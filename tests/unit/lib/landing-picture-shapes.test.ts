@@ -68,8 +68,8 @@ describe("landingPictureDestination", () => {
   });
 
   it("takes every shape in a text section, and in an image section with no other picture", () => {
-    const text: LandingSection = { id: id(2), type: "text", imageSide: "start", imageId: id(50) };
-    const lone: LandingSection = { id: id(3), type: "image", images: [{ id: id(10), imageId: id(50) }] };
+    const text: LandingSection = { id: id(2), type: "text", background: "default", imageSide: "start", imageId: id(50) };
+    const lone: LandingSection = { id: id(3), type: "image", background: "default", images: [{ id: id(10), imageId: id(50) }] };
     for (const [section, pictureId] of [
       [text, undefined],
       [lone, id(10)],
@@ -85,6 +85,7 @@ describe("landingPictureDestination", () => {
     const gallery: LandingSection = {
       id: id(3),
       type: "image",
+      background: "default",
       images: [
         { id: id(10), imageId: id(50) },
         { id: id(11), imageId: id(50) },

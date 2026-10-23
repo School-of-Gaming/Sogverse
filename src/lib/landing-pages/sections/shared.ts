@@ -70,6 +70,24 @@ export const buttonTarget = z.discriminatedUnion("kind", [
 
 export type ButtonTarget = z.infer<typeof buttonTarget>;
 
+/**
+ * The ground a section sits on: `default`, the page's own, or `card`, a band
+ * of the card ground running the viewport's width. Every section type but the
+ * hero takes one, by spreading `landingBackgroundField` into its schema, and a
+ * section stored without one reads as `default`. Adjacent `card` sections
+ * share one band, which is how an admin sets related sections apart as a
+ * group. The SQL half (`landing_sections_problem`) holds the same values and
+ * refuses one on the hero.
+ */
+export const LANDING_SECTION_BACKGROUNDS = ["default", "card"] as const;
+
+export type LandingSectionBackground = (typeof LANDING_SECTION_BACKGROUNDS)[number];
+
+/** The background field, spread into every non-hero section's schema. */
+export const landingBackgroundField = {
+  background: z.enum(LANDING_SECTION_BACKGROUNDS).default("default"),
+};
+
 /** A plain-text field, unwritten while absent or blank. */
 export const plainText = z.string().trim().optional();
 

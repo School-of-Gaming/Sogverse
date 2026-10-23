@@ -22,7 +22,7 @@ const FORM = id(2);
 
 const SECTIONS: LandingSection[] = [
   { id: HERO, type: "hero" },
-  { id: FORM, type: "subscribe" },
+  { id: FORM, type: "subscribe", background: "default" },
 ];
 
 const TEXTS: LandingSectionTexts = {

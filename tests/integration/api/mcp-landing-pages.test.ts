@@ -125,9 +125,10 @@ const PAGE: AdminLandingPage = {
     id: ID,
     sections: [
       { id: HERO, type: "hero", imageId: CASTLE, button: { kind: "internal", path: "/shop" } },
-      { id: TEXT, type: "text", imageSide: "start" },
-      { id: FAQ, type: "faq", items: [{ id: QUESTION }] },
-      { id: GALLERY, type: "image", images: [{ id: PICTURE_ITEM, imageId: CASTLE }] },
+      // Two related sections grouped on one band.
+      { id: TEXT, type: "text", background: "card", imageSide: "start" },
+      { id: FAQ, type: "faq", background: "card", items: [{ id: QUESTION }] },
+      { id: GALLERY, type: "image", background: "default", images: [{ id: PICTURE_ITEM, imageId: CASTLE }] },
     ],
     pictures: { [CASTLE]: { path: "castle.jpg", purpose: "landing_image" } },
     versions: [
@@ -336,7 +337,7 @@ describe("reading", () => {
       ...PAGE,
       draft: {
         ...PAGE.draft,
-        sections: [...PAGE.draft.sections, { id: PICKS, type: "products", productIds: [CLUB, CAMP] }],
+        sections: [...PAGE.draft.sections, { id: PICKS, type: "products", background: "default", productIds: [CLUB, CAMP] }],
       },
       productPicks: [
         {
@@ -439,6 +440,8 @@ describe("reading", () => {
     expect(structure).toContain("A page starts with its hero section");
     expect(structure).toContain("headline; imageAlt when imageId is set; buttonLabel when button is set");
     expect(structure).toContain("drops its words in every language");
+    expect(structure).toContain("adjacent card sections share one band and read as one related group");
+    expect(structure).toContain("The hero takes no background");
     // Which shapes each section's pictures may be, from the section registry.
     expect(structure).toContain("Its picture must be wide 16:9.");
     expect(structure).toContain(
@@ -747,6 +750,45 @@ describe("saving", () => {
     });
   });
 
+  it("saves each section's background, adjacent card sections included, reading one left out as default", async () => {
+    landing.getAdminPage.mockResolvedValue(PAGE);
+
+    const result = await tool("save_landing_page_structure", {
+      pageId: ID,
+      sections: [
+        { id: HERO, type: "hero" },
+        { id: TEXT, type: "text", imageSide: "start", background: "card" },
+        { id: FAQ, type: "faq", items: [{ id: QUESTION }], background: "card" },
+        { id: GALLERY, type: "image", images: [{ id: PICTURE_ITEM, imageId: CASTLE }] },
+      ],
+    });
+
+    expect(result.isError).toBeUndefined();
+    expect(landing.saveStructure).toHaveBeenCalledWith(ID, [
+      { id: HERO, type: "hero" },
+      { id: TEXT, type: "text", imageSide: "start", background: "card" },
+      { id: FAQ, type: "faq", items: [{ id: QUESTION }], background: "card" },
+      { id: GALLERY, type: "image", images: [{ id: PICTURE_ITEM, imageId: CASTLE }], background: "default" },
+    ]);
+  });
+
+  it.each([
+    ["the hero's background", [{ type: "hero", background: "card" }], "Section 1 (Hero)"],
+    [
+      "a ground there is none of",
+      [{ type: "hero" }, { type: "cta", button: { kind: "internal", path: "/" }, background: "tinted" }],
+      "Section 2 (Call to action), background: ",
+    ],
+  ])("refuses %s, saving nothing", async (_, sections, named) => {
+    landing.getAdminPage.mockResolvedValue(PAGE);
+
+    const result = await tool("save_landing_page_structure", { pageId: ID, sections });
+
+    expect(result.isError).toBe(true);
+    expect(resultText(result)).toContain(named);
+    expect(landing.saveStructure).not.toHaveBeenCalled();
+  });
+
   it("writes one language's words checked against the structure", async () => {
     const sectionTexts = {
       [HERO]: { headline: "Pelikerhot", buttonLabel: "Kauppaan", imageAlt: "Linna" },
@@ -836,7 +878,7 @@ describe("saving", () => {
 
     expect(landing.saveStructure).toHaveBeenCalledWith(ID, [
       PAGE.draft.sections[0],
-      { id: PICKS, type: "products", productIds: [GONE] },
+      { id: PICKS, type: "products", background: "default", productIds: [GONE] },
     ]);
     expect(result.isError).toBe(true);
     expect(resultText(result)).toBe(sentence);
@@ -1251,7 +1293,7 @@ describe("testimonials sections", () => {
       ...PAGE.draft,
       sections: [
         ...PAGE.draft.sections,
-        { id: QUOTES, type: "testimonials", arrangement: "pair", testimonialIds: [ONE, TWO] },
+        { id: QUOTES, type: "testimonials", background: "default", arrangement: "pair", testimonialIds: [ONE, TWO] },
       ],
     },
     testimonials: {
@@ -1295,7 +1337,7 @@ describe("testimonials sections", () => {
   it("saves a section placing testimonials by id and arrangement", async () => {
     const sections = [
       ...PAGE.draft.sections,
-      { id: QUOTES, type: "testimonials", arrangement: "row", testimonialIds: [ONE, TWO, THREE] },
+      { id: QUOTES, type: "testimonials", background: "card", arrangement: "row", testimonialIds: [ONE, TWO, THREE] },
     ];
     landing.getAdminPage.mockResolvedValue(PAGE);
     const result = await tool("save_landing_page_structure", { pageId: ID, sections });

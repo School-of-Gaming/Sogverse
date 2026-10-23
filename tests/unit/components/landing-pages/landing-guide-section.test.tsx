@@ -44,7 +44,7 @@ const GUIDE = id(3);
 
 const SECTIONS: LandingSection[] = [
   { id: HERO, type: "hero" },
-  { id: GUIDE_SECTION, type: "guide", guideId: GUIDE },
+  { id: GUIDE_SECTION, type: "guide", background: "default", guideId: GUIDE },
 ];
 
 const TEXTS: LandingSectionTexts = {

@@ -14,6 +14,7 @@ import {
   fieldOf,
   type LandingMarkdownField,
   type LandingMarkdownUseCase,
+  type LandingSectionBackground,
   type TextReading,
 } from "./shared";
 
@@ -85,6 +86,15 @@ export type LandingSectionOf<Type extends LandingSectionType> = Extract<
   LandingSection,
   { type: Type }
 >;
+
+/**
+ * The ground a section sits on. The hero has no choice and opens the page on
+ * its own ground; every other type carries the field, so a type added without
+ * it fails type-check here.
+ */
+export function landingSectionBackground(section: LandingSection): LandingSectionBackground {
+  return section.type === "hero" ? "default" : section.background;
+}
 
 /**
  * Every product the structure's products sections pick, each once, in page
@@ -333,9 +343,11 @@ export {
   isWritten,
   LANDING_EMAIL_PATTERN,
   LANDING_ID_PATTERN,
+  LANDING_SECTION_BACKGROUNDS,
   landingId,
   type ButtonTarget,
   type LandingMarkdownField,
   type LandingMarkdownUseCase,
+  type LandingSectionBackground,
   type LandingSectionDefinition,
 } from "./shared";

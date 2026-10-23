@@ -87,8 +87,8 @@ const FI: LandingPageDraftVersion = {
 
 const SECTIONS: AdminLandingPage["draft"]["sections"] = [
   { id: HERO_ID, type: "hero" },
-  { id: TEXT_ID, type: "text", imageSide: "end" },
-  { id: FAQ_ID, type: "faq", items: [{ id: QUESTION_ID }] },
+  { id: TEXT_ID, type: "text", background: "default", imageSide: "end" },
+  { id: FAQ_ID, type: "faq", background: "default", items: [{ id: QUESTION_ID }] },
 ];
 
 function draftPage(versions: LandingPageDraftVersion[]): AdminLandingPage {
@@ -389,7 +389,7 @@ describe("the landing page status page's testimonials", () => {
         ...page.draft,
         sections: [
           ...SECTIONS,
-          { id: QUOTES_ID, type: "testimonials", arrangement: "pair", testimonialIds: [ONE, TWO] },
+          { id: QUOTES_ID, type: "testimonials", background: "default", arrangement: "pair", testimonialIds: [ONE, TWO] },
         ],
       },
       testimonials: {

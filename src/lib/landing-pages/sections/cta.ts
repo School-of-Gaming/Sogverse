@@ -2,6 +2,7 @@ import { z } from "zod";
 import {
   buttonTarget,
   isWritten,
+  landingBackgroundField,
   landingId,
   plainText,
   type LandingSectionDefinition,
@@ -12,6 +13,7 @@ const section = z
   .object({
     id: landingId,
     type: z.literal("cta"),
+    ...landingBackgroundField,
     button: buttonTarget,
   })
   .strict();

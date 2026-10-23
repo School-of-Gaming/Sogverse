@@ -52,7 +52,7 @@ const quote = (n: number): TestimonialVersionInput => ({
 function structure(arrangement: "feature" | "pair" | "row", ids: string[]): LandingSection[] {
   return [
     { id: HERO, type: "hero" },
-    { id: QUOTES, type: "testimonials", arrangement, testimonialIds: ids },
+    { id: QUOTES, type: "testimonials", background: "default", arrangement, testimonialIds: ids },
   ];
 }
 

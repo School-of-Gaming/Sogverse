@@ -1,5 +1,11 @@
 import { z } from "zod";
-import { isWritten, landingId, plainText, type LandingSectionDefinition } from "./shared";
+import {
+  isWritten,
+  landingBackgroundField,
+  landingId,
+  plainText,
+  type LandingSectionDefinition,
+} from "./shared";
 
 /**
  * A guide from Marketing's store — a PDF, one file per language — offered for
@@ -23,6 +29,7 @@ const section = z
     type: z.literal("guide"),
     guideId: landingId,
     imageId: landingId.optional(),
+    ...landingBackgroundField,
   })
   .strict();
 

@@ -216,7 +216,7 @@ address, the names given, the page's locale, the landing page's id, and the visi
 values only under marketing consent — nothing else. The list is the deployment's
 (`KLAVIYO_*` in the environment, read by `src/lib/landing-pages/subscribe-config.server.ts`):
 the local server and Vercel Preview use a staging list, and production the real one. So
-the section has no shared field; its form copy, consent sentence included, is fixed copy
+the section has no shared field but its background; its form copy, consent sentence included, is fixed copy
 in `landingSubscribe`, and the page writes only the ask. The route refuses a body without
 the ticked consent and a page whose published copy no longer holds the section, and
 answers a new address, a known one and a filled honeypot identically. The admin's preview
@@ -232,8 +232,23 @@ page is built by its address module** — the slug a locale's live version store
 id — never by handing a segment to the route builder, because a slug resolves in its own
 locale only and a hand-picked one is a 404 in every other. The renderer and the SEO
 contribution (structured data) are each an exhaustive map over the section
-types. Every section sits on the plain page ground: an admin chooses the order, so a
-tinted band could land beside another and read as one section. **A page with products
+types.
+
+**Every section but the hero has a background, `default` or `card`, and it is structure**,
+shared by every language. `default` is the page ground; `card` lays the section on a band
+of the card ground that runs the viewport's full width, the content keeping the section's
+own container. A section stored without one reads as `default`, in both copies, and the
+next structure save writes the value out. Adjacent `card` sections join into one band, and
+that is the design: it is how an admin groups related sections, so nothing refuses or
+merges them, and the MCP tools tell the AI app as much. The hero takes none — its schema
+and the SQL check both refuse the field. The band carries no spacing of its own, so two
+sections on one band sit as far apart as two on the page ground, and cards on a band are
+told apart by their own border (`packages/sog-ui/CLAUDE.md`). The field is one shared
+definition in the registry, spread into each type's schema, checked once more in SQL by
+the structure check and held equal to it by a DB test; a new section type spreads it in,
+and the registry's one background lookup fails type-check until it does.
+
+**A page with products
 sections reads the listing of every product type and seat counts on the server, once for
 all of them, before its HTML** — the live page and the preview alike, with no Suspense
 boundary — so the cards, or a section's absence, are in the first byte and nothing below
