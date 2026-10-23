@@ -73,10 +73,10 @@ ALTER TABLE ONLY public.landing_page_publication_translations
 
 
 --
--- Name: landing_page_publication_translations trg_landing_page_publication_translations_refresh_image_paths; Type: TRIGGER; Schema: public; Owner: -
+-- Name: landing_page_publication_translations trg_landing_page_publication_translations_refresh_pictures; Type: TRIGGER; Schema: public; Owner: -
 --
 
-CREATE TRIGGER trg_landing_page_publication_translations_refresh_image_paths AFTER INSERT OR DELETE OR UPDATE OF share_image_id ON public.landing_page_publication_translations FOR EACH ROW EXECUTE FUNCTION public.refresh_landing_image_paths();
+CREATE TRIGGER trg_landing_page_publication_translations_refresh_pictures AFTER INSERT OR DELETE OR UPDATE OF share_image_id ON public.landing_page_publication_translations FOR EACH ROW EXECUTE FUNCTION public.refresh_landing_pictures();
 
 
 --

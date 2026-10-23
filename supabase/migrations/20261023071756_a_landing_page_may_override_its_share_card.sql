@@ -6,10 +6,12 @@
 -- page: the shown version's title and summary, and the hero's picture. An
 -- admin may now override, per language, while writing that language:
 --
--- * A SHARE PICTURE — a landing_image catalogue entry referenced by id, in
---   share_image_id on both copies' versions. Per language because a share
---   picture often carries words of its own, which are written per language
---   like every other word on the page.
+-- * A SHARE PICTURE — a wide 16:9 landing picture ('landing_image') of the
+--   catalogue, referenced by id, in share_image_id on both copies' versions.
+--   Wide only, as the hero's picture is, because it is what the link preview
+--   shows, drawn at 16:9. Per language because a share picture often carries
+--   words of its own, which are written per language like every other word
+--   on the page.
 -- * A SHARE TITLE and the share picture's ALT TEXT — in share_title and
 --   share_image_alt beside it.
 --
@@ -20,22 +22,22 @@
 --
 -- THE CATALOGUE'S GUARANTEES
 --
--- A copy's image_paths names every catalogue entry the copy shows, and the
+-- A copy's pictures names every catalogue entry the copy shows, and the
 -- catalogue's usage map, replace and removal all find a copy by it. A share
--- picture lives on a version row while image_paths lives on the copy's row,
--- so the copy's paths are derived from its sections and from every one of
+-- picture lives on a version row while pictures lives on the copy's row, so
+-- the copy's pictures are derived from its sections and from every one of
 -- its versions' share pictures:
 --
--- * apply_landing_image_paths reads the copy's versions too, so the copy
---   carries each share picture's path and an entry that is gone (23503) or of
---   another purpose (23514) is refused.
--- * refresh_landing_image_paths re-derives the copy's paths whenever a
+-- * apply_landing_pictures reads the copy's versions too, so the copy
+--   carries each share picture's path and purpose, and refuses an entry that
+--   is gone (23503), not a landing picture, or not wide (23514).
+-- * refresh_landing_pictures re-derives the copy's pictures whenever a
 --   version's share picture is written, changed or removed with its version,
 --   so a picture only one language names counts as in use, and stops
 --   counting when that language goes.
 -- * repoint_landing_images and unlink_removed_landing_image move or unset it
 --   on the versions of both copies.
--- * The catalogue's usage map reads image_paths, so it knows about it with no
+-- * The catalogue's usage map reads pictures, so it knows about it with no
 --   change of its own.
 --
 -- Publishing copies all three with each version, and so does a clone; the
@@ -69,7 +71,7 @@ ALTER TABLE public.landing_page_publication_translations
 
 COMMENT ON COLUMN public.landing_page_translations.share_title IS 'The link preview''s title in this language, in place of the page title, or the empty string to use the page title. At most 70 characters, a share card''s length. Optional: completeness never reads it.';
 
-COMMENT ON COLUMN public.landing_page_translations.share_image_id IS 'The share picture in this language: a landing_image catalogue entry the link preview shows in place of the hero''s picture, or NULL to use the hero''s. No foreign key, as for the pictures in sections: the copy''s image_paths names it (apply_landing_image_paths, kept current by refresh_landing_image_paths), which refuses an entry that is gone or of another purpose, and the catalogue''s replace moves it and its removal unsets it.';
+COMMENT ON COLUMN public.landing_page_translations.share_image_id IS 'The share picture in this language: a wide 16:9 landing picture (a landing_image catalogue entry) the link preview shows in place of the hero''s picture, or NULL to use the hero''s. No foreign key, as for the pictures in sections: the copy''s pictures names it (apply_landing_pictures, kept current by refresh_landing_pictures), which refuses an entry that is gone, not a landing picture or not wide, and the catalogue''s replace moves it and its removal unsets it.';
 
 COMMENT ON COLUMN public.landing_page_translations.share_image_alt IS 'The share picture''s alt text in this language, or the empty string while unwritten, when the preview falls back to the card''s title. Optional: completeness never reads it.';
 
@@ -79,98 +81,165 @@ COMMENT ON COLUMN public.landing_page_publication_translations.share_image_id IS
 
 COMMENT ON COLUMN public.landing_page_publication_translations.share_image_alt IS 'The live share picture''s alt text in this language, copied by publishing; the empty string while unwritten.';
 
-COMMENT ON COLUMN public.landing_pages.image_paths IS 'Each catalogue entry the sections and every version''s share picture show, as {entry id: object name in the landing-images bucket}, derived by apply_landing_image_paths and never written by anything else.';
+COMMENT ON COLUMN public.landing_pages.pictures IS 'Each catalogue entry the sections and every version''s share picture show, as {entry id: {"path": object name in its purpose''s bucket, "purpose": landing_image (wide 16:9), landing_square_image (square 1:1) or landing_portrait_image (portrait 4:5)}}, derived by apply_landing_pictures and never written by anything else.';
 
-COMMENT ON COLUMN public.landing_page_publications.image_paths IS 'Each catalogue entry the live sections and every live version''s share picture show, as {entry id: object name in the landing-images bucket}, derived by apply_landing_image_paths — what the public pages paint, readable without reading the admin-only catalogue.';
+COMMENT ON COLUMN public.landing_page_publications.pictures IS 'Each catalogue entry the live sections and every live version''s share picture show, as {entry id: {"path", "purpose"}}, derived by apply_landing_pictures — what the public pages paint, and the shape each picture''s box is reserved at, readable without reading the admin-only catalogue.';
 
-COMMENT ON TABLE public.catalogue_images IS 'The catalogue of pictures admins pick from for content: product pictures, Library article covers, landing page pictures and spotlight pictures, each entry marked with its purpose. One row per distinct image per purpose, identified by the sha256 of its bytes; the object key is <sha256>.<ext> in the public bucket of the entry''s purpose (product-images, library-covers, landing-images or spotlight-images). A row is immutable except for its label — the bytes behind a path never change, which is what makes the image optimizer''s one-year cache floor safe. Admin-only: no anon grant and no anon policy, because nothing family-facing reads this table. Products reference it by products.image_id, Library article copies by cover_image_id, landing page copies by the image ids in their sections and their versions'' share_image_id, and spotlights by spotlights.image_id; the served products.image_path, cover_path, image_paths and spotlights.image_path are derived from those links by triggers and are what every reader reads.';
+COMMENT ON TABLE public.catalogue_images IS 'The catalogue of pictures admins pick from for content: product pictures, Library article covers, landing page pictures (in three shapes) and spotlight pictures, each entry marked with its purpose. One row per distinct image per purpose, identified by the sha256 of its bytes; the object key is <sha256>.<ext> in the public bucket of the entry''s purpose (product-images, library-covers, landing-images, landing-square-images, landing-portrait-images or spotlight-images). A row is immutable except for its label — the bytes behind a path never change, which is what makes the image optimizer''s one-year cache floor safe. Admin-only: no anon grant and no anon policy, because nothing family-facing reads this table. Products reference it by products.image_id, Library article copies by cover_image_id, landing page copies by the image ids in their sections and their versions'' share_image_id, and spotlights by spotlights.image_id; the served products.image_path, cover_path, a landing page copy''s pictures and spotlights.image_path are derived from those links by triggers and are what every reader reads.';
 
 -- ---------------------------------------------------------------------------
 -- 2. The catalogue's guarantees reach the share pictures
 -- ---------------------------------------------------------------------------
 
-CREATE OR REPLACE FUNCTION public.apply_landing_image_paths() RETURNS trigger
+CREATE OR REPLACE FUNCTION public.apply_landing_pictures() RETURNS trigger
     LANGUAGE plpgsql
     SET search_path TO ''
-    AS $_$
+    AS $$
 DECLARE
-  v_ref     text;
-  v_path    text;
-  v_purpose public.catalogue_image_purpose;
-  v_paths   jsonb := '{}'::jsonb;
-  v_sections jsonb := CASE WHEN jsonb_typeof(NEW.sections) = 'array' THEN NEW.sections ELSE '[]'::jsonb END;
-  v_shares  uuid[];
+  c_uuid constant text := '^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$';
+  v_section  jsonb;
+  v_ref      text;
+  v_path     text;
+  v_purpose  public.catalogue_image_purpose;
+  v_first    public.catalogue_image_purpose;
+  v_takes    public.catalogue_image_purpose[];
+  v_pictures jsonb := '{}'::jsonb;
+  v_share    uuid;
+  v_shares   uuid[];
 BEGIN
+  IF jsonb_typeof(NEW.sections) = 'array' THEN
+    FOR v_section IN
+      SELECT s.e FROM jsonb_array_elements(NEW.sections) WITH ORDINALITY AS s(e, n) ORDER BY s.n
+    LOOP
+      -- The shapes this section's type takes. Held equal to the section
+      -- registry's declaration by a DB test.
+      v_takes := CASE v_section->>'type'
+        WHEN 'hero' THEN ARRAY['landing_image']::public.catalogue_image_purpose[]
+        WHEN 'guide' THEN ARRAY['landing_image']::public.catalogue_image_purpose[]
+        ELSE ARRAY['landing_image', 'landing_square_image', 'landing_portrait_image']::public.catalogue_image_purpose[]
+      END;
+      v_first := NULL;
+
+      FOR v_ref IN
+        SELECT r.ref FROM (
+          SELECT v_section->>'imageId' AS ref, 0::bigint AS n
+           WHERE jsonb_typeof(v_section->'imageId') = 'string'
+          UNION ALL
+          SELECT i.e->>'imageId', i.n
+            FROM jsonb_array_elements(
+                   CASE WHEN jsonb_typeof(v_section->'images') = 'array' THEN v_section->'images' ELSE '[]'::jsonb END
+                 ) WITH ORDINALITY AS i(e, n)
+           WHERE jsonb_typeof(i.e->'imageId') = 'string'
+        ) AS r
+        ORDER BY r.n
+      LOOP
+        v_path := NULL;
+        IF v_ref ~ c_uuid THEN
+          -- Locked so a removal of this entry waits for this save to commit,
+          -- and its unlink then sees the rows this save wrote: unlocked, a
+          -- removal racing the save leaves a picture named that no longer
+          -- exists.
+          SELECT path, purpose INTO v_path, v_purpose
+            FROM public.catalogue_images
+           WHERE id = v_ref::uuid
+             FOR KEY SHARE;
+        END IF;
+
+        -- The reachable cause is an entry another admin removed after this
+        -- one was chosen; saving without the picture would be the worst answer.
+        IF v_path IS NULL THEN
+          RAISE EXCEPTION 'That picture is no longer in the catalogue (catalogue_images row %)', v_ref
+            USING ERRCODE = 'foreign_key_violation';
+        END IF;
+
+        -- An entry of another purpose lives in another bucket, cut for
+        -- another frame. The uploader and the picker offer only landing
+        -- pictures; this refuses loudly the state they cannot produce.
+        IF v_purpose NOT IN ('landing_image', 'landing_square_image', 'landing_portrait_image') THEN
+          RAISE EXCEPTION 'That picture is a % picture, and a landing page shows only landing pictures (catalogue_images row %)', v_purpose, v_ref
+            USING ERRCODE = 'check_violation';
+        END IF;
+
+        IF NOT v_purpose = ANY (v_takes) THEN
+          RAISE EXCEPTION 'A % section''s picture must be wide 16:9%, and that picture is % (catalogue_images row %)',
+            v_section->>'type',
+            CASE v_section->>'type' WHEN 'hero' THEN ', because it is the page''s link preview' ELSE '' END,
+            CASE v_purpose WHEN 'landing_square_image' THEN 'square 1:1' ELSE 'portrait 4:5' END, v_ref
+            USING ERRCODE = 'check_violation';
+        END IF;
+
+        IF v_first IS NULL THEN
+          v_first := v_purpose;
+        ELSIF v_purpose <> v_first THEN
+          RAISE EXCEPTION 'The pictures of an image section must all be one shape so they line up, and section % has a % picture beside a % one (catalogue_images row %)',
+            v_section->>'id',
+            CASE v_first WHEN 'landing_image' THEN 'wide 16:9' WHEN 'landing_square_image' THEN 'square 1:1' ELSE 'portrait 4:5' END,
+            CASE v_purpose WHEN 'landing_image' THEN 'wide 16:9' WHEN 'landing_square_image' THEN 'square 1:1' ELSE 'portrait 4:5' END,
+            v_ref
+            USING ERRCODE = 'check_violation';
+        END IF;
+
+        v_pictures := v_pictures
+          || jsonb_build_object(v_ref, jsonb_build_object('path', v_path, 'purpose', v_purpose));
+      END LOOP;
+    END LOOP;
+  END IF;
+
   -- The copy's versions' share pictures: the working versions for the working
-  -- copy, the live ones for the published copy.
+  -- copy, the live ones for the published copy. Each is wide, as the hero's
+  -- picture is, because the link preview it stands for is drawn at 16:9.
+  -- Read per table, since only the published copy's row has a page_id.
   IF TG_TABLE_NAME = 'landing_pages' THEN
-    SELECT array_agg(share_image_id) INTO v_shares
+    SELECT array_agg(DISTINCT share_image_id) INTO v_shares
       FROM public.landing_page_translations
      WHERE page_id = NEW.id AND share_image_id IS NOT NULL;
   ELSE
-    SELECT array_agg(share_image_id) INTO v_shares
+    SELECT array_agg(DISTINCT share_image_id) INTO v_shares
       FROM public.landing_page_publication_translations
      WHERE page_id = NEW.page_id AND share_image_id IS NOT NULL;
   END IF;
 
-  FOR v_ref IN
-    SELECT DISTINCT r.ref FROM (
-      SELECT s.e->>'imageId' AS ref
-        FROM jsonb_array_elements(v_sections) AS s(e)
-       WHERE jsonb_typeof(s.e->'imageId') = 'string'
-      UNION ALL
-      SELECT i.e->>'imageId'
-        FROM jsonb_array_elements(v_sections) AS s(e),
-             jsonb_array_elements(
-               CASE WHEN jsonb_typeof(s.e->'images') = 'array' THEN s.e->'images' ELSE '[]'::jsonb END
-             ) AS i(e)
-       WHERE jsonb_typeof(i.e->'imageId') = 'string'
-      UNION ALL
-      SELECT u.id::text
-        FROM unnest(COALESCE(v_shares, '{}'::uuid[])) AS u(id)
-    ) AS r
+  FOREACH v_share IN ARRAY COALESCE(v_shares, '{}'::uuid[])
   LOOP
     v_path := NULL;
-    IF v_ref ~ '^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$' THEN
-      -- Locked so a removal of this entry waits for this save to commit, and
-      -- its unlink then sees the rows this save wrote: unlocked, a removal
-      -- racing the save leaves a picture named that no longer exists.
-      SELECT path, purpose INTO v_path, v_purpose
-        FROM public.catalogue_images
-       WHERE id = v_ref::uuid
-         FOR KEY SHARE;
-    END IF;
+    -- Locked for the same reason as a section's picture.
+    SELECT path, purpose INTO v_path, v_purpose
+      FROM public.catalogue_images
+     WHERE id = v_share
+       FOR KEY SHARE;
 
-    -- The reachable cause is an entry another admin removed after this one
-    -- was chosen; saving without the picture would be the worst answer.
     IF v_path IS NULL THEN
-      RAISE EXCEPTION 'That picture is no longer in the catalogue (catalogue_images row %)', v_ref
+      RAISE EXCEPTION 'That picture is no longer in the catalogue (catalogue_images row %)', v_share
         USING ERRCODE = 'foreign_key_violation';
     END IF;
 
-    -- An entry of another purpose lives in another bucket, cut for another
-    -- frame. The picker offers only landing pictures; this refuses loudly
-    -- the state it cannot produce.
-    IF v_purpose <> 'landing_image' THEN
-      RAISE EXCEPTION 'That picture is a % picture, and a landing page shows only landing_image ones (catalogue_images row %)', v_purpose, v_ref
+    IF v_purpose NOT IN ('landing_image', 'landing_square_image', 'landing_portrait_image') THEN
+      RAISE EXCEPTION 'That picture is a % picture, and a landing page shows only landing pictures (catalogue_images row %)', v_purpose, v_share
         USING ERRCODE = 'check_violation';
     END IF;
 
-    v_paths := v_paths || jsonb_build_object(v_ref, v_path);
+    IF v_purpose <> 'landing_image' THEN
+      RAISE EXCEPTION 'A share picture must be wide 16:9, because it is the page''s link preview, and that picture is % (catalogue_images row %)',
+        CASE v_purpose WHEN 'landing_square_image' THEN 'square 1:1' ELSE 'portrait 4:5' END, v_share
+        USING ERRCODE = 'check_violation';
+    END IF;
+
+    v_pictures := v_pictures
+      || jsonb_build_object(v_share::text, jsonb_build_object('path', v_path, 'purpose', v_purpose));
   END LOOP;
 
-  NEW.image_paths := v_paths;
+  NEW.pictures := v_pictures;
   RETURN NEW;
 END;
-$_$;
+$$;
 
-COMMENT ON FUNCTION public.apply_landing_image_paths() IS 'BEFORE INSERT OR UPDATE on landing_pages and landing_page_publications: image_paths is derived from every catalogue entry the copy names (a section''s imageId, an image section''s images[].imageId, and the share_image_id of each of the copy''s versions), as {entry id: path}. No branch keeps a statement-supplied value and the triggers carry no column list, so this is the column''s only writer; refresh_landing_image_paths re-runs it when a version''s share picture changes. Refuses an entry that is gone (23503) or whose purpose is not landing_image (23514).';
+COMMENT ON FUNCTION public.apply_landing_pictures() IS 'BEFORE INSERT OR UPDATE on landing_pages and landing_page_publications: pictures is derived from every catalogue entry the copy names (a hero, text or guide section''s imageId, an image section''s images[].imageId, and the share_image_id of each of the copy''s versions), as {entry id: {path, purpose}} — the purpose is the picture''s shape and names its bucket. No branch keeps a statement-supplied value and the triggers carry no column list, so this is the column''s only writer; refresh_landing_pictures re-runs it when a version''s share picture changes. Each entry is locked FOR KEY SHARE, so a racing removal waits and then unlinks what this write stored. Refuses an entry that is gone (23503); one that is not a landing picture (landing_image, landing_square_image or landing_portrait_image); a hero picture or a share picture that is not wide (landing_image), since each is the page''s link preview; a guide section''s picture that is not wide; and a section whose pictures are not all one purpose (each 23514).';
 
 -- A share picture is written on a version row, and the copy's row carries the
--- paths, so a write that adds, changes or removes one re-derives the copy's.
+-- pictures, so a write that adds, changes or removes one re-derives the copy's.
 -- The UPDATE names no column any other trigger on the copy listens to, so it
 -- moves neither the last-saved time nor the saver, and cascades nothing.
-CREATE FUNCTION public.refresh_landing_image_paths() RETURNS trigger
+CREATE FUNCTION public.refresh_landing_pictures() RETURNS trigger
     LANGUAGE plpgsql
     SET search_path TO ''
     AS $$
@@ -190,27 +259,27 @@ BEGIN
 
   -- A version removed with its copy (an unpublish's cascade) finds no row.
   IF TG_TABLE_NAME = 'landing_page_translations' THEN
-    UPDATE public.landing_pages SET image_paths = image_paths WHERE id = v_page;
+    UPDATE public.landing_pages SET pictures = pictures WHERE id = v_page;
   ELSE
-    UPDATE public.landing_page_publications SET image_paths = image_paths WHERE page_id = v_page;
+    UPDATE public.landing_page_publications SET pictures = pictures WHERE page_id = v_page;
   END IF;
 
   RETURN NULL;
 END;
 $$;
 
-COMMENT ON FUNCTION public.refresh_landing_image_paths() IS 'AFTER INSERT, UPDATE OF share_image_id or DELETE on landing_page_translations and landing_page_publication_translations: when a version''s share picture is added, changed or removed (with its version or alone), touches the copy''s row so apply_landing_image_paths re-derives the copy''s image_paths. That is what makes a share picture named by one language alone count as in use, refuses one that is gone or of another purpose at the version''s write, and lets it stop counting when no version names it.';
+COMMENT ON FUNCTION public.refresh_landing_pictures() IS 'AFTER INSERT, UPDATE OF share_image_id or DELETE on landing_page_translations and landing_page_publication_translations: when a version''s share picture is added, changed or removed (with its version or alone), touches the copy''s row so apply_landing_pictures re-derives the copy''s pictures. That is what makes a share picture named by one language alone count as in use, refuses one that is gone, not a landing picture or not wide at the version''s write, and lets it stop counting when no version names it.';
 
-REVOKE ALL ON FUNCTION public.refresh_landing_image_paths() FROM PUBLIC;
-GRANT ALL ON FUNCTION public.refresh_landing_image_paths() TO service_role;
+REVOKE ALL ON FUNCTION public.refresh_landing_pictures() FROM PUBLIC;
+GRANT ALL ON FUNCTION public.refresh_landing_pictures() TO service_role;
 
-CREATE TRIGGER trg_landing_page_translations_refresh_image_paths
+CREATE TRIGGER trg_landing_page_translations_refresh_pictures
   AFTER INSERT OR DELETE OR UPDATE OF share_image_id ON public.landing_page_translations
-  FOR EACH ROW EXECUTE FUNCTION public.refresh_landing_image_paths();
+  FOR EACH ROW EXECUTE FUNCTION public.refresh_landing_pictures();
 
-CREATE TRIGGER trg_landing_page_publication_translations_refresh_image_paths
+CREATE TRIGGER trg_landing_page_publication_translations_refresh_pictures
   AFTER INSERT OR DELETE OR UPDATE OF share_image_id ON public.landing_page_publication_translations
-  FOR EACH ROW EXECUTE FUNCTION public.refresh_landing_image_paths();
+  FOR EACH ROW EXECUTE FUNCTION public.refresh_landing_pictures();
 
 CREATE OR REPLACE FUNCTION public.repoint_landing_images(p_from uuid, p_to uuid) RETURNS integer
     LANGUAGE plpgsql SECURITY DEFINER
@@ -228,28 +297,28 @@ BEGIN
       USING ERRCODE = 'null_value_not_allowed';
   END IF;
 
-  -- image_paths names every version's share picture as well as the sections'
+  -- pictures names every version's share picture as well as the sections'
   -- pictures, so a copy whose only use of p_from is a share picture is found
   -- and counted too; sections is set either way, which moves the working
   -- copy's last-saved time and saver as for any picture.
   WITH drafts AS (
     UPDATE public.landing_pages
        SET sections = public.landing_sections_repointed(sections, p_from, p_to)
-     WHERE image_paths ? p_from::text
+     WHERE pictures ? p_from::text
     RETURNING id
   ),
   live AS (
     UPDATE public.landing_page_publications
        SET sections = public.landing_sections_repointed(sections, p_from, p_to)
-     WHERE image_paths ? p_from::text
+     WHERE pictures ? p_from::text
     RETURNING page_id
   )
   SELECT count(*) INTO v_moved
     FROM (SELECT id FROM drafts UNION SELECT page_id FROM live) AS moved;
 
   -- The share pictures, once the copies have been found by them. Each version
-  -- moved re-derives its copy's paths, which refuses a p_to that is gone or
-  -- not a landing_image.
+  -- moved re-derives its copy's pictures, which refuses a p_to that is gone,
+  -- not a landing picture or not wide.
   UPDATE public.landing_page_translations
      SET share_image_id = p_to
    WHERE share_image_id = p_from;
@@ -262,30 +331,30 @@ BEGIN
 END;
 $$;
 
-COMMENT ON FUNCTION public.repoint_landing_images(p_from uuid, p_to uuid) IS 'Admin-gated landing half of the image catalogue''s replace: points every landing page picture that is entry p_from — in the sections or as any language''s share picture, working and published copies alike — at entry p_to, and returns how many pages moved (a page whose two copies both moved counts once). A live page''s picture changes without a republish. The image-path triggers re-derive each copy''s paths and refuse a p_to that is gone or not a landing_image. Either argument NULL raises null_value_not_allowed. SECURITY DEFINER because no landing page table carries a write grant.';
+COMMENT ON FUNCTION public.repoint_landing_images(p_from uuid, p_to uuid) IS 'Admin-gated landing half of the image catalogue''s replace: points every landing page picture that is entry p_from — in the sections or as any language''s share picture, working and published copies alike — at entry p_to, and returns how many pages moved (a page whose two copies both moved counts once). A live page''s picture changes without a republish. The catalogue''s replace hands it an entry of p_from''s own purpose, so a picture keeps its shape; the picture triggers re-derive each copy''s pictures and refuse a p_to that is gone, not a landing picture, or of a shape its section or a share picture does not take. Either argument NULL raises null_value_not_allowed. SECURITY DEFINER because no landing page table carries a write grant.';
 
 CREATE OR REPLACE FUNCTION public.unlink_removed_landing_image() RETURNS trigger
     LANGUAGE plpgsql SECURITY DEFINER
     SET search_path TO ''
     AS $$
 BEGIN
-  IF OLD.purpose <> 'landing_image' THEN
+  IF OLD.purpose NOT IN ('landing_image', 'landing_square_image', 'landing_portrait_image') THEN
     RETURN OLD;
   END IF;
 
-  -- Taken out of both copies before the entry goes, so the image-path trigger
+  -- Taken out of both copies before the entry goes, so the picture trigger
   -- re-deriving each copy never meets the entry it is removing; the structure
   -- trigger drops the text of an image section this leaves with no picture.
-  -- The copies are found by their paths before the share pictures are unset,
-  -- so a working copy whose only use was a share picture moves its last-saved
-  -- time too.
+  -- The copies are found by their pictures before the share pictures are
+  -- unset, so a working copy whose only use was a share picture moves its
+  -- last-saved time too.
   UPDATE public.landing_pages
      SET sections = public.landing_sections_without_image(sections, OLD.id)
-   WHERE image_paths ? OLD.id::text;
+   WHERE pictures ? OLD.id::text;
 
   UPDATE public.landing_page_publications
      SET sections = public.landing_sections_without_image(sections, OLD.id)
-   WHERE image_paths ? OLD.id::text;
+   WHERE pictures ? OLD.id::text;
 
   -- A share picture that was this entry is unset, and that language's preview
   -- falls back to the hero's picture.
@@ -301,7 +370,7 @@ BEGIN
 END;
 $$;
 
-COMMENT ON FUNCTION public.unlink_removed_landing_image() IS 'BEFORE DELETE on catalogue_images: the landing pages'' half of a removal, standing in for the foreign key a picture inside sections JSON cannot have. Takes a removed landing_image entry out of every landing page, working and published copies alike, as a cover''s SET NULL does: a hero or text section loses its picture, an image section loses that picture, an image section left with none is dropped with its text, and a language''s share picture is unset, so that language''s link preview falls back to the hero''s picture. A live page changes without a republish; the working copy''s updated_at and saver move, as a cover removal''s do. SECURITY DEFINER because the remover is an admin''s own session and no landing page table carries a write grant.';
+COMMENT ON FUNCTION public.unlink_removed_landing_image() IS 'BEFORE DELETE on catalogue_images: the landing pages'' half of a removal, standing in for the foreign key a picture inside sections JSON cannot have. Takes a removed landing picture entry, of any of the three landing purposes, out of every landing page, working and published copies alike, as a cover''s SET NULL does: a hero, text or guide section loses its picture, an image section loses that picture, an image section left with none is dropped with its text, and a language''s share picture is unset, so that language''s link preview falls back to the hero''s picture. A live page changes without a republish; the working copy''s updated_at and saver move, as a cover removal''s do. SECURITY DEFINER because the remover is an admin''s own session and no landing page table carries a write grant.';
 
 -- ---------------------------------------------------------------------------
 -- 3. Publishing copies the overrides
@@ -335,8 +404,8 @@ BEGIN
       USING ERRCODE = 'check_violation';
   END IF;
 
-  -- The structure is copied and the picture paths are not: the triggers
-  -- derive the published copy's own, its versions' share pictures included.
+  -- The structure is copied and the pictures are not: the triggers derive
+  -- the published copy's own, its versions' share pictures included.
   INSERT INTO public.landing_page_publications (page_id, sections, published_at, first_published_at)
   VALUES (v_page.id, v_page.sections, now(), now())
   ON CONFLICT (page_id) DO UPDATE SET
@@ -483,13 +552,13 @@ BEGIN
          share_title     = EXCLUDED.share_title,
          share_image_id  = EXCLUDED.share_image_id,
          share_image_alt = EXCLUDED.share_image_alt;
-  -- The page's image paths are re-derived by refresh_landing_image_paths when
-  -- the share picture changed, which refuses one that is gone (23503) or of
-  -- another purpose (23514).
+  -- The page's pictures are re-derived by refresh_landing_pictures when the
+  -- share picture changed, which refuses one that is gone (23503), not a
+  -- landing picture or not wide (23514).
 END;
 $_$;
 
-COMMENT ON FUNCTION public.write_landing_page_version(p_id uuid, p_locale text, p_title text, p_summary text, p_slug text, p_default_slug text, p_section_texts jsonb, p_share_title text, p_share_image_id uuid, p_share_image_alt text) IS 'Internal: validates and upserts one language version of a landing page''s working copy, for save_landing_page and save_landing_page_version, which have already locked the page row. A blank or over-long title, an over-long summary or share title, or text for a section the page does not have raises check_violation; section texts, or one section''s text, that are not an object raise 22023. The slug is p_slug when sent, else the stored one, else p_default_slug (the application''s derivation from the title), else unwritten; it may differ from the page''s own live slug, which changes at the next publish. A malformed or uuid-shaped one raises check_violation, and one another page holds in that locale, working or live, raises unique_violation naming that page by its title. The share title, share picture and share picture alt text are written as sent, NULL as the empty string or no picture: like the words, a write carries the whole of what the version holds. A share picture that is gone raises foreign_key_violation, and one of another purpose check_violation. Carries no guard: not granted to any Data API role.';
+COMMENT ON FUNCTION public.write_landing_page_version(p_id uuid, p_locale text, p_title text, p_summary text, p_slug text, p_default_slug text, p_section_texts jsonb, p_share_title text, p_share_image_id uuid, p_share_image_alt text) IS 'Internal: validates and upserts one language version of a landing page''s working copy, for save_landing_page and save_landing_page_version, which have already locked the page row. A blank or over-long title, an over-long summary or share title, or text for a section the page does not have raises check_violation; section texts, or one section''s text, that are not an object raise 22023. The slug is p_slug when sent, else the stored one, else p_default_slug (the application''s derivation from the title), else unwritten; it may differ from the page''s own live slug, which changes at the next publish. A malformed or uuid-shaped one raises check_violation, and one another page holds in that locale, working or live, raises unique_violation naming that page by its title. The share title, share picture and share picture alt text are written as sent, NULL as the empty string or no picture: like the words, a write carries the whole of what the version holds. A share picture that is gone raises foreign_key_violation, and one that is not a wide landing picture (landing_image) check_violation. Carries no guard: not granted to any Data API role.';
 
 REVOKE ALL ON FUNCTION public.write_landing_page_version(p_id uuid, p_locale text, p_title text, p_summary text, p_slug text, p_default_slug text, p_section_texts jsonb, p_share_title text, p_share_image_id uuid, p_share_image_alt text) FROM PUBLIC;
 GRANT ALL ON FUNCTION public.write_landing_page_version(p_id uuid, p_locale text, p_title text, p_summary text, p_slug text, p_default_slug text, p_section_texts jsonb, p_share_title text, p_share_image_id uuid, p_share_image_alt text) TO service_role;

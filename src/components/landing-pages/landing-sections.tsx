@@ -20,7 +20,10 @@ import { FaqAccordion } from "@/components/ui/faq-accordion";
 import { Markdown } from "@/components/ui/markdown";
 import type { SupportedLocale } from "@/lib/constants/locales";
 import { resolveTranslation } from "@/lib/i18n/resolve-translation";
-import { CATALOGUE_IMAGE_PURPOSES } from "@/lib/images/catalogue-image-purposes";
+import {
+  landingPictureSize,
+  type LandingPictureShape,
+} from "@/lib/landing-pages/picture-shapes";
 import type {
   ButtonTarget,
   LandingSectionOf,
@@ -33,6 +36,7 @@ import {
 import { buttonTargetHref } from "@/lib/links/button-target";
 import { cn } from "@/lib/cn";
 import type { PublicTestimonial } from "@/services/testimonials/testimonials.contracts";
+import { GuideDownload } from "./guide-download";
 import { LANDING_ICON_GLYPHS } from "./landing-icons";
 import { LandingProductsSection } from "./landing-products-section";
 import { Eyebrow, hasSectionHeader, LANDING_SECTION, SectionHeader } from "./landing-section-header";
@@ -54,17 +58,20 @@ import { Heading } from "@sog/ui";
  * the centred heading over a card grid, the act-filled step numbers, the FAQ
  * rows, the closing card with the world rule along its top, the shop's own
  * product cards in the Roblox page's carousel — so a landing page
- * reads as part of the same site whatever order an admin puts them in. Every
- * section sits on the plain page ground: an admin chooses the order, and a
- * tinted band beside another tinted band reads as one section with a stray
- * heading in it, so no band is spent at all.
+ * reads as part of the same site whatever order an admin puts them in. A
+ * renderer draws its section on whatever ground it is given and owns its own
+ * container and vertical padding; the band a `card` section sits on is laid
+ * by the page body around it, so cards and the closing card on a band are told
+ * apart from it by their own border.
  *
  * **Every word is the admin's**, so the renderers paint what is written and
  * leave out what is not: a published version has every required word, and the
  * preview of one still being written shows its blanks as gaps rather than as
  * placeholder copy. The strings of our own are the screen reader's "opens in
- * a new tab" beside a button that leaves the site, and the email sign-up
- * form's fields, consent and answers, which are the same promise on every page.
+ * a new tab" beside a button that leaves the site, a guide's download —
+ * its button and the account a signed-out reader needs — and the email
+ * sign-up form's fields, consent and answers, which are the same promise on
+ * every page.
  */
 
 /** What every renderer is handed besides its own section and words. */
@@ -82,10 +89,10 @@ export interface LandingRenderContext {
    */
   preview: boolean;
   /**
-   * A picture's servable URL by its catalogue entry id, or null when the copy
-   * names no path for it (the picture has left the catalogue).
+   * A picture's servable URL and its shape by its catalogue entry id, or null
+   * when the copy names no path for it (the picture has left the catalogue).
    */
-  imageSrc: (imageId: string) => string | null;
+  picture: (imageId: string) => ShownPicture | null;
   /**
    * A placed testimonial's current words by its id, or null when the read
    * answered none for it.
@@ -98,6 +105,14 @@ export interface LandingRenderContext {
    * live query fetches for itself.
    */
   products: ProductRailPrefetch | null;
+  /** Whether the read answered the placed guide with this id. */
+  hasGuide: (guideId: string) => boolean;
+}
+
+/** A picture as a renderer draws it: where it is, and the shape its box is reserved at. */
+export interface ShownPicture {
+  src: string;
+  shape: LandingPictureShape;
 }
 
 interface LandingSectionProps<Type extends LandingSectionType> {
@@ -106,34 +121,43 @@ interface LandingSectionProps<Type extends LandingSectionType> {
   context: LandingRenderContext;
 }
 
-/** A landing picture's stored size: `next/image` reserves its box from it. */
-const PICTURE = CATALOGUE_IMAGE_PURPOSES.landing_image;
+/**
+ * Each shape's frame. The stored size already gives the box its ratio; the
+ * frame holds it too for an entry from before sizes were enforced, which is
+ * cut to the frame rather than let its own shape move the layout.
+ */
+const PICTURE_FRAME: Record<LandingPictureShape, string> = {
+  wide: "aspect-video",
+  square: "aspect-square",
+  portrait: "aspect-[4/5]",
+};
 
 /**
- * A landing picture at its stored 16:9, through the image optimizer with its
- * box reserved, so nothing moves when it arrives. `sizes` is the CSS width its
- * column resolves to, stated by each caller.
+ * A landing picture at its shape's stored size, through the image optimizer
+ * with its box reserved, so nothing moves when it arrives. `sizes` is the CSS
+ * width its column resolves to, stated by each caller.
  */
 function LandingPicture({
-  src,
+  picture,
   alt,
   sizes,
   eager = false,
 }: {
-  src: string;
+  picture: ShownPicture;
   alt: string | undefined;
   sizes: string;
   eager?: boolean;
 }) {
+  const { width, height } = landingPictureSize(picture.shape);
   return (
     <Image
-      src={src}
+      src={picture.src}
       alt={written(alt) ?? ""}
-      width={PICTURE.width}
-      height={PICTURE.height}
+      width={width}
+      height={height}
       sizes={sizes}
       priority={eager}
-      className="aspect-video w-full rounded-lg object-cover"
+      className={cn("w-full rounded-lg object-cover", PICTURE_FRAME[picture.shape])}
     />
   );
 }
@@ -201,7 +225,7 @@ function LandingButton({
  * button are what the first screen shows.
  */
 function HeroSection({ section, text, context }: LandingSectionProps<"hero">) {
-  const src = section.imageId === undefined ? null : context.imageSrc(section.imageId);
+  const picture = section.imageId === undefined ? null : context.picture(section.imageId);
   const eyebrow = written(text.eyebrow);
   const subline = written(text.subline);
   const buttonLabel = written(text.buttonLabel);
@@ -210,12 +234,12 @@ function HeroSection({ section, text, context }: LandingSectionProps<"hero">) {
       <div
         className={cn(
           "mx-auto",
-          src === null
+          picture === null
             ? "max-w-3xl text-center"
             : "grid max-w-6xl items-center gap-10 lg:grid-cols-2 lg:gap-16",
         )}
       >
-        <div className={cn(src !== null && "text-center lg:text-left")}>
+        <div className={cn(picture !== null && "text-center lg:text-left")}>
           {eyebrow !== null && (
             <div className="mb-4">
               <Eyebrow>{eyebrow}</Eyebrow>
@@ -230,7 +254,7 @@ function HeroSection({ section, text, context }: LandingSectionProps<"hero">) {
             <Heading
               level={1}
               step="hero"
-              align={src === null ? "center" : "center-narrow"}
+              align={picture === null ? "center" : "center-narrow"}
             >
               {text.headline}
             </Heading>
@@ -245,7 +269,7 @@ function HeroSection({ section, text, context }: LandingSectionProps<"hero">) {
             <div
               className={cn(
                 "mt-8 flex justify-center sm:mt-10",
-                src !== null && "lg:justify-start",
+                picture !== null && "lg:justify-start",
               )}
             >
               <LandingButton
@@ -257,18 +281,29 @@ function HeroSection({ section, text, context }: LandingSectionProps<"hero">) {
             </div>
           )}
         </div>
-        {src !== null && (
-          <LandingPicture
-            src={src}
-            alt={text.imageAlt}
-            sizes="(min-width: 1152px) 544px, (min-width: 1024px) calc(50vw - 3rem), calc(100vw - 2rem)"
-            eager
-          />
+        {picture !== null && (
+          <LandingPicture picture={picture} alt={text.imageAlt} sizes={HALF_COLUMN} eager />
         )}
       </div>
     </section>
   );
 }
+
+/** The CSS width of one of the two columns words and a picture share from `lg`. */
+const HALF_COLUMN =
+  "(min-width: 1152px) 544px, (min-width: 1024px) calc(50vw - 3rem), calc(100vw - 2rem)";
+
+/**
+ * How a text section's picture is drawn beside the words, by its shape: a
+ * wide one fills its column; a square or a portrait one is held narrower and
+ * centred in it, so it stands about as tall as a few paragraphs rather than
+ * towering over them, and does not fill a phone's whole screen either.
+ */
+const BESIDE_WORDS: Record<LandingPictureShape, { width: string; sizes: string }> = {
+  wide: { width: "", sizes: HALF_COLUMN },
+  square: { width: "max-w-md", sizes: "(min-width: 480px) 448px, calc(100vw - 2rem)" },
+  portrait: { width: "max-w-sm", sizes: "(min-width: 416px) 384px, calc(100vw - 2rem)" },
+};
 
 /**
  * A heading over authored prose, in the reading column alone or beside a
@@ -276,14 +311,14 @@ function HeroSection({ section, text, context }: LandingSectionProps<"hero">) {
  * follows the words whichever side it takes.
  */
 function TextSection({ section, text, context }: LandingSectionProps<"text">) {
-  const src = section.imageId === undefined ? null : context.imageSrc(section.imageId);
+  const picture = section.imageId === undefined ? null : context.picture(section.imageId);
   const body = written(text.body);
   return (
     <section className={LANDING_SECTION}>
       <div
         className={cn(
           "mx-auto",
-          src === null
+          picture === null
             ? "max-w-3xl"
             : "grid max-w-6xl items-center gap-10 lg:grid-cols-2 lg:gap-16",
         )}
@@ -296,12 +331,18 @@ function TextSection({ section, text, context }: LandingSectionProps<"text">) {
             </Markdown>
           )}
         </div>
-        {src !== null && (
-          <div className={cn(section.imageSide === "start" && "lg:order-first")}>
+        {picture !== null && (
+          <div
+            className={cn(
+              "mx-auto w-full",
+              BESIDE_WORDS[picture.shape].width,
+              section.imageSide === "start" && "lg:order-first",
+            )}
+          >
             <LandingPicture
-              src={src}
+              picture={picture}
               alt={text.imageAlt}
-              sizes="(min-width: 1152px) 544px, (min-width: 1024px) calc(50vw - 3rem), calc(100vw - 2rem)"
+              sizes={BESIDE_WORDS[picture.shape].sizes}
             />
           </div>
         )}
@@ -311,44 +352,105 @@ function TextSection({ section, text, context }: LandingSectionProps<"text">) {
 }
 
 /**
- * The picture grid by how many pictures there are: its width, its columns and
- * each picture's CSS width — one across the column, two or four in pairs,
- * three in a row, all stacked on a phone.
+ * One way of laying out an image section's pictures: the figure's width, as
+ * its class and in px, and from which viewport width how many columns it
+ * has — one below the first step.
  */
-function pictureGrid(count: number): { width: string; columns: string; sizes: string } {
-  switch (count) {
-    case 1:
-      return {
-        width: "max-w-4xl",
-        columns: "",
-        sizes: "(min-width: 928px) 896px, calc(100vw - 2rem)",
-      };
-    case 3:
-      return {
-        width: "max-w-6xl",
-        columns: "sm:grid-cols-3",
-        sizes: "(min-width: 1184px) 368px, (min-width: 640px) calc(33vw - 1.5rem), calc(100vw - 2rem)",
-      };
-    default:
-      return {
-        width: "max-w-5xl",
-        columns: "sm:grid-cols-2",
-        sizes: "(min-width: 1056px) 504px, (min-width: 640px) calc(50vw - 1.5rem), calc(100vw - 2rem)",
-      };
-  }
+interface PictureGrid {
+  width: string;
+  widthPx: number;
+  columns: string;
+  steps: readonly { from: number; columns: number }[];
+}
+
+const SM = 640;
+const LG = 1024;
+
+/**
+ * The picture grid by the pictures' shape and how many there are. Wide
+ * pictures take the page's measure: one across it, two or four in pairs,
+ * three in a row. Square and portrait pictures are taller for their width, so
+ * each count is held narrower — one alone sits at about the height a wide
+ * one would, two make a pair rather than two towers — and four go four across
+ * from `lg`, a single row. All stack on a phone.
+ */
+const PICTURE_GRIDS: Record<LandingPictureShape, Record<1 | 2 | 3 | 4, PictureGrid>> = {
+  wide: {
+    1: { width: "max-w-4xl", widthPx: 896, columns: "", steps: [] },
+    2: { width: "max-w-5xl", widthPx: 1024, columns: "sm:grid-cols-2", steps: [{ from: SM, columns: 2 }] },
+    3: { width: "max-w-6xl", widthPx: 1152, columns: "sm:grid-cols-3", steps: [{ from: SM, columns: 3 }] },
+    4: { width: "max-w-5xl", widthPx: 1024, columns: "sm:grid-cols-2", steps: [{ from: SM, columns: 2 }] },
+  },
+  square: {
+    1: { width: "max-w-xl", widthPx: 576, columns: "", steps: [] },
+    2: { width: "max-w-4xl", widthPx: 896, columns: "sm:grid-cols-2", steps: [{ from: SM, columns: 2 }] },
+    3: { width: "max-w-5xl", widthPx: 1024, columns: "sm:grid-cols-3", steps: [{ from: SM, columns: 3 }] },
+    4: {
+      width: "max-w-6xl",
+      widthPx: 1152,
+      columns: "sm:grid-cols-2 lg:grid-cols-4",
+      steps: [{ from: SM, columns: 2 }, { from: LG, columns: 4 }],
+    },
+  },
+  portrait: {
+    1: { width: "max-w-md", widthPx: 448, columns: "", steps: [] },
+    2: { width: "max-w-3xl", widthPx: 768, columns: "sm:grid-cols-2", steps: [{ from: SM, columns: 2 }] },
+    3: { width: "max-w-5xl", widthPx: 1024, columns: "sm:grid-cols-3", steps: [{ from: SM, columns: 3 }] },
+    4: {
+      width: "max-w-6xl",
+      widthPx: 1152,
+      columns: "sm:grid-cols-2 lg:grid-cols-4",
+      steps: [{ from: SM, columns: 2 }, { from: LG, columns: 4 }],
+    },
+  },
+};
+
+/** A figure in `rem` or `vw`, to three places at most. */
+function css(value: number, unit: "rem" | "vw"): string {
+  return `${Number(value.toFixed(3))}${unit}`;
 }
 
 /**
- * One to four pictures with an optional heading and caption. A picture that
- * has left the catalogue is not drawn.
+ * The CSS width each picture of a grid resolves to, as `sizes` states it: the
+ * page's 1rem gutters either side and the grid's 1rem gaps taken out of the
+ * viewport, until the figure reaches its own width and each picture stops
+ * growing.
+ */
+function pictureGridSizes(grid: Pick<PictureGrid, "widthPx" | "steps">): string {
+  const gutters = 2;
+  const widest = grid.steps.at(-1)?.columns ?? 1;
+  const fixed = Math.round((grid.widthPx - (widest - 1) * 16) / widest);
+  const fluid = [...grid.steps]
+    .reverse()
+    .map(
+      ({ from, columns }) =>
+        `(min-width: ${from}px) calc(${css(100 / columns, "vw")} - ${css((gutters + columns - 1) / columns, "rem")})`,
+    );
+  return [
+    `(min-width: ${grid.widthPx + gutters * 16}px) ${fixed}px`,
+    ...fluid,
+    `calc(100vw - ${gutters}rem)`,
+  ].join(", ");
+}
+
+/** The grid of `count` pictures of one shape. */
+function pictureGrid(shape: LandingPictureShape, count: number): PictureGrid {
+  return PICTURE_GRIDS[shape][count === 1 || count === 2 || count === 3 ? count : 4];
+}
+
+/**
+ * One to four pictures of one shape, with an optional heading and caption. A
+ * picture that has left the catalogue is not drawn. The database keeps a
+ * section's pictures one shape, so the first one's is the grid's.
  */
 function ImageSection({ section, text, context }: LandingSectionProps<"image">) {
   const pictures = section.images.flatMap((image) => {
-    const src = context.imageSrc(image.imageId);
-    return src === null ? [] : [{ id: image.id, src, alt: text.alts?.[image.id] }];
+    const picture = context.picture(image.imageId);
+    return picture === null ? [] : [{ id: image.id, picture, alt: text.alts?.[image.id] }];
   });
   if (pictures.length === 0) return null;
-  const grid = pictureGrid(pictures.length);
+  const grid = pictureGrid(pictures[0].picture.shape, pictures.length);
+  const sizes = pictureGridSizes(grid);
   const caption = written(text.caption);
   const hasHeader = hasSectionHeader({ eyebrow: text.eyebrow, heading: text.heading });
   return (
@@ -356,13 +458,8 @@ function ImageSection({ section, text, context }: LandingSectionProps<"image">) 
       <SectionHeader eyebrow={text.eyebrow} heading={text.heading} />
       <figure className={cn("mx-auto", grid.width, hasHeader && "mt-12")}>
         <div className={cn("grid gap-4", grid.columns)}>
-          {pictures.map((picture) => (
-            <LandingPicture
-              key={picture.id}
-              src={picture.src}
-              alt={picture.alt}
-              sizes={grid.sizes}
-            />
+          {pictures.map(({ id, picture, alt }) => (
+            <LandingPicture key={id} picture={picture} alt={alt} sizes={sizes} />
           ))}
         </div>
         {caption !== null && (
@@ -638,6 +735,69 @@ function CtaSection({ section, text, context }: LandingSectionProps<"cta">) {
 }
 
 /**
+ * A guide to download: the section's header and line over the download, laid
+ * out like the hero — centred alone; with a cover picture, the words beside it
+ * from `lg`, start-aligned there and centred on a phone, the picture after
+ * them.
+ *
+ * A guide the read did not answer leaves the section out, since there is
+ * nothing to offer; one it answered has a file, and the download route picks
+ * the reader's by the reader fallback. Whether the reader may download is
+ * decided in the browser (`guide-download.tsx`); everything here is the same
+ * for every reader.
+ */
+function GuideSection({ section, text, context }: LandingSectionProps<"guide">) {
+  if (!context.hasGuide(section.guideId)) return null;
+  const picture = section.imageId === undefined ? null : context.picture(section.imageId);
+  const eyebrow = written(text.eyebrow);
+  const heading = written(text.heading);
+  const description = written(text.description);
+  return (
+    <section className={LANDING_SECTION}>
+      <div
+        className={cn(
+          "mx-auto",
+          picture === null
+            ? "max-w-3xl text-center"
+            : "grid max-w-6xl items-center gap-10 lg:grid-cols-2 lg:gap-16",
+        )}
+      >
+        <div className={cn(picture !== null && "text-center lg:text-left")}>
+          {eyebrow !== null && <Eyebrow>{eyebrow}</Eyebrow>}
+          {heading !== null && (
+            <div className={cn(eyebrow !== null && "mt-4")}>
+              {/* As in the hero, the heading turns start-aligned at `md` while
+                  the columns split at `lg`. */}
+              <Heading
+                level={2}
+                step="display"
+                align={picture === null ? "center" : "center-narrow"}
+              >
+                {heading}
+              </Heading>
+            </div>
+          )}
+          {description !== null && (
+            <p className="mt-4 text-lg leading-8 text-muted-foreground">{description}</p>
+          )}
+          {/* exact-locale: resets the body's language mark for our own words */}
+          <div lang={context.textLocale === context.locale ? undefined : context.locale}>
+            <GuideDownload
+              guideId={section.guideId}
+              locale={context.locale}
+              besidePicture={picture !== null}
+            />
+          </div>
+        </div>
+        {picture !== null && (
+          <LandingPicture picture={picture} alt={text.imageAlt} sizes={HALF_COLUMN} />
+        )}
+      </div>
+    </section>
+  );
+}
+
+/**
  * An email sign-up: the heading and intro the page wrote over the site's own
  * form, in the reading column.
  */
@@ -674,6 +834,7 @@ export const LANDING_SECTION_RENDERERS: {
   steps: StepsSection,
   testimonials: TestimonialsSection,
   products: ProductsSection,
+  guide: GuideSection,
   faq: FaqSection,
   subscribe: SubscribeSection,
   cta: CtaSection,

@@ -20,6 +20,10 @@ import {
   landingSectionName,
 } from "@/lib/landing-pages/describe-missing";
 import {
+  describeLandingPictureShape,
+  landingPictureShapeOf,
+} from "@/lib/landing-pages/picture-shapes";
+import {
   LANDING_TESTIMONIAL_SLOTS,
   landingMarkdownValues,
   landingSections,
@@ -118,7 +122,7 @@ const OFFER_PREVIEW =
 const NO_DELETE =
   "There is no delete: unpublishing takes a page down and keeps it to work on.";
 
-const SHARE_CARD = `A page's share card — the link preview shown wherever its address is shared, in a chat or a feed — is derived from the page, per language: that language's title and summary, and the hero's picture (the site-wide card when the hero has none). Each language may override part of its own card, written with that language's words: a share title (shareTitle, at most ${LANDING_SHARE_TITLE_MAX_LENGTH} characters), a share picture (shareImageId, a catalogue id from list_landing_images) and the share picture's alt text (shareImageAlt). The picture is per language because a share picture often carries words of its own, which must be in that language; give each language its own picture, or the same one where it has no words. The summary is always the card's description. An override does not follow later edits to the page: a share title stays as written when the page title changes, and a share picture stays when the hero's picture changes. So set one only when the shared line is meant to differ from the search title, or the shared picture from the hero's, and clear it when it no longer applies. A partner's logo (Roblox's, Lynx's) in a share picture is a new placement of their mark, which needs that partner's sign-off first, as in a hero. get_landing_page says which card each language uses (shareCard).`;
+const SHARE_CARD = `A page's share card — the link preview shown wherever its address is shared, in a chat or a feed — is derived from the page, per language: that language's title and summary, and the hero's picture (the site-wide card when the hero has none). Each language may override part of its own card, written with that language's words: a share title (shareTitle, at most ${LANDING_SHARE_TITLE_MAX_LENGTH} characters), a share picture (shareImageId, the catalogue id of a wide 16:9 picture from list_landing_images — a share picture is wide only, like a hero's, because the link preview is drawn wide, so a square or portrait one is refused) and the share picture's alt text (shareImageAlt). The picture is per language because a share picture often carries words of its own, which must be in that language; give each language its own picture, or the same one where it has no words. The summary is always the card's description. An override does not follow later edits to the page: a share title stays as written when the page title changes, and a share picture stays when the hero's picture changes. So set one only when the shared line is meant to differ from the search title, or the shared picture from the hero's, and clear it when it no longer applies. A partner's logo (Roblox's, Lynx's) in a share picture is a new placement of their mark, which needs that partner's sign-off first, as in a hero. get_landing_page says which card each language uses (shareCard).`;
 
 /** How a one-language write treats the share card, the one part it does not write whole. */
 const SHARE_CARD_KEPT =
@@ -196,7 +200,7 @@ const shareImageId = z
   .toLowerCase()
   .nullable()
   .describe(
-    "The share picture in this language: the catalogue id of a landing page picture from list_landing_images, shown on this language's link preview in place of the hero's picture. Optional; null means none, and the preview takes the hero's picture. It does not follow later changes to the hero's picture.",
+    "The share picture in this language: the catalogue id of a wide 16:9 landing page picture from list_landing_images (a square or portrait one is refused), shown on this language's link preview in place of the hero's picture. Optional; null means none, and the preview takes the hero's picture. It does not follow later changes to the hero's picture.",
   );
 
 /**
@@ -391,7 +395,7 @@ function shareCardView(page: AdminLandingPage, version: DraftVersion) {
         ? { from: "the site-wide card, because the hero has no picture" }
         : {
             from: card.picture.source === "custom" ? "shareImageId" : "the hero's picture",
-            publicUrl: catalogueImageUrl("landing_image", card.picture.path),
+            publicUrl: catalogueImageUrl(card.picture.purpose, card.picture.path),
             alt: card.picture.alt,
           },
     description: "the summary",
@@ -467,9 +471,10 @@ function pageView(page: AdminLandingPage, origin: string) {
   return {
     pageId: draft.id,
     sections: draft.sections,
-    pictures: Object.entries(draft.imagePaths).map(([catalogueId, path]) => ({
+    pictures: Object.entries(draft.pictures).map(([catalogueId, { path, purpose }]) => ({
       catalogueId,
-      publicUrl: catalogueImageUrl("landing_image", path),
+      shape: describeLandingPictureShape(landingPictureShapeOf(purpose)),
+      publicUrl: catalogueImageUrl(purpose, path),
     })),
     createdAt: draft.createdAt,
     lastSaved: lastSaved(draft),
@@ -570,7 +575,7 @@ export function registerLandingPageTools(server: McpServer): void {
     "get_landing_page",
     {
       title: "Read a landing page",
-      description: `One landing page whole: its structure (every section with its id, type and shared fields), its pictures shown small, and every language version — title, summary, slug, its address, every section's words, whether it is complete and what it still needs (each as a path, sections.<section id>.<field>, and as a sentence numbering sections and items from one), and the share card it uses (shareCard: derived from the page, or a custom title and/or picture, with the title and picture in use) — with what a publish now would put live, leave out and take down, and the live addresses it would change (publish.slugsChanging: each language live now whose saved slug differs from its live one, with the old slug and address, which stop working at the publish, and the new); each testimonials section's arrangement and the testimonials it places, with each one's id, whom it is from and an excerpt (testimonials); for each products section, its picked products under productPicks — whether readers are shown each one now, and why not (its term ended, it is unlisted) — with drawn false when none is shown, in which case readers see no trace of the section; what readers see now, with each live language's public link; a preview link per language; and adminLink, the page's status page in Sogverse admin, where the admin sees each language's state, opens its preview and live links, and publishes or unpublishes. Landing pages are written only through these tools. ${COMPLETE} ${PUBLISHING} ${SHARE_CARD}`,
+      description: `One landing page whole: its structure (every section with its id, type and shared fields), its pictures with their shapes, shown small, and every language version — title, summary, slug, its address, every section's words, whether it is complete and what it still needs (each as a path, sections.<section id>.<field>, and as a sentence numbering sections and items from one), and the share card it uses (shareCard: derived from the page, or a custom title and/or picture, with the title and picture in use) — with what a publish now would put live, leave out and take down, and the live addresses it would change (publish.slugsChanging: each language live now whose saved slug differs from its live one, with the old slug and address, which stop working at the publish, and the new); each testimonials section's arrangement and the testimonials it places, with each one's id, whom it is from and an excerpt (testimonials); for each products section, its picked products under productPicks — whether readers are shown each one now, and why not (its term ended, it is unlisted) — with drawn false when none is shown, in which case readers see no trace of the section; what readers see now, with each live language's public link; a preview link per language; and adminLink, the page's status page in Sogverse admin, where the admin sees each language's state, opens its preview and live links, and publishes or unpublishes. Landing pages are written only through these tools. ${COMPLETE} ${PUBLISHING} ${SHARE_CARD}`,
       inputSchema: readableInput(z.object({ pageId }), z.object({ pageId })),
       annotations: READ_ONLY,
     },
@@ -581,12 +586,12 @@ export function registerLandingPageTools(server: McpServer): void {
         const view = pageView(page, origin);
         return answerWithCovers(
           view,
-          Object.entries(page.draft.imagePaths).map(([catalogueId, path]) => ({
+          Object.entries(page.draft.pictures).map(([catalogueId, { path, purpose }]) => ({
             path,
-            caption: `Picture ${catalogueId}: ${catalogueImageUrl("landing_image", path)}`,
+            purpose,
+            caption: `Picture ${catalogueId} (${describeLandingPictureShape(landingPictureShapeOf(purpose))}): ${catalogueImageUrl(purpose, path)}`,
           })),
           COVER_THUMBNAIL,
-          "landing_image",
         );
       }),
   );

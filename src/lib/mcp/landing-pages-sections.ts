@@ -1,10 +1,12 @@
 import { z } from "zod-v4";
 import { describeMarkdownSubset } from "@/lib/authored-markdown-subset";
 import {
+  IMAGE_SECTION_MAX_PICTURES,
   LANDING_EMAIL_PATTERN,
   LANDING_ICONS,
   LANDING_ID_PATTERN,
   LANDING_IMAGE_SIDES,
+  LANDING_SECTION_BACKGROUNDS,
   LANDING_SECTION_TYPES,
   LANDING_SECTIONS,
   LANDING_TESTIMONIAL_ARRANGEMENTS,
@@ -15,6 +17,11 @@ import {
   type LandingSectionOf,
   type LandingSectionType,
 } from "@/lib/landing-pages/sections";
+import {
+  LANDING_PICTURE_SHAPES,
+  describeLandingPictureShapes,
+  type LandingPictureShape,
+} from "@/lib/landing-pages/picture-shapes";
 
 /*
  * The landing page sections as an AI app writes them. The section registry
@@ -52,7 +59,7 @@ const itemId = landingId
   .describe("The item's id. Keep it on every existing item; leave it out for a new one.");
 
 const pictureId = landingId.describe(
-  "A picture's catalogue id: a landing page picture entry, as list_landing_images returns it.",
+  "A picture's catalogue id: a landing page picture entry of a shape the section takes, as list_landing_images returns it.",
 );
 
 const buttonTarget = z
@@ -88,6 +95,19 @@ const buttonTarget = z
     }),
   ])
   .describe("Where the button leads: a page of this site, another site, or an email.");
+
+/**
+ * The background every section but the hero takes, spread into each of their
+ * structures as the registry spreads its own.
+ */
+const backgroundField = {
+  background: z
+    .enum(LANDING_SECTION_BACKGROUNDS)
+    .default("default")
+    .describe(
+      "The ground the section sits on: default, the page's own, or card, a band of the card colour across the full width of the screen that sets the section apart. Adjacent card sections share one band and read as one related group, so give card to two or more neighbours to group them, and keep sections that are not related apart with a default one between. Left out, default.",
+    ),
+};
 
 /** Items whose ids, where given, are distinct. */
 function distinctGivenIds(items: readonly { id?: string }[]): boolean {
@@ -193,6 +213,7 @@ export const MCP_LANDING_SECTIONS: {
     structure: z.strictObject({
       id: sectionId,
       type: z.literal("text"),
+      ...backgroundField,
       imageId: pictureId.optional(),
       imageSide: z
         .enum(LANDING_IMAGE_SIDES)
@@ -207,9 +228,9 @@ export const MCP_LANDING_SECTIONS: {
       imageAlt: plainText.describe("The picture's alt text."),
     }),
     ruleSamples: {
-      minimal: { id: ANY_ID, type: "text", imageSide: "start" },
+      minimal: { id: ANY_ID, type: "text", background: "default", imageSide: "start" },
       withOptional: {
-        imageId: { id: ANY_ID, type: "text", imageSide: "start", imageId: ANY_ID },
+        imageId: { id: ANY_ID, type: "text", background: "default", imageSide: "start", imageId: ANY_ID },
       },
     },
     itemIds: () => null,
@@ -220,10 +241,11 @@ export const MCP_LANDING_SECTIONS: {
     structure: z.strictObject({
       id: sectionId,
       type: z.literal("image"),
+      ...backgroundField,
       images: z
         .array(z.strictObject({ id: itemId, imageId: pictureId }))
         .min(1, "An image section shows at least one picture")
-        .max(4, "An image section shows at most four pictures")
+        .max(IMAGE_SECTION_MAX_PICTURES, "An image section shows at most four pictures")
         .refine(distinctGivenIds, "Two pictures share an id")
         .describe("The pictures, in order."),
     }),
@@ -237,7 +259,7 @@ export const MCP_LANDING_SECTIONS: {
         .describe("Each picture's alt text, keyed by the picture item's id from the structure."),
     }),
     ruleSamples: {
-      minimal: { id: ANY_ID, type: "image", images: [{ id: PICTURE, imageId: ANY_ID }] },
+      minimal: { id: ANY_ID, type: "image", background: "default", images: [{ id: PICTURE, imageId: ANY_ID }] },
       withOptional: {},
     },
     itemIds: (section) => ({ key: "alts", ids: section.images.map((image) => image.id) }),
@@ -247,6 +269,7 @@ export const MCP_LANDING_SECTIONS: {
     structure: z.strictObject({
       id: sectionId,
       type: z.literal("points"),
+      ...backgroundField,
       items: z
         .array(z.strictObject({ id: itemId, icon: z.enum(LANDING_ICONS) }))
         .min(2, "A points section has at least two points")
@@ -267,7 +290,7 @@ export const MCP_LANDING_SECTIONS: {
       ),
     }),
     ruleSamples: {
-      minimal: { id: ANY_ID, type: "points", items: [{ id: ITEM, icon: "star" }] },
+      minimal: { id: ANY_ID, type: "points", background: "default", items: [{ id: ITEM, icon: "star" }] },
       withOptional: {},
     },
     itemIds: (section) => ({ key: "items", ids: section.items.map((item) => item.id) }),
@@ -277,6 +300,7 @@ export const MCP_LANDING_SECTIONS: {
     structure: z.strictObject({
       id: sectionId,
       type: z.literal("steps"),
+      ...backgroundField,
       items: z
         .array(z.strictObject({ id: itemId }))
         .min(2, "A steps section has at least two steps")
@@ -297,7 +321,7 @@ export const MCP_LANDING_SECTIONS: {
       ),
     }),
     ruleSamples: {
-      minimal: { id: ANY_ID, type: "steps", items: [{ id: ITEM }] },
+      minimal: { id: ANY_ID, type: "steps", background: "default", items: [{ id: ITEM }] },
       withOptional: {},
     },
     itemIds: (section) => ({ key: "items", ids: section.items.map((item) => item.id) }),
@@ -307,6 +331,7 @@ export const MCP_LANDING_SECTIONS: {
     structure: z.strictObject({
       id: sectionId,
       type: z.literal("testimonials"),
+      ...backgroundField,
       arrangement: z
         .enum(LANDING_TESTIMONIAL_ARRANGEMENTS)
         .describe(`How the testimonials are laid out, and so how many: ${ARRANGEMENTS}.`),
@@ -324,7 +349,7 @@ export const MCP_LANDING_SECTIONS: {
       intro: plainText.describe("A line under the heading. Optional."),
     }),
     ruleSamples: {
-      minimal: { id: ANY_ID, type: "testimonials", arrangement: "feature", testimonialIds: [ANY_ID] },
+      minimal: { id: ANY_ID, type: "testimonials", background: "default", arrangement: "feature", testimonialIds: [ANY_ID] },
       withOptional: {},
     },
     itemIds: () => null,
@@ -335,6 +360,7 @@ export const MCP_LANDING_SECTIONS: {
     structure: z.strictObject({
       id: sectionId,
       type: z.literal("products"),
+      ...backgroundField,
       productIds: z
         .array(landingId.describe("A product's id, as list_products returns it."))
         .min(1, "A products section picks at least one product")
@@ -350,8 +376,32 @@ export const MCP_LANDING_SECTIONS: {
       intro: plainText.describe("A line under the heading. Optional."),
     }),
     ruleSamples: {
-      minimal: { id: ANY_ID, type: "products", productIds: [ANY_ID] },
+      minimal: { id: ANY_ID, type: "products", background: "default", productIds: [ANY_ID] },
       withOptional: {},
+    },
+    itemIds: () => null,
+  },
+  guide: {
+    about:
+      "A guide from School of Gaming's store — a PDF with one file per language — offered for download, with a heading, an optional description and an optional cover picture. Readers who are signed in download the file in their own language, else English, else the earliest language that has one, in Sogverse's language order; a signed-out reader sees the section and is asked to create an account first. The guide's files live in the store, never in the page: choose one by its id from list_guides, or upload a new guide or another language's file with open_guide_uploader, then place it here. An id no guide has is refused when the structure is saved. To take a guide off this page, save the structure without this section; guides themselves are never deleted.",
+    structure: z.strictObject({
+      id: sectionId,
+      type: z.literal("guide"),
+      ...backgroundField,
+      guideId: landingId.describe("The guide's id, as list_guides returns it."),
+      imageId: pictureId.optional(),
+    }),
+    text: z.strictObject({
+      eyebrow,
+      heading: plainText.describe("The section's heading."),
+      description: plainText.describe("A line or two on what the guide holds, plain text. Optional."),
+      imageAlt: plainText.describe("The cover picture's alt text."),
+    }),
+    ruleSamples: {
+      minimal: { id: ANY_ID, type: "guide", background: "default", guideId: ANY_ID },
+      withOptional: {
+        imageId: { id: ANY_ID, type: "guide", background: "default", guideId: ANY_ID, imageId: ANY_ID },
+      },
     },
     itemIds: () => null,
   },
@@ -361,6 +411,7 @@ export const MCP_LANDING_SECTIONS: {
     structure: z.strictObject({
       id: sectionId,
       type: z.literal("faq"),
+      ...backgroundField,
       items: z
         .array(z.strictObject({ id: itemId }))
         .min(1, "A questions section has at least one question")
@@ -382,17 +433,18 @@ export const MCP_LANDING_SECTIONS: {
       ),
     }),
     ruleSamples: {
-      minimal: { id: ANY_ID, type: "faq", items: [{ id: ITEM }] },
+      minimal: { id: ANY_ID, type: "faq", background: "default", items: [{ id: ITEM }] },
       withOptional: {},
     },
     itemIds: (section) => ({ key: "items", ids: section.items.map((item) => item.id) }),
   },
   subscribe: {
     about:
-      "An email sign-up form: a reader leaves their email address, and their first and last name if they like, to join School of Gaming's newsletter. The form's field labels, its consent sentence and what it says after a sign-up are the site's own, in the reader's language; the page writes only the heading, an optional intro line and the button's words, which should say why a reader would sign up from this page. The reader is on the list as soon as they sign up, with no confirmation email. The list is the same for every page, so the section has no other field.",
+      "An email sign-up form: a reader leaves their email address, and their first and last name if they like, to join School of Gaming's newsletter. The form's field labels, its consent sentence and what it says after a sign-up are the site's own, in the reader's language; the page writes only the heading, an optional intro line and the button's words, which should say why a reader would sign up from this page. The reader is on the list as soon as they sign up, with no confirmation email. The list is the same for every page, so the section has no other field but its background.",
     structure: z.strictObject({
       id: sectionId,
       type: z.literal("subscribe"),
+      ...backgroundField,
     }),
     text: z.strictObject({
       eyebrow,
@@ -401,7 +453,7 @@ export const MCP_LANDING_SECTIONS: {
       buttonLabel: plainText.describe("The submit button's words."),
     }),
     ruleSamples: {
-      minimal: { id: ANY_ID, type: "subscribe" },
+      minimal: { id: ANY_ID, type: "subscribe", background: "default" },
       withOptional: {},
     },
     itemIds: () => null,
@@ -411,6 +463,7 @@ export const MCP_LANDING_SECTIONS: {
     structure: z.strictObject({
       id: sectionId,
       type: z.literal("cta"),
+      ...backgroundField,
       button: buttonTarget,
     }),
     text: z.strictObject({
@@ -421,7 +474,7 @@ export const MCP_LANDING_SECTIONS: {
       emailSubject,
     }),
     ruleSamples: {
-      minimal: { id: ANY_ID, type: "cta", button: { kind: "internal", path: "/" } },
+      minimal: { id: ANY_ID, type: "cta", background: "default", button: { kind: "internal", path: "/" } },
       withOptional: {},
     },
     itemIds: () => null,
@@ -534,12 +587,24 @@ const STRUCTURE_RULES = [
   .filter((rule) => rule !== null)
   .join("; ");
 
+/** The shapes a type's pictures may be, in words, from the registry; nothing for a type without pictures. */
+function describePictureShapes(type: LandingSectionType): string {
+  const shapes: readonly LandingPictureShape[] = LANDING_SECTIONS[type].pictureShapes;
+  if (shapes.length === 0) return "";
+  const which = describeLandingPictureShapes(shapes);
+  if (type === "image") return ` Its pictures may be ${which}, all one shape.`;
+  return shapes.length === LANDING_PICTURE_SHAPES.length
+    ? ` Its picture may be ${which}.`
+    : ` Its picture must be ${which}.`;
+}
+
 /** Every section type, what it is, and which of its words are required. */
 export const SECTIONS_MANUAL = [
   `${STRUCTURE_RULES}; the other sections follow in any order and number.`,
   ...LANDING_SECTION_TYPES.map(
     (type) =>
-      `- ${type} (${LANDING_SECTIONS[type].label}): ${MCP_LANDING_SECTIONS[type].about} Required words in every language: ${describeRequiredWords(type)}.`,
+      `- ${type} (${LANDING_SECTIONS[type].label}): ${MCP_LANDING_SECTIONS[type].about}${describePictureShapes(type)} Required words in every language: ${describeRequiredWords(type)}.`,
   ),
   `In those paths ${ITEM} is each item's id and ${PICTURE} each picture item's id. Every section also takes an optional eyebrow.`,
+  `Every section but the hero takes a background in its structure, shared by every language: ${LANDING_SECTION_BACKGROUNDS.join(" or ")}, default when left out. card sets the section on a full-width band; adjacent card sections share one band and read as one related group. The hero takes no background.`,
 ].join("\n");

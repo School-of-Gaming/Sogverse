@@ -91,7 +91,7 @@ COMMENT ON COLUMN public.landing_page_translations.share_title IS 'The link prev
 -- Name: COLUMN landing_page_translations.share_image_id; Type: COMMENT; Schema: public; Owner: -
 --
 
-COMMENT ON COLUMN public.landing_page_translations.share_image_id IS 'The share picture in this language: a landing_image catalogue entry the link preview shows in place of the hero''s picture, or NULL to use the hero''s. No foreign key, as for the pictures in sections: the copy''s image_paths names it (apply_landing_image_paths, kept current by refresh_landing_image_paths), which refuses an entry that is gone or of another purpose, and the catalogue''s replace moves it and its removal unsets it.';
+COMMENT ON COLUMN public.landing_page_translations.share_image_id IS 'The share picture in this language: a wide 16:9 landing picture (a landing_image catalogue entry) the link preview shows in place of the hero''s picture, or NULL to use the hero''s. No foreign key, as for the pictures in sections: the copy''s pictures names it (apply_landing_pictures, kept current by refresh_landing_pictures), which refuses an entry that is gone, not a landing picture or not wide, and the catalogue''s replace moves it and its removal unsets it.';
 
 
 --
@@ -124,10 +124,10 @@ CREATE TRIGGER trg_landing_page_translations_completeness BEFORE INSERT OR UPDAT
 
 
 --
--- Name: landing_page_translations trg_landing_page_translations_refresh_image_paths; Type: TRIGGER; Schema: public; Owner: -
+-- Name: landing_page_translations trg_landing_page_translations_refresh_pictures; Type: TRIGGER; Schema: public; Owner: -
 --
 
-CREATE TRIGGER trg_landing_page_translations_refresh_image_paths AFTER INSERT OR DELETE OR UPDATE OF share_image_id ON public.landing_page_translations FOR EACH ROW EXECUTE FUNCTION public.refresh_landing_image_paths();
+CREATE TRIGGER trg_landing_page_translations_refresh_pictures AFTER INSERT OR DELETE OR UPDATE OF share_image_id ON public.landing_page_translations FOR EACH ROW EXECUTE FUNCTION public.refresh_landing_pictures();
 
 
 --

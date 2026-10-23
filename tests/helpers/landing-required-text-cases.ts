@@ -30,6 +30,7 @@ export const CASE_IDS = {
   cta: id(0x1007),
   testimonials: id(0x1008),
   products: id(0x1009),
+  guide: id(0x100b),
   subscribe: id(0x100a),
   picture: id(0x2001),
   pictureTwo: id(0x2002),
@@ -44,6 +45,7 @@ export const CASE_IDS = {
   testimonialB: id(0x4002),
   productA: id(0x4003),
   productB: id(0x4004),
+  guideA: id(0x4101),
 } as const;
 
 const I = CASE_IDS;
@@ -57,10 +59,11 @@ export function everySection(): LandingSection[] {
       imageId: I.picture,
       button: { kind: "internal", path: "/shop" },
     },
-    { id: I.text, type: "text", imageId: I.picture, imageSide: "end" },
+    { id: I.text, type: "text", background: "default", imageId: I.picture, imageSide: "end" },
     {
       id: I.image,
       type: "image",
+      background: "default",
       images: [
         { id: I.imageItemA, imageId: I.picture },
         { id: I.imageItemB, imageId: I.pictureTwo },
@@ -69,26 +72,40 @@ export function everySection(): LandingSection[] {
     {
       id: I.points,
       type: "points",
+      background: "card",
       items: [
         { id: I.pointA, icon: "star" },
         { id: I.pointB, icon: "heart" },
       ],
     },
-    { id: I.steps, type: "steps", items: [{ id: I.stepA }, { id: I.stepB }] },
+    {
+      id: I.steps,
+      type: "steps",
+      background: "card",
+      items: [{ id: I.stepA }, { id: I.stepB }],
+    },
     {
       id: I.testimonials,
       type: "testimonials",
+      background: "card",
       arrangement: "pair",
       testimonialIds: [I.testimonialA, I.testimonialB],
     },
-    { id: I.faq, type: "faq", items: [{ id: I.faqA }] },
-    { id: I.subscribe, type: "subscribe" },
+    { id: I.faq, type: "faq", background: "default", items: [{ id: I.faqA }] },
+    { id: I.guide, type: "guide", background: "card", guideId: I.guideA, imageId: I.picture },
+    { id: I.subscribe, type: "subscribe", background: "card" },
     {
       id: I.cta,
       type: "cta",
+      background: "default",
       button: { kind: "external", url: "https://example.com" },
     },
-    { id: I.products, type: "products", productIds: [I.productA, I.productB] },
+    {
+      id: I.products,
+      type: "products",
+      background: "default",
+      productIds: [I.productA, I.productB],
+    },
   ];
 }
 
@@ -97,7 +114,10 @@ export function plainSections(): LandingSection[] {
   return everySection().map((section) => {
     if (section.type === "hero") return { id: section.id, type: "hero" };
     if (section.type === "text") {
-      return { id: section.id, type: "text", imageSide: section.imageSide };
+      return { id: section.id, type: "text", background: section.background, imageSide: section.imageSide };
+    }
+    if (section.type === "guide") {
+      return { id: section.id, type: "guide", background: section.background, guideId: section.guideId };
     }
     return section;
   });
@@ -150,6 +170,12 @@ export function everyText(): Texts {
       heading: "Clubs near you",
       intro: "Online and in person.",
     },
+    [I.guide]: {
+      eyebrow: "Free download",
+      heading: "The parents' guide",
+      description: "What a club is like.",
+      imageAlt: "The guide's cover",
+    },
     [I.faq]: {
       heading: "Questions",
       items: { [I.faqA]: { question: "Is it safe?", answer: "Yes — *always*." } },
@@ -187,6 +213,8 @@ export const EVERY_REQUIRED_PATH: readonly string[] = [
   `sections.${I.faq}.heading`,
   `sections.${I.faq}.items.${I.faqA}.question`,
   `sections.${I.faq}.items.${I.faqA}.answer`,
+  `sections.${I.guide}.heading`,
+  `sections.${I.guide}.imageAlt`,
   `sections.${I.subscribe}.heading`,
   `sections.${I.subscribe}.buttonLabel`,
   `sections.${I.cta}.heading`,
@@ -264,6 +292,7 @@ export function requiredTextCases(): RequiredTextCase[] {
         ...everyText(),
         [I.hero]: { headline: "Gaming clubs" },
         [I.text]: { heading: "How", body: "Like this." },
+        [I.guide]: { heading: "The guide" },
       },
       expected: [],
     },

@@ -192,8 +192,8 @@ export class CatalogueImagesService {
     }
 
     for (const row of landingRows) {
-      const liveIds = new Set(entryIdsOf(row.publication?.image_paths));
-      const entryIds = new Set([...entryIdsOf(row.image_paths), ...liveIds]);
+      const liveIds = new Set(entryIdsOf(row.publication?.pictures));
+      const entryIds = new Set([...entryIdsOf(row.pictures), ...liveIds]);
       const title =
         resolveTranslation(row.landing_page_translations, DEFAULT_LOCALE)
           ?.title ?? "";
@@ -265,7 +265,7 @@ export class CatalogueImagesService {
 
   /**
    * Every landing page with the pictures of both its copies. Each copy's
-   * `image_paths` is keyed by the entries its sections and its versions' share
+   * `pictures` is keyed by the entries its sections and its versions' share
    * pictures show, derived by the database, so neither the structure nor the
    * versions are read here.
    */
@@ -274,7 +274,7 @@ export class CatalogueImagesService {
       this.supabase
         .from("landing_pages")
         .select(
-          "id, image_paths, landing_page_translations(locale, title), publication:landing_page_publications(image_paths)",
+          "id, pictures, landing_page_translations(locale, title), publication:landing_page_publications(pictures)",
           { count: "exact" },
         )
         .order("id")
@@ -438,9 +438,9 @@ async function uploadError(
   return error;
 }
 
-/** The entry ids a landing page copy's `image_paths` is keyed by. */
-function entryIdsOf(imagePaths: unknown): string[] {
-  return typeof imagePaths === "object" && imagePaths !== null && !Array.isArray(imagePaths)
-    ? Object.keys(imagePaths)
+/** The entry ids a landing page copy's `pictures` is keyed by. */
+function entryIdsOf(pictures: unknown): string[] {
+  return typeof pictures === "object" && pictures !== null && !Array.isArray(pictures)
+    ? Object.keys(pictures)
     : [];
 }

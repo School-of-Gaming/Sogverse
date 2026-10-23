@@ -53,7 +53,7 @@ const STORE: Record<string, PublicTestimonial> = Object.fromEntries(
 function sections(arrangement: LandingTestimonialArrangement, ids: string[]): LandingSection[] {
   return [
     { id: HERO, type: "hero" },
-    { id: QUOTES, type: "testimonials", arrangement, testimonialIds: ids },
+    { id: QUOTES, type: "testimonials", background: "default", arrangement, testimonialIds: ids },
   ];
 }
 
@@ -76,8 +76,9 @@ function renderSection({
     <NextIntlClientProvider locale={locale} messages={locale === "fi" ? fi : en}>
       <LandingPageBody
         sections={sections(arrangement, ids)}
-        imagePaths={{}}
+        pictures={{}}
         testimonials={store}
+        guideIds={[]}
         sectionTexts={{ [HERO]: { headline: "Quotes" }, ...texts }}
         textLocale={textLocale}
         locale={locale}

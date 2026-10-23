@@ -95,6 +95,9 @@
     "adminTestimonials": "Testimonials",
     "adminTestimonialNew": "New testimonial",
     "adminTestimonialEdit": "Edit testimonial",
+    "adminGuides": "Guides",
+    "adminGuideNew": "New guide",
+    "adminGuideEdit": "Guide",
     "discover": "Discover"
   },
   "descriptions": {

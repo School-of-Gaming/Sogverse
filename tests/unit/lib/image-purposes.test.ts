@@ -4,6 +4,7 @@ import { fileURLToPath } from "node:url";
 import { describe, expect, it } from "vitest";
 import { CATALOGUE_IMAGE_PURPOSES } from "@/lib/images/catalogue-image-purposes";
 import { IMAGE_PURPOSES, type ImagePurposeSpec } from "@/lib/images/image-purposes";
+import { GUIDES_BUCKET } from "@/services/guides/guides.contracts";
 
 /**
  * **Every storage bucket has exactly one image purpose, and agrees with it.**
@@ -14,10 +15,17 @@ import { IMAGE_PURPOSES, type ImagePurposeSpec } from "@/lib/images/image-purpos
  * flag is either a preview that 404s or a private photo answered to anyone.
  * The bucket list is read from the generated storage schema on every run, so a
  * bucket added tomorrow fails here the same way a missing one would today.
+ *
+ * The one exception is a bucket of documents rather than pictures — the
+ * guides' PDFs — named below, and held private here, since its files are read
+ * only through a session-checked route.
  */
 
 const repoRoot = join(dirname(fileURLToPath(import.meta.url)), "..", "..", "..");
 const BUCKETS_FILE = "supabase/schema/outside-public/storage-buckets.sql";
+
+/** The buckets that hold documents, not pictures, so no image purpose names them. */
+const DOCUMENT_BUCKETS: ReadonlySet<string> = new Set([GUIDES_BUCKET]);
 
 /** One `storage.buckets` row as the schema dump renders it. */
 interface BucketRow {
@@ -49,7 +57,15 @@ function bucketsInSchema(): BucketRow[] {
 const purposes: readonly (readonly [string, ImagePurposeSpec])[] = Object.entries(IMAGE_PURPOSES);
 
 describe("the image purpose registry", () => {
-  const buckets = bucketsInSchema();
+  const all = bucketsInSchema();
+  const buckets = all.filter(({ id }) => !DOCUMENT_BUCKETS.has(id));
+
+  it("keeps every document bucket private and out of the registry", () => {
+    const documents = all.filter(({ id }) => DOCUMENT_BUCKETS.has(id));
+    expect(documents.map(({ id }) => id).sort()).toEqual([...DOCUMENT_BUCKETS].sort());
+    expect(documents.filter(({ isPublic }) => isPublic)).toEqual([]);
+    expect(purposes.filter(([, spec]) => DOCUMENT_BUCKETS.has(spec.bucket))).toEqual([]);
+  });
 
   it("reads at least one bucket from the schema", () => {
     expect(buckets.length).toBeGreaterThan(0);

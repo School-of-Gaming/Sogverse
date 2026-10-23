@@ -194,7 +194,7 @@ describe("reading in a language", () => {
     firstPublishedAt: "2026-10-01T00:00:00Z",
     publishedAt: "2026-10-02T00:00:00Z",
     sections: [],
-    imagePaths: {},
+    pictures: {},
     versions: [
       { locale: "fi", title: "Kerhot", summary: "S", slug: "kerhot" },
       { locale: "sv", title: "Klubbar", summary: "S", slug: "klubbar" },

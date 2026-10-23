@@ -23,7 +23,7 @@ import {
   defaultLandingSlug,
   hasUnpublishedChanges,
   landingCopyTitle,
-  landingImagePaths,
+  landingPictures,
   landingPageInput,
   landingVersionInput,
   oauthClientNameRows,
@@ -58,10 +58,10 @@ const DRAFT_VERSION_COLUMNS =
 const DRAFT_VERSION_LIST_COLUMNS =
   "locale, title, summary, slug, texts_md5, share_title, share_image_id, share_image_alt, is_complete";
 
-const PUBLICATION_COLUMNS = `page_id, sections, sections_md5, image_paths, published_at, first_published_at, versions:landing_page_publication_translations(locale, title, summary, slug, section_texts, texts_md5, share_title, share_image_id, share_image_alt)`;
+const PUBLICATION_COLUMNS = `page_id, sections, sections_md5, pictures, published_at, first_published_at, versions:landing_page_publication_translations(locale, title, summary, slug, section_texts, texts_md5, share_title, share_image_id, share_image_alt)`;
 
 /** The published copy's columns for a list: the structure, and no words. */
-const PUBLICATION_SUMMARY_COLUMNS = `page_id, sections, image_paths, published_at, first_published_at, versions:landing_page_publication_translations(locale, title, summary, slug)`;
+const PUBLICATION_SUMMARY_COLUMNS = `page_id, sections, pictures, published_at, first_published_at, versions:landing_page_publication_translations(locale, title, summary, slug)`;
 
 /** The published copy's columns for comparing, without its words. */
 const PUBLICATION_COMPARE_COLUMNS = `sections_md5, versions:landing_page_publication_translations(locale, title, summary, slug, texts_md5, share_title, share_image_id, share_image_alt)`;
@@ -106,7 +106,7 @@ function publishable(row: {
 interface PublicationSummaryRow {
   page_id: string;
   sections: unknown;
-  image_paths: unknown;
+  pictures: unknown;
   published_at: string;
   first_published_at: string;
   versions: readonly { locale: string; title: string; summary: string; slug: string }[];
@@ -131,7 +131,7 @@ function toPublishedSummary(row: PublicationSummaryRow): PublishedLandingPageSum
     firstPublishedAt: row.first_published_at,
     publishedAt: row.published_at,
     sections: readSections(row.sections),
-    imagePaths: landingImagePaths.parse(row.image_paths),
+    pictures: landingPictures.parse(row.pictures),
     versions: inLocaleOrder(row.versions).map(({ locale, title, summary, slug }) => ({
       locale,
       title,
@@ -258,7 +258,7 @@ export class LandingPageService {
     const { data, error } = await this.supabase
       .from("landing_pages")
       .select(
-        `id, sections, sections_md5, image_paths, created_at, updated_at, last_saved_via, ${LAST_SAVER_EMBED}, versions:landing_page_translations(${DRAFT_VERSION_COLUMNS}), publication:landing_page_publications(${PUBLICATION_COLUMNS})`,
+        `id, sections, sections_md5, pictures, created_at, updated_at, last_saved_via, ${LAST_SAVER_EMBED}, versions:landing_page_translations(${DRAFT_VERSION_COLUMNS}), publication:landing_page_publications(${PUBLICATION_COLUMNS})`,
       )
       .eq("id", id)
       .maybeSingle();
@@ -267,11 +267,11 @@ export class LandingPageService {
     if (!data) return null;
 
     const sections = readSections(data.sections);
-    const imagePaths = landingImagePaths.parse(data.image_paths);
+    const pictures = landingPictures.parse(data.pictures);
     const draft: LandingPageDraft = {
       id: data.id,
       sections,
-      imagePaths,
+      pictures,
       versions: inLocaleOrder(data.versions).map((version) => {
         const sectionTexts = readSectionTexts(sections, version.section_texts);
         return {

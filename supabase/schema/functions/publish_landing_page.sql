@@ -30,8 +30,8 @@ BEGIN
       USING ERRCODE = 'check_violation';
   END IF;
 
-  -- The structure is copied and the picture paths are not: the triggers
-  -- derive the published copy's own, its versions' share pictures included.
+  -- The structure is copied and the pictures are not: the triggers derive
+  -- the published copy's own, its versions' share pictures included.
   INSERT INTO public.landing_page_publications (page_id, sections, published_at, first_published_at)
   VALUES (v_page.id, v_page.sections, now(), now())
   ON CONFLICT (page_id) DO UPDATE SET

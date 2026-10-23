@@ -1,6 +1,7 @@
 import { z } from "zod";
 import {
   isWritten,
+  landingBackgroundField,
   landingId,
   plainText,
   type LandingSectionDefinition,
@@ -10,10 +11,11 @@ import {
  * An email sign-up form: a reader leaves their address, and optionally their
  * first and last name, to join the newsletter list in Klaviyo, single opt-in.
  *
- * **No shared field.** The list a reader joins is the deployment's
- * configuration, the same for every page, so nothing about it is the page's to
- * choose. A later field naming what the reader receives once signed up (a
- * download, say) would be structure and would join here.
+ * **No shared field but the background every section takes.** The list a
+ * reader joins is the deployment's configuration, the same for every page, so
+ * nothing about it is the page's to choose. A later field naming what the
+ * reader receives once signed up (a download, say) would be structure and
+ * would join here.
  *
  * **The page writes the ask; the form's own words are ours.** The heading, the
  * intro and the button say why a reader would want to sign up from this page,
@@ -26,6 +28,7 @@ const section = z
   .object({
     id: landingId,
     type: z.literal("subscribe"),
+    ...landingBackgroundField,
   })
   .strict();
 
@@ -48,4 +51,5 @@ export const subscribeSection = {
     ...(isWritten(words.buttonLabel) ? [] : ["buttonLabel"]),
   ],
   markdownFields: [],
+  pictureShapes: [],
 } as const satisfies LandingSectionDefinition<"subscribe", typeof section, typeof text>;

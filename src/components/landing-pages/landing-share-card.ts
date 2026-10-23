@@ -1,6 +1,7 @@
 import type {
   LandingPageDraft,
   LandingPageDraftVersion,
+  LandingPicture,
   LocalizedLandingPage,
 } from "@/services/landing-pages/landing-pages.contracts";
 import { landingLeadPicture } from "./landing-section-seo";
@@ -11,7 +12,7 @@ export type LandingShareCardSource = Pick<
   | "title"
   | "sections"
   | "sectionTexts"
-  | "imagePaths"
+  | "pictures"
   | "shareImageId"
   | "shareTitle"
   | "shareImageAlt"
@@ -20,12 +21,12 @@ export type LandingShareCardSource = Pick<
 /**
  * The picture a share card shows: the version's own share picture, the
  * hero's, or none, when the card is the site-wide one. A picture carries its stored
- * path in the `landing-images` bucket and its alt text in the version's
- * language.
+ * path and purpose — always the wide one, which the database keeps true for
+ * both — and its alt text in the version's language.
  */
 export type LandingSharePicture =
-  | { source: "custom"; path: string; alt: string }
-  | { source: "hero"; path: string; alt: string }
+  | ({ source: "custom"; alt: string } & LandingPicture)
+  | ({ source: "hero"; alt: string } & LandingPicture)
   | { source: "site" };
 
 export interface LandingShareCard {
@@ -44,7 +45,7 @@ export interface LandingShareCard {
  * version's share picture with its share alt text, else the hero's picture
  * (`landingLeadPicture`) with the hero's alt text, else none, and the card is
  * the site-wide one. A picture's alt text falls back to the card's title. A
- * share picture whose path the copy does not carry is treated as none, as the
+ * share picture whose picture the copy does not carry is treated as none, as the
  * hero's is: the database derives the paths and unsets a removed picture, so
  * it should not arise, and the hero is the safe answer if it does.
  *
@@ -57,16 +58,16 @@ export function landingShareCard(page: LandingShareCardSource): LandingShareCard
 }
 
 function sharePicture(page: LandingShareCardSource, title: string): LandingSharePicture {
-  if (page.shareImageId !== null && Object.hasOwn(page.imagePaths, page.shareImageId)) {
+  if (page.shareImageId !== null && Object.hasOwn(page.pictures, page.shareImageId)) {
     return {
       source: "custom",
-      path: page.imagePaths[page.shareImageId],
+      ...page.pictures[page.shareImageId],
       alt: page.shareImageAlt === "" ? title : page.shareImageAlt,
     };
   }
   const hero = landingLeadPicture(page);
   if (hero === null) return { source: "site" };
-  return { source: "hero", path: hero.path, alt: hero.alt ?? title };
+  return { source: "hero", path: hero.path, purpose: hero.purpose, alt: hero.alt ?? title };
 }
 
 /** Which halves of a share card are the page's own overrides, as one name. */
@@ -96,7 +97,7 @@ export function landingShareCardInUse({
  * words and share card read with the working copy's structure.
  */
 export function draftShareCard(
-  draft: Pick<LandingPageDraft, "sections" | "imagePaths">,
+  draft: Pick<LandingPageDraft, "sections" | "pictures">,
   version: Pick<
     LandingPageDraftVersion,
     "title" | "sectionTexts" | "shareTitle" | "shareImageId" | "shareImageAlt"
@@ -109,6 +110,6 @@ export function draftShareCard(
     shareImageId: version.shareImageId,
     shareImageAlt: version.shareImageAlt,
     sections: draft.sections,
-    imagePaths: draft.imagePaths,
+    pictures: draft.pictures,
   });
 }

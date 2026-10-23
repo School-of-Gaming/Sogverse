@@ -61,10 +61,10 @@ const PAGE: PublishedLandingPage = {
   publishedAt: "2026-10-01T08:00:00Z",
   sections: [
     { id: HERO, type: "hero", imageId: PICTURE },
-    { id: STEPS, type: "steps", items: [{ id: S1 }, { id: S2 }] },
-    { id: FAQ, type: "faq", items: [{ id: Q1 }, { id: Q2 }] },
+    { id: STEPS, type: "steps", background: "default", items: [{ id: S1 }, { id: S2 }] },
+    { id: FAQ, type: "faq", background: "default", items: [{ id: Q1 }, { id: Q2 }] },
   ],
-  imagePaths: { [PICTURE]: "pictures/club.jpg" },
+  pictures: { [PICTURE]: { path: "pictures/club.jpg", purpose: "landing_image" } },
   versions: [
     {
       locale: "en",
@@ -200,7 +200,7 @@ describe("landingPageMetadata", () => {
 
   it("takes the site card at the request locale when the hero has no picture", async () => {
     const metadata = await landingPageMetadata(
-      { ...PAGE, sections: [{ id: HERO, type: "hero" }], imagePaths: {} },
+      { ...PAGE, sections: [{ id: HERO, type: "hero" }], pictures: {} },
       "fr",
     );
 
@@ -210,7 +210,7 @@ describe("landingPageMetadata", () => {
   });
 
   it("takes the site card when the hero's picture has no path", async () => {
-    const metadata = await landingPageMetadata({ ...PAGE, imagePaths: {} }, "en");
+    const metadata = await landingPageMetadata({ ...PAGE, pictures: {} }, "en");
 
     expect(metadata.openGraph).toMatchObject({
       images: [expect.objectContaining({ alt: "en:metadata.og.site.alt" })],
@@ -229,10 +229,10 @@ describe("landingPageMetadata", () => {
     function overridden(cards: Partial<Record<"en" | "fi", ShareCard>>): PublishedLandingPage {
       return {
         ...PAGE,
-        imagePaths: {
-          ...PAGE.imagePaths,
-          [SHARE_PICTURE]: "pictures/share.jpg",
-          [FI_SHARE_PICTURE]: "pictures/share-fi.jpg",
+        pictures: {
+          ...PAGE.pictures,
+          [SHARE_PICTURE]: { path: "pictures/share.jpg", purpose: "landing_image" },
+          [FI_SHARE_PICTURE]: { path: "pictures/share-fi.jpg", purpose: "landing_image" },
         },
         versions: PAGE.versions.map((version) => ({
           ...version,
@@ -337,7 +337,7 @@ describe("landingPageMetadata", () => {
       const unset = overridden({ en: { shareImageAlt: "A club room" } });
       const pathless = {
         ...overridden({ en: { shareImageId: SHARE_PICTURE, shareImageAlt: "A club room" } }),
-        imagePaths: PAGE.imagePaths,
+        pictures: PAGE.pictures,
       };
 
       for (const page of [unset, pathless]) {
@@ -453,7 +453,7 @@ describe("landingProductListsJsonLd", () => {
       locale: "en",
       page: page([
         { id: HERO, type: "hero" },
-        { id: PICKS, type: "products", productIds: [P2, P3, P1] },
+        { id: PICKS, type: "products", background: "default", productIds: [P2, P3, P1] },
       ]),
       listing: LISTING,
     });
@@ -476,7 +476,7 @@ describe("landingProductListsJsonLd", () => {
     const [{ list }] = landingProductListsJsonLd({
       siteUrl: "https://sog.test",
       locale: "fi",
-      page: page([{ id: PICKS, type: "products", productIds: [P1, P2] }]),
+      page: page([{ id: PICKS, type: "products", background: "default", productIds: [P1, P2] }]),
       listing: LISTING,
     });
     expect(list.itemListElement).toEqual([
@@ -489,8 +489,8 @@ describe("landingProductListsJsonLd", () => {
   it("lists a drawn municipality club nowhere, since its schools page is never promoted", () => {
     const MUNI = "0b5a1e2c-3d4f-4a5b-8c6d-7e8f9a0b1c04";
     const sections = [
-      { id: PICKS, type: "products" as const, productIds: [MUNI, P1] },
-      { id: MORE, type: "products" as const, productIds: [MUNI] },
+      { id: PICKS, type: "products" as const, background: "default" as const, productIds: [MUNI, P1] },
+      { id: MORE, type: "products" as const, background: "default" as const, productIds: [MUNI] },
     ];
     const lists = landingProductListsJsonLd({
       siteUrl: "https://sog.test",
@@ -508,7 +508,7 @@ describe("landingProductListsJsonLd", () => {
     const [{ list }] = landingProductListsJsonLd({
       siteUrl: "https://sog.test",
       locale: "en",
-      page: page([{ id: PICKS, type: "products", productIds: [P1] }]),
+      page: page([{ id: PICKS, type: "products", background: "default", productIds: [P1] }]),
       listing: LISTING,
     });
     expect(Object.keys(list.itemListElement[0]).sort()).toEqual(["@type", "name", "position", "url"]);
@@ -516,8 +516,8 @@ describe("landingProductListsJsonLd", () => {
 
   it("lists nothing for a section with none listed, and nothing at all without the listing", () => {
     const sections = [
-      { id: PICKS, type: "products" as const, productIds: [P3] },
-      { id: MORE, type: "products" as const, productIds: [P1] },
+      { id: PICKS, type: "products" as const, background: "default" as const, productIds: [P3] },
+      { id: MORE, type: "products" as const, background: "default" as const, productIds: [P1] },
     ];
     expect(
       landingProductListsJsonLd({ siteUrl: "", locale: "en", page: page(sections), listing: LISTING }).map(
@@ -533,7 +533,7 @@ describe("landingProductListsJsonLd", () => {
     const withPicks = landingPageJsonLd({
       siteUrl: "https://sog.test",
       canonicalPath: "/en/discover/x",
-      page: { ...SHOWN, sections: [{ id: HERO, type: "hero" }, { id: PICKS, type: "products", productIds: [P1] }] },
+      page: { ...SHOWN, sections: [{ id: HERO, type: "hero" }, { id: PICKS, type: "products", background: "default", productIds: [P1] }] },
     });
     expect(withPicks["@type"]).toBe("WebPage");
     expect(JSON.stringify(withPicks)).not.toContain(P1);

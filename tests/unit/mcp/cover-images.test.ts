@@ -74,7 +74,11 @@ describe("coverImage", () => {
 
 describe("answerWithCovers", () => {
   const covers = (n: number) =>
-    Array.from({ length: n }, (_, i) => ({ path: `c${i}.jpg`, caption: `Cover ${i}` }));
+    Array.from({ length: n }, (_, i) => ({
+      path: `c${i}.jpg`,
+      purpose: "library_cover" as const,
+      caption: `Cover ${i}`,
+    }));
 
   it("puts each caption right before its picture, after the JSON", async () => {
     serve(await sharp({ create: { width: 1600, height: 900, channels: 3, background: "black" } }).jpeg().toBuffer());

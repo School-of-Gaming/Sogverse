@@ -394,7 +394,7 @@ function ShareCard({ draft }: { draft: LandingPageDraft }) {
                   src={
                     card.picture.source === "site"
                       ? null
-                      : catalogueImageUrl("landing_image", card.picture.path)
+                      : catalogueImageUrl(card.picture.purpose, card.picture.path)
                   }
                   className="w-40 shrink-0 rounded-md"
                   sizes="160px"
@@ -711,6 +711,7 @@ const ITEM_KEYS: {
   steps: "steps",
   testimonials: null,
   products: null,
+  guide: null,
   faq: "faq",
   subscribe: null,
   cta: null,

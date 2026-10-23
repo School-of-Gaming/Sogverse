@@ -97,18 +97,37 @@ admin before publishing.
 written per locale"). An id address resolves in every locale; a slug address only
 in its own.
 
-**Pictures are `landing_image` entries of the shared image catalogue, referenced by id** —
-from a section of the structure, or from a language version as its share picture. Each
-copy carries the path of every picture its structure or any of its versions names, derived
-by the database and re-derived whenever a version's share picture is written or the version
-goes, which refuses an entry that is gone or of another purpose — so public pages paint a
-path without reading the admin-only catalogue, and a picture only one language names is in
-use for exactly as long as that language names it. No foreign key can reach into
-the structure, so the catalogue's two rules are kept another way, with the same outcome
-as for a Library cover: a **replace** moves every picture in both copies at once, a live
+**Pictures are entries of the shared image catalogue, referenced by id — from a section of
+the structure, or from a language version as its share picture — in three shapes: wide
+16:9, square 1:1 and portrait 4:5, each its own catalogue purpose.** The shape is the
+purpose's, never a claim in the structure: the catalogue stores no size, and the page has
+to reserve each picture's box before it loads, so each copy carries the path *and the
+purpose* of every picture its structure or any of its versions names, derived by the
+database and re-derived whenever a version's share picture is written or the version goes —
+so public pages paint a picture at its shape, from its bucket, without reading the
+admin-only catalogue, the shape cannot disagree with the file, and a picture only one
+language names is in use for exactly as long as that language names it. An entry's
+purpose never changes and a replace keeps it, so a picture's shape cannot drift under a
+page.
+
+**Which shapes a section takes is its type's declaration in the section registry, and the
+database refuses anything else.** A hero's picture is wide only, since it is the page's
+link preview and the picture its structured data leads with; a share picture is wide only
+for the same reason; a guide section's picture is wide only too; a text section's picture
+and an image section's pictures may be any shape; and a section's pictures are all one
+shape, so an image section's grid lines up — a mixed one is refused, naming both shapes. The
+same rule is written once more in the SQL that derives the pictures, and a DB test runs
+every type with a picture against every shape and requires the two halves to agree. The
+renderer lays each shape out on its own terms (a square or portrait picture beside words
+is held narrower than its column, so it does not tower over them) with its box and its
+`sizes` stated for that shape.
+
+The derivation also refuses an entry that is gone or not a landing picture. No foreign key
+can reach into the structure, so the catalogue's two rules are kept another way, with the
+same outcome as for a Library cover: a **replace** moves every picture in both copies at once, a live
 page's included, without a republish (the replace's landing half is a database function
 the catalogue's replace calls beside the Library's); a **removal** unlinks the picture
-from both copies at once — a hero or text section loses its picture, an image section
+from both copies at once — a hero, text or guide section loses its picture, an image section
 loses that picture, an image section left with none is dropped with its words, and a
 language's share picture is unset — done by a trigger on the catalogue's own delete, so it
 needs nothing from the remover.
@@ -137,13 +156,21 @@ and it contributes no structured data — review markup a site writes about itse
 nothing. Its words are never written through a landing page tool, and a quote comes off a
 page by saving the structure without it.
 
+**A guide is placed by id from the structure, like a testimonial** (`src/services/guides/`):
+a guide section names one guide and an optional cover picture, which the picture triggers
+handle like a hero's; an id no guide has is refused by the shared trigger, which reads the
+section's one id as a list of one. Neither copy carries a guide's files: the live page asks
+the public read only which of its guides exist, answering only what the published copy
+places, and the download is the guide store's, gated on a signed-in reader.
+
 **A page's link preview is derived from the page, per language, unless the admin overrides
 it.** Derived, it carries the shown version's title and summary and the hero's picture — the
 one its structured data names as the picture the page leads with — with that version's alt
 text; a hero without one shares the site-wide card. Each language may override part of its
 own card: a **share title**, capped at a share card's length, and a **share picture** with
-its alt text. The picture is per language, not structure, because a share picture often
-carries words of its own, as the app's own drawn cards do per locale. The description is
+its alt text — wide, like the hero's, since the preview is drawn wide. The picture is per
+language, not structure, because a share picture often carries words of its own, as the
+app's own drawn cards do per locale. The description is
 always the summary. None of it counts toward completeness. The share card is written with
 the language's words, and it is the one exception to a one-language write carrying the whole
 language: the MCP tool changes a share field only when the call sends it, an empty value
@@ -185,8 +212,8 @@ refusals. Nothing else in the save path touches a link. A clone sends no words, 
 none to check: the words it copies were made canonical when they were saved.
 
 **Every landing page write invalidates the whole `landing-pages` key tree**, the admin
-detail included, the image catalogue's usage map, and the `testimonials` tree, whose
-"where it is used" names each page's copies.
+detail included, the image catalogue's usage map, and the `testimonials` and `guides`
+trees, whose "where it is used" names each page's copies.
 
 **Every publish and unpublish goes through one helper per action in `src/lib/indexnow/`**,
 which runs the service's own publish on the caller's client and then submits every
@@ -209,7 +236,7 @@ address, the names given, the page's locale, the landing page's id, and the visi
 values only under marketing consent — nothing else. The list is the deployment's
 (`KLAVIYO_*` in the environment, read by `src/lib/landing-pages/subscribe-config.server.ts`):
 the local server and Vercel Preview use a staging list, and production the real one. So
-the section has no shared field; its form copy, consent sentence included, is fixed copy
+the section has no shared field but its background; its form copy, consent sentence included, is fixed copy
 in `landingSubscribe`, and the page writes only the ask. The route refuses a body without
 the ticked consent and a page whose published copy no longer holds the section, and
 answers a new address, a known one and a filled honeypot identically. The admin's preview
@@ -225,8 +252,23 @@ page is built by its address module** — the slug a locale's live version store
 id — never by handing a segment to the route builder, because a slug resolves in its own
 locale only and a hand-picked one is a 404 in every other. The renderer and the SEO
 contribution (structured data) are each an exhaustive map over the section
-types. Every section sits on the plain page ground: an admin chooses the order, so a
-tinted band could land beside another and read as one section. **A page with products
+types.
+
+**Every section but the hero has a background, `default` or `card`, and it is structure**,
+shared by every language. `default` is the page ground; `card` lays the section on a band
+of the card ground that runs the viewport's full width, the content keeping the section's
+own container. A section stored without one reads as `default`, in both copies, and the
+next structure save writes the value out. Adjacent `card` sections join into one band, and
+that is the design: it is how an admin groups related sections, so nothing refuses or
+merges them, and the MCP tools tell the AI app as much. The hero takes none — its schema
+and the SQL check both refuse the field. The band carries no spacing of its own, so two
+sections on one band sit as far apart as two on the page ground, and cards on a band are
+told apart by their own border (`packages/sog-ui/CLAUDE.md`). The field is one shared
+definition in the registry, spread into each type's schema, checked once more in SQL by
+the structure check and held equal to it by a DB test; a new section type spreads it in,
+and the registry's one background lookup fails type-check until it does.
+
+**A page with products
 sections reads the listing of every product type and seat counts on the server, once for
 all of them, before its HTML** — the live page and the preview alike, with no Suspense
 boundary — so the cards, or a section's absence, are in the first byte and nothing below

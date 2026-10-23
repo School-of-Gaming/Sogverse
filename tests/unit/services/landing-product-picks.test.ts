@@ -34,9 +34,9 @@ function facts(n: number, overrides: Partial<ProductListingFactsRow> = {}): Prod
 
 const SECTIONS: LandingSection[] = [
   { id: id(1), type: "hero" },
-  { id: id(2), type: "products", productIds: [id(10), id(11), id(12), id(13), id(14)] },
-  { id: id(3), type: "text", imageSide: "start" },
-  { id: id(4), type: "products", productIds: [id(15)] },
+  { id: id(2), type: "products", background: "default", productIds: [id(10), id(11), id(12), id(13), id(14)] },
+  { id: id(3), type: "text", background: "default", imageSide: "start" },
+  { id: id(4), type: "products", background: "default", productIds: [id(15)] },
 ];
 
 const FACTS = [
@@ -86,7 +86,7 @@ describe("landingProductPicks", () => {
 
   it("takes the listing's word over the facts when the two reads disagree", () => {
     const [section] = landingProductPicks(
-      [{ id: id(2), type: "products", productIds: [id(10)] }],
+      [{ id: id(2), type: "products", background: "default", productIds: [id(10)] }],
       new Set(),
       [facts(10)],
       NOW,
