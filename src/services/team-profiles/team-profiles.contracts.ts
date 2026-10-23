@@ -23,7 +23,9 @@ export const storeTeamPhotoResponse = z.object({ path: z.string().min(1) });
  *
  * - `role` is only ever an admin's or a Gedu's; the body filters every other.
  * - `last_name` and `title` are an admin's alone, NULL for a Gedu, who is
- *   public by first name and nickname.
+ *   public by first name and nickname. An admin's are never NULL: the last
+ *   name is a NOT NULL column, and `save_team_profile` refuses to mark an
+ *   admin's profile ready without a title, which it must be to be public.
  * - `photo_version` is an md5 of the photo's object path, so it changes with
  *   the photo; NULL only for a profile with no photo, which cannot be public.
  * - `translations` is every locale the person wrote, ordered by locale, and
@@ -31,13 +33,10 @@ export const storeTeamPhotoResponse = z.object({ path: z.string().min(1) });
  * - `created_at` is when the profile was first saved, which never moves: two
  *   people deriving one public address settle it by age.
  */
-export const publicTeamProfileRow = z.object({
+const publicTeamProfileRowBase = z.object({
   user_id: z.string().uuid(),
-  role: z.enum(["admin", "gedu"]),
   first_name: z.string(),
-  last_name: z.string().nullable(),
   nickname: z.string().nullable(),
-  title: z.string().nullable(),
   pick: z.number().int().nullable(),
   spoken_languages: z.array(z.enum(Constants.public.Enums.spoken_language)),
   photo_version: z.string().nullable(),
@@ -51,6 +50,19 @@ export const publicTeamProfileRow = z.object({
   ),
   created_at: z.string(),
 });
+
+export const publicTeamProfileRow = z.discriminatedUnion("role", [
+  publicTeamProfileRowBase.extend({
+    role: z.literal("admin"),
+    last_name: z.string(),
+    title: z.string(),
+  }),
+  publicTeamProfileRowBase.extend({
+    role: z.literal("gedu"),
+    last_name: z.null(),
+    title: z.null(),
+  }),
+]);
 
 export type PublicTeamProfileRow = z.infer<typeof publicTeamProfileRow>;
 
