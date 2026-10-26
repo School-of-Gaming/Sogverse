@@ -21,7 +21,7 @@ vi.mock("@/lib/products/delivery-mode", async (importOriginal) => {
   };
 });
 
-const { resolveTopicPrep } = await import("@/lib/products/topics");
+const { resolveTopicPrep } = await import("@/lib/products/topic-prep");
 
 const ROOM_STEP = "remoteSession";
 

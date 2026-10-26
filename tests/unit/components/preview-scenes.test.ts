@@ -15,9 +15,9 @@ import {
 } from "@/components/preview/scenes/topic-prep-scene";
 import {
   PRODUCT_TOPIC_VALUES,
-  resolveTopicPrep,
   topicHasPrep,
 } from "@/lib/products/topics";
+import { resolveTopicPrep } from "@/lib/products/topic-prep";
 import {
   GEDU_DASHBOARD_SCENARIOS,
   buildGeduDashboardFixture,

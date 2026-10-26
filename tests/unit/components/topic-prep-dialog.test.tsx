@@ -1,7 +1,7 @@
 import { afterEach, describe, expect, it, vi } from "vitest";
 import { act, cleanup, render, screen } from "@testing-library/react";
 import { TopicPrepDialog } from "@/components/topic-prep/TopicPrepDialog";
-import { resolveTopicPrep } from "@/lib/products/topics";
+import { resolveTopicPrep } from "@/lib/products/topic-prep";
 import type { TopicPrepPlan } from "@/lib/products/topics";
 
 /**

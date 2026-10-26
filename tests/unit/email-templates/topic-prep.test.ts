@@ -8,7 +8,7 @@ import {
   type TopicPrepTranslator,
 } from "@/lib/email-templates/translator";
 import { HOLD_CLASS } from "@/lib/email-templates/utils";
-import { resolveTopicPrep } from "@/lib/products/topics";
+import { resolveTopicPrep } from "@/lib/products/topic-prep";
 import type { DeliveryMode, ProductTopic } from "@/types";
 import enTopicPrep from "@/../messages/en/topicPrep.json";
 

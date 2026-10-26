@@ -12,7 +12,7 @@ import { SUPPORT_EMAIL } from "@/lib/constants/brand";
 import { VOICE_CONFIG } from "@/lib/constants/voice";
 import { MAIL_SPACE } from "./type-scale";
 import { buildTopicPrepSection, topicPrepText } from "./topic-prep";
-import { resolveTopicPrep } from "@/lib/products/topics";
+import { resolveTopicPrep } from "@/lib/products/topic-prep";
 import { textAttachment, type RenderedAttachment } from "./attachments";
 import {
   composeProductConfirmationInvitation,

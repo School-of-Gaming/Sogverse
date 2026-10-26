@@ -1,3 +1,5 @@
+import { readFileSync } from "node:fs";
+import { join } from "node:path";
 import { describe, it, expect } from "vitest";
 import enProductDetail from "@/../messages/en/productDetail.json";
 import enTopicPrep from "@/../messages/en/topicPrep.json";
@@ -7,11 +9,11 @@ import {
   PRODUCT_TOPIC_VALUES,
   TOPIC_FILTER_CHIPS,
   platformForTopic,
-  resolveTopicPrep,
   topicHasInfoCard,
   topicHasPrep,
   type TopicMeta,
 } from "@/lib/products/topics";
+import { resolveTopicPrep } from "@/lib/products/topic-prep";
 import { SUPPORTED_GAME_PLATFORMS } from "@/lib/constants/game-platforms";
 
 const messages = { productDetail: enProductDetail, topicPrep: enTopicPrep };
@@ -518,5 +520,19 @@ describe("product topics", () => {
     // Chip keys feed React lists and the URL membership check.
     const keys = TOPIC_FILTER_CHIPS.map((c) => c.key);
     expect(new Set(keys).size).toBe(keys.length);
+  });
+});
+
+// The screenshot preset (scripts/preview-export/presets/topic-copy.mjs) loads topics.ts with plain Node, which cannot resolve a value import.
+describe("topics.ts loads under plain Node", () => {
+  it("has only type-only imports", () => {
+    const source = readFileSync(
+      join(process.cwd(), "src/lib/products/topics.ts"),
+      "utf8",
+    );
+    const imports = source.match(/^import[^;]*;/gm) ?? [];
+    for (const statement of imports) {
+      expect(statement.startsWith("import type "), statement).toBe(true);
+    }
   });
 });

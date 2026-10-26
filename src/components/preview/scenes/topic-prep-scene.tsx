@@ -5,9 +5,9 @@ import { TopicPrepContent } from "@/components/topic-prep/TopicPrepContent";
 import {
   PRODUCT_TOPICS,
   PRODUCT_TOPIC_VALUES,
-  resolveTopicPrep,
   topicHasPrep,
 } from "@/lib/products/topics";
+import { resolveTopicPrep } from "@/lib/products/topic-prep";
 import type { DeliveryMode, ProductTopic } from "@/types";
 
 /**
