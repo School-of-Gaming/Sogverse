@@ -11,6 +11,7 @@ import {
   findGeduContractAcceptance,
   GEDU_CONTRACT_CURRENT_VERSION,
 } from "@/components/gedu/contract/documents";
+import { useKlaviyoSyncObservation } from "@/services/klaviyo-sync/klaviyo-sync.queries";
 import { useUserList } from "@/services/users/users.queries";
 import type { UserListEntry } from "@/services/users/users.contracts";
 import {
@@ -49,6 +50,13 @@ export default function AdminUsersPage() {
     spokenLanguage: null,
   });
   const acceptances = useGeduContractAcceptanceMap();
+
+  // Opening this page is the Klaviyo sync's observation point: it kicks a
+  // stuck outbox row and says whether any are parked.
+  const klaviyo = useKlaviyoSyncObservation();
+  const parkedKlaviyoRows = klaviyo.data
+    ? klaviyo.data.parkedProfiles + klaviyo.data.parkedEvents
+    : 0;
 
   const rows = list.data?.rows ?? [];
 
@@ -102,9 +110,19 @@ export default function AdminUsersPage() {
     <div className="space-y-6" data-reserve-scroll-gutter>
       <div>
         <Heading level={1} step="section">{t('title')}</Heading>
-        <p className="text-muted-foreground">
-          {t('manageAccounts')}
-        </p>
+        {/* The parked line arrives a round trip after the page, so it sits at
+            the end of this row, in its slack, where its arrival moves nothing
+            painted. Keep it last. */}
+        <div className="flex items-baseline gap-4">
+          <p className="text-muted-foreground">
+            {t('manageAccounts')}
+          </p>
+          {parkedKlaviyoRows > 0 && (
+            <p className="ml-auto text-right text-sm text-muted-foreground">
+              {t('klaviyoParked', { count: parkedKlaviyoRows })}
+            </p>
+          )}
+        </div>
       </div>
 
       <Card>

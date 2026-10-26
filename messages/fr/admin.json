@@ -1463,6 +1463,7 @@
   "users": {
     "title": "Utilisateurs",
     "manageAccounts": "Gérer les comptes utilisateurs et les rôles",
+    "klaviyoParked": "{count, plural, one {# mise à jour d’un parent n’a pas pu être envoyée à Klaviyo} other {# mises à jour de parents n’ont pas pu être envoyées à Klaviyo}}",
     "searchPlaceholder": "Rechercher par nom, e-mail, téléphone ou nom d’utilisateur de jeu…",
     "searchAriaLabel": "Rechercher des utilisateurs",
     "roleFilterLabel": "Rôle",

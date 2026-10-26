@@ -209,6 +209,8 @@ const TESTS = {
     "tests/integration/api/gedu-session-image-remove.test.ts",
   guideDownload: "tests/integration/api/guide-download.test.ts",
   helpRequests: "tests/integration/api/help-requests.test.ts",
+  klaviyoSyncObserve: "tests/integration/api/klaviyo-sync-observe.test.ts",
+  klaviyoSyncSync: "tests/integration/api/klaviyo-sync-sync.test.ts",
   landingSubscribe: "tests/integration/api/landing-pages-subscribe.test.ts",
   locationsSearch: "tests/integration/api/locations-search.test.ts",
   minecraftAccount: "tests/integration/api/minecraft-account.test.ts",
@@ -1203,6 +1205,35 @@ const ROUTE_REGISTRY: Record<string, RouteEntry> = {
     },
   },
 
+  // --- Klaviyo sync --------------------------------------------------------
+
+  "src/app/api/klaviyo-sync/observe/route.ts": {
+    adminClient:
+      "the due kick and the parked counts read the two Klaviyo outboxes, which grant the service role alone, and the kick function is granted to nobody else. The caller chooses nothing: it takes no input, answers only two counts, and the kick goes through the Vault-gated pg_net call a write makes",
+    handlers: {
+      POST: {
+        posture: { kind: "role-gated", roles: ["admin"] },
+        body: { kind: "none" },
+        test: TESTS.klaviyoSyncObserve,
+      },
+    },
+  },
+
+  "src/app/api/klaviyo-sync/sync/route.ts": {
+    handlers: {
+      POST: {
+        posture: {
+          kind: "api-key",
+          primitive: "verifyKlaviyoSyncRequest",
+          reason:
+            "pg_net calls it from the database; there is no session. The environment's KLAVIYO_SYNC_SECRET as a bearer token, compared in constant time, is the authorization, and an unset secret refuses everything. It only drains the Klaviyo outboxes and takes no input, so a caller can choose nothing about what is sent",
+        },
+        body: { kind: "none" },
+        test: TESTS.klaviyoSyncSync,
+      },
+    },
+  },
+
   // --- Landing pages -------------------------------------------------------
 
   "src/app/api/landing-pages/subscribe/route.ts": {
@@ -1770,6 +1801,8 @@ const NON_ROUTE_ADMIN_CLIENT_SITES: Record<string, string> = {
     "reads the Slack username and expiry of a Slack link token for the confirm page, which names the account before an admin links it; the token table is granted to the service role alone. The page calls it only past its admin gate, and it only reads: the token is spent by consume_slack_link_token on the admin's own session, behind the button's POST",
   "src/lib/discord-substitution.server.ts":
     "the Discord bot's /sub command acts for a gedu it knows only by the Discord user id on a signature-verified interaction, with no Sogverse session to act through. Every call is to a function granted to the service role alone that first resolves that id to the gedu account linked to it and refuses when there is none; past that, the reads and the filing are the very bodies the web reaches through auth.uid(), so the service role widens nothing but who the gedu is taken to be. The same holds for a substitution DM's Offer and Decline buttons. The one read that is not the web's is the notification snapshot a pressed DM is redrawn from, which carries the absence reason: the redraw reads only the pool's session facts and the presser's own answer from it",
+  "src/lib/klaviyo-sync/sync.server.ts":
+    "the Klaviyo sync runs with no caller at all — the outbox drain behind the sync route — and claims and finishes outbox rows and reads parent snapshots and events, all granted to the service role alone. It sends Klaviyo only what the contract maps from a snapshot, and deletes the profile of a parent the snapshot read no longer returns",
   "src/lib/substitution-notifications/sync.server.ts":
     "the notification sync runs with no caller at all — the outbox drain behind the sync route, or a button press after its own write — and reads a snapshot that carries the absence reason and writes the message tables, all granted to the service role alone. It sends only what the snapshot's own disclosure rules allow: the DMs carry the pool's session facts and nothing about the absent gedu, and the reason goes only to the staff Slack channel",
   "src/services/family/family.server.ts":

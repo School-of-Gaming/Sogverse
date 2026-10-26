@@ -315,7 +315,11 @@ profile to Klaviyo and subscribes it to the newsletter list; nothing is ever rea
 The list is single opt-in, so the reader is on it as soon as the route answers. A sign-up
 is not an account and never touches an account's marketing consent. The profile carries
 the address, the names given, the page's locale, the landing page's id, and the visit's
-UTM values only under marketing consent — nothing else. The section has no shared field
+UTM values only under marketing consent — nothing else. The two custom ones are named in
+the Klaviyo contract (`src/lib/klaviyo-sync/`): `Sogverse Newsletter Page` and
+`Sogverse Newsletter UTM Source` … `Term`, never the account sync's `Sogverse Signup …`
+names, because a subscriber who later opens an account is one Klaviyo profile carrying
+both. The section has no shared field
 but its background and its sticky side; its form copy, consent sentence included, is fixed
 copy in `landingSubscribe`, and the page writes only the ask. The route refuses a body
 without the ticked consent and a page whose published copy no longer holds the section,

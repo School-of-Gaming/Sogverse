@@ -30,7 +30,7 @@ vi.mock("next-intl", () => ({
   useTranslations: () => (key: string) => key,
 }));
 
-// The one read behind the rows, and the only other thing the page asks for:
+// The one read behind the rows, and the other thing the rows ask for:
 // contract acceptance, which lands after them and which these cases leave
 // answered-and-empty so no warning mark is in question.
 const fetchNextPage = vi.fn(() => Promise.resolve());
@@ -46,6 +46,11 @@ vi.mock("@/services/gedu/gedu-contract.queries", () => ({
     isError: false,
     isPending: false,
   }),
+}));
+
+// The Klaviyo sync's observation, which these cases are not about: nothing parked.
+vi.mock("@/services/klaviyo-sync/klaviyo-sync.queries", () => ({
+  useKlaviyoSyncObservation: () => ({ data: { parkedProfiles: 0, parkedEvents: 0 } }),
 }));
 
 // Real UUIDs, hardcoded: every row draws an identicon from the id's hex bytes,

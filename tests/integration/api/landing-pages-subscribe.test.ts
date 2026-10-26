@@ -155,9 +155,9 @@ describe("POST /api/landing-pages/subscribe", () => {
           last_name: "Virtanen",
           locale: "fi",
           properties: {
-            landing_page_id: PAGE,
-            utm_source: "newsletter",
-            utm_campaign: "autumn",
+            "Sogverse Newsletter Page": PAGE,
+            "Sogverse Newsletter UTM Source": "newsletter",
+            "Sogverse Newsletter UTM Campaign": "autumn",
           },
         },
       },
@@ -209,7 +209,7 @@ describe("POST /api/landing-pages/subscribe", () => {
   ])("sends no UTM values with %s", async (_, headers) => {
     await POST(request(VALID, headers));
     expect(profileSent().properties).toEqual({
-      landing_page_id: PAGE,
+      "Sogverse Newsletter Page": PAGE,
     });
   });
 
@@ -221,8 +221,8 @@ describe("POST /api/landing-pages/subscribe", () => {
       ),
     );
     const properties = profileSent().properties;
-    expect(properties).toMatchObject({ utm_medium: "email" });
-    expect(properties).not.toHaveProperty("utm_source");
+    expect(properties).toMatchObject({ "Sogverse Newsletter UTM Medium": "email" });
+    expect(properties).not.toHaveProperty(["Sogverse Newsletter UTM Source"]);
   });
 
   it("answers a known address exactly as a new one", async () => {
