@@ -22,8 +22,10 @@ import {
   buttonTarget,
   LANDING_SECTION_TYPES,
   LANDING_STICKY_TYPES,
+  landingSection,
   landingSectionBackground,
   landingSections,
+  landingStructureProblem,
   missingInLandingVersion,
   type LandingSection,
 } from "@/lib/landing-pages/sections";
@@ -35,6 +37,7 @@ import { asObject } from "../helpers/json";
 import { backgroundCases } from "../helpers/landing-background-cases";
 import { BUTTON_TARGET_CASES } from "../helpers/landing-button-cases";
 import { everySection, requiredTextCases } from "../helpers/landing-required-text-cases";
+import { inTurn } from "../helpers/in-turn";
 
 /**
  * Landing pages: `landing_pages` (a page's admin-only working copy, holding
@@ -89,8 +92,9 @@ const ENTRIES = [PIC_A, PIC_B, PRODUCT_PICTURE, PIC_DOOMED, PIC_DOOMED_TOO, SQUA
 const LISTED = "00000000-0000-0000-0000-00000000083c";
 const UNLISTED = "00000000-0000-0000-0000-00000000083e";
 const ENDED = "00000000-0000-0000-0000-00000000083f";
-/** A product id that must NEVER exist. */
+/** Product ids that must NEVER exist. */
 const NO_PRODUCT = "00000000-0000-0000-0000-00000000083d";
+const NO_PRODUCT_TOO = "00000000-0000-0000-0000-0000000008ff";
 const PICKS = "00000000-0000-4000-8000-0000000008a8";
 
 /** Section and item ids inside the fixture structures. */
@@ -212,26 +216,19 @@ describe("landing pages", () => {
   }
 
   /**
-   * The whole save, `save_landing_page` — what `create_landing_page` runs in
-   * SQL: the structure and the version set together, the set replacing what is
-   * stored. No application writer sends it, so it is called here directly.
+   * A page's structure, then each named version, through the structure and
+   * one-language writers the application sends — the whole save
+   * (`save_landing_page`) is internal to create and clone.
    */
-  async function saveWhole(
+  async function writePage(
     id: string,
     page: {
       sections: LandingSection[];
-      versions: { locale: string; title: string; summary: string; slug: string; sectionTexts: Json }[];
+      versions: Parameters<LandingPageService["saveVersion"]>[1][];
     },
   ) {
-    const { error } = await adminAuth.rpc("save_landing_page", {
-      p_id: id,
-      p_sections: page.sections,
-      p_versions: page.versions.map(({ sectionTexts, ...rest }) => ({
-        ...rest,
-        section_texts: sectionTexts,
-      })),
-    });
-    if (error) throw error;
+    await service.saveStructure(id, page.sections);
+    for (const each of page.versions) await service.saveVersion(id, each);
   }
 
   async function draftVersions(id: string) {
@@ -278,16 +275,14 @@ describe("landing pages", () => {
   describe("the required-text rule", () => {
     it("answers in SQL exactly what it answers in TypeScript, on every case", async () => {
       const cases = requiredTextCases();
-      const answers = await Promise.all(
-        cases.map((testCase) =>
-          admin.rpc("landing_version_missing", {
-            p_sections: testCase.sections,
-            p_title: testCase.title,
-            p_summary: testCase.summary,
-            p_slug: testCase.slug,
-            p_section_texts: testCase.sectionTexts,
-          }),
-        ),
+      const answers = await inTurn(cases, (testCase) =>
+        admin.rpc("landing_version_missing", {
+          p_sections: testCase.sections,
+          p_title: testCase.title,
+          p_summary: testCase.summary,
+          p_slug: testCase.slug,
+          p_section_texts: testCase.sectionTexts,
+        }),
       );
       cases.forEach((testCase, index) => {
         const { data, error } = answers[index];
@@ -314,8 +309,8 @@ describe("landing pages", () => {
         const parsed = buttonTarget.safeParse(testCase.target);
         return { ...testCase, accepted: parsed.success, stored: parsed.success ? parsed.data : testCase.target };
       });
-      const answers = await Promise.all(
-        cases.map((testCase) => admin.rpc("landing_button_is_valid", { p_button: testCase.stored })),
+      const answers = await inTurn(cases, (testCase) =>
+        admin.rpc("landing_button_is_valid", { p_button: testCase.stored }),
       );
       cases.forEach((testCase, index) => {
         const { data, error } = answers[index];
@@ -336,10 +331,8 @@ describe("landing pages", () => {
           stored: parsed.success ? parsed.data : testCase.sections,
         };
       });
-      const answers = await Promise.all(
-        cases.map((testCase) =>
-          admin.rpc("landing_sections_problem", { p_sections: testCase.stored }),
-        ),
+      const answers = await inTurn(cases, (testCase) =>
+        admin.rpc("landing_sections_problem", { p_sections: testCase.stored }),
       );
       cases.forEach((testCase, index) => {
         const { data, error } = answers[index];
@@ -374,30 +367,17 @@ describe("landing pages", () => {
       ]);
     });
 
-    it("reads as default on a section stored without one, in the working and the published copy", async () => {
+    it("is refused on a section saved without one, naming the section by its number", async () => {
       await reseed();
-      // A structure written before sections had a background: no section names one.
-      const bare = [
-        { id: HERO, type: "hero", imageId: PIC_A },
-        { id: CTA, type: "cta", button: { kind: "internal", path: "/shop" } },
-      ];
-      const stored = await admin.from("landing_pages").update({ sections: bare }).eq("id", PAGE_A);
-      expect(stored.error).toBeNull();
-      expect((await admin.rpc("landing_sections_problem", { p_sections: bare })).data).toBeNull();
-
-      const draft = await service.getAdminPage(PAGE_A);
-      expect(draft?.draft.sections.map(landingSectionBackground)).toEqual(["default", "default"]);
-
-      await service.publishPage(PAGE_A);
-      const { data: published } = await admin
-        .from("landing_page_publications")
-        .select("sections")
-        .eq("page_id", PAGE_A)
-        .single();
-      expect(published?.sections).toEqual(bare);
-      const live = await new LandingPageService(anon).getPublishedPage(PAGE_A);
-      expect(live?.sections.map(landingSectionBackground)).toEqual(["default", "default"]);
-      await service.unpublishPage(PAGE_A);
+      const { error } = await adminAuth.rpc("save_landing_page_structure", {
+        p_id: PAGE_A,
+        p_sections: [
+          { id: HERO, type: "hero", imageId: PIC_A },
+          { id: CTA, type: "cta", button: { kind: "internal", path: "/shop" } },
+        ],
+      });
+      expect(error?.code).toBe("23514");
+      expect(error?.message).toBe("Section 2 needs its background, default or card");
     });
   });
 
@@ -446,10 +426,9 @@ describe("landing pages", () => {
     });
 
     it("refuses a section of no known type, and a picture that is not a uuid", async () => {
-      const unknown = await adminAuth.rpc("save_landing_page", {
+      const unknown = await adminAuth.rpc("save_landing_page_structure", {
         p_id: PAGE_A,
         p_sections: [...structure(null), { id: GALLERY, type: "video" }],
-        p_versions: [{ locale: "en", title: "T" }],
       });
       expect(unknown.error?.code).toBe("23514");
       const badPicture = await adminAuth.rpc("save_landing_page_structure", {
@@ -492,16 +471,19 @@ describe("landing pages", () => {
           ),
         { name: "no sticky section", structure: sections },
       ];
-      const answers = await Promise.all(
-        cases.map((testCase) =>
-          admin.rpc("landing_sections_problem", { p_sections: testCase.structure }),
-        ),
+      const answers = await inTurn(cases, (testCase) =>
+        admin.rpc("landing_sections_problem", { p_sections: testCase.structure }),
       );
+      // Both halves refuse with the same sentence, word for word, a section
+      // named by its number from one.
       cases.forEach((testCase, index) => {
         const { data, error } = answers[index];
         expect(error, testCase.name).toBeNull();
         expect(data === null, testCase.name).toBe(
           landingSections.safeParse(testCase.structure).success,
+        );
+        expect(data, testCase.name).toBe(
+          landingStructureProblem(landingSection.array().parse(testCase.structure)),
         );
       });
       // A lone sticky section is accepted on some types and refused on others.
@@ -515,8 +497,21 @@ describe("landing pages", () => {
           testCase.name.endsWith(`and another on the ${second}`) ? [answers[index].data] : [],
         );
       expect(new Set(pairs("right"))).toEqual(new Set([null]));
+      // The second is named by its number, with the side and the first's.
       expect(new Set(pairs("left"))).toEqual(
-        new Set(["A page has at most one sticky section on each side"]),
+        new Set(
+          sections
+            .flatMap((section, at) => (LANDING_STICKY_TYPES.includes(section.type) ? [at + 1] : []))
+            .map(
+              (first) =>
+                `Section ${sections.length + 1}: a page has at most one sticky section on each side, and section ${first} is already sticky on the left`,
+            ),
+        ),
+      );
+      // A type not allowed is named by its number, the allowed by their keys.
+      const faqAt = sections.findIndex((section) => section.type === "faq");
+      expect(answers[faqAt].data).toBe(
+        `Section ${faqAt + 1}: only a section of type guide, subscribe or cta can be sticky`,
       );
 
       const [allowed] = sections.filter((section) => LANDING_STICKY_TYPES.includes(section.type));
@@ -524,7 +519,9 @@ describe("landing pages", () => {
       const { data: sideProblem } = await admin.rpc("landing_sections_problem", {
         p_sections: side,
       });
-      expect(sideProblem).toBe(`The sticky side of section ${allowed.id} is left or right`);
+      expect(sideProblem).toBe(
+        `The sticky side of section ${sections.indexOf(allowed) + 1} is left or right`,
+      );
       expect(landingSections.safeParse(side).success).toBe(false);
     });
 
@@ -540,28 +537,7 @@ describe("landing pages", () => {
       expect(error?.message).toContain(GALLERY);
     });
 
-    it("replaces the version set whole, removing a language left out", async () => {
-      await reseed();
-      await saveWhole(PAGE_A, {
-        sections: structure(),
-        versions: [version("en", SLUG_A), version("fi", "fixture-landing-a-fi")],
-      });
-      expect((await draftVersions(PAGE_A)).map((v) => v.locale)).toEqual(["en", "fi"]);
-
-      await saveWhole(PAGE_A, {
-        sections: structure(),
-        versions: [version("fi", "fixture-landing-a-fi")],
-      });
-      expect((await draftVersions(PAGE_A)).map((v) => v.locale)).toEqual(["fi"]);
-    });
-
     it("refuses an id no page has", async () => {
-      const { error } = await adminAuth.rpc("save_landing_page", {
-        p_id: PAGE_MISSING,
-        p_sections: structure(null),
-        p_versions: [{ locale: "en", title: "T" }],
-      });
-      expect(error?.code).toBe("P0002");
       const structureOnly = await adminAuth.rpc("save_landing_page_structure", {
         p_id: PAGE_MISSING,
         p_sections: structure(null),
@@ -677,14 +653,14 @@ describe("landing pages", () => {
       expect((await draftVersions(PAGE_A))[0].slug).toBe("fixture-landing-a-renamed");
     });
 
-    it("writes a language again after a whole save removed it while live, its live slug still held from other pages", async () => {
+    it("writes a language again after its removal while live, its live slug still held from other pages", async () => {
       await reseed();
-      await saveWhole(PAGE_A, {
+      await writePage(PAGE_A, {
         sections: structure(),
         versions: [version("en", SLUG_A), version("fi", "fixture-landing-a-fi")],
       });
       await service.publishPage(PAGE_A);
-      await saveWhole(PAGE_A, { sections: structure(), versions: [version("en", SLUG_A)] });
+      await service.removeVersion(PAGE_A, "fi");
 
       // Another page cannot take the address the live Finnish version holds.
       const taken = await adminAuth.rpc("save_landing_page_version", {
@@ -722,7 +698,7 @@ describe("landing pages", () => {
   describe("partial writes", () => {
     it("a structure save drops a removed section's words from every language", async () => {
       await reseed();
-      await saveWhole(PAGE_A, {
+      await writePage(PAGE_A, {
         sections: structure(),
         versions: [version("en", SLUG_A), version("fi", "fixture-landing-a-fi")],
       });
@@ -738,7 +714,7 @@ describe("landing pages", () => {
       await reseed();
       await service.saveStructure(PAGE_A, [
         ...structure(),
-        { id: FAQ, type: "faq", items: [{ id: FAQ_1 }] },
+        { id: FAQ, type: "faq", background: "default", items: [{ id: FAQ_1 }] },
       ]);
       const [en] = await draftVersions(PAGE_A);
       expect(en.is_complete).toBe(false);
@@ -764,7 +740,7 @@ describe("landing pages", () => {
 
     it("a one-language save touches no other language and not the structure", async () => {
       await reseed();
-      await saveWhole(PAGE_A, {
+      await writePage(PAGE_A, {
         sections: structure(),
         versions: [version("en", SLUG_A), version("fi", "fixture-landing-a-fi")],
       });
@@ -885,7 +861,7 @@ describe("landing pages", () => {
 
     it("puts every complete version live at once and leaves an incomplete one out", async () => {
       await reseed();
-      await saveWhole(PAGE_A, {
+      await writePage(PAGE_A, {
         sections: structure(),
         versions: [
           version("en", SLUG_A),
@@ -961,11 +937,6 @@ describe("landing pages", () => {
             p_sections: structure(null),
             p_versions: [{ locale: "en", title: "T" }],
           }),
-          client.rpc("save_landing_page", {
-            p_id: PAGE_A,
-            p_sections: structure(null),
-            p_versions: [{ locale: "en", title: "T" }],
-          }),
           client.rpc("save_landing_page_structure", { p_id: PAGE_A, p_sections: structure(null) }),
           client.rpc("save_landing_page_version", { p_id: PAGE_A, p_locale: "en", p_title: "T" }),
           client.rpc("remove_landing_page_version", { p_id: PAGE_A, p_locale: "fi" }),
@@ -980,6 +951,16 @@ describe("landing pages", () => {
         expect(data).toEqual([]);
       });
     }
+
+    it("keeps the whole save internal to create and clone: not even an admin may call it", async () => {
+      await reseed();
+      const { error } = await adminAuth.rpc("save_landing_page", {
+        p_id: PAGE_A,
+        p_sections: structure(),
+        p_versions: [version("en", SLUG_A)],
+      });
+      expect(error?.code).toBe("42501");
+    });
 
     it("lets anon read the published copy and nothing of the working one", async () => {
       await reseed();
@@ -1063,6 +1044,35 @@ describe("landing pages", () => {
         p_versions: [{ locale: "en", title: "Fixture: no product" }],
       });
       expect(created.error?.code).toBe("23503");
+      const { data } = await admin.from("landing_pages").select("sections").eq("id", PAGE_A).single();
+      expect(data?.sections).toEqual(structure());
+    });
+
+    it("names every pick no product has in one refusal, by section and in order", async () => {
+      await reseed();
+      const oneSection = await adminAuth.rpc("save_landing_page_structure", {
+        p_id: PAGE_A,
+        p_sections: withPicks([NO_PRODUCT_TOO, LISTED, NO_PRODUCT]),
+      });
+      expect(oneSection.error?.code).toBe("23503");
+      expect(oneSection.error?.message).toBe(
+        `No product has these ids: section 2 picks ${NO_PRODUCT_TOO} and ${NO_PRODUCT}`,
+      );
+
+      const [hero, picks, cta] = withPicks([NO_PRODUCT]);
+      const twoSections = await adminAuth.rpc("save_landing_page_structure", {
+        p_id: PAGE_A,
+        p_sections: [
+          hero,
+          picks,
+          cta,
+          { id: "00000000-0000-4000-8000-0000000008a9", type: "products", background: "default", productIds: [LISTED, NO_PRODUCT_TOO] },
+        ],
+      });
+      expect(twoSections.error?.code).toBe("23503");
+      expect(twoSections.error?.message).toBe(
+        `No product has these ids: section 2 picks ${NO_PRODUCT}; section 4 picks ${NO_PRODUCT_TOO}`,
+      );
       const { data } = await admin.from("landing_pages").select("sections").eq("id", PAGE_A).single();
       expect(data?.sections).toEqual(structure());
     });
@@ -1179,6 +1189,11 @@ describe("landing pages", () => {
         p_sections: structure(PAGE_MISSING),
       });
       expect(gone.error?.code).toBe("23503");
+      // True of an id that never existed as of one removed since it was chosen.
+      expect(gone.error?.message).toBe(`No picture in the catalogue has the id ${PAGE_MISSING}`);
+      expect(product.error?.message).toBe(
+        `The picture ${PRODUCT_PICTURE} is a product picture, and a landing page shows only landing pictures`,
+      );
     });
 
     it("a replace moves both copies' pictures, a live page's without a republish", async () => {
@@ -1217,7 +1232,7 @@ describe("landing pages", () => {
         background: "default",
         images: [{ id: SHOT_1, imageId: PIC_DOOMED_TOO }],
       };
-      await saveWhole(PAGE_A, {
+      await writePage(PAGE_A, {
         sections: [...structure(PIC_DOOMED), gallery],
         versions: [
           {
@@ -1253,6 +1268,7 @@ describe("landing pages", () => {
         {
           id: GALLERY,
           type: "image",
+          background: "default",
           images: [
             { id: SHOT_1, imageId: PIC_DOOMED_TOO },
             { id: SHOT_2, imageId: PIC_B },
@@ -1310,6 +1326,8 @@ describe("landing pages", () => {
           p_share_image_id: shareImageId,
         });
         expect(error?.code).toBe(code);
+        expect(error?.message).toContain(shareImageId);
+        expect(error?.message).not.toContain("catalogue_images");
         const created = await adminAuth.rpc("create_landing_page", {
           p_sections: structure(null),
           p_versions: [{ locale: "en", title: "Fixture share", share_image_id: shareImageId }],
@@ -1598,12 +1616,13 @@ describe("landing pages", () => {
       } else {
         expect(error?.code).toBe("23514");
         expect(error?.message).toContain("must be wide 16:9");
+        expect(error?.message).toContain(`and the picture ${OF_SHAPE[shape]} is`);
       }
     });
 
     it("derives each picture's purpose beside its path into both copies", async () => {
       await reseed();
-      await saveWhole(PAGE_A, {
+      await writePage(PAGE_A, {
         sections: [
           ...structure(),
           { id: GALLERY, type: "image", background: "default", images: [{ id: SHOT_1, imageId: PORTRAIT }] },
@@ -1632,6 +1651,7 @@ describe("landing pages", () => {
           {
             id: GALLERY,
             type: "image",
+            background: "default",
             images: [
               { id: SHOT_1, imageId: SQUARE },
               { id: SHOT_2, imageId: PIC_B },
@@ -1641,7 +1661,8 @@ describe("landing pages", () => {
       });
       expect(error?.code).toBe("23514");
       expect(error?.message).toContain("must all be one shape");
-      expect(error?.message).toContain("a square 1:1 picture beside a wide 16:9 one");
+      expect(error?.message).toContain(`in section 3 the picture ${PIC_B} is wide 16:9 beside a square 1:1 one`);
+      expect(error?.message).not.toContain("catalogue_images");
       const view = await service.getAdminPage(PAGE_A);
       expect(view?.draft.sections).toEqual(structure());
     });
@@ -1669,6 +1690,7 @@ describe("landing pages", () => {
         {
           id: GALLERY,
           type: "image",
+          background: "default",
           images: [
             { id: SHOT_1, imageId: SQUARE },
             { id: SHOT_2, imageId: SQUARE_TOO },
@@ -1693,7 +1715,7 @@ describe("landing pages", () => {
       await reseed();
       await service.saveStructure(PAGE_A, [
         ...structure(),
-        { id: GALLERY, type: "text", imageSide: "end", imageId: SQUARE_TOO },
+        { id: GALLERY, type: "text", background: "default", imageSide: "end", imageId: SQUARE_TOO },
       ]);
       const removed = await adminAuth.from("catalogue_images").delete().eq("id", SQUARE_TOO);
       expect(removed.error).toBeNull();
@@ -1754,19 +1776,22 @@ describe("landing pages", () => {
       await admin.from("guides").delete().eq("id", GUIDE);
     });
 
-    /** One section of every type, every item-bearing one with its items. */
+    /**
+     * One section of every type, every item-bearing one with its items, on
+     * both backgrounds, with a sticky section on each side.
+     */
     const RICH: LandingSection[] = [
       { id: S_HERO, type: "hero", imageId: PIC_A, button: { kind: "internal", path: "/shop" } },
-      { id: S_TEXT, type: "text", background: "default", imageId: PIC_B, imageSide: "end" },
+      { id: S_TEXT, type: "text", background: "card", imageId: PIC_B, imageSide: "end" },
       { id: S_GALLERY, type: "image", background: "default", images: [{ id: item(1), imageId: PIC_A }, { id: item(2), imageId: PIC_B }] },
       { id: S_POINTS, type: "points", background: "default", items: [{ id: item(3), icon: "star" }, { id: item(4), icon: "rocket" }] },
       { id: S_STEPS, type: "steps", background: "default", items: [{ id: item(5) }, { id: item(6) }] },
       { id: S_FAQ, type: "faq", background: "default", items: [{ id: item(7) }] },
       { id: S_QUOTE, type: "testimonials", background: "default", arrangement: "feature", testimonialIds: [TESTIMONIAL] },
       { id: S_PICKS, type: "products", background: "default", productIds: [PICKED] },
-      { id: S_GUIDE, type: "guide", background: "default", guideId: GUIDE, imageId: PIC_B },
+      { id: S_GUIDE, type: "guide", background: "default", guideId: GUIDE, imageId: PIC_B, sticky: "left" },
       { id: S_SUBSCRIBE, type: "subscribe", background: "default" },
-      { id: S_CTA, type: "cta", background: "default", button: { kind: "internal", path: "/shop" } },
+      { id: S_CTA, type: "cta", background: "card", button: { kind: "internal", path: "/shop" }, sticky: "right" },
     ];
 
     /** Every word of `RICH` in one language, each naming where it belongs. */
@@ -1849,6 +1874,22 @@ describe("landing pages", () => {
       const rekey = (value: unknown): unknown =>
         JSON.parse(from.reduce((json, id, n) => json.replaceAll(id, to[n]), JSON.stringify(value)));
       expect(clone.draft.sections).toEqual(rekey(source.draft.sections));
+      // The backgrounds and the sticky sides come with it, and the copy is a
+      // structure both halves of the structure rule accept.
+      expect(
+        clone.draft.sections.map((section) => [landingSectionBackground(section), section.sticky ?? null]),
+      ).toEqual(RICH.map((section) => [landingSectionBackground(section), section.sticky ?? null]));
+      expect(clone.draft.sections.map((section) => section.sticky)).toEqual(
+        expect.arrayContaining(["left", "right"]),
+      );
+      expect(clone.draft.sections.map(landingSectionBackground)).toEqual(
+        expect.arrayContaining(["default", "card"]),
+      );
+      expect(landingSections.safeParse(clone.draft.sections).success).toBe(true);
+      const { data: cloneProblem } = await admin.rpc("landing_sections_problem", {
+        p_sections: clone.draft.sections,
+      });
+      expect(cloneProblem).toBeNull();
       expect(clone.draft.versions.map((v) => v.locale)).toEqual(["en", "fi"]);
       for (const [n, copy] of clone.draft.versions.entries()) {
         const original = source.draft.versions[n];

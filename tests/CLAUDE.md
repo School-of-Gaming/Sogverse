@@ -184,6 +184,11 @@ Shared helpers and constants live in `tests/db/`:
 The deterministic `TEST_IDS` (and the credentials/seed values) must stay in sync with
 `supabase/seed.sql` — they're the same fixtures viewed from two sides.
 
+**A DB test that asks the database once per generated case goes through the bounded
+helper in `tests/helpers/` (four at a time), never a `Promise.all` over the whole list.**
+Each in-flight call opens its own connection on a freshly built stack and queues for a
+database session, so the test's time then measures the machine rather than the cases.
+
 ## Integration test conventions
 
 Integration tests import route handlers directly and call them with mock `Request`

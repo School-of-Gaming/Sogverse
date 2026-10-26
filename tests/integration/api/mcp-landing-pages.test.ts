@@ -46,6 +46,7 @@ const landing = {
   removeVersion: vi.fn(),
   publishPage: vi.fn(),
   unpublishPage: vi.fn(),
+  listPlacedGuideLabels: vi.fn(),
 };
 vi.mock("@/services/landing-pages/landing-pages.service", () => ({
   LandingPageService: vi.fn(() => landing),
@@ -255,6 +256,7 @@ beforeEach(() => {
   mockMaybeSingle.mockResolvedValue({ data: { role: "admin" }, error: null });
   for (const method of Object.values(landing)) method.mockReset();
   landing.getAdminPage.mockResolvedValue(PAGE);
+  landing.listPlacedGuideLabels.mockResolvedValue({});
   // A write answers its id and the links it stored elsewhere: none, unless a case says.
   landing.createPage.mockResolvedValue({ id: ID, linkRewrites: [] });
   landing.saveStructure.mockResolvedValue({ id: ID, linkRewrites: [] });
@@ -297,6 +299,18 @@ describe("reading", () => {
         },
       ],
     });
+  });
+
+  it("gives a page that is not live no unpublished changes either way: null, not false", async () => {
+    landing.listAdminPages.mockResolvedValue([{ ...LIST_ITEM, isPublished: false }]);
+    landing.getAdminPage.mockResolvedValue({ ...PAGE, publication: null, hasUnpublishedChanges: false });
+
+    const list = await tool("list_landing_pages");
+    expect(list.structuredContent).toMatchObject({
+      pages: [{ live: false, hasUnpublishedChanges: null }],
+    });
+    const read = await tool("get_landing_page", { pageId: ID });
+    expect(read.structuredContent).toMatchObject({ live: null, hasUnpublishedChanges: null });
   });
 
   it("reads one page whole, with addresses, completeness and what a publish would do", async () => {
@@ -345,7 +359,7 @@ describe("reading", () => {
     expect(resultText(result)).toContain(`Picture ${CASTLE} (wide 16:9): ${BUCKET}/castle.jpg`);
   });
 
-  it("reports each products section's picks, shown or not and why", async () => {
+  it("reports each products section's picks, whether each would be drawn and why not", async () => {
     const PICKS = "a1000000-0000-4000-8000-000000000005";
     const CLUB = "c3000000-0000-4000-8000-000000000001";
     const CAMP = "c3000000-0000-4000-8000-000000000002";
@@ -379,19 +393,41 @@ describe("reading", () => {
       {
         section: "section 5 (Products)",
         sectionId: PICKS,
-        shown: 1,
+        drawnPicks: 1,
         picked: 2,
         drawn: true,
         picks: [
-          { productId: CLUB, names: [{ locale: "en", name: "Autumn club" }], shown: true, notShownBecause: [] },
+          { productId: CLUB, names: [{ locale: "en", name: "Autumn club" }], drawn: true, notDrawnBecause: [] },
           {
             productId: CAMP,
             names: [{ locale: "en", name: "Summer camp" }],
-            shown: false,
-            notShownBecause: ["it is unlisted", "its term has ended"],
+            drawn: false,
+            notDrawnBecause: ["it is unlisted", "its term has ended"],
           },
         ],
       },
+    ]);
+  });
+
+  it("names each guide section's guide by its label, read once for the working copy", async () => {
+    const OFFER = "a1000000-0000-4000-8000-000000000006";
+    const SIDEBAR = "a1000000-0000-4000-8000-000000000007";
+    const PARENTS = "d4000000-0000-4000-8000-000000000001";
+    const sections: AdminLandingPage["draft"]["sections"] = [
+      ...PAGE.draft.sections,
+      { id: OFFER, type: "guide", background: "default", guideId: PARENTS },
+      { id: SIDEBAR, type: "guide", background: "default", guideId: PARENTS, sticky: "right" },
+    ];
+    landing.getAdminPage.mockResolvedValue({ ...PAGE, draft: { ...PAGE.draft, sections } });
+    landing.listPlacedGuideLabels.mockResolvedValue({ [PARENTS]: "Parents' guide 2026" });
+
+    const result = await tool("get_landing_page", { pageId: ID });
+
+    expect(landing.listPlacedGuideLabels).toHaveBeenCalledTimes(1);
+    expect(landing.listPlacedGuideLabels).toHaveBeenCalledWith(sections);
+    expect(result.structuredContent?.guides).toEqual([
+      { section: "section 5 (Guide)", sectionId: OFFER, guideId: PARENTS, label: "Parents' guide 2026" },
+      { section: "section 6 (Guide)", sectionId: SIDEBAR, guideId: PARENTS, label: "Parents' guide 2026" },
     ]);
   });
 
@@ -958,7 +994,7 @@ describe("cloning", () => {
     const result = await tool("clone_landing_page", { pageId: ID });
 
     expect(result.isError).toBe(true);
-    expect(resultText(result)).toBe(sentence);
+    expect(resultText(result)).toBe(`Nothing was saved: ${sentence}`);
   });
 
   it("tells the AI app a clone is a structure to rewrite, never a page to publish as it is", async () => {
@@ -1012,6 +1048,26 @@ describe("saving", () => {
         { locale: "fi", complete: false },
       ],
     });
+  });
+
+  it("names the guide a saved guide section offers, read from the saved structure", async () => {
+    const OFFER = "a1000000-0000-4000-8000-000000000006";
+    const PARENTS = "d4000000-0000-4000-8000-000000000001";
+    const sections: AdminLandingPage["draft"]["sections"] = [
+      PAGE.draft.sections[0],
+      { id: OFFER, type: "guide", background: "default", guideId: PARENTS },
+    ];
+    landing.getAdminPage
+      .mockResolvedValueOnce(PAGE)
+      .mockResolvedValueOnce({ ...PAGE, draft: { ...PAGE.draft, sections } });
+    landing.listPlacedGuideLabels.mockResolvedValue({ [PARENTS]: "Parents' guide 2026" });
+
+    const result = await tool("save_landing_page_structure", { pageId: ID, sections });
+
+    expect(landing.listPlacedGuideLabels).toHaveBeenCalledWith(sections);
+    expect(result.structuredContent?.guides).toEqual([
+      { section: "section 2 (Guide)", sectionId: OFFER, guideId: PARENTS, label: "Parents' guide 2026" },
+    ]);
   });
 
   it("saves each section's background, adjacent card sections included, reading one left out as default", async () => {
@@ -1148,7 +1204,7 @@ describe("saving", () => {
       { id: PICKS, type: "products", background: "default", productIds: [GONE] },
     ]);
     expect(result.isError).toBe(true);
-    expect(resultText(result)).toBe(sentence);
+    expect(resultText(result)).toBe(`Nothing was saved: ${sentence}`);
   });
 
   it("refuses a products section with no picks before anything is sent", async () => {
@@ -1178,7 +1234,7 @@ describe("saving", () => {
     });
 
     expect(result.isError).toBe(true);
-    expect(resultText(result)).toBe(sentence);
+    expect(resultText(result)).toBe(`Nothing was saved: ${sentence}`);
   });
 
   it("answers anything else with a generic line", async () => {
@@ -1233,7 +1289,7 @@ describe("removing a language", () => {
     const result = await tool("remove_landing_page_language", { pageId: ID, locale: "en" });
 
     expect(result.isError).toBe(true);
-    expect(resultText(result)).toBe(sentence);
+    expect(resultText(result)).toBe(`Nothing was saved: ${sentence}`);
   });
 
   it("answers an id no page has as a tool error, removing nothing", async () => {
@@ -1289,7 +1345,17 @@ describe("publishing", () => {
 
     const result = await tool("publish_landing_page", { pageId: ID });
 
-    expect(resultText(result)).toBe(sentence);
+    expect(resultText(result)).toBe(`Nothing changed on the site: ${sentence}`);
+  });
+
+  it("says nothing changed on the site when the database refuses an unpublish", async () => {
+    const sentence = "No landing page has that id";
+    landing.unpublishPage.mockRejectedValue(dbError("P0002", sentence));
+
+    const result = await tool("unpublish_landing_page", { pageId: ID });
+
+    expect(result.isError).toBe(true);
+    expect(resultText(result)).toBe(`Nothing changed on the site: ${sentence}`);
   });
 
   it("unpublishes, keeping the working copy", async () => {
@@ -1480,7 +1546,9 @@ describe("pictures", () => {
     });
 
     expect(result.isError).toBe(true);
-    expect(resultText(result)).toBe("An image section's pictures must all be one shape: wide 16:9 and square 1:1.");
+    expect(resultText(result)).toBe(
+      "Nothing was saved: An image section's pictures must all be one shape: wide 16:9 and square 1:1.",
+    );
   });
 
   it.each([
@@ -1892,8 +1960,8 @@ describe("testimonials sections", () => {
     });
 
     expect(result.isError).toBe(true);
-    expect(resultText(result)).toContain(
-      `Section 2 places the testimonial ${THREE}, and no testimonial has that id`,
+    expect(resultText(result)).toBe(
+      `Nothing was saved: Section 2 places the testimonial ${THREE}, and no testimonial has that id`,
     );
   });
 

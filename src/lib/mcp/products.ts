@@ -34,7 +34,7 @@ const LISTING =
   'listing says whether a landing page\'s products section shows the product now: "listed" is drawn; "ended" is not, its term being over, and never will be again; "hidden" is not, because the admin has unlisted it — it shows again if they list it.';
 
 const PICKING =
-  "A products section draws listed products of every type, municipality clubs included; a pick goes stale as terms end — the page then simply leaves its card out — and get_landing_page reports each products section's picks under productPicks, shown or not and why, for swapping in next term's products.";
+  "A products section draws listed products of every type, municipality clubs included; a pick goes stale as terms end — the page then simply leaves its card out — and get_landing_page reports the working copy's picks in each products section under productPicks, each with whether it would be drawn once the page is published and why not, for swapping in next term's products.";
 
 /**
  * The page a cursor resumes after, as the AI app carries it: opaque, so it is

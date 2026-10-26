@@ -11,7 +11,6 @@ import { createAnonClient } from "@/lib/supabase/anon";
 import { utmMetadataForConsent } from "@/lib/utm";
 import { LandingPageService } from "@/services/landing-pages/landing-pages.service";
 import {
-  LANDING_SUBSCRIBE_HONEYPOT,
   landingSubscribeBody,
   landingSubscribeResponse,
 } from "@/services/landing-pages/landing-subscribe.contracts";
@@ -29,8 +28,8 @@ import {
  * marketing consent. An address that had unsubscribed is subscribed again,
  * which is what Klaviyo's subscribe call does.
  *
- * **One answer for every sign-up that is not refused.** A new address, one
- * already on the list and a bot's all get the same 200, so the form cannot be
+ * **One answer for every sign-up that is not refused.** A new address and one
+ * already on the list get the same 200, so the form cannot be
  * used to learn who is on the list.
  *
  * **What is passed with the address**: the names that were given, the
@@ -41,24 +40,17 @@ import {
  *
  * **Two calls, both upserts**: the profile first, since the subscribe call
  * carries no name or property, then the subscription. Either failing — refused,
- * or unanswered within the client's timeout — answers 502, and a retry repeats both harmlessly. A filled honeypot gets the success
- * answer and nothing is sent. A misconfigured deployment (no key or list id)
+ * or unanswered within the client's timeout — answers 502, and a retry repeats both harmlessly. A misconfigured deployment (no key or list id)
  * refuses every sign-up rather than accepting it into nowhere.
  */
 export const POST = defineRoute({
   posture: "public",
   reason:
-    "a landing page's reader signs up for email with no account and no session. It stores nothing about them and writes the address to Klaviyo's single opt-in newsletter list, behind a honeypot, answering a new address and one already on the list identically so it reveals nothing about who is subscribed",
+    "a landing page's reader signs up for email with no account and no session. It stores nothing about them and writes the address to Klaviyo's single opt-in newsletter list, answering a new address and one already on the list identically so it reveals nothing about who is subscribed",
   body: landingSubscribeBody,
   response: landingSubscribeResponse,
 
   handler: async ({ request, body }) => {
-    // A person never sees the field, so anything in it is a bot. It is told
-    // what a person would be told, and nothing is sent.
-    if ((body[LANDING_SUBSCRIBE_HONEYPOT] ?? "") !== "") {
-      return { success: true as const };
-    }
-
     const configured = readSubscribeConfig();
     if (!configured.ok) {
       console.error(

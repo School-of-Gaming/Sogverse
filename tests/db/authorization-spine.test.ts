@@ -174,17 +174,17 @@ const ROLE_GATED_RPCS: Record<string, RoleGatedRpc> = {
   save_library_article_version: { permittedRoles: ["admin"] },
   set_library_article_category: { permittedRoles: ["admin"] },
   set_library_article_cover: { permittedRoles: ["admin"] },
-  // The writers of landing pages — whole, structure-only and one-language
-  // saves, a language's removal, create, clone, publish and unpublish — and
-  // the image catalogue's replace for their pictures. No landing page table
-  // carries a write grant for `authenticated`, so these are the only path in.
+  // The writers of landing pages — structure-only and one-language saves, a
+  // language's removal, create, clone, publish and unpublish — and the image
+  // catalogue's replace for their pictures. No landing page table carries a
+  // write grant for `authenticated`, so these are the only path in; the whole
+  // save, save_landing_page, is internal to create and clone and not exposed.
   // Past the admin guard, all-NULL arguments are refused with 22023 (create,
-  // clone, save, structure: not a JSON array), `check_violation` (the version: no
+  // clone, structure: not a JSON array), `check_violation` (the version: no
   // title), `no_data_found` (removal, publish, unpublish: no such page) or
   // `null_value_not_allowed` (repoint) — errors, but not the forbidden one.
   create_landing_page: { permittedRoles: ["admin"] },
   clone_landing_page: { permittedRoles: ["admin"] },
-  save_landing_page: { permittedRoles: ["admin"] },
   save_landing_page_structure: { permittedRoles: ["admin"] },
   save_landing_page_version: { permittedRoles: ["admin"] },
   remove_landing_page_version: { permittedRoles: ["admin"] },

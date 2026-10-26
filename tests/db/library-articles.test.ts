@@ -347,7 +347,9 @@ describe("library articles", () => {
         p_cover_image_id: PRODUCT_PICTURE,
       });
       expect(error?.code).toBe("23514");
-      expect(error?.message).toMatch(/library_cover/);
+      expect(error?.message).toBe(
+        `The picture ${PRODUCT_PICTURE} is a product picture, and an article's cover can only be a Library cover`,
+      );
     });
 
     it("refuses a cover that is no longer in the catalogue", async () => {
@@ -357,6 +359,7 @@ describe("library articles", () => {
         p_cover_image_id: ARTICLE_MISSING,
       });
       expect(error?.code).toBe("23503");
+      expect(error?.message).toBe(`No picture in the catalogue has the id ${ARTICLE_MISSING}`);
     });
 
     it("refuses to save an id no article has", async () => {

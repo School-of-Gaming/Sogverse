@@ -440,6 +440,7 @@
     "backToList": "Retour aux pages d’atterrissage",
     "notFound": "Aucune page d’atterrissage ne porte cet identifiant.",
     "loadError": "Impossible de charger cette page d’atterrissage. Actualisez pour réessayer.",
+    "listLoadError": "Impossible de charger les pages d’atterrissage. Actualisez pour réessayer.",
     "statusPage": {
       "title": "Page d’atterrissage",
       "authoring": "Pour modifier cette page, demandez-le à une application d’IA connectée à Sogverse.",
@@ -456,7 +457,8 @@
         "stillNeeded": "Il manque encore :",
         "address": "Adresse :",
         "noAddress": "pas encore d’adresse",
-        "addressChanging": "En ligne à l’adresse {address} pour l’instant. La prochaine publication la déplace à cette adresse, et les liens vers l’ancienne cesseront de fonctionner."
+        "addressChanging": "En ligne à l’adresse {address} pour l’instant. La prochaine publication la déplace à cette adresse, et les liens vers l’ancienne cesseront de fonctionner.",
+        "removed": "Retirée de cette page, mais encore en ligne sur le site. La prochaine publication la retire du site."
       },
       "missing": {
         "inSection": "Section {number} ({type}) : {field}",
@@ -475,7 +477,8 @@
           "page": "Titre : le titre de la page."
         },
         "description": "Description : le résumé dans chaque langue.",
-        "stale": "Un titre ou une image personnalisés restent tels quels quand le titre de la page ou l'image de la section d'ouverture change. S'ils ne correspondent plus à la page, demandez à l'application d'IA de les retirer."
+        "stale": "Un titre ou une image personnalisés restent tels quels quand le titre de la page ou l'image de la section d'ouverture change. S'ils ne correspondent plus à la page, demandez à l'application d'IA de les retirer.",
+        "nextPublish": "Jusqu'à la prochaine publication, les liens partagés dans cette langue affichent toujours l'aperçu actuellement en ligne."
       },
       "products": {
         "heading": "Produits choisis",

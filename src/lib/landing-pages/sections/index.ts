@@ -15,7 +15,6 @@ import {
   stickyField,
   type LandingMarkdownField,
   type LandingMarkdownUseCase,
-  LANDING_STICKY_SIDES,
   type LandingSectionBackground,
   type LandingStickySide,
   type TextReading,
@@ -127,36 +126,75 @@ export const LANDING_STICKY_TYPES: readonly LandingSectionType[] = LANDING_SECTI
   (type) => LANDING_SECTIONS[type].sticky,
 );
 
-/** The sticky types by their labels, as a refusal names them. */
-const STICKY_LABELS = LANDING_STICKY_TYPES.map((type) => LANDING_SECTIONS[type].label).join(", ");
+/**
+ * The sticky types by their keys, as a refusal names them ("guide, subscribe
+ * or cta"): the keys an AI app writes a structure with.
+ */
+const STICKY_KEYS =
+  LANDING_STICKY_TYPES.length < 2
+    ? LANDING_STICKY_TYPES.join("")
+    : `${LANDING_STICKY_TYPES.slice(0, -1).join(", ")} or ${LANDING_STICKY_TYPES.at(-1)}`;
+
+/**
+ * One thing wrong with a structure's arrangement: the sentence, and the
+ * section it is about by its index in the structure, or null when it is about
+ * the page as a whole. A section is never named by its id, which an AI app
+ * that sent the section without one has never seen.
+ */
+export interface LandingStructureIssue {
+  readonly index: number | null;
+  readonly message: string;
+}
 
 /**
  * What is wrong with a structure's arrangement, or null: the hero comes
  * first and there is only the one, no two sections share an id, and a sticky
  * section is of a type whose module allows it, at most one on each side — so
- * two at most, one left and one right. The SQL structure check
- * (`landing_sections_problem`) holds the same rules.
+ * two at most, one left and one right. The sections are read in order, as the
+ * SQL structure check (`landing_sections_problem`) reads them, so the first
+ * sticky problem is the one both halves name.
+ */
+export function landingStructureIssue(
+  sections: readonly { id: string; type: LandingSectionType; sticky?: LandingStickySide }[],
+): LandingStructureIssue | null {
+  if (sections[0]?.type !== "hero") {
+    return { index: null, message: "A page starts with its hero section" };
+  }
+  if (sections.filter((section) => section.type === "hero").length !== 1) {
+    return { index: null, message: "A page has exactly one hero section" };
+  }
+  if (new Set(sections.map((section) => section.id)).size !== sections.length) {
+    return { index: null, message: "Two sections share an id" };
+  }
+  const sides = new Map<LandingStickySide, number>();
+  for (const [index, section] of sections.entries()) {
+    if (section.sticky === undefined) continue;
+    if (!LANDING_SECTIONS[section.type].sticky) {
+      return { index, message: `Only a section of type ${STICKY_KEYS} can be sticky` };
+    }
+    const first = sides.get(section.sticky);
+    if (first !== undefined) {
+      return {
+        index,
+        message: `A page has at most one sticky section on each side, and section ${first + 1} is already sticky on the ${section.sticky}`,
+      };
+    }
+    sides.set(section.sticky, index);
+  }
+  return null;
+}
+
+/**
+ * The arrangement's problem as one sentence, a section named by its number
+ * from one — word for word what the SQL structure check answers.
  */
 export function landingStructureProblem(
   sections: readonly { id: string; type: LandingSectionType; sticky?: LandingStickySide }[],
 ): string | null {
-  if (sections[0]?.type !== "hero") return "A page starts with its hero section";
-  if (sections.filter((section) => section.type === "hero").length !== 1) {
-    return "A page has exactly one hero section";
-  }
-  if (new Set(sections.map((section) => section.id)).size !== sections.length) {
-    return "Two sections share an id";
-  }
-  const sticky = sections.filter((section) => section.sticky !== undefined);
-  const misplaced = sticky.find((section) => !LANDING_SECTIONS[section.type].sticky);
-  if (misplaced !== undefined) {
-    return `Section ${misplaced.id} (${LANDING_SECTIONS[misplaced.type].label}) cannot be sticky: only ${STICKY_LABELS} sections can`;
-  }
-  const doubled = LANDING_STICKY_SIDES.some(
-    (side) => sticky.filter((section) => section.sticky === side).length > 1,
-  );
-  if (doubled) return "A page has at most one sticky section on each side";
-  return null;
+  const issue = landingStructureIssue(sections);
+  if (issue === null) return null;
+  if (issue.index === null) return issue.message;
+  return `Section ${issue.index + 1}: ${issue.message.charAt(0).toLowerCase()}${issue.message.slice(1)}`;
 }
 
 /** The page's sticky sections, in structure order: none, one, or one on each side. */
@@ -171,13 +209,20 @@ export function landingStickySections<Section extends { sticky?: LandingStickySi
 /**
  * A page's whole structure, its arrangement rules included, and each section's
  * rules that read two of its fields together — a testimonials section's count
- * against its arrangement, reported at the section's ids.
+ * against its arrangement. An issue about one section is reported at its index,
+ * so a refusal names the section by its number.
  */
 export const landingSections = z
   .array(landingSection)
   .superRefine((sections, context) => {
-    const problem = landingStructureProblem(sections);
-    if (problem !== null) context.addIssue({ code: "custom", message: problem });
+    const issue = landingStructureIssue(sections);
+    if (issue !== null) {
+      context.addIssue({
+        code: "custom",
+        path: issue.index === null ? [] : [issue.index],
+        message: issue.message,
+      });
+    }
     sections.forEach((section, index) => {
       if (section.type !== "testimonials") return;
       const slots = testimonialSlotProblem(section);

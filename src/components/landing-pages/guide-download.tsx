@@ -12,17 +12,19 @@ import { ROUTES } from "@/lib/constants/routes";
 import type { SupportedLocale } from "@/lib/constants/locales";
 import { cn } from "@/lib/cn";
 import { useAuth } from "@/providers/auth-provider";
-import { LANDING_CARD_ACTION } from "./landing-section-header";
+import { LANDING_STICKY_ACTION, LANDING_WRAPPING_ACTION } from "./landing-section-header";
 
 /** Where a guide section draws its download. */
-export type GuideDownloadPlacement = "centred" | "beside-picture" | "card";
+export type GuideDownloadPlacement = "centred" | "beside-picture";
 
 /** The download's alignment and its gap from the words above, by placement. */
 const PLACEMENT: Record<GuideDownloadPlacement, string> = {
   centred: "mt-8 flex flex-col items-center",
   "beside-picture": "mt-8 flex flex-col items-center lg:items-start",
-  card: "mt-6 flex flex-col items-stretch",
 };
+
+/** In a sticky section, from `2xl`, the sticky card's: start-aligned, the button the card's width. */
+const STICKY_PLACEMENT = "2xl:mt-6 2xl:items-stretch";
 
 /**
  * **A guide section's download, decided by whether the reader is signed in** —
@@ -37,7 +39,8 @@ const PLACEMENT: Record<GuideDownloadPlacement, string> = {
  *
  * Centred like the section around it; beside a cover picture, centred on a
  * phone and start-aligned from `lg`, where the picture takes the other column;
- * in a sticky card, start-aligned with the button the card's full width.
+ * and in a sticky section, from `2xl` where the section is the sticky card,
+ * start-aligned with the button the card's full width.
  *
  * **Nothing moves when the session is known.** The locale layout reads the
  * session on the server and seeds the provider, so a signed-in reader's first
@@ -52,31 +55,30 @@ export function GuideDownload({
   guideId,
   locale,
   placement,
+  sticky,
 }: {
   guideId: string;
   /** The page's locale: the language the download asks for. */
   locale: SupportedLocale;
   /**
-   * Where the section draws it: `centred` alone, `beside-picture` where a
-   * cover picture takes the other column from `lg`, or `card` in a sticky
-   * card's narrow column.
+   * Where the section draws it: `centred` alone, or `beside-picture` where a
+   * cover picture takes the other column from `lg`.
    */
   placement: GuideDownloadPlacement;
+  /** The section is sticky: from `2xl` the download is the sticky card's. */
+  sticky: boolean;
 }) {
   const t = useTranslations("landingPage.guide");
   const { user } = useAuth();
   const pathname = usePathname();
-  // The label may wrap: at 360px, and in a sticky card's 20rem, the French
-  // call to action is wider than the column, and an unwrapped button runs past
-  // its edge.
   const buttonClass = buttonVariants({
     size: "lg",
-    className: cn(LANDING_CARD_ACTION, "max-w-full", placement !== "card" && "w-auto"),
+    className: cn(LANDING_WRAPPING_ACTION, "max-w-full", sticky && LANDING_STICKY_ACTION),
   });
   const redirectQuery = { redirect: pathname };
 
   return (
-    <div className={PLACEMENT[placement]}>
+    <div className={cn(PLACEMENT[placement], sticky && STICKY_PLACEMENT)}>
       {user !== null ? (
         <a
           href={`/api/guides/${guideId}/download?locale=${locale}`}

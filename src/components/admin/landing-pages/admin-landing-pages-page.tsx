@@ -33,9 +33,9 @@ import { LandingPageStatusChip, landingPageStatus } from "./landing-page-status-
  * marked complete or not. There is no way to start a page here: pages are
  * written through the MCP server, by an AI app acting as the admin.
  *
- * **Presentational**: the rows arrive as a prop. `settled` is separate from
- * the rows because "no pages yet" and "the read has not answered" are
- * different pages, and only the first may print an empty state.
+ * **Presentational**: the rows arrive as a prop, once the read has answered —
+ * so an empty list here is "no pages yet", never "not read yet" or "the read
+ * failed", which the data shell draws instead.
  *
  * **No loading affordance.** The read is one walk over a hand-written table,
  * without the pages' words, and lands in a frame or two; the search, the
@@ -43,18 +43,15 @@ import { LandingPageStatusChip, landingPageStatus } from "./landing-page-status-
  */
 export function AdminLandingPagesPage({
   pages,
-  settled,
 }: {
   /** Most recently saved first — the order the read delivers. */
   pages: readonly AdminLandingPageListItem[];
-  settled: boolean;
 }) {
   const t = useTranslations("admin.landingPages");
 
   return (
     <div className="space-y-6">
-
-      {settled && pages.length === 0 && (
+      {pages.length === 0 && (
         <Card>
           <CardContent className="py-8 text-center text-muted-foreground">
             {t("empty")}

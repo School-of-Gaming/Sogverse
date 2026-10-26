@@ -14,6 +14,7 @@ import {
   SLOT_CASE_SECTION,
   testimonialSlotCases,
 } from "../helpers/landing-testimonial-slot-cases";
+import { inTurn } from "../helpers/in-turn";
 
 /**
  * A landing page's testimonials section: the structure check's two halves on
@@ -149,10 +150,8 @@ describe("landing page testimonials", () => {
   describe("the slot counts", () => {
     it("are judged in SQL exactly as in TypeScript, on every arrangement and count", async () => {
       const cases = testimonialSlotCases();
-      const answers = await Promise.all(
-        cases.map((testCase) =>
-          admin.rpc("landing_sections_problem", { p_sections: testCase.sections }),
-        ),
+      const answers = await inTurn(cases, (testCase) =>
+        admin.rpc("landing_sections_problem", { p_sections: testCase.sections }),
       );
       cases.forEach((testCase, index) => {
         const { data, error } = answers[index];
@@ -160,11 +159,13 @@ describe("landing page testimonials", () => {
         expect(landingSections.safeParse(testCase.sections).success, testCase.name).toBe(
           testCase.problem === null,
         );
-        // SQL names the section first, so its sentence continues in lower case.
+        // SQL names the section first, by its number from one, so its
+        // sentence continues in lower case.
+        const number = testCase.sections.findIndex((section) => section.id === SLOT_CASE_SECTION) + 1;
         expect(data, testCase.name).toBe(
           testCase.problem === null
             ? null
-            : `Section ${SLOT_CASE_SECTION}: ${testCase.problem.charAt(0).toLowerCase()}${testCase.problem.slice(1)}`,
+            : `Section ${number}: ${testCase.problem.charAt(0).toLowerCase()}${testCase.problem.slice(1)}`,
         );
       });
     });
@@ -189,7 +190,7 @@ describe("landing page testimonials", () => {
         p_sections: structure("row", [t[0], t[1], t[0]]),
       });
       expect(error?.code).toBe("23514");
-      expect(error?.message).toBe(`Section ${QUOTES} names the testimonial ${t[0]} twice`);
+      expect(error?.message).toBe(`Section 2 names the testimonial ${t[0]} twice`);
     });
   });
 

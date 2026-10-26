@@ -1,5 +1,7 @@
 import { describe, expect, it } from "vitest";
+import { landingSections } from "@/lib/landing-pages/sections";
 import { issueSentence } from "@/lib/mcp/landing-pages-call";
+import { mcpLandingStructure, withIds } from "@/lib/mcp/landing-pages-sections";
 
 /**
  * **A schema's refusal as a sentence.** Every landing tool says where an
@@ -42,5 +44,43 @@ describe("issueSentence", () => {
     expect(issueSentence({ path: [], message: "A page starts with its hero section" }, sections)).toBe(
       "A page starts with its hero section",
     );
+  });
+});
+
+/**
+ * **The structure rule's refusals name what the AI app can find.** An app
+ * often sends a new section without an id and the server mints one, so a
+ * refusal naming the section by its uuid would name something the app never
+ * saw: each is issued at the section's index, and said by its number.
+ */
+describe("the structure rule's sticky refusals, as an AI app is told them", () => {
+  const hero = { type: "hero" };
+  const faq = { type: "faq", items: [{}] };
+  const subscribe = { type: "subscribe", sticky: "left" };
+  const cta = { type: "cta", button: { kind: "internal", path: "/" }, sticky: "left" };
+  // As the tool reads a structure: through its own schema, which hands on a
+  // background left out as default, then ids minted for what was sent
+  // without one, then the registry's schema.
+  const told = (sent: readonly Record<string, unknown>[]) => {
+    const parsed = landingSections.safeParse(
+      withIds(mcpLandingStructure.parse(sent), () => crypto.randomUUID()),
+    );
+    return parsed.success
+      ? []
+      : parsed.error.issues.map((issue) =>
+          issueSentence({ path: ["sections", ...issue.path], message: issue.message }, sent),
+        );
+  };
+
+  it("names a type that may not be sticky by its number, and the allowed types by their keys", () => {
+    expect(told([hero, { ...faq, sticky: "right" }, subscribe])).toEqual([
+      "Section 2 (Questions and answers): Only a section of type guide, subscribe or cta can be sticky",
+    ]);
+  });
+
+  it("names a second sticky section on a side, the side and the first by their numbers", () => {
+    expect(told([hero, faq, subscribe, cta])).toEqual([
+      "Section 4 (Call to action): A page has at most one sticky section on each side, and section 3 is already sticky on the left",
+    ]);
   });
 });

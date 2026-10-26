@@ -91,11 +91,12 @@ export const stickyField = {
 /**
  * The ground a section sits on: `default`, the page's own, or `card`, a band
  * of the card ground running the viewport's width. Every section type but the
- * hero takes one, by spreading `landingBackgroundField` into its schema, and a
- * section stored without one reads as `default`. Adjacent `card` sections
- * share one band, which is how an admin sets related sections apart as a
- * group. The SQL half (`landing_sections_problem`) holds the same values and
- * refuses one on the hero.
+ * hero takes one, by spreading `landingBackgroundField` into its schema, and
+ * every one of them has one: a section without it is refused, here and by the
+ * SQL half. Adjacent `card` sections share one band, which is how an admin
+ * sets related sections apart as a group. The SQL half
+ * (`landing_sections_problem`) holds the same values and refuses one on the
+ * hero.
  */
 export const LANDING_SECTION_BACKGROUNDS = ["default", "card"] as const;
 
@@ -103,7 +104,7 @@ export type LandingSectionBackground = (typeof LANDING_SECTION_BACKGROUNDS)[numb
 
 /** The background field, spread into every non-hero section's schema. */
 export const landingBackgroundField = {
-  background: z.enum(LANDING_SECTION_BACKGROUNDS).default("default"),
+  background: z.enum(LANDING_SECTION_BACKGROUNDS),
 };
 
 /** A plain-text field, unwritten while absent or blank. */

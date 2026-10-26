@@ -6,9 +6,21 @@ CREATE FUNCTION public.refuse_catalogue_image_purpose_change() RETURNS trigger
     LANGUAGE plpgsql
     SET search_path TO ''
     AS $$
+DECLARE
+  v_words text;
 BEGIN
   IF NEW.purpose IS DISTINCT FROM OLD.purpose THEN
-    RAISE EXCEPTION 'catalogue_images row % is a % picture, and an entry''s purpose never changes', OLD.id, OLD.purpose
+    CASE OLD.purpose
+      WHEN 'product' THEN v_words := 'a product picture';
+      WHEN 'library_cover' THEN v_words := 'a Library cover';
+      WHEN 'landing_image' THEN v_words := 'a landing page picture';
+      WHEN 'landing_square_image' THEN v_words := 'a landing page picture';
+      WHEN 'landing_portrait_image' THEN v_words := 'a landing page picture';
+      WHEN 'spotlight_image' THEN v_words := 'a spotlight picture';
+      ELSE RAISE EXCEPTION 'No words for the picture purpose %', OLD.purpose;
+    END CASE;
+    RAISE EXCEPTION 'The picture % is %, and a picture''s purpose never changes',
+      OLD.id, v_words
       USING ERRCODE = 'check_violation';
   END IF;
 

@@ -372,8 +372,9 @@ export interface AdminLandingPage {
   testimonials: Readonly<Record<string, PublicTestimonial>>;
   /**
    * Each products section of the working copy, in page order, with which of
-   * its picks readers are shown now and why each other one is not; empty when
-   * the working copy has no products section.
+   * its picks the listing holds now — the cards that structure draws once it
+   * is published — and why each other one is not; empty when the working copy
+   * has no products section.
    */
   productPicks: LandingProductsSectionPicks[];
 }
@@ -442,13 +443,21 @@ export function localizeLandingPageSummary(
   return version === null ? null : { ...shared, ...version };
 }
 
+/**
+ * The version a reader of `locale` is shown, as `localizeLandingPageSummary`
+ * picks it. Every published copy has a version — publishing copies only the
+ * complete ones and refuses when there are none, and the working copy as a
+ * publish would leave it is null without one — so a copy with none is a
+ * broken invariant and throws.
+ */
 export function localizeLandingPage(
   page: PublishedLandingPage,
   locale: SupportedLocale,
-): LocalizedLandingPage | null {
+): LocalizedLandingPage {
   const { versions, ...shared } = page;
   const version = resolveTranslation(versions, locale);
-  return version === null ? null : { ...shared, ...version };
+  if (version === null) throw new Error(`Landing page ${page.id} has no version`);
+  return { ...shared, ...version };
 }
 
 // ---------------------------------------------------------------------------
@@ -461,7 +470,8 @@ export function localizeLandingPage(
  * admin-facing sentences under four SQLSTATEs — `check_violation` (a missing
  * title, a malformed structure or address, nothing complete to publish, a
  * picture of another purpose), `no_data_found` (the
- * page is gone), `foreign_key_violation` (a picture left the catalogue) and
+ * page is gone), `foreign_key_violation` (a picture, testimonial, product or guide id
+ * nothing has) and
  * `unique_violation` (an address another page holds). Every other code carries
  * a message written for a developer, so it falls back to a generic line. The
  * status page and the MCP tools both read a refusal through this.

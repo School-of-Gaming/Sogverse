@@ -5,6 +5,7 @@ import { walkPages } from "@/lib/supabase/paging";
 import {
   LANDING_PRODUCT_TYPES,
   landingPickedProductIds,
+  landingPlacedGuideIds,
   landingPlacedTestimonialIds,
   landingSections,
   landingSectionTextsSchema,
@@ -263,8 +264,9 @@ export class LandingPageService {
    * query. Each draft version carries what it still needs before publishing
    * takes it, by the TypeScript half of the required-text rule; the page
    * carries the current words of every testimonial its working copy places;
-   * and each products section of the working copy, which of its picks readers
-   * are shown now and why the others are not.
+   * and each products section of the working copy, which of its picks the
+   * listing holds now — the cards that structure draws once published — and
+   * why the others are not.
    */
   async getAdminPage(id: string): Promise<AdminLandingPage | null> {
     if (!UUID.test(id)) return null;
@@ -341,7 +343,28 @@ export class LandingPageService {
   }
 
   /**
-   * Each products section's picks, shown or not and why: the listing of every
+   * The label of every guide a structure places, by id — the name admins know
+   * each guide by, read under the admin policy, so an AI app can say which
+   * guide a section offers. A structure placing none reads nothing. Every id
+   * placed has its guide: the app deletes none and a save adding an unknown
+   * one is refused, so an id the read does not answer throws.
+   */
+  async listPlacedGuideLabels(
+    sections: readonly LandingSection[],
+  ): Promise<Record<string, string>> {
+    const ids = landingPlacedGuideIds(sections);
+    if (ids.length === 0) return {};
+    const { data, error } = await this.supabase.from("guides").select("id, label").in("id", ids);
+    if (error) throw error;
+    const labels = Object.fromEntries(data.map((row) => [row.id, row.label]));
+    for (const id of ids) {
+      if (!Object.hasOwn(labels, id)) throw new Error(`No guide has the id ${id}`);
+    }
+    return labels;
+  }
+
+  /**
+   * Each products section's picks, drawn or not and why: the listing of every
    * product type asked about the picks — the answer the public page draws by —
    * and the picks' own rows for the reasons. A structure with no products
    * section reads nothing.

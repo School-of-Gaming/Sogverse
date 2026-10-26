@@ -3,7 +3,8 @@
  * DOM, like `frames.ts`. Every picked file is judged on its own against the
  * frames, in the order the admin picked them, and every one that fits is
  * added to the catalogue; the model is told the whole batch in one piece and
- * then what to do with the new entries, in the opening's own sentence.
+ * then what to do with the new entries, in the opening's own sentence. The
+ * admin sees the batch's count while it uploads, and its summary after.
  */
 
 /** What became of one picked file, in the order the admin picked it. */
@@ -70,4 +71,26 @@ export function batchReport(outcomes: readonly FileOutcome[], nextStep: string):
       ? "Nothing was uploaded; the admin can pick again in the same uploader."
       : `The uploaded pictures are in the catalogue, placed nowhere yet. ${nextStep}${refused + failed > 0 ? ` ${NO_MORE_PICKS}` : ""}`,
   ].join("\n");
+}
+
+/**
+ * The status line while a batch of pictures uploads, after each file: how
+ * many of those sent are done, and how many of them failed once any has.
+ */
+export function progressLine(done: number, total: number, failed: number): string {
+  return `Uploaded ${done} of ${total}${failed > 0 ? `, ${failed} failed` : ""}`;
+}
+
+/**
+ * The status line once the pictures sent are all answered: how many are in
+ * the catalogue, and the names of any that failed — each one's row already
+ * says why. Refused pictures were never sent, so they are not counted here.
+ */
+export function batchSummary(sent: readonly FileOutcome[]): string {
+  const stored = sent.filter((each) => each.kind === "uploaded").length;
+  if (stored === 0) return "Nothing was uploaded.";
+  if (sent.length === 1) return "The picture is in the catalogue.";
+  const failed = sent.filter((each) => each.kind !== "uploaded").map((each) => each.fileName);
+  if (failed.length === 0) return `All ${sent.length} pictures are in the catalogue.`;
+  return `${stored} of ${sent.length} pictures ${stored === 1 ? "is" : "are"} in the catalogue. Not uploaded: ${failed.join(", ")}.`;
 }

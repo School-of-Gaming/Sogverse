@@ -14,7 +14,7 @@ DECLARE
   v_type     text;
   v_ids      text[] := ARRAY[]::text[];
   v_heroes   integer := 0;
-  v_sides    text[] := ARRAY[]::text[];
+  v_sticky   jsonb := '{}'::jsonb;
   v_key      text;
   v_min      integer;
   v_max      integer;
@@ -33,6 +33,8 @@ BEGIN
     RETURN 'A page starts with its hero section';
   END IF;
 
+  -- A section is named by its number from one, never by its id: a section an
+  -- AI app sent without an id has one only the server has seen.
   FOR v_section, v_n IN
     SELECT e, n FROM jsonb_array_elements(p_sections) WITH ORDINALITY AS t(e, n)
      ORDER BY n
@@ -54,26 +56,29 @@ BEGIN
 
     -- A sticky section, of a type that may be, at most one on each side: every
     -- type takes the field, and the types allowed it are the section modules'
-    -- that say sticky: true. A DB test holds this list to theirs.
+    -- that say sticky: true, named by their keys in registry order. A DB test
+    -- holds this list, and these sentences, to the TypeScript half's.
+    -- v_sticky maps each side taken to the number of the section taking it.
     IF v_section ? 'sticky' THEN
-      IF v_type IS NULL OR v_type NOT IN ('subscribe', 'cta', 'guide') THEN
-        RETURN format('Section %s cannot be sticky: only an email sign-up, a call to action or a guide section can', v_id);
+      IF v_type IS NULL OR v_type NOT IN ('guide', 'subscribe', 'cta') THEN
+        RETURN format('Section %s: only a section of type guide, subscribe or cta can be sticky', v_n);
       END IF;
       IF jsonb_typeof(v_section->'sticky') IS DISTINCT FROM 'string'
          OR v_section->>'sticky' NOT IN ('left', 'right') THEN
-        RETURN format('The sticky side of section %s is left or right', v_id);
+        RETURN format('The sticky side of section %s is left or right', v_n);
       END IF;
-      IF v_section->>'sticky' = ANY (v_sides) THEN
-        RETURN 'A page has at most one sticky section on each side';
+      IF v_sticky ? (v_section->>'sticky') THEN
+        RETURN format('Section %s: a page has at most one sticky section on each side, and section %s is already sticky on the %s',
+                      v_n, v_sticky->>(v_section->>'sticky'), v_section->>'sticky');
       END IF;
-      v_sides := array_append(v_sides, v_section->>'sticky');
+      v_sticky := v_sticky || jsonb_build_object(v_section->>'sticky', v_n);
     END IF;
 
     -- A single picture, where a type takes one, is optional and a uuid.
     IF v_type IN ('hero', 'text', 'guide') AND v_section ? 'imageId'
        AND (jsonb_typeof(v_section->'imageId') IS DISTINCT FROM 'string'
             OR v_section->>'imageId' !~ c_uuid) THEN
-      RETURN format('The picture of section %s must be a catalogue entry''s lowercase uuid', v_id);
+      RETURN format('The picture of section %s must be a catalogue entry''s lowercase uuid', v_n);
     END IF;
 
     v_key := NULL;
@@ -82,11 +87,11 @@ BEGIN
       WHEN 'hero' THEN
         v_heroes := v_heroes + 1;
         IF v_section ? 'button' AND NOT public.landing_button_is_valid(v_section->'button') THEN
-          RETURN format('The button of section %s needs a site path, an http(s) URL or an email address', v_id);
+          RETURN format('The button of section %s needs a site path, an http(s) URL or an email address', v_n);
         END IF;
       WHEN 'text' THEN
         IF v_section->>'imageSide' IS NULL OR v_section->>'imageSide' NOT IN ('start', 'end') THEN
-          RETURN format('Section %s needs its picture side, start or end', v_id);
+          RETURN format('Section %s needs its picture side, start or end', v_n);
         END IF;
       WHEN 'image' THEN
         v_key := 'images'; v_min := 1; v_max := 4;  v_field := 'imageId';
@@ -98,7 +103,7 @@ BEGIN
         v_key := 'items';  v_min := 1; v_max := 20; v_field := NULL;
       WHEN 'cta' THEN
         IF NOT public.landing_button_is_valid(v_section->'button') THEN
-          RETURN format('The button of section %s needs a site path, an http(s) URL or an email address', v_id);
+          RETURN format('The button of section %s needs a site path, an http(s) URL or an email address', v_n);
         END IF;
       WHEN 'testimonials' THEN
         -- Each arrangement shows exactly this many: the TypeScript half's
@@ -110,25 +115,25 @@ BEGIN
                      WHEN 'showcase' THEN 6
                    END;
         IF jsonb_typeof(v_section->'arrangement') IS DISTINCT FROM 'string' OR v_slots IS NULL THEN
-          RETURN format('Section %s needs its arrangement: feature, pair, row or showcase', v_id);
+          RETURN format('Section %s needs its arrangement: feature, pair, row or showcase', v_n);
         END IF;
         IF jsonb_typeof(v_section->'testimonialIds') IS DISTINCT FROM 'array' THEN
-          RETURN format('Section %s needs its testimonials, as a list of ids', v_id);
+          RETURN format('Section %s needs its testimonials, as a list of ids', v_n);
         END IF;
         v_item_ids := ARRAY[]::text[];
         FOR v_item IN SELECT e FROM jsonb_array_elements(v_section->'testimonialIds') AS t(e) LOOP
           IF jsonb_typeof(v_item) IS DISTINCT FROM 'string' OR v_item #>> '{}' !~ c_uuid THEN
-            RETURN format('Every testimonial of section %s must be a testimonial''s lowercase uuid', v_id);
+            RETURN format('Every testimonial of section %s must be a testimonial''s lowercase uuid', v_n);
           END IF;
           IF v_item #>> '{}' = ANY (v_item_ids) THEN
-            RETURN format('Section %s names the testimonial %s twice', v_id, v_item #>> '{}');
+            RETURN format('Section %s names the testimonial %s twice', v_n, v_item #>> '{}');
           END IF;
           v_item_ids := array_append(v_item_ids, v_item #>> '{}');
         END LOOP;
         v_count := jsonb_array_length(v_section->'testimonialIds');
         IF v_count <> v_slots THEN
           RETURN format('Section %s: a %s arrangement shows exactly %s %s; this section has %s',
-                        v_id, v_section->>'arrangement', v_slots,
+                        v_n, v_section->>'arrangement', v_slots,
                         CASE WHEN v_slots = 1 THEN 'testimonial' ELSE 'testimonials' END,
                         v_count);
         END IF;
@@ -136,47 +141,46 @@ BEGIN
         -- At least one pick and no upper bound: the carousel scrolls.
         IF jsonb_typeof(v_section->'productIds') IS DISTINCT FROM 'array'
            OR jsonb_array_length(v_section->'productIds') = 0 THEN
-          RETURN format('Section %s needs at least one product', v_id);
+          RETURN format('Section %s needs at least one product', v_n);
         END IF;
         v_item_ids := ARRAY[]::text[];
         FOR v_item IN SELECT e FROM jsonb_array_elements(v_section->'productIds') AS t(e) LOOP
           IF jsonb_typeof(v_item) IS DISTINCT FROM 'string' OR v_item #>> '{}' !~ c_uuid THEN
-            RETURN format('Every product of section %s must be a product''s lowercase uuid', v_id);
+            RETURN format('Every product of section %s must be a product''s lowercase uuid', v_n);
           END IF;
           IF v_item #>> '{}' = ANY (v_item_ids) THEN
-            RETURN format('Section %s names the product %s twice', v_id, v_item #>> '{}');
+            RETURN format('Section %s names the product %s twice', v_n, v_item #>> '{}');
           END IF;
           v_item_ids := array_append(v_item_ids, v_item #>> '{}');
         END LOOP;
       WHEN 'guide' THEN
         IF jsonb_typeof(v_section->'guideId') IS DISTINCT FROM 'string'
            OR v_section->>'guideId' !~ c_uuid THEN
-          RETURN format('Section %s needs its guide, as a guide''s lowercase uuid', v_id);
+          RETURN format('Section %s needs its guide, as a guide''s lowercase uuid', v_n);
         END IF;
       WHEN 'subscribe' THEN
-        -- No shared field but its background: the list it signs up to is the
-        -- deployment's configuration, not the page's.
+        -- No shared field but its background and its sticky side: the list it
+        -- signs up to is the deployment's configuration, not the page's.
         NULL;
       ELSE
-        RETURN format('Section %s has no type a landing page knows (%s)', v_id, COALESCE(v_type, 'none'));
+        RETURN format('Section %s has no type a landing page knows (%s)', v_n, COALESCE(v_type, 'none'));
     END CASE;
 
-    -- The ground a section sits on: every type but the hero may name one, and
-    -- a section without one sits on the page's own ground.
-    IF v_section ? 'background' THEN
-      IF v_type = 'hero' THEN
+    -- The ground a section sits on: every type but the hero names one, and
+    -- the hero takes none.
+    IF v_type = 'hero' THEN
+      IF v_section ? 'background' THEN
         RETURN 'The hero section takes no background';
       END IF;
-      IF jsonb_typeof(v_section->'background') IS DISTINCT FROM 'string'
-         OR v_section->>'background' NOT IN ('default', 'card') THEN
-        RETURN format('The background of section %s is default or card', v_id);
-      END IF;
+    ELSIF jsonb_typeof(v_section->'background') IS DISTINCT FROM 'string'
+          OR v_section->>'background' NOT IN ('default', 'card') THEN
+      RETURN format('Section %s needs its background, default or card', v_n);
     END IF;
 
     IF v_key IS NOT NULL THEN
       IF jsonb_typeof(v_section->v_key) IS DISTINCT FROM 'array'
          OR jsonb_array_length(v_section->v_key) NOT BETWEEN v_min AND v_max THEN
-        RETURN format('Section %s needs between %s and %s %s', v_id, v_min, v_max, v_key);
+        RETURN format('Section %s needs between %s and %s %s', v_n, v_min, v_max, v_key);
       END IF;
 
       v_item_ids := ARRAY[]::text[];
@@ -184,20 +188,20 @@ BEGIN
         IF jsonb_typeof(v_item) IS DISTINCT FROM 'object'
            OR jsonb_typeof(v_item->'id') IS DISTINCT FROM 'string'
            OR v_item->>'id' !~ c_uuid THEN
-          RETURN format('Every one of the %s of section %s needs a lowercase uuid as its id', v_key, v_id);
+          RETURN format('Every one of the %s of section %s needs a lowercase uuid as its id', v_key, v_n);
         END IF;
         IF v_item->>'id' = ANY (v_item_ids) THEN
-          RETURN format('Two of the %s of section %s share the id %s', v_key, v_id, v_item->>'id');
+          RETURN format('Two of the %s of section %s share the id %s', v_key, v_n, v_item->>'id');
         END IF;
         v_item_ids := array_append(v_item_ids, v_item->>'id');
 
         IF v_field = 'imageId'
            AND (jsonb_typeof(v_item->'imageId') IS DISTINCT FROM 'string'
                 OR v_item->>'imageId' !~ c_uuid) THEN
-          RETURN format('Every picture of section %s must be a catalogue entry''s lowercase uuid', v_id);
+          RETURN format('Every picture of section %s must be a catalogue entry''s lowercase uuid', v_n);
         END IF;
         IF v_field = 'icon' AND NOT public.landing_text_is_written(v_item->'icon') THEN
-          RETURN format('Every item of section %s needs an icon', v_id);
+          RETURN format('Every item of section %s needs an icon', v_n);
         END IF;
       END LOOP;
     END IF;
@@ -216,7 +220,7 @@ $_$;
 -- Name: FUNCTION landing_sections_problem(p_sections jsonb); Type: COMMENT; Schema: public; Owner: -
 --
 
-COMMENT ON FUNCTION public.landing_sections_problem(p_sections jsonb) IS 'What is wrong with a landing page''s section structure, in a sentence for the admin, or NULL when nothing is. The structure is a JSON array of sections, each {id, type, ...shared fields, sticky?}, ids lowercase uuids distinct within the page; the first is the page''s one hero. Per type: hero {imageId?, button?}, which takes no background; text {imageId?, imageSide: start|end}; image {images: 1-4 of {id, imageId}}; points {items: 2-6 of {id, icon}}; steps {items: 2-6 of {id}}; testimonials {arrangement: feature|pair|row|showcase, testimonialIds: exactly 1, 2, 3 or 6 distinct testimonial uuids, by arrangement}; products {productIds: 1 or more distinct product uuids, no upper bound}; guide {guideId: a guide uuid, imageId?}; faq {items: 1-20 of {id}}; subscribe {} (no shared field but the background); cta {button}. Every type but the hero also takes background?: default|card, absent read as default. sticky, left or right, marks a sticky section and its side, at most one on each side, and only a subscribe, cta or guide section may carry it — the section modules that say sticky: true, held equal by a DB test. Item ids are lowercase uuids distinct within their section. A button is checked by landing_button_is_valid. The curated icon list and the text fields are the application''s to check; whether a picture exists, is a landing picture and is a shape its section takes is apply_landing_pictures''; whether a placed testimonial, a picked product or a placed guide exists is check_landing_section_picks''. The TypeScript structure schema in src/lib/landing-pages/sections/ states the testimonials counts and the backgrounds too, and DB tests hold the two equal.';
+COMMENT ON FUNCTION public.landing_sections_problem(p_sections jsonb) IS 'What is wrong with a landing page''s section structure, in a sentence for the admin, or NULL when nothing is. A section is named by its number from one, the hero being 1, never by its id. The structure is a JSON array of sections, each {id, type, ...shared fields, sticky?}, ids lowercase uuids distinct within the page; the first is the page''s one hero. Per type: hero {imageId?, button?}, which takes no background; text {imageId?, imageSide: start|end}; image {images: 1-4 of {id, imageId}}; points {items: 2-6 of {id, icon}}; steps {items: 2-6 of {id}}; testimonials {arrangement: feature|pair|row|showcase, testimonialIds: exactly 1, 2, 3 or 6 distinct testimonial uuids, by arrangement}; products {productIds: 1 or more distinct product uuids, no upper bound}; guide {guideId: a guide uuid, imageId?}; faq {items: 1-20 of {id}}; subscribe {} (no shared field but the background and the sticky side); cta {button}. Every type but the hero also takes background: default|card, which it must carry. sticky, left or right, marks a sticky section and its side, at most one on each side, and only a guide, subscribe or cta section may carry it — the section modules that say sticky: true, held equal by a DB test. Item ids are lowercase uuids distinct within their section. A button is checked by landing_button_is_valid. The curated icon list and the text fields are the application''s to check; whether a picture exists, is a landing picture and is a shape its section takes is apply_landing_pictures''; whether a placed testimonial, a picked product or a placed guide exists is check_landing_section_picks''. The TypeScript structure schema in src/lib/landing-pages/sections/ states the testimonials counts, the backgrounds and the sticky rules too, and DB tests hold the two equal, the sticky refusals word for word.';
 
 
 --

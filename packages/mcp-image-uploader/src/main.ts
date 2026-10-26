@@ -4,7 +4,7 @@ import { App } from "@modelcontextprotocol/ext-apps";
 import { BRAND, NEUTRALS, statusHex } from "@sog/ui/tokens/brand";
 import { FACES } from "@sog/ui/tokens/typography";
 import { z } from "zod";
-import { batchReport, type FileOutcome } from "./batch";
+import { batchReport, batchSummary, progressLine, type FileOutcome } from "./batch";
 import { judgePicture, sourceRect, type Frame } from "./frames";
 import "./style.css";
 
@@ -129,6 +129,7 @@ const fileNote = element("file-note", HTMLParagraphElement);
 const list = element("files", HTMLOListElement);
 const uploadButton = element("upload", HTMLButtonElement);
 const status = element("status", HTMLParagraphElement);
+const progress = element("progress", HTMLProgressElement);
 
 /** One picked picture, its row on screen, and what the checks made of it. */
 interface Row {
@@ -171,6 +172,20 @@ let committing = false;
 function say(text: string, tone: "info" | "error" = "info"): void {
   status.textContent = text;
   status.dataset.tone = tone;
+}
+
+/**
+ * The bar under the status line while a batch of pictures uploads. It is the
+ * last thing in the view, so showing and hiding it move nothing on screen.
+ */
+function showProgress(done: number, total: number): void {
+  progress.max = total;
+  progress.value = done;
+  progress.hidden = false;
+}
+
+function hideProgress(): void {
+  progress.hidden = true;
 }
 
 function show(row: Row, text: string, tone: "info" | "error" | "done" = "info"): void {
@@ -293,6 +308,7 @@ app.ontoolresult = (result) => {
   committing = false;
   fileInput.value = "";
   say("");
+  hideProgress();
   if (opening.kind === "picture") {
     fileInput.accept = "image/*";
     fileInput.multiple = true;
@@ -546,34 +562,46 @@ async function storePicture(row: Row, picked: NonNullable<Row["picked"]>): Promi
 /** Store every ready picture, one call each, and tell the model the whole batch. */
 async function uploadPictures(current: PictureOpening, mine: number): Promise<void> {
   const batch = rows;
-  say("Uploading…");
+  const sending = batch.flatMap((row) =>
+    row.picked !== null && row.outcome === null ? [{ row, picked: row.picked }] : [],
+  );
+  // More than one picture shows how far the batch has got; one picture's row says it all.
+  const counted = sending.length > 1;
+  const sent: FileOutcome[] = [];
+  if (counted) {
+    say(progressLine(0, sending.length, 0));
+    showProgress(0, sending.length);
+  } else {
+    say("Uploading…");
+  }
 
   // One at a time, in pick order: each picture is a request of its own.
-  for (const row of batch) {
-    const { picked } = row;
-    if (picked === null || row.outcome !== null) continue;
+  for (const { row, picked } of sending) {
     show(row, "Uploading…");
     const outcome = await storePicture(row, picked);
     row.outcome = outcome;
+    sent.push(outcome);
     if (outcome.kind === "uploaded") show(row, `Uploaded as catalogue entry ${outcome.catalogueId}.`, "done");
     else show(row, `Could not be uploaded. ${outcome.reason}`, "error");
+    // A new opening that took the screen meanwhile has a status area of its own.
+    if (counted && mine === openingNumber) {
+      const failed = sent.filter((each) => each.kind !== "uploaded").length;
+      say(progressLine(sent.length, sending.length, failed));
+      showProgress(sent.length, sending.length);
+    }
   }
 
-  const outcomes = outcomesOf(batch);
-  const stored = outcomes.filter((each) => each.kind === "uploaded").length;
+  const stored = sent.filter((each) => each.kind === "uploaded").length;
 
   // A new opening took the screen while this batch ran: the model still
   // hears what was stored, but the new opening's screen is left alone.
   if (mine === openingNumber) {
-    if (stored === 0) {
-      // Nothing was stored, so nothing stands in the way of picking again.
-      committing = false;
-      say("Nothing was uploaded.", "error");
-    } else {
-      say(stored === 1 ? "The picture is in the catalogue." : "The pictures are in the catalogue.");
-    }
+    hideProgress();
+    // Nothing was stored, so nothing stands in the way of picking again.
+    if (stored === 0) committing = false;
+    say(batchSummary(sent), stored === sent.length ? "info" : "error");
   }
-  await reportBatch(outcomes, current);
+  await reportBatch(outcomesOf(batch), current);
 }
 
 /**

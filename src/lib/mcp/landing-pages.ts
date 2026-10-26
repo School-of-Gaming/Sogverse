@@ -47,6 +47,8 @@ import {
 import { OVERWRITES, READ_ONLY, answer, refusal } from "@/lib/mcp/library-call";
 import {
   NOT_FOUND,
+  NOTHING_CHANGED_ON_SITE,
+  UNPUBLISHED_CHANGES,
   adminLink,
   asLandingAdmin,
   issueSentence,
@@ -56,6 +58,7 @@ import {
   readableInput,
   savedPage,
   slugLink,
+  unpublishedChanges,
 } from "@/lib/mcp/landing-pages-call";
 import {
   MCP_LANDING_SECTIONS,
@@ -409,13 +412,11 @@ function seoFields(seo: RenderedLandingSeo): Record<string, unknown> {
 }
 
 async function servedAt(
-  copy: PublishedLandingPage | null,
+  copy: PublishedLandingPage,
   locale: SupportedLocale,
   siteUrl: string,
-): Promise<RenderedLandingSeo | null> {
-  if (copy === null) return null;
-  const seo = await landingPageSeo(copy, locale);
-  return seo === null ? null : renderedLandingSeo(seo, siteUrl);
+): Promise<RenderedLandingSeo> {
+  return renderedLandingSeo(await landingPageSeo(copy, locale), siteUrl);
 }
 
 /** Each written version's `seo`, by locale: null for one a publish would leave out. */
@@ -424,14 +425,19 @@ async function versionsSeo(
   siteUrl: string,
 ): Promise<Map<SupportedLocale, VersionSeo | null>> {
   const next = landingPublishedCopy(page);
+  // No version complete: a publish now would leave every one out (and is refused).
+  if (next === null) {
+    return new Map(page.draft.versions.map((version) => [version.locale, null]));
+  }
+  const { publication } = page;
   const entries = await Promise.all(
     page.draft.versions.map(async (version): Promise<[SupportedLocale, VersionSeo | null]> => {
       if (version.missing.length > 0) return [version.locale, null];
       const served = await servedAt(next, version.locale, siteUrl);
-      if (served === null) return [version.locale, null];
       // exact-locale: what this language's own live version serves
-      const isLive = page.publication?.versions.some((v) => v.locale === version.locale) ?? false;
-      const live = isLive ? await servedAt(page.publication, version.locale, siteUrl) : null;
+      const live = publication?.versions.some((v) => v.locale === version.locale)
+        ? await servedAt(publication, version.locale, siteUrl)
+        : null;
       if (live === null) return [version.locale, served];
       const liveFields = seoFields(live);
       const differs = Object.entries(seoFields(served)).filter(
@@ -535,30 +541,55 @@ const PICK_REASON_WORDS: { readonly [Reason in LandingPickReason]: string } = {
 };
 
 /**
- * Each products section's picks: shown now or not, and every reason a hidden
- * one is not — read from the working copy, which the next publish puts live.
+ * Each products section of the working copy, which the next publish puts
+ * live: whether the listing holds each pick now, so the structure draws its
+ * card, and every reason one it would not draw is left out.
  */
 function productPicks(page: AdminLandingPage) {
   return page.productPicks.map((section) => ({
     section: landingSectionName(section.sectionNumber, "products"),
     sectionId: section.sectionId,
-    shown: section.shownCount,
+    drawnPicks: section.shownCount,
     picked: section.picks.length,
     drawn: section.shownCount > 0,
     picks: section.picks.map((pick) => ({
       productId: pick.productId,
       names: pick.names,
-      shown: pick.shown,
-      notShownBecause: pick.reasons.map((reason) => PICK_REASON_WORDS[reason]),
+      drawn: pick.shown,
+      notDrawnBecause: pick.reasons.map((reason) => PICK_REASON_WORDS[reason]),
     })),
   }));
+}
+
+/**
+ * Each guide section of the working copy, which the next publish puts live,
+ * with the guide it offers: its id and its label, the name admins know it by.
+ * get_guide reads one whole.
+ */
+function placedGuides(page: AdminLandingPage, labels: Readonly<Record<string, string>>) {
+  return page.draft.sections.flatMap((section, index) =>
+    section.type === "guide"
+      ? [
+          {
+            section: landingSectionName(index + 1, "guide"),
+            sectionId: section.id,
+            guideId: section.guideId,
+            label: labels[section.guideId],
+          },
+        ]
+      : [],
+  );
 }
 
 function lastSaved(draft: AdminLandingPage["draft"]) {
   return { at: draft.updatedAt, by: draft.lastSavedBy, via: draft.lastSavedVia };
 }
 
-async function pageView(page: AdminLandingPage, origin: string) {
+async function pageView(
+  page: AdminLandingPage,
+  guideLabels: Readonly<Record<string, string>>,
+  origin: string,
+) {
   const { draft, publication } = page;
   const liveLocales = new Set(publication?.versions.map((v) => v.locale) ?? []);
   // The served page's addresses are on its `metadataBase`, the site's own origin.
@@ -592,8 +623,9 @@ async function pageView(page: AdminLandingPage, origin: string) {
       // exact-locale: each version carries what its own language would serve
       seo: seo.get(version.locale) ?? null,
     })),
-    hasUnpublishedChanges: page.hasUnpublishedChanges,
+    hasUnpublishedChanges: unpublishedChanges(page.publication !== null, page.hasUnpublishedChanges),
     testimonials: placedTestimonials(page),
+    guides: placedGuides(page, guideLabels),
     productPicks: productPicks(page),
     publish: publishForecast(page, origin),
     live:
@@ -641,7 +673,7 @@ export function registerLandingPageTools(server: McpServer): void {
     "list_landing_pages",
     {
       title: "List landing pages",
-      description: `Every School of Gaming landing page, most recently saved first: its id, each language's title, slug and whether it is complete, whether it is live, whether it has saved changes readers do not see yet, and when, by whom and through which AI app it was last saved. get_landing_page reads one whole. ${MODEL}`,
+      description: `Every School of Gaming landing page, most recently saved first: its id, each language's title, slug and whether it is complete, whether it is live, whether it has saved changes readers do not see yet, and when, by whom and through which AI app it was last saved. get_landing_page reads one whole. ${UNPUBLISHED_CHANGES} ${MODEL}`,
       annotations: READ_ONLY,
     },
     (ctx) =>
@@ -657,7 +689,7 @@ export function registerLandingPageTools(server: McpServer): void {
               complete: version.isComplete,
             })),
             live: page.isPublished,
-            hasUnpublishedChanges: page.hasUnpublishedChanges,
+            hasUnpublishedChanges: unpublishedChanges(page.isPublished, page.hasUnpublishedChanges),
             lastSaved: {
               at: page.updatedAt,
               by: page.lastSavedBy,
@@ -672,7 +704,7 @@ export function registerLandingPageTools(server: McpServer): void {
     "get_landing_page",
     {
       title: "Read a landing page",
-      description: `One landing page whole: its structure (every section with its id, type and shared fields, each sticky section with its side in sticky), its pictures with their shapes, shown small, and every language version — title, summary, slug, its address, every section's words, whether it is complete and what it still needs (each as a path, sections.<section id>.<field>, and as a sentence numbering sections and items from one), and the share card it uses (shareCard: derived from the page, or a custom title and/or picture, with the title and picture in use) — with what a publish now would put live, leave out and take down, and the live addresses it would change (publish.slugsChanging: each language live now whose saved slug differs from its live one, with the old slug and address, which stop working at the publish, and the new); each testimonials section's arrangement and the testimonials it places, with each one's id, whom it is from and an excerpt (testimonials); for each products section, its picked products under productPicks — whether readers are shown each one now, and why not (its term ended, it is unlisted) — with drawn false when none is shown, in which case readers see no trace of the section; what readers see now, with each live language's public link; a preview link per language; and adminLink, the page's status page in Sogverse admin, where the admin sees each language's state, opens its preview and live links, and publishes or unpublishes. Landing pages are written only through these tools. ${SEO} ${COMPLETE} ${PUBLISHING} ${SHARE_CARD} ${STICKY_MANUAL}`,
+      description: `One landing page whole: its structure (every section with its id, type and shared fields, each sticky section with its side in sticky), its pictures with their shapes, shown small, and every language version — title, summary, slug, its address, every section's words, whether it is complete and what it still needs (each as a path, sections.<section id>.<field>, and as a sentence numbering sections and items from one), and the share card it uses (shareCard: derived from the page, or a custom title and/or picture, with the title and picture in use) — with what a publish now would put live, leave out and take down, and the live addresses it would change (publish.slugsChanging: each language live now whose saved slug differs from its live one, with the old slug and address, which stop working at the publish, and the new); each testimonials section's arrangement and the testimonials it places, with each one's id, whom it is from and an excerpt (testimonials); each guide section's guide, with its id and label, the name admins know it by (guides); for each products section, its picked products under productPicks — whether each would be drawn once the working copy is published, because the shop lists it now, and why not (its term ended, it is unlisted) — with drawn false when none would be, in which case the section would leave no trace on the page; these, like the structure, are the working copy's, so a section or pick saved since the last publish is not what readers see yet; what readers see now, with each live language's public link; a preview link per language; and adminLink, the page's status page in Sogverse admin, where the admin sees each language's state, opens its preview and live links, and publishes or unpublishes. Landing pages are written only through these tools. ${UNPUBLISHED_CHANGES} ${SEO} ${COMPLETE} ${PUBLISHING} ${SHARE_CARD} ${STICKY_MANUAL}`,
       inputSchema: readableInput(z.object({ pageId }), z.object({ pageId })),
       annotations: READ_ONLY,
     },
@@ -680,7 +712,8 @@ export function registerLandingPageTools(server: McpServer): void {
       asLandingAdmin(ctx, async ({ service, origin }) => {
         const page = await service.getAdminPage(id);
         if (page === null) return refusal(NOT_FOUND);
-        const view = await pageView(page, origin);
+        const guideLabels = await service.listPlacedGuideLabels(page.draft.sections);
+        const view = await pageView(page, guideLabels, origin);
         return answerWithCovers(
           view,
           Object.entries(page.draft.pictures).map(([catalogueId, { path, purpose }]) => ({
@@ -837,7 +870,7 @@ ${SECTIONS_MANUAL}`,
     "save_landing_page_structure",
     {
       title: "Save a landing page's structure",
-      description: `Replace the page's structure — its ordered sections and their shared fields — for every language at once. No language's words are written, except that ${STRUCTURE_WRITES.charAt(0).toLowerCase()}${STRUCTURE_WRITES.slice(1)} Send the whole structure, read from get_landing_page: what is left out is removed. The answer lists the saved structure with every id, the sections removed, each language's completeness under the new structure, and each testimonials section's testimonials (testimonials), and each products section's picks, shown or not and why (productPicks). Readers see nothing until the next publish. ${PUBLISHING} ${LINKS}\n\n${SECTIONS_MANUAL}`,
+      description: `Replace the page's structure — its ordered sections and their shared fields — for every language at once. No language's words are written, except that ${STRUCTURE_WRITES.charAt(0).toLowerCase()}${STRUCTURE_WRITES.slice(1)} Send the whole structure, read from get_landing_page: what is left out is removed. The answer lists the saved structure with every id, the sections removed, each language's completeness under the new structure, each testimonials section's testimonials (testimonials), each guide section's guide with its label (guides), and each products section's picks, whether each would be drawn once published and why not (productPicks). Readers see nothing until the next publish. ${PUBLISHING} ${LINKS}\n\n${SECTIONS_MANUAL}`,
       inputSchema: readableInput(
         z.object({ pageId, sections: mcpLandingStructure }),
         z.object({ pageId, sections: mcpLandingStructure }),
@@ -852,6 +885,7 @@ ${SECTIONS_MANUAL}`,
         if ("refusal" in structure) return structure.refusal;
         const { linkRewrites } = await service.saveStructure(id, structure.sections);
         const after = await savedPage(service, id);
+        const guideLabels = await service.listPlacedGuideLabels(after.draft.sections);
         const kept = new Set(after.draft.sections.map((section) => section.id));
         return answer({
           pageId: id,
@@ -861,8 +895,9 @@ ${SECTIONS_MANUAL}`,
             .map((section) => ({ id: section.id, type: section.type })),
           languages: languages(after),
           testimonials: placedTestimonials(after),
+          guides: placedGuides(after, guideLabels),
           productPicks: productPicks(after),
-          hasUnpublishedChanges: after.hasUnpublishedChanges,
+          hasUnpublishedChanges: unpublishedChanges(after.publication !== null, after.hasUnpublishedChanges),
           publish: publishForecast(after, origin),
           ...rewritten(linkRewrites),
         });
@@ -937,7 +972,7 @@ ${SECTIONS_MANUAL}`,
           languageIsLive:
             // exact-locale: whether the named version is live
             page.publication?.versions.some((v) => v.locale === input.locale) ?? false,
-          hasUnpublishedChanges: page.hasUnpublishedChanges,
+          hasUnpublishedChanges: unpublishedChanges(page.publication !== null, page.hasUnpublishedChanges),
           publish: publishForecast(page, origin),
           ...rewritten(linkRewrites),
         });
@@ -969,7 +1004,7 @@ ${SECTIONS_MANUAL}`,
           // exact-locale: whether the removed version is live
           languageIsLive: page.publication?.versions.some((v) => v.locale === removed) ?? false,
           languages: languages(page),
-          hasUnpublishedChanges: page.hasUnpublishedChanges,
+          hasUnpublishedChanges: unpublishedChanges(page.publication !== null, page.hasUnpublishedChanges),
           publish: publishForecast(page, origin),
         });
       }),
@@ -1013,7 +1048,7 @@ ${SECTIONS_MANUAL}`,
             publicLink: publication === null ? null : publicLink(origin, publication, l),
           })),
         });
-      }),
+      }, NOTHING_CHANGED_ON_SITE),
   );
 
   server.registerTool(
@@ -1030,7 +1065,7 @@ ${SECTIONS_MANUAL}`,
         if (before === null) return refusal(NOT_FOUND);
         await unpublishLandingPage(service, id);
         return answer({ pageId: id, wasLive: before.publication !== null, live: false });
-      }),
+      }, NOTHING_CHANGED_ON_SITE),
   );
 }
 
