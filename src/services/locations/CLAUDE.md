@@ -975,7 +975,7 @@ set it later — stranding someone mid-signup over it would be strictly worse th
 
 ### The product picker
 
-In-person products pick a **site**; online municipality clubs pick a **Finnish
+In-person and hybrid products pick a **site**; online municipality clubs pick a **Finnish
 municipality**. Two levels of one hierarchy, and **one control in two configurations** —
 both fields are the tree dialog, the same one gedu coverage and a parent's own location
 open, and both look identical until it is open: a compact affordance when empty, a card
@@ -1288,21 +1288,30 @@ search fold picks the new alternates up on write, with no reindexing step.
 
 ## Products ↔ locations
 
-**`is_remote` is the only field that says how a product is delivered.** `location_id` says
-where it *belongs*, and which levels it may point at depends on the product type as well as
-the delivery mode. Three CHECK constraints plus a `BEFORE INSERT/UPDATE` trigger on
-`products` together permit exactly three shapes:
+**`delivery_mode` is the only field that says how a product is delivered**: `online`,
+`in_person` or `hybrid`, where a hybrid product's gamers attend a site and its gedu (with
+perhaps a few gamers) joins through the voice room. `location_id` says where it *belongs*,
+and which levels it may point at depends on the product type as well as the delivery mode.
+Three CHECK constraints plus a `BEFORE INSERT/UPDATE` trigger on `products` together permit
+exactly four shapes:
 
-| Product | `is_remote` | `location_id` |
+| Product | `delivery_mode` | `location_id` |
 |---|---|---|
-| In-person, any type | `false` | required, must be a `site` row |
-| Online municipality club | `true` | required, must be a `country`, `region` or `municipality` row |
-| Online, any other type | `true` | must be `NULL` |
+| In-person, any type | `in_person` | required, must be a `site` row |
+| Hybrid, any type | `hybrid` | required, must be a `site` row |
+| Online municipality club | `online` | required, must be a `country`, `region` or `municipality` row |
+| Online, any other type | `online` | must be `NULL` |
+
+A reader of the mode is asking one of three questions, and each has its own answer: **is
+there a voice room** — online or hybrid; **do gamers attend a site** — in person or hybrid,
+which is what the location rules follow; **does the gedu attend a site** — in person alone,
+so a hybrid product asks nothing of gedu coverage (below). Name the question before writing
+the test, because two of them split hybrid differently.
 
 The trigger also refuses a `location_id` referencing no row at all, raising a
 foreign-key violation instead of letting the write through.
 
-**Rule: an in-person product pins to a `site` (leaf) location — never to a municipality,
+**Rule: an in-person or hybrid product pins to a `site` (leaf) location — never to a municipality,
 region or country.** This gives the ancestor-walk matcher a well-defined start point.
 Defence in depth, and each layer stops something the next one cannot: the picker only ever
 hands the form a `site`, because that is the only type its site flow completes on; the
@@ -1312,7 +1321,7 @@ submit while the field is empty, so a dropped pick cannot be saved as nothing; a
 CHECK plus the `BEFORE INSERT/UPDATE` trigger are the backstop that binds every writer,
 including one that never touched the form.
 
-**Rule: `is_remote` and `spoken_language_code` on `products` are NOT NULL with no
+**Rule: `delivery_mode` and `spoken_language_code` on `products` are NOT NULL with no
 DEFAULT — admins must explicitly pick both on every product.** No silent default at any
 layer.
 
@@ -1320,17 +1329,17 @@ layer.
 
 A municipality club is funded by one Finnish municipality, and its `location_id` is how
 that ownership is recorded — **in both delivery modes, at whichever level the mode
-requires**: an online club points at the municipality row itself, an in-person one at a
-site inside it. A site is only ever created directly beneath the municipality an admin
+requires**: an online club points at the municipality row itself, an in-person or hybrid
+one at a site inside it. A site is only ever created directly beneath the municipality an admin
 confirmed, so the municipality sits at depth 0 or 1 either way. Both shapes assert the same
 thing — this is the municipality paying for the club, and therefore the municipality whose
 parents see it when they browse.
 
 **Rule: never read `location_id` presence, or its value, as a delivery-mode proxy.** On a
 consumer club the two happen to coincide (online means no location at all), so code written
-for that type reads as though a location implied in-person. A municipality club always has
+for that type reads as though a location implied a site. A municipality club always has
 one, so on that type the inference is simply false — and the failure is silent: the surface
-renders its online clubs and quietly omits every in-person one. Ask `is_remote`.
+renders its online clubs and quietly omits every in-person one. Ask `delivery_mode`.
 
 **Rule: a surface that groups, filters or scopes clubs by municipality resolves membership
 — it never compares `location_id` against a municipality id.** Resolving means taking the
@@ -1346,7 +1355,7 @@ restriction above — resolves to *no* municipality rather than lighting up ever
 municipality beneath it.
 
 Delivery mode stays an orthogonal axis on top of membership. A page scoped to one
-municipality shows both modes by default and offers online/in-person as its own filter, so
+municipality shows every mode by default and offers the delivery mode as its own filter, so
 the two dimensions never collapse into each other.
 
 Product queries embed a product's location plus one level of parent, which is exactly the
@@ -1355,7 +1364,7 @@ reads that embed and touches the locations table not at all — the municipality
 resolves to carries the id and the names, which is everything such a page renders.
 
 **What the embed cannot answer is the region above the municipality**, because the chain
-stops at the municipality for an in-person club. A surface that *groups by region* therefore
+stops at the municipality for a club at a site. A surface that *groups by region* therefore
 makes exactly one locations read: the resolved municipality ids, by key, with their chains.
 That read is bounded by the clubs the page already holds, which is the shape any future
 club-scoped geography read should take — resolve first, then key, never scan a country and
@@ -1380,7 +1389,7 @@ target both checked); admins manage any row, for the user-detail view.
   enumerate descendants to express a gap ("Uusimaa except Helsinki" is just the other
   municipalities, ticked). Matching reads any one of the rows, so enumerating would only
   multiply rows that say the same thing.
-- **An empty selection is valid** — the gedu is remote-only.
+- **An empty selection is valid** — the gedu covers online and hybrid products only.
 - **A tick is a row id, from the moment it is made to the moment it is written.** The
   picker browses the table, so a ticked node is already a row. There is nothing to resolve
   at save time, and therefore no class of claim the editor can display but not store: a
@@ -1403,8 +1412,9 @@ the save button.
   `gedu_locations` rows is any link of the product's ancestor-or-self chain: a product at
   a site matches every gedu who claimed that site, its municipality, its region or its
   country — the "claim means subtree" semantics are what make an ancestor row sufficient.
-  **An online product asks nothing of coverage**, an online municipality club's location
-  included: the remote flag decides, never the presence of a location. The walk lives in
+  **An online or hybrid product asks nothing of coverage** — a hybrid product's gamers are
+  at the site but its gedu joins online — an online municipality club's location included:
+  the delivery mode decides, never the presence of a location. The walk lives in
   one database predicate, and the admin gedu picker asks the database which gedus cover a
   product rather than walking the chain in the browser; the substitution rules it gates
   are in `../session-substitution/CLAUDE.md`.

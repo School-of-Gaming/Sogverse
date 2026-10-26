@@ -133,7 +133,7 @@ describe("get_admin_session_feedback", () => {
       start_date: "2025-01-01",
       registration_opens_at: "2024-12-01T00:00:00Z",
       timezone: TIMEZONE,
-      is_remote: true,
+      delivery_mode: "online",
       is_visible: false,
       for_gamers: true,
       min_age: 8,
@@ -290,7 +290,7 @@ describe("get_admin_session_feedback", () => {
       groupName: "Tuesday crew",
       productId: PRODUCT,
       productType: "consumer_club",
-      isRemote: true,
+      deliveryMode: "online",
       answers: { learned: 5, fun: 4, retiredKey: 2 },
       note: "",
     });
@@ -336,7 +336,7 @@ describe("get_admin_session_feedback", () => {
       source: "gamer_online",
       groupId: GROUP,
       productId: PRODUCT,
-      isRemote: true,
+      deliveryMode: "online",
     });
   });
 
@@ -361,19 +361,19 @@ describe("get_admin_session_feedback", () => {
     // count toward a rate whose denominator holds no such session.
     const toSite = await admin
       .from("products")
-      .update({ is_remote: false, location_id: TEST_IDS.LOCATION_SITE })
+      .update({ delivery_mode: "in_person", location_id: TEST_IDS.LOCATION_SITE })
       .eq("id", PRODUCT);
     expect(toSite.error).toBeNull();
     try {
       const { responses, sessions } = await read(DAY_1, DAY_1);
-      expect(responses.map((r) => [r.respondent.id, r.isRemote, r.countsTowardRate])).toEqual([
-        [TEST_IDS.GAMER, false, false],
+      expect(responses.map((r) => [r.respondent.id, r.deliveryMode, r.countsTowardRate])).toEqual([
+        [TEST_IDS.GAMER, "in_person", false],
       ]);
       expect(sessions).toEqual([]);
     } finally {
       const back = await admin
         .from("products")
-        .update({ is_remote: true, location_id: null })
+        .update({ delivery_mode: "online", location_id: null })
         .eq("id", PRODUCT);
       expect(back.error).toBeNull();
     }

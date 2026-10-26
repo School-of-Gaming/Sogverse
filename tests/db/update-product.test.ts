@@ -127,7 +127,7 @@ describe("update_product", () => {
       min_age: 7,
       max_age: 12,
       spoken_language_code: "en",
-      is_remote: true,
+      delivery_mode: "online" as const,
       // A municipality club needs a location, and an ONLINE one may point only
       // at a country, region or municipality — so the seeded municipality.
       location_id: TEST_IDS.LOCATION_MUNICIPALITY,
@@ -166,7 +166,7 @@ describe("update_product", () => {
       p_min_age: 7,
       p_max_age: 12,
       p_spoken_language_code: "en" as const,
-      p_is_remote: true,
+      p_delivery_mode: "online" as const,
       p_location_id: TEST_IDS.LOCATION_MUNICIPALITY,
       p_timezone: "Europe/Helsinki",
       p_registration_opens_at: new Date().toISOString(),
@@ -189,7 +189,7 @@ describe("update_product", () => {
       min_age: 7,
       max_age: 12,
       spoken_language_code: "en",
-      is_remote: true,
+      delivery_mode: "online" as const,
       timezone: "Europe/Helsinki",
       start_date: "2099-01-01",
       registration_opens_at: new Date(Date.now() - 60_000).toISOString(),
@@ -228,7 +228,7 @@ describe("update_product", () => {
       p_min_age: 8,
       p_max_age: 14,
       p_spoken_language_code: "en",
-      p_is_remote: true,
+      p_delivery_mode: "online" as const,
       p_timezone: "Europe/Helsinki",
       p_registration_opens_at: new Date().toISOString(),
       p_start_date: "2099-01-01",
@@ -307,7 +307,7 @@ describe("update_product", () => {
       p_min_age: 7,
       p_max_age: 12,
       p_spoken_language_code: "en",
-      p_is_remote: true,
+      p_delivery_mode: "online" as const,
       p_timezone: "Europe/Helsinki",
       p_registration_opens_at: new Date().toISOString(),
       p_start_date: "2099-01-01",
@@ -332,7 +332,7 @@ describe("update_product", () => {
       p_min_age: 7,
       p_max_age: 12,
       p_spoken_language_code: "en",
-      p_is_remote: true,
+      p_delivery_mode: "online" as const,
       p_timezone: "Europe/Helsinki",
       p_registration_opens_at: new Date().toISOString(),
       p_start_date: "2099-01-01",
@@ -360,7 +360,7 @@ describe("update_product", () => {
       p_min_age: 7,
       p_max_age: 12,
       p_spoken_language_code: "en",
-      p_is_remote: true,
+      p_delivery_mode: "online" as const,
       p_timezone: "Europe/Helsinki",
       p_registration_opens_at: new Date().toISOString(),
       p_start_date: "2099-01-01",
@@ -381,7 +381,7 @@ describe("update_product", () => {
       p_min_age: 7,
       p_max_age: 12,
       p_spoken_language_code: "en",
-      p_is_remote: true,
+      p_delivery_mode: "online" as const,
       p_timezone: "Europe/Helsinki",
       p_registration_opens_at: new Date().toISOString(),
       p_start_date: "2099-01-01",
@@ -420,7 +420,7 @@ describe("update_product", () => {
       p_min_age: 7,
       p_max_age: 12,
       p_spoken_language_code: "en",
-      p_is_remote: true,
+      p_delivery_mode: "online" as const,
       p_timezone: "Europe/Helsinki",
       p_registration_opens_at: new Date().toISOString(),
       p_start_date: "2099-01-01",
@@ -473,7 +473,7 @@ describe("update_product", () => {
       p_min_age: 7,
       p_max_age: 12,
       p_spoken_language_code: "en",
-      p_is_remote: true,
+      p_delivery_mode: "online" as const,
       p_timezone: "Europe/Helsinki",
       p_registration_opens_at: new Date().toISOString(),
       p_start_date: "2099-01-01",
@@ -603,7 +603,7 @@ describe("update_product", () => {
       p_min_age: 7,
       p_max_age: 12,
       p_spoken_language_code: "en",
-      p_is_remote: true,
+      p_delivery_mode: "online" as const,
       p_timezone: "Europe/Helsinki",
       p_registration_opens_at: new Date().toISOString(),
       p_start_date: "2099-01-01",
@@ -644,7 +644,7 @@ describe("update_product", () => {
       p_min_age: 7,
       p_max_age: 12,
       p_spoken_language_code: "en",
-      p_is_remote: true,
+      p_delivery_mode: "online" as const,
       p_timezone: "Europe/Helsinki",
       p_registration_opens_at: new Date().toISOString(),
       p_start_date: "2099-01-01",
@@ -678,7 +678,7 @@ describe("update_product", () => {
       p_min_age: 7,
       p_max_age: 12,
       p_spoken_language_code: "en",
-      p_is_remote: true,
+      p_delivery_mode: "online" as const,
       p_timezone: "Europe/Helsinki",
       p_registration_opens_at: new Date().toISOString(),
       p_start_date: "2099-01-01",
@@ -721,7 +721,7 @@ describe("update_product", () => {
       p_min_age: 7,
       p_max_age: 12,
       p_spoken_language_code: "en",
-      p_is_remote: true,
+      p_delivery_mode: "online" as const,
       p_timezone: "Europe/Helsinki",
       p_registration_opens_at: new Date().toISOString(),
       p_start_date: "2099-01-01",
@@ -757,7 +757,7 @@ describe("update_product", () => {
       p_min_age: 7,
       p_max_age: 12,
       p_spoken_language_code: "en",
-      p_is_remote: true,
+      p_delivery_mode: "online" as const,
       p_timezone: "Europe/Helsinki",
       p_registration_opens_at: new Date().toISOString(),
       p_start_date: "2099-01-01",
@@ -811,7 +811,7 @@ describe("update_product", () => {
       p_min_age: 7,
       p_max_age: 12,
       p_spoken_language_code: "en" as const,
-      p_is_remote: true,
+      p_delivery_mode: "online" as const,
       p_timezone: "Europe/Helsinki",
       p_registration_opens_at: new Date().toISOString(),
       p_start_date: "2099-01-01",
@@ -982,7 +982,7 @@ describe("update_product", () => {
         p_min_age: 7,
         p_max_age: 12,
         p_spoken_language_code: "en" as const,
-        p_is_remote: true,
+        p_delivery_mode: "online" as const,
         p_timezone: "Europe/Helsinki",
         p_registration_opens_at: new Date().toISOString(),
         p_start_date: "2099-01-01",
@@ -1059,6 +1059,35 @@ describe("update_product", () => {
       });
       expect(error?.code).toBe("23514");
       expect(error?.message).toMatch(/needs join instructions/);
+    });
+
+    it("moves an online product to hybrid at a site, and refuses it the no-room mode there", async () => {
+      await freshProduct();
+      const { error } = await adminAuth.rpc("update_product", {
+        ...voiceUpdateArgs(null),
+        p_delivery_mode: "hybrid" as const,
+        p_location_id: TEST_IDS.LOCATION_SITE,
+      });
+      expect(error).toBeNull();
+      const { data: row } = await admin
+        .from("products")
+        .select("delivery_mode, location_id, voice_room_mode")
+        .eq("id", PRODUCT_ID)
+        .single();
+      expect(row).toEqual({
+        delivery_mode: "hybrid" as const,
+        location_id: TEST_IDS.LOCATION_SITE,
+        voice_room_mode: "sogverse",
+      });
+
+      const refused = await adminAuth.rpc("update_product", {
+        ...voiceUpdateArgs("Join by phone."),
+        p_delivery_mode: "hybrid" as const,
+        p_location_id: TEST_IDS.LOCATION_SITE,
+        p_voice_room_mode: "none",
+      });
+      expect(refused.error?.code).toBe("23514");
+      expect(refused.error?.message).toMatch(/sogverse_room_unless_online/);
     });
   });
 
@@ -1150,7 +1179,7 @@ describe("update_product", () => {
         p_min_age: 7,
         p_max_age: 12,
         p_spoken_language_code: "en",
-        p_is_remote: true,
+        p_delivery_mode: "online" as const,
         p_timezone: "Europe/Helsinki",
         p_registration_opens_at: new Date().toISOString(),
         p_start_date: "2099-01-01",

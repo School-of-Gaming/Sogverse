@@ -128,7 +128,7 @@ describe("substitutions from Discord", () => {
       billing_mode: "free",
       topic: "minecraft_java",
       spoken_language_code: "en",
-      is_remote: true,
+      delivery_mode: "online",
       location_id: null,
       timezone: "UTC",
       registration_opens_at: new Date(Date.now() - 60_000).toISOString(),
