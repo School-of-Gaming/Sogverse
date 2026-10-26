@@ -1356,7 +1356,7 @@
           "noLiveSubscription": "pa’vam DungDaq taHbogh Huch nge’ghach tu’lu’be’, vaj jan lughbe’ ’oH: pa’ yIteq, ’ej latlh ghom’a’Daq SuvwI’ yIngu’.",
           "targetNotPaidSubscriptionClub": "jarmey Huch poQbogh ghom’a’ ’oHbe’ ngoptlhInvam’e’, vaj pa’ tlha’laHbe’ Huch nge’ghach.",
           "sameProduct": "ghom’a’vamDaq ghaHtaH SuvwI’’e’.",
-          "alreadyOnTarget": "ghom’a’vamDaq pa’ ghaj SuvwI’.",
+          "alreadyOnTarget": "ngoptlhInvamDaq pa’ ghaj {name}.",
           "targetIsSubscriptionClub": "jarmey Huch poQ ghom’a’vam. jarmey Huch chenmoHlaHbe’ vIHghachvam.",
           "targetNotOpenToParents": "vavpu’ SoSpu’ je lajbe’ ngoptlhInvam. pa’vetlh yIvIHQo’!",
           "targetNotOpenToGamers": "QujwI’pu’ lajbe’ ngoptlhInvam. pa’vetlh yIvIHQo’!"
@@ -1399,7 +1399,7 @@
         "move": "latlh ngoptlhInDaq yIvIH…",
         "remove": "ngoptlhInvamvo’ yIteq…",
         "disabled": {
-          "subscriptionLive": "wa’DIch StripeDaq jarmey Huch yIqIl."
+          "subscriptionLive": "jIH SOGDaq Huch nge’ghach chIl qorDu’; rInDI’, pa’ rIn je."
         }
       }
     },

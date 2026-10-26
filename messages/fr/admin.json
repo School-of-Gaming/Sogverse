@@ -1356,7 +1356,7 @@
           "noLiveSubscription": "Aucun abonnement actif ne se trouve derrière cette place : ce n’est pas le bon outil. Retirez la place et inscrivez le joueur sur l’autre club.",
           "targetNotPaidSubscriptionClub": "Ce produit n’est pas un club facturé chaque mois, un abonnement ne peut donc pas suivre la place jusque-là.",
           "sameProduct": "C’est le club où le joueur se trouve déjà.",
-          "alreadyOnTarget": "Ce joueur a déjà une place dans ce club.",
+          "alreadyOnTarget": "{name} a déjà une place dans ce produit.",
           "targetIsSubscriptionClub": "Ce club est facturé chaque mois : une place y exige un abonnement, que ce déplacement ne peut pas créer.",
           "targetNotOpenToParents": "Ce produit n’est pas ouvert aux parents, la place d’un parent ne peut donc pas y être déplacée.",
           "targetNotOpenToGamers": "Ce produit n’est pas ouvert aux joueurs, la place de ce joueur ne peut donc pas y être déplacée."
@@ -1399,7 +1399,7 @@
         "move": "Déplacer vers un autre produit…",
         "remove": "Retirer de ce produit…",
         "disabled": {
-          "subscriptionLive": "L’abonnement doit d’abord être résilié dans Stripe."
+          "subscriptionLive": "La famille résilie l’abonnement depuis Mon SOG, et la place prend fin avec lui."
         }
       }
     },

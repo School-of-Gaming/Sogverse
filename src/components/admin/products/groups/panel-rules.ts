@@ -231,7 +231,8 @@ export type SeatMenuAction = "switchClub" | "move" | "remove";
  * after it.
  *
  *  - `subscriptionLive` — removal would leave a live subscription billing for a
- *    seat that no longer exists; it has to be cancelled in Stripe first.
+ *    seat that no longer exists. The family cancels it in My SOG, and the
+ *    seat ends with the subscription.
  */
 export type SeatMenuDisabledReason = "subscriptionLive";
 

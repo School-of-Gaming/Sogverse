@@ -1356,7 +1356,7 @@
           "noLiveSubscription": "Tämän paikan takana ei ole voimassa olevaa tilausta, joten tämä ei ole oikea työkalu: poista paikka ja ilmoita pelaaja toiseen kerhoon.",
           "targetNotPaidSubscriptionClub": "Kyseinen tuote ei ole kuukausittain laskutettava kerho, joten tilaus ei voi seurata paikkaa sinne.",
           "sameProduct": "Pelaaja on jo tässä kerhossa.",
-          "alreadyOnTarget": "Pelaajalla on jo paikka kyseisessä kerhossa.",
+          "alreadyOnTarget": "Käyttäjällä {name} on jo paikka kyseisessä tuotteessa.",
           "targetIsSubscriptionClub": "Kerho laskutetaan kuukausittain, joten paikka siellä vaatii tilauksen, jota tämä siirto ei voi luoda.",
           "targetNotOpenToParents": "Tuote ei ole avoin vanhemmille, joten vanhemman omaa paikkaa ei voi siirtää sinne.",
           "targetNotOpenToGamers": "Tuote ei ole avoin pelaajille, joten tämän pelaajan paikkaa ei voi siirtää sinne."
@@ -1399,7 +1399,7 @@
         "move": "Siirrä toiseen tuotteeseen…",
         "remove": "Poista tästä tuotteesta…",
         "disabled": {
-          "subscriptionLive": "Tilaus on ensin peruttava Stripessä."
+          "subscriptionLive": "Perhe peruu tilauksen Oma SOG -sivulla, ja paikka päättyy sen mukana."
         }
       }
     },

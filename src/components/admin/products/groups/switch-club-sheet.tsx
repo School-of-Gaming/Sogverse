@@ -614,15 +614,24 @@ export function SwitchClubSheet({
                 </div>
               </div>
 
-              {/* The money. A Stripe round trip fills this, so the skeleton is
-                  immediate and the box already stands at its final height —
-                  waiting for the answer and reading it happen without a pixel
-                  below moving. */}
+              {/* The check's answer: the money, or in the no-subscription move
+                  what the family experiences. A round trip to the route fills
+                  either, so the skeleton is immediate and the box already
+                  stands at its final height — waiting for the answer and
+                  reading it happen without a pixel below moving. */}
               {noSubscription ? (
-                <NoSubscriptionLines
-                  refusals={refusals}
-                  isError={check.isError}
-                />
+                // Taller than the money's box: it holds the four family lines
+                // whole in every locale at the sheet's desktop width (French,
+                // the longest, wraps two of them), so the answer is read
+                // without scrolling inside it.
+                <div className="h-48 overflow-y-auto rounded-lg border border-border p-3">
+                  <NoSubscriptionLines
+                    answered={check.data?.kind === "no_subscription"}
+                    refusals={refusals}
+                    isError={check.isError}
+                    gamerName={gamerName}
+                  />
+                </div>
               ) : (
               <div className="h-36 overflow-y-auto rounded-lg border border-border p-3">
                 {check.isError ? (
@@ -633,7 +642,7 @@ export function SwitchClubSheet({
                   // Ahead of the skeleton: an answer of the other kind (the
                   // seat lost its subscription under the sheet) carries its
                   // refusal and no money, and must not read as still loading.
-                  <RefusalList refusals={refusals} />
+                  <RefusalList refusals={refusals} gamerName={gamerName} />
                 ) : subscriptionCheck === undefined ? (
                   <div className="space-y-2">
                     <div className="h-4 w-24 animate-pulse rounded bg-lifted" />
@@ -712,7 +721,9 @@ export function SwitchClubSheet({
                       <>
                         {commitRefusals
                           .map((refusal) =>
-                            t(`refusals.${REFUSAL_KEY[refusal]}`),
+                            t(`refusals.${REFUSAL_KEY[refusal]}`, {
+                              name: gamerName,
+                            }),
                           )
                           .join(" ")}
                         {failure.stripeUpdated && (
@@ -890,16 +901,21 @@ function ClubList({
  * repeat to the parent unchanged, except the price-difference line — the
  * sanctioned exception, an instruction that sends the admin to Stripe.
  *
- * A refusal from the check replaces the lines — a different panel, not a line
- * joining them — because a move that cannot happen has nothing for the family
- * to experience.
+ * The lines wait for the check: a refusal from it replaces them — a different
+ * panel, not a line joining them — because a move that cannot happen has
+ * nothing for the family to experience, so drawing them before the answer
+ * would show a promise the answer may withdraw.
  */
 function NoSubscriptionLines({
+  answered,
   refusals,
   isError,
+  gamerName,
 }: {
+  answered: boolean;
   refusals: readonly SwitchClubRefusal[];
   isError: boolean;
+  gamerName: string;
 }) {
   const t = useTranslations("admin.products.groupsPanel.switchClub");
   const tn = useTranslations(
@@ -909,7 +925,22 @@ function NoSubscriptionLines({
   if (isError) {
     return <p className="text-sm text-muted-foreground">{t("prices.error")}</p>;
   }
-  if (refusals.length > 0) return <RefusalList refusals={refusals} />;
+  // Ahead of the skeleton, as in the money's box: an answer of the other kind
+  // carries its refusal and must not read as still loading.
+  if (refusals.length > 0) {
+    return <RefusalList refusals={refusals} gamerName={gamerName} />;
+  }
+  if (!answered) {
+    return (
+      <div className="space-y-2">
+        <div className="h-3 w-28 animate-pulse rounded bg-lifted" />
+        <div className="h-4 w-full animate-pulse rounded bg-lifted" />
+        <div className="h-4 w-full animate-pulse rounded bg-lifted" />
+        <div className="h-4 w-5/6 animate-pulse rounded bg-lifted" />
+        <div className="h-4 w-3/4 animate-pulse rounded bg-lifted" />
+      </div>
+    );
+  }
 
   return (
     <div>
@@ -927,7 +958,14 @@ function NoSubscriptionLines({
 }
 
 /** The check's hard refusals, one line each with the mark in the danger tone. */
-function RefusalList({ refusals }: { refusals: readonly SwitchClubRefusal[] }) {
+function RefusalList({
+  refusals,
+  gamerName,
+}: {
+  refusals: readonly SwitchClubRefusal[];
+  /** The seat holder's first name, which one refusal names. */
+  gamerName: string;
+}) {
   const t = useTranslations("admin.products.groupsPanel.switchClub");
   return (
     <ul className="space-y-2">
@@ -940,7 +978,7 @@ function RefusalList({ refusals }: { refusals: readonly SwitchClubRefusal[] }) {
             className="mt-0.5 h-4 w-4 shrink-0 text-destructive"
             aria-hidden
           />
-          {t(`refusals.${REFUSAL_KEY[refusal]}`)}
+          {t(`refusals.${REFUSAL_KEY[refusal]}`, { name: gamerName })}
         </li>
       ))}
     </ul>

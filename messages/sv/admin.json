@@ -1356,7 +1356,7 @@
           "noLiveSubscription": "Ingen aktiv prenumeration står bakom den här platsen, så det här är fel verktyg: ta bort platsen och skriv in spelaren på den andra klubben i stället.",
           "targetNotPaidSubscriptionClub": "Den produkten är ingen klubb som faktureras varje månad, så en prenumeration kan inte följa med platsen dit.",
           "sameProduct": "Det är klubben spelaren redan går i.",
-          "alreadyOnTarget": "Spelaren har redan en plats i den klubben.",
+          "alreadyOnTarget": "{name} har redan en plats i den produkten.",
           "targetIsSubscriptionClub": "Den klubben faktureras varje månad, så en plats där kräver en prenumeration som den här flytten inte kan skapa.",
           "targetNotOpenToParents": "Den produkten är inte öppen för föräldrar, så en förälders egen plats kan inte flyttas dit.",
           "targetNotOpenToGamers": "Den produkten är inte öppen för spelare, så den här spelarens plats kan inte flyttas dit."
@@ -1399,7 +1399,7 @@
         "move": "Flytta till en annan produkt…",
         "remove": "Ta bort från den här produkten…",
         "disabled": {
-          "subscriptionLive": "Prenumerationen måste först sägas upp i Stripe."
+          "subscriptionLive": "Familjen säger upp prenumerationen på Min SOG, och platsen upphör med den."
         }
       }
     },
