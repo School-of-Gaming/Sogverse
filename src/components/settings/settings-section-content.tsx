@@ -60,6 +60,7 @@ import {
   useSetMarketingConsent,
 } from "@/services/marketing-consents/marketing-consents.queries";
 import { hasRealEmail, gamerUsernameFromEmail } from "@/lib/gamer-sign-in";
+import { trimPersonName } from "@/lib/person-name-trim";
 import {
   isGamerProfile,
   type GamerSignIn,
@@ -442,7 +443,7 @@ export function SettingsSectionContent({
 
       // The profiles CHECK holds a first name to at least two characters once
       // trimmed; saying so here keeps a refusal from reading as a failed save.
-      if (firstName.trim().length < DISPLAY_NAME_MIN) {
+      if (trimPersonName(firstName).length < DISPLAY_NAME_MIN) {
         setSaveError("firstNameRequired");
         setIsSaving(false);
         return;
@@ -451,7 +452,7 @@ export function SettingsSectionContent({
       // Last name is required for non-gamers (gamers don't render the field and
       // keep their inherited name). This also gradually backfills legacy rows
       // that hold an empty last name from before it was required.
-      if (!isGamer && lastName.trim().length < DISPLAY_NAME_MIN) {
+      if (!isGamer && trimPersonName(lastName).length < DISPLAY_NAME_MIN) {
         setSaveError("lastNameRequired");
         setIsSaving(false);
         return;
@@ -461,8 +462,8 @@ export function SettingsSectionContent({
       // from the browser — no route, no contract — so nothing downstream will
       // strip whitespace the field picked up.
       const updates: ProfileUpdate = {
-        first_name: firstName.trim(),
-        last_name: lastName.trim(),
+        first_name: trimPersonName(firstName),
+        last_name: trimPersonName(lastName),
         spoken_languages: spokenLanguages,
       };
 
