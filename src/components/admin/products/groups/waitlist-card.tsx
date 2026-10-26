@@ -58,8 +58,8 @@ interface WaitlistCardProps {
  * numbered 1..N list (position = derived order, computed here as the array
  * index + 1 — never stored), reusing the same draggable ParticipantChip as the groups
  * and unassigned inbox. Three things an admin can do from here, two via drag:
- *  - drag a chip OUT to a group / the unassigned inbox → promote (seat them), or
- *    to the header's remove zone → cancel them off the product entirely;
+ *  - drag a chip OUT to a group / the unassigned inbox → promote (seat them);
+ *    removing them off the product entirely is the chip's own seat menu;
  *  - drop an active gamer ONTO this card → demote them to the back of the line;
  *  - press **Invite** on a row → offer that family the seat that opened, and let
  *    them answer. Promotion seats somebody whether or not they can still come;

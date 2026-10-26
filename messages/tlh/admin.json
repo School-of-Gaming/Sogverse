@@ -1238,8 +1238,7 @@
         "title": "ngu’be’pu’",
         "subtitle": "ghomDaq pagh chaH. ghomvaD yIngeH ngu’meH.",
         "empty": "Hoch ghom ghaj.",
-        "addParticipant": "ghom yIchel",
-        "removeParticipant": "ghom yIteq"
+        "addParticipant": "ghom yIchel"
       },
       "empty": {
         "title": "ghommey pagh",
@@ -1313,15 +1312,9 @@
           "title": "taHtaH Huch nge’ghach",
           "description": "loSwI’pu’ tetlhDaq {name} DalanDI’, taHtaH Huch nge’ghach: pa’ Hutlh qorDu’, ’ach Huch nge’taH. quvHa’ghach ’oH!",
           "nextStep": "jIH SOG yaHDaj Huch ngoptlhIn poSmoH qorDu’; vaj Hubbogh Stripe Huch pa’Daq nge’ghach chIl. chIlDI’, tlhab pa’."
-        },
-        "removeSubscribed": {
-          "title": "taHtaH Huch nge’ghach",
-          "description": "{name} Dateqchugh, ngab pa’ ’ach taHtaH Huch nge’ghach: pa’ Hutlhbogh qorDu’vo’ Huch nge’taH. quvHa’ghach ’oH!",
-          "nextStep": "jIH SOG yaHDaj Huch ngoptlhIn poSmoH qorDu’; vaj Hubbogh Stripe Huch pa’Daq nge’ghach chIl. chIlDI’, tlhab pa’."
         }
       },
       "switchClub": {
-        "dropZone": "ghom’a’ yIchIj",
         "title": "ghom’a’ yIchIj",
         "description": "latlh ghom’a’Daq {name} vIH. DaHjaj qorDu’vaD pagh choH: rap nav, rap jaj je; ghIq ghom’a’ chu’ Huch DIl qorDu’.",
         "searchPlaceholder": "pongDaq ghom’a’ yISam",

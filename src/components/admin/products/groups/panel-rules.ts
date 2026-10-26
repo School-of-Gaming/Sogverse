@@ -21,9 +21,9 @@ import type {
  *
  * They live outside the panel component so each one can be exercised directly —
  * the interesting cases (a never-paid waitlister promoted onto a subscription-
- * billed club, a subscribed member dragged onto the waitlist or onto the remove
- * zone) are decisions, not rendering, and a decision that only exists inside a
- * drag handler can't be tested without simulating a pointer.
+ * billed club, a subscribed member dragged onto the waitlist, which rows a
+ * seat's menu offers) are decisions, not rendering, and a decision that only
+ * exists inside a drag handler can't be tested without simulating a pointer.
  */
 
 // ---------------------------------------------------------------------------
@@ -57,17 +57,15 @@ export function readChipDragData(value: unknown): ChipDragData | null {
 
 /**
  * Payload attached by the droppables: group columns and the unassigned card
- * carry `{ toGroupId }` (null = unassigned inbox); the header's removal zone
- * carries `{ remove: true }`; the waitlist card carries `{ waitlist: true }`.
+ * carry `{ toGroupId }` (null = unassigned inbox); the waitlist card carries
+ * `{ waitlist: true }`.
  */
 export type DropData =
   | { kind: "move"; toGroupId: string | null }
-  | { kind: "remove" }
   | { kind: "waitlist" };
 
 export function readDropData(value: unknown): DropData | null {
   if (typeof value !== "object" || value === null) return null;
-  if ("remove" in value && value.remove === true) return { kind: "remove" };
   if ("waitlist" in value && value.waitlist === true) {
     return { kind: "waitlist" };
   }
@@ -85,32 +83,18 @@ export function readDropData(value: unknown): DropData | null {
 // ---------------------------------------------------------------------------
 
 /**
- * Why a drop wrote nothing. All three are money problems the panel cannot fix
- * by dragging, so the drop is refused and a dialog explains the manual path.
+ * Why a drop wrote nothing. Both are money problems the panel cannot fix by
+ * dragging, so the drop is refused and a dialog explains the manual path.
  */
 export type BlockedDropReason =
   /** Seating a never-paid waitlister on a product whose seat needs a sub. */
   | "unpaidPromote"
   /** Demoting a member whose seat is behind a live Stripe subscription. */
-  | "liveSubscription"
-  /**
-   * Removing a **waitlisted** row whose seat is behind a live Stripe
-   * subscription — a webhook race, and the one subscribed shape the club
-   * switch cannot serve. An active subscribed seat resolves to the switch
-   * instead of to this refusal.
-   */
-  | "removeSubscribed";
+  | "liveSubscription";
 
 export type DropOutcome =
   /** Nothing to do: dropped back where it started, or already there. */
   | { kind: "none" }
-  | { kind: "remove" }
-  /**
-   * Not a removal at all: the seat the admin dropped is subscribed, and the
-   * zone they dropped it on said "Switch club" rather than "Remove gamer". The
-   * panel opens the switch dialog; nothing is written by the drop itself.
-   */
-  | { kind: "switch" }
   | { kind: "move"; toGroupId: string | null }
   | { kind: "promote"; toGroupId: string | null }
   | { kind: "demote" }
@@ -191,9 +175,9 @@ export function dragSubjectsFrom(
  * the mutation, so a blocked drop writes nothing at all — the panel shows the
  * dialog and the snapshot is left exactly as it was.
  *
- * Two of the three refusals key on the participation's own live subscription,
- * which is the same condition the database refuses on, so the dialog and the
- * RPC always agree. The third — promoting a never-paid waitlister — keys on the
+ * The demote refusal keys on the participation's own live subscription, which
+ * is the same condition the database refuses on, so the dialog and the RPC
+ * always agree. The promote refusal — a never-paid waitlister — keys on the
  * product being subscription-shaped, not on it merely costing money: a one-off
  * paid camp or event is handled out of band and the admin's drag is trusted
  * there. It also asks for the payment marker, because demotion preserves it, so
@@ -206,32 +190,6 @@ export function resolveDrop(
   subscriptionShaped: boolean,
 ): DropOutcome {
   switch (drop.kind) {
-    case "remove":
-      // Removal CASCADEs family_subscriptions, so a live subscription would go
-      // on billing a family with nothing left in the database to cancel it —
-      // and `admin_remove_participation` refuses exactly this, whatever the
-      // product type. So a subscribed seat never removes here; what it does
-      // instead splits on where it sits, because the two are exact opposites:
-      // removal is refused precisely when a subscription stands behind the
-      // seat, and the switch exists precisely then.
-      //
-      //  - An **active** subscribed seat is what the club switch was built
-      //    for, and the zone the admin dropped on said so — it reads "Switch
-      //    club" for exactly this chip. The drop opens the dialog; the drop
-      //    itself still writes nothing.
-      //  - A **waitlisted** subscribed row is an edge the dialog does not
-      //    serve (there is no active seat to move), so it keeps the refusal
-      //    and its explanation of the manual path.
-      if (subject.hasLiveSubscription) {
-        if (subject.isWaitlisted) {
-          return { kind: "blocked", reason: "removeSubscribed" };
-        }
-        return { kind: "switch" };
-      }
-      // Otherwise legal from anywhere, including the waitlist (it just cancels
-      // the queued family). Confirmed in its own dialog.
-      return { kind: "remove" };
-
     case "waitlist":
       if (subject.isWaitlisted) return { kind: "none" };
       if (subject.hasLiveSubscription) {
@@ -257,13 +215,13 @@ export function resolveDrop(
 
 /**
  * What a seat's menu offers. Three actions, and each one leaves the seat off
- * this product:
+ * this product — the menu is the only way a seat does:
  *
  *  - `switchClub` — the paid club switch, for an active seat a live
  *    subscription stands behind.
  *  - `move` — the no-charge move, for an active seat with nothing billing
  *    behind it, onto another product that charges nothing.
- *  - `remove` — the removal confirm the header drop zone also opens.
+ *  - `remove` — the removal confirm.
  */
 export type SeatMenuAction = "switchClub" | "move" | "remove";
 
@@ -289,13 +247,15 @@ export interface SeatMenuItem {
  * The rows of one seat's menu, in the order they are drawn.
  *
  * Read off the same subject a drop is resolved from, so the menu and the drag
- * cannot disagree about a seat: a live subscription is what makes removal
- * impossible and the paid switch possible, exactly as `resolveDrop` has it.
+ * cannot disagree about a seat. A live subscription is what makes removal
+ * impossible and the paid switch possible: removal CASCADEs
+ * family_subscriptions, so a live subscription would go on billing a family
+ * with nothing left in the database to cancel it — and
+ * `admin_remove_participation` refuses exactly this, whatever the product type.
  *
  * A waitlisted row offers removal alone. It holds no seat to move, and the
- * paid switch serves active seats only — the same edge `resolveDrop` refuses
- * with `removeSubscribed`, which is also why a waitlisted row with a live
- * subscription is shown its removal disabled.
+ * paid switch serves active seats only, so a waitlisted row with a live
+ * subscription (a webhook race) is shown its removal disabled and nothing else.
  *
  * The move is offered on an active seat with no subscription behind it, and
  * pressable only where the product it sits on charges nothing. On a paid camp

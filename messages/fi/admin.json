@@ -1238,8 +1238,7 @@
         "title": "Nimeämättömät",
         "subtitle": "Osallistujat, jotka eivät ole vielä missään ryhmässä. Vedä heidät ryhmään sijoittaaksesi.",
         "empty": "Kaikilla on ryhmä.",
-        "addParticipant": "Lisää osallistuja",
-        "removeParticipant": "Poista osallistuja"
+        "addParticipant": "Lisää osallistuja"
       },
       "empty": {
         "title": "Ei vielä ryhmiä",
@@ -1313,15 +1312,9 @@
           "title": "Tilaus on yhä voimassa",
           "description": "Jos {name} siirtyy jonotuslistalle, tilaus jää voimaan ja perheeltä veloitetaan edelleen paikasta, jota sillä ei enää ole.",
           "nextStep": "Perhe avaa laskutuskortin Oma SOG -sivullaan ja siirtyy sitä kautta Stripen suojattuun laskutusportaaliin perumaan tilauksen. Paikka vapautuu heti, kun tilaus päättyy."
-        },
-        "removeSubscribed": {
-          "title": "Tilaus on yhä voimassa",
-          "description": "Jos {name} poistetaan, perheen tilaus jatkaa laskuttamista paikasta, jota ei enää ole.",
-          "nextStep": "Perhe avaa laskutuskortin Oma SOG -sivullaan ja siirtyy sitä kautta Stripen suojattuun laskutusportaaliin perumaan tilauksen. Paikka vapautuu heti, kun tilaus päättyy."
         }
       },
       "switchClub": {
-        "dropZone": "Vaihda kerhoa",
         "title": "Vaihda kerhoa",
         "description": "{name} siirtyy toiseen kerhoon. Perheelle ei muutu tänään mitään: samalta kortilta veloitetaan samana päivänä, ja siitä eteenpäin perhe maksaa uuden kerhon hinnan.",
         "searchPlaceholder": "Hae kerhoja nimellä",

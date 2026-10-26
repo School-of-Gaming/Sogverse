@@ -49,7 +49,6 @@ const waitlisted: DragSubject = {
 const toGroup2 = { kind: "move", toGroupId: "group-2" } as const;
 const toUnassigned = { kind: "move", toGroupId: null } as const;
 const toWaitlist = { kind: "waitlist" } as const;
-const toRemoveZone = { kind: "remove" } as const;
 
 describe("readChipDragData", () => {
   it("reads a well-formed chip payload", () => {
@@ -70,7 +69,6 @@ describe("readChipDragData", () => {
 
 describe("readDropData", () => {
   it("reads each droppable's payload", () => {
-    expect(readDropData({ remove: true })).toEqual({ kind: "remove" });
     expect(readDropData({ waitlist: true })).toEqual({ kind: "waitlist" });
     expect(readDropData({ toGroupId: "group-1" })).toEqual({
       kind: "move",
@@ -86,7 +84,6 @@ describe("readDropData", () => {
   it("rejects anything that isn't one", () => {
     expect(readDropData(null)).toBeNull();
     expect(readDropData({})).toBeNull();
-    expect(readDropData({ remove: false })).toBeNull();
     expect(readDropData({ toGroupId: 7 })).toBeNull();
   });
 });
@@ -117,15 +114,6 @@ describe("resolveDrop — ordinary moves", () => {
     expect(
       resolveDrop(toUnassigned, { ...member, currentGroupId: null }, ONE_OFF),
     ).toEqual({ kind: "none" });
-  });
-
-  it("offers removal from a group or from the waitlist when no money is behind the seat", () => {
-    expect(resolveDrop(toRemoveZone, member, SUBSCRIPTION_CLUB)).toEqual({
-      kind: "remove",
-    });
-    expect(resolveDrop(toRemoveZone, waitlisted, SUBSCRIPTION_CLUB)).toEqual({
-      kind: "remove",
-    });
   });
 });
 
@@ -209,66 +197,6 @@ describe("resolveDrop — demoting onto the waitlist", () => {
     expect(resolveDrop(toWaitlist, waitlisted, SUBSCRIPTION_CLUB)).toEqual({
       kind: "none",
     });
-  });
-});
-
-describe("resolveDrop — removing a subscribed member", () => {
-  it("offers the club switch instead of removing an active subscribed seat", () => {
-    // Removal is refused by `admin_remove_participation` on exactly this
-    // condition — it CASCADEs family_subscriptions, so the subscription would
-    // bill on with nothing in the database left to cancel it. The switch
-    // exists for precisely the same seat, so the zone the admin dropped on
-    // read "Switch club" and the drop resolves to it. Whatever the product's
-    // own shape: the subscription is the participation's fact, not the club's.
-    for (const shape of [SUBSCRIPTION_CLUB, ONE_OFF]) {
-      expect(
-        resolveDrop(
-          toRemoveZone,
-          { ...member, hasLiveSubscription: true },
-          shape,
-        ),
-      ).toEqual({ kind: "switch" });
-    }
-  });
-
-  it("still refuses it from the waitlist, where there is nothing to switch", () => {
-    // A waitlisted row can carry a live subscription: the webhook writes one
-    // without the product lock, so a demote can land in that window. The
-    // dialog does not serve that edge — there is no active seat to move — so
-    // the refusal and its manual path stay.
-    expect(
-      resolveDrop(
-        toRemoveZone,
-        { ...waitlisted, hasLiveSubscription: true },
-        SUBSCRIPTION_CLUB,
-      ),
-    ).toEqual({ kind: "blocked", reason: "removeSubscribed" });
-  });
-
-  it("removes an active seat with no subscription behind it", () => {
-    // The other half of the split: the switch is keyed to the subscription,
-    // not to the chip being active, so an unsubscribed member on the same
-    // club still stages the ordinary removal confirm.
-    expect(
-      resolveDrop(
-        toRemoveZone,
-        { ...member, hasLiveSubscription: false },
-        SUBSCRIPTION_CLUB,
-      ),
-    ).toEqual({ kind: "remove" });
-  });
-
-  it("allows removal once the subscription is no longer live", () => {
-    // The flag is false for a cancelled subscription (the snapshot filters
-    // them out), which is what stops a dunning-dead row holding the seat
-    // forever — there is nothing left for the family to cancel.
-    expect(
-      resolveDrop(
-        toRemoveZone,
-        { ...member, hasLiveSubscription: false, hasPaymentMarker: true },
-        SUBSCRIPTION_CLUB,
-      ),
-    ).toEqual({ kind: "remove" });
   });
 });
 
@@ -393,13 +321,6 @@ describe("dragSubjectsFrom", () => {
     expect(
       resolveDrop(toWaitlist, subjects.get("p-subscribed")!, SUBSCRIPTION_CLUB),
     ).toEqual({ kind: "blocked", reason: "liveSubscription" });
-    expect(
-      resolveDrop(
-        toRemoveZone,
-        subjects.get("p-subscribed")!,
-        SUBSCRIPTION_CLUB,
-      ),
-    ).toEqual({ kind: "switch" });
   });
 });
 
@@ -1115,8 +1036,9 @@ describe("seatMenuItems", () => {
   });
 
   it("disables a subscribed waitlisted row's removal, and offers no switch", () => {
-    // The webhook-race edge resolveDrop refuses as removeSubscribed: there is
-    // no active seat for the switch to move.
+    // The webhook-race edge (the webhook writes a subscription without the
+    // product lock, so a demote can land in that window): there is no active
+    // seat for the switch to move.
     expect(
       seatMenuItems({ ...waitlisted, hasLiveSubscription: true }, "paid"),
     ).toEqual([{ action: "remove", disabledReason: "subscriptionLive" }]);

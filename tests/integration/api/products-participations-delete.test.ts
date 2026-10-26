@@ -135,9 +135,9 @@ describe("DELETE /api/admin/products/[id]/participations/[participationId]", () 
     // 400, not 500, and the change of status is the point. This was justified
     // as an unreachable broken invariant while a product-type check refused
     // every consumer club before the subscription was ever consulted. With that
-    // check gone, any admin reaches it by dragging a subscribed member onto the
-    // panel's remove zone — on a paid club, or on one flipped to free whose
-    // existing members keep their subscriptions. It is an ordinary refusal of a
+    // check gone, any admin can meet it removing a subscribed member — on a
+    // paid club, or on one flipped to free whose existing members keep their
+    // subscriptions. It is an ordinary refusal of a
     // legitimate request, which is what the PATCH handler already answers for
     // the identical SQLSTATE, so the two now agree.
     mockAuthenticatedAdmin();

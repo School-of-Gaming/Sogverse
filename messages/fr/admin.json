@@ -1238,8 +1238,7 @@
         "title": "Sans groupe",
         "subtitle": "Personnes qui ne sont pas encore dans un groupe. Faites-les glisser dans un groupe pour les placer.",
         "empty": "Tout le monde a un groupe.",
-        "addParticipant": "Ajouter un participant",
-        "removeParticipant": "Retirer le participant"
+        "addParticipant": "Ajouter un participant"
       },
       "empty": {
         "title": "Pas encore de groupe",
@@ -1313,15 +1312,9 @@
           "title": "L’abonnement est toujours actif",
           "description": "Déplacer {name} vers la liste d’attente laisserait un abonnement actif qui continuerait à facturer la famille pour une place qu’elle n’a plus.",
           "nextStep": "La famille ouvre la carte de facturation sur Mon SOG, qui la conduit au portail de facturation sécurisé de Stripe pour résilier. La place se libère dès la fin de l’abonnement."
-        },
-        "removeSubscribed": {
-          "title": "L’abonnement est toujours actif",
-          "description": "Retirer {name} laisserait l’abonnement de la famille facturer une place qui n’existe plus.",
-          "nextStep": "La famille ouvre la carte de facturation sur Mon SOG, qui la conduit au portail de facturation sécurisé de Stripe pour résilier. La place se libère dès la fin de l’abonnement."
         }
       },
       "switchClub": {
-        "dropZone": "Changer de club",
         "title": "Changer de club",
         "description": "Déplacez {name} vers un autre club. Rien ne change pour la famille aujourd’hui : la même carte est débitée à la même date, puis la famille paie le prix du nouveau club.",
         "searchPlaceholder": "Rechercher un club par son nom",
