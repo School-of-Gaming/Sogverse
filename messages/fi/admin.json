@@ -1386,6 +1386,7 @@
       },
       "seatMenu": {
         "label": "Toiminnot: {name}",
+        "goToUser": "Siirry käyttäjän {name} sivulle",
         "switchClub": "Vaihda kerhoa…",
         "move": "Siirrä toiseen tuotteeseen…",
         "remove": "Poista tästä tuotteesta…",

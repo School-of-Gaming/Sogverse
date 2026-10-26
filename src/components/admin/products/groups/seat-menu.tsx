@@ -2,7 +2,9 @@
 
 import { createContext, forwardRef, type KeyboardEvent } from "react";
 import { useTranslations } from "next-intl";
+import { Link } from "@/i18n/navigation";
 import { cn } from "@/lib/cn";
+import { ROUTES } from "@/lib/constants/routes";
 import type { SeatMenuAction, SeatMenuItem } from "./panel-rules";
 
 /**
@@ -41,6 +43,14 @@ const ACTION_KEY = {
  * The panel of one seat's menu. Positioned under the chip it belongs to, and
  * absolutely, so opening it moves nothing on the board.
  *
+ * **The first row is a link to the seat holder's admin user page, drawn here
+ * rather than decided by `seatMenuItems`.** It is not an action on the seat and
+ * nothing about the seat decides it — every seat has a holder with a page — so
+ * it never depends on the rules the action rows are read off, and it is a real
+ * anchor (Ctrl- or middle-click opens a new tab) rather than a press the panel
+ * routes through `onSelect`. A separator sets it apart from the actions below,
+ * the account menu's divider.
+ *
  * **Disabled rows stay in the list and stay focusable**, with the reason under
  * the label: a row the action cannot apply to is shown with its reason rather
  * than left out, and a row the arrow keys skipped would be a reason a keyboard
@@ -54,22 +64,39 @@ const ACTION_KEY = {
 export const SeatMenuPanel = forwardRef<
   HTMLDivElement,
   {
-    label: string;
+    /** The seat holder's profile id — the person in the seat, not the parent. */
+    participantId: string;
+    firstName: string;
     items: readonly SeatMenuItem[];
     onSelect: (action: SeatMenuAction) => void;
+    /** The user page link was followed; the menu closes behind it. */
+    onNavigate: () => void;
     onKeyDown: (event: KeyboardEvent<HTMLDivElement>) => void;
   }
->(function SeatMenuPanel({ label, items, onSelect, onKeyDown }, ref) {
+>(function SeatMenuPanel(
+  { participantId, firstName, items, onSelect, onNavigate, onKeyDown },
+  ref,
+) {
   const t = useTranslations("admin.products.groupsPanel.seatMenu");
 
   return (
     <div
       ref={ref}
       role="menu"
-      aria-label={label}
+      aria-label={t("label", { name: firstName })}
       onKeyDown={onKeyDown}
       className="absolute left-0 top-full z-50 mt-1 w-64 overflow-hidden rounded-md border border-border bg-card py-1 text-left shadow-lg"
     >
+      <Link
+        href={ROUTES.admin.user(participantId)}
+        role="menuitem"
+        data-seat-menu-item=""
+        onClick={onNavigate}
+        className="flex w-full px-3 py-2 text-left text-sm transition-colors hover:bg-hover hover:text-foreground focus:bg-lifted focus:text-foreground focus:outline-none"
+      >
+        {t("goToUser", { name: firstName })}
+      </Link>
+      <div role="separator" className="my-1 h-px bg-border" />
       {items.map((item) => {
         const disabled = item.disabledReason !== null;
         return (

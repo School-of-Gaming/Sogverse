@@ -1386,6 +1386,7 @@
       },
       "seatMenu": {
         "label": "{name} ta’mey",
+        "goToUser": "{name} ghot De’ yIjaH!",
         "switchClub": "ghom’a’ yIchIj…",
         "move": "latlh ngoptlhInDaq yIvIH…",
         "remove": "ngoptlhInvamvo’ yIteq…",

@@ -208,7 +208,7 @@ interface ParticipantChipProps extends ContentProps {
  * not inside it, so pressing a row starts no drag, and a drag that does start
  * from the chip closes the menu.
  *
- * Which rows the menu holds is the panel's decision (`seatMenuItems`), handed
+ * Which action rows the menu holds is the panel's decision (`seatMenuItems`), handed
  * down through `SeatMenuContext`; a chip with no context, or one whose seat is
  * mid-write, is a plain handle.
  */
@@ -228,7 +228,6 @@ export function ParticipantChip({
   participantEmail,
   isPending,
 }: ParticipantChipProps) {
-  const t = useTranslations("admin.products.groupsPanel.seatMenu");
   const { attributes, listeners, setNodeRef, isDragging } = useDraggable({
     id: `participation-${participationId}`,
     data: { participationId, participantId, firstName },
@@ -394,9 +393,11 @@ export function ParticipantChip({
       {menuOpen && seatMenu !== null && (
         <SeatMenuPanel
           ref={panelRef}
-          label={t("label", { name: firstName })}
+          participantId={participantId}
+          firstName={firstName}
           items={items}
           onKeyDown={handlePanelKeyDown}
+          onNavigate={() => setOpen(false)}
           onSelect={(action) => {
             setOpen(false);
             // Focus goes back to the chip before the row's flow opens, so the

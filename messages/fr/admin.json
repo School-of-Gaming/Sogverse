@@ -1386,6 +1386,7 @@
       },
       "seatMenu": {
         "label": "Actions pour {name}",
+        "goToUser": "Aller à la page utilisateur de {name}",
         "switchClub": "Changer de club…",
         "move": "Déplacer vers un autre produit…",
         "remove": "Retirer de ce produit…",

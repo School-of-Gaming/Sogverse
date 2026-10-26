@@ -1386,6 +1386,7 @@
       },
       "seatMenu": {
         "label": "Åtgärder för {name}",
+        "goToUser": "Gå till användarsidan för {name}",
         "switchClub": "Byt klubb…",
         "move": "Flytta till en annan produkt…",
         "remove": "Ta bort från den här produkten…",

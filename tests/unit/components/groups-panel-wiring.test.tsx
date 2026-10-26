@@ -517,6 +517,30 @@ describe("GroupsPanel — the seat menu", () => {
     fireEvent.click(chip!);
   }
 
+  function expectUserLinkFirst() {
+    const [first] = screen.getAllByRole("menuitem");
+    expect(first.tagName).toBe("A");
+    expect(first.textContent).toBe(`${MENU}.goToUser`);
+    // The seat holder's page — the participant, not the parent.
+    expect(first.getAttribute("href")).toBe(`/admin/users/${IDS.gamer}`);
+  }
+
+  it("leads with a link to the seat holder's user page, which closes the menu", () => {
+    seatInInbox();
+    renderPanel("consumer_club", "free");
+    openMenu();
+
+    expectUserLinkFirst();
+    // jsdom cannot follow a link to another document; the href above is the
+    // navigation, so the default is cancelled once the panel has seen the click.
+    document.addEventListener("click", (event) => event.preventDefault(), {
+      once: true,
+    });
+    fireEvent.click(screen.getAllByRole("menuitem")[0]);
+    noMutationFired();
+    expect(screen.queryByRole("menu")).toBeNull();
+  });
+
   it("opens the no-charge move from a free product's seat, writing nothing", () => {
     seatInInbox();
     renderPanel("consumer_club", "free");
@@ -565,6 +589,7 @@ describe("GroupsPanel — the seat menu", () => {
     renderPanel("consumer_club", "paid");
     openMenu();
 
+    expectUserLinkFirst();
     expect(
       screen
         .getByRole("menuitem", {
@@ -586,9 +611,20 @@ describe("GroupsPanel — the seat menu", () => {
     const chip = screen.getByText("Aino").closest('[aria-haspopup="menu"]')!;
 
     fireEvent.keyDown(chip, { key: "Enter" });
-    expect(screen.getByRole("menu")).toBeTruthy();
+    const menu = screen.getByRole("menu");
+    // The user page link is the first row the keyboard lands on, and the arrow
+    // keys carry on from it into the actions.
+    expect(document.activeElement).toBe(
+      screen.getByRole("menuitem", { name: `${MENU}.goToUser` }),
+    );
+    fireEvent.keyDown(menu, { key: "ArrowDown" });
     expect(document.activeElement).toBe(
       screen.getByRole("menuitem", { name: `${MENU}.move` }),
+    );
+    fireEvent.keyDown(menu, { key: "ArrowUp" });
+    fireEvent.keyDown(menu, { key: "ArrowUp" });
+    expect(document.activeElement).toBe(
+      screen.getByRole("menuitem", { name: `${MENU}.remove` }),
     );
 
     fireEvent.keyDown(document, { key: "Escape" });
