@@ -194,7 +194,7 @@ describe("templateRegistry render()", () => {
       productType: "consumer_club",
       mode: "subscription",
       priceAmount: "€40.00",
-      dashboardUrl: "https://sogverse.sog.gg/parent",
+      dashboardUrl: "https://sog.gg/parent",
       gamerCopy: false,
       ...PRODUCT_CONFIRMATION_SCHEDULE,
     };
@@ -722,7 +722,7 @@ describe("templateRegistry sessionReport", () => {
     sample: "en",
     viewerTimezone: "Europe/Helsinki",
     reportMarkdown: "",
-    productUrl: "https://sogverse.sog.gg/parent/clubs/3f9c2b7e-5d14-4a8e-9c61-0b2f7e8d4a15",
+    productUrl: "https://sog.gg/parent/clubs/3f9c2b7e-5d14-4a8e-9c61-0b2f7e8d4a15",
   };
 
   /**
@@ -731,7 +731,7 @@ describe("templateRegistry sessionReport", () => {
    * render's origin, and the first body's link kept and made absolute.
    */
   it("hangs the demo spotlights under the mail when asked", () => {
-    vi.stubEnv("NEXT_PUBLIC_SITE_URL", "https://sogverse.sog.gg");
+    vi.stubEnv("NEXT_PUBLIC_SITE_URL", "https://sog.gg");
     try {
       const none = templateRegistry.sessionReport.render(params, t, "en");
       expect(none.html).not.toContain("/preview-art/spotlight-");
@@ -740,11 +740,11 @@ describe("templateRegistry sessionReport", () => {
         { ...params, spotlights: "two" },
         t,
         "en",
-        { origin: "https://sogverse.sog.gg" },
+        { origin: "https://sog.gg" },
       );
-      expect(html.match(/<img src="https:\/\/sogverse\.sog\.gg\/preview-art\/spotlight-[a-z]+\.jpg"/g))
+      expect(html.match(/<img src="https:\/\/sog\.gg\/preview-art\/spotlight-[a-z]+\.jpg"/g))
         .toHaveLength(2);
-      expect(html).toContain('href="https://sogverse.sog.gg/shop"');
+      expect(html).toContain('href="https://sog.gg/shop"');
       expect(html.indexOf("Autumn camps are open")).toBeLessThan(
         html.indexOf("A new Roblox club this term"),
       );
@@ -873,7 +873,7 @@ describe("templateRegistry sessionReport", () => {
    * path is unfetchable from wherever the test send lands.
    */
   it("hangs the chosen number of demo photos on the fixture session", () => {
-    const origin = { origin: "https://sogverse.sog.gg" };
+    const origin = { origin: "https://sog.gg" };
     const none = templateRegistry.sessionReport.render(params, t, "en", origin);
     expect(none.html).not.toContain("Photos from this session");
 
@@ -884,7 +884,7 @@ describe("templateRegistry sessionReport", () => {
       origin,
     );
     expect(three.html).toContain("Photos from this session");
-    expect(three.html.match(/<img src="https:\/\/sogverse\.sog\.gg\/preview-art\//g))
+    expect(three.html.match(/<img src="https:\/\/sog\.gg\/preview-art\//g))
       .toHaveLength(3);
     // The staff copy is the same mail behind a banner, pictures included.
     const staff = templateRegistry.sessionReport.render(
@@ -893,7 +893,7 @@ describe("templateRegistry sessionReport", () => {
       "en",
       origin,
     );
-    expect(staff.html.match(/<img src="https:\/\/sogverse\.sog\.gg\/preview-art\//g))
+    expect(staff.html.match(/<img src="https:\/\/sog\.gg\/preview-art\//g))
       .toHaveLength(3);
   });
 
@@ -1069,7 +1069,7 @@ describe("templateRegistry calendarInvitation", () => {
     ["startDate", { startDate: "2026-02-31" }, /Start date: expected a real calendar date/],
     ["startTime", { startTime: "16.00" }, /Start time: expected a 24-hour clock time/],
     ["durationMinutes", { durationMinutes: "two hours" }, /Duration: expected a whole number/],
-    ["url", { url: "sogverse.sog.gg" }, /URL: expected an absolute URL/],
+    ["url", { url: "sog.gg" }, /URL: expected an absolute URL/],
     ["url", { url: "javascript:alert(1)" }, /URL: expected an http or https URL/],
     ["attendeeEmail", { attendeeEmail: "nobody" }, /Attendee email: expected an email address/],
     ["organizerEmail", { organizerEmail: "nobody" }, /Organizer email: expected an email address/],
@@ -1233,7 +1233,7 @@ describe("every template renders in every locale", () => {
    */
   const TEMPLATE_PARAMS: Record<string, Record<string, string | boolean | null>> = {
     componentsReference: {},
-    passwordReset: { resetLink: "https://sogverse.sog.gg/reset-password?code=abc123" },
+    passwordReset: { resetLink: "https://sog.gg/reset-password?code=abc123" },
     helpRequest: {
       userName: "Marja Virtanen",
       userRole: "customer",
@@ -1244,16 +1244,16 @@ describe("every template renders in every locale", () => {
     },
     welcomeParent: {
       firstName: "Marja",
-      verificationUrl: "https://sogverse.sog.gg/verify-email?token=abc123",
-      dashboardUrl: "https://sogverse.sog.gg/parent",
-      shopUrl: "https://sogverse.sog.gg/shop",
-      settingsUrl: "https://sogverse.sog.gg/settings",
+      verificationUrl: "https://sog.gg/verify-email?token=abc123",
+      dashboardUrl: "https://sog.gg/parent",
+      shopUrl: "https://sog.gg/shop",
+      settingsUrl: "https://sog.gg/settings",
     },
     welcomeGedu: {
       firstName: "Alice",
-      verificationUrl: "https://sogverse.sog.gg/verify-email?token=abc123",
-      dashboardUrl: "https://sogverse.sog.gg/gedu",
-      settingsUrl: "https://sogverse.sog.gg/settings",
+      verificationUrl: "https://sog.gg/verify-email?token=abc123",
+      dashboardUrl: "https://sog.gg/gedu",
+      settingsUrl: "https://sog.gg/settings",
     },
     productConfirmation: {
       participantName: "Aino",
@@ -1262,7 +1262,7 @@ describe("every template renders in every locale", () => {
       productType: "camp",
       mode: "upfront",
       priceAmount: "€40.00",
-      dashboardUrl: "https://sogverse.sog.gg/parent",
+      dashboardUrl: "https://sog.gg/parent",
       gamerCopy: false,
       // With a schedule, so the locale sweep also reaches the session-times
       // section, the attached-invitation sentence and — through the invitation
@@ -1271,26 +1271,26 @@ describe("every template renders in every locale", () => {
     },
     verifyEmail: {
       firstName: "Marja",
-      verificationUrl: "https://sogverse.sog.gg/verify-email?token=abc123",
+      verificationUrl: "https://sog.gg/verify-email?token=abc123",
     },
     seatOfferGamer: {
       gamerName: "Aino",
       productName: "Minecraft 101",
       deadline: "Sunday, 31 August at 14:20 GMT+3",
-      dashboardUrl: "https://sogverse.sog.gg/gamer",
+      dashboardUrl: "https://sog.gg/gamer",
     },
     gamerWelcome: {
       gamerFirstName: "Aino",
-      verificationUrl: "https://sogverse.sog.gg/verify-email?token=abc123",
+      verificationUrl: "https://sog.gg/verify-email?token=abc123",
     },
     seatOffer: {
       participantName: "Aino",
       isSelfSeat: false,
       productName: "Minecraft 101",
       deadline: "Sunday, 31 August at 14:20 GMT+3",
-      acceptUrl: "https://sogverse.sog.gg/seat-offer?token=abc123&answer=accept",
-      declineUrl: "https://sogverse.sog.gg/seat-offer?token=abc123&answer=decline",
-      dashboardUrl: "https://sogverse.sog.gg/parent",
+      acceptUrl: "https://sog.gg/seat-offer?token=abc123&answer=accept",
+      declineUrl: "https://sog.gg/seat-offer?token=abc123&answer=decline",
+      dashboardUrl: "https://sog.gg/parent",
     },
     seatOfferStaff: {
       reason: "declined",
@@ -1301,7 +1301,7 @@ describe("every template renders in every locale", () => {
       productSchedule: "Tue 16:00, Thu 16:00 (Europe/Helsinki)",
       offeredAt: "Tue, 26 Aug, 14:20 GMT+3",
       adminProductUrl:
-        "https://sogverse.sog.gg/admin/municipality-clubs/3f9c2b7e-5d14-4a8e-9c61-0b2f7e8d4a15",
+        "https://sog.gg/admin/municipality-clubs/3f9c2b7e-5d14-4a8e-9c61-0b2f7e8d4a15",
     },
     sessionReport: {
       gamerName: "Aino",
@@ -1316,7 +1316,7 @@ describe("every template renders in every locale", () => {
       sample: "en",
       viewerTimezone: "Europe/Helsinki",
       reportMarkdown: "",
-      productUrl: "https://sogverse.sog.gg/parent/clubs/3f9c2b7e-5d14-4a8e-9c61-0b2f7e8d4a15",
+      productUrl: "https://sog.gg/parent/clubs/3f9c2b7e-5d14-4a8e-9c61-0b2f7e8d4a15",
     },
     calendarInvitation: CALENDAR_INVITATION_FIXTURE,
   };
@@ -1373,7 +1373,7 @@ describe("every template renders in every locale", () => {
       for (const params of variantsOf(key)) {
         const { subject, html, text, replyTo, attachments } = templateRegistry[
           key
-        ].render(params, translator, locale, { origin: "https://sogverse.sog.gg" });
+        ].render(params, translator, locale, { origin: "https://sog.gg" });
 
         expect(subject.trim()).not.toBe("");
         expect(subject).not.toContain(`email.${key}`);
@@ -1404,7 +1404,7 @@ describe("every template renders in every locale", () => {
 describe("templateRegistry componentsReference", () => {
   function render() {
     return templateRegistry.componentsReference.render({}, translatorStub, "en", {
-      origin: "https://sogverse.sog.gg",
+      origin: "https://sog.gg",
     });
   }
 
@@ -1427,12 +1427,12 @@ describe("templateRegistry componentsReference", () => {
     expect(html).toContain(
       ctaButtonRow(
         {
-          href: "https://sogverse.sog.gg/seat-offer?answer=decline",
+          href: "https://sog.gg/seat-offer?answer=decline",
           label: "No, thank you",
           variant: "outline",
         },
         {
-          href: "https://sogverse.sog.gg/seat-offer?answer=accept",
+          href: "https://sog.gg/seat-offer?answer=accept",
           label: "Accept the seat",
           variant: "secondary",
         },

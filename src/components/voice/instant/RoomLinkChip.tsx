@@ -29,7 +29,7 @@ interface RoomLinkChipProps {
  * out (create card, lobby, in-call title row, "you left" screen) so they all
  * look and behave identically.
  *
- * Renders the host-relative URL (e.g. "sogverse.sog.gg/voice/ABCD") for visual
+ * Renders the host-relative URL (e.g. "sog.gg/voice/ABCD") for visual
  * cleanliness, or just the code in the compact variant; both copy the full URL
  * with protocol so it pastes as a clickable link.
  */
@@ -42,7 +42,7 @@ export function RoomLinkChip({
   const { copied, copy } = useCopyToClipboard();
 
   const host =
-    typeof window !== "undefined" ? window.location.host : "sogverse.sog.gg";
+    typeof window !== "undefined" ? window.location.host : "sog.gg";
   const displayUrl = `${host}${ROUTES.voice.forCodePath(code)}`;
 
   const handleCopy = () => {

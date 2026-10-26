@@ -8,7 +8,7 @@ import {
   type SlugResolver,
 } from "@/lib/links/own-site";
 
-const SITE = "https://sogverse.sog.gg";
+const SITE = "https://sog.gg";
 const ID = "3f1c2a9e-8b7d-4c6e-9a5f-1e2d3c4b5a69";
 
 describe("canonicalizeHref", () => {
@@ -23,8 +23,8 @@ describe("canonicalizeHref", () => {
     ["a bare locale with a slash", "/fi/", "/"],
     ["a Klingon address (English slugs)", "/tlh/shop/9", "/shop/9"],
     ["an uppercase locale prefix", "/FI/kauppa/1", "/shop/1"],
-    ["an uppercase host", "HTTPS://SOGVERSE.SOG.GG/fi/kauppa", "/shop"],
-    ["plain http on our host", "http://sogverse.sog.gg/fi/meista", "/about"],
+    ["an uppercase host", "HTTPS://SOG.GG/fi/kauppa", "/shop"],
+    ["plain http on our host", "http://sog.gg/fi/meista", "/about"],
     ["a trailing slash", "/fi/kauppa/", "/shop"],
     ["dot segments", "/fi/kirjasto/../kauppa", "/shop"],
     ["another locale's slug under a locale", "/fi/shop/1", "/shop/1"],
@@ -54,9 +54,9 @@ describe("canonicalizeHref", () => {
 
   it.each([
     ["another site", "https://example.com/fi/kauppa"],
-    ["a www variant of our host", "https://www.sogverse.sog.gg/fi/kauppa"],
-    ["our host on another port", "https://sogverse.sog.gg:8443/shop"],
-    ["a subdomain of ours", "https://evil.sogverse.sog.gg/shop"],
+    ["a www variant of our host", "https://www.sog.gg/fi/kauppa"],
+    ["our host on another port", "https://sog.gg:8443/shop"],
+    ["a subdomain of ours", "https://evil.sog.gg/shop"],
     ["a protocol-relative address", "//example.com/x"],
     ["a mailto: address", "mailto:hi@sog.gg"],
   ])("leaves %s untouched", (_name, href) => {
@@ -171,7 +171,7 @@ describe("localizeOwnSiteHref", () => {
 
   it.each([
     ["another site", "https://example.com/shop"],
-    ["a www variant of our host", "https://www.sogverse.sog.gg/shop"],
+    ["a www variant of our host", "https://www.sog.gg/shop"],
     ["a mailto: address", "mailto:hi@sog.gg"],
     ["a fragment", "#faq"],
     ["a path no route matches", "/llms.txt"],

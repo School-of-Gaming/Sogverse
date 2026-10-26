@@ -250,8 +250,8 @@ paragraph above. A purpose being added was off until then, so the scripts it cov
 not in the document yet, and the answer travels with their load.
 
 Two things about the cookies. They are walked across every domain the page could have set
-them on, because both vendors write on the registrable domain while our pages are served
-from a subdomain. And the names are **read back off the document by prefix rather than
+them on, because both vendors may write on the registrable domain rather than on the
+page's own host, and staging and preview pages are served from subdomains. And the names are **read back off the document by prefix rather than
 expired from a list**: the container's analytics cookies carry a property id in their own
 names, decided in the Tag Manager UI and unknowable here. A cookie that survives a
 withdrawal goes on identifying the same browser to the same platform — including from our

@@ -31,7 +31,7 @@ const fi = { discordSubOffer: fiDiscordSubOffer, gedu: fiGedu };
  * admin preview on the preview prefix.
  */
 
-const LOGO = "https://sogverse.sog.gg/apple-icon.png";
+const LOGO = "https://sog.gg/apple-icon.png";
 const REQUEST = SNAPSHOT_IDS.request;
 
 let en: DiscordSubOfferCopy;
@@ -207,12 +207,12 @@ describe("buildSubstitutionAcceptedDm", () => {
       copy: en,
       logoUrl: LOGO,
       session: session(),
-      mySogUrl: "https://sogverse.sog.gg/gedu",
+      mySogUrl: "https://sog.gg/gedu",
     });
     expect(texts(message)).toContain("You’ve been accepted");
     expect(texts(message)).toContain("Minecraft Club – A on Wed 14 Oct");
     expect(buttons(message)).toEqual([
-      expect.objectContaining({ style: 5, url: "https://sogverse.sog.gg/gedu", label: "Open My SOG" }),
+      expect.objectContaining({ style: 5, url: "https://sog.gg/gedu", label: "Open My SOG" }),
     ]);
   });
 
@@ -233,7 +233,7 @@ describe("buildSubstitutionRequesterFilledDm", () => {
     });
 
   it("names the substitute and the session, without the role's pay, with a link to My SOG", () => {
-    const message = dm(en, "https://sogverse.sog.gg/gedu");
+    const message = dm(en, "https://sog.gg/gedu");
     expect(message.flags).toBe(DISCORD_FLAG_IS_COMPONENTS_V2);
     expect(texts(message)).toContain("Your substitution request has been filled");
     expect(texts(message)).toContain("Aino Korhonen will substitute for you");
@@ -241,7 +241,7 @@ describe("buildSubstitutionRequesterFilledDm", () => {
     expect(texts(message)).toContain("Minecraft Club — A");
     expect(texts(message)).not.toContain("€");
     expect(buttons(message)).toEqual([
-      expect.objectContaining({ style: 5, url: "https://sogverse.sog.gg/gedu" }),
+      expect.objectContaining({ style: 5, url: "https://sog.gg/gedu" }),
     ]);
   });
 
@@ -259,7 +259,7 @@ describe("buildSubstitutionPreviewFlow", () => {
       copy: en,
       logoUrl: LOGO,
       now: new Date("2026-10-08T06:00:00Z"),
-      mySogUrl: "https://sogverse.sog.gg/gedu",
+      mySogUrl: "https://sog.gg/gedu",
       refusalLine: "This session has already passed.",
     });
     expect(flow).toHaveLength(8);

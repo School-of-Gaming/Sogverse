@@ -176,7 +176,7 @@ owner's say — never by a session on its own initiative (`supabase/CLAUDE.md`).
 
 Each project gets two Vault secrets: where its deployment's sync route is, and that
 deployment's `SUBSTITUTION_SYNC_SECRET`. Staging points at `sogverse-staging.sog.gg` with the
-unsuffixed secret from `.env.local`; prod at `sogverse.sog.gg` with
+unsuffixed secret from `.env.local`; prod at `sog.gg` with
 `SUBSTITUTION_SYNC_SECRET_PRODUCTION`.
 
 ```sql
@@ -201,7 +201,7 @@ the same shape. For each, at api.slack.com/apps:
 1. **Bot token scopes `chat:write` and `commands`.** Adding a scope later only takes effect
    after the app is **reinstalled** to the workspace, which mints the token again.
 2. **Interactivity** on, and **one slash command**, both with the request URL
-   `https://<host>/api/slack/interactions` — `sogverse-staging.sog.gg` or `sogverse.sog.gg`.
+   `https://<host>/api/slack/interactions` — `sogverse-staging.sog.gg` or `sog.gg`.
    The command is `/link-staging` on staging and `/link` on prod, so both fit in one
    workspace; the route treats any command as the link command.
 3. **Install** to the workspace (it may need a workspace admin's approval). The Bot User

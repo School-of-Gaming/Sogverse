@@ -11,7 +11,7 @@ composes one JPEG per group for Slack. Its `README.md` is the reference for the 
 the preset shape and the composite; this skill is when and how to use it.
 
 ```bash
-node scripts/preview-export/export.mjs --preset public-pages --base https://sogverse.sog.gg
+node scripts/preview-export/export.mjs --preset public-pages --base https://sog.gg
 node scripts/preview-export/export.mjs --preset public-pages --base http://localhost:3021 --locales en,fi
 node scripts/preview-export/export.mjs --preset topic-copy --base http://localhost:3021
 node scripts/preview-export/export.mjs --preset <name> --only <slug,…> --viewports mobile

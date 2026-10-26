@@ -279,14 +279,14 @@ describe("renderMarkdownForEmail", () => {
    * path: the site then sends the reader on in their own stored language.
    */
   it("writes a link to one of our pages absolute and without a language", () => {
-    vi.stubEnv("NEXT_PUBLIC_SITE_URL", "https://sogverse.sog.gg");
+    vi.stubEnv("NEXT_PUBLIC_SITE_URL", "https://sog.gg");
     try {
       const html = renderMarkdownForEmail(
         "[shop](/shop/1) [pinned](/fi/kauppa/1?x=1) [away](https://example.com/fi/kauppa)",
         "landing",
       );
-      expect(html).toContain('href="https://sogverse.sog.gg/shop/1"');
-      expect(html).toContain('href="https://sogverse.sog.gg/shop/1?x=1"');
+      expect(html).toContain('href="https://sog.gg/shop/1"');
+      expect(html).toContain('href="https://sog.gg/shop/1?x=1"');
       expect(html).toContain('href="https://example.com/fi/kauppa"');
     } finally {
       vi.unstubAllEnvs();

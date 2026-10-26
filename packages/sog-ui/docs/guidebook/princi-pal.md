@@ -30,7 +30,7 @@ Set his lines apart as a blockquote and sign them according to register:
 | **Institutional** | Mikko Perälä, Princi-Pal, School of Gaming | Safety Standard, partner and press material, funding applications, anything at Level 1 |
 | **Accountable** | Mikko Perälä, School of Gaming | A serious message where the school owes an answer. Title omitted, because a title is a place to hide behind |
 
-**Never write "Principal".** The live site at sogverse.sog.gg currently attributes the imagination proverb to "The Principal of the School of Gaming". That is a bug and should be corrected to "The Princi-Pal". The hyphen and the second capital are the entire joke, and the joke is that this man is on your side.
+**Never write "Principal".** The live site at sog.gg currently attributes the imagination proverb to "The Principal of the School of Gaming". That is a bug and should be corrected to "The Princi-Pal". The hyphen and the second capital are the entire joke, and the joke is that this man is on your side.
 
 **Never invent a first name for the character while treating the executive as separate.** There is one man. He runs the school from the northeast tower and he also signs the compliance documents. That is not a tension to be managed, it is the most charming fact about this brand, and copy should be relaxed about it.
 

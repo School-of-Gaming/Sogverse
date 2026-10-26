@@ -238,12 +238,12 @@ export function buildComponentsReferenceEmail(
     ${section("Buttons")}
     ${entry(
       "primary",
-      ctaButton({ href: "https://sogverse.sog.gg/verify", label: "Verify your email address" }),
+      ctaButton({ href: "https://sog.gg/verify", label: "Verify your email address" }),
     )}
     ${entry(
       "secondary",
       ctaButton({
-        href: "https://sogverse.sog.gg/shop",
+        href: "https://sog.gg/shop",
         label: "Browse the shop",
         variant: "secondary",
       }),
@@ -251,7 +251,7 @@ export function buildComponentsReferenceEmail(
     ${entry(
       "outline",
       ctaButton({
-        href: "https://sogverse.sog.gg/parent",
+        href: "https://sog.gg/parent",
         label: "Go to My SOG",
         variant: "outline",
       }),
@@ -259,20 +259,20 @@ export function buildComponentsReferenceEmail(
     ${entry(
       "ctaButtonRow — outline + outline",
       ctaButtonRow(
-        { href: "https://sogverse.sog.gg/shop", label: "Browse the shop", variant: "outline" },
-        { href: "https://sogverse.sog.gg/parent", label: "Go to My SOG", variant: "outline" },
+        { href: "https://sog.gg/shop", label: "Browse the shop", variant: "outline" },
+        { href: "https://sog.gg/parent", label: "Go to My SOG", variant: "outline" },
       ),
     )}
     ${entry(
       "ctaButtonRow — outline + secondary",
       ctaButtonRow(
         {
-          href: "https://sogverse.sog.gg/seat-offer?answer=decline",
+          href: "https://sog.gg/seat-offer?answer=decline",
           label: "No, thank you",
           variant: "outline",
         },
         {
-          href: "https://sogverse.sog.gg/seat-offer?answer=accept",
+          href: "https://sog.gg/seat-offer?answer=accept",
           label: "Accept the seat",
           variant: "secondary",
         },
@@ -345,7 +345,7 @@ export function buildComponentsReferenceEmail(
     ${entry(
       "inlineLink",
       paragraph(
-        `You can do this later in ${inlineLink("https://sogverse.sog.gg/settings", "your settings")}.`,
+        `You can do this later in ${inlineLink("https://sog.gg/settings", "your settings")}.`,
       ),
     )}
     ${entry(
@@ -359,7 +359,7 @@ export function buildComponentsReferenceEmail(
     ${entry(
       "numberedList + inlineLink",
       numberedList([
-        `${inlineBold("Make an account")}<br />It takes a minute.<br />${inlineLink("https://sogverse.sog.gg/settings", "Open your settings")}`,
+        `${inlineBold("Make an account")}<br />It takes a minute.<br />${inlineLink("https://sog.gg/settings", "Open your settings")}`,
         `${inlineBold("Check the device")}${bulletList(["A mouse.", "Headphones."])}`,
       ]),
     )}
@@ -469,10 +469,10 @@ export function buildComponentsReferenceEmail(
       "renderMarkdownForEmail — with links",
       renderMarkdownForEmail(
         [
-          "Our winter camp opens for signups on Monday. Read [the camp page](https://sogverse.sog.gg/shop) for the dates.",
+          "Our winter camp opens for signups on Monday. Read [the camp page](https://sog.gg/shop) for the dates.",
           "",
           "- Bring **headphones**",
-          "- Ask us anything at [support](https://sogverse.sog.gg/help)",
+          "- Ask us anything at [support](https://sog.gg/help)",
         ].join("\n"),
         "spotlight",
       ),

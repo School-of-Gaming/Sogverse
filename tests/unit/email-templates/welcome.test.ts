@@ -9,10 +9,10 @@ beforeAll(async () => {
   t = await getEmailTranslator("en");
 });
 
-const VERIFICATION_URL = "https://sogverse.sog.gg/verify-email?token=abc123";
-const DASHBOARD_URL = "https://sogverse.sog.gg/parent";
-const SHOP_URL = "https://sogverse.sog.gg/shop";
-const SETTINGS_URL = "https://sogverse.sog.gg/settings";
+const VERIFICATION_URL = "https://sog.gg/verify-email?token=abc123";
+const DASHBOARD_URL = "https://sog.gg/parent";
+const SHOP_URL = "https://sog.gg/shop";
+const SETTINGS_URL = "https://sog.gg/settings";
 
 /**
  * The mail's html with every URL-bearing attribute value emptied, lowercased —
@@ -193,7 +193,7 @@ describe("buildWelcomeGeduEmail", () => {
   const params = {
     firstName: "Alice",
     verificationUrl: VERIFICATION_URL,
-    dashboardUrl: "https://sogverse.sog.gg/gedu",
+    dashboardUrl: "https://sog.gg/gedu",
     settingsUrl: SETTINGS_URL,
   };
 
@@ -246,7 +246,7 @@ describe("buildWelcomeGeduEmail", () => {
   it("puts the verification, My SOG and settings URLs in hrefs", () => {
     const html = buildWelcomeGeduEmail(t, "en", params);
     expect(html).toContain(`href="${VERIFICATION_URL}"`);
-    expect(html).toContain('href="https://sogverse.sog.gg/gedu"');
+    expect(html).toContain('href="https://sog.gg/gedu"');
     expect(html).toContain(`<a href="${SETTINGS_URL}"`);
     expect(html).toContain(">settings</a>");
   });

@@ -20,10 +20,10 @@ beforeAll(async () => {
   t = await getEmailTranslator("en");
 });
 
-const ACCEPT_URL = "https://sogverse.sog.gg/seat-offer?token=abc123&answer=accept";
-const DECLINE_URL = "https://sogverse.sog.gg/seat-offer?token=abc123&answer=decline";
+const ACCEPT_URL = "https://sog.gg/seat-offer?token=abc123&answer=accept";
+const DECLINE_URL = "https://sog.gg/seat-offer?token=abc123&answer=decline";
 const DEADLINE = "Sunday, 31 August at 14:20 GMT+3";
-const DASHBOARD_URL = "https://sogverse.sog.gg/parent";
+const DASHBOARD_URL = "https://sog.gg/parent";
 
 const offer = {
   participantName: "Aino",
@@ -137,7 +137,7 @@ describe("buildSeatOfferEmail", () => {
   });
 });
 
-const GAMER_DASHBOARD_URL = "https://sogverse.sog.gg/gamer";
+const GAMER_DASHBOARD_URL = "https://sog.gg/gamer";
 
 const gamerCopy = {
   gamerName: "Aino",
@@ -211,7 +211,7 @@ const staff = {
   productName: "Minecraft 101",
   productSchedule: "Tue 16:00, Thu 16:00 (Europe/Helsinki)",
   offeredAt: "Tue, 26 Aug, 14:20 GMT+3",
-  adminProductUrl: "https://sogverse.sog.gg/admin/municipality-clubs/abc",
+  adminProductUrl: "https://sog.gg/admin/municipality-clubs/abc",
 };
 
 describe("buildSeatOfferStaffEmail", () => {

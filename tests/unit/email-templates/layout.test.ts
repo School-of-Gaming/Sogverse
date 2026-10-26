@@ -33,7 +33,7 @@ import {
  * attributes a client honours before it has fetched anything.
  */
 
-const PROD_ORIGIN = "https://sogverse.sog.gg";
+const PROD_ORIGIN = "https://sog.gg";
 const STAGING_ORIGIN = "https://sogverse-staging.sog.gg";
 
 function render(): string {

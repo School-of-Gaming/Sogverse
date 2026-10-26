@@ -12,7 +12,7 @@
  *      Covers per-PR preview deploys, which do get tested on.
  *   2. `VERCEL_BRANCH_URL` — Vercel-injected branch alias hostname.
  *   3. The host of `NEXT_PUBLIC_SITE_URL` — configured per environment in
- *      Vercel's project settings: prod = sogverse.sog.gg, preview =
+ *      Vercel's project settings: prod = sog.gg, preview =
  *      sogverse-staging.sog.gg, local = localhost:3000.
  *   4. localhost (only when NODE_ENV !== "production") for `npm run dev`.
  *

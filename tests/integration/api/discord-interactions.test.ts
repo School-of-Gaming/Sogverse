@@ -8,7 +8,7 @@ vi.stubEnv("DISCORD_BOT_TOKEN", "test-bot-token");
 vi.stubEnv("DISCORD_APPLICATION_ID", "test-app-id");
 // The origin `/link` builds its URL on. The test requests carry no Host, so
 // it is the configured site URL that is used.
-vi.stubEnv("NEXT_PUBLIC_SITE_URL", "https://sogverse.sog.gg");
+vi.stubEnv("NEXT_PUBLIC_SITE_URL", "https://sog.gg");
 afterAll(() => vi.unstubAllEnvs());
 
 // A webhook, so there is no session and no role: the Ed25519 signature over the
@@ -443,7 +443,7 @@ describe("POST /api/discord/interactions", () => {
     const { patched, row } = await runLink({ member: GUILD_CALLER });
 
     expect(mockFrom).toHaveBeenCalledWith("discord_link_tokens");
-    const url = /^(https:\/\/sogverse\.sog\.gg\/link-discord\?token=([A-Za-z0-9_-]+))$/.exec(
+    const url = /^(https:\/\/sog\.gg\/link-discord\?token=([A-Za-z0-9_-]+))$/.exec(
       linkButtonUrl(patched),
     );
     expect(url).not.toBeNull();
@@ -630,7 +630,7 @@ describe("POST /api/discord/interactions — /sub", () => {
               type: 11,
               id: 10,
               media: {
-                url: "https://sogverse.sog.gg/apple-icon.png",
+                url: "https://sog.gg/apple-icon.png",
                 proxy_url: "https://media.discordapp.net/external/abc/apple-icon.png",
                 width: 180,
                 height: 180,
@@ -648,7 +648,7 @@ describe("POST /api/discord/interactions — /sub", () => {
             id: 5,
             components: [
               { type: 2, id: 6, style: 2, custom_id: "sub:l", label: "Back" },
-              { type: 2, id: 7, style: 5, url: "https://sogverse.sog.gg", label: "Web" },
+              { type: 2, id: 7, style: 5, url: "https://sog.gg", label: "Web" },
             ],
           },
         ],
@@ -671,7 +671,7 @@ describe("POST /api/discord/interactions — /sub", () => {
               type: 11,
               id: 10,
               media: {
-                url: "https://sogverse.sog.gg/apple-icon.png",
+                url: "https://sog.gg/apple-icon.png",
                 proxy_url: "https://media.discordapp.net/external/abc/apple-icon.png",
                 width: 180,
                 height: 180,
@@ -698,7 +698,7 @@ describe("POST /api/discord/interactions — /sub", () => {
                 label: "Back",
                 disabled: true,
               },
-              { type: 2, id: 7, style: 5, url: "https://sogverse.sog.gg", label: "Web" },
+              { type: 2, id: 7, style: 5, url: "https://sog.gg", label: "Web" },
             ],
           },
         ],
@@ -756,7 +756,7 @@ describe("POST /api/discord/interactions — /sub", () => {
         "The link expires in 10 minutes and works once.",
     );
     expect(linkButtonUrl(patched)).toMatch(
-      /^https:\/\/sogverse\.sog\.gg\/link-discord\?token=[A-Za-z0-9_-]{43}$/,
+      /^https:\/\/sog\.gg\/link-discord\?token=[A-Za-z0-9_-]{43}$/,
     );
     expect(mockInsert).toHaveBeenCalledTimes(1);
     expect(mockGetSessions).not.toHaveBeenCalled();
@@ -799,7 +799,7 @@ describe("POST /api/discord/interactions — /sub", () => {
       const [section] = ofType(patched, 9);
       expect(section.accessory).toEqual({
         type: 11,
-        media: { url: "https://sogverse.sog.gg/apple-icon.png" },
+        media: { url: "https://sog.gg/apple-icon.png" },
       });
       expect(texts({ components: section.components })).toContain(
         "# School of Gaming · Substitutions",
@@ -818,7 +818,7 @@ describe("POST /api/discord/interactions — /sub", () => {
       expect(texts(patched)).toContain("# School of Gaming · Substitutions");
       expect(JSON.stringify(patched)).not.toContain("apple-icon");
     } finally {
-      vi.stubEnv("NEXT_PUBLIC_SITE_URL", "https://sogverse.sog.gg");
+      vi.stubEnv("NEXT_PUBLIC_SITE_URL", "https://sog.gg");
     }
   });
 

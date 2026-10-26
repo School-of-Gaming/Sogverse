@@ -21,9 +21,9 @@ describe("getOrigin", () => {
   });
 
   it("trusts the Host when it matches the canonical NEXT_PUBLIC_SITE_URL", () => {
-    process.env.NEXT_PUBLIC_SITE_URL = "https://sogverse.sog.gg";
-    expect(getOrigin(makeRequest("sogverse.sog.gg"))).toBe(
-      "https://sogverse.sog.gg",
+    process.env.NEXT_PUBLIC_SITE_URL = "https://sog.gg";
+    expect(getOrigin(makeRequest("sog.gg"))).toBe(
+      "https://sog.gg",
     );
   });
 
@@ -37,7 +37,7 @@ describe("getOrigin", () => {
   });
 
   it("trusts the Host when it matches VERCEL_BRANCH_URL", () => {
-    process.env.NEXT_PUBLIC_SITE_URL = "https://sogverse.sog.gg";
+    process.env.NEXT_PUBLIC_SITE_URL = "https://sog.gg";
     process.env.VERCEL_BRANCH_URL = "sogverse-git-main.vercel.app";
 
     expect(getOrigin(makeRequest("sogverse-git-main.vercel.app"))).toBe(
@@ -71,22 +71,22 @@ describe("getOrigin", () => {
   });
 
   it("falls back to NEXT_PUBLIC_SITE_URL when an attacker spoofs the Host header", () => {
-    process.env.NEXT_PUBLIC_SITE_URL = "https://sogverse.sog.gg";
-    expect(getOrigin(makeRequest("evil.com"))).toBe("https://sogverse.sog.gg");
+    process.env.NEXT_PUBLIC_SITE_URL = "https://sog.gg";
+    expect(getOrigin(makeRequest("evil.com"))).toBe("https://sog.gg");
   });
 
   it("falls back to NEXT_PUBLIC_SITE_URL when the Host is missing", () => {
-    process.env.NEXT_PUBLIC_SITE_URL = "https://sogverse.sog.gg";
-    expect(getOrigin(makeRequest(null))).toBe("https://sogverse.sog.gg");
+    process.env.NEXT_PUBLIC_SITE_URL = "https://sog.gg";
+    expect(getOrigin(makeRequest(null))).toBe("https://sog.gg");
   });
 
   it("does NOT redirect to a Vercel host that isn't ours", () => {
     // VERCEL_URL is unset; an attacker can't spoof their way in just because
     // they crafted a `.vercel.app` Host.
-    process.env.NEXT_PUBLIC_SITE_URL = "https://sogverse.sog.gg";
+    process.env.NEXT_PUBLIC_SITE_URL = "https://sog.gg";
     expect(
       getOrigin(makeRequest("attacker-app.vercel.app")),
-    ).toBe("https://sogverse.sog.gg");
+    ).toBe("https://sog.gg");
   });
 
   it("throws when neither a trusted Host nor NEXT_PUBLIC_SITE_URL is configured", () => {
@@ -103,16 +103,16 @@ describe("getOrigin", () => {
    * argument fell through to some other branch.
    */
   it("reads a bare Headers exactly as it reads a Request's", () => {
-    process.env.NEXT_PUBLIC_SITE_URL = "https://sogverse.sog.gg";
-    expect(getOrigin(new Headers({ host: "sogverse.sog.gg" }))).toBe(
-      "https://sogverse.sog.gg",
+    process.env.NEXT_PUBLIC_SITE_URL = "https://sog.gg";
+    expect(getOrigin(new Headers({ host: "sog.gg" }))).toBe(
+      "https://sog.gg",
     );
   });
 
   it("refuses an untrusted Host on bare Headers too", () => {
-    process.env.NEXT_PUBLIC_SITE_URL = "https://sogverse.sog.gg";
+    process.env.NEXT_PUBLIC_SITE_URL = "https://sog.gg";
     expect(getOrigin(new Headers({ host: "evil.com" }))).toBe(
-      "https://sogverse.sog.gg",
+      "https://sog.gg",
     );
   });
 
@@ -124,12 +124,12 @@ describe("getOrigin", () => {
    * this. The discriminator now asks whether the value can `get`.
    */
   it("reads a Headers adapter that carries its own `headers` field", () => {
-    process.env.NEXT_PUBLIC_SITE_URL = "https://sogverse.sog.gg";
+    process.env.NEXT_PUBLIC_SITE_URL = "https://sog.gg";
     class AdapterLike extends Headers {
-      readonly headers = { host: "sogverse.sog.gg" };
+      readonly headers = { host: "sog.gg" };
     }
-    expect(getOrigin(new AdapterLike({ host: "sogverse.sog.gg" }))).toBe(
-      "https://sogverse.sog.gg",
+    expect(getOrigin(new AdapterLike({ host: "sog.gg" }))).toBe(
+      "https://sog.gg",
     );
   });
 });

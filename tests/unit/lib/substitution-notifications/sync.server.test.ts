@@ -252,7 +252,7 @@ async function drain() {
 let messageCounter = 0;
 
 beforeEach(() => {
-  vi.stubEnv("NEXT_PUBLIC_SITE_URL", "https://sogverse.sog.gg");
+  vi.stubEnv("NEXT_PUBLIC_SITE_URL", "https://sog.gg");
   // The drain logs each failed job; the cases that fail one assert on the outbox.
   vi.spyOn(console, "error").mockImplementation(() => undefined);
   db.base = null;

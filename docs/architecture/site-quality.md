@@ -241,16 +241,15 @@ Ideas not yet decided or not yet built, in rough order of expected value. An ite
 lands is deleted here and its mechanism is described above.
 
 - **Overtake the legacy site.** `www.sog.gg` is the current front door and the legacy
-  site; Sogverse is to adopt its content and features over time and `sog.gg` is
-  eventually dropped entirely (owner, 2026-09-10). The near-term goal is that Sogverse
-  draws more traffic than `sog.gg`, so families read this as the main site and the old one
+  site; Sogverse is to adopt its content and features over time and the legacy site
+  is eventually dropped entirely (owner, 2026-09-10). The near-term goal is that Sogverse
+  draws more traffic than the legacy site, so families read this as the main site and the old one
   as legacy. Today the legacy site carries every non-brand ranking and this app none, so
   the ranking has to be *moved*, not just earned: each time Sogverse gains a page that
   supersedes a legacy one (a club, a location, a topic), the legacy URL should 301 to it,
   which is what carries the authority across; the `Organization` schema names this app as
-  the brand's URL, never `www.sog.gg`. The rest of the estate goes the same way: the bare
-  apex redirects to one host, the dead `sogverse-fi.sog.gg` sign-in page is removed from
-  the index, and the `en.` / `lat.` / `start.` sites either redirect here or are current.
+  the brand's URL, never `www.sog.gg`. The rest of the estate goes the same way: the
+  dead `sogverse-fi.sog.gg` sign-in page is removed from the index, and the `en.` / `lat.` / `start.` sites either redirect here or are current.
 - **Topic landing pages** (`/minecraft`, `/roblox`, `/fortnite`, …) generated from the
   topics module: the existing "About {topic}" prose plus that topic's listed products.
   These are the pages both search and AI assistants cite for "who runs Minecraft clubs
@@ -560,7 +559,7 @@ Same tool, same queries, same recording, so two entries compare cleanly:
   Record which tool and the date; if the tool changes, say so in the entry, because the
   numbers then compare only loosely.
 - **Per query, record:** whether any School of Gaming property appears at all; its
-  position in the returned list; **which host** — `sogverse.sog.gg` or `www.sog.gg`
+  position in the returned list; **which host** — `sog.gg` or `www.sog.gg`
   matters more than the position, since the goal is that Sogverse takes over; and the
   top three other results. Keep the table shape below.
 - **The queries, verbatim** (language in brackets where not English):
@@ -595,9 +594,7 @@ tool returned; "—" means no School of Gaming property appeared at all.
 
 **The domain estate this app sits in.** `www.sog.gg` is the marketing site (club
 catalogue under `/lessons/`, locations, municipality pages, blog; `robots.txt` names it as
-host). `sogverse.sog.gg` is this app. Also indexed: the bare apex `sog.gg` serving
-marketing content under its own URLs (confirm it redirects rather than duplicates),
-`en.sog.gg` (older English site), `lat.sog.gg` (Spanish / Latin America), `start.sog.gg`
+host). `sog.gg` is this app. Also indexed: `en.sog.gg` (older English site), `lat.sog.gg` (Spanish / Latin America), `start.sog.gg`
 (campaign landing), `www.geduacademy.com` (Game Educator recruiting), and a stale
 `sogverse-fi.sog.gg` sign-in page whose hostname no longer resolves. **Every non-brand
 query that surfaces the company at all surfaces `www.sog.gg`; this app is found only on
@@ -608,7 +605,7 @@ this repo does not control, and the estate competes with itself for the same ter
 |---|---|---|
 | School of Gaming | ~7–8 | own Facebook, YouTube and LinkedIn pages above the site; the generic "school for gamers" sense and Xamk's "Summer School of Gaming" dilute it |
 | School of Gaming Finland | ~6 | `www.sog.gg/lauttasaari`; Xamk name collision at 3 |
-| Sogverse | 3 | `sogverse.sog.gg/`, `/privacy` at 4 |
+| Sogverse | 3 | `sog.gg/`, `/privacy` at 4 |
 | school of gaming minecraft club | 1 | `www.sog.gg/lessons/…` |
 | minecraft club for kids online | — | Connected Camps, Outschool, minecraftclub.co.uk |
 | minecraft club for kids Finland | ~6 | one `/lessons/` page; exen.fi present |
@@ -616,7 +613,7 @@ this repo does not control, and the estate competes with itself for the same ter
 | online gaming club for children | ~5 | `www.sog.gg/` |
 | gaming hobby for children with a coach | — | "how to quit gaming" content; the intent is unclaimed |
 | game educator children | — | NGO and academic results; the job title is unowned |
-| (fi) minecraft kerho lapsille | 4, 5, 6, 8 | four distinct sog.gg URLs; harrastamisensuomenmalli.fi's page *about* us at 1 |
+| (fi) minecraft kerho lapsille | 4, 5, 6, 8 | four distinct legacy-site URLs; harrastamisensuomenmalli.fi's page *about* us at 1 |
 | (fi) pelikerho lapsille | — | municipal and parish free clubs end to end |
 | (fi) School of Gaming pelikoulu | ~4 | press and partner pages above the site |
 | (fi) roblox leiri lapsille | — | toy shops and safety pieces; no camp provider at all |
@@ -635,8 +632,7 @@ partner press) rank for our story more reliably than we do. Two open goals nobod
 claimed: Finnish Roblox camps, and "gaming as a coached hobby".
 
 **Official profiles, confirmed by the owner the same day** and now the `Organization`'s
-`sameAs`: the legacy site `www.sog.gg` itself, so the entity search engines already know
-is tied to this Organization, then Instagram `sog_suomi` (the one posted to regularly), the Helsinki Facebook page
+`sameAs`: Instagram `sog_suomi` (the one posted to regularly), the Helsinki Facebook page
 `sogversum`, YouTube `@SchoolofGamingSuomi`, LinkedIn `company/school-of-gaming`, the
 Eventbrite organiser page and Crunchbase. The Oulu Facebook page `sogsuomi`, the one the
 legacy site links to, no longer resolves for a visitor and is left out. The Finnish

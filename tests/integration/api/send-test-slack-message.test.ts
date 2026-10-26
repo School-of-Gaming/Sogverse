@@ -14,7 +14,7 @@ import { NextResponse } from "next/server";
 
 vi.stubEnv("SLACK_BOT_TOKEN", "xoxb-test-token");
 // The origin the preview's link replies are built on.
-vi.stubEnv("NEXT_PUBLIC_SITE_URL", "https://sogverse.sog.gg");
+vi.stubEnv("NEXT_PUBLIC_SITE_URL", "https://sog.gg");
 afterAll(() => {
   vi.unstubAllEnvs();
 });

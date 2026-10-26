@@ -5,7 +5,7 @@ import {
 } from "@/lib/links/button-target";
 import type { SlugResolver } from "@/lib/links/own-site";
 
-const SITE = "https://sogverse.sog.gg";
+const SITE = "https://sog.gg";
 const ID = "3f1c2a9e-8b7d-4c6e-9a5f-1e2d3c4b5a69";
 const resolver: SlugResolver = async (_template, locale, slug) =>
   locale === "fi" && slug === "opas" ? ID : null;
@@ -40,7 +40,7 @@ describe("canonicalizeButtonTarget", () => {
 
   it.each([
     ["another site", "https://example.com/x"],
-    ["a www variant of our host", "https://www.sogverse.sog.gg/fi/kauppa"],
+    ["a www variant of our host", "https://www.sog.gg/fi/kauppa"],
   ])("keeps %s external, as written", async (_name, url) => {
     await expect(canonicalizeButtonTarget(`  ${url} `, resolver, SITE)).resolves.toEqual({
       ok: true,

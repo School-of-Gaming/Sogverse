@@ -106,8 +106,8 @@ backend = "postgres"
 project_id = "yoqkelsopqsksqrkrorx"
 
 [remotes.production.auth]
-site_url = "https://sogverse.sog.gg"
-additional_redirect_urls = ["https://sogverse.sog.gg/**"]
+site_url = "https://sog.gg"
+additional_redirect_urls = ["https://sog.gg/**"]
 
 [remotes.staging]
 project_id = "dbcozhkmfsczwgduizkg"

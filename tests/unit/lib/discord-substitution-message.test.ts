@@ -38,7 +38,7 @@ const GROUP_B = "0b7e2a56-3c1d-4f7e-8a2b-9c4d5e6f7a81";
 const TZ = "Europe/Helsinki";
 /** A Monday morning in Helsinki. */
 const NOW = new Date("2026-10-05T06:00:00Z");
-const LOGO = "https://sogverse.sog.gg/apple-icon.png";
+const LOGO = "https://sog.gg/apple-icon.png";
 
 function session(
   groupId: string,
@@ -254,7 +254,7 @@ describe("the admin preview", () => {
       copy: en,
       logoUrl: LOGO,
       now: NOW,
-      origin: "https://sogverse.sog.gg",
+      origin: "https://sog.gg",
     });
 
   it("is the same first step over sample sessions, every control on the preview prefix", () => {
@@ -284,7 +284,7 @@ describe("the admin preview", () => {
             type: 2,
             style: 5,
             label: "Connect account",
-            url: "https://sogverse.sog.gg/link-discord?token=preview",
+            url: "https://sog.gg/link-discord?token=preview",
           },
         ],
       },
@@ -518,7 +518,7 @@ describe("greying out a pressed message's controls", () => {
           type: 1,
           components: [
             { type: 2, style: 1, custom_id: "sub:f:x", label: "File" },
-            { type: 2, style: 5, url: "https://sogverse.sog.gg", label: "Web" },
+            { type: 2, style: 5, url: "https://sog.gg", label: "Web" },
           ],
         },
         { type: 1, components: [5, 6, 7, 8].map((type) => ({ type, custom_id: `s${type}` })) },
@@ -542,7 +542,7 @@ describe("greying out a pressed message's controls", () => {
     ]);
     expect(buttonRow.components).toEqual([
       { type: 2, style: 1, custom_id: "sub:f:x", label: "File", disabled: true },
-      { type: 2, style: 5, url: "https://sogverse.sog.gg", label: "Web" },
+      { type: 2, style: 5, url: "https://sog.gg", label: "Web" },
     ]);
     expect(otherSelects.components).toEqual(
       [5, 6, 7, 8].map((type) => ({ type, custom_id: `s${type}`, disabled: true })),

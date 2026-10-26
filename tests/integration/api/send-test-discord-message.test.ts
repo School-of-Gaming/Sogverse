@@ -13,7 +13,7 @@ import { NextResponse } from "next/server";
 
 vi.stubEnv("DISCORD_BOT_TOKEN", "test-bot-token");
 // The origin the /sub preview's web link is built on.
-vi.stubEnv("NEXT_PUBLIC_SITE_URL", "https://sogverse.sog.gg");
+vi.stubEnv("NEXT_PUBLIC_SITE_URL", "https://sog.gg");
 afterAll(() => {
   vi.unstubAllEnvs();
 });
@@ -232,7 +232,7 @@ describe("POST /api/admin/send-test-discord-message", () => {
     expect(notLinked.content).toContain("Jotta voit käyttää /sub-komentoa");
     expect(notLinked.content).toContain("The link expires in 10 minutes and works once.");
     expect(JSON.stringify(notLinked.components)).toContain(
-      "https://sogverse.sog.gg/link-discord?token=preview",
+      "https://sog.gg/link-discord?token=preview",
     );
 
     // The list, the filed line, a refusal, the empty list and the failure
@@ -264,7 +264,7 @@ describe("POST /api/admin/send-test-discord-message", () => {
     const [, ...steps] = postedMessages();
     for (const step of steps) {
       expect(thumbnails(step.components)).toEqual([
-        { type: 11, media: { url: "https://sogverse.sog.gg/apple-icon.png" } },
+        { type: 11, media: { url: "https://sog.gg/apple-icon.png" } },
       ]);
     }
   });
@@ -282,7 +282,7 @@ describe("POST /api/admin/send-test-discord-message", () => {
       expect(steps.flatMap((step) => thumbnails(step.components))).toEqual([]);
       expect(JSON.stringify(steps[0])).toContain("School of Gaming · Substitutions");
     } finally {
-      vi.stubEnv("NEXT_PUBLIC_SITE_URL", "https://sogverse.sog.gg");
+      vi.stubEnv("NEXT_PUBLIC_SITE_URL", "https://sog.gg");
     }
   });
 

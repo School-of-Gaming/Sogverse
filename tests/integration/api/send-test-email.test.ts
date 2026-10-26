@@ -214,7 +214,7 @@ describe("POST /api/admin/send-test-email", () => {
     await POST(createRequest({
       toEmail: "test@example.com",
       template: "passwordReset",
-      params: { resetLink: "https://sogverse.sog.gg/reset-password?token_hash=abc" },
+      params: { resetLink: "https://sog.gg/reset-password?token_hash=abc" },
     }));
 
     expect(mockSendTransactionalEmail).toHaveBeenCalledWith(
@@ -272,7 +272,7 @@ describe("POST /api/admin/send-test-email", () => {
       mode: "subscription",
       priceAmount: "€40.00",
       firstChargeDate: "none",
-      dashboardUrl: "https://sogverse.sog.gg/parent",
+      dashboardUrl: "https://sog.gg/parent",
       gamerCopy: false,
       // The page facts the mail mirrors, which the schema requires whole too.
       ageRange: "8-12",
@@ -367,7 +367,7 @@ describe("POST /api/admin/send-test-email", () => {
         sample: "en",
         viewerTimezone: "Europe/Helsinki",
         reportMarkdown: "",
-        productUrl: "https://sogverse.sog.gg/parent/clubs/3f9c2b7e-5d14-4a8e-9c61-0b2f7e8d4a15",
+        productUrl: "https://sog.gg/parent/clubs/3f9c2b7e-5d14-4a8e-9c61-0b2f7e8d4a15",
       },
     }));
     const data = await response.json();
@@ -405,7 +405,7 @@ describe("POST /api/admin/send-test-email", () => {
         sample: "en",
         viewerTimezone: "Europe/Helsinki",
         reportMarkdown: "",
-        productUrl: "https://sogverse.sog.gg/parent/clubs/3f9c2b7e-5d14-4a8e-9c61-0b2f7e8d4a15",
+        productUrl: "https://sog.gg/parent/clubs/3f9c2b7e-5d14-4a8e-9c61-0b2f7e8d4a15",
       },
     }));
 
@@ -436,7 +436,7 @@ describe("POST /api/admin/send-test-email", () => {
         sample: "en",
         viewerTimezone: "Europe/Helsinki",
         reportMarkdown: "# Typed title\n\nWith a [link](https://evil.example).",
-        productUrl: "https://sogverse.sog.gg/parent/clubs/3f9c2b7e-5d14-4a8e-9c61-0b2f7e8d4a15",
+        productUrl: "https://sog.gg/parent/clubs/3f9c2b7e-5d14-4a8e-9c61-0b2f7e8d4a15",
       },
     }));
 

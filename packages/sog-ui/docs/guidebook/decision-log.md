@@ -20,9 +20,9 @@ Four inconsistencies between the published sites and this guide. None are urgent
 
 | Where | What it says | What it should say |
 | :---- | :---- | :---- |
-| sogverse.sog.gg, About | "— The Principal of the School of Gaming" | "— The Princi-Pal" |
-| sogverse.sog.gg, Make Gaming a Great Hobby | "a professional instructor who is there to guide and help" | "a Gedu who is there to guide and help" |
-| sogverse.sog.gg, throughout | "clubs" used for both the group and the session | "club" for the group, "lesson" for the 90 minute session |
-| sogverse.sog.gg, throughout | Minecraft presented as the whole offer | Minecraft, Roblox, Fortnite, and Rocket League, with the games framed as dimensions rather than the definition |
+| sog.gg, About | "— The Principal of the School of Gaming" | "— The Princi-Pal" |
+| sog.gg, Make Gaming a Great Hobby | "a professional instructor who is there to guide and help" | "a Gedu who is there to guide and help" |
+| sog.gg, throughout | "clubs" used for both the group and the session | "club" for the group, "lesson" for the 90 minute session |
+| sog.gg, throughout | Minecraft presented as the whole offer | Minecraft, Roblox, Fortnite, and Rocket League, with the games framed as dimensions rather than the definition |
 
 The last one is the most costly. The site currently reads as a Minecraft club business, which undersells a multi-game platform and will need rewriting again every time a title is added. Framing the games as dimensions of Sogverse makes the copy survive the next addition.

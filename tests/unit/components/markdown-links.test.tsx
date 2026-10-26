@@ -14,7 +14,7 @@ const messages = { richText: enRichText };
  * eye and to a screen reader. One rule, in the shared renderer, for every use
  * case that keeps links — and a use case that keeps none still keeps none.
  */
-const SITE = "https://sogverse.sog.gg";
+const SITE = "https://sog.gg";
 
 beforeEach(() => {
   vi.stubEnv("NEXT_PUBLIC_SITE_URL", SITE);
@@ -57,8 +57,8 @@ describe("a link in authored markdown", () => {
 
   it.each([
     ["another site", "https://example.com/guide"],
-    ["a subdomain of ours", "https://evil.sogverse.sog.gg/x"],
-    ["our host on another port", "https://sogverse.sog.gg:8443/x"],
+    ["a subdomain of ours", "https://evil.sog.gg/x"],
+    ["our host on another port", "https://sog.gg:8443/x"],
     ["a protocol-relative address", "//example.com/x"],
     ["plain http to another site", "http://example.com"],
   ])("opens %s in a new tab, and says so", (_name, href) => {
@@ -142,14 +142,14 @@ describe("authoredLinkKind", () => {
   });
 
   it("compares hosts, not spellings", () => {
-    expect(authoredLinkKind("HTTPS://SOGVERSE.SOG.GG/x", SITE)).toBe("own-site");
-    expect(authoredLinkKind("http://sogverse.sog.gg/x", SITE)).toBe("own-site");
+    expect(authoredLinkKind("HTTPS://SOG.GG/x", SITE)).toBe("own-site");
+    expect(authoredLinkKind("http://sog.gg/x", SITE)).toBe("own-site");
   });
 
   it.each([
-    ["our host as the userinfo of another", "https://sogverse.sog.gg@evil.com/x"],
+    ["our host as the userinfo of another", "https://sog.gg@evil.com/x"],
     ["a backslash the browser reads as a slash", "/\\evil.com"],
-    ["our host as a label of another", "https://sogverse.sog.gg.evil.com"],
+    ["our host as a label of another", "https://sog.gg.evil.com"],
   ])("is not fooled by %s", (_name, href) => {
     expect(authoredLinkKind(href, SITE)).toBe("other-site");
   });

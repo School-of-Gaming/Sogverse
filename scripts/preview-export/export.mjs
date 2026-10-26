@@ -18,7 +18,7 @@
  *
  *   node scripts/preview-export/export.mjs --preset topic-copy
  *   node scripts/preview-export/export.mjs --preset topic-copy --locales en,fi --viewports mobile
- *   node scripts/preview-export/export.mjs --preset public-pages --base https://sogverse.sog.gg
+ *   node scripts/preview-export/export.mjs --preset public-pages --base https://sog.gg
  *   node scripts/preview-export/export.mjs --pages ./my-pages.mjs --only minecraft_java--about
  *   node scripts/preview-export/export.mjs --selftest       # no app, no login
  *

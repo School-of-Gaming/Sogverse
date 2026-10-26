@@ -11,7 +11,7 @@ beforeAll(async () => {
   t = await getEmailTranslator("en");
 });
 
-const VERIFICATION_URL = "https://sogverse.sog.gg/verify-email?token=abc123";
+const VERIFICATION_URL = "https://sog.gg/verify-email?token=abc123";
 
 /**
  * The first mail a child ever receives from us. What is pinned here is the one

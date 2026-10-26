@@ -116,12 +116,12 @@ describe("resolveBase", () => {
     expect(resolveBase("http://localhost:3007/en", false)).toBe("http://localhost:3007");
     expect(resolveBase("http://127.0.0.1:3000", false)).toBe("http://127.0.0.1:3000");
     expect(resolveBase("http://[::1]:3000", false)).toBe("http://[::1]:3000");
-    expect(() => resolveBase("https://sogverse.sog.gg", false)).toThrow(/not a local dev server/);
+    expect(() => resolveBase("https://sog.gg", false)).toThrow(/not a local dev server/);
     expect(() => resolveBase("http://localhost.evil.com:3000", false)).toThrow(/not a local dev server/);
   });
 
   it("lets a signed-out run reach any http origin, and nothing else", () => {
-    expect(resolveBase("https://sogverse.sog.gg", true)).toBe("https://sogverse.sog.gg");
+    expect(resolveBase("https://sog.gg", true)).toBe("https://sog.gg");
     expect(() => resolveBase("ftp://localhost", true)).toThrow(/http or https/);
     expect(() => resolveBase("not a url", true)).toThrow(/not a URL/);
   });
@@ -167,7 +167,7 @@ describe("credentialsFor", () => {
 
   it("hands out nothing for a host that is not loopback, whatever the stack", () => {
     for (const stack of ["local", "staging"]) {
-      expect(() => credentialsFor("admin", stack, "sogverse.sog.gg", staging)).toThrow(/Refusing/);
+      expect(() => credentialsFor("admin", stack, "sog.gg", staging)).toThrow(/Refusing/);
     }
   });
 

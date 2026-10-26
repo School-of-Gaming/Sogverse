@@ -39,7 +39,6 @@ describe("siteJsonLd", () => {
     // Facebook page) must never creep back in, because a `sameAs` that 404s
     // is a corroboration that fails.
     expect(organization.sameAs).toEqual([
-      "https://www.sog.gg/",
       "https://www.instagram.com/sog_suomi/",
       "https://www.facebook.com/sogversum",
       "https://www.youtube.com/@SchoolofGamingSuomi",

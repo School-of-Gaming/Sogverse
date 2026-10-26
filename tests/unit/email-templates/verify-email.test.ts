@@ -8,7 +8,7 @@ beforeAll(async () => {
   t = await getEmailTranslator("en");
 });
 
-const VERIFICATION_URL = "https://sogverse.sog.gg/verify-email?token=abc123";
+const VERIFICATION_URL = "https://sog.gg/verify-email?token=abc123";
 
 describe("buildVerifyEmailEmail", () => {
   const params = { firstName: "Marja", verificationUrl: VERIFICATION_URL };
