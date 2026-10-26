@@ -12,6 +12,7 @@ CREATE FUNCTION public.claim_klaviyo_event_jobs(p_limit integer, p_customer_ids 
      WHERE e.next_attempt_at <= now()
        AND (e.leased_until IS NULL OR e.leased_until <= now())
        AND (p_customer_ids IS NULL OR e.customer_id = ANY (p_customer_ids))
+       AND NOT public.klaviyo_parent_owes_registration(e.customer_id)
      ORDER BY e.next_attempt_at, e.occurred_at, e.id
      LIMIT greatest(p_limit, 0)
        FOR UPDATE SKIP LOCKED
@@ -29,7 +30,7 @@ $$;
 -- Name: FUNCTION claim_klaviyo_event_jobs(p_limit integer, p_customer_ids uuid[]); Type: COMMENT; Schema: public; Owner: -
 --
 
-COMMENT ON FUNCTION public.claim_klaviyo_event_jobs(p_limit integer, p_customer_ids uuid[]) IS 'Leases up to p_limit due rows of the Klaviyo event outbox for two minutes, oldest first, and returns each row''s id, kind and parent. p_customer_ids narrows the claim to named parents. Due, SKIP LOCKED and the attempt count work as claim_klaviyo_profile_jobs''s do. Service role only.';
+COMMENT ON FUNCTION public.claim_klaviyo_event_jobs(p_limit integer, p_customer_ids uuid[]) IS 'Leases up to p_limit due rows of the Klaviyo event outbox for two minutes, oldest first, and returns each row''s id, kind and parent. p_customer_ids narrows the claim to named parents. An event whose parent still owes their registration is not claimed: it waits for the stamp, which files the parent and kicks the sync, rather than meeting no snapshot and being dropped. Due, SKIP LOCKED and the attempt count work as claim_klaviyo_profile_jobs''s do. Service role only.';
 
 
 --

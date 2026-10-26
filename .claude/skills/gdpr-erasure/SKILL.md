@@ -46,10 +46,15 @@ change the plan:
 **Then Klaviyo, read-only.** Every parent account has a Klaviyo profile, kept by the
 account sync whether or not they agreed to marketing. Search the address in the Klaviyo
 dashboard (Audience → Profiles) and note every profile it finds. The account's own
-profile carries the Sogverse profile id as its external ID. A second profile under the
-same address, with no external ID, is a newsletter-only sign-up from a landing page: the
-sync never created it and does not know it exists, so the delete in step 3 leaves it
-standing. A gamer has no Klaviyo profile; the sync covers parent accounts only.
+profile carries the Sogverse profile id as its external ID. Klaviyo keeps one profile per
+address, so a newsletter sign-up made with the account's current address is that same
+profile, and the delete in step 3 takes it with the rest. A separate newsletter-only
+profile, with no external ID, exists only under a **different** address — typically one
+the parent used before changing their email in Sogverse, or another they signed up with:
+the sync never created it and does not know it exists, so step 3 leaves it standing. So
+search the parent's old address(es) too, where known — the request itself, earlier
+support mail, an address correction — and note any profile found. A gamer has no Klaviyo
+profile; the sync covers parent accounts only.
 
 **Then scan every column for the ids and the address**, which catches anything that
 references the account without an FK: ids in jsonb or text, the address copied into a
@@ -157,7 +162,7 @@ profile, and it goes once the deletion is done.
 Then search the address in Klaviyo again. The account's profile must be gone; if it is
 still there once the queue row has cleared, the sync failed for it, so find out why before
 deleting it by hand, or the next erasure fails the same way. A newsletter-only profile from
-step 2 is deleted now, by hand: the profile's **Delete profile** action, or a deletion
+step 2, under an old or other address, is deleted now, by hand: the profile's **Delete profile** action, or a deletion
 request under Klaviyo's data privacy settings. Either removes the profile and its history,
 which is what the request asks for; suppressing or unsubscribing it would keep the data.
 

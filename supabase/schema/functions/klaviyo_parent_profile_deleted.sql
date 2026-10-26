@@ -7,16 +7,10 @@ CREATE FUNCTION public.klaviyo_parent_profile_deleted() RETURNS trigger
     SET search_path TO ''
     AS $$
 BEGIN
-  INSERT INTO public.klaviyo_profile_outbox AS o (customer_id)
-  VALUES (OLD.id)
-  ON CONFLICT (customer_id) DO UPDATE
-     SET seq             = o.seq + 1,
-         next_attempt_at = now(),
-         attempts        = 0;
+  PERFORM public.file_klaviyo_profiles(ARRAY[OLD.id]);
 
   DELETE FROM public.klaviyo_event_outbox e WHERE e.customer_id = OLD.id;
 
-  PERFORM public.kick_klaviyo_sync_once();
   RETURN NULL;
 END;
 $$;

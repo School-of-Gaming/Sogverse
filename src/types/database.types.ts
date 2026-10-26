@@ -4730,6 +4730,10 @@ export type Database = {
         Args: { p_gamer_id: string }
         Returns: undefined
       }
+      enqueue_klaviyo_parents_of_location: {
+        Args: { p_location_id: string }
+        Returns: undefined
+      }
       enqueue_klaviyo_parents_of_product: {
         Args: { p_product_id: string }
         Returns: undefined
@@ -4766,6 +4770,10 @@ export type Database = {
       ensure_group_session: {
         Args: { p_group_id: string; p_session_date: string }
         Returns: string
+      }
+      file_klaviyo_profiles: {
+        Args: { p_customer_ids: string[] }
+        Returns: undefined
       }
       file_session_substitution_request: {
         Args: {
@@ -5230,6 +5238,10 @@ export type Database = {
       kick_substitution_notification_sync_if_due: {
         Args: never
         Returns: undefined
+      }
+      klaviyo_parent_owes_registration: {
+        Args: { p_customer_id: string }
+        Returns: boolean
       }
       klaviyo_payment_product: { Args: { p_metadata: Json }; Returns: string }
       klaviyo_product_document: {

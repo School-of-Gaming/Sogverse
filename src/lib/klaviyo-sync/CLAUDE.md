@@ -19,6 +19,15 @@ to enqueue the parent. Once per transaction the database kicks the sync route wi
 Vault-gated `pg_net` call after commit; with no Vault secrets — every local stack and CI —
 the outboxes fill and nothing is sent.
 
+**Only a registered parent has a snapshot** — a `customer` row whose
+`registration_completed_at` is set. A Google sign-up is a customer row, with a verified
+address, before it has registered, and it may never register, or register as a gedu; none
+of those reaches Klaviyo. The profile trigger watches the role and the registration stamp
+as well as what the snapshot reads, so completing a registration files the parent, and a
+row leaving `customer` is filed one last time. An event filed while its parent still owes
+the registration — a Google parent's terms are recorded a moment before the stamp — waits
+unclaimed until it lands, rather than meeting no snapshot and being dropped.
+
 **A parent the snapshot read no longer returns is deleted from Klaviyo**, found by their
 external id (the Sogverse profile id), through Klaviyo's data-privacy deletion, which also
 takes any newsletter subscription that address held. That is the erasure path: an erased
@@ -45,6 +54,12 @@ its value type and fails on any change, so the change is always deliberate.
 - `Sogverse Environment` is `production` on the production deployment and `staging`
   everywhere else, preview and local included: one Klaviyo account holds both, and every
   segment and flow has to filter on it.
+- **The property filters segments; it does not separate the two.** Klaviyo identifies a
+  profile by its email address, so a staging account under an address that also exists
+  in production writes onto that production profile, or collides with it and fails, and a
+  staging registration with the mailing-list box ticked subscribes that real address.
+  Staging accounts therefore use addresses that exist nowhere in production — a
+  plus-address of a mailbox the tester owns (`name+staging-1@…`) is the usual one.
 - The account's `Sogverse Signup …` properties and the newsletter's `Sogverse Newsletter …`
   ones are separate on purpose: a subscriber who later opens an account is one profile.
 
@@ -115,17 +130,31 @@ hold the same secret.
 
 ## Before the first deploy
 
-The deploy that brings the sync deletes Sogverse's own `school_of_gaming` marketing
+The migration that brings the sync deletes Sogverse's own `school_of_gaming` marketing
 consents, so a yes given in Settings or a product signup panel must reach Klaviyo first.
+**Each database loses them when its own migration runs**: merging into `dev` migrates
+staging, and production's runs only at the later `dev` → `main` release. Until then
+production's Settings toggle keeps working, so production's consents keep changing after
+the branch has merged.
+
 `scripts/klaviyo-consent-handover/run.ts` subscribes, with no list, every parent whose
 current consent is granted — never one Klaviyo holds as unsubscribed or suppressed, and
-writing nothing for one already subscribed — so it is safe to run again. It is run against
-prod by the owner, or with the owner's say, from a checkout holding `.env.local`, in this
-order:
+writing nothing for one already subscribed. It also takes back what an earlier run gave: a
+parent whose current consent is `granted = false` and whose address Klaviyo holds
+subscribed under the handover's own custom source is unsubscribed (globally, no list).
+Klaviyo keeps a subscription's custom source on the profile, and any later subscription —
+the newsletter form — replaces it, so a yes given to Klaviyo directly is never undone. Both
+halves are safe to run again. It is run by the owner, or with the owner's say, from a
+checkout holding `.env.local`, in this order:
 
-1. Dry run: `npx tsx scripts/klaviyo-consent-handover/run.ts --prod` — counts only.
-2. Apply: the same with `--apply`. It exits non-zero, naming profile ids, if any parent failed.
-3. Check the count subscribed against Klaviyo: the profiles whose consent source is
+1. Staging, right before merging into `dev`: `npx tsx scripts/klaviyo-consent-handover/run.ts`
+   (a dry run, counts only), then the same with `--apply`. It exits non-zero, naming
+   profile ids, if any parent failed.
+2. Merge into `dev`; staging's migration deletes its consents.
+3. Production dry run, whenever convenient before the release: the same with `--prod`.
+4. **Right before the production release** (the `dev` → `main` merge): `--prod --apply`,
+   for every consent given or revoked until then. An earlier production apply is harmless
+   but does not replace this one.
+5. Check the count subscribed against Klaviyo: the profiles whose consent source is
    `Sogverse account (consent given before the Klaviyo sync)`.
-4. Apply again right before merging, for the consents given since.
-5. Deploy.
+6. Release.

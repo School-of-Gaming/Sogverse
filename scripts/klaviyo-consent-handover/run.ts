@@ -13,6 +13,15 @@
  *   npx tsx scripts/klaviyo-consent-handover/run.ts --prod            # prod, dry run
  *   npx tsx scripts/klaviyo-consent-handover/run.ts --prod --apply    # prod, writes
  *
+ * **A consent revoked since an earlier run is taken back.** Until the
+ * production release, the Settings toggle still works, so a parent the last
+ * run subscribed may have said no since. Every parent whose current consent is
+ * `granted = false` and whose address Klaviyo holds subscribed under this
+ * script's own custom source is unsubscribed (globally, no list). Klaviyo
+ * records a subscription's custom source on the profile and any later
+ * subscription replaces it, so a yes the parent gave Klaviyo directly — the
+ * newsletter form — is never undone.
+ *
  * **Klaviyo's word wins.** A parent whose Klaviyo profile has unsubscribed or
  * is suppressed is skipped and counted, never subscribed again; one already
  * subscribed is not written to. That is also what makes it safe to re-run.
@@ -116,7 +125,15 @@ async function main() {
   console.log(`mode        : ${apply ? "APPLY (writing to Klaviyo)" : "dry run"}\n`);
 
   const klaviyo = await import("@/lib/klaviyo");
-  const { consentRows, consentedParents, grantEvents, handOver } = await import("./handover");
+  const {
+    consentRows,
+    consentedParents,
+    grantEvents,
+    handOver,
+    revokedParents,
+    revokedRows,
+    withdrawRevoked,
+  } = await import("./handover");
 
   // Untyped on purpose: the generated types follow this branch's schema, where
   // `school_of_gaming` is no longer a consent type, while the database read
@@ -138,6 +155,22 @@ async function main() {
     if (error) throw new Error(`Reading marketing_consents failed: ${error.message}`);
     const page: unknown = data;
     rows.push(...consentRows.parse(page));
+    if (data.length < PAGE) break;
+  }
+
+  const revoked = [];
+  for (let from = 0; ; from += PAGE) {
+    const { data, error } = await supabase
+      .from("marketing_consents")
+      .select("customer_id, profiles!inner(email)")
+      .eq("consent_type", "school_of_gaming")
+      .eq("granted", false)
+      .eq("profiles.role", "customer")
+      .order("customer_id")
+      .range(from, from + PAGE - 1);
+    if (error) throw new Error(`Reading marketing_consents failed: ${error.message}`);
+    const page: unknown = data;
+    revoked.push(...revokedRows.parse(page));
     if (data.length < PAGE) break;
   }
 
@@ -164,16 +197,18 @@ async function main() {
   const parents = consentedParents(rows, events);
   console.log(`parents with a granted School of Gaming consent: ${parents.length}\n`);
 
-  const result = await handOver(
-    parents,
-    {
-      findEmailMarketing: klaviyo.findKlaviyoEmailMarketing,
-      upsertProfile: klaviyo.upsertKlaviyoProfile,
-      subscribe: klaviyo.subscribeKlaviyoProfile,
-      sleep: (ms) => new Promise((resolve) => setTimeout(resolve, ms)),
-    },
-    { apply, environment },
-  );
+  console.log(`parents with a revoked School of Gaming consent: ${revoked.length}\n`);
+
+  const deps = {
+    findEmailMarketing: klaviyo.findKlaviyoEmailMarketing,
+    upsertProfile: klaviyo.upsertKlaviyoProfile,
+    subscribe: klaviyo.subscribeKlaviyoProfile,
+    unsubscribe: klaviyo.unsubscribeKlaviyoProfile,
+    sleep: (ms: number) => new Promise<void>((resolve) => setTimeout(resolve, ms)),
+  };
+  const result = await handOver(parents, deps, { apply, environment });
+  const withdrawal = await withdrawRevoked(revokedParents(revoked), deps, { apply });
+  const errors = [...result.errors, ...withdrawal.errors];
 
   console.log(`${apply ? "subscribed" : "to subscribe"}           : ${result.subscribe}`);
   for (const [source, count] of Object.entries(result.bySource).sort()) {
@@ -181,12 +216,14 @@ async function main() {
   }
   console.log(`already subscribed     : ${result.alreadySubscribed}`);
   console.log(`skipped (unsubscribed) : ${result.unsubscribed}`);
-  console.log(`errors                 : ${result.errors.length}`);
-  for (const { profileId, error } of result.errors) {
+  console.log(`${apply ? "unsubscribed" : "to unsubscribe"} (revoked) : ${withdrawal.unsubscribe}`);
+  console.log(`revoked, left alone    : ${withdrawal.leftAlone}`);
+  console.log(`errors                 : ${errors.length}`);
+  for (const { profileId, error } of errors) {
     console.log(`  ${profileId}: ${error}`);
   }
   if (!apply) console.log("\nDry run: nothing was written. Re-run with --apply to write.");
-  if (result.errors.length > 0) process.exit(1);
+  if (errors.length > 0) process.exit(1);
 }
 
 main().catch((error: unknown) => {

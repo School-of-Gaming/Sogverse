@@ -35,7 +35,7 @@ export const POST = defineRoute({
         .eq("next_attempt_at", "infinity"),
       admin
         .from("klaviyo_event_outbox")
-        .select("event_id", { count: "exact", head: true })
+        .select("id", { count: "exact", head: true })
         .eq("next_attempt_at", "infinity"),
     ]);
     if (profiles.error) throw profiles.error;

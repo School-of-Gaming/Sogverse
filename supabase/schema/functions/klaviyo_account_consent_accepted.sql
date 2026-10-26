@@ -42,7 +42,7 @@ $$;
 -- Name: FUNCTION klaviyo_account_consent_accepted(); Type: COMMENT; Schema: public; Owner: -
 --
 
-COMMENT ON FUNCTION public.klaviyo_account_consent_accepted() IS 'Trigger on account_consent_acceptances, after every insert: files the parent in the Klaviyo profile outbox and, on their first acceptance, files the account_created event, timed at the profile''s creation. The terms are recorded only by a parent''s registration — the register route, or the finish page for a Google account — so this is the first moment a customer row is known to be a parent: a gamer or a gedu is a customer row too until its promotion, and files nothing. Granted to nobody.';
+COMMENT ON FUNCTION public.klaviyo_account_consent_accepted() IS 'Trigger on account_consent_acceptances, after every insert: files the parent in the Klaviyo profile outbox and, on their first acceptance, files the account_created event, timed at the profile''s creation. The terms are recorded only by a parent''s registration — the register route, or the finish page for a Google account — never by a gamer''s or a gedu''s. The finish page records them before it stamps registration_completed_at, so a Google parent''s event is filed while they still owe their registration, and claim_klaviyo_event_jobs leaves it waiting until the stamp lands. Granted to nobody.';
 
 
 --

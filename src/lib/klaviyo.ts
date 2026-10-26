@@ -8,7 +8,8 @@ import "server-only";
  * read is finding a profile's Klaviyo id by its external id, which it needs to
  * update or delete the profile it wrote; the consent handover script
  * (`scripts/klaviyo-consent-handover/`) also reads a profile's email marketing
- * standing, so it never subscribes anyone Klaviyo has unsubscribed. Every
+ * standing, so it never subscribes anyone Klaviyo has unsubscribed, and
+ * unsubscribes a parent whose handed-over consent was revoked since. Every
  * write is idempotent, so a caller that failed part-way can simply be retried.
  *
  * The private key's scopes, all of them needed: Profiles read and write,
@@ -209,6 +210,12 @@ export interface KlaviyoEmailMarketing {
    * so a caller that must respect them has to read this first.
    */
   suppressed: boolean;
+  /**
+   * The custom source of the consent standing now — Klaviyo stores a
+   * subscribe call's `custom_source` as the profile's `custom_method_detail`,
+   * and a later subscription replaces it with its own. Null when none was given.
+   */
+  source: string | null;
 }
 
 /**
@@ -239,6 +246,10 @@ export async function findKlaviyoEmailMarketing(
     email: typeof attributes.email === "string" ? attributes.email : null,
     consent: typeof marketing.consent === "string" ? marketing.consent : null,
     suppressed: marketing.can_receive_email_marketing === false || suppression.length > 0,
+    source:
+      typeof marketing.custom_method_detail === "string" && marketing.custom_method_detail !== ""
+        ? marketing.custom_method_detail
+        : null,
   };
 }
 
@@ -355,6 +366,32 @@ export async function subscribeKlaviyoProfile(
       ...(subscription.listId === undefined
         ? {}
         : { relationships: { list: { data: { type: "list", id: subscription.listId } } } }),
+    },
+  });
+}
+
+/**
+ * Unsubscribe `email` from email marketing altogether — no list named, so the
+ * unsubscribe is global. Klaviyo queues the job and answers 202; asking twice
+ * is harmless.
+ */
+export async function unsubscribeKlaviyoProfile(email: string): Promise<void> {
+  await klaviyoCall("POST", "/profile-subscription-bulk-delete-jobs", {
+    data: {
+      type: "profile-subscription-bulk-delete-job",
+      attributes: {
+        profiles: {
+          data: [
+            {
+              type: "profile",
+              attributes: {
+                email,
+                subscriptions: { email: { marketing: { consent: "UNSUBSCRIBED" } } },
+              },
+            },
+          ],
+        },
+      },
     },
   });
 }

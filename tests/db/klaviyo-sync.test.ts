@@ -164,6 +164,21 @@ describe("the Klaviyo sync", () => {
       }
     });
 
+    it("answers the observation route's parked counts, by the columns it selects", async () => {
+      // The same reads the route makes: each outbox's own key column.
+      const profiles = await admin
+        .from("klaviyo_profile_outbox")
+        .select("customer_id", { count: "exact", head: true })
+        .eq("next_attempt_at", "infinity");
+      const events = await admin
+        .from("klaviyo_event_outbox")
+        .select("id", { count: "exact", head: true })
+        .eq("next_attempt_at", "infinity");
+      expect(profiles.error).toBeNull();
+      expect(events.error).toBeNull();
+      expect(typeof events.count).toBe("number");
+    });
+
     it("lets the service role kick when a row is due, which with Vault empty sends nothing", async () => {
       const { error } = await admin.rpc("kick_klaviyo_sync_if_due");
       expect(error).toBeNull();
@@ -238,6 +253,155 @@ describe("the Klaviyo sync", () => {
 
       await admin.from("participations").delete().eq("id", participationId);
       expect((await profileRow(TEST_IDS.CUSTOMER))?.seq).toBe(3);
+    });
+  });
+
+  // -------------------------------------------------------------------------
+  // Only a registered parent reaches Klaviyo
+  // -------------------------------------------------------------------------
+
+  describe("who reaches Klaviyo", () => {
+    /** A fresh password account: a customer row, registered at creation. */
+    async function newCustomer(label: string): Promise<string> {
+      const { data, error } = await admin.auth.admin.createUser({
+        email: `klaviyo-${label}-${Date.now()}@test.local`,
+        password: "testpassword123",
+        email_confirm: true,
+        user_metadata: { first_name: "Klaviyo", last_name: label },
+      });
+      expect(error).toBeNull();
+      return data.user?.id ?? "";
+    }
+
+    /** As a Google sign-up arrives: a customer row still owing its registration. */
+    async function newUnregisteredCustomer(label: string): Promise<string> {
+      const userId = await newCustomer(label);
+      const owed = await admin.from("profiles").update({ registration_completed_at: null }).eq("id", userId);
+      expect(owed.error).toBeNull();
+      return userId;
+    }
+
+    async function snapshotIds(customerIds: string[]): Promise<string[]> {
+      const { data, error } = await admin.rpc("get_klaviyo_parent_snapshots", { p_customer_ids: customerIds });
+      expect(error).toBeNull();
+      return (data ?? []).map((row) => row.customer_id);
+    }
+
+    async function remove(userId: string) {
+      expect((await admin.auth.admin.deleteUser(userId)).error).toBeNull();
+      await clearProfiles([userId]);
+    }
+
+    it("gives a customer who has not finished registering no snapshot, so they never reach Klaviyo", async () => {
+      const userId = await newUnregisteredCustomer("unregistered");
+      // The OAuth callback's verified-address stamp files them, and the
+      // snapshot's silence is what keeps them out.
+      await admin.from("profiles").update({ email_verified_at: new Date().toISOString() }).eq("id", userId);
+      expect((await profileRow(userId))?.seq).toBeGreaterThanOrEqual(1);
+      expect(await snapshotIds([userId])).toEqual([]);
+      await remove(userId);
+    });
+
+    it("files the parent when their registration completes, and the snapshot then answers", async () => {
+      const userId = await newUnregisteredCustomer("completes");
+      await clearProfiles([userId]);
+
+      const stamped = await admin
+        .from("profiles")
+        .update({ registration_completed_at: new Date().toISOString() })
+        .eq("id", userId);
+      expect(stamped.error).toBeNull();
+      expect((await profileRow(userId))?.seq).toBe(1);
+      expect(await snapshotIds([userId])).toEqual([userId]);
+      await remove(userId);
+    });
+
+    it("leaves a Google parent's account opening unclaimed until their registration is stamped", async () => {
+      const userId = await newUnregisteredCustomer("google-parent");
+      // The finish page records the terms first and stamps the registration last.
+      const terms = await admin.rpc("record_account_consents", {
+        p_customer_id: userId,
+        p_document_slugs: [...REGISTRATION_CONSENT_DOCUMENTS],
+      });
+      expect(terms.error).toBeNull();
+      expect(await eventRow("account_created", userId)).not.toBeNull();
+
+      const early = await admin.rpc("claim_klaviyo_event_jobs", { p_limit: 10, p_customer_ids: [userId] });
+      expect(early.error).toBeNull();
+      expect(early.data).toEqual([]);
+
+      await admin.from("profiles").update({ registration_completed_at: new Date().toISOString() }).eq("id", userId);
+      const claimed = await admin.rpc("claim_klaviyo_event_jobs", { p_limit: 10, p_customer_ids: [userId] });
+      expect(claimed.data).toEqual([expect.objectContaining({ kind: "account_created", customer_id: userId })]);
+      await remove(userId);
+    });
+
+    it("files a customer promoted to gedu one last time, with no snapshot, so their Klaviyo profile is deleted", async () => {
+      const userId = await newCustomer("promoted");
+      // The account was a registered customer, so Klaviyo may hold it.
+      expect(await snapshotIds([userId])).toEqual([userId]);
+      await clearProfiles([userId]);
+
+      const promoted = await admin.rpc("register_gedu", {
+        p_user_id: userId,
+        p_first_name: "Klaviyo",
+        p_last_name: "Gedu",
+        p_locale: "en",
+        p_phone: "",
+        p_spoken_languages: [],
+        p_location_ids: [],
+        p_minecraft_username: "",
+        p_minecraft_uuid: "",
+        p_roblox_username: "",
+        p_roblox_user_id: "",
+      });
+      expect(promoted.error).toBeNull();
+      expect((await profileRow(userId))?.seq).toBe(1);
+      expect(await snapshotIds([userId])).toEqual([]);
+
+      // A gedu is never filed again.
+      await clearProfiles([userId]);
+      await admin.from("profiles").update({ phone: "358401234569" }).eq("id", userId);
+      expect(await profileRow(userId)).toBeNull();
+      await remove(userId);
+    });
+
+    it("files every registered parent at a location whose name or country changes, and sends its canonical name alone", async () => {
+      const { data: location, error } = await admin
+        .from("locations")
+        .insert({
+          name: "Klaviyo Town",
+          type: "municipality",
+          parent_id: TEST_IDS.LOCATION_REGION,
+          country_code: "FI",
+          name_i18n: { sv: "Klaviyostad" },
+        })
+        .select("id")
+        .single();
+      expect(error).toBeNull();
+      const locationId = location?.id ?? "";
+      const { data: before } = await admin.from("profiles").select("home_location_id").eq("id", TEST_IDS.CUSTOMER_2).single();
+      await admin.from("profiles").update({ home_location_id: locationId }).eq("id", TEST_IDS.CUSTOMER_2);
+
+      await clearProfiles([TEST_IDS.CUSTOMER_2]);
+      await admin.from("locations").update({ name: "Klaviyo City" }).eq("id", locationId);
+      expect((await profileRow(TEST_IDS.CUSTOMER_2))?.seq).toBe(1);
+      await admin.from("locations").update({ country_code: "SE" }).eq("id", locationId);
+      expect((await profileRow(TEST_IDS.CUSTOMER_2))?.seq).toBe(2);
+
+      const { data } = await admin.rpc("get_klaviyo_parent_snapshots", { p_customer_ids: [TEST_IDS.CUSTOMER_2] });
+      // Exactly these three keys: the translations stay out of Klaviyo.
+      expect(data?.[0]?.snapshot).toEqual(
+        expect.objectContaining({
+          profile: expect.objectContaining({
+            home_location: { id: locationId, name: "Klaviyo City", country_code: "SE" },
+          }),
+        }),
+      );
+
+      await admin.from("profiles").update({ home_location_id: before?.home_location_id ?? null }).eq("id", TEST_IDS.CUSTOMER_2);
+      await admin.from("locations").delete().eq("id", locationId);
+      await clearProfiles([TEST_IDS.CUSTOMER_2]);
     });
   });
 

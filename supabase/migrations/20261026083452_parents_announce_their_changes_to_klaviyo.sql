@@ -7,8 +7,12 @@
 --    parent's Klaviyo picture is read from file the parent's id there through
 --    `enqueue_klaviyo_profiles`, in the writer's own transaction. The database
 --    announces ids only; what Klaviyo is told is read through
---    `get_klaviyo_parent_snapshots`. No foreign key: a deleted parent stays
---    filed, so the sync can delete their Klaviyo profile.
+--    `get_klaviyo_parent_snapshots`, which answers only for a REGISTERED
+--    parent — a customer row whose registration_completed_at is set. Anything
+--    else (an unregistered Google sign-up, an account promoted to gedu, a row
+--    deleted) gets no snapshot, and the sync deletes its Klaviyo profile or
+--    never creates one. No foreign key: a deleted parent stays filed, so the
+--    sync can delete their Klaviyo profile.
 -- 2. An EVENT OUTBOX, `klaviyo_event_outbox`: one row per thing that happened
 --    to a parent that Klaviyo should hear about as an event — the account
 --    opened, a seat taken, a waitlist joined, a seat offered, a payment, a
@@ -22,9 +26,10 @@
 -- 4. A LEASE the sync route works each outbox under, with the backoff and the
 --    parking of the substitution notification outbox, and
 --    `kick_klaviyo_sync_if_due` for an observation point to call. Nothing runs
---    on a clock.
--- 5. Every existing parent is filed once, so the first sync after deploy
---    brings Klaviyo up to date. No historical event is filed.
+--    on a clock. An event waits, unclaimed, while its parent still owes their
+--    registration.
+-- 5. Every existing registered parent is filed once, so the first sync after
+--    deploy brings Klaviyo up to date. No historical event is filed.
 
 -- ---------------------------------------------------------------------------
 -- 1. The outboxes
@@ -174,20 +179,15 @@ COMMENT ON FUNCTION public.kick_klaviyo_sync_once() IS 'kick_klaviyo_sync, at mo
 
 REVOKE ALL ON FUNCTION public.kick_klaviyo_sync_once() FROM PUBLIC;
 
-CREATE FUNCTION public.enqueue_klaviyo_profiles(p_customer_ids uuid[]) RETURNS void
+CREATE FUNCTION public.file_klaviyo_profiles(p_customer_ids uuid[]) RETURNS void
     LANGUAGE plpgsql SECURITY DEFINER
     SET search_path TO ''
     AS $$
 BEGIN
-  -- Only parents. A gamer or a gedu is never in Klaviyo, and every account
-  -- starts life as a customer row the new-user trigger made, so the role is
-  -- read now rather than trusted from the caller. A parent deleted in this
-  -- transaction is filed by the profile delete trigger itself, not here.
   INSERT INTO public.klaviyo_profile_outbox AS o (customer_id)
-  SELECT DISTINCT p.id
-    FROM public.profiles p
-   WHERE p.id = ANY (p_customer_ids)
-     AND p.role = 'customer'::public.user_role
+  SELECT DISTINCT ids.id
+    FROM unnest(p_customer_ids) AS ids(id)
+   WHERE ids.id IS NOT NULL
   ON CONFLICT (customer_id) DO UPDATE
      SET seq             = o.seq + 1,
          next_attempt_at = now(),
@@ -199,7 +199,28 @@ BEGIN
 END;
 $$;
 
-COMMENT ON FUNCTION public.enqueue_klaviyo_profiles(p_customer_ids uuid[]) IS 'Files parents in the Klaviyo profile outbox: a new row each, or seq bumped, the row due now and its attempts reset. Only ids whose profile exists with role customer are filed. Then, once per transaction, the kick. Called by the triggers on every table the Klaviyo snapshot reads. Granted to nobody.';
+COMMENT ON FUNCTION public.file_klaviyo_profiles(p_customer_ids uuid[]) IS 'Files the given ids in the Klaviyo profile outbox whatever their role: a new row each, or seq bumped, the row due now and its attempts reset; then, once per transaction, the kick. The unfiltered half of enqueue_klaviyo_profiles, called directly only for a row that is no longer a parent — its delete, and its role leaving customer — so that the snapshot''s silence deletes its Klaviyo profile. Granted to nobody.';
+
+REVOKE ALL ON FUNCTION public.file_klaviyo_profiles(p_customer_ids uuid[]) FROM PUBLIC;
+
+CREATE FUNCTION public.enqueue_klaviyo_profiles(p_customer_ids uuid[]) RETURNS void
+    LANGUAGE sql SECURITY DEFINER
+    SET search_path TO ''
+    AS $$
+  -- Only customer rows. A gamer or a gedu is never in Klaviyo, so the role is
+  -- read now rather than trusted from the caller. A customer who has not
+  -- finished registering is filed all the same: the snapshot, which answers
+  -- only for a registered parent, decides whether they reach Klaviyo. A row
+  -- leaving customer, or deleted, is filed through file_klaviyo_profiles.
+  SELECT public.file_klaviyo_profiles(ARRAY(
+    SELECT p.id
+      FROM public.profiles p
+     WHERE p.id = ANY (p_customer_ids)
+       AND p.role = 'customer'::public.user_role
+  ));
+$$;
+
+COMMENT ON FUNCTION public.enqueue_klaviyo_profiles(p_customer_ids uuid[]) IS 'Files customer rows in the Klaviyo profile outbox through file_klaviyo_profiles: only ids whose profile exists with role customer, registered or not — get_klaviyo_parent_snapshots decides who reaches Klaviyo. Called by the triggers on every table the Klaviyo snapshot reads. Granted to nobody.';
 
 REVOKE ALL ON FUNCTION public.enqueue_klaviyo_profiles(p_customer_ids uuid[]) FROM PUBLIC;
 
@@ -230,6 +251,22 @@ $$;
 COMMENT ON FUNCTION public.enqueue_klaviyo_parents_of_product(p_product_id uuid) IS 'Files every parent holding any participation in a product in the Klaviyo profile outbox, because a parent''s Klaviyo profile lists their products by name, topic, type and dates. A fan-out over one product''s participations. Granted to nobody.';
 
 REVOKE ALL ON FUNCTION public.enqueue_klaviyo_parents_of_product(p_product_id uuid) FROM PUBLIC;
+
+CREATE FUNCTION public.enqueue_klaviyo_parents_of_location(p_location_id uuid) RETURNS void
+    LANGUAGE sql SECURITY DEFINER
+    SET search_path TO ''
+    AS $$
+  SELECT public.enqueue_klaviyo_profiles(ARRAY(
+    SELECT p.id
+      FROM public.profiles p
+     WHERE p.home_location_id = p_location_id
+       AND p.registration_completed_at IS NOT NULL
+  ));
+$$;
+
+COMMENT ON FUNCTION public.enqueue_klaviyo_parents_of_location(p_location_id uuid) IS 'Files every registered parent whose home location this is in the Klaviyo profile outbox, because a parent''s Klaviyo profile carries their home location''s name and country. A fan-out over one location''s parents. Granted to nobody.';
+
+REVOKE ALL ON FUNCTION public.enqueue_klaviyo_parents_of_location(p_location_id uuid) FROM PUBLIC;
 
 CREATE FUNCTION public.enqueue_klaviyo_event(
   p_kind public.klaviyo_event_kind,
@@ -278,19 +315,27 @@ REVOKE ALL ON FUNCTION public.enqueue_klaviyo_event(p_kind public.klaviyo_event_
 -- 3. The triggers
 -- ---------------------------------------------------------------------------
 
--- profiles: the parent themself. Only the columns the snapshot reads, so a
--- bookkeeping write (updated_at, registration_completed_at) files nothing.
+-- profiles: the parent themself. Only the columns the snapshot reads or
+-- decides on, so a bookkeeping write (updated_at) files nothing. The role and
+-- the registration stamp decide whether there is a snapshot at all: a
+-- registration completed files the parent, and a row whose role leaves
+-- customer (register_gedu's promotion) is filed one last time, so the
+-- snapshot's silence deletes whatever Klaviyo holds for it.
 CREATE FUNCTION public.klaviyo_parent_profile_changed() RETURNS trigger
     LANGUAGE plpgsql SECURITY DEFINER
     SET search_path TO ''
     AS $$
 BEGIN
-  PERFORM public.enqueue_klaviyo_profiles(ARRAY[NEW.id]);
+  IF NEW.role = 'customer'::public.user_role THEN
+    PERFORM public.enqueue_klaviyo_profiles(ARRAY[NEW.id]);
+  ELSE
+    PERFORM public.file_klaviyo_profiles(ARRAY[NEW.id]);
+  END IF;
   RETURN NULL;
 END;
 $$;
 
-COMMENT ON FUNCTION public.klaviyo_parent_profile_changed() IS 'Trigger on profiles, after an update of a parent row that changes a column the Klaviyo snapshot reads: files the parent in the Klaviyo profile outbox. A profile''s insert files nothing — every gamer and gedu account is a customer row for a moment before its promotion — and a parent is filed instead when they first accept the terms (klaviyo_account_consent_accepted). Granted to nobody.';
+COMMENT ON FUNCTION public.klaviyo_parent_profile_changed() IS 'Trigger on profiles, after an update of a row that is or was a customer and that changes a column the Klaviyo snapshot reads or decides on (role and registration_completed_at among them): files it in the Klaviyo profile outbox — through file_klaviyo_profiles when its role has just left customer, since enqueue_klaviyo_profiles files customers only. A profile''s insert files nothing: a password parent is filed when their registration records the terms (klaviyo_account_consent_accepted), a Google parent when the completion route stamps registration_completed_at. Whether the row reaches Klaviyo is the snapshot''s to say, and only a registered customer has one. Granted to nobody.';
 
 REVOKE ALL ON FUNCTION public.klaviyo_parent_profile_changed() FROM PUBLIC;
 
@@ -298,18 +343,18 @@ CREATE TRIGGER profiles_klaviyo_parent_changed
   AFTER UPDATE ON public.profiles
   FOR EACH ROW
   WHEN (
-    NEW.role = 'customer'::public.user_role
+    (OLD.role = 'customer'::public.user_role OR NEW.role = 'customer'::public.user_role)
     AND (
       OLD.email, OLD.first_name, OLD.last_name, OLD.phone, OLD.locale,
       OLD.spoken_languages, OLD.home_location_id, OLD.currency,
-      OLD.email_verified_at, OLD.role,
+      OLD.email_verified_at, OLD.role, OLD.registration_completed_at,
       OLD.utm_source, OLD.utm_medium, OLD.utm_campaign, OLD.utm_content, OLD.utm_term,
       OLD.signup_intent_kind, OLD.signup_intent_id,
       OLD.registration_marketing_consent
     ) IS DISTINCT FROM (
       NEW.email, NEW.first_name, NEW.last_name, NEW.phone, NEW.locale,
       NEW.spoken_languages, NEW.home_location_id, NEW.currency,
-      NEW.email_verified_at, NEW.role,
+      NEW.email_verified_at, NEW.role, NEW.registration_completed_at,
       NEW.utm_source, NEW.utm_medium, NEW.utm_campaign, NEW.utm_content, NEW.utm_term,
       NEW.signup_intent_kind, NEW.signup_intent_id,
       NEW.registration_marketing_consent
@@ -349,16 +394,10 @@ CREATE FUNCTION public.klaviyo_parent_profile_deleted() RETURNS trigger
     SET search_path TO ''
     AS $$
 BEGIN
-  INSERT INTO public.klaviyo_profile_outbox AS o (customer_id)
-  VALUES (OLD.id)
-  ON CONFLICT (customer_id) DO UPDATE
-     SET seq             = o.seq + 1,
-         next_attempt_at = now(),
-         attempts        = 0;
+  PERFORM public.file_klaviyo_profiles(ARRAY[OLD.id]);
 
   DELETE FROM public.klaviyo_event_outbox e WHERE e.customer_id = OLD.id;
 
-  PERFORM public.kick_klaviyo_sync_once();
   RETURN NULL;
 END;
 $$;
@@ -374,9 +413,9 @@ CREATE TRIGGER profiles_klaviyo_parent_deleted
   EXECUTE FUNCTION public.klaviyo_parent_profile_deleted();
 
 -- account_consent_acceptances: the account opened. Only a parent's
--- registration records account terms, so the first acceptance is the moment a
--- customer row is known to be a parent rather than an account about to be
--- promoted.
+-- registration records account terms, so the first acceptance is the account
+-- opening. A Google parent's terms are recorded a moment before their
+-- registration is stamped, and the event waits unclaimed until it is.
 CREATE FUNCTION public.klaviyo_account_consent_accepted() RETURNS trigger
     LANGUAGE plpgsql SECURITY DEFINER
     SET search_path TO ''
@@ -412,7 +451,7 @@ BEGIN
 END;
 $$;
 
-COMMENT ON FUNCTION public.klaviyo_account_consent_accepted() IS 'Trigger on account_consent_acceptances, after every insert: files the parent in the Klaviyo profile outbox and, on their first acceptance, files the account_created event, timed at the profile''s creation. The terms are recorded only by a parent''s registration — the register route, or the finish page for a Google account — so this is the first moment a customer row is known to be a parent: a gamer or a gedu is a customer row too until its promotion, and files nothing. Granted to nobody.';
+COMMENT ON FUNCTION public.klaviyo_account_consent_accepted() IS 'Trigger on account_consent_acceptances, after every insert: files the parent in the Klaviyo profile outbox and, on their first acceptance, files the account_created event, timed at the profile''s creation. The terms are recorded only by a parent''s registration — the register route, or the finish page for a Google account — never by a gamer''s or a gedu''s. The finish page records them before it stamps registration_completed_at, so a Google parent''s event is filed while they still owe their registration, and claim_klaviyo_event_jobs leaves it waiting until the stamp lands. Granted to nobody.';
 
 REVOKE ALL ON FUNCTION public.klaviyo_account_consent_accepted() FROM PUBLIC;
 
@@ -734,9 +773,47 @@ CREATE TRIGGER product_translations_klaviyo_renamed
   WHEN (OLD.name IS DISTINCT FROM NEW.name)
   EXECUTE FUNCTION public.klaviyo_product_changed();
 
+-- locations: a parent's home location, by name and country.
+CREATE FUNCTION public.klaviyo_location_changed() RETURNS trigger
+    LANGUAGE plpgsql SECURITY DEFINER
+    SET search_path TO ''
+    AS $$
+BEGIN
+  PERFORM public.enqueue_klaviyo_parents_of_location(NEW.id);
+  RETURN NULL;
+END;
+$$;
+
+COMMENT ON FUNCTION public.klaviyo_location_changed() IS 'Trigger on locations, after its name or country_code changes: files every registered parent whose home location it is in the Klaviyo profile outbox. Granted to nobody.';
+
+REVOKE ALL ON FUNCTION public.klaviyo_location_changed() FROM PUBLIC;
+
+CREATE TRIGGER locations_klaviyo
+  AFTER UPDATE OF name, country_code ON public.locations
+  FOR EACH ROW
+  WHEN ((OLD.name, OLD.country_code) IS DISTINCT FROM (NEW.name, NEW.country_code))
+  EXECUTE FUNCTION public.klaviyo_location_changed();
+
 -- ---------------------------------------------------------------------------
 -- 4. The kick when a row is due, and the leases
 -- ---------------------------------------------------------------------------
+
+CREATE FUNCTION public.klaviyo_parent_owes_registration(p_customer_id uuid) RETURNS boolean
+    LANGUAGE sql STABLE SECURITY DEFINER
+    SET search_path TO ''
+    AS $$
+  SELECT EXISTS (
+    SELECT 1
+      FROM public.profiles p
+     WHERE p.id = p_customer_id
+       AND p.role = 'customer'::public.user_role
+       AND p.registration_completed_at IS NULL
+  );
+$$;
+
+COMMENT ON FUNCTION public.klaviyo_parent_owes_registration(p_customer_id uuid) IS 'Whether this id is a customer row still owing its registration. Such a parent''s events wait unclaimed: the finish page records a Google parent''s terms — filing account_created — a moment before it stamps the registration, and a sync claiming the event in between would find no snapshot and drop it, and with it the one subscription Sogverse ever sends. A row that is gone or not a customer answers false, so its events are claimed and dropped. Granted to nobody.';
+
+REVOKE ALL ON FUNCTION public.klaviyo_parent_owes_registration(p_customer_id uuid) FROM PUBLIC;
 
 CREATE FUNCTION public.kick_klaviyo_sync_if_due() RETURNS void
     LANGUAGE plpgsql SECURITY DEFINER
@@ -754,13 +831,14 @@ BEGIN
          FROM public.klaviyo_event_outbox e
         WHERE e.next_attempt_at <= now()
           AND (e.leased_until IS NULL OR e.leased_until <= now())
+          AND NOT public.klaviyo_parent_owes_registration(e.customer_id)
      ) THEN
     PERFORM public.kick_klaviyo_sync();
   END IF;
 END;
 $$;
 
-COMMENT ON FUNCTION public.kick_klaviyo_sync_if_due() IS 'Kicks the Klaviyo sync when a row in either outbox is due and not leased — a kick that was lost, a sync that died holding its lease, a failed sync whose backoff has run out, or the outboxes filled before the Vault secrets existed. Nothing runs it on a clock: it is for an observation point in the app to call. Granted to the service role.';
+COMMENT ON FUNCTION public.kick_klaviyo_sync_if_due() IS 'Kicks the Klaviyo sync when a row in either outbox is due and not leased (an event only once its parent is registered, as claim_klaviyo_event_jobs claims them) — a kick that was lost, a sync that died holding its lease, a failed sync whose backoff has run out, or the outboxes filled before the Vault secrets existed. Nothing runs it on a clock: it is for an observation point in the app to call. Granted to the service role.';
 
 REVOKE ALL ON FUNCTION public.kick_klaviyo_sync_if_due() FROM PUBLIC;
 GRANT EXECUTE ON FUNCTION public.kick_klaviyo_sync_if_due() TO service_role;
@@ -843,6 +921,7 @@ CREATE FUNCTION public.claim_klaviyo_event_jobs(p_limit integer, p_customer_ids 
      WHERE e.next_attempt_at <= now()
        AND (e.leased_until IS NULL OR e.leased_until <= now())
        AND (p_customer_ids IS NULL OR e.customer_id = ANY (p_customer_ids))
+       AND NOT public.klaviyo_parent_owes_registration(e.customer_id)
      ORDER BY e.next_attempt_at, e.occurred_at, e.id
      LIMIT greatest(p_limit, 0)
        FOR UPDATE SKIP LOCKED
@@ -855,7 +934,7 @@ CREATE FUNCTION public.claim_klaviyo_event_jobs(p_limit integer, p_customer_ids 
   RETURNING e.id, e.kind, e.customer_id;
 $$;
 
-COMMENT ON FUNCTION public.claim_klaviyo_event_jobs(p_limit integer, p_customer_ids uuid[]) IS 'Leases up to p_limit due rows of the Klaviyo event outbox for two minutes, oldest first, and returns each row''s id, kind and parent. p_customer_ids narrows the claim to named parents. Due, SKIP LOCKED and the attempt count work as claim_klaviyo_profile_jobs''s do. Service role only.';
+COMMENT ON FUNCTION public.claim_klaviyo_event_jobs(p_limit integer, p_customer_ids uuid[]) IS 'Leases up to p_limit due rows of the Klaviyo event outbox for two minutes, oldest first, and returns each row''s id, kind and parent. p_customer_ids narrows the claim to named parents. An event whose parent still owes their registration is not claimed: it waits for the stamp, which files the parent and kicks the sync, rather than meeting no snapshot and being dropped. Due, SKIP LOCKED and the attempt count work as claim_klaviyo_profile_jobs''s do. Service role only.';
 
 REVOKE ALL ON FUNCTION public.claim_klaviyo_event_jobs(p_limit integer, p_customer_ids uuid[]) FROM PUBLIC;
 GRANT EXECUTE ON FUNCTION public.claim_klaviyo_event_jobs(p_limit integer, p_customer_ids uuid[]) TO service_role;
@@ -941,7 +1020,6 @@ CREATE FUNCTION public.get_klaviyo_parent_snapshots(p_customer_ids uuid[]) RETUR
                SELECT jsonb_build_object(
                         'id',           l.id,
                         'name',         l.name,
-                        'name_i18n',    l.name_i18n,
                         'country_code', l.country_code
                       )
                  FROM public.locations l
@@ -1055,10 +1133,11 @@ CREATE FUNCTION public.get_klaviyo_parent_snapshots(p_customer_ids uuid[]) RETUR
          )
     FROM public.profiles p
    WHERE p.id = ANY (p_customer_ids)
-     AND p.role = 'customer'::public.user_role;
+     AND p.role = 'customer'::public.user_role
+     AND p.registration_completed_at IS NOT NULL;
 $$;
 
-COMMENT ON FUNCTION public.get_klaviyo_parent_snapshots(p_customer_ids uuid[]) IS 'The single definition of what Klaviyo is told about a parent: one row per named id that is an existing parent (role customer), and none for any other — a parent deleted, or an account that was never one — which tells the sync to delete that Klaviyo profile. `profile`: id, email, names, phone, locale, spoken_languages, currency, created_at, email_verified_at and home_location ({id, name, name_i18n, country_code}, null when unset). `attribution`: the five utm_* values, signup_intent_kind and signup_intent_id, and registration_marketing_consent — all write-once. `gamers`: every linked gamer as {id, first_name, birth_year, birth_month, gender, minecraft, roblox}, the last two whether a username is linked. `participations`: every seat the parent holds or waits for (the retired reserving status left out) as {id, participant_id, status, state, signed_up_at, waitlisted_at, seat_offer_sent_at, product}, where state is waitlisted, active or past — past for a completed seat, or an active one whose product ended before today in its own zone — read at call time, and product is klaviyo_product_document. `subscriptions`: every family subscription as {id, status, current_period_end, currency, participation_id, created_at}. `payments`: {count, first_at, last_at, lifetime_cents}, lifetime_cents an object of summed amount_cents per currency, refunded duplicates (reservation_duplicate) left out of all four. Every gamer fact and the parent''s phone are in it, so it is for the service role alone.';
+COMMENT ON FUNCTION public.get_klaviyo_parent_snapshots(p_customer_ids uuid[]) IS 'The single definition of what Klaviyo is told about a parent: one row per named id that is a registered parent (role customer, registration_completed_at set), and none for any other — a parent deleted, a Google sign-up that never finished registering, an account promoted to gedu, or one that was never a parent — which tells the sync to delete that Klaviyo profile, or never create it. `profile`: id, email, names, phone, locale, spoken_languages, currency, created_at, email_verified_at and home_location ({id, name, country_code}, null when unset; the canonical name only). `attribution`: the five utm_* values, signup_intent_kind and signup_intent_id, and registration_marketing_consent — all write-once. `gamers`: every linked gamer as {id, first_name, birth_year, birth_month, gender, minecraft, roblox}, the last two whether a username is linked. `participations`: every seat the parent holds or waits for (the retired reserving status left out) as {id, participant_id, status, state, signed_up_at, waitlisted_at, seat_offer_sent_at, product}, where state is waitlisted, active or past — past for a completed seat, or an active one whose product ended before today in its own zone — read at call time, and product is klaviyo_product_document. `subscriptions`: every family subscription as {id, status, current_period_end, currency, participation_id, created_at}. `payments`: {count, first_at, last_at, lifetime_cents}, lifetime_cents an object of summed amount_cents per currency, refunded duplicates (reservation_duplicate) left out of all four. Every gamer fact and the parent''s phone are in it, so it is for the service role alone.';
 
 REVOKE ALL ON FUNCTION public.get_klaviyo_parent_snapshots(p_customer_ids uuid[]) FROM PUBLIC;
 GRANT EXECUTE ON FUNCTION public.get_klaviyo_parent_snapshots(p_customer_ids uuid[]) TO service_role;
@@ -1091,9 +1170,12 @@ REVOKE ALL ON FUNCTION public.get_klaviyo_events(p_event_ids uuid[]) FROM PUBLIC
 GRANT EXECUTE ON FUNCTION public.get_klaviyo_events(p_event_ids uuid[]) TO service_role;
 
 -- ---------------------------------------------------------------------------
--- 6. Every existing parent, once
+-- 6. Every existing registered parent, once
 -- ---------------------------------------------------------------------------
 
 SELECT public.enqueue_klaviyo_profiles(ARRAY(
-  SELECT p.id FROM public.profiles p WHERE p.role = 'customer'::public.user_role
+  SELECT p.id
+    FROM public.profiles p
+   WHERE p.role = 'customer'::public.user_role
+     AND p.registration_completed_at IS NOT NULL
 ));

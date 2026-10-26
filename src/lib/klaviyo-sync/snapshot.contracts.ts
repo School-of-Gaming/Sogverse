@@ -31,9 +31,8 @@ export type KlaviyoProduct = z.infer<typeof klaviyoProduct>;
 
 const homeLocation = z.object({
   id: z.string(),
+  /** The canonical name only: what Klaviyo is sent (`contract.ts`). */
   name: z.string(),
-  /** Other locales' names keyed by locale, as `locations.name_i18n` stores them. */
-  name_i18n: z.record(z.string(), z.string()).nullable(),
   country_code: z.string().nullable(),
 });
 

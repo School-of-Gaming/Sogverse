@@ -18,6 +18,7 @@ BEGIN
          FROM public.klaviyo_event_outbox e
         WHERE e.next_attempt_at <= now()
           AND (e.leased_until IS NULL OR e.leased_until <= now())
+          AND NOT public.klaviyo_parent_owes_registration(e.customer_id)
      ) THEN
     PERFORM public.kick_klaviyo_sync();
   END IF;
@@ -29,7 +30,7 @@ $$;
 -- Name: FUNCTION kick_klaviyo_sync_if_due(); Type: COMMENT; Schema: public; Owner: -
 --
 
-COMMENT ON FUNCTION public.kick_klaviyo_sync_if_due() IS 'Kicks the Klaviyo sync when a row in either outbox is due and not leased — a kick that was lost, a sync that died holding its lease, a failed sync whose backoff has run out, or the outboxes filled before the Vault secrets existed. Nothing runs it on a clock: it is for an observation point in the app to call. Granted to the service role.';
+COMMENT ON FUNCTION public.kick_klaviyo_sync_if_due() IS 'Kicks the Klaviyo sync when a row in either outbox is due and not leased (an event only once its parent is registered, as claim_klaviyo_event_jobs claims them) — a kick that was lost, a sync that died holding its lease, a failed sync whose backoff has run out, or the outboxes filled before the Vault secrets existed. Nothing runs it on a clock: it is for an observation point in the app to call. Granted to the service role.';
 
 
 --

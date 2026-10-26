@@ -63,7 +63,6 @@ const FULL: KlaviyoParentSnapshot = {
     home_location: {
       id: "9e3c1b7a-2d58-4f04-8a6e-5b1c7d3f9e20",
       name: "Espoo",
-      name_i18n: null,
       country_code: "FI",
     },
   },

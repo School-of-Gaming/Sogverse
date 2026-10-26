@@ -6,6 +6,8 @@ import {
   consentedParents,
   decide,
   handOver,
+  isHandedOverSubscription,
+  withdrawRevoked,
   type ConsentedParent,
   type ConsentRow,
   type HandoverDeps,
@@ -35,6 +37,7 @@ const marketing = (over: Partial<KlaviyoEmailMarketing> = {}): KlaviyoEmailMarke
   email: null,
   consent: "NEVER_SUBSCRIBED",
   suppressed: false,
+  source: null,
   ...over,
 });
 
@@ -43,6 +46,7 @@ function deps(find: HandoverDeps["findEmailMarketing"]) {
     findEmailMarketing: vi.fn(find),
     upsertProfile: vi.fn(async () => "kl-new"),
     subscribe: vi.fn(async () => {}),
+    unsubscribe: vi.fn(async () => {}),
     sleep: vi.fn(async () => {}),
   } satisfies HandoverDeps;
 }
@@ -187,5 +191,61 @@ describe("handOver", () => {
       },
     ]);
     expect(d.subscribe).toHaveBeenCalledTimes(1);
+  });
+});
+
+describe("isHandedOverSubscription", () => {
+  const handedOver = { consent: "SUBSCRIBED", source: HANDOVER_CUSTOM_SOURCE };
+
+  it("recognises the handover's own standing subscription", () => {
+    expect(isHandedOverSubscription(marketing(handedOver))).toBe(true);
+  });
+
+  it("leaves a subscription the parent gave Klaviyo another way", () => {
+    expect(isHandedOverSubscription(marketing({ ...handedOver, source: "Landing page newsletter" }))).toBe(false);
+    expect(isHandedOverSubscription(marketing({ ...handedOver, source: null }))).toBe(false);
+  });
+
+  it("has nothing to take back from an address not subscribed", () => {
+    expect(isHandedOverSubscription(null)).toBe(false);
+    expect(isHandedOverSubscription(marketing({ ...handedOver, consent: "UNSUBSCRIBED" }))).toBe(false);
+    expect(isHandedOverSubscription(marketing({ ...handedOver, suppressed: true }))).toBe(false);
+  });
+});
+
+describe("withdrawRevoked", () => {
+  const revoked = [
+    { id: ANNA, email: "anna@example.com" },
+    { id: BEN, email: "ben@example.com" },
+  ];
+  const find: HandoverDeps["findEmailMarketing"] = async (by) =>
+    "email" in by && by.email === "anna@example.com"
+      ? marketing({ consent: "SUBSCRIBED", source: HANDOVER_CUSTOM_SOURCE })
+      : marketing({ consent: "SUBSCRIBED", source: "Landing page newsletter" });
+
+  it("counts, in a dry run, the parents whose handed-over subscription a revocation takes back", async () => {
+    const d = deps(find);
+    const result = await withdrawRevoked(revoked, d, { apply: false });
+    expect(result).toEqual({ unsubscribe: 1, leftAlone: 1, errors: [] });
+    expect(d.findEmailMarketing).toHaveBeenCalledWith({ email: "anna@example.com" });
+    expect(d.unsubscribe).not.toHaveBeenCalled();
+  });
+
+  it("unsubscribes only those under --apply", async () => {
+    const d = deps(find);
+    const result = await withdrawRevoked(revoked, d, { apply: true });
+    expect(result.unsubscribe).toBe(1);
+    expect(d.unsubscribe).toHaveBeenCalledTimes(1);
+    expect(d.unsubscribe).toHaveBeenCalledWith("anna@example.com");
+  });
+
+  it("records a failure by profile id and goes on", async () => {
+    const d = deps(find);
+    d.unsubscribe.mockRejectedValueOnce(new Error("Klaviyo /profile-subscription-bulk-delete-jobs answered 400"));
+    const result = await withdrawRevoked(revoked, d, { apply: true });
+    expect(result.errors).toEqual([
+      { profileId: ANNA, error: "Error: Klaviyo /profile-subscription-bulk-delete-jobs answered 400" },
+    ]);
+    expect(result.leftAlone).toBe(1);
   });
 });

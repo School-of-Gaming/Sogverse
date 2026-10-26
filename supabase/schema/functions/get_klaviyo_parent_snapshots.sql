@@ -23,7 +23,6 @@ CREATE FUNCTION public.get_klaviyo_parent_snapshots(p_customer_ids uuid[]) RETUR
                SELECT jsonb_build_object(
                         'id',           l.id,
                         'name',         l.name,
-                        'name_i18n',    l.name_i18n,
                         'country_code', l.country_code
                       )
                  FROM public.locations l
@@ -137,7 +136,8 @@ CREATE FUNCTION public.get_klaviyo_parent_snapshots(p_customer_ids uuid[]) RETUR
          )
     FROM public.profiles p
    WHERE p.id = ANY (p_customer_ids)
-     AND p.role = 'customer'::public.user_role;
+     AND p.role = 'customer'::public.user_role
+     AND p.registration_completed_at IS NOT NULL;
 $$;
 
 
@@ -145,7 +145,7 @@ $$;
 -- Name: FUNCTION get_klaviyo_parent_snapshots(p_customer_ids uuid[]); Type: COMMENT; Schema: public; Owner: -
 --
 
-COMMENT ON FUNCTION public.get_klaviyo_parent_snapshots(p_customer_ids uuid[]) IS 'The single definition of what Klaviyo is told about a parent: one row per named id that is an existing parent (role customer), and none for any other — a parent deleted, or an account that was never one — which tells the sync to delete that Klaviyo profile. `profile`: id, email, names, phone, locale, spoken_languages, currency, created_at, email_verified_at and home_location ({id, name, name_i18n, country_code}, null when unset). `attribution`: the five utm_* values, signup_intent_kind and signup_intent_id, and registration_marketing_consent — all write-once. `gamers`: every linked gamer as {id, first_name, birth_year, birth_month, gender, minecraft, roblox}, the last two whether a username is linked. `participations`: every seat the parent holds or waits for (the retired reserving status left out) as {id, participant_id, status, state, signed_up_at, waitlisted_at, seat_offer_sent_at, product}, where state is waitlisted, active or past — past for a completed seat, or an active one whose product ended before today in its own zone — read at call time, and product is klaviyo_product_document. `subscriptions`: every family subscription as {id, status, current_period_end, currency, participation_id, created_at}. `payments`: {count, first_at, last_at, lifetime_cents}, lifetime_cents an object of summed amount_cents per currency, refunded duplicates (reservation_duplicate) left out of all four. Every gamer fact and the parent''s phone are in it, so it is for the service role alone.';
+COMMENT ON FUNCTION public.get_klaviyo_parent_snapshots(p_customer_ids uuid[]) IS 'The single definition of what Klaviyo is told about a parent: one row per named id that is a registered parent (role customer, registration_completed_at set), and none for any other — a parent deleted, a Google sign-up that never finished registering, an account promoted to gedu, or one that was never a parent — which tells the sync to delete that Klaviyo profile, or never create it. `profile`: id, email, names, phone, locale, spoken_languages, currency, created_at, email_verified_at and home_location ({id, name, country_code}, null when unset; the canonical name only). `attribution`: the five utm_* values, signup_intent_kind and signup_intent_id, and registration_marketing_consent — all write-once. `gamers`: every linked gamer as {id, first_name, birth_year, birth_month, gender, minecraft, roblox}, the last two whether a username is linked. `participations`: every seat the parent holds or waits for (the retired reserving status left out) as {id, participant_id, status, state, signed_up_at, waitlisted_at, seat_offer_sent_at, product}, where state is waitlisted, active or past — past for a completed seat, or an active one whose product ended before today in its own zone — read at call time, and product is klaviyo_product_document. `subscriptions`: every family subscription as {id, status, current_period_end, currency, participation_id, created_at}. `payments`: {count, first_at, last_at, lifetime_cents}, lifetime_cents an object of summed amount_cents per currency, refunded duplicates (reservation_duplicate) left out of all four. Every gamer fact and the parent''s phone are in it, so it is for the service role alone.';
 
 
 --

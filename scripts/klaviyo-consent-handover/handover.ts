@@ -2,7 +2,9 @@
  * The handover's logic, free of the network so the unit test can drive it:
  * which parents carry a School of Gaming consent across, what Klaviyo's own
  * answer about each one decides, and the sequential, retried run that writes
- * it. `run.ts` reads the database and hands this module the Klaviyo client.
+ * it — plus the run that takes back a handed-over subscription whose consent
+ * the parent has revoked in Sogverse since. `run.ts` reads the database and
+ * hands this module the Klaviyo client.
  */
 
 import { z } from "zod";
@@ -37,6 +39,22 @@ export const grantEvent = z.object({
 export type GrantEvent = z.infer<typeof grantEvent>;
 
 export const consentRows = z.array(consentRow);
+
+/** One `marketing_consents` row for `school_of_gaming` whose current answer is no. */
+export const revokedRow = z.object({
+  customer_id: z.string(),
+  profiles: z.object({ email: z.string() }),
+});
+export const revokedRows = z.array(revokedRow);
+
+export interface RevokedParent {
+  id: string;
+  email: string;
+}
+
+export function revokedParents(rows: readonly z.infer<typeof revokedRow>[]): RevokedParent[] {
+  return rows.map((row) => ({ id: row.customer_id, email: row.profiles.email }));
+}
 export const grantEvents = z.array(grantEvent);
 
 export interface ConsentedParent {
@@ -110,6 +128,25 @@ export function decide(
   return { kind: "subscribe", profileId: byExternalId?.profileId ?? byEmail?.profileId ?? null };
 }
 
+/**
+ * Whether a parent who now says no in Sogverse is held subscribed by this
+ * script's own earlier run: the address is subscribed and not suppressed, and
+ * the consent standing is the handover's. Klaviyo keeps a subscription's
+ * custom source as the profile's `custom_method_detail` and any later
+ * subscription — the newsletter form, the account registration — replaces it,
+ * so a match means the subscription is the one this script gave, for a
+ * consent since revoked. Anything else is a yes given to Klaviyo itself, and
+ * is left alone.
+ */
+export function isHandedOverSubscription(holder: KlaviyoEmailMarketing | null): boolean {
+  return (
+    holder !== null &&
+    holder.consent === "SUBSCRIBED" &&
+    !holder.suppressed &&
+    holder.source === HANDOVER_CUSTOM_SOURCE
+  );
+}
+
 function sameAddress(a: string | null, b: string): boolean {
   return a !== null && a.trim().toLowerCase() === b.trim().toLowerCase();
 }
@@ -135,6 +172,8 @@ export interface HandoverDeps {
     customSource: string;
     consentedAt: string;
   }) => Promise<void>;
+  /** A global email marketing unsubscribe of the address. */
+  unsubscribe: (email: string) => Promise<void>;
   sleep: (ms: number) => Promise<void>;
 }
 
@@ -251,6 +290,47 @@ export async function handOver(
       result.subscribe += 1;
       const source = parent.source ?? "unrecorded";
       result.bySource[source] = (result.bySource[source] ?? 0) + 1;
+    } catch (error) {
+      result.errors.push({ profileId: parent.id, error: label(error) });
+    }
+  }
+  return result;
+}
+
+export interface WithdrawalResult {
+  /** Unsubscribed in an apply run; would be unsubscribed in a dry run. */
+  unsubscribe: number;
+  /** Parents saying no whose address Klaviyo does not hold under the handover's subscription. */
+  leftAlone: number;
+  errors: { profileId: string; error: string }[];
+}
+
+/**
+ * Take back the handover's subscription from every parent who has revoked
+ * their School of Gaming consent in Sogverse since an earlier run gave it —
+ * the Settings toggle keeps working until the release deletes the consents. A
+ * dry run only reads. Safe to run again: an address unsubscribed by an earlier
+ * run no longer reads as subscribed.
+ */
+export async function withdrawRevoked(
+  parents: readonly RevokedParent[],
+  deps: Pick<HandoverDeps, "findEmailMarketing" | "unsubscribe" | "sleep">,
+  options: Pick<HandoverOptions, "apply" | "pauseMs">,
+): Promise<WithdrawalResult> {
+  const result: WithdrawalResult = { unsubscribe: 0, leftAlone: 0, errors: [] };
+  const retried = <T>(call: () => Promise<T>) => withRetry(call, deps.sleep);
+
+  for (const [index, parent] of parents.entries()) {
+    if (index > 0) await deps.sleep(options.pauseMs ?? 250);
+    try {
+      // The address is what the handover subscribed and what is unsubscribed.
+      const holder = await retried(() => deps.findEmailMarketing({ email: parent.email }));
+      if (!isHandedOverSubscription(holder)) {
+        result.leftAlone += 1;
+        continue;
+      }
+      if (options.apply) await retried(() => deps.unsubscribe(parent.email));
+      result.unsubscribe += 1;
     } catch (error) {
       result.errors.push({ profileId: parent.id, error: label(error) });
     }

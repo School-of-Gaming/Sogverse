@@ -238,6 +238,9 @@ export function klaviyoProfileFor(snapshot: KlaviyoParentSnapshot): ParentProfil
       [PROFILE_PROPERTIES.emailVerified]: profile.email_verified_at,
       [PROFILE_PROPERTIES.spokenLanguages]: [...profile.spoken_languages].sort(),
       [PROFILE_PROPERTIES.currency]: profile.currency,
+      // The location's canonical name, never the parent's locale's version of
+      // it: a segment on "Espoo" must match every parent in Espoo, whichever
+      // language they read the site in.
       [PROFILE_PROPERTIES.homeLocation]: profile.home_location?.name ?? null,
       [PROFILE_PROPERTIES.homeLocationId]: profile.home_location?.id ?? null,
       [PROFILE_PROPERTIES.country]: country,
