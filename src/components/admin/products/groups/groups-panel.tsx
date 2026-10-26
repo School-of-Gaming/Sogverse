@@ -206,12 +206,11 @@ export function GroupsPanel({
       name: row.participant_first_name,
       age: birth === null ? null : computeAge(birth, timeZone),
       // Which of the sheet's two actions this seat gets: a live subscription
-      // behind it is the paid club switch, and nothing behind it is the
-      // no-charge move — which the seat menu only offers on a product that
-      // charges nothing.
+      // behind it is the paid club switch, and none behind it is the
+      // no-subscription move, whatever the product charges.
       mode: row.has_live_subscription
         ? ("subscription" as const)
-        : ("no_charge" as const),
+        : ("no_subscription" as const),
     };
   }, [snapshot, switchingId, timeZone]);
 

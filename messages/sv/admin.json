@@ -1321,7 +1321,8 @@
         "picker": {
           "empty": "Det finns ingen annan klubb att byta till. Målet måste vara en klubb som faktureras varje månad och som inte har avslutats.",
           "noMatch": "Ingen klubb matchar sökningen. Pröva ett annat namn.",
-          "alreadyHolds": "Har redan plats"
+          "alreadyHolds": "Har redan plats",
+          "needsSubscription": "Kräver prenumeration"
         },
         "facts": {
           "ageRange": "{ends, select, both {Åldrar {min}–{max}} from {Från {min} år} other {Upp till {max} år}}",
@@ -1361,17 +1362,18 @@
           "failed": "Bytet slutfördes inte. Tryck på Byt klubb igen — ett nytt tryck upprepar samma begäran, så familjen debiteras aldrig två gånger."
         },
         "confirm": "Byt klubb",
-        "noCharge": {
+        "noSubscription": {
           "title": "Flytta till en annan produkt",
-          "description": "Flytta {name} till en annan produkt som inte tar betalt för platsen.",
+          "description": "Flytta {name} till en annan produkt.",
           "searchPlaceholder": "Sök produkter på namn",
           "picker": {
-            "empty": "Det finns ingen annan produkt att flytta till. Målet måste vara en kostnadsfri produkt som inte har avslutats.",
+            "empty": "Det finns ingen annan produkt att flytta till. Målet måste vara en produkt som inte faktureras månadsvis och som inte har avslutats.",
             "noMatch": "Ingen produkt matchar sökningen. Prova ett annat namn."
           },
           "family": {
             "label": "För familjen",
-            "money": "Inget ändras ekonomiskt: ingen av produkterna tar betalt för platsen.",
+            "money": "Flytten debiterar eller återbetalar ingenting.",
+            "priceDifference": "Om priserna skiljer sig åt, reglera mellanskillnaden i Stripe.",
             "email": "Familjen får den nya produktens bekräftelsemejl, och kalenderposten flyttas dit.",
             "consents": "Om den nya produkten kräver samtycken ges de för familjens räkning, så familjen behöver inte svara på dem."
           },
@@ -1391,8 +1393,7 @@
         "move": "Flytta till en annan produkt…",
         "remove": "Ta bort från den här produkten…",
         "disabled": {
-          "subscriptionLive": "Prenumerationen måste först sägas upp i Stripe.",
-          "productCharges": "Bara platser på produkter som är kostnadsfria kan flyttas."
+          "subscriptionLive": "Prenumerationen måste först sägas upp i Stripe."
         }
       }
     },

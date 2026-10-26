@@ -135,28 +135,30 @@ export type SwitchClubSubscriptionCheck = z.infer<
 >;
 
 /**
- * The check's answer for an active seat nothing bills behind, on a product
- * that charges nothing: the no-charge move, onto another product of any type
- * that charges nothing either. There is no money to show, so the answer is the
- * refusals alone — empty means the move is allowed.
+ * The check's answer for an active seat no live subscription stands behind:
+ * the no-subscription move, onto any product that is not billed monthly. Only
+ * the seat moves and no money is charged or refunded by the move, so the
+ * answer is the refusals alone — empty means the move is allowed.
  */
-export const switchClubNoChargeCheck = z.object({
-  kind: z.literal("no_charge"),
+export const switchClubNoSubscriptionCheck = z.object({
+  kind: z.literal("no_subscription"),
   /** Empty means the commit is allowed. */
   refusals: z.array(switchClubRefusal),
 });
 
-export type SwitchClubNoChargeCheck = z.infer<typeof switchClubNoChargeCheck>;
+export type SwitchClubNoSubscriptionCheck = z.infer<
+  typeof switchClubNoSubscriptionCheck
+>;
 
 /**
  * Response of the check handler, split by what stands behind the seat: a live
- * subscription (`subscription`, the paid club switch) or nothing at all on a
- * product that charges nothing (`no_charge`, the move). The sheet branches on
- * `kind` for what its second stage says about money.
+ * subscription (`subscription`, the paid club switch) or none
+ * (`no_subscription`, the move). The sheet branches on `kind` for what its
+ * second stage says about money.
  */
 export const switchClubCheckResponse = z.discriminatedUnion("kind", [
   switchClubSubscriptionCheck,
-  switchClubNoChargeCheck,
+  switchClubNoSubscriptionCheck,
 ]);
 
 export type SwitchClubCheckResponse = z.infer<typeof switchClubCheckResponse>;

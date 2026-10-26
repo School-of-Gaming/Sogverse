@@ -31,9 +31,9 @@ const switchPath = (productId: string, participationId: string) =>
 
 /**
  * Which of the two actions the sheet is: the paid club switch for a seat a
- * live subscription stands behind, or the no-charge move for a seat nothing
- * bills behind, on a product that charges nothing. The same values as the
- * check response's `kind`.
+ * live subscription stands behind, or the no-subscription move for a seat no
+ * live subscription stands behind, whatever its product charges. The same
+ * values as the check response's `kind`.
  */
 export type SwitchClubMode = SwitchClubCheckResponse["kind"];
 
@@ -128,10 +128,13 @@ export function useSwitchClubCheck(
   return useQuery({
     queryKey: switchClubKeys.check(participationId, targetProductId ?? ""),
     queryFn: async (): Promise<SwitchClubCheckResponse> => {
-      // UI-STUB: the no-charge move has no route answer yet, so the check is
-      // synthesized here with no refusals and the route is not called. The
-      // logic step replaces this with the route's own `no_charge` answer.
-      if (mode === "no_charge") return { kind: "no_charge", refusals: [] };
+      // UI-STUB: the no-subscription move has no route answer yet, so the
+      // check is synthesized here with no refusals and the route is not
+      // called. The logic step replaces this with the route's own
+      // `no_subscription` answer.
+      if (mode === "no_subscription") {
+        return { kind: "no_subscription", refusals: [] };
+      }
       const response = await fetch(
         `${switchPath(productId, participationId)}?target=${encodeURIComponent(
           targetProductId!,
@@ -182,10 +185,10 @@ export function useSwitchClub(
 
   return useMutation({
     mutationFn: async (vars: CommitVars): Promise<SwitchClubCommitResponse> => {
-      // UI-STUB: the no-charge move's commit is not wired, so it refuses
-      // before reaching the route. The logic step replaces this with the
-      // route's own no-charge commit.
-      if (mode === "no_charge") throw new Error("Not wired yet");
+      // UI-STUB: the no-subscription move's commit is not wired, so it
+      // refuses before reaching the route. The logic step replaces this with
+      // the route's own no-subscription commit.
+      if (mode === "no_subscription") throw new Error("Not wired yet");
       const response = await fetch(switchPath(productId, participationId), {
         method: "POST",
         headers: { "Content-Type": "application/json" },

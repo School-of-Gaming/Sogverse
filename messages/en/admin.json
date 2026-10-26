@@ -1321,7 +1321,8 @@
         "picker": {
           "empty": "There is no other club to switch to. A target has to be a club billed monthly that has not finished.",
           "noMatch": "No club matches this search. Try another name.",
-          "alreadyHolds": "Already has seat"
+          "alreadyHolds": "Already has seat",
+          "needsSubscription": "Needs a subscription"
         },
         "facts": {
           "ageRange": "{ends, select, both {Ages {min}–{max}} from {Ages {min} and up} other {Ages {max} and under}}",
@@ -1361,17 +1362,18 @@
           "failed": "The switch did not complete. Press Switch club again — a repeated press replays the same request, so it never charges the family twice."
         },
         "confirm": "Switch club",
-        "noCharge": {
+        "noSubscription": {
           "title": "Move to another product",
-          "description": "Move {name} to another product that does not charge for its seat.",
+          "description": "Move {name} to another product.",
           "searchPlaceholder": "Search products by name",
           "picker": {
-            "empty": "There is no other product to move to. A target has to be a product that does not charge and has not finished.",
+            "empty": "There is no other product to move to. A target has to be a product that is not billed monthly and has not finished.",
             "noMatch": "No product matches this search. Try another name."
           },
           "family": {
             "label": "For the family",
-            "money": "Nothing changes for money: neither product charges for the seat.",
+            "money": "No money is charged or refunded by this move.",
+            "priceDifference": "If the two prices differ, settle the difference in Stripe.",
             "email": "They receive the new product’s confirmation email, and their calendar entry moves to it.",
             "consents": "If the new product asks for consents, they are given on the family’s behalf, so the family is not asked for them."
           },
@@ -1391,8 +1393,7 @@
         "move": "Move to another product…",
         "remove": "Remove from this product…",
         "disabled": {
-          "subscriptionLive": "The subscription has to be cancelled in Stripe first.",
-          "productCharges": "Only seats on products that do not charge can be moved."
+          "subscriptionLive": "The subscription has to be cancelled in Stripe first."
         }
       }
     },

@@ -541,7 +541,7 @@ describe("GroupsPanel — the seat menu", () => {
     expect(screen.queryByRole("menu")).toBeNull();
   });
 
-  it("opens the no-charge move from a free product's seat, writing nothing", () => {
+  it("opens the no-subscription move from a free product's seat, writing nothing", () => {
     seatInInbox();
     renderPanel("consumer_club", "free");
     openMenu();
@@ -551,7 +551,7 @@ describe("GroupsPanel — the seat menu", () => {
     noMutationFired();
     const sheet = screen.getByTestId("switch-club-sheet");
     expect(sheet.dataset.open).toBe("true");
-    expect(sheet.dataset.mode).toBe("no_charge");
+    expect(sheet.dataset.mode).toBe("no_subscription");
     expect(sheet.textContent).toBe(INBOX_SEAT);
     expect(screen.queryByRole("menu")).toBeNull();
   });
@@ -569,19 +569,21 @@ describe("GroupsPanel — the seat menu", () => {
     ).toBeTruthy();
   });
 
-  it("shows the move disabled with its reason on a paid camp, and presses to nothing", () => {
-    // The billing prop reaching the menu rule: the same seat on a free
-    // product moves.
+  it("opens the no-subscription move from a paid camp's seat too", () => {
+    // A seat paid for once has no subscription behind it, so it moves like a
+    // free one: only the seat moves, whatever the product charges.
     seatInInbox();
     renderPanel("camp", "paid");
     openMenu();
 
-    const move = screen.getByRole("menuitem", {
-      name: `${MENU}.move ${MENU}.disabled.productCharges`,
-    });
-    expect(move.getAttribute("aria-disabled")).toBe("true");
+    const move = screen.getByRole("menuitem", { name: `${MENU}.move` });
+    expect(move.getAttribute("aria-disabled")).not.toBe("true");
     fireEvent.click(move);
-    expect(screen.getByTestId("switch-club-sheet").dataset.open).toBe("false");
+
+    noMutationFired();
+    const sheet = screen.getByTestId("switch-club-sheet");
+    expect(sheet.dataset.open).toBe("true");
+    expect(sheet.dataset.mode).toBe("no_subscription");
   });
 
   it("offers a subscribed seat the paid switch, in subscription mode", () => {

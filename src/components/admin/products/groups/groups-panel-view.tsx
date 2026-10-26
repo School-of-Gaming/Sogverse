@@ -107,7 +107,7 @@ export interface GroupsPanelActions {
    * menus then carry no switch or move row.
    *
    * One request for both of the sheet's actions — the paid club switch and the
-   * no-charge move — because which one a seat gets is a fact of the seat (a
+   * no-subscription move — because which one a seat gets is a fact of the seat (a
    * live subscription stands behind it or not), and the shell reads that fact
    * off the same snapshot. It fires from the seat menu's Switch club and Move
    * rows.
@@ -307,7 +307,7 @@ export function GroupsPanelView({
       itemsFor: (participationId) => {
         const subject = dragSubjects.get(participationId);
         if (!subject) return null;
-        return seatMenuItems(subject, billingMode).filter(
+        return seatMenuItems(subject).filter(
           (item) => item.action === "remove" || onRequestSwitchClub !== undefined,
         );
       },
@@ -325,7 +325,7 @@ export function GroupsPanelView({
         }
       },
     }),
-    [dragSubjects, billingMode, onRequestSwitchClub],
+    [dragSubjects, onRequestSwitchClub],
   );
 
   const sensors = useSensors(

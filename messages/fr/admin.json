@@ -1321,7 +1321,8 @@
         "picker": {
           "empty": "Il n’y a aucun autre club vers lequel basculer. La destination doit être un club facturé chaque mois et qui n’est pas terminé.",
           "noMatch": "Aucun club ne correspond à cette recherche. Essayez un autre nom.",
-          "alreadyHolds": "A déjà une place"
+          "alreadyHolds": "A déjà une place",
+          "needsSubscription": "Abonnement requis"
         },
         "facts": {
           "ageRange": "{ends, select, both {Âges {min}–{max}} from {À partir de {min} ans} other {Jusqu’à {max} ans}}",
@@ -1361,17 +1362,18 @@
           "failed": "Le changement n’est pas allé jusqu’au bout. Appuyez de nouveau sur Changer de club — un nouvel appui rejoue la même requête, la famille n’est donc jamais facturée deux fois."
         },
         "confirm": "Changer de club",
-        "noCharge": {
+        "noSubscription": {
           "title": "Déplacer vers un autre produit",
-          "description": "Déplacez {name} vers un autre produit dont la place est gratuite.",
+          "description": "Déplacez {name} vers un autre produit.",
           "searchPlaceholder": "Rechercher un produit par son nom",
           "picker": {
-            "empty": "Il n’y a aucun autre produit vers lequel déplacer. La destination doit être un produit gratuit qui n’est pas terminé.",
+            "empty": "Il n’y a aucun autre produit vers lequel déplacer. La destination doit être un produit qui n’est pas facturé chaque mois et qui n’est pas terminé.",
             "noMatch": "Aucun produit ne correspond à cette recherche. Essayez un autre nom."
           },
           "family": {
             "label": "Pour la famille",
-            "money": "Rien ne change côté argent : aucun des deux produits ne fait payer la place.",
+            "money": "Ce déplacement ne prélève ni ne rembourse aucun montant.",
+            "priceDifference": "Si les deux prix diffèrent, réglez la différence dans Stripe.",
             "email": "La famille reçoit l’e-mail de confirmation du nouveau produit, et son entrée de calendrier y est déplacée.",
             "consents": "Si le nouveau produit demande des consentements, ils sont donnés au nom de la famille, qui n’a donc pas à y répondre."
           },
@@ -1391,8 +1393,7 @@
         "move": "Déplacer vers un autre produit…",
         "remove": "Retirer de ce produit…",
         "disabled": {
-          "subscriptionLive": "L’abonnement doit d’abord être résilié dans Stripe.",
-          "productCharges": "Seules les places sur des produits gratuits peuvent être déplacées."
+          "subscriptionLive": "L’abonnement doit d’abord être résilié dans Stripe."
         }
       }
     },

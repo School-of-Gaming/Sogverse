@@ -46,8 +46,8 @@ import { ProductStatusChip } from "../product-status-chip";
 import { PRODUCT_TYPE_PRESENTATION } from "@/components/admin/dashboard/product-type-presentation";
 import {
   heldProductIds,
-  isNoChargeMoveTarget,
   isSwitchTarget,
+  noSubscriptionMoveTarget,
   orderSwitchTargets,
   switchTargetFacts,
   type SwitchTargetFact,
@@ -106,9 +106,9 @@ interface SwitchClubSheetProps {
   onCommittingChange: (committing: boolean) => void;
   /**
    * Which of the sheet's two actions this is: `subscription`, the paid club
-   * switch, or `no_charge`, the move of a seat nothing bills behind onto
-   * another product of any type that charges nothing. The second has no money
-   * to show, and its catalogue spans every product type.
+   * switch, or `no_subscription`, the move of a seat no live subscription
+   * stands behind onto any product that is not billed monthly. The second
+   * moves no money, and its catalogue spans every product type.
    */
   mode: SwitchClubMode;
 }
@@ -126,11 +126,12 @@ interface SwitchClubSheetProps {
  * sits, what changes for the family's money, and the club's own facts stated as
  * information under it.
  *
- * **The same sheet is the no-charge move** (`mode="no_charge"`): an active
- * seat nothing bills behind, on a product that charges nothing, moved onto
- * another such product of any type. Its picker lists every type, naming the
- * type where they mix, and its second stage states what the family
- * experiences where the paid switch shows the money.
+ * **The same sheet is the no-subscription move** (`mode="no_subscription"`):
+ * an active seat no live subscription stands behind — free, municipality, or a
+ * paid camp or event paid for once — moved onto any product that is not billed
+ * monthly. Its picker lists every type, naming the type where they mix, and
+ * shows the monthly clubs disabled with the reason; its second stage states
+ * what the family experiences where the paid switch shows the money.
  *
  * **Always mounted, opened by its `open` prop**, like the gedu and participant
  * pickers beside it — a sheet mounted already open plays neither its enter nor
@@ -149,10 +150,12 @@ export function SwitchClubSheet({
   mode,
 }: SwitchClubSheetProps) {
   const t = useTranslations("admin.products.groupsPanel.switchClub");
-  const tn = useTranslations("admin.products.groupsPanel.switchClub.noCharge");
+  const tn = useTranslations(
+    "admin.products.groupsPanel.switchClub.noSubscription",
+  );
   const tt = useTranslations("admin.products.types");
   const c = useTranslations("common");
-  const noCharge = mode === "no_charge";
+  const noSubscription = mode === "no_subscription";
   const uiLocale = resolveLocale(useLocale());
   const timeZone = useTimezone();
   const now = useNow();
@@ -206,20 +209,24 @@ export function SwitchClubSheet({
   // exactly when stage one wants its skeleton.
   //
   // The paid switch moves between consumer clubs only, so it reads that one
-  // type. The no-charge move may land on a product of any type, so it reads
-  // the other three as well — each its own cached read, the same one every
-  // other per-type list of the admin's shares, and each fired only once a
-  // move is actually opened.
+  // type. The no-subscription move may land on a product of any type and any
+  // price, so it reads the other three as well, unfiltered by billing — each
+  // its own cached read, the same one every other per-type list of the
+  // admin's shares, and each fired only once a move is actually opened.
   const consumerClubs = useProductsByType("consumer_club", {
     enabled: hasOpened,
   });
   const municipalityClubs = useProductsByType("municipality_club", {
-    enabled: hasOpened && noCharge,
+    enabled: hasOpened && noSubscription,
   });
-  const camps = useProductsByType("camp", { enabled: hasOpened && noCharge });
-  const events = useProductsByType("event", { enabled: hasOpened && noCharge });
+  const camps = useProductsByType("camp", {
+    enabled: hasOpened && noSubscription,
+  });
+  const events = useProductsByType("event", {
+    enabled: hasOpened && noSubscription,
+  });
   const products = useMemo(() => {
-    if (!noCharge) return consumerClubs.data;
+    if (!noSubscription) return consumerClubs.data;
     if (
       consumerClubs.data === undefined ||
       municipalityClubs.data === undefined ||
@@ -234,10 +241,16 @@ export function SwitchClubSheet({
       ...camps.data,
       ...events.data,
     ];
-  }, [noCharge, consumerClubs.data, municipalityClubs.data, camps.data, events.data]);
+  }, [
+    noSubscription,
+    consumerClubs.data,
+    municipalityClubs.data,
+    camps.data,
+    events.data,
+  ]);
   const productsLoading =
     consumerClubs.isLoading ||
-    (noCharge &&
+    (noSubscription &&
       (municipalityClubs.isLoading || camps.isLoading || events.isLoading));
   // Every place this gamer already holds, in every status — gated on the same
   // latch, because it is as pointless as the catalogue read on a sheet nobody
@@ -269,17 +282,26 @@ export function SwitchClubSheet({
   const source = products?.find((p) => p.id === productId) ?? null;
   const target = products?.find((p) => p.id === targetId) ?? null;
 
-  const candidates = useMemo(
-    () =>
-      (products ?? []).filter((p) =>
-        noCharge
-          ? isNoChargeMoveTarget(p, productId, now)
-          : isSwitchTarget(p, productId, now),
-      ),
-    [products, productId, now, noCharge],
-  );
+  // The rows the picker lists, and among them the monthly clubs the
+  // no-subscription move shows disabled rather than hides: the seat would need
+  // a subscription there, which only checkout creates.
+  const { candidates, needsSubscription } = useMemo(() => {
+    const listed: ProductWithDetails[] = [];
+    const disabled = new Set<string>();
+    for (const p of products ?? []) {
+      if (!noSubscription) {
+        if (isSwitchTarget(p, productId, now)) listed.push(p);
+        continue;
+      }
+      const standing = noSubscriptionMoveTarget(p, productId, now);
+      if (standing === "hidden") continue;
+      listed.push(p);
+      if (standing === "needsSubscription") disabled.add(p.id);
+    }
+    return { candidates: listed, needsSubscription: disabled };
+  }, [products, productId, now, noSubscription]);
 
-  // Where the list mixes types — a free club beside a free camp — each row
+  // Where the list mixes types — a free club beside a paid camp — each row
   // says which it is, because a camp and a club of the same name are told
   // apart by that first. A list of one type says nothing about it.
   const mixedTypes = useMemo(
@@ -384,7 +406,7 @@ export function SwitchClubSheet({
     if (!committing) onOpenChange(false);
   };
 
-  const searchPlaceholder = noCharge
+  const searchPlaceholder = noSubscription
     ? tn("searchPlaceholder")
     : t("searchPlaceholder");
 
@@ -434,9 +456,9 @@ export function SwitchClubSheet({
     <Sheet open={open} onOpenChange={(next) => !next && close()}>
       <SheetContent>
         <SheetHeader onClose={close}>
-          <SheetTitle>{noCharge ? tn("title") : t("title")}</SheetTitle>
+          <SheetTitle>{noSubscription ? tn("title") : t("title")}</SheetTitle>
           <SheetDescription>
-            {noCharge
+            {noSubscription
               ? tn("description", { name: gamerName })
               : t("description", { name: gamerName })}
           </SheetDescription>
@@ -480,9 +502,10 @@ export function SwitchClubSheet({
             <ClubList
               rows={rows}
               held={held}
+              needsSubscription={needsSubscription}
               loading={productsLoading}
               empty={
-                noCharge
+                noSubscription
                   ? candidates.length === 0
                     ? tn("picker.empty")
                     : tn("picker.noMatch")
@@ -554,8 +577,8 @@ export function SwitchClubSheet({
                   immediate and the box already stands at its final height —
                   waiting for the answer and reading it happen without a pixel
                   below moving. */}
-              {noCharge ? (
-                <NoChargeLines
+              {noSubscription ? (
+                <NoSubscriptionLines
                   refusals={refusals}
                   isError={check.isError}
                 />
@@ -628,7 +651,7 @@ export function SwitchClubSheet({
                 locale={uiLocale}
                 timeZone={timeZone}
                 name={gamerName}
-                noCharge={noCharge}
+                noSubscription={noSubscription}
                 subscriptionEndsAt={subscriptionCheck?.subscriptionEndsAt ?? null}
               />
 
@@ -663,7 +686,7 @@ export function SwitchClubSheet({
                       ) : (
                         t("commit.stripeUpdatedStuck")
                       )
-                    ) : noCharge ? (
+                    ) : noSubscription ? (
                       tn("commitFailed")
                     ) : (
                       t("commit.failed")
@@ -691,7 +714,7 @@ export function SwitchClubSheet({
               confirm however far the money got. */}
           <Button onClick={handleConfirm} disabled={confirmDisabled}>
             {committing && <Loader2 className="mr-1 h-4 w-4 animate-spin" />}
-            {noCharge ? tn("confirm") : t("confirm")}
+            {noSubscription ? tn("confirm") : t("confirm")}
           </Button>
         </div>
       </SheetContent>
@@ -705,15 +728,18 @@ export function SwitchClubSheet({
  * Nothing is flagged here; what is worth knowing about a club is stated on the
  * second stage, about the one club that was chosen.
  *
- * The one exception is a club the gamer already holds a place on, which is not
- * a flag but a dead end: the unique index covers it, the commit refuses it, and
- * a row that leads only to that refusal is drawn disabled and says why. It
- * keeps its ordered position — the club is still where the admin expects to
- * find it, it simply cannot be pressed.
+ * The exceptions are dead ends, not flags: a club the gamer already holds a
+ * place on (the unique index covers it, the commit refuses it), and — in the
+ * no-subscription move — a club billed monthly, where a seat exists only behind
+ * a subscription that checkout alone creates. A row that leads only to a
+ * refusal is drawn disabled and says why. It keeps its ordered position — the
+ * club is still where the admin expects to find it, it simply cannot be
+ * pressed.
  */
 function ClubList({
   rows,
   held,
+  needsSubscription,
   loading,
   empty,
   locale,
@@ -723,6 +749,7 @@ function ClubList({
 }: {
   rows: ProductWithDetails[];
   held: ReadonlySet<string>;
+  needsSubscription: ReadonlySet<string>;
   loading: boolean;
   empty: string;
   locale: SupportedLocale;
@@ -753,17 +780,25 @@ function ClubList({
   return (
     <ul className="space-y-2">
       {rows.map((row) => {
+        // Held first: where both are true, the place the gamer already holds
+        // is the nearer reason.
         const isHeld = held.has(row.id);
+        const disabledReason = isHeld
+          ? t("alreadyHolds")
+          : needsSubscription.has(row.id)
+            ? t("needsSubscription")
+            : null;
+        const disabled = disabledReason !== null;
         return (
           <li key={row.id}>
             <button
               type="button"
-              disabled={isHeld}
-              aria-disabled={isHeld}
+              disabled={disabled}
+              aria-disabled={disabled}
               onClick={() => onSelect(row.id)}
               className={cn(
                 "w-full rounded-lg border border-border p-3 text-left transition-colors",
-                isHeld ? "cursor-default opacity-60" : "hover:bg-hover",
+                disabled ? "cursor-default opacity-60" : "hover:bg-hover",
               )}
             >
               <span className="flex items-start justify-between gap-2">
@@ -771,17 +806,18 @@ function ClubList({
                   {resolveTranslation(row.product_translations, locale)?.name ??
                     ""}
                 </span>
-                {/* One pill in this slot, never two: the held badge REPLACES
-                    the status chip rather than joining it, because where a club
-                    is a dead end for this gamer its lifecycle state is not what
-                    the row is about, and a held row that grew a second pill
-                    would be the one row wider than all the others. The two
-                    wear the same pill geometry — same border, same text size,
-                    same vertical padding — so the swap when the participations
-                    read lands changes the word, not the row's height. */}
+                {/* One pill in this slot, never two: a disabled row's reason
+                    REPLACES the status chip rather than joining it, because
+                    where a club is a dead end for this gamer its lifecycle
+                    state is not what the row is about, and a row that grew a
+                    second pill would be the one row wider than all the others.
+                    The two wear the same pill geometry — same border, same text
+                    size, same vertical padding — so the swap when the
+                    participations read lands changes the word, not the row's
+                    height. */}
                 <span className="shrink-0">
-                  {isHeld ? (
-                    <Badge variant="outline">{t("alreadyHolds")}</Badge>
+                  {disabledReason !== null ? (
+                    <Badge variant="outline">{disabledReason}</Badge>
                   ) : (
                     <ProductStatusChip status={effectiveStatus(row, now)} />
                   )}
@@ -799,15 +835,17 @@ function ClubList({
 }
 
 /**
- * The no-charge move's second stage, in place of the money: what the family
- * experiences, said plainly, because there is no price on either side to
- * show. Each line is one an admin could repeat to the parent unchanged.
+ * The no-subscription move's second stage, in place of the money: what the
+ * family experiences, said plainly, because the move charges and refunds
+ * nothing whatever either product costs. Each line is one an admin could
+ * repeat to the parent unchanged, except the price-difference line — the
+ * sanctioned exception, an instruction that sends the admin to Stripe.
  *
  * A refusal from the check replaces the lines — a different panel, not a line
  * joining them — because a move that cannot happen has nothing for the family
  * to experience.
  */
-function NoChargeLines({
+function NoSubscriptionLines({
   refusals,
   isError,
 }: {
@@ -816,7 +854,7 @@ function NoChargeLines({
 }) {
   const t = useTranslations("admin.products.groupsPanel.switchClub");
   const tn = useTranslations(
-    "admin.products.groupsPanel.switchClub.noCharge.family",
+    "admin.products.groupsPanel.switchClub.noSubscription.family",
   );
 
   if (isError) {
@@ -831,6 +869,7 @@ function NoChargeLines({
       </p>
       <ul className="space-y-1.5 text-sm text-foreground">
         <li>{tn("money")}</li>
+        <li>{tn("priceDifference")}</li>
         <li>{tn("email")}</li>
         <li>{tn("consents")}</li>
       </ul>
@@ -875,15 +914,15 @@ function TargetFactLines({
   locale,
   timeZone,
   name,
-  noCharge,
+  noSubscription,
   subscriptionEndsAt,
 }: {
   facts: SwitchTargetFact[];
   locale: SupportedLocale;
   timeZone: string;
   name: string;
-  /** The no-charge move, whose not-started line says nothing about paying. */
-  noCharge: boolean;
+  /** The no-subscription move, whose not-started line says nothing about paying. */
+  noSubscription: boolean;
   /**
    * When the family has already cancelled, the instant the subscription runs
    * out. Never a refusal — an admin may well be switching the club of a family
@@ -893,7 +932,9 @@ function TargetFactLines({
   subscriptionEndsAt: string | null;
 }) {
   const t = useTranslations("admin.products.groupsPanel.switchClub.facts");
-  const tn = useTranslations("admin.products.groupsPanel.switchClub.noCharge");
+  const tn = useTranslations(
+    "admin.products.groupsPanel.switchClub.noSubscription",
+  );
 
   if (facts.length === 0 && subscriptionEndsAt === null) return null;
 
@@ -901,7 +942,7 @@ function TargetFactLines({
     <div className="space-y-1">
       {facts.map((fact) => (
         <p key={fact.kind} className="min-h-5 text-sm text-muted-foreground">
-          {fact.kind === "notStarted" && noCharge
+          {fact.kind === "notStarted" && noSubscription
             ? tn("notStarted", { date: formatDateOnly(fact.startDate, locale) })
             : factLine(fact, t, locale, name)}
         </p>

@@ -1321,7 +1321,8 @@
         "picker": {
           "empty": "latlh ghom’a’ tu’lu’be’. jarmey Huch poQnIS ghom’a’, ’ej rInbe’nIS.",
           "noMatch": "ghom’a’ tu’lu’be’ QulmeHvam. latlh pong yInID.",
-          "alreadyHolds": "quS ghaj"
+          "alreadyHolds": "quS ghaj",
+          "needsSubscription": "jarmey Huch poQ"
         },
         "facts": {
           "ageRange": "{ends, select, both {DIS {min}–{max}} from {DIS {min} pagh nIvbogh} other {DIS {max} pagh puSbogh}}",
@@ -1361,17 +1362,18 @@
           "failed": "rInbe’ chIjghach. ghom’a’ yIchIj yI’uy’qa’ — rap tlhobHa’ghach, vaj not cha’logh DIl qorDu’."
         },
         "confirm": "ghom’a’ yIchIj",
-        "noCharge": {
+        "noSubscription": {
           "title": "latlh ngoptlhInDaq yIvIH",
-          "description": "latlh ngoptlhIn DIlbe’lu’bogh Daq {name} yIvIH.",
+          "description": "latlh ngoptlhInDaq {name} yIvIH.",
           "searchPlaceholder": "pongDaq ngoptlhIn yISam",
           "picker": {
-            "empty": "latlh ngoptlhIn tu’lu’be’. DIlbe’lu’nIS ngoptlhIn, ’ej rInbe’nIS.",
+            "empty": "latlh ngoptlhIn tu’lu’be’. jar Hoch DIlbe’lu’nIS ngoptlhIn, ’ej rInbe’nIS.",
             "noMatch": "Sambogh ngoptlhIn tu’lu’be’. latlh pong yInId."
           },
           "family": {
             "label": "qorDu’vaD",
-            "money": "Huch choHbe’: quSvaD DIlmoHbe’ cha’ ngoptlhIn.",
+            "money": "vIHghachvam Huch tlhaplu’be’, Huch nobHa’lu’be’.",
+            "priceDifference": "cha’ DIlmey rap’be’chugh, StripeDaq yIrapmoH.",
             "email": "ngoptlhIn chu’ QIn Hev qorDu’, ’ej ngoptlhIn chu’Daq vIH DIS jaj ghItlh.",
             "consents": "chaq chaw’ poQ ngoptlhIn chu’; qorDu’ rIllu’, vaj qorDu’ tlhoblu’be’."
           },
@@ -1391,8 +1393,7 @@
         "move": "latlh ngoptlhInDaq yIvIH…",
         "remove": "ngoptlhInvamvo’ yIteq…",
         "disabled": {
-          "subscriptionLive": "wa’DIch StripeDaq jarmey Huch yIqIl.",
-          "productCharges": "ngoptlhInmey DIlbe’lu’bogh neH quSDaq vIHlaH."
+          "subscriptionLive": "wa’DIch StripeDaq jarmey Huch yIqIl."
         }
       }
     },

@@ -5,8 +5,8 @@ import {
   dragSubjectsFrom,
   heldProductIds,
   isSubscriptionShaped,
-  isNoChargeMoveTarget,
   isSwitchTarget,
+  noSubscriptionMoveTarget,
   orderSwitchTargets,
   readDropData,
   readChipDragData,
@@ -1002,35 +1002,23 @@ describe("seatMenuItems", () => {
   it("offers a subscribed seat the paid switch, and its removal disabled", () => {
     // Removal is refused for exactly this seat by the database, and the
     // switch exists exactly for it — the same split resolveDrop makes.
-    expect(seatMenuItems(subscribed, "paid")).toEqual([
+    expect(seatMenuItems(subscribed)).toEqual([
       { action: "switchClub", disabledReason: null },
       { action: "remove", disabledReason: "subscriptionLive" },
     ]);
   });
 
-  it("offers a seat on a product that charges nothing the move and the removal", () => {
-    for (const mode of ["free", "external_contract"] as const) {
-      expect(seatMenuItems(member, mode)).toEqual([
-        { action: "move", disabledReason: null },
-        { action: "remove", disabledReason: null },
-      ]);
-    }
-  });
-
-  it("shows the move disabled on a paid product, and keeps the removal", () => {
-    // A paid camp's seat holds no subscription, but money was paid for it, so
-    // a move is not this menu's to make. The row stays, saying why.
-    expect(seatMenuItems(member, "paid")).toEqual([
-      { action: "move", disabledReason: "productCharges" },
+  it("offers an active seat with no subscription the move and the removal", () => {
+    // Whatever the product charges: a paid camp's seat was paid for once,
+    // and only the seat moves.
+    expect(seatMenuItems(member)).toEqual([
+      { action: "move", disabledReason: null },
       { action: "remove", disabledReason: null },
     ]);
   });
 
-  it("offers a waitlisted row its removal alone, whatever the product charges", () => {
-    expect(seatMenuItems(waitlisted, "free")).toEqual([
-      { action: "remove", disabledReason: null },
-    ]);
-    expect(seatMenuItems(waitlisted, "paid")).toEqual([
+  it("offers a waitlisted row its removal alone", () => {
+    expect(seatMenuItems(waitlisted)).toEqual([
       { action: "remove", disabledReason: null },
     ]);
   });
@@ -1040,56 +1028,80 @@ describe("seatMenuItems", () => {
     // product lock, so a demote can land in that window): there is no active
     // seat for the switch to move.
     expect(
-      seatMenuItems({ ...waitlisted, hasLiveSubscription: true }, "paid"),
+      seatMenuItems({ ...waitlisted, hasLiveSubscription: true }),
     ).toEqual([{ action: "remove", disabledReason: "subscriptionLive" }]);
   });
 });
 
-describe("isNoChargeMoveTarget", () => {
+describe("noSubscriptionMoveTarget", () => {
   const product = {
     id: "camp-b",
+    product_type: "camp",
     billing_mode: "free",
     end_date: null,
     timezone: "Europe/Helsinki",
   } as const;
 
-  it("admits a product that charges nothing and has not ended, of either no-charge mode", () => {
-    expect(isNoChargeMoveTarget(product, "club-a", NOW)).toBe(true);
+  it("admits every product not billed monthly, paid or free, of every type", () => {
+    const shapes = [
+      { product_type: "camp", billing_mode: "free" },
+      { product_type: "camp", billing_mode: "paid" },
+      { product_type: "event", billing_mode: "free" },
+      { product_type: "event", billing_mode: "paid" },
+      { product_type: "consumer_club", billing_mode: "free" },
+      { product_type: "municipality_club", billing_mode: "external_contract" },
+    ] as const;
+    for (const shape of shapes) {
+      expect(
+        noSubscriptionMoveTarget({ ...product, ...shape }, "club-a", NOW),
+      ).toBe("target");
+    }
     expect(
-      isNoChargeMoveTarget(
-        { ...product, billing_mode: "external_contract" },
+      noSubscriptionMoveTarget({ ...product, end_date: "2026-06-15" }, "club-a", NOW),
+    ).toBe("target");
+  });
+
+  it("lists a club billed monthly as needing a subscription, not as a target", () => {
+    expect(
+      noSubscriptionMoveTarget(
+        { ...product, product_type: "consumer_club", billing_mode: "paid" },
         "club-a",
         NOW,
       ),
-    ).toBe(true);
-    expect(
-      isNoChargeMoveTarget({ ...product, end_date: "2026-06-15" }, "club-a", NOW),
-    ).toBe(true);
+    ).toBe("needsSubscription");
   });
 
-  it("refuses a product that charges", () => {
-    expect(
-      isNoChargeMoveTarget({ ...product, billing_mode: "paid" }, "club-a", NOW),
-    ).toBe(false);
+  it("hides the product the seat is already on", () => {
+    expect(noSubscriptionMoveTarget(product, "camp-b", NOW)).toBe("hidden");
   });
 
-  it("refuses the product the seat is already on", () => {
-    expect(isNoChargeMoveTarget(product, "camp-b", NOW)).toBe(false);
-  });
-
-  it("refuses a product whose last day has passed, read in its own zone", () => {
+  it("hides a product whose last day has passed, read in its own zone", () => {
     expect(
-      isNoChargeMoveTarget({ ...product, end_date: "2026-06-14" }, "club-a", NOW),
-    ).toBe(false);
+      noSubscriptionMoveTarget({ ...product, end_date: "2026-06-14" }, "club-a", NOW),
+    ).toBe("hidden");
+    // Over is over whatever the billing: a finished monthly club is not shown
+    // disabled, it is not shown.
+    expect(
+      noSubscriptionMoveTarget(
+        {
+          ...product,
+          product_type: "consumer_club",
+          billing_mode: "paid",
+          end_date: "2026-06-14",
+        },
+        "club-a",
+        NOW,
+      ),
+    ).toBe("hidden");
     const midnightish = new Date("2026-06-14T22:00:00Z");
     const ending = { ...product, end_date: "2026-06-14" };
-    expect(isNoChargeMoveTarget(ending, "club-a", midnightish)).toBe(false);
+    expect(noSubscriptionMoveTarget(ending, "club-a", midnightish)).toBe("hidden");
     expect(
-      isNoChargeMoveTarget(
+      noSubscriptionMoveTarget(
         { ...ending, timezone: "America/Los_Angeles" },
         "club-a",
         midnightish,
       ),
-    ).toBe(true);
+    ).toBe("target");
   });
 });

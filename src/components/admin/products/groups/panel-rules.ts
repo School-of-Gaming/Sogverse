@@ -219,8 +219,8 @@ export function resolveDrop(
  *
  *  - `switchClub` — the paid club switch, for an active seat a live
  *    subscription stands behind.
- *  - `move` — the no-charge move, for an active seat with nothing billing
- *    behind it, onto another product that charges nothing.
+ *  - `move` — the no-subscription move, for an active seat no live
+ *    subscription stands behind, onto any product that is not billed monthly.
  *  - `remove` — the removal confirm.
  */
 export type SeatMenuAction = "switchClub" | "move" | "remove";
@@ -232,10 +232,8 @@ export type SeatMenuAction = "switchClub" | "move" | "remove";
  *
  *  - `subscriptionLive` — removal would leave a live subscription billing for a
  *    seat that no longer exists; it has to be cancelled in Stripe first.
- *  - `productCharges` — the seat is on a product that charges, and only a seat
- *    nothing is paid for can be moved without money following it.
  */
-export type SeatMenuDisabledReason = "subscriptionLive" | "productCharges";
+export type SeatMenuDisabledReason = "subscriptionLive";
 
 export interface SeatMenuItem {
   action: SeatMenuAction;
@@ -257,16 +255,11 @@ export interface SeatMenuItem {
  * paid switch serves active seats only, so a waitlisted row with a live
  * subscription (a webhook race) is shown its removal disabled and nothing else.
  *
- * The move is offered on an active seat with no subscription behind it, and
- * pressable only where the product it sits on charges nothing. On a paid camp
- * or event the row stays, disabled with its reason, so an admin looking for a
- * way to move that seat learns why there is none rather than finding a menu
- * that simply lacks the line.
+ * The move is offered on every active seat with no subscription behind it,
+ * whatever the product charges: a paid camp's seat was paid for once, and only
+ * the seat moves — a difference in price is the admin's to settle in Stripe.
  */
-export function seatMenuItems(
-  subject: DragSubject,
-  billingMode: BillingMode,
-): SeatMenuItem[] {
+export function seatMenuItems(subject: DragSubject): SeatMenuItem[] {
   const removeItem: SeatMenuItem = {
     action: "remove",
     disabledReason: subject.hasLiveSubscription ? "subscriptionLive" : null,
@@ -278,15 +271,7 @@ export function seatMenuItems(
     return [{ action: "switchClub", disabledReason: null }, removeItem];
   }
 
-  return [
-    {
-      action: "move",
-      disabledReason: isNoChargeBillingMode(billingMode)
-        ? null
-        : "productCharges",
-    },
-    removeItem,
-  ];
+  return [{ action: "move", disabledReason: null }, removeItem];
 }
 
 // ---------------------------------------------------------------------------
@@ -762,30 +747,45 @@ export function isSwitchTarget(
 }
 
 /**
- * Whether a product is a legal destination for the no-charge move: it charges
- * nothing for its seat, it is not yet over, and it is not the product the seat
- * is already on.
+ * Where a product stands in the no-subscription move's picker, for a seat no
+ * live subscription stands behind:
  *
- * **Every type qualifies**, unlike the paid switch: with no subscription to
- * reprice, nothing ties the seat to a monthly club, so a seat on a free club
- * may go to a municipality club, a free camp or a free event as readily as to
- * another free club. "Not yet over" is read exactly as {@link isSwitchTarget}
- * reads it — the end date against the product's own today.
+ *  - `target` — a legal destination: not the product the seat is on, not yet
+ *    over, and not subscription-shaped. Every other type and billing mode
+ *    qualifies — a free or municipality club, any camp or event, paid or free —
+ *    because only the seat moves, and no money follows it either way.
+ *  - `needsSubscription` — a club billed monthly and not yet over. A seat there
+ *    exists only behind a subscription, which only checkout creates, so the row
+ *    is drawn disabled with that reason rather than hidden: an admin looking for
+ *    the club finds it and learns why it cannot be chosen.
+ *  - `hidden` — the seat's own product, or one that is over.
+ *
+ * "Not yet over" is read exactly as {@link isSwitchTarget} reads it — the end
+ * date against the product's own today.
  */
-export function isNoChargeMoveTarget(
+export type NoSubscriptionMoveTarget = "target" | "needsSubscription" | "hidden";
+
+export function noSubscriptionMoveTarget(
   candidate: {
     id: string;
+    product_type: ProductType;
     billing_mode: BillingMode;
     end_date: string | null;
     timezone: string;
   },
   sourceProductId: string,
   now: Date,
-): boolean {
-  if (candidate.id === sourceProductId) return false;
-  if (!isNoChargeBillingMode(candidate.billing_mode)) return false;
-  if (candidate.end_date === null) return true;
-  return candidate.end_date >= formatInTimeZone(now, candidate.timezone, "yyyy-MM-dd");
+): NoSubscriptionMoveTarget {
+  if (candidate.id === sourceProductId) return "hidden";
+  if (
+    candidate.end_date !== null &&
+    candidate.end_date < formatInTimeZone(now, candidate.timezone, "yyyy-MM-dd")
+  ) {
+    return "hidden";
+  }
+  return isSubscriptionShaped(candidate.product_type, candidate.billing_mode)
+    ? "needsSubscription"
+    : "target";
 }
 
 /** What the held-place derivation reads off one of the gamer's participations. */
