@@ -24,7 +24,7 @@ import {
   SUPPORTED_LOCALES,
   type SupportedLocale,
 } from "@/lib/constants/locales";
-import { resolveTranslation } from "@/lib/i18n/resolve-translation";
+import { resolveRequiredTranslation } from "@/lib/i18n/resolve-translation";
 import {
   COVER_PREVIEW,
   COVER_THUMBNAIL,
@@ -41,6 +41,7 @@ import {
   articleId,
   asAdmin,
   refusal,
+  savedArticle,
 } from "@/lib/mcp/library-call";
 import {
   isCompleteVersion,
@@ -243,7 +244,7 @@ function coversOnce(articles: readonly AdminLibraryArticleListItem[]): CoverToSh
   }
   return [...usedBy].map(([path, users]) => {
     const named = users
-      .map((article) => `article ${article.id} ("${resolveTranslation(article.versions, DEFAULT_LOCALE)?.title ?? ""}")`)
+      .map((article) => `article ${article.id} ("${resolveRequiredTranslation(article.versions, DEFAULT_LOCALE).title}")`)
       .join(", ");
     return {
       path,
@@ -373,11 +374,11 @@ export function registerLibraryTools(server: McpServer): void {
       asAdmin(ctx, async ({ service, origin }) => {
         const article = await service.getAdminArticle(id);
         if (article === null) return refusal(NOT_FOUND);
-        const shown = resolveTranslation(article.draft.versions, at);
+        const shown = resolveRequiredTranslation(article.draft.versions, at);
         return answer({
           articleId: id,
           locale: at,
-          shows: shown?.locale ?? at,
+          shows: shown.locale,
           previewLink: previewLink(origin, id, at),
         });
       }),
@@ -444,8 +445,7 @@ export function registerLibraryTools(server: McpServer): void {
           summary: input.summary,
           body: input.body,
         });
-        const article = await service.getAdminArticle(input.articleId);
-        if (article === null) return refusal(NOT_FOUND);
+        const article = await savedArticle(service, input.articleId);
         // exact-locale: the tool writes the version it was asked for
         const saved = article.draft.versions.find((v) => v.locale === input.locale);
         const liveSlug =
@@ -507,10 +507,9 @@ export function registerLibraryTools(server: McpServer): void {
         // from the read before it: a save landing in between changes what
         // goes live.
         const [after, published] = await Promise.all([
-          service.getAdminArticle(id),
+          savedArticle(service, id),
           service.listPublishedArticles(),
         ]);
-        if (after === null) return refusal(NOT_FOUND);
         const live = after.publication?.versions.map((v) => v.locale) ?? [];
         return answer({
           articleId: id,

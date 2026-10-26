@@ -124,6 +124,12 @@ maakunta/state/prefecture, etc.) is metadata, not separate types.
 **Rule: `parent_id` uses `ON DELETE RESTRICT`** — never let a delete orphan child
 locations.
 
+**Rule: SQL climbs the tree through `location_lineage()`, never a recursive walk of its
+own.** The tree holds no loop — a trigger refuses any write that would put a place under
+itself or anything below it — so the lineage climbs to the root with no depth bound and
+no loop check. One function is the one place that assumption is made, rather than a
+recursive query per reader, each choosing its own bound.
+
 ## What is seeded
 
 Every supported country is seeded complete, from **GeoNames**, by data-only migrations:

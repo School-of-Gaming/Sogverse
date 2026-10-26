@@ -1,5 +1,6 @@
 import { z } from "zod";
 import { DISPLAY_NAME_MIN, DISPLAY_NAME_MAX } from "@/lib/constants/account-limits";
+import { trimPersonName } from "@/lib/person-name-trim";
 import { SUPPORTED_LOCALES } from "@/lib/constants/locales";
 import { GAMER_EMAIL_DOMAIN } from "@/lib/gamer-sign-in";
 
@@ -43,7 +44,7 @@ export type RegistrationUtmBody = z.infer<typeof registrationUtmBody>;
  * **The names are trimmed here, not in the route.** Sign-up writes them into the
  * auth user's metadata, which the `handle_new_user` trigger copies verbatim into
  * the profile, so nothing further down the path is positioned to clean up a
- * stray trailing space — and `.trim()` before the length checks is also what
+ * stray trailing space — and trimming before the length checks is also what
  * makes them measure the name rather than the whitespace around it (`" A"` is
  * not a two-character first name).
  */
@@ -95,8 +96,14 @@ export const realEmailValue = z
 export const registerParentBody = z.object({
   email: realEmailValue,
   password: accountPasswordValue,
-  firstName: z.string().trim().min(DISPLAY_NAME_MIN).max(DISPLAY_NAME_MAX),
-  lastName: z.string().trim().min(DISPLAY_NAME_MIN).max(DISPLAY_NAME_MAX),
+  firstName: z
+    .string()
+    .transform(trimPersonName)
+    .pipe(z.string().min(DISPLAY_NAME_MIN).max(DISPLAY_NAME_MAX)),
+  lastName: z
+    .string()
+    .transform(trimPersonName)
+    .pipe(z.string().min(DISPLAY_NAME_MIN).max(DISPLAY_NAME_MAX)),
   /**
    * Optional home location, as a `locations.id`. Written to the profile after
    * the account exists; a failure there is never fatal (see the route).

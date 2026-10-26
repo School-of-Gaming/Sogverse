@@ -156,7 +156,6 @@
       "language": "Hol",
       "ages": "qan {min}–{max}",
       "audienceParents": "vavpu’vaD",
-      "audienceFamilies": "qorDu’pu’vaD",
       "audienceFamiliesWithAges": "qorDu’pu’vaD, qan {min}–{max}",
       "holidayBreaks": "SuvwI’pu’ leSbogh poHmey",
       "holidayBreak": "{name}, {range}"

@@ -7,7 +7,6 @@ import { describe, it, expect, vi, beforeEach } from "vitest";
 import sharp from "sharp";
 import { createTranslator } from "next-intl";
 import { PREVIEW_IMAGE_BUDGET_BYTES } from "@/lib/images/encode-within-budget.server";
-import type { PublicTeamProfileRow } from "@/services/team-profiles/team-profiles.contracts";
 
 // The real catalogs behind a stand-in for the RSC-only `getTranslations`
 // (under vitest next-intl resolves to its client build, whose server API
@@ -70,7 +69,7 @@ const { GET } = await import("@/app/opengraph-images/team/[userId]/route");
 
 const USER_ID = "3c3ca18c-c44b-40df-86f7-98ad3e277aba";
 
-function row(overrides: Partial<PublicTeamProfileRow> = {}): PublicTeamProfileRow {
+function row(overrides: object = {}) {
   return {
     user_id: USER_ID,
     role: "gedu",

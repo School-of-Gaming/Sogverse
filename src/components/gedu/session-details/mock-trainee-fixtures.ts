@@ -43,7 +43,7 @@ export function buildTraineeWorkspaceFixture(now: Date): {
     return {
       participant_id: member.participant_id,
       first_name: member.first_name,
-      signed_up_at: member.group_joined_at ?? data.product.start_date ?? "",
+      signed_up_at: member.group_joined_at,
       group_joined_at: member.group_joined_at,
       age: birth === null ? null : computeAge(birth, timeZone),
       gender: member.gender,

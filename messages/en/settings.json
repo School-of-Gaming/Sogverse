@@ -5,6 +5,7 @@
   "firstNamePlaceholder": "Enter your first name",
   "lastNamePlaceholder": "Enter your last name",
   "invalidPhone": "Please enter a valid phone number.",
+  "firstNameRequired": "First name must be at least {min} characters.",
   "lastNameRequired": "Last name must be at least {min} characters.",
   "profileUpdated": "Personal information saved.",
   "failedToUpdateProfile": "Your personal information could not be saved.",

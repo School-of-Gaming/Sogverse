@@ -36,7 +36,6 @@
       "title": "Gedujen hyväksyntä",
       "justNow": "Hyväksytty juuri nyt: {count}",
       "empty": "Yksikään Gedu ei odota hyväksyntää.",
-      "unnamed": "Nimetön Gedu",
       "registered": "rekisteröitynyt {when}",
       "certify": "Hyväksy",
       "certifying": "Hyväksytään…",
@@ -504,8 +503,7 @@
           "pair": "kaksi rinnakkain",
           "row": "kolme rivissä",
           "showcase": "yksi suuri lainaus, kaksi rinnakkain ja sitten kolme rivissä"
-        },
-        "missing": "Asiakaskokemus, jota ei enää ole tallessa"
+        }
       }
     },
     "status": {
@@ -1220,8 +1218,6 @@
       "searchHint": "Hae kirjoittamalla vähintään 2 merkkiä.",
       "noParents": "Ei vielä yhtään vanhempaa.",
       "noSearchResults": "Yksikään vanhempi tai pelaaja ei vastaa hakuasi.",
-      "unnamedParent": "Nimetön vanhempi",
-      "unnamedGamer": "Nimetön pelaaja",
       "add": "Lisää",
       "adding": "Lisätään…",
       "added": "Lisätty",
@@ -1483,14 +1479,11 @@
     "unknown": "Tuntematon",
     "linkedGamers": "Liitetyt pelaajat",
     "linkedParents": "Liitetyt vanhemmat",
-    "unnamedGamer": "Nimetön pelaaja",
-    "unnamedUser": "Nimetön käyttäjä",
     "noConnectedGamers": "Ei liitettyjä pelaajia",
     "assignedProducts": "Liitetyt tuotteet",
     "noAssignedProducts": "Ei liitettyjä tuotteita",
     "unassignedGroup": "Ei ryhmää määritetty",
     "needsGroup": "Tarvitsee ryhmän",
-    "untitledProduct": "Nimetön tuote",
     "gamerDetails": {
       "title": "Henkilötiedot",
       "edit": "Muokkaa henkilötietoja",
@@ -1572,7 +1565,6 @@
     "slackNotLinked": "Ei yhdistetty"
   },
   "locations": {
-    "editName": "Muokkaa: {name}",
     "addChildUnder": "Lisää {type} kohteen {parent} alle",
     "location": "Sijainti",
     "nameRequired": "Nimi on pakollinen",
@@ -1677,7 +1669,6 @@
     "justNow": "{count, plural, one {# tuuraaja hyväksytty juuri nyt} other {# tuuraajaa hyväksytty juuri nyt}}",
     "offersLabel": "Tuuraamista tarjoavat Gedut",
     "away": "Poissa:",
-    "unnamed": "Nimetön Gedu",
     "reason": {
       "sick": "Sairaus",
       "other": "Muu"

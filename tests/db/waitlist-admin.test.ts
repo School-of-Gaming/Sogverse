@@ -364,6 +364,36 @@ describe("waitlist — admin read + promote/demote + self position", () => {
     expect(row?.group_id).toBe(group!.id);
   });
 
+  it("promote_from_waitlist cannot seat the gamer in another product's group", async () => {
+    // Refused by trg_validate_participations_group on the promotion's own
+    // write, which rolls the whole promotion back.
+    const { data: foreign } = await admin
+      .from("product_groups")
+      .insert({ product_id: PRODUCT_FREE_CLUB, name: "Another product's group" })
+      .select("id")
+      .single();
+    const waiting = await joinWaitlist(TEST_IDS.GAMER);
+
+    try {
+      const res = await adminUser.rpc("promote_from_waitlist", {
+        p_participation_id: waiting,
+        p_group_id: foreign!.id,
+      });
+      expect(res.error?.code).toBe("23514");
+      expect(res.error?.message).toMatch(/belongs to a different product/);
+
+      const { data: row } = await admin
+        .from("participations")
+        .select("status, group_id")
+        .eq("id", waiting)
+        .single();
+      expect(row?.status).toBe("waitlisted");
+      expect(row?.group_id).toBeNull();
+    } finally {
+      await admin.from("product_groups").delete().eq("id", foreign!.id);
+    }
+  });
+
   it("promote_from_waitlist is a noop on a row that isn't waitlisted", async () => {
     const active = await registerActive(TEST_IDS.GAMER);
 

@@ -311,7 +311,7 @@ function mockAdmin(opts: AdminMockOptions = {}): void {
           // Subscription branch looks up the gamer's name for the Stripe sub
           // description (what the parent sees in the billing portal).
           eq: () => ({
-            maybeSingle: () => Promise.resolve({ data: gamer, error: null }),
+            single: () => Promise.resolve({ data: gamer, error: null }),
           }),
           // The confirmation mail reads the payer and the participant in one
           // query — on a self seat they are the same row.
@@ -1905,41 +1905,6 @@ describe("POST /api/checkout/products/create", () => {
 
       const params = mockStripeSessionCreate.mock.calls[0][0];
       expect(params.subscription_data.description).toBe("Test Club — Marja");
-    });
-
-    it("falls back to an audience-aware label when the profile has no name", async () => {
-      // The fallback lives outside `messages/` — it lands in Stripe receipts —
-      // so no locale sweep would ever catch it saying "your child" on a seat
-      // the payer holds. A self seat says "you"; a child's still says "your
-      // child".
-      const cases: [participantId: string, expected: string][] = [
-        [CUSTOMER_ID, "Test Club — you"],
-        [GAMER_ID, "Test Club — your child"],
-      ];
-      for (const [participantId, expected] of cases) {
-        vi.clearAllMocks();
-        mockGetOrCreateStripeCustomer.mockResolvedValue(STRIPE_CUSTOMER_ID);
-        mockAuthenticatedCustomer();
-        mockAdmin({ product: PAID_CLUB, gamer: { first_name: "" } });
-        mockAdminRpc.mockResolvedValueOnce({
-          data: { kind: "validated" },
-          error: null,
-        });
-        mockGetOrCreateSubscriptionPrice.mockResolvedValue({
-          product_id: PRODUCT_ID,
-          currency: "eur",
-          stripe_price_id: STRIPE_PRICE_ID,
-          unit_amount_cents: 3900,
-        });
-        mockStripeSessionCreate.mockResolvedValue({
-          url: "https://checkout.stripe.com/c/test_fallback",
-        });
-
-        await POST(createRequest({ ...VALID_BODY, participantId }));
-
-        const params = mockStripeSessionCreate.mock.calls[0][0];
-        expect(params.subscription_data.description).toBe(expected);
-      }
     });
   });
 

@@ -64,7 +64,7 @@ BEGIN
   FROM public.products p
   WHERE p.id = p_product_id;
 
-  v_today := (now() AT TIME ZONE COALESCE(v_timezone, 'UTC'))::date;
+  v_today := (now() AT TIME ZONE v_timezone)::date;
 
   -- Every group of the product, ordered as get_gedu_assigned_product orders
   -- them. A sibling group is shown by name only, so the trainee can see it

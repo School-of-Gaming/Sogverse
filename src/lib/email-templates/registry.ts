@@ -22,10 +22,10 @@ import {
   fail,
   isNoneToken,
   listEntries,
-  noneOrAgeRange,
   noneOrDate,
   noneOrText,
   optionalDate,
+  requireAgeRange,
   requireDate,
   requireEmail,
   requireTime,
@@ -670,7 +670,10 @@ function resolveProductConfirmationOptions(
     // whatever locale it is handed. A translated site name cannot reach here.
     "en",
   );
-  const ages = noneOrAgeRange(params.ageRange, "Age range");
+  // The schema ties an age range to the gamer audience, both ways, so the
+  // audience decides whether the field is read at all.
+  const ages =
+    params.audience === "parents" ? null : requireAgeRange(params.ageRange, "Age range");
 
   return {
     participantName: params.participantName,
@@ -1704,7 +1707,7 @@ export const templateRegistry: Record<string, TemplateDefinition> = {
 
       {
         key: "ageRange",
-        label: `Good to know – Age range, \`8-12\` (\`${FORM_NONE_TOKEN}\` for a product with none)`,
+        label: "Good to know – Age range, `8-12` (unused for a product sold to parents)",
         placeholder: "8-12",
       },
       {

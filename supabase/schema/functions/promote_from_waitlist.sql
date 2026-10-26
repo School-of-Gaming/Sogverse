@@ -27,20 +27,12 @@ BEGIN
     RETURN jsonb_build_object('kind', 'noop', 'status', v_status::text);
   END IF;
 
-  -- A drop target group must belong to this product (NULL = unassigned inbox).
-  IF p_group_id IS NOT NULL
-     AND NOT EXISTS (
-       SELECT 1 FROM public.product_groups
-        WHERE id = p_group_id AND product_id = v_product_id
-     ) THEN
-    RAISE EXCEPTION 'group % is not in product %', p_group_id, v_product_id
-      USING ERRCODE = 'check_violation';
-  END IF;
-
   -- Give them a seat. No seat-count gate by design: promoting from a full
   -- waitlist is a deliberate admin capacity override. waitlisted_at cleared so
   -- they leave the waitlist ordering. The uq_participations_active_or_waitlisted
   -- index already guaranteed no other in-set row exists for this (product,gamer).
+  -- A p_group_id of NULL is the unassigned inbox; one naming a group of another
+  -- product is refused by trg_validate_participations_group on this write.
   --
   -- The two offer stamps go with it. An admin dragging a row that
   -- carries a live offer is answering it on the family's behalf — granting

@@ -179,29 +179,21 @@ export function ProductOverviewCard({
               <div className="text-muted-foreground">{t("info.hybrid")}</div>
             )}
           </DetailRow>
-          {/* Null only for a row carrying neither an audience label nor an age
-              range, which the schema's CHECKs make unreachable — the grid
-              would fall back to three facts rather than render an empty
-              cell. */}
-          {whoItsFor !== null && (
-            <DetailRow
-              icon={whoItsFor.value.kind === "parents" ? UserRound : Users}
-              label={
-                whoItsFor.label === "ageRange"
-                  ? t("info.ageRange")
-                  : t("info.audience")
-              }
-              railFrom2xl={railFrom2xl}
-            >
-              {whoItsFor.value.kind === "ages"
-                ? t("info.ages", whoItsFor.value)
-                : whoItsFor.value.kind === "parents"
-                  ? tAudience("parents")
-                  : whoItsFor.value.kind === "families"
-                    ? tAudience("families")
-                    : tAudience("familiesWithAges", whoItsFor.value)}
-            </DetailRow>
-          )}
+          <DetailRow
+            icon={whoItsFor.value.kind === "parents" ? UserRound : Users}
+            label={
+              whoItsFor.label === "ageRange"
+                ? t("info.ageRange")
+                : t("info.audience")
+            }
+            railFrom2xl={railFrom2xl}
+          >
+            {whoItsFor.value.kind === "ages"
+              ? t("info.ages", whoItsFor.value)
+              : whoItsFor.value.kind === "parents"
+                ? tAudience("parents")
+                : tAudience("familiesWithAges", whoItsFor.value)}
+          </DetailRow>
           <DetailRow
             icon={Languages}
             label={t("info.language")}

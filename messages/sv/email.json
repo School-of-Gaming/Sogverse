@@ -156,7 +156,6 @@
       "language": "Språk",
       "ages": "Ålder {min}–{max}",
       "audienceParents": "För föräldrar",
-      "audienceFamilies": "För familjer",
       "audienceFamiliesWithAges": "För familjer, ålder {min}–{max}",
       "holidayBreaks": "Lov",
       "holidayBreak": "{name}, {range}"

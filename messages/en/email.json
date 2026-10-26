@@ -156,7 +156,6 @@
       "language": "Language",
       "ages": "Ages {min}–{max}",
       "audienceParents": "For parents",
-      "audienceFamilies": "For families",
       "audienceFamiliesWithAges": "For families, ages {min}–{max}",
       "holidayBreaks": "Holiday breaks",
       "holidayBreak": "{name}, {range}"

@@ -10,7 +10,7 @@ import { NavChevron } from "@/components/ui/nav-chevron";
 import { Link } from "@/i18n/navigation";
 import { ROUTES } from "@/lib/constants/routes";
 import { resolveLocale } from "@/lib/constants/locales";
-import { resolveTranslation } from "@/lib/i18n/resolve-translation";
+import { resolveRequiredTranslation } from "@/lib/i18n/resolve-translation";
 import { formatDate } from "@/lib/date-format";
 import { useTimezone } from "@/providers";
 import type { AdminTestimonial } from "@/services/testimonials/testimonials.contracts";
@@ -101,7 +101,7 @@ function TestimonialRow({ testimonial }: { testimonial: AdminTestimonial }) {
   const q = useTranslations("testimonial");
   const locale = useLocale();
   const timeZone = useTimezone();
-  const version = resolveTranslation(testimonial.versions, resolveLocale(locale));
+  const version = resolveRequiredTranslation(testimonial.versions, resolveLocale(locale));
 
   return (
     <div className="group relative flex items-center gap-4 rounded-lg border border-border p-4 transition-colors hover:bg-hover">
@@ -110,9 +110,9 @@ function TestimonialRow({ testimonial }: { testimonial: AdminTestimonial }) {
           href={ROUTES.admin.testimonial(testimonial.id)}
           className="line-clamp-2 font-serif italic after:absolute after:inset-0 after:rounded-lg focus-visible:outline-none focus-visible:after:ring-2 focus-visible:after:ring-inset focus-visible:after:ring-act"
         >
-          {version === null ? "" : q("quoted", { quote: version.quote })}
+          {q("quoted", { quote: version.quote })}
         </Link>
-        <p className="mt-1 text-sm font-medium text-muted-foreground">{version?.from}</p>
+        <p className="mt-1 text-sm font-medium text-muted-foreground">{version.from}</p>
         <div className="mt-1 flex flex-wrap gap-3 text-xs text-muted-foreground">
           <span className="inline-flex items-center gap-1">
             <Languages className="h-3 w-3" aria-hidden />

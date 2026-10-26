@@ -98,7 +98,7 @@ export interface AdminSpotlight {
 /**
  * An enabled spotlight as a session report email reads it: everything needed
  * to draw it in any reader's locale. Pick the version with
- * `resolveTranslation(spotlight.versions, locale)`.
+ * `resolveRequiredTranslation(spotlight.versions, locale)`.
  */
 export interface EnabledSpotlight {
   id: string;

@@ -2028,11 +2028,11 @@ function buildRoster(
         // mutually exclusive and this is the other side of that.
         parent_email: null,
         participant_email: "marja.korhonen@example.com",
-        // The staff-only flair is null-shaped on every roster entry
-        // here, on purpose: the scene feeds both marks through the page body's
-        // own `RosterMemberFlair` prop, and rows do not read flair off a roster
-        // entry. Filling these in would be a second source for one fact.
-        group_joined_at: null,
+        // The join stamp is the session-feed roster's own, the one source for
+        // it. The note fields are null-shaped on purpose: the scene feeds the
+        // marks through the page body's own `RosterMemberFlair` prop, and rows
+        // do not read flair off a roster entry.
+        group_joined_at: person.inGroupSince.toISOString(),
         note: null,
         note_updated_by_first_name: null,
         creations: [],
@@ -2070,9 +2070,10 @@ function buildRoster(
       // A child's contact is their linked parent's address; their own profile
       // email is the synthetic handle and is never emitted.
       participant_email: null,
-      // Null-shaped for the same reason as the adult row above: the scene's
-      // flair travels through the page body's `RosterMemberFlair` prop.
-      group_joined_at: null,
+      // As on the adult row above: the stamp is the session-feed roster's, and
+      // the scene's flair travels through the page body's `RosterMemberFlair`
+      // prop.
+      group_joined_at: person.inGroupSince.toISOString(),
       note: null,
       note_updated_by_first_name: null,
       creations: [],

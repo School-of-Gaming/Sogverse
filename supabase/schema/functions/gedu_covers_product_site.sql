@@ -6,25 +6,18 @@ CREATE FUNCTION public.gedu_covers_product_site(p_gedu_id uuid, p_product_id uui
     LANGUAGE sql STABLE
     SET search_path TO ''
     AS $$
-  WITH RECURSIVE
+  WITH
   product AS (
     SELECT p.delivery_mode, p.location_id
       FROM public.products p
      WHERE p.id = p_product_id
   ),
   -- The site and every place above it. A tick is an "I cover this subtree"
-  -- claim, so a tick on any of these covers the site. The depth bound is a
-  -- belt-and-braces stop on a tree the schema does not forbid a cycle in
-  -- beyond a row parenting itself.
+  -- claim, so a tick on any of these covers the site.
   lineage AS (
-    SELECT l.id, l.parent_id, 0 AS depth
-      FROM public.locations l
-      JOIN product ON l.id = product.location_id
-     UNION ALL
-    SELECT l.id, l.parent_id, w.depth + 1
-      FROM lineage w
-      JOIN public.locations l ON l.id = w.parent_id
-     WHERE w.depth < 16
+    SELECT lin.location_id AS id
+      FROM product
+     CROSS JOIN LATERAL public.location_lineage(product.location_id) AS lin
   )
   -- Only an in-person product asks the gedu to be at the site: a hybrid
   -- product's gedu joins through the voice room, as an online one's does.

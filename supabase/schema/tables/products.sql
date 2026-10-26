@@ -41,7 +41,7 @@ CASE
     WHEN for_gamers THEN ((min_age IS NOT NULL) AND (max_age IS NOT NULL))
     ELSE ((min_age IS NULL) AND (max_age IS NULL))
 END),
-    CONSTRAINT chk_products_date_range CHECK (((start_date IS NULL) OR (end_date IS NULL) OR (end_date >= start_date))),
+    CONSTRAINT chk_products_date_range CHECK (((end_date IS NULL) OR (end_date >= start_date))),
     CONSTRAINT chk_products_event_single_date CHECK (((product_type <> 'event'::public.product_type) OR (NOT (end_date IS DISTINCT FROM start_date)))),
     CONSTRAINT chk_products_external_contract_muni CHECK (((billing_mode <> 'external_contract'::public.billing_mode) OR (product_type = 'municipality_club'::public.product_type))),
     CONSTRAINT chk_products_external_voice_url_iff_external CHECK (

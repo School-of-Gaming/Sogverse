@@ -9,7 +9,7 @@ import { Constants, type VoiceRoomMode } from "@/types";
 // How a product's sessions are joined, as every Join surface receives it.
 //
 // An online product picks one of three ways in: the Sogverse voice room (the
-// default, and the only one an in-person product may hold), a meeting held on
+// default, and the only one a product that is not online may hold), a meeting held on
 // another service at a link, or no room at all and join instructions written
 // per locale. Each read that draws a Join carries the product's mode and link
 // and every translation's instructions; `productVoiceRoom` folds them into the
@@ -17,8 +17,8 @@ import { Constants, type VoiceRoomMode } from "@/types";
 // columns.
 //
 // The instructions stay per locale here, never picked: the surface that shows
-// them picks the reader's version with `resolveTranslation()`, as it does the
-// product's name.
+// them picks the reader's version with `resolveRequiredTranslation()`, as it
+// does the product's name.
 
 /** The two product-level wire fields, for a read's product shell schema. */
 export const voiceRoomWireFields = {
@@ -43,9 +43,10 @@ export interface VoiceJoinInstructions {
  * - `sogverse` — the Sogverse group voice room, during the session window.
  * - `external` — the meeting at `url`, on another service. Public by design.
  * - `none` — no room; the reader is shown `instructions` in their locale,
- *   picked with `resolveTranslation()`. Only the locales that have
- *   instructions written are listed; the product writers refuse mode `none`
- *   with none at all, so the list is never empty for real data.
+ *   picked with `resolveRequiredTranslation()`. Only the locales that have
+ *   instructions written are listed, and the list is never empty:
+ *   `create_product` and `update_product`, the only writers of either column,
+ *   refuse mode `none` with instructions in no locale.
  */
 export type ProductVoiceRoom =
   | { mode: "sogverse" }

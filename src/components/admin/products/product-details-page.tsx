@@ -12,8 +12,12 @@ import { LanguageFlag } from "@/components/ui/language-flag";
 import { useCopyToClipboard } from "@/hooks/use-copy-to-clipboard";
 import { SUPPORTED_CURRENCIES } from "@/lib/constants/currency";
 import { ROUTES } from "@/lib/constants/routes";
-import { formattingLocale, resolveLocale } from "@/lib/constants/locales";
-import { resolveTranslation } from "@/lib/i18n/resolve-translation";
+import {
+  formattingLocale,
+  resolveLocale,
+  type SupportedLocale,
+} from "@/lib/constants/locales";
+import { resolveRequiredTranslation } from "@/lib/i18n/resolve-translation";
 import { municipalityOf } from "@/lib/locations/embedded-chain";
 import { municipalitySlug } from "@/lib/locations/municipality-slug";
 import { cn } from "@/lib/cn";
@@ -63,7 +67,10 @@ import {
   type EffectiveProductStatus,
 } from "@/lib/products/effective-status";
 import { computeVoiceState } from "@/lib/voice-window";
-import { productVoiceRoom } from "@/lib/products/voice-room";
+import {
+  productVoiceRoom,
+  type ProductVoiceRoom,
+} from "@/lib/products/voice-room";
 import { useNow, useTimezone } from "@/providers";
 import { personName } from "@/components/admin/person-name";
 import { GroupsPanel } from "./groups/groups-panel";
@@ -190,7 +197,7 @@ export function ProductDetailsPage({
     );
   }
 
-  const tr = resolveTranslation(product.product_translations, uiLocale);
+  const tr = resolveRequiredTranslation(product.product_translations, uiLocale);
   const status = effectiveStatus(product, now);
   // Every group on the product shares one plan, so resolve the voice window
   // once here and thread it into each group's Join button. `useNow` ticks so
@@ -209,12 +216,6 @@ export function ProductDetailsPage({
   });
   const voiceAvailable = hasVoiceRoom(product.delivery_mode) && voice.hasUpcomingSession;
   const voiceRoom = productVoiceRoom(product, product.product_translations);
-  // The same pick a family's "How to join" dialog makes, so a locale with no
-  // instructions of its own falls back exactly as theirs does.
-  const joinInstructions =
-    voiceRoom.mode === "none"
-      ? (resolveTranslation(voiceRoom.instructions, uiLocale)?.text ?? null)
-      : null;
   const topicName = topicLabel(product.topic);
 
   return (
@@ -224,8 +225,8 @@ export function ProductDetailsPage({
       <HeaderCard
         imagePath={product.image_path}
         kicker={label}
-        title={tr?.name ?? t("list.untitled")}
-        description={tr?.short_description ?? null}
+        title={tr.name}
+        description={tr.short_description}
         statusKey={status}
         isVisible={product.is_visible}
         listedLabel={t("detailsPage.listed")}
@@ -262,7 +263,7 @@ export function ProductDetailsPage({
           product={product}
           plannedSessions={plannedSessions}
           topicName={topicName}
-          joinInstructions={joinInstructions}
+          voiceRoom={voiceRoom}
           uiLocale={uiLocale}
           timeZone={timeZone}
           t={t}
@@ -387,7 +388,7 @@ function ProductDetailsCard({
   product,
   plannedSessions,
   topicName,
-  joinInstructions,
+  voiceRoom,
   uiLocale,
   timeZone,
   t,
@@ -397,9 +398,8 @@ function ProductDetailsCard({
   /** The product's plan; `undefined` only when the read failed. */
   plannedSessions: readonly PlannedSession[] | undefined;
   topicName: string | null;
-  /** The join instructions of the translation the header shows, or null. */
-  joinInstructions: string | null;
-  uiLocale: string;
+  voiceRoom: ProductVoiceRoom;
+  uiLocale: SupportedLocale;
   timeZone: string;
   t: ReturnType<typeof useTranslations<"admin.products">>;
   c: ReturnType<typeof useTranslations<"common">>;
@@ -693,45 +693,40 @@ function ProductDetailsCard({
               {hasVoiceRoom(product.delivery_mode) && (
                 <DetailRow label={t("detailsPage.fields.voiceRoom")}>
                   <div>{t(`voiceRoomModes.${product.voice_room_mode}`)}</div>
-                  {product.voice_room_mode === "external" &&
-                    product.external_voice_url && (
-                      <a
-                        href={product.external_voice_url}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        className="break-all text-act underline-offset-2 hover:underline"
-                      >
-                        {product.external_voice_url}
-                      </a>
-                    )}
-                  {product.voice_room_mode === "none" && joinInstructions && (
+                  {voiceRoom.mode === "external" && (
+                    <a
+                      href={voiceRoom.url}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="break-all text-act underline-offset-2 hover:underline"
+                    >
+                      {voiceRoom.url}
+                    </a>
+                  )}
+                  {/* The same pick a family's "How to join" dialog makes, so a
+                      locale with no instructions of its own falls back exactly
+                      as theirs does. */}
+                  {voiceRoom.mode === "none" && (
                     <p className="whitespace-pre-wrap text-muted-foreground">
-                      {joinInstructions}
+                      {resolveRequiredTranslation(voiceRoom.instructions, uiLocale).text}
                     </p>
                   )}
                 </DetailRow>
               )}
 
-              {/* Null only for a row carrying neither an audience label nor an
-                  age range, which the schema's CHECKs make unreachable — the row
-                  is left out rather than rendered empty. */}
-              {whoItsFor !== null && (
-                <DetailRow
-                  label={
-                    whoItsFor.label === "ageRange"
-                      ? t("detailsPage.fields.ageRange")
-                      : t("sections.audience")
-                  }
-                >
-                  {whoItsFor.value.kind === "ages"
-                    ? tFamily("ages", whoItsFor.value)
-                    : whoItsFor.value.kind === "parents"
-                      ? tAudience("parents")
-                      : whoItsFor.value.kind === "families"
-                        ? tAudience("families")
-                        : tAudience("familiesWithAges", whoItsFor.value)}
-                </DetailRow>
-              )}
+              <DetailRow
+                label={
+                  whoItsFor.label === "ageRange"
+                    ? t("detailsPage.fields.ageRange")
+                    : t("sections.audience")
+                }
+              >
+                {whoItsFor.value.kind === "ages"
+                  ? tFamily("ages", whoItsFor.value)
+                  : whoItsFor.value.kind === "parents"
+                    ? tAudience("parents")
+                    : tAudience("familiesWithAges", whoItsFor.value)}
+              </DetailRow>
 
               <DetailRow label={t("labels.spokenLanguage")}>
                 <LanguageFlag code={product.spoken_language_code} />

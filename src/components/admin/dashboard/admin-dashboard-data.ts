@@ -148,12 +148,7 @@ export interface UncertifiedGedu {
    * degenerate face rather than a different one.
    */
   id: string;
-  /**
-   * `null` where the account carries no name at all. The queue still has to be
-   * actionable for one — the identicon is keyed to the id either way — so the
-   * stand-in is copy the card owns, not a sentence invented out here.
-   */
-  name: string | null;
+  name: string;
   /**
    * How long they have been waiting — "12 days ago", already locale-formatted
    * by `Intl.RelativeTimeFormat`. The sentence around it ("registered …") is the

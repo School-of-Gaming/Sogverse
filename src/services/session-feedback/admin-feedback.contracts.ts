@@ -1,6 +1,6 @@
 import { z } from "zod";
 import type { SupportedLocale } from "@/lib/constants/locales";
-import { resolveTranslation } from "@/lib/i18n/resolve-translation";
+import { resolveRequiredTranslation } from "@/lib/i18n/resolve-translation";
 import { Constants, type DeliveryMode, type ProductType } from "@/types";
 
 /**
@@ -143,8 +143,7 @@ function withProductName<T extends { productTranslations: ProductTranslation[] }
   locale: SupportedLocale,
 ): Omit<T, "productTranslations"> & { productName: string } {
   const { productTranslations, ...rest } = entry;
-  // Every product holds at least one translation, so the fallback is defensive.
-  const productName = resolveTranslation(productTranslations, locale)?.name ?? "";
+  const productName = resolveRequiredTranslation(productTranslations, locale).name;
   return { ...rest, productName };
 }
 

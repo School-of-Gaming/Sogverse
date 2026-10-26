@@ -124,25 +124,18 @@ CREATE OR REPLACE FUNCTION public.gedu_covers_product_site(p_gedu_id uuid, p_pro
     LANGUAGE sql STABLE
     SET search_path TO ''
     AS $$
-  WITH RECURSIVE
+  WITH
   product AS (
     SELECT p.delivery_mode, p.location_id
       FROM public.products p
      WHERE p.id = p_product_id
   ),
   -- The site and every place above it. A tick is an "I cover this subtree"
-  -- claim, so a tick on any of these covers the site. The depth bound is a
-  -- belt-and-braces stop on a tree the schema does not forbid a cycle in
-  -- beyond a row parenting itself.
+  -- claim, so a tick on any of these covers the site.
   lineage AS (
-    SELECT l.id, l.parent_id, 0 AS depth
-      FROM public.locations l
-      JOIN product ON l.id = product.location_id
-     UNION ALL
-    SELECT l.id, l.parent_id, w.depth + 1
-      FROM lineage w
-      JOIN public.locations l ON l.id = w.parent_id
-     WHERE w.depth < 16
+    SELECT lin.location_id AS id
+      FROM product
+     CROSS JOIN LATERAL public.location_lineage(product.location_id) AS lin
   )
   -- Only an in-person product asks the gedu to be at the site: a hybrid
   -- product's gedu joins through the voice room, as an online one's does.
@@ -418,7 +411,7 @@ BEGIN
              WHERE gs.group_id = g.id
                AND gs.ends_at <= now()
                AND gs.session_date >= COALESCE(p_epoch_date, DATE '0001-01-01')
-               AND (p.start_date IS NULL OR gs.session_date >= p.start_date)
+               AND gs.session_date >= p.start_date
           ) AS occurrence
 
           -- The occurrence's END INSTANT — one value per occurrence, and the
@@ -459,21 +452,16 @@ BEGIN
           -- not a per-occurrence question. This one also answers the
           -- empty-group exemption below, which is.
           --
-          -- The NULL branches are explicit rather than left to a comparison's
-          -- behaviour on NULL, and both point the same way — expected. A seat
-          -- with no stamp holds no group, so it cannot be here at all; an
-          -- occurrence with no end instant cannot arise either. Where the
-          -- unreachable happens anyway, the answer is the behaviour that
-          -- predates this migration, which costs a mark nobody needed rather
-          -- than producing a false "complete".
+          -- Both sides of the comparison are always there: a seat in a group
+          -- carries its join stamp (chk_participations_group_joined_at_iff_group),
+          -- and an occurrence's end is a stored row's NOT NULL ends_at or, for
+          -- a date only the plan projects, that same plan's end.
           CROSS JOIN LATERAL (
             SELECT COUNT(*)::integer AS expected_size
               FROM public.participations part4
              WHERE part4.group_id = g.id
                AND part4.status   = 'active'::public.participation_status
-               AND (part4.group_joined_at IS NULL
-                    OR occurrence_end.ends_at IS NULL
-                    OR part4.group_joined_at <= occurrence_end.ends_at)
+               AND part4.group_joined_at <= occurrence_end.ends_at
           ) AS expected
 
          -- A session nobody in the group was expected at owes nothing: there
@@ -554,9 +542,7 @@ BEGIN
                    ON part2.participant_id = att.participant_id
                   AND part2.group_id = g.id
                   AND part2.status   = 'active'::public.participation_status
-                  AND (part2.group_joined_at IS NULL
-                       OR occurrence_end.ends_at IS NULL
-                       OR part2.group_joined_at <= occurrence_end.ends_at)
+                  AND part2.group_joined_at <= occurrence_end.ends_at
                 WHERE gs2.group_id     = g.id
                   AND gs2.session_date = occurrence.session_date
              ) < expected.expected_size
@@ -621,10 +607,9 @@ BEGIN
              -- every seat postdating it — is already excluded by the
              -- expected_size guard above, so nothing here has to restate it.
              --
-             -- The array-length test is defensive: the CHECK on the table
-             -- refuses an empty array and the write RPC deletes the row instead
-             -- of storing one, so "no row" is the only reachable empty. It costs
-             -- nothing and it states what "has a creation" means.
+             -- A row IS a creation: the table's CHECK refuses an empty array and
+             -- the write RPC deletes the row instead of storing one, so "no row"
+             -- is the only empty there is.
              OR (
                p.requires_gamer_creations
                AND occurrence.session_date = final_occurrence.session_date
@@ -633,21 +618,14 @@ BEGIN
                    FROM public.participations part3
                   WHERE part3.group_id = g.id
                     AND part3.status   = 'active'::public.participation_status
-                    -- The same three-branch shape (1) and the expected-size
-                    -- lateral use, against the same per-occurrence end instant,
-                    -- and NULL points the same way in both: expected, which is
-                    -- the behaviour that predates this file and can only ever
-                    -- ask for a creation nobody needed rather than declare a
-                    -- run finished that is not.
-                    AND (part3.group_joined_at IS NULL
-                         OR occurrence_end.ends_at IS NULL
-                         OR part3.group_joined_at <= occurrence_end.ends_at)
+                    -- The same join-date test (1) and the expected-size
+                    -- lateral use, against the same per-occurrence end instant.
+                    AND part3.group_joined_at <= occurrence_end.ends_at
                     AND NOT EXISTS (
                       SELECT 1
                         FROM public.gamer_group_creations c
                        WHERE c.group_id       = g.id
                          AND c.participant_id = part3.participant_id
-                         AND jsonb_array_length(c.creations) > 0
                     )
                )
              )
@@ -2071,7 +2049,7 @@ BEGIN
   FROM public.products p
   WHERE p.id = p_product_id;
 
-  v_today := (now() AT TIME ZONE COALESCE(v_timezone, 'UTC'))::date;
+  v_today := (now() AT TIME ZONE v_timezone)::date;
 
   -- Every group of the product, ordered as get_gedu_assigned_product orders
   -- them. A sibling group is shown by name only, so the trainee can see it
@@ -2203,7 +2181,7 @@ BEGIN
   v_horizon := public.session_plan_horizon(v_product_id, p_group_id);
 
   -- Ages are counted on the product's own calendar day.
-  v_today := (now() AT TIME ZONE COALESCE(v_timezone, 'UTC'))::date;
+  v_today := (now() AT TIME ZONE v_timezone)::date;
 
   -- The shell, the material link included: a trainee prepares from the same
   -- material the session is run from.

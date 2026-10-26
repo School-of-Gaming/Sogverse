@@ -234,7 +234,7 @@ function feedMember(
   participantId: string,
   firstName: string,
   flair: {
-    group_joined_at?: string | null;
+    group_joined_at?: string;
     note?: string | null;
     note_updated_by_first_name?: string | null;
     creations?: GeduGroupFeed["roster"][number]["creations"];
@@ -253,7 +253,7 @@ function feedMember(
     roblox_user_id: null,
     parent_email: `${firstName.toLowerCase()}.parent@example.com`,
     participant_email: null,
-    group_joined_at: flair.group_joined_at ?? null,
+    group_joined_at: flair.group_joined_at ?? "2025-09-01T00:00:00.000Z",
     note: flair.note ?? null,
     note_updated_by_first_name: flair.note_updated_by_first_name ?? null,
     // `[]` is what the RPC emits for a member with none — a list has a real

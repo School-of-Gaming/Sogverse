@@ -332,7 +332,7 @@ describe("the admin Substitutions page's queue panel", () => {
           ...WITHOUT_OFFERS,
           declines: [
             { geduId: IDS.offererA, name: "Eeli Virtanen" },
-            { geduId: IDS.offererB, name: null },
+            { geduId: IDS.offererB, name: "Aino Laine" },
           ],
         },
         WITH_OFFERS,
@@ -343,7 +343,7 @@ describe("the admin Substitutions page's queue panel", () => {
     // One line across two cards: the card with nobody declining draws none.
     // The names are joined into one phrase in the reader's locale.
     const lines = screen.getAllByText(
-      "admin.substitutions.declinedBy Eeli Virtanen and admin.substitutions.unnamed",
+      "admin.substitutions.declinedBy Eeli Virtanen and Aino Laine",
     );
     expect(lines).toHaveLength(1);
     const declined = requestCards().find((card) => card.contains(lines[0]));

@@ -507,26 +507,19 @@ function resolveOverview(
     min_age: input.minAge,
     max_age: input.maxAge,
   });
-  if (whoItsFor !== null) {
-    facts.push({
-      label:
-        whoItsFor.label === "ageRange"
-          ? t("productConfirmation.overview.ageRange")
-          : t("productConfirmation.overview.audience"),
-      lines: [
-        whoItsFor.value.kind === "ages"
-          ? t("productConfirmation.overview.ages", whoItsFor.value)
-          : whoItsFor.value.kind === "parents"
-            ? t("productConfirmation.overview.audienceParents")
-            : whoItsFor.value.kind === "families"
-              ? t("productConfirmation.overview.audienceFamilies")
-              : t(
-                  "productConfirmation.overview.audienceFamiliesWithAges",
-                  whoItsFor.value,
-                ),
-      ],
-    });
-  }
+  facts.push({
+    label:
+      whoItsFor.label === "ageRange"
+        ? t("productConfirmation.overview.ageRange")
+        : t("productConfirmation.overview.audience"),
+    lines: [
+      whoItsFor.value.kind === "ages"
+        ? t("productConfirmation.overview.ages", whoItsFor.value)
+        : whoItsFor.value.kind === "parents"
+          ? t("productConfirmation.overview.audienceParents")
+          : t("productConfirmation.overview.audienceFamiliesWithAges", whoItsFor.value),
+    ],
+  });
 
   facts.push({
     label: t("productConfirmation.overview.language"),

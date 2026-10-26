@@ -36,7 +36,6 @@
       "title": "Gedu-certifiering",
       "justNow": "{count} certifierade nyss",
       "empty": "Ingen Gedu väntar på certifiering.",
-      "unnamed": "Namnlös Gedu",
       "registered": "registrerades {when}",
       "certify": "Certifiera",
       "certifying": "Certifierar…",
@@ -504,8 +503,7 @@
           "pair": "två bredvid varandra",
           "row": "tre i rad",
           "showcase": "ett stort citat, två bredvid varandra och sedan tre i rad"
-        },
-        "missing": "Ett omdöme som inte längre finns kvar"
+        }
       }
     },
     "status": {
@@ -1220,8 +1218,6 @@
       "searchHint": "Skriv minst 2 tecken för att söka.",
       "noParents": "Inga föräldrar ännu.",
       "noSearchResults": "Inga föräldrar eller spelare matchar din sökning.",
-      "unnamedParent": "Namnlös förälder",
-      "unnamedGamer": "Namnlös spelare",
       "add": "Lägg till",
       "adding": "Lägger till…",
       "added": "Tillagd",
@@ -1483,14 +1479,11 @@
     "unknown": "Okänd",
     "linkedGamers": "Kopplade spelare",
     "linkedParents": "Kopplade föräldrar",
-    "unnamedGamer": "Namnlös spelare",
-    "unnamedUser": "Namnlös användare",
     "noConnectedGamers": "Inga kopplade spelare",
     "assignedProducts": "Kopplade produkter",
     "noAssignedProducts": "Inga kopplade produkter",
     "unassignedGroup": "Ingen grupp tilldelad",
     "needsGroup": "Behöver en grupp",
-    "untitledProduct": "Namnlös produkt",
     "gamerDetails": {
       "title": "Personuppgifter",
       "edit": "Redigera personuppgifter",
@@ -1572,7 +1565,6 @@
     "slackNotLinked": "Inte kopplat"
   },
   "locations": {
-    "editName": "Redigera {name}",
     "addChildUnder": "Lägg till {type} under {parent}",
     "location": "Plats",
     "nameRequired": "Namn krävs",
@@ -1677,7 +1669,6 @@
     "justNow": "{count, plural, one {# vikarie godkänd nyss} other {# vikarier godkända nyss}}",
     "offersLabel": "Geduer som erbjuder sig att vikariera",
     "away": "Borta:",
-    "unnamed": "Namnlös Gedu",
     "reason": {
       "sick": "Sjuk",
       "other": "Annat"

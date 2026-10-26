@@ -508,18 +508,6 @@ describe("ParticipationsService.getMyWaitlistEntries", () => {
     await expect(service.getMyWaitlistEntries("customer")).rejects.toThrow();
   });
 
-  it("falls back to a truncated gamer id when the first name is blank", async () => {
-    mockBackend([{ ...rawRow("p1", ""), participant_id: "abcdefghijkl" }], {
-      rows: [{ participation_id: "p1", waitlist_position: 2 }],
-    });
-
-    const result = await service.getMyWaitlistEntries("customer");
-
-    // Same fallback the sessions adapter uses, so one gamer reads identically
-    // on a waitlist card and a session card.
-    expect(result[0].participant.firstName).toBe("abcdefgh");
-  });
-
   it("returns [] without touching the database when there is no session", async () => {
     const supabase = createFetchStubbedClient(fetchMock);
     vi.spyOn(supabase.auth, "getClaims").mockResolvedValue({

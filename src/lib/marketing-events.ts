@@ -41,7 +41,7 @@ import {
   type SupportedCurrency,
 } from "@/lib/constants/currency";
 import { DEFAULT_LOCALE } from "@/lib/constants/locales";
-import { resolveTranslation } from "@/lib/i18n/resolve-translation";
+import { resolveRequiredTranslation } from "@/lib/i18n/resolve-translation";
 import type { BillingMode, ProductTopic, ProductType } from "@/types";
 
 export const PIXEL_EVENTS = {
@@ -111,7 +111,7 @@ export function isAdvertisedProduct(product: {
 export interface MetaProductDetails {
   content_ids: [string];
   content_type: "product";
-  content_name?: string;
+  content_name: string;
   content_category: ProductTopic;
   value?: number;
   currency?: string;
@@ -127,10 +127,7 @@ export function metaProductDetails(
   },
   currency: SupportedCurrency = DEFAULT_CURRENCY,
 ): MetaProductDetails {
-  const name = resolveTranslation(
-    product.product_translations,
-    DEFAULT_LOCALE,
-  )?.name;
+  const name = resolveRequiredTranslation(product.product_translations, DEFAULT_LOCALE).name;
   const priceCents =
     product.billing_mode === "free"
       ? 0
@@ -140,7 +137,7 @@ export function metaProductDetails(
   return {
     content_ids: [product.id],
     content_type: "product",
-    ...(name !== undefined && { content_name: name }),
+    content_name: name,
     content_category: product.topic,
     ...(priceCents !== undefined && {
       value: priceCents / 100,

@@ -56,6 +56,10 @@ Decided by the owner on 2026-10-15 and 2026-10-26.
   preserving the path** (`sogverse.sog.gg/<path>` → `sog.gg/<path>`), in the same hour.
   There is no app code and no splash page. The DNS record is kept for about a year and
   then deleted. Nothing in the app may know `sogverse.sog.gg` existed.
+- **Staging moves to `staging.sog.gg` in the same hour, and `sogverse-staging.sog.gg` is
+  deleted outright, with no redirect** (owner, 2026-10-26). Staging is internal, so
+  nothing outside the team holds a link worth keeping. Lynx is the one outside caller,
+  and is told with its production change.
 - **Clean break from Webflow.** No old Webflow path is redirected; they return the app's
   404. The Webflow blog, Library content and landing pages are not ported.
 - **Webflow's data is exported to the team Google Drive before the subscription is
@@ -163,13 +167,21 @@ Every write outside the repo is confirmed with the owner before it is made.
    - Drop the `https://www.sog.gg/` entry from the Organization `sameAs` list
      (`src/lib/seo/`), and its comment.
 
-   `npm run gates` passes. Staging's `sogverse-staging.sog.gg` is out of scope.
-   Until this branch is released, `supabase/config.toml` documents the old prod values.
+   - Replace `sogverse-staging.sog.gg` with `staging.sog.gg` the same way, including the
+     staging remote in `supabase/config.toml`.
+   - Tests and the email-template previews name no real host at all: they use the neutral
+     origin in `tests/mocks/site-origin.ts` and the render's own origin (done on the
+     branch, 2026-10-26).
+
+   `npm run gates` passes.
+   Until this branch is released, `supabase/config.toml` documents the old values.
    That's accepted, since the file is never pushed to prod.
 3. **Message the two external API users: Lynx and the Minecraft server team.** Draft each
    with `/slack-msg` or `/whatsapp-msg`. Each message gives the date and the hour, and
    says:
-   - their base URL moves from `https://sogverse.sog.gg` to `https://sog.gg`;
+   - their base URL moves from `https://sogverse.sog.gg` to `https://sog.gg`, and Lynx's
+     staging one from `https://sogverse-staging.sog.gg` to `https://staging.sog.gg`
+     (Lynx calls both);
    - nothing changes for their key;
    - their calls fail from the cutover until they switch.
 
@@ -193,6 +205,18 @@ Every write outside the repo is confirmed with the owner before it is made.
    - The Minecraft servers do use the join check (owner, 2026-10-26), though its 30-day
      log held only one manual `curl`. Their base URL is the Minecraft server team's to
      change (step 0.3).
+   - Re-pulled 2026-10-26 (needs `--project sogverse --scope school-of-gaming` when run
+     outside a linked checkout): the same callers as the Scale table, plus some that need
+     no step. `vercel-image-optimization` fetching `/api/team/photos/*` (3,133) is
+     Vercel's optimiser fetching a relative image address on whichever host the visitor
+     is on, so it moves with them. Googlebot-Image, Slack link previews of the MCP
+     address, a scanner probe and our own `curl`s are the rest.
+   - **The staging host's callers** (the same query on `sogverse-staging.sog.gg`,
+     2026-10-26): Claude connectors on `/api/mcp` (2,912), the opencode CLI on `/api/mcp`
+     (97, re-added by whoever runs it), Lynx's `Ruby` client on the partner API (186),
+     the staging Discord app (71), the Stripe test-mode webhook (53), the staging Slack app
+     (5) and the staging database's `pg_net` (3). `python-httpx` made 17 MCP calls there:
+     confirm they were all refused, as on production. Each one is moved in step 1.7.
 5. **Check the dashboards that may hold `sogverse.sog.gg` or depend on the Webflow site**,
    and write what each needs into step 1.6's table, in this file. None of these shows up
    in a request log:
@@ -207,6 +231,10 @@ Every write outside the repo is confirmed with the owner before it is made.
      Webflow pages, which will now say "not found". `sogverse.sog.gg` links keep working
      through the redirect.
    - **Daily.co:** any domain restriction.
+   - **Sogverse's own stored content:** product descriptions, Library articles, landing
+     pages and spotlights that link to `www.sog.gg` or bare `sog.gg` Webflow pages. After
+     the cutover those links open this app's 404. Find them with a read-only prod query
+     over the authored text columns, and fix them in the admin UI.
 6. **Add `https://sog.gg/**` to Supabase Auth's redirect allow-list**, keeping
    `sogverse.sog.gg/**`. It is harmless before the cutover.
    - Every Supabase Auth change in this plan goes through the Management API:
@@ -220,13 +248,37 @@ Every write outside the repo is confirmed with the owner before it is made.
      on its own.
 
    *Verify:* a `GET` lists both entries.
-7. **Add the domains in Vercel.** Add `sog.gg` to the `sogverse` project as a production
-   domain. Add `www.sog.gg` as a domain that redirects (308) to `sog.gg`. Both stay
-   unverified until DNS moves; nothing more is expected before the hour. Write the DNS
-   values Vercel asks for into step 1.1, in this file.
-8. **The day before, lower the TTL** on the apex `A` and the `www` CNAME to 300 s at
-   Nordname. *Verify:* `https://dns.google/resolve?name=www.sog.gg&type=CNAME` shows the
-   new TTL.
+
+   Done 2026-10-26: prod's allow-list is `https://sogverse.sog.gg/**,https://sog.gg/**`,
+   and its site URL is unchanged. Staging's (the project ref is in `supabase/config.toml`)
+   is `https://sogverse-staging.sog.gg/**,https://staging.sog.gg/**`, also done
+   2026-10-26.
+7. **Add the domains in Vercel.**
+   - Add `sog.gg` to the `sogverse` project as a production domain, and `www.sog.gg` as a
+     domain that redirects (308) to `sog.gg`. Both stay unverified until DNS moves.
+     *Done 2026-10-26* through `vercel api /v10/projects/sogverse/domains`. Pass the body
+     with `-f`/`-F`; the CLI has no `-d`.
+   - Add `staging.sog.gg` to the project with git branch `dev`, the way
+     `sogverse-staging.sog.gg` is set up today. *Done 2026-10-26.*
+   - Vercel asked for (2026-10-26):
+     - three TXT records on `_vercel.sog.gg`, which prove ownership:
+       `vc-domain-verify=sog.gg,15aa4e3f612a0a0e9641`,
+       `vc-domain-verify=www.sog.gg,3eaea6edb8b650f1ddb6` and
+       `vc-domain-verify=staging.sog.gg,cb5672db6f4dc6d97232`;
+     - apex `A` records `216.150.1.1` and `216.150.16.1`;
+     - a `www` CNAME to `88d8df46e7ff3b6f.vercel-dns-017.com.`
+     Re-read with `vercel api "/v6/domains/<domain>/config?projectIdOrName=sogverse"
+     --scope school-of-gaming` before the hour. The existing hosts point at
+     `cname.vercel-dns.com`, which Vercel ranks second and still serves.
+8. **The day before, at Nordname:**
+   - Lower the TTL on the apex `A` and the `www` CNAME to 300 s.
+   - Add the `_vercel` TXT records from step 0.7.
+   - Add a `staging` CNAME to `cname.vercel-dns.com`. A new name changes nothing for
+     anyone, so `staging.sog.gg` serves the `dev` deployment from then on. Sign-in and
+     links there still return to the old staging host until step 1.7.
+
+   *Verify:* `https://dns.google/resolve?name=www.sog.gg&type=CNAME` shows the new TTL,
+   and `curl -sI https://staging.sog.gg/` answers from Vercel.
 
 ### 1. The cutover hour
 
@@ -242,8 +294,9 @@ address before the DNS switch is no better: it would send `sogverse.sog.gg` visi
 back to `sog.gg` while that is still Webflow.
 
 1. **Switch DNS at Nordname.**
-   - The apex `A` record goes from Webflow (`198.202.211.1`) to Vercel's value.
-   - `www` changes from `cdn.webflow.com` to Vercel's value.
+   - The apex `A` record goes from Webflow (`198.202.211.1`) to Vercel's two values,
+     `216.150.1.1` and `216.150.16.1` (step 0.7).
+   - `www` changes from `cdn.webflow.com` to `88d8df46e7ff3b6f.vercel-dns-017.com.`
    - Change no other record.
 
    *Check, once it resolves:*
@@ -283,8 +336,7 @@ back to `sog.gg` while that is still Webflow.
    (`proxy-ssl.webflow.com`) at Nordname.
    *Check:* `curl -sI https://sogverse.sog.gg/fi/kauppa` answers 308 to
    `https://sog.gg/fi/kauppa`.
-6. **Move the rest.** Change only the production apps. Staging's Discord app, Slack app
-   and URLs stay as they are.
+6. **Move the rest.** These are the production apps; staging's follow in step 7.
 
    | Integration | Change | Check |
    |---|---|---|
@@ -295,18 +347,40 @@ back to `sog.gg` while that is still Webflow.
    | Minecraft servers | The Minecraft server team changes the base URL in their config, as agreed in step 0.3 | A join check succeeds |
    | Google Cloud OAuth | Consent screen URLs, and JavaScript origins if they list the old host | Saved |
    | Anything step 0.5 found | As found | As found |
-7. **Confirm nothing was dropped.**
+7. **Move staging to `staging.sog.gg`.** It's the same work as production's, on test
+   data. Nothing here can drop real data or money, so it runs after production is
+   confirmed working.
+   - Set `NEXT_PUBLIC_SITE_URL` for **Preview** to `https://staging.sog.gg` with the
+     `env-vars` skill. In Vercel it's one value for every preview deployment, not one per
+     branch. Then redeploy the latest `dev` preview with the build cache unticked.
+   - Staging Supabase Auth: site URL `https://staging.sog.gg`, and an allow-list of
+     `https://staging.sog.gg/**` only.
+   - The Stripe **test-mode** endpoint `we_1U0cUCCD5Q5ECgrcpTkY9xnU`: URL
+     `https://staging.sog.gg/api/webhooks/stripe/products` (`stripe webhook_endpoints
+     update`, without `--live`).
+   - Staging Vault: `substitution_sync_url` becomes
+     `https://staging.sog.gg/api/substitution-notifications/sync`, the same way as step 3.
+   - The staging Discord app's Interactions Endpoint URL, and the staging Slack app's
+     Interactivity and `/link` URLs.
+   - Claude connectors on staging: re-add them with `https://staging.sog.gg/api/mcp`.
+     Whoever runs the opencode CLI re-adds it the same way.
+   - Remove `sogverse-staging.sog.gg` from the Vercel project, and delete its CNAME at
+     Nordname. There is no redirect.
+
+   *Check:* a Google sign-in on `staging.sog.gg` lands signed in, a staging `/sub`
+   answers, and a Stripe test event shows as delivered.
+8. **Confirm nothing was dropped.**
    - Stripe: list the live endpoint's recent deliveries, or the events since the hour
      began. Resend any failed delivery with
      `stripe events resend <event id> --webhook-endpoint we_1U2rZcCD5Q5ECgrcKzDSQRcJ --live`.
    - Substitution outbox on prod: this returns 0 rows:
      `SELECT count(*) FROM public.substitution_notification_outbox WHERE next_attempt_at < now() - interval '5 minutes' AND (leased_until IS NULL OR leased_until <= now());`.
    - The request log shows Stripe and `pg_net` arriving on `sog.gg`.
-8. **Submit `https://sog.gg/sitemap.xml`** to Google Search Console and Bing Webmaster
+9. **Submit `https://sog.gg/sitemap.xml`** to Google Search Console and Bing Webmaster
    Tools. The Domain property already covers every subdomain, so nothing is
    re-verified. Google's Change of Address tool does not apply to a move within one
    domain.
-9. **Remind the owner** that everyone has been signed out once and sees the cookie banner
+10. **Remind the owner** that everyone has been signed out once and sees the cookie banner
    again. The owner handles any message to families.
 
 **Rolling back the hour** undoes it in reverse:
@@ -320,12 +394,18 @@ full rebuild. Stripe and the substitution sync are pointed back by hand, the rev
 cutover step 3. They
 retry through the rollback the same way they do through the cutover.
 
+Staging (step 7) rolls back on its own and needs no prod rollback. Its last action is
+removing the old staging host, so until then each change can be pointed back at
+`sogverse-staging.sog.gg`.
+
 ### 2. Afterwards
 
 1. **About a week later, look for stragglers.** Run the step 0.4 query again over the
    days since the cutover. Every non-browser caller on `sogverse.sog.gg` is now getting
    308s; move each one, Lynx included if they haven't switched.
-2. **Land `feat/move-to-sog-gg`** in the next normal release.
+2. **Land `feat/move-to-sog-gg`** in the next normal release. Before merging, re-verify
+   the domain → branch mapping in the `vercel-analytics` skill and change its
+   "verified" date to the day of the check.
 3. **Remove `sogverse.sog.gg/**` from the Supabase allow-list.**
 4. **Remove the old sitemaps a few weeks later:** `https://sogverse.sog.gg/sitemap.xml`
    and the Webflow sitemap `https://www.sog.gg/sitemap.xml`, from both Search Console and
@@ -349,7 +429,12 @@ retry through the rollback the same way they do through the cutover.
 - A week on, no non-browser caller is left on `sogverse.sog.gg`.
 - The MX, SPF, DMARC and every verification TXT record match the values listed under
   Constraints.
-- `git grep sogverse.sog.gg` matches only `docs/records/`.
+- `git grep sogverse.sog.gg` matches only `docs/records/` and the dated 2026-09-10 search
+  baseline in `docs/architecture/site-quality.md`, which names the hosts as they were that
+  day (owner, 2026-10-26). `git grep sogverse-staging.sog.gg` matches only
+  `docs/records/`.
+- `staging.sog.gg` serves the `dev` deployment, and `sogverse-staging.sog.gg` no longer
+  resolves.
 - The Webflow data is on the team Drive, and the subscription is cancelled.
 
 ## Follow-ups
@@ -365,6 +450,5 @@ retry through the rollback the same way they do through the cutover.
   - The CEO counts 15 domains and Nordname shows 14, so ask him for the registrar list.
 - Country domains landing on their own language (`.fi` → `/fi` and so on), which needs
   host-based redirects in the app.
-- Renaming the staging host `sogverse-staging.sog.gg`.
 - Re-writing a few high-traffic Webflow blog posts as Library articles, if Search
   Console's Performance report shows any worth it.

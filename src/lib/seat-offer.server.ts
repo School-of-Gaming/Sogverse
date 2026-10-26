@@ -1,7 +1,7 @@
 import "server-only";
 import { SEAT_OFFER_WINDOW_MS } from "@/lib/constants/seat-offer";
 import type { SupportedLocale } from "@/lib/constants/locales";
-import { resolveTranslation } from "@/lib/i18n/resolve-translation";
+import { resolveRequiredTranslation } from "@/lib/i18n/resolve-translation";
 import {
   isSeatOfferTokenExpired,
   readSeatOfferToken,
@@ -154,21 +154,14 @@ export async function resolveSeatOfferLink(
   const state = classifySeatOffer(data, claims, Date.now());
   if (state !== "live") return { kind: state };
 
-  const productName = resolveTranslation(
+  const productName = resolveRequiredTranslation(
     data.product.product_translations,
     locale,
-  )?.name;
-  const participantName = data.participant.first_name.trim();
-
-  // Both are guaranteed by the schema — a product has at least one translation
-  // row and `profiles.first_name` is NOT NULL — so this is a shape the data
-  // model says cannot arrive. If it does, a page asking a family about an
-  // unnamed child is worse than one saying the link did not work.
-  if (!productName || !participantName) return { kind: "invalid" };
+  ).name;
 
   return {
     kind: "offer",
-    participantName,
+    participantName: data.participant.first_name,
     isSelfSeat: data.participant_id === data.customer_id,
     productName,
     deadline: new Date(claims.sentAtMs + SEAT_OFFER_WINDOW_MS),

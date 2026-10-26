@@ -3,7 +3,7 @@
 import { useLocale, useTranslations } from "next-intl";
 import { useNow, useTimezone } from "@/providers";
 import { resolveLocale } from "@/lib/constants/locales";
-import { resolveTranslation } from "@/lib/i18n/resolve-translation";
+import { resolveRequiredTranslation } from "@/lib/i18n/resolve-translation";
 import { useTopicLabel } from "@/lib/products/use-topic-label";
 import { catalogueImageSrc } from "@/lib/images/catalogue-image-url";
 import { DEFAULT_CURRENCY } from "@/lib/constants/currency";
@@ -107,7 +107,7 @@ export function useBrowseCardViewProps(
   const topicLabel = useTopicLabel();
   const currency = DEFAULT_CURRENCY;
 
-  const tr = resolveTranslation(
+  const tr = resolveRequiredTranslation(
     product.product_translations,
     uiLocale,
   );
@@ -179,8 +179,8 @@ export function useBrowseCardViewProps(
   );
 
   return {
-    name: tr?.name ?? "",
-    description: tr?.short_description ?? null,
+    name: tr.name,
+    description: tr.short_description,
     // The shared row-level resolution owns the empty-string-means-no-image
     // rule; null paints the wordmark banner.
     imageSrc: catalogueImageSrc("product", product.image_path),

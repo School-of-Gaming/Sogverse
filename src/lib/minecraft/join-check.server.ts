@@ -2,7 +2,7 @@ import "server-only";
 import type { SupabaseClient } from "@supabase/supabase-js";
 import type { Database } from "@/types/database.types";
 import { DEFAULT_LOCALE } from "@/lib/constants/locales";
-import { resolveTranslation } from "@/lib/i18n/resolve-translation";
+import { resolveRequiredTranslation } from "@/lib/i18n/resolve-translation";
 import type { JoinCheckLookup, LinkedGamer } from "./join-check";
 
 /**
@@ -74,9 +74,8 @@ export async function loadJoinCheck(
         startDate: product.start_date,
         endDate: product.end_date,
         timezone: product.timezone,
-        product:
-          resolveTranslation(product.product_translations, DEFAULT_LOCALE)
-            ?.name ?? "",
+        product: resolveRequiredTranslation(product.product_translations, DEFAULT_LOCALE)
+          .name,
       })),
   }));
 
