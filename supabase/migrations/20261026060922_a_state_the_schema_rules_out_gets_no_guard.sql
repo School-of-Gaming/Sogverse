@@ -27,6 +27,15 @@
 --   and the foreign key is ON DELETE RESTRICT.
 -- * chk_products_date_range drops its start_date IS NULL arm (NOT NULL). A
 --   CHECK cannot be altered in place, so it is dropped and added again.
+-- * products.voice_room_mode is none exactly when at least one of the
+--   product's translations carries voice_join_instructions. create_product and
+--   update_product checked it in their bodies, but an admin holds direct
+--   writes on both tables, so the rule now lives in two deferred constraint
+--   triggers that check the finished state at commit — the mode and the
+--   instructions are written by separate statements of one transaction. Any
+--   product already out of step fails the migration rather than being guessed
+--   at; staging and prod held none on 2026-10-26. The comments on both
+--   columns are reissued to name the triggers.
 --
 -- Three comments are corrected with them: admin_move_participation's on why it
 -- re-checks the target group, the participations table comment (the group
@@ -39,7 +48,9 @@
 --
 -- Every function is replaced in place with its signature unchanged, so its
 -- grants and comments stand; the one comment that described a removed guard
--- is reissued.
+-- is reissued. The one new function, the voice rule's trigger function, is
+-- granted to service_role alone, as every trigger function is: a trigger runs
+-- it whoever writes, and no API role has a reason to call it.
 
 -- ---------------------------------------------------------------------------
 -- 1. A seat in a group carries its join stamp, and only then
@@ -1412,7 +1423,115 @@ $$;
 COMMENT ON FUNCTION public.can_read_product(p_product_id uuid) IS 'Read predicate behind the products SELECT policy and the seven satellite tables that defer to it: translations, prices, schedule slots, marketing consents, gamer photo consents, required consents, holiday calendars. True for ANY product that exists; false only for an id no product has. Every product is readable by direct link forever, by owner decision (2026-09-15): a parent following a link to a term that ended should land on the product''s page and read that it is over, with the product''s own picture in the link preview, rather than meet a not-found page and the site''s default card — and the crawler that renders that preview holds no session either. is_visible governs LISTING alone — the browse queries apply it, alongside their own date filters — so a finished or unlisted product is absent from the shop and present at its URL. Whether a place can be BOUGHT is decided somewhere else entirely: the term dates, the seat cap and the registration window. The former arms — an admin, a party to an active or waitlisted participation, an assigned gedu, and the term test that used to bound the public one — are removed rather than left dormant: with the public answer true for every product none of them could decide anything, and a security predicate whose branches cannot decide is one the next reader has to reason about for nothing. It remains a function rather than a USING (true) written into each policy, so those eight policies keep ONE predicate to tighten if the decision is ever revisited, and it remains SECURITY DEFINER because it runs inside the products SELECT policy and must not depend on the caller''s own RLS.';
 
 -- ---------------------------------------------------------------------------
--- 3. End state
+-- 3. Join instructions exactly when there is no voice room
+-- ---------------------------------------------------------------------------
+
+-- Refuse to start from a broken row: a product out of step is a decision for a
+-- person (which mode, which words), never one for a migration to guess.
+DO $$
+DECLARE
+  v_offenders text;
+BEGIN
+  SELECT string_agg(
+           format('%s (mode %s, %s)', p.id, p.voice_room_mode,
+                  CASE WHEN p.voice_room_mode = 'none'
+                       THEN 'no translation carries instructions'
+                       ELSE 'a translation carries instructions' END),
+           '; ' ORDER BY p.id)
+    INTO v_offenders
+    FROM public.products p
+   WHERE (p.voice_room_mode = 'none') <> EXISTS (
+           SELECT 1
+             FROM public.product_translations t
+            WHERE t.product_id = p.id
+              AND t.voice_join_instructions IS NOT NULL
+         );
+
+  IF v_offenders IS NOT NULL THEN
+    RAISE EXCEPTION 'Products whose voice room mode and join instructions disagree: %', v_offenders
+      USING ERRCODE = 'check_violation';
+  END IF;
+END;
+$$;
+
+CREATE FUNCTION public.ensure_voice_join_instructions_iff_no_voice_room() RETURNS trigger
+    LANGUAGE plpgsql
+    SET search_path TO ''
+    AS $$
+DECLARE
+  v_product_ids uuid[];
+  v_product_id  uuid;
+  v_mode        public.voice_room_mode;
+BEGIN
+  IF TG_TABLE_NAME = 'products' THEN
+    v_product_ids := ARRAY[NEW.id];
+  ELSIF TG_OP = 'INSERT' THEN
+    v_product_ids := ARRAY[NEW.product_id];
+  ELSIF TG_OP = 'DELETE' THEN
+    v_product_ids := ARRAY[OLD.product_id];
+  ELSE
+    -- A translation moved to another product leaves its old one to be
+    -- checked as well.
+    v_product_ids := ARRAY[NEW.product_id, OLD.product_id];
+  END IF;
+
+  FOREACH v_product_id IN ARRAY v_product_ids LOOP
+    -- Locked, so two transactions that each clear a different locale's
+    -- instructions are judged one after the other: the second waits for the
+    -- first to commit, and its count below then sees what the first left.
+    SELECT voice_room_mode INTO v_mode
+      FROM public.products
+     WHERE id = v_product_id
+       FOR UPDATE;
+
+    -- The product was deleted in this transaction, its translations cascading
+    -- away with it: there is nothing left to keep in step.
+    CONTINUE WHEN NOT FOUND;
+
+    IF v_mode = 'none' AND NOT EXISTS (
+      SELECT 1 FROM public.product_translations
+       WHERE product_id = v_product_id
+         AND voice_join_instructions IS NOT NULL
+    ) THEN
+      RAISE EXCEPTION 'Product % has no voice room, so at least one translation needs join instructions', v_product_id
+        USING ERRCODE = 'check_violation';
+    END IF;
+
+    IF v_mode <> 'none' AND EXISTS (
+      SELECT 1 FROM public.product_translations
+       WHERE product_id = v_product_id
+         AND voice_join_instructions IS NOT NULL
+    ) THEN
+      RAISE EXCEPTION 'Product % has voice room mode %, and join instructions belong only to a product with no voice room', v_product_id, v_mode
+        USING ERRCODE = 'check_violation';
+    END IF;
+  END LOOP;
+
+  RETURN NULL;
+END;
+$$;
+
+COMMENT ON FUNCTION public.ensure_voice_join_instructions_iff_no_voice_room() IS 'Deferred constraint trigger on products (INSERT, UPDATE OF voice_room_mode) and on product_translations (INSERT, UPDATE OF voice_join_instructions or product_id, DELETE): a product''s voice_room_mode is none exactly when at least one of its translations carries voice_join_instructions. Deferred to commit because the mode and the instructions are written by separate statements of one transaction — create_product inserts the product before its translations, and update_product updates the product before it replaces them — so only the finished state can be judged. Checks the product the row names, and the product it left when an UPDATE moves a translation; skips a product that no longer exists, which is how deleting a whole product, its translations cascading away, commits. Locks the product row before counting, so two concurrent transactions that each clear a different locale''s instructions cannot both commit. Refuses with 23514.';
+
+REVOKE ALL ON FUNCTION public.ensure_voice_join_instructions_iff_no_voice_room() FROM PUBLIC;
+GRANT ALL ON FUNCTION public.ensure_voice_join_instructions_iff_no_voice_room() TO service_role;
+
+CREATE CONSTRAINT TRIGGER trg_products_voice_instructions_iff_no_room
+  AFTER INSERT OR UPDATE OF voice_room_mode ON public.products
+  DEFERRABLE INITIALLY DEFERRED
+  FOR EACH ROW EXECUTE FUNCTION public.ensure_voice_join_instructions_iff_no_voice_room();
+
+CREATE CONSTRAINT TRIGGER trg_product_translations_voice_instructions_iff_no_room
+  AFTER INSERT OR UPDATE OF voice_join_instructions, product_id OR DELETE ON public.product_translations
+  DEFERRABLE INITIALLY DEFERRED
+  FOR EACH ROW EXECUTE FUNCTION public.ensure_voice_join_instructions_iff_no_voice_room();
+
+COMMENT ON COLUMN public.product_translations.voice_join_instructions IS 'PUBLIC TO EVERYONE, LOGGED-OUT VISITORS INCLUDED. product_translations carries a table-level SELECT grant for anon and its read policy admits the translations of every product, so anybody can read these instructions through the Data API without an account or a seat. That is a KNOWN AND ACCEPTED RISK, decided by the owner: do not write anything here that must stay private. How to join the product''s sessions in this locale when the product''s voice_room_mode is none, as plain text the team writes per locale; NULL where this locale has none, never blank. A reader is shown one locale''s version through the app''s translation picker, like the rest of the row. A product of mode none carries instructions in at least one translation, and a product of any other mode in none — a rule across two tables, held at commit by the deferred constraint triggers trg_products_voice_instructions_iff_no_room and trg_product_translations_voice_instructions_iff_no_room, so a direct write cannot break it either. A STOPGAP like products.external_voice_url, to be removed with the none mode once Sogverse rooms can hold more than 50 people — see docs/investigations/voice-room-scale.md.';
+
+COMMENT ON COLUMN public.products.voice_room_mode IS 'How this product''s sessions are joined — see the voice_room_mode type. Anything but sogverse is refused on an in-person product by chk_products_in_person_voice_room_is_sogverse. The admin chooses it on the product form, beside online versus in person. Mode none goes with join instructions on the translations, and no other mode does — a rule across two tables, held at commit by the deferred constraint triggers trg_products_voice_instructions_iff_no_room and trg_product_translations_voice_instructions_iff_no_room.';
+
+-- ---------------------------------------------------------------------------
+-- 4. End state
 -- ---------------------------------------------------------------------------
 
 -- The constraint is in force, and none of the removed guards is back in the
@@ -1445,6 +1564,27 @@ BEGIN
   ) THEN
     RAISE EXCEPTION 'products must carry a validated chk_products_date_range without a start_date IS NULL arm';
   END IF;
+
+  FOR v_guard IN
+    SELECT *
+      FROM (VALUES
+        ('public.products',             'trg_products_voice_instructions_iff_no_room'),
+        ('public.product_translations', 'trg_product_translations_voice_instructions_iff_no_room')
+      ) AS g(fn, text)
+  LOOP
+    IF NOT EXISTS (
+      SELECT 1
+        FROM pg_trigger t
+       WHERE t.tgrelid = v_guard.fn::regclass
+         AND t.tgname = v_guard.text
+         AND t.tgconstraint <> 0
+         AND t.tgdeferrable
+         AND t.tginitdeferred
+         AND t.tgfoid = 'public.ensure_voice_join_instructions_iff_no_voice_room()'::regprocedure
+    ) THEN
+      RAISE EXCEPTION '% must carry the deferred constraint trigger %', v_guard.fn, v_guard.text;
+    END IF;
+  END LOOP;
 
   FOR v_guard IN
     SELECT *

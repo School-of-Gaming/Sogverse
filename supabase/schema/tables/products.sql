@@ -127,7 +127,7 @@ COMMENT ON COLUMN public.products.invoice_customer_id IS 'The Fennoa customer th
 -- Name: COLUMN products.voice_room_mode; Type: COMMENT; Schema: public; Owner: -
 --
 
-COMMENT ON COLUMN public.products.voice_room_mode IS 'How this product''s sessions are joined — see the voice_room_mode type. Anything but sogverse is refused on an in-person product by chk_products_in_person_voice_room_is_sogverse. The admin chooses it on the product form, beside online versus in person. Mode none goes with join instructions on the translations, a rule across two tables that create_product and update_product enforce rather than a CHECK.';
+COMMENT ON COLUMN public.products.voice_room_mode IS 'How this product''s sessions are joined — see the voice_room_mode type. Anything but sogverse is refused on an in-person product by chk_products_in_person_voice_room_is_sogverse. The admin chooses it on the product form, beside online versus in person. Mode none goes with join instructions on the translations, and no other mode does — a rule across two tables, held at commit by the deferred constraint triggers trg_products_voice_instructions_iff_no_room and trg_product_translations_voice_instructions_iff_no_room.';
 
 
 --
@@ -213,6 +213,13 @@ CREATE TRIGGER trg_products_apply_image_path BEFORE INSERT OR UPDATE ON public.p
 --
 
 CREATE TRIGGER trg_products_seed_seat_counts AFTER INSERT ON public.products FOR EACH ROW EXECUTE FUNCTION public.trg_seed_product_seat_counts();
+
+
+--
+-- Name: products trg_products_voice_instructions_iff_no_room; Type: TRIGGER; Schema: public; Owner: -
+--
+
+CREATE CONSTRAINT TRIGGER trg_products_voice_instructions_iff_no_room AFTER INSERT OR UPDATE OF voice_room_mode ON public.products DEFERRABLE INITIALLY DEFERRED FOR EACH ROW EXECUTE FUNCTION public.ensure_voice_join_instructions_iff_no_voice_room();
 
 
 --

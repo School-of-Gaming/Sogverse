@@ -15,7 +15,7 @@ import {
 } from "@/components/ui/dialog";
 import { MaybeInertLink } from "@/components/ui/maybe-inert-link";
 import { resolveLocale } from "@/lib/constants/locales";
-import { resolveTranslation } from "@/lib/i18n/resolve-translation";
+import { resolveRequiredTranslation } from "@/lib/i18n/resolve-translation";
 import { resolveInternalPath } from "@/lib/navigation/internal-path";
 import type {
   ProductVoiceRoom,
@@ -237,7 +237,7 @@ function JoinInstructionsButton({
   const locale = resolveLocale(useLocale());
   const [open, setOpen] = useState(false);
   const titleId = useId();
-  const text = resolveTranslation(instructions, locale)?.text ?? "";
+  const text = resolveRequiredTranslation(instructions, locale).text;
 
   return (
     <>
