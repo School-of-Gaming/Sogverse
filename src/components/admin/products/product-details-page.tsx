@@ -532,12 +532,11 @@ function ProductDetailsCard({
   const lastSession = formatSessionDate(plannedSessions?.at(-1));
 
   // Where the product happens, and who it is for — the shop card's own rules
-  // (`formatProductLocation`, `productWhoItsFor`), so the label each row wears
-  // follows the same shape: "Format" for an online product with no place and
-  // "Where" for one with a place behind it; "Age range" where the answer is a range and
+  // (`formatProductLocation`, `productWhoItsFor`): a "Where" row only for a
+  // product with a place behind it; "Age range" where the answer is a range and
   // "Audience" where it leads with the audience word.
   const location = formatProductLocation(product, uiLocale);
-  const labelIsFormat = productLocationLabelIsFormat(product.delivery_mode, location);
+  const hasPlace = !productLocationLabelIsFormat(product.delivery_mode, location);
   const whoItsFor = productWhoItsFor(product);
 
   const seatsLine =
@@ -673,20 +672,19 @@ function ProductDetailsCard({
                 {t(`deliveryModes.${product.delivery_mode}`)}
               </DetailRow>
 
-              <DetailRow
-                label={
-                  labelIsFormat
-                    ? t("detailsPage.fields.format")
-                    : t("sections.where")
-                }
-              >
-                {renderProductLocationLine({
-                  location,
-                  deliveryMode: product.delivery_mode,
-                  online: tFamily("online"),
-                  tbd: tFamily("tbd"),
-                })}
-              </DetailRow>
+              {/* The place alone, since the row above already says how the
+                  product is delivered. An online product with no place behind
+                  it has nothing to show here. */}
+              {hasPlace && (
+                <DetailRow label={t("sections.where")}>
+                  {renderProductLocationLine({
+                    location,
+                    deliveryMode: product.delivery_mode,
+                    online: tFamily("online"),
+                    tbd: tFamily("tbd"),
+                  })}
+                </DetailRow>
+              )}
 
               {/* How an online or hybrid product's sessions are joined. The meeting link
                   is shown whole, since it is what an admin checks; the join
