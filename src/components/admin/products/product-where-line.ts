@@ -32,8 +32,8 @@ export interface ProductWhereSource {
  * have.
  *
  * **A hybrid product names its site and then says it is hybrid**, because both
- * halves are true of it: the gamers meet in the school hall and the gedu is in
- * the voice room.
+ * halves are true of it: the gamers meet at the site and the gedu is in the
+ * voice room.
  *
  * `null` is a real answer — an in-person product with no location set has
  * nothing to say here, and the caller renders no chip rather than an em dash
