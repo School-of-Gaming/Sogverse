@@ -125,7 +125,7 @@ export const POST = defineRoute({
       // omission would clear a flag an admin set.
       p_requires_gamer_creations: body.requires_gamer_creations,
       p_spoken_language_code: body.spoken_language_code,
-      p_is_remote: body.is_remote,
+      p_delivery_mode: body.delivery_mode,
       // How the sessions are joined. The mode travels unconditionally, the
       // shape `p_requires_gamer_creations` has (its parameter defaults to
       // 'sogverse' rather than NULL); the link is an omission when null, like

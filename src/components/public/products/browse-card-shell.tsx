@@ -139,10 +139,10 @@ export type BrowseCardFooterLeft =
   | { kind: "seats"; seats: SeatBarValue }
   | { kind: "price"; price: ProductPriceLine };
 
-export type LocationLine = {
-  kind: "in_person" | "online" | "online_muni";
-  label: string;
-};
+export type LocationLine =
+  | { kind: "in_person" | "online" | "online_muni"; label: string }
+  /** A hybrid product's site, and the "Online" that is the other half of it. */
+  | { kind: "hybrid"; label: string; onlineLabel: string };
 
 export interface BrowseCardShell {
   /** Null when the card shows no CTA at all (an ended run). */

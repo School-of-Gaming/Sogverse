@@ -5,9 +5,11 @@ import {
 } from "@/components/public/products/format-product-price";
 import { CURRENCY_CONFIG, DEFAULT_CURRENCY } from "@/lib/constants/currency";
 import type { SupportedLocale } from "@/lib/constants/locales";
-import { resolveTranslation } from "@/lib/i18n/resolve-translation";
+import { resolveRequiredTranslation } from "@/lib/i18n/resolve-translation";
 import { catalogueImageSrc } from "@/lib/images/catalogue-image-url";
+import { gamersAttendSite } from "@/lib/products/delivery-mode";
 import { formatProductLocation } from "@/lib/products/format-product-location";
+import type { DeliveryMode } from "@/types";
 import { dateTimeInstant } from "@/lib/schedule-occurrence";
 import { organizationId } from "@/lib/seo/organization";
 import type { ProductDetailRow } from "@/services/products/products.service";
@@ -26,7 +28,7 @@ import type { ProductDetailRow } from "@/services/products/products.service";
  *   shows: a camp's range is a calendar range and is stated as dates; an event
  *   with a time slot is an instant, stated with the product timezone's offset,
  *   ending its slot's duration later. An online product's location is its own
- *   page. An in-person one's `Place` is the site the page names, and its
+ *   page, and a hybrid one's is both its site and its page. An in-person one's `Place` is the site the page names, and its
  *   address is the municipality the page names beside it: the site's street
  *   address is staff data the public page never shows, so it is not asserted
  *   here, and Google may count that address as incomplete.
@@ -61,6 +63,39 @@ import type { ProductDetailRow } from "@/services/products/products.service";
  * matters.
  */
 
+/**
+ * schema.org's names for the three delivery modes. A hybrid club is a
+ * `Blended` course and a hybrid camp or event a mixed-attendance one: gamers
+ * attend the site, and the voice room is part of every session.
+ */
+const COURSE_MODE = {
+  online: "Online",
+  in_person: "Onsite",
+  hybrid: "Blended",
+} as const satisfies Record<DeliveryMode, string>;
+
+const EVENT_ATTENDANCE_MODE = {
+  online: "https://schema.org/OnlineEventAttendanceMode",
+  in_person: "https://schema.org/OfflineEventAttendanceMode",
+  hybrid: "https://schema.org/MixedEventAttendanceMode",
+} as const satisfies Record<DeliveryMode, string>;
+
+/** An event's `location`: its page online, its site in person, both when hybrid. */
+function eventLocationOf(
+  mode: DeliveryMode,
+  place: object | null,
+  virtualLocation: object,
+): { location?: object | object[] } {
+  switch (mode) {
+    case "online":
+      return { location: virtualLocation };
+    case "in_person":
+      return place === null ? {} : { location: place };
+    case "hybrid":
+      return { location: place === null ? virtualLocation : [place, virtualLocation] };
+  }
+}
+
 /** The columns of the detail row this reads. */
 export type ProductJsonLdSubject = Pick<
   ProductDetailRow,
@@ -70,7 +105,7 @@ export type ProductJsonLdSubject = Pick<
   | "product_prices"
   | "schedule_slots"
   | "locations"
-  | "is_remote"
+  | "delivery_mode"
   | "for_gamers"
   | "min_age"
   | "max_age"
@@ -248,15 +283,16 @@ export function productJsonLd({
   plannedDates,
 }: ProductJsonLdInput) {
   const url = `${siteUrl}${canonicalPath}`;
-  const shown = resolveTranslation(
+  const shown = resolveRequiredTranslation(
     product.product_translations,
     locale,
   );
-  const description = shown?.short_description ?? "";
+  const description = shown.short_description;
   const image = catalogueImageSrc("product", product.image_path);
   const offer = offerOf(product, url);
   const audience = audienceOf(product);
-  const place = product.is_remote ? null : placeOf(product, locale);
+  const place = gamersAttendSite(product.delivery_mode) ? placeOf(product, locale) : null;
+  const virtualLocation = { "@type": "VirtualLocation", url };
   const provider = {
     "@type": "Organization",
     "@id": organizationId(siteUrl),
@@ -266,7 +302,7 @@ export function productJsonLd({
 
   const common = {
     "@context": "https://schema.org",
-    name: shown?.name ?? "",
+    name: shown.name,
     ...(description !== "" && { description }),
     url,
     ...(image !== null && { image }),
@@ -298,7 +334,7 @@ export function productJsonLd({
       provider,
       hasCourseInstance: {
         "@type": "CourseInstance",
-        courseMode: product.is_remote ? "Online" : "Onsite",
+        courseMode: COURSE_MODE[product.delivery_mode],
         ...(place !== null && { location: place }),
         ...(courseSchedule.length > 0 && { courseSchedule }),
       },
@@ -309,14 +345,10 @@ export function productJsonLd({
     ...common,
     "@type": "Event",
     ...eventDatesOf(product),
-    eventAttendanceMode: product.is_remote
-      ? "https://schema.org/OnlineEventAttendanceMode"
-      : "https://schema.org/OfflineEventAttendanceMode",
+    eventAttendanceMode: EVENT_ATTENDANCE_MODE[product.delivery_mode],
     // An online product's place is its page; an in-person one names its site,
-    // which the database requires it to have.
-    ...(product.is_remote
-      ? { location: { "@type": "VirtualLocation", url } }
-      : place !== null && { location: place }),
+    // which the database requires it to have, and a hybrid one is at both.
+    ...eventLocationOf(product.delivery_mode, place, virtualLocation),
     organizer: provider,
   };
 }

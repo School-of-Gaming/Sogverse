@@ -65,7 +65,7 @@ export const POST = defineRoute({
     // the inbox, and a recipient list assembled from the profiles table changes
     // whenever staff do.
     const role = profile.role;
-    const userEmail = profile.email || "";
+    const userEmail = profile.email;
     let isGamer = false;
     let parentEmail: string | undefined;
     let gamerOwnMailbox = false;
@@ -121,7 +121,7 @@ export const POST = defineRoute({
       : detectLocaleFromHeader(request.headers.get("Accept-Language"));
 
     const t = await getEmailTranslator(locale);
-    const displayName = profile.first_name || "Unknown";
+    const displayName = profile.first_name;
 
     // `userEmail` is the submitter's own address, whatever it is — the mail
     // resolves the reply-to from it and the parent's, in the one place both

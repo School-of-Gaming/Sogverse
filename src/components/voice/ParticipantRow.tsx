@@ -139,10 +139,10 @@ export interface ParticipantRowProps {
      overlay existed. */
 
   /**
-   * The member's `group_joined_at`, for the fading newcomer badge. `null` (or
-   * omitted) draws nothing, as does a stamp past the newcomer window.
+   * The member's `group_joined_at`, for the fading newcomer badge. Omitted
+   * draws nothing, as does a stamp past the newcomer window.
    */
-  newcomerJoinedAt?: string | null;
+  newcomerJoinedAt?: string;
   /**
    * The clock the badge's fade is measured against — the caller's, so a room
    * full of rows agrees with the page around it instead of each row reading its
@@ -313,7 +313,7 @@ export function ParticipantRow({
           {c(ROLE_LABEL_KEYS.customer)}
         </Badge>
       )}
-      {newcomerJoinedAt != null && flairNow !== undefined && (
+      {newcomerJoinedAt !== undefined && flairNow !== undefined && (
         <NewcomerBadge
           joinedAt={newcomerJoinedAt}
           now={flairNow}

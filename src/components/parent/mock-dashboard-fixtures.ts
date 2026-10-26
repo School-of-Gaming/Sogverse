@@ -44,12 +44,12 @@ import type { ParentDashboardParticipant } from "./parent-dashboard-page-body";
  * for-parents products exist means *two children and the parent themselves*
  * rather than three children. That is one cap over both kinds of chip, not two
  * (see `MAX_NAMED_PILL_ENTRIES`), and this is the page it is judged on. Across
- * the three sections: a remote club live right now with a failing card beside a
+ * the three sections: an online club live right now with a failing card beside a
  * waitlist place with no session to join and a seat nobody has been placed in
  * (and, under the second child, one still unplaced when its session has started);
  * an in-person camp naming its site where the Join would be — with the prep
  * guide's button under that sentence, and the guide's quiet-link form beside
- * Aino's lit Join above — beside a club
+ * Aino's lit Join above — a hybrid club naming its site beside its Join, a club
  * winding down and a finished camp sitting muted *below* them (the demotion has
  * to read as history without reading as broken, and that is only visible next
  * to something live); and the parent's own two cards — a club whose Join goes
@@ -190,7 +190,7 @@ export function buildParentDashboardFixture(
               participationId: "mock-enrollment-roblox-studio-club",
               productName: "Roblox Studio Club",
               productType: "consumer_club",
-              isRemote: true,
+              deliveryMode: "online",
               // The prep guide in the slot the locked Join would take: a remote
               // club whose room is three days from opening, with the longest
               // guide in the registry behind it. The one card on the calm page
@@ -225,7 +225,7 @@ export function buildParentDashboardFixture(
               participationId: "mock-enrollment-minecraft-club",
               productName: "Minecraft Explorers Club",
               productType: "consumer_club",
-              isRemote: true,
+              deliveryMode: "online",
               // Anchored to `now`: the lit Join is true for a couple of hours a
               // week, so the card that owns the room is always mid-session when
               // the scene is opened.
@@ -244,7 +244,7 @@ export function buildParentDashboardFixture(
               participationId: "mock-enrollment-fortnite-waitlist",
               productName: "Fortnite Creative Club",
               productType: "consumer_club",
-              isRemote: true,
+              deliveryMode: "online",
               // A topic that *does* carry a guide, on a card that must not draw
               // one: there is no seat here yet, so there is nothing to get
               // ready for. A topic without a guide would have proved nothing.
@@ -263,7 +263,7 @@ export function buildParentDashboardFixture(
               participationId: "mock-enrollment-roblox-studio-awaiting",
               productName: "Roblox Studio Club",
               productType: "consumer_club",
-              isRemote: true,
+              deliveryMode: "online",
               // The unplaced seat is exactly the prep window — the purchase has
               // landed and there is a week of evenings in which to install
               // something. The guide takes the locked Join's slot, exactly as
@@ -284,7 +284,7 @@ export function buildParentDashboardFixture(
               productType: "camp",
               // In person: no room to join at all, so this card renders no Join
               // beside Aino's lit one and names its site instead.
-              isRemote: false,
+              deliveryMode: "in_person",
               // The in-person placement: the guide filters down to its account
               // steps (School of Gaming brings the machines) and its button
               // sits under the site line, where a Join never was.
@@ -299,13 +299,26 @@ export function buildParentDashboardFixture(
               siteName: CAMP_SITE_NAME,
             },
             {
+              // Hybrid: the gamers meet at the school and the Gedu joins
+              // online, so the card names the site beside its locked Join.
+              participationId: "mock-enrollment-hybrid-school-club",
+              productName: "School Minecraft Club",
+              productType: "municipality_club",
+              deliveryMode: "hybrid",
+              slots: [futureSlot(now, 3, "14:30", 90, FIXTURE_TIMEZONE)],
+              startedDaysAgo: 35,
+              enrolledDaysAgo: 35,
+              endsInDays: null,
+              siteName: "Kallion ala-aste, Helsinki",
+            },
+            {
               // The edge case of a seat still unplaced when its session has
               // started: the Join stays locked and already names next week.
               // Marked ready (see `prepReady`) so the locked Join is what shows.
               participationId: "mock-enrollment-game-studio-awaiting-live",
               productName: "Game Studio Club",
               productType: "consumer_club",
-              isRemote: true,
+              deliveryMode: "online",
               slots: [liveNowSlot(now, 90, FIXTURE_TIMEZONE)],
               startedDaysAgo: 3,
               endsInDays: null,
@@ -315,7 +328,7 @@ export function buildParentDashboardFixture(
               participationId: "mock-enrollment-rocket-league-club",
               productName: "Rocket League Club",
               productType: "municipality_club",
-              isRemote: true,
+              deliveryMode: "online",
               // **The card that offers nothing, and the reason the offer has a
               // window at all.** The topic carries a guide and the Join is
               // locked, so on the old rule this card would be asking a family
@@ -338,7 +351,7 @@ export function buildParentDashboardFixture(
               participationId: "mock-enrollment-summer-camp",
               productName: "Summer Roblox Camp",
               productType: "camp",
-              isRemote: false,
+              deliveryMode: "in_person",
               // The same topic as the camp still running above it, on a run
               // that is over: a finished card offers nothing to get ready for,
               // and the pair is what shows that.
@@ -457,7 +470,7 @@ export function buildParentDashboardFixture(
               participationId: "mock-seven-kasper",
               productName: "Winter LAN Afternoon",
               productType: "event",
-              isRemote: false,
+              deliveryMode: "in_person",
               slots: [futureSlot(now, 5, "13:00", 240, FIXTURE_TIMEZONE)],
               startedDaysAgo: -5,
               endsInDays: 5,
@@ -525,7 +538,7 @@ function parentsOwnSection(clock: FixtureClock): ParentDashboardParticipant {
       participationId: "mock-enrollment-parents-evening",
       productName: "Parents’ Minecraft Evening",
       productType: "consumer_club",
-      isRemote: true,
+      deliveryMode: "online",
       topic: "minecraft_java",
       // Anchored to `now`, like Aino's: the one Join on this page that goes
       // straight to a room should be the one that is lit while somebody is
@@ -538,7 +551,7 @@ function parentsOwnSection(clock: FixtureClock): ParentDashboardParticipant {
       participationId: "mock-enrollment-parents-pokemon-walk",
       productName: "Family Pokémon GO Walk",
       productType: "event",
-      isRemote: false,
+      deliveryMode: "in_person",
       slots: [futureSlot(clock.now, 6, "11:00", 120, FIXTURE_TIMEZONE)],
       startedDaysAgo: 3,
       endsInDays: 30,
@@ -580,7 +593,7 @@ function gamer(
   };
 }
 
-/** The ordinary remote club — the shape most of these children are in. */
+/** The ordinary online club — the shape most of these children are in. */
 function club(
   now: Date,
   participationId: string,
@@ -592,7 +605,7 @@ function club(
     participationId,
     productName,
     productType: "consumer_club",
-    isRemote: true,
+    deliveryMode: "online",
     slots: [futureSlot(now, daysAhead, startTime, 90, FIXTURE_TIMEZONE)],
     startedDaysAgo: 28,
     endsInDays: null,

@@ -129,9 +129,9 @@
           "id": "De'wI' pong mI'.",
           "name": "Hoch Hol De'wI' pong, Hol ngoq lo'. reH wa' tu'lu' puS; nuq 'oH De'wI' 'e' wIv.",
           "type": "nuq Segh De'wI'. Hoch Hogh qaS ghom'a' — Qav Hutlh; ragh je wanI' jaj wIvlu'bogh qaS.",
-          "delivery": "chay' qaS. mIw'a' qaSmoHmeH Lynx pongmey — Daq pagh polbe'lu'; <code>type</code> je <code>delivery</code> cha'vam 'oH ngoDmey pongmey ghoSbogh'e'.",
+          "delivery": "chay' qaS: <code>online</code> Hop muv — Sogverse ghogh pa', latlh ghom, ghItlhbogh muvmeH ra'mey ghap, <code>in_person</code> DaqDaq, <code>hybrid</code> je — DaqDaq puqpu' ghoS, Sogverse ghogh pa'Daq ghoqwI' muv. mIw'a' qaSmoHmeH Lynx pongmey — Daq pagh polbe'lu'; <code>type</code> je <code>delivery</code> cha'vam 'oH ngoDmey pongmey ghoSbogh'e'.",
           "audience": "De'wI'Daq Daq ghajlaHbogh: <code>gamers</code> <code>true</code> puqpu' ghajlaHDI', <code>parents</code> <code>true</code> vavpu' ghajlaHDI'. reH wa' <code>true</code> 'oH; cha' <code>true</code>DI' qorDu' Hoch jaH — vavpu' puqpu' je.",
-          "location": "De'wI' Daq ngaSbogh veng je cha' ghItlh Sep ngoq; <code>city</code> 'oH veng pong'e'. DIvI' Daq nuvDaq je rap chut: <code>null</code> Daq Hutlhchugh De'wI' qoj vengDaq ngaSbe'chugh DaqDaj.",
+          "location": "De'wI' Daq ngaSbogh veng je cha' ghItlh Sep ngoq; <code>city</code> 'oH veng pong'e'. DIvI' Daq nuvDaq hybrid je rap chut: <code>null</code> Daq Hutlhchugh De'wI' qoj vengDaq ngaSbe'chugh DaqDaj.",
           "status": "<code>pending</code> tagh jaj qaSpa', <code>running</code> tagh jajvo', <code>completed</code> Qav jaj juSpu'DI'. laDDI' toghlu': De'wI' jajmey, De'wI' poH Daqvo' — pagh pollu', vaj not qan De'.",
           "dates": "ghorgh qaS. je'wI' ghom'a' Qav jaj ghajbe' net chaw'; Hoch latlh De'wI' ghaj.",
           "timezone": "IANA poH Daq — De'wI' jajmey je poHmey Daq.",
@@ -206,7 +206,7 @@
       },
       "feedback": {
         "title": "mejDI' puq jatlhbogh",
-        "intro": "wa' poH Qavdaq wa' puq jangbogh: vagh maqmey, vagh nISwI' naQDaq toghlu'; wIvbogh QIn puq mu'mey je. DaHjaj DIvI' Daq poHmey Qav neH jang ghomlu'. maq toghbe'bogh 'ej QIn ghItlhbe'bogh puq tlhegh chenmoHbe', vaj jang mI' 'oH tetlhvam <code>/sessions</code> DIvI' Daq poHmey qelbogh'e'; wa' tlhegh 'oH wa' puq wa' poHDaq'e', vaj tlheghmey bID toghDI' Hoch jangpu'bogh poHvaD wa'logh puq toghlu'.",
+        "intro": "wa' poH Qavdaq wa' puq jangbogh: vagh maqmey, vagh nISwI' naQDaq toghlu'; wIvbogh QIn puq mu'mey je. DaHjaj ghogh pa'Daq muvbogh puqpu' neH jang ghomlu', DIvI' Daq hybrid je. maq toghbe'bogh 'ej QIn ghItlhbe'bogh puq tlhegh chenmoHbe', vaj jang mI' 'oH tetlhvam <code>/sessions</code> DIvI' Daq hybrid je poHmey qelbogh'e'; wa' tlhegh 'oH wa' puq wa' poHDaq'e', vaj tlheghmey bID toghDI' Hoch jangpu'bogh poHvaD wa'logh puq toghlu'.",
         "params": {
           "productId": "De'wI'vam ghommey jangmey neH.",
           "groupId": "ghomvam jangmey neH.",
@@ -306,7 +306,7 @@
       "items": {
         "childIdentity": "puqpu' qorDu' pongmey, bogh jajmey, loD/be' je; vavpu' jatlhmeH mI'mey je. mIw'a' pegh chut bogh jar nob — bogh jaj nobbe'; 'ej latlh lo'be' leghmeH Daqmey Roblox ja'chuq je.",
         "releases": "qun De' je jatlh De' chaw'mey. Sogverse qengbogh wa' nagh beQ chaw' So' vaj: Lynx Educate, School of Gaming, je Roblox nagh beQ lo' Hoch DaqDaq. 'ach puq pong naQ, qun De', mu'tlhegh, qoj puqDaq boqbogh De' — pIm ghItlh chaw' nIS, Daq HurDaq Suqlu'bogh.",
-        "deliveryModel": "mIw Segh pong. De'wI' Segh SovtaH Sogverse, 'ej DIvI' Daq qoj nuvDaq qaS 'e' SovtaH; mIw Seghmey chenmoHmeH Lynx Qu' 'oH — cha' yotlh Dung.",
+        "deliveryModel": "mIw Segh pong. De'wI' Segh SovtaH Sogverse, 'ej DIvI' Daq qoj nuvDaq qoj hybrid qaS 'e' SovtaH; mIw Seghmey chenmoHmeH Lynx Qu' 'oH — cha' yotlh Dung.",
         "analytics": "mut nav, malja' nav, je mIw'a' De'wI' navmey Hutlhbogh Hoch nav lengmey, je wa' leghwI' De' Hoch. <code>/traffic</code> bIngDaq De' ghom pegh qaD wa'DIch: 'elpu'DI' qorDu' pawbogh nav ghaHvaD 'oH; 'ej leghwI' 'oH mI''e' — not De'wI'."
       }
     }

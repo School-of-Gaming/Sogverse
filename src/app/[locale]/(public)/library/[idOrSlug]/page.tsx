@@ -86,7 +86,6 @@ export default async function LibraryArticlePage({ params }: PageProps) {
   ]);
   if (article === null) notFound();
   const shown = localizeArticle(article, locale);
-  if (shown === null) notFound();
   const canonicalPath = libraryArticleCanonicalPath(published, article, locale);
 
   return (

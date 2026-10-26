@@ -203,7 +203,7 @@ function mockReadsForConfirmationEmail(
                         timezone: "Europe/Helsinki",
                         start_date: null,
                         end_date: null,
-                        is_remote: true,
+                        delivery_mode: "online",
                         min_age: 8,
                         max_age: 12,
                         for_gamers: true,

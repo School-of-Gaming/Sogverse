@@ -251,14 +251,7 @@ function viewerZoneAbbrev(
   return part?.value ?? null;
 }
 
-/**
- * A person's display name, or `null` where the account carries none.
- *
- * The absence travels as `null` rather than as a stand-in string because the
- * stand-in is translated copy and this module has no locale for copy — only for
- * `Intl`.
- */
-function personName(first: string, last: string): string | null {
-  const name = [first, last].filter((part) => part.trim().length > 0).join(" ");
-  return name.length > 0 ? name : null;
+/** A person's display name; the last name may be empty on an older account. */
+function personName(first: string, last: string): string {
+  return [first, last].filter(Boolean).join(" ");
 }

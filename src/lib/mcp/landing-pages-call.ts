@@ -25,6 +25,7 @@ import { getOrigin } from "@/lib/url";
 import type { SupportedLocale } from "@/lib/constants/locales";
 import {
   landingWriteFailure,
+  type AdminLandingPage,
 } from "@/services/landing-pages/landing-pages.contracts";
 import { LandingPageService } from "@/services/landing-pages/landing-pages.service";
 import type { AppSupabaseClient } from "@/types";
@@ -42,6 +43,21 @@ export const pageId = z
   .describe("The landing page's id, as list_landing_pages returns it.");
 
 export const NOT_FOUND = "No landing page has that id.";
+
+/**
+ * A page read back after a write that succeeded on it. Every write refuses an
+ * id with no page, and a page is never deleted, so it is there.
+ */
+export async function savedPage(
+  service: LandingPageService,
+  id: string,
+): Promise<AdminLandingPage> {
+  const page = await service.getAdminPage(id);
+  if (page === null) {
+    throw new Error(`Landing page ${id} is missing after a write succeeded on it`);
+  }
+  return page;
+}
 
 /**
  * What every landing page answer says of hasUnpublishedChanges, which compares

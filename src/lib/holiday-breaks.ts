@@ -1,6 +1,6 @@
 import { z } from "zod";
 import type { SupportedLocale } from "@/lib/constants/locales";
-import { resolveTranslation } from "@/lib/i18n/resolve-translation";
+import { resolveRequiredTranslation } from "@/lib/i18n/resolve-translation";
 import { plannedSessionRow, type PlannedSession } from "@/lib/planned-sessions";
 
 /**
@@ -49,14 +49,14 @@ export const holidayBreakRows = z.array(holidayBreakRow);
 
 /**
  * The break's name for a reader of `locale`: theirs, else English, else the
- * first one written. Empty only for a break with no name at all, which the
- * calendar writers refuse.
+ * first one written. Every stored break has a name: the calendar writers
+ * refuse one without.
  */
 export function breakName(
   row: { names: readonly { locale: string; name: string }[] },
   locale: SupportedLocale,
 ): string {
-  return resolveTranslation(row.names, locale)?.name ?? "";
+  return resolveRequiredTranslation(row.names, locale).name;
 }
 
 /**

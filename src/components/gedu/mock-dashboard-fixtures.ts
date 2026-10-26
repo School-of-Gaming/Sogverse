@@ -17,6 +17,8 @@ import {
   formatProductSchedule,
   scheduleCardLines,
 } from "@/lib/products/format-product-schedule";
+import { gamersAttendSite } from "@/lib/products/delivery-mode";
+import type { DeliveryMode } from "@/types";
 import type { SupportedLocale } from "@/lib/constants/locales";
 import {
   geduAssignmentKey,
@@ -197,7 +199,7 @@ export function buildGeduDashboardFixture(
       id: MINECRAFT_PRODUCT_ID,
       name: "Minecraft Monday Club",
       productType: "consumer_club",
-      isRemote: true,
+      deliveryMode: "online",
       // Anchored to `now` rather than to a fixed Monday evening: the open Join
       // state is the one thing on this card that cannot be seen on demand — it
       // is true for a couple of hours a week — so the club that owns the room
@@ -220,7 +222,7 @@ export function buildGeduDashboardFixture(
       // Remote and *not* running: the locked "Opens …" Join, which is what a
       // gedu sees on six days out of seven and which the live card above can
       // never show at the same time.
-      isRemote: true,
+      deliveryMode: "online",
       slots: [futureSlot(now, 3, "17:00", 90, SESSION_FEED_TIMEZONE)],
       startedDaysAgo: 35,
       endsInDays: null,
@@ -249,7 +251,7 @@ export function buildGeduDashboardFixture(
       id: "mock-dashboard-roblox-club",
       name: "Roblox Studio Club",
       productType: "consumer_club",
-      isRemote: true,
+      deliveryMode: "online",
       slots: [futureSlot(now, 1, "15:00", 90, SESSION_FEED_TIMEZONE)],
       startedDaysAgo: 21,
       endsInDays: null,
@@ -263,7 +265,7 @@ export function buildGeduDashboardFixture(
       id: "mock-dashboard-rocket-league-club",
       name: "Rocket League Club",
       productType: "consumer_club",
-      isRemote: true,
+      deliveryMode: "online",
       slots: [futureSlot(now, 2, "17:30", 60, SESSION_FEED_TIMEZONE)],
       startedDaysAgo: 63,
       endsInDays: null,
@@ -280,7 +282,7 @@ export function buildGeduDashboardFixture(
       id: "mock-dashboard-stardew-club",
       name: "Stardew Valley Co-op Club",
       productType: "municipality_club",
-      isRemote: true,
+      deliveryMode: "online",
       slots: [futureSlot(now, 4, "16:00", 90, SESSION_FEED_TIMEZONE)],
       startedDaysAgo: 14,
       endsInDays: null,
@@ -294,7 +296,7 @@ export function buildGeduDashboardFixture(
       id: "mock-dashboard-terraria-club",
       name: "Terraria Builders Club",
       productType: "consumer_club",
-      isRemote: true,
+      deliveryMode: "online",
       slots: [futureSlot(now, 5, "13:00", 120, SESSION_FEED_TIMEZONE)],
       startedDaysAgo: 112,
       endsInDays: null,
@@ -308,7 +310,7 @@ export function buildGeduDashboardFixture(
       id: "mock-dashboard-sims-club",
       name: "Sims Storytellers Club",
       productType: "municipality_club",
-      isRemote: true,
+      deliveryMode: "online",
       slots: [futureSlot(now, 6, "18:00", 90, SESSION_FEED_TIMEZONE)],
       startedDaysAgo: 42,
       endsInDays: null,
@@ -343,7 +345,7 @@ export function buildGeduDashboardFixture(
       id: ENDED_CLUB_PRODUCT_ID,
       name: "Splatoon Squid Club",
       productType: "consumer_club",
-      isRemote: true,
+      deliveryMode: "online",
       slots: [{ weekday: 3, startTime: "17:00", durationMinutes: 90 }],
       startedDaysAgo: 160,
       endsInDays: -46,
@@ -365,7 +367,7 @@ export function buildGeduDashboardFixture(
       // in-person and remote shapes side by side on one screen, so it is
       // obvious the camp card is missing a button by design rather than
       // showing a locked one that will never open.
-      isRemote: false,
+      deliveryMode: "in_person",
       slots: [0, 1, 2, 3, 4].map((weekday) => ({
         weekday,
         startTime: "10:00",
@@ -390,7 +392,7 @@ export function buildGeduDashboardFixture(
       // wears the Live badge and renders no Join, and its footer holds the
       // site instead, so it sits at the same height as the remote card that
       // does render one without either of them reserving empty space.
-      isRemote: false,
+      deliveryMode: "in_person",
       slots: [liveNowSlot(now, 240, SESSION_FEED_TIMEZONE)],
       startedDaysAgo: 0,
       endsInDays: 0,
@@ -434,7 +436,7 @@ export function buildGeduDashboardFixture(
       id: SUBSTITUTION_PRODUCT_ID,
       name: "Zelda Explorers Club",
       productType: "consumer_club",
-      isRemote: true,
+      deliveryMode: "online",
       slots: [futureSlot(now, 1, "16:00", 90, SESSION_FEED_TIMEZONE)],
       startedDaysAgo: 28,
       endsInDays: null,
@@ -450,7 +452,7 @@ export function buildGeduDashboardFixture(
       id: LOCKED_SUBSTITUTION_PRODUCT_ID,
       name: "Pokémon GO Club",
       productType: "consumer_club",
-      isRemote: true,
+      deliveryMode: "online",
       slots: [futureSlot(now, 6, "17:30", 90, SESSION_FEED_TIMEZONE)],
       startedDaysAgo: 40,
       endsInDays: null,
@@ -481,7 +483,7 @@ export function buildGeduDashboardFixture(
       id: TRAINEE_CLUB_PRODUCT_ID,
       name: "Minecraft Builders Club",
       productType: "consumer_club",
-      isRemote: true,
+      deliveryMode: "online",
       slots: [futureSlot(now, 2, "16:30", 90, SESSION_FEED_TIMEZONE)],
       startedDaysAgo: 56,
       endsInDays: null,
@@ -496,7 +498,7 @@ export function buildGeduDashboardFixture(
       id: TRAINEE_CAMP_PRODUCT_ID,
       name: "Coding Camp",
       productType: "camp",
-      isRemote: false,
+      deliveryMode: "in_person",
       slots: [0, 1, 2, 3, 4].map((weekday) => ({
         weekday,
         startTime: "09:00",
@@ -697,7 +699,7 @@ function assignmentRow(opts: {
   id: string;
   name: string;
   productType: GeduAssignmentRow["product"]["productType"];
-  isRemote: boolean;
+  deliveryMode: DeliveryMode;
   slots: GeduAssignmentRow["slots"];
   startedDaysAgo: number;
   /**
@@ -709,7 +711,7 @@ function assignmentRow(opts: {
   participantCount: number;
   groupName: string;
   groupParticipantCount: number;
-  /** The site, on in-person products. Remote products have no building. */
+  /** The site, on in-person and hybrid products. Online products have no building. */
   siteName?: string | null;
   /**
    * Which kind of seat the row is. `assignment` unless a fixture says
@@ -744,11 +746,11 @@ function assignmentRow(opts: {
       timezone: SESSION_FEED_TIMEZONE,
       startDate,
       endDate,
-      isRemote: opts.isRemote,
+      deliveryMode: opts.deliveryMode,
       voiceRoom: { mode: "sogverse" },
-      // Remote products have no building, whatever a fixture passes — the
+      // Online products have no building, whatever a fixture passes — the
       // read applies the same test.
-      siteName: opts.isRemote ? null : (opts.siteName ?? null),
+      siteName: gamersAttendSite(opts.deliveryMode) ? (opts.siteName ?? null) : null,
       topic: "minecraft_java",
       spokenLanguageCode: "fi",
       productType: opts.productType,

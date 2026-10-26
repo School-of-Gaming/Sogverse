@@ -83,7 +83,7 @@ export function buildGamerDashboardFixture(
       participationId: "mock-gamer-minecraft-club",
       productName: "Minecraft Explorers Club",
       productType: "consumer_club",
-      isRemote: true,
+      deliveryMode: "online",
       // **The card that offers nothing, and the state most cards on a real
       // dashboard are in.** The topic carries a guide, but this gamer has been
       // turning up to this club since it started twelve weeks ago: their first
@@ -102,7 +102,7 @@ export function buildGamerDashboardFixture(
       participationId: "mock-gamer-fortnite-waitlist",
       productName: "Fortnite Creative Club",
       productType: "consumer_club",
-      isRemote: true,
+      deliveryMode: "online",
       slots: [futureSlot(now, 4, "17:00", 90, FIXTURE_TIMEZONE)],
       startedDaysAgo: 21,
       endsInDays: null,
@@ -116,7 +116,7 @@ export function buildGamerDashboardFixture(
       participationId: "mock-gamer-terraria-awaiting",
       productName: "Terraria Builders Club",
       productType: "consumer_club",
-      isRemote: true,
+      deliveryMode: "online",
       slots: [futureSlot(now, 5, "16:00", 90, FIXTURE_TIMEZONE)],
       startedDaysAgo: 1,
       endsInDays: null,
@@ -130,7 +130,7 @@ export function buildGamerDashboardFixture(
       participationId: "mock-gamer-roblox-studio-club",
       productName: "Roblox Studio Club",
       productType: "consumer_club",
-      isRemote: true,
+      deliveryMode: "online",
       topic: "roblox_studio",
       slots: [futureSlot(now, 3, "15:00", 90, FIXTURE_TIMEZONE)],
       startedDaysAgo: 28,
@@ -140,7 +140,7 @@ export function buildGamerDashboardFixture(
       participationId: "mock-gamer-roblox-camp",
       productName: "Roblox Builders Camp",
       productType: "camp",
-      isRemote: false,
+      deliveryMode: "in_person",
       // The in-person placement, on a seat taken this week: the guide filters
       // down to its account steps (School of Gaming brings the machines) and
       // its button sits under the site line, where a Join never was. Read
@@ -167,7 +167,7 @@ export function buildGamerDashboardFixture(
       participationId: "mock-gamer-winter-lan-event",
       productName: "Winter LAN Afternoon",
       productType: "event",
-      isRemote: false,
+      deliveryMode: "in_person",
       slots: [futureSlot(now, 5, "13:00", 240, FIXTURE_TIMEZONE)],
       // Starts and ends on the same future day: an event has no run behind it.
       startedDaysAgo: -5,

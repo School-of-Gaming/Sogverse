@@ -36,7 +36,6 @@
       "title": "Certification des Gedus",
       "justNow": "{count} certifiés à l’instant",
       "empty": "Aucun Gedu n’est en attente de certification.",
-      "unnamed": "Gedu sans nom",
       "registered": "inscrit {when}",
       "certify": "Certifier",
       "certifying": "Certification…",
@@ -504,8 +503,7 @@
           "pair": "deux côte à côte",
           "row": "trois en ligne",
           "showcase": "une grande citation, deux côte à côte, puis trois en ligne"
-        },
-        "missing": "Un témoignage qui n’est plus conservé"
+        }
       }
     },
     "status": {
@@ -666,6 +664,7 @@
       "ageRange": "{min}–{max} ans",
       "seats": "{count} places",
       "online": "En ligne",
+      "hybrid": "Hybride",
       "unlisted": "hors catalogue",
       "untitled": "(sans titre)",
       "missingGeduFee": "Rémunération Gedu manquante",
@@ -728,7 +727,7 @@
         "visibility": "Visibilité",
         "gamerPhotoConsents": "Questions photo",
         "marketingConsents": "Questions marketing",
-        "format": "Format",
+        "deliveryMode": "Modalité",
         "ageRange": "Tranche d’âge",
         "publicLink": "Lien public",
         "createdBy": "Créé par",
@@ -819,6 +818,7 @@
       "spokenLanguage": "Langue parlée",
       "online": "En ligne",
       "inPerson": "En présentiel",
+      "hybrid": "Hybride",
       "municipality": "Commune concernée",
       "site": "Site",
       "startDate": "Date de début",
@@ -913,6 +913,11 @@
       "none": "Pas de salle vocale",
       "noneDescription": "Les familles voient à la place les instructions de connexion que vous rédigez pour chaque langue."
     },
+    "deliveryModes": {
+      "online": "En ligne",
+      "in_person": "En présentiel",
+      "hybrid": "Hybride"
+    },
     "endDateModes": {
       "ongoing": "Aucune date de fin",
       "ongoingDescription": "Le club se poursuit indéfiniment jusqu’à ce que vous décidiez d’y mettre fin.",
@@ -958,6 +963,7 @@
       "externalVoiceUrlHint": "Public : n’importe qui peut lire ce lien, y compris les visiteurs non connectés.",
       "municipalityHint": "Les clubs municipaux sont toujours rattachés à une commune finlandaise précise — celle qui les finance. Les parents de cette commune le verront en parcourant le catalogue.",
       "siteHint": "Où les sessions se déroulent physiquement.",
+      "hybridHint": "Les gamers viennent sur le site. Le Gedu, et tout gamer qui ne peut pas s’y rendre, rejoint la salle vocale Sogverse.",
       "eventSingleDay": "Les événements ont lieu à une seule date.",
       "timezoneEntry": "Les horaires des séances ci-dessous sont saisis dans ce fuseau horaire. Les parents les voient automatiquement convertis dans le leur.",
       "timezoneChangeMoves": "Les horaires des séances ci-dessous sont saisis dans ce fuseau horaire. En changer déplace chaque séance à venir au même horaire dans le nouveau fuseau, tandis que les séances dont un compte rendu ou une présence est déjà enregistré conservent les horaires auxquels elles se sont tenues.",
@@ -1212,8 +1218,6 @@
       "searchHint": "Saisissez au moins 2 caractères pour lancer la recherche.",
       "noParents": "Aucun parent pour l’instant.",
       "noSearchResults": "Aucun parent ni joueur ne correspond à votre recherche.",
-      "unnamedParent": "Parent sans nom",
-      "unnamedGamer": "Joueur sans nom",
       "add": "Ajouter",
       "adding": "Ajout…",
       "added": "Ajouté",
@@ -1504,14 +1508,11 @@
     "unknown": "Inconnu",
     "linkedGamers": "Joueurs associés",
     "linkedParents": "Parents associés",
-    "unnamedGamer": "Joueur sans nom",
-    "unnamedUser": "Utilisateur sans nom",
     "noConnectedGamers": "Aucun joueur associé",
     "assignedProducts": "Produits affectés",
     "noAssignedProducts": "Aucun produit affecté",
     "unassignedGroup": "Aucun groupe attribué",
     "needsGroup": "Doit être affecté à un groupe",
-    "untitledProduct": "Produit sans titre",
     "gamerDetails": {
       "title": "Informations personnelles",
       "edit": "Modifier les informations personnelles",
@@ -1593,7 +1594,6 @@
     "slackNotLinked": "Non associé"
   },
   "locations": {
-    "editName": "Modifier {name}",
     "addChildUnder": "Ajouter {type} sous {parent}",
     "location": "Lieu",
     "nameRequired": "Le nom est obligatoire",
@@ -1698,7 +1698,6 @@
     "justNow": "{count, plural, one {# remplacement validé à l’instant} other {# remplacements validés à l’instant}}",
     "offersLabel": "Gedus proposant de remplacer",
     "away": "Absence :",
-    "unnamed": "Gedu sans nom",
     "reason": {
       "sick": "Maladie",
       "other": "Autre"

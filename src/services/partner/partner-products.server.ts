@@ -29,7 +29,7 @@ import {
  * product id.
  */
 
-const PRODUCT_COLUMNS = `id, product_type, is_remote, for_gamers, for_parents, location_id, start_date, end_date, timezone, min_age, max_age, created_at, ${PROGRAMME_PRODUCT_EMBED}`;
+const PRODUCT_COLUMNS = `id, product_type, delivery_mode, for_gamers, for_parents, location_id, start_date, end_date, timezone, min_age, max_age, created_at, ${PROGRAMME_PRODUCT_EMBED}`;
 
 /** A product's groups as the record lists them. */
 type ProductGroup = PartnerProduct["groups"][number];
@@ -166,7 +166,7 @@ export async function readPartnerProducts(
           id: row.id,
           name,
           type: row.product_type,
-          delivery: productDelivery(row.is_remote),
+          delivery: productDelivery(row.delivery_mode),
           audience: { gamers: row.for_gamers, parents: row.for_parents },
           location: row.location_id === null ? null : placeOf(row.location_id),
           status: statusOf(row.id),

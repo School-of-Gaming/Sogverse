@@ -91,6 +91,12 @@ const SCENE_TRAINEES: ReadonlySet<string> = new Set([
 ]);
 
 /**
+ * The join stamp of a member seated long before the newcomer window: every seat
+ * in a group carries one, and the fixture names only the newcomers'.
+ */
+const LONG_SEATED = "2020-01-01T00:00:00.000Z";
+
+/**
  * The trainee's overlay over the same fixture, in the shape
  * `get_trainee_group_overlay` answers with: every seat, its join stamp, whether
  * a note exists, and no creations.
@@ -104,7 +110,7 @@ function traineeOverlayFrom(
       [...SEATED_MEMBER_IDS].map((id) => [
         id,
         {
-          group_joined_at: fixture.newcomers[id] ?? null,
+          group_joined_at: fixture.newcomers[id] ?? LONG_SEATED,
           has_note: id in fixture.notes,
           creations: [],
         },

@@ -22,11 +22,12 @@ import type { TopicPrepPlan } from "@/lib/products/topics";
 // legal to read. Whoever holds a plan holds a guide; there is no empty case
 // left for this component to have an opinion about.
 //
-// What the resolver decided, for context: a remote product renders every step,
-// plus the shared one about the voice room's mic and camera; an in-person one
-// renders only the account steps, because School of Gaming brings the machines.
-// See the registry's header note for that split, and for why a label-only
-// topic's remote guide is that shared step alone.
+// What the resolver decided, for context: where the family brings their own
+// machine every step renders, and otherwise only the account steps, because
+// School of Gaming brings the machines; where there is a voice room the shared
+// step about its mic and camera is appended. See the registry's header note
+// for that split, and for why a label-only topic's guide is that shared step
+// alone.
 
 export interface TopicPrepContentProps {
   /** What to render — `resolveTopicPrep`'s answer, resolved by the surface. */

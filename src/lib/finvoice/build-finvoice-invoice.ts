@@ -525,11 +525,12 @@ function buildRow(
   rowNumber: number,
   namesTheMonth: boolean,
 ): FinvoiceRow {
-  // Non-null by `finvoiceFileState`, which refuses the whole file when any club
-  // that ran has no fee — and only a club that ran becomes a row. Coerced
-  // rather than asserted so a future caller that skipped the check produces a
-  // visible zero rather than a crash halfway through writing a file.
-  const unitPriceCents = club.feeCents ?? 0;
+  // `finvoiceFileState` refuses the whole file when any club that ran has no
+  // fee, and only a club that ran becomes a row.
+  const unitPriceCents = club.feeCents;
+  if (unitPriceCents === null) {
+    throw new Error(`buildFinvoiceInvoice: club ${club.id} ran in ${monthStart} with no fee`);
+  }
   const netCents = sumCents([unitPriceCents * club.billedCount]);
   const vatCents = vatOf(netCents);
   const text = rowText(club);

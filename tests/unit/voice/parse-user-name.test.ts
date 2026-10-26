@@ -171,25 +171,18 @@ describe("parseUserName", () => {
     });
   });
 
-  describe("tolerated layouts (a room outlives a deploy)", () => {
-    it("reads the legacy 5-slot Minecraft form as platform minecraft", () => {
-      // A token is minted once at join and lives for the whole session window,
-      // so a deploy landing mid-window puts both formats in one live room. The
-      // old layout was `…|minecraftUsername|minecraftUuid` with no platform
-      // slot, and it was always Minecraft.
-      const result = parseUserName("uid|gamer|Kid|Steve123|abc-uuid");
+  describe("layouts", () => {
+    it("throws on a slot count buildUserName never writes", () => {
+      expect(() => parseUserName("uid|gamer|Kid|Steve123|abc-uuid")).toThrow(/5 slots/);
+      expect(() => parseUserName("uid|gamer|Kid|minecraft")).toThrow(/4 slots/);
+    });
+
+    it("ignores slots past the sixth, which a later deploy may append mid-window", () => {
+      const result = parseUserName("uid|gamer|Kid|minecraft|Steve123|abc-uuid|future");
 
       expect(result.gamePlatform).toBe("minecraft");
       expect(result.gameUsername).toBe("Steve123");
       expect(result.gameExternalId).toBe("abc-uuid");
-    });
-
-    it("reads the legacy form's empty slots as linked-but-unset", () => {
-      const result = parseUserName("uid|gamer|Kid||");
-
-      expect(result.gamePlatform).toBe("minecraft");
-      expect(result.gameUsername).toBeNull();
-      expect(result.gameExternalId).toBeNull();
     });
 
     it("leaves the game fields undefined on the 3-slot instant-room form", () => {
@@ -201,8 +194,8 @@ describe("parseUserName", () => {
     });
 
     it("degrades an unknown platform slot to no game context instead of throwing", () => {
-      // The mirror image of the legacy case: a peer minted by a *newer* deploy
-      // that knows a platform this build does not. These slots are cosmetic, so
+      // A token outlives a deploy, so a peer minted by a *newer* deploy can
+      // carry a platform this build does not know. These slots are cosmetic, so
       // that peer drops its identity row and keeps its place in the roster —
       // unlike the role slot, which drives moderator UI and throws.
       const result = parseUserName("uid|gamer|Kid|fortnite|Kid|123");

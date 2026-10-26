@@ -50,7 +50,7 @@ interface ProductOverviewCardProps {
     | "end_date"
     | "timezone"
     | "schedule_slots"
-    | "is_remote"
+    | "delivery_mode"
     | "locations"
     | "min_age"
     | "max_age"
@@ -97,7 +97,7 @@ export function ProductOverviewCard({
   const now = useNow();
 
   const location = formatProductLocation(product, uiLocale);
-  const labelIsFormat = productLocationLabelIsFormat(product.is_remote, location);
+  const labelIsFormat = productLocationLabelIsFormat(product.delivery_mode, location);
 
   // The three-shape "who is this for" answer, and the club term range folded
   // into the schedule, are both shared rules — the signup confirmation mail
@@ -169,34 +169,31 @@ export function ProductOverviewCard({
           >
             {renderProductLocationLine({
               location,
-              isRemote: product.is_remote,
+              deliveryMode: product.delivery_mode,
               online: t("info.online"),
               tbd: t("info.tbd"),
             })}
+            {/* The site is half of a hybrid product's answer; the other half
+                is that the group also meets in the voice room. */}
+            {product.delivery_mode === "hybrid" && (
+              <div className="text-muted-foreground">{t("info.hybrid")}</div>
+            )}
           </DetailRow>
-          {/* Null only for a row carrying neither an audience label nor an age
-              range, which the schema's CHECKs make unreachable — the grid
-              would fall back to three facts rather than render an empty
-              cell. */}
-          {whoItsFor !== null && (
-            <DetailRow
-              icon={whoItsFor.value.kind === "parents" ? UserRound : Users}
-              label={
-                whoItsFor.label === "ageRange"
-                  ? t("info.ageRange")
-                  : t("info.audience")
-              }
-              railFrom2xl={railFrom2xl}
-            >
-              {whoItsFor.value.kind === "ages"
-                ? t("info.ages", whoItsFor.value)
-                : whoItsFor.value.kind === "parents"
-                  ? tAudience("parents")
-                  : whoItsFor.value.kind === "families"
-                    ? tAudience("families")
-                    : tAudience("familiesWithAges", whoItsFor.value)}
-            </DetailRow>
-          )}
+          <DetailRow
+            icon={whoItsFor.value.kind === "parents" ? UserRound : Users}
+            label={
+              whoItsFor.label === "ageRange"
+                ? t("info.ageRange")
+                : t("info.audience")
+            }
+            railFrom2xl={railFrom2xl}
+          >
+            {whoItsFor.value.kind === "ages"
+              ? t("info.ages", whoItsFor.value)
+              : whoItsFor.value.kind === "parents"
+                ? tAudience("parents")
+                : tAudience("familiesWithAges", whoItsFor.value)}
+          </DetailRow>
           <DetailRow
             icon={Languages}
             label={t("info.language")}

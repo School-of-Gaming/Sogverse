@@ -5,7 +5,7 @@ import { POST } from "@/app/api/voice/token/route";
 import { DailyApiError } from "@/lib/daily";
 import { mockSupabaseSuccess } from "../../mocks/supabase";
 import { VOICE_CONFIG } from "@/lib/constants/voice";
-import type { ProductTopic, VoiceRoomMode } from "@/types";
+import type { DeliveryMode, ProductTopic, VoiceRoomMode } from "@/types";
 
 // --- Mocks ---
 
@@ -160,7 +160,7 @@ function authAs(
 function mockTables(opts: {
   group: {
     timezone?: string;
-    is_remote?: boolean;
+    delivery_mode?: DeliveryMode;
     /** Drives which game identity (if any) the token carries. Defaults to the
      *  Minecraft Java topic, which is what most remote clubs are. */
     topic?: ProductTopic;
@@ -204,7 +204,7 @@ function mockTables(opts: {
             product: {
               id: PRODUCT_ID,
               timezone: opts.group.timezone ?? "Europe/Helsinki",
-              is_remote: opts.group.is_remote ?? true,
+              delivery_mode: opts.group.delivery_mode ?? "online",
               topic: opts.group.topic ?? "minecraft_java",
               voice_room_mode: opts.group.voice_room_mode ?? "sogverse",
             },
@@ -416,11 +416,24 @@ describe("POST /api/voice/token", () => {
     expect(data.error).toBe("Room not found");
   });
 
-  it("returns 404 when the product is in-person (is_remote = false)", async () => {
+  it("returns 404 when the product is in person, which has no voice room", async () => {
     authAs("gedu-id", { role: "gedu", first_name: "Edu" });
-    mockTables({ group: { is_remote: false }, geduAssignment: { group_id: GROUP_ID } });
+    mockTables({
+      group: { delivery_mode: "in_person" },
+      geduAssignment: { group_id: GROUP_ID },
+    });
     const res = await POST(tokenRequest({ groupId: GROUP_ID }));
     expect(res.status).toBe(404);
+  });
+
+  it("admits a member of a hybrid product, whose sessions all have the voice room", async () => {
+    authAs("gedu-id", { role: "gedu", first_name: "Edu" });
+    mockTables({
+      group: { delivery_mode: "hybrid" },
+      geduAssignment: { group_id: GROUP_ID },
+    });
+    const res = await POST(tokenRequest({ groupId: GROUP_ID }));
+    expect(res.status).toBe(200);
   });
 
   describe("membership gate", () => {

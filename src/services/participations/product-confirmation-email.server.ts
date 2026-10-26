@@ -27,7 +27,7 @@ import {
   resolveFamilyRecipients,
   type FamilyRecipient,
 } from "@/lib/email/family-recipients.server";
-import { resolveTranslation } from "@/lib/i18n/resolve-translation";
+import { resolveRequiredTranslation } from "@/lib/i18n/resolve-translation";
 import { localizedLocationName } from "@/lib/locations/localized-name";
 import { plannedSessionRows, type PlannedSession } from "@/lib/planned-sessions";
 import { formatProductLocation } from "@/lib/products/format-product-location";
@@ -205,9 +205,9 @@ async function send({
         // The last five are the "Good to know" facts the mail states, read
         // through the same formatters the product page's card uses.
         // `topic` is the "Before the first session" guide's one input beyond
-        // `is_remote`: which guide the mail carries, if any. It states no row
+        // `delivery_mode`: which guide the mail carries, if any. It states no row
         // of its own and is not one of the "Good to know" facts.
-        "product_type, billing_mode, topic, timezone, start_date, end_date, is_remote, min_age, max_age, for_gamers, for_parents, spoken_language_code, product_translations(locale, name, short_description)",
+        "product_type, billing_mode, topic, timezone, start_date, end_date, delivery_mode, min_age, max_age, for_gamers, for_parents, spoken_language_code, product_translations(locale, name, short_description)",
       )
       .eq("id", productId)
       .single(),
@@ -299,18 +299,18 @@ async function send({
         : "free"
       : sendMode;
 
-  const participantName = participant?.first_name.trim();
-
-  // Guaranteed by the schema — `profiles.first_name` is NOT NULL — so this is a
-  // shape the data model says cannot arrive. If it does, a mail whose subject
-  // line names an empty person is worse than no mail, so stop and say so.
-  if (!participant || !participantName) {
+  // An account erased since the seat was written takes the seat with it (ON
+  // DELETE CASCADE), leaving no one to name. The first name itself needs no
+  // check: the profiles CHECK stores it trimmed and at least two characters
+  // long.
+  if (!participant) {
     console.error(
       "[product-confirmation email] nothing to name — skipping the send",
       { productId, participantId },
     );
     return;
   }
+  const participantName = participant.first_name;
 
   // The same test the confirmation page makes on the row: participant equals
   // customer means the payer took the seat themselves, and every sentence
@@ -341,44 +341,11 @@ async function send({
   const site = scheduleResult.data.locations;
   const slots = scheduleResult.data.schedule_slots;
 
-  // The parent's mail goes first, and a child's copy only follows a parent's
-  // that went. That ordering is load-bearing for the skip below, which is why
-  // this counts what has actually left rather than assuming.
-  let sent = 0;
   for (const recipient of recipients) {
     const locale = recipient.locale;
-    const translation = resolveTranslation(product.product_translations, locale);
-    const productName = translation?.name;
-    // Read here rather than beside the invitation below, because the guard on
-    // `productName` narrows the row it comes from and the optional access would
-    // then read as dead code.
-    const shortDescription = translation?.short_description ?? null;
-
-    // A product has at least one translation row, so an empty name here is the
-    // same impossible shape as an empty person above — except that the two
-    // recipients resolve the name in DIFFERENT locales, so a product missing one
-    // translation can name itself for the parent and not for the child. That
-    // makes it a per-recipient failure, not a per-send one. It used to `return`
-    // unconditionally, abandoning the child's copy after the parent's had
-    // already gone out while logging it as "skipping the send", which read as
-    // though nothing had been mailed at all.
-    if (!productName) {
-      console.error(
-        "[product-confirmation email] nothing to name — skipping this recipient",
-        {
-          productId,
-          participantId,
-          recipientKind: recipient.kind,
-          locale,
-          anySent: sent > 0,
-        },
-      );
-      // Nothing has left yet, so there is nothing for a child's copy to be the
-      // follow-up to. Give up on the whole send. Once something HAS gone out,
-      // skipping this one recipient is the honest remainder.
-      if (sent === 0) return;
-      continue;
-    }
+    const translation = resolveRequiredTranslation(product.product_translations, locale);
+    const productName = translation.name;
+    const shortDescription = translation.short_description;
 
     const gamerCopy = recipient.kind === "gamer";
     // One link, read twice: the mail's button and the calendar entry's own URL.
@@ -403,7 +370,7 @@ async function send({
       // gamer — and a waitlist join carries none, which the resolver decides
       // from the mode rather than this call site.
       topic: product.topic,
-      isRemote: product.is_remote,
+      deliveryMode: product.delivery_mode,
       mode,
       // The child's copy states no price, so it never reads one.
       priceAmount: gamerCopy
@@ -436,9 +403,13 @@ async function send({
         startDate: product.start_date,
         endDate: product.end_date,
         slots,
-        isRemote: product.is_remote,
+        deliveryMode: product.delivery_mode,
         location: formatProductLocation(
-          { is_remote: product.is_remote, product_type: product.product_type, locations: site },
+          {
+            delivery_mode: product.delivery_mode,
+            product_type: product.product_type,
+            locations: site,
+          },
           locale,
         ),
         minAge: product.min_age,
@@ -475,7 +446,7 @@ async function send({
                 durationMinutes: slot.duration_minutes,
               }),
             ),
-            isRemote: product.is_remote,
+            deliveryMode: product.delivery_mode,
             // The shared `name_i18n[locale] ?? name` resolution every other
             // surface makes on a location row.
             siteName: site ? localizedLocationName(site, locale) : null,
@@ -510,7 +481,6 @@ async function send({
       // the unattended sending address.
       replyToEmail: SUPPORT_EMAIL,
     });
-    sent++;
   }
 }
 

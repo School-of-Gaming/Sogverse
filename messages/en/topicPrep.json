@@ -33,7 +33,7 @@
     "rocket_league": "We bring the machines to the session, with Rocket League already installed. Each participant still needs their own Epic Games account. Please complete the step below before the session.",
     "roblox_studio": "We bring the computers to the session, with Roblox Studio already installed. Each participant still needs their own Roblox account. Please complete the step below before the session."
   },
-  "remoteOnlyIntro": "The sessions happen online, in a voice room. Please complete the step below before the first session.",
+  "remoteOnlyIntro": "The sessions use a voice room. Please complete the step below before the first session.",
   "steps": {
     "minecraftJavaAccount": {
       "title": "Get a Microsoft account with Minecraft on it",

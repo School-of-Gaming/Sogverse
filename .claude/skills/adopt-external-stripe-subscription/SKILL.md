@@ -107,7 +107,7 @@ API. The Stripe CLI is pinned to an old API version, so `search` calls take
    Distinguish it from a profile customer holding a real sub of its own; leave that one.
    Fix these before the parent opens Manage billing, which mints the empty customer.
 2. **Insert the `participations` row** (product, gamer, customer, status `active`) — the
-   seat. A remote club (`products.is_remote`) needs `group_id` on the seat, or the voice
+   seat. A club with a voice room (`products.delivery_mode` online or hybrid) needs `group_id` on the seat, or the voice
    room refuses the child as not enrolled.
 3. **Insert `family_subscriptions`** keyed on the existing `stripe_subscription_id`, with
    `stripe_customer_id`, `stripe_price_id` (**honour the price the sub is already on**),

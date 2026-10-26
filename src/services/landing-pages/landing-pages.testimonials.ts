@@ -11,8 +11,9 @@ import type {
  * One testimonials section of a page, as the admin's status page and the MCP
  * read tools show it: where it sits, its arrangement, and each testimonial it
  * places in reading order with its current words from the store — enough to
- * tell the quotes apart. `versions` is empty for an id the store does not
- * answer, which the save-time check keeps from arising.
+ * tell the quotes apart. Every placed id names a testimonial: the working
+ * copy's save refuses an id no testimonial has, and no Data API role can
+ * delete one, so `versions` is never empty.
  */
 export interface LandingTestimonialsSection {
   sectionId: string;
@@ -36,12 +37,27 @@ export function landingTestimonialsSections(
             arrangement: section.arrangement,
             testimonials: section.testimonialIds.map((testimonialId) => ({
               testimonialId,
-              versions: Object.hasOwn(words, testimonialId) ? words[testimonialId].versions : [],
+              versions: placedWords(words, testimonialId).versions,
             })),
           },
         ]
       : [],
   );
+}
+
+/**
+ * The words of a testimonial the structure places. One the store did not
+ * answer is a broken invariant (see `LandingTestimonialsSection`), so it
+ * throws rather than show an empty slot.
+ */
+function placedWords(
+  words: Readonly<Record<string, PublicTestimonial>>,
+  testimonialId: string,
+): PublicTestimonial {
+  if (!Object.hasOwn(words, testimonialId)) {
+    throw new Error(`The structure places testimonial ${testimonialId}, which the store did not answer`);
+  }
+  return words[testimonialId];
 }
 
 /** Testimonials by id, as a page's renderer and its admin reads look them up. */

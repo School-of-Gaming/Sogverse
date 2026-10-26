@@ -36,7 +36,6 @@
       "title": "Gedujen hyväksyntä",
       "justNow": "Hyväksytty juuri nyt: {count}",
       "empty": "Yksikään Gedu ei odota hyväksyntää.",
-      "unnamed": "Nimetön Gedu",
       "registered": "rekisteröitynyt {when}",
       "certify": "Hyväksy",
       "certifying": "Hyväksytään…",
@@ -504,8 +503,7 @@
           "pair": "kaksi rinnakkain",
           "row": "kolme rivissä",
           "showcase": "yksi suuri lainaus, kaksi rinnakkain ja sitten kolme rivissä"
-        },
-        "missing": "Asiakaskokemus, jota ei enää ole tallessa"
+        }
       }
     },
     "status": {
@@ -666,6 +664,7 @@
       "ageRange": "{min}–{max} v",
       "seats": "{count} paikkaa",
       "online": "Etänä",
+      "hybrid": "Hybridi",
       "unlisted": "ei listattu",
       "untitled": "(nimetön)",
       "missingGeduFee": "Gedun palkkio puuttuu",
@@ -728,7 +727,7 @@
         "visibility": "Näkyvyys",
         "gamerPhotoConsents": "Valokuvakysymykset",
         "marketingConsents": "Markkinointikysymykset",
-        "format": "Muoto",
+        "deliveryMode": "Toteutustapa",
         "ageRange": "Ikähaarukka",
         "publicLink": "Julkinen linkki",
         "createdBy": "Luonut",
@@ -819,6 +818,7 @@
       "spokenLanguage": "Puhuttu kieli",
       "online": "Verkossa",
       "inPerson": "Paikan päällä",
+      "hybrid": "Hybridi",
       "municipality": "Mille kunnalle tämä on",
       "site": "Toimipiste",
       "startDate": "Alkupäivä",
@@ -913,6 +913,11 @@
       "none": "Ei äänihuonetta",
       "noneDescription": "Perheille näytetään sen sijaan liittymisohjeet, jotka kirjoitat kullekin kielelle."
     },
+    "deliveryModes": {
+      "online": "Verkossa",
+      "in_person": "Paikan päällä",
+      "hybrid": "Hybridi"
+    },
     "endDateModes": {
       "ongoing": "Ei loppupäivää",
       "ongoingDescription": "Kerho jatkuu toistaiseksi, kunnes päätät lopettaa sen.",
@@ -958,6 +963,7 @@
       "externalVoiceUrlHint": "Julkinen: kuka tahansa voi lukea linkin, myös kirjautumattomat vierailijat.",
       "municipalityHint": "Kuntakerhot on aina sidottu tiettyyn Suomen kuntaan — siihen, joka sen maksaa. Sen kunnan vanhemmat näkevät kerhon selatessaan.",
       "siteHint": "Missä kerrat fyysisesti tapahtuvat.",
+      "hybridHint": "Pelaajat tulevat paikan päälle. Gedu ja pelaajat, jotka eivät pääse paikalle, liittyvät Sogversen äänihuoneeseen.",
       "eventSingleDay": "Tapahtumat ovat yhden päivän mittaisia.",
       "timezoneEntry": "Alla olevat kertojen ajat syötetään tällä aikavyöhykkeellä. Vanhemmat näkevät ne automaattisesti omalla aikavyöhykkeellään.",
       "timezoneChangeMoves": "Alla olevat kertojen ajat syötetään tällä aikavyöhykkeellä. Vaihto siirtää jokaisen tulevan kerran samaan kellonaikaan uudella aikavyöhykkeellä, mutta kerrat, joille on jo kirjattu raportti tai läsnäolot, säilyttävät ajat, joina ne pidettiin.",
@@ -1212,8 +1218,6 @@
       "searchHint": "Hae kirjoittamalla vähintään 2 merkkiä.",
       "noParents": "Ei vielä yhtään vanhempaa.",
       "noSearchResults": "Yksikään vanhempi tai pelaaja ei vastaa hakuasi.",
-      "unnamedParent": "Nimetön vanhempi",
-      "unnamedGamer": "Nimetön pelaaja",
       "add": "Lisää",
       "adding": "Lisätään…",
       "added": "Lisätty",
@@ -1504,14 +1508,11 @@
     "unknown": "Tuntematon",
     "linkedGamers": "Liitetyt pelaajat",
     "linkedParents": "Liitetyt vanhemmat",
-    "unnamedGamer": "Nimetön pelaaja",
-    "unnamedUser": "Nimetön käyttäjä",
     "noConnectedGamers": "Ei liitettyjä pelaajia",
     "assignedProducts": "Liitetyt tuotteet",
     "noAssignedProducts": "Ei liitettyjä tuotteita",
     "unassignedGroup": "Ei ryhmää määritetty",
     "needsGroup": "Tarvitsee ryhmän",
-    "untitledProduct": "Nimetön tuote",
     "gamerDetails": {
       "title": "Henkilötiedot",
       "edit": "Muokkaa henkilötietoja",
@@ -1593,7 +1594,6 @@
     "slackNotLinked": "Ei yhdistetty"
   },
   "locations": {
-    "editName": "Muokkaa: {name}",
     "addChildUnder": "Lisää {type} kohteen {parent} alle",
     "location": "Sijainti",
     "nameRequired": "Nimi on pakollinen",
@@ -1698,7 +1698,6 @@
     "justNow": "{count, plural, one {# tuuraaja hyväksytty juuri nyt} other {# tuuraajaa hyväksytty juuri nyt}}",
     "offersLabel": "Tuuraamista tarjoavat Gedut",
     "away": "Poissa:",
-    "unnamed": "Nimetön Gedu",
     "reason": {
       "sick": "Sairaus",
       "other": "Muu"

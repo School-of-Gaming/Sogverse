@@ -1,5 +1,9 @@
-import type { ProductTopic } from "@/types";
+import type { DeliveryMode, ProductTopic } from "@/types";
 import type { GamePlatform } from "@/lib/constants/game-platforms";
+import {
+  familyBringsOwnMachine,
+  hasVoiceRoom,
+} from "@/lib/products/delivery-mode";
 
 // Product "topic" is a fixed Postgres enum (`product_topic`), and it is one
 // flat axis: every value is simply a topic. There is no game/subject split in
@@ -61,7 +65,8 @@ import type { GamePlatform } from "@/lib/constants/game-platforms";
 // machines.** At an in-person session School of Gaming provides computers with
 // everything already installed, so a step is the family's to do only where the
 // thing it is about is theirs: `"always"` steps render on every product,
-// `"ownDevice"` steps only on a remote one (`is_remote`).
+// `"ownDevice"` steps only where the family sets up a machine of their own
+// (`familyBringsOwnMachine` of the product's delivery mode).
 //
 // **An account step is scoped by where the login comes from, not by the fact
 // that it is an account.** For the three Minecraft topics the login is ours as
@@ -75,14 +80,20 @@ import type { GamePlatform } from "@/lib/constants/game-platforms";
 // nothing, which is what `resolveTopicPrep` returning null means.
 //
 // **One step belongs to no topic at all.** Getting a microphone and camera
-// ready for the voice room is a fact about a *remote* product — the session
-// happens in a browser room, and in person it does not happen at all — so it is
-// declared once, outside every topic's `steps`, and `resolveTopicPrep` appends
-// it as the last step of every remote guide. Written into every topic's block it
-// would be one paragraph copied per topic, drifting apart the first time one of
-// them was edited. It is also why the label-only topics now render a guide
-// on a remote product where they rendered none before: there is exactly one
-// thing to do beforehand, and it is this.
+// ready for the voice room is a fact about a product with a voice room
+// (`hasVoiceRoom` of its delivery mode) — the session happens in a browser
+// room, and in person there is no room — so it is declared once, outside every
+// topic's `steps`, and `resolveTopicPrep` appends it as the last step of every
+// guide for a product with a room. Written into every topic's block it would
+// be one paragraph copied per topic, drifting apart the first time one of them
+// was edited. It is also why the label-only topics render a guide on such a
+// product: there is exactly one thing to do beforehand, and it is this.
+//
+// **The two are separate inputs on purpose.** Whether the install-and-test
+// steps apply and whether the voice-room step applies are different questions
+// of the delivery mode, and the resolver asks each through its own helper, so
+// changing what one helper answers for a mode changes that half of the guide
+// and nothing else.
 //
 // **Every message-shaped thing stays out of this registry.** It holds structure
 // and literals (a step's key, its scope, its URL) and the catalog holds the
@@ -525,17 +536,16 @@ export function topicHasInfoCard(
  * ready for the voice room.
  *
  * **Declared here rather than inside every topic's `steps` array** because it
- * is a fact about a *remote* product and not about any topic — the same
- * paragraph would otherwise be written once per topic and be that many
- * paragraphs to keep in agreement. `resolveTopicPrep` appends it, last, to every remote guide, and a
- * label-only topic's remote guide is this step and nothing else.
+ * is a fact about a product with a voice room and not about any topic — the
+ * same paragraph would otherwise be written once per topic and be that many
+ * paragraphs to keep in agreement. `resolveTopicPrep` appends it, last, to
+ * every guide for a product with a room, and a label-only topic's guide there
+ * is this step and nothing else.
  *
- * Its scope is `ownDevice` for the reason the scope axis exists: the room runs
- * in a browser on the family's own machine, and at an in-person product there
- * is no room to join, so the step is never the family's to do there. The
- * resolver never has to *filter* it — it is only ever added on the remote
- * branch — but the scope has to be the honest one, because the tests read a
- * plan's steps back through it.
+ * Its scope is `ownDevice` because the room runs in a browser on a machine of
+ * the family's. The resolver never *filters* it by scope — it is added exactly
+ * when the product has a voice room — but the scope is stated honestly,
+ * because the tests read a plan's steps back through it.
  */
 const REMOTE_SESSION_STEP = {
   key: "remoteSession",
@@ -594,7 +604,7 @@ export type TopicPrepChecklistKey = NonNullable<
  * *different message key*, and the type is what stops a renderer asking the
  * catalog for one that does not exist. `full` and `accountsOnly` are keyed by
  * topic and carry the narrowest topic union that has prose; `remoteOnly` is
- * keyed by nothing, because a guide that is only the shared remote-session step
+ * keyed by nothing, because a guide that is only the shared voice-room step
  * has no topic-specific sentence to open with and takes the one generic intro.
  */
 export type TopicPrepPlan =
@@ -609,7 +619,7 @@ export type TopicPrepPlan =
       steps: readonly TopicPrepStep[];
     }
   | {
-      /** A label-only topic on a remote product: the shared step, alone. */
+      /** Nothing of the topic's applies, but there is a voice room: the shared step, alone. */
       form: "remoteOnly";
       steps: readonly TopicPrepStep[];
     };
@@ -619,8 +629,8 @@ export type TopicPrepPlan =
  * and asked for the same reason: a `prep !== undefined` check repeated per
  * surface would drift.
  *
- * It is **not** the render condition on its own any more — a remote product
- * with no topic steps still renders the shared one — so a surface asks
+ * It is **not** the render condition on its own — a product with a voice room
+ * and no topic steps still renders the shared one — so a surface asks
  * `resolveTopicPrep`, and this predicate answers only the narrower question of
  * whether the topic brought steps and prose of its own.
  *
@@ -649,41 +659,46 @@ function topicHasAccountsOnlyIntro(
  * The whole render decision for one product: which steps apply, which intro
  * they take, and — as `null` — whether anything applies at all.
  *
+ * The delivery mode is asked two separate questions, each through its own
+ * helper: whether the family sets up a machine of their own
+ * (`familyBringsOwnMachine`, which keeps the topic's `ownDevice` steps), and
+ * whether the sessions have a voice room (`hasVoiceRoom`, which appends the
+ * shared voice-room step).
+ *
  * `null` covers both ways a surface ends up with nothing to draw, because a
  * caller cannot usefully tell them apart: the topic has no guide, or every one
  * of its steps belongs to something School of Gaming is supplying — a device,
- * or a login. The three Minecraft topics in person are the second case, and it
- * is why the answer is a predicate over the *filtered* steps rather than over
- * `prep` alone.
- *
- * **Both ways are now in-person answers.** Every remote product has at least
- * the shared remote-session step, so `null` on a remote product is unreachable
- * — which is the whole change a label-only topic sees: it drew no guide, and
- * now it draws a one-step one.
+ * or a login — and there is no voice room to get ready for. The three
+ * Minecraft topics in person are the second case, and it is why the answer is
+ * a predicate over the *filtered* steps rather than over `prep` alone. A
+ * product with a voice room never answers `null`.
  */
 export function resolveTopicPrep(
   topic: ProductTopic,
-  isRemote: boolean,
+  mode: DeliveryMode,
 ): TopicPrepPlan | null {
-  // A topic with no steps of its own still has the shared one, on a remote
-  // product: the room is browser-based and the mic has to work. In person it
-  // has nothing, which is the answer it has always given.
-  if (!topicHasPrep(topic)) {
-    return isRemote ? { form: "remoteOnly", steps: [REMOTE_SESSION_STEP] } : null;
-  }
+  const roomSteps = hasVoiceRoom(mode) ? [REMOTE_SESSION_STEP] : [];
+
+  // The topic brings nothing that applies here — no guide of its own, or only
+  // steps School of Gaming is supplying — so the guide is the voice-room step
+  // alone where there is a room, and nothing where there is not.
+  const roomOnly: TopicPrepPlan | null =
+    roomSteps.length > 0 ? { form: "remoteOnly", steps: roomSteps } : null;
+
+  if (!topicHasPrep(topic)) return roomOnly;
 
   // Read through the const map rather than the declared shape, so the step
   // keys stay the literals the message catalog is checked against.
   const declared: readonly TopicPrepStep[] = PRODUCT_TOPICS[topic].prep.steps;
-  const applicable = isRemote
+  const applicable = familyBringsOwnMachine(mode)
     ? declared
     : declared.filter((step) => step.scope === "always");
 
-  if (applicable.length === 0) return null;
+  if (applicable.length === 0) return roomOnly;
 
   // The shared step goes last, after everything the topic itself asked for: it
   // is the one thing to do once the game is installed and signed into.
-  const steps = isRemote ? [...applicable, REMOTE_SESSION_STEP] : applicable;
+  const steps = [...applicable, ...roomSteps];
 
   if (applicable.length === declared.length) {
     return { form: "full", topic, steps };

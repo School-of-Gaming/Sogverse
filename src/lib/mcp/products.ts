@@ -105,7 +105,7 @@ export function registerProductTools(server: McpServer): void {
     "list_products",
     {
       title: "List products",
-      description: `School of Gaming's products, every type — clubs, municipality clubs, camps and events, listed or not — newest first, ${ADMIN_PRODUCT_LIST_PAGE_SIZE} to a page, as the admin product list in Sogverse shows them, narrowed by type, a name search, spoken language and weekday. Each one's id, its name in every language it is written in, its type and topic, whether it is online, its start and end dates (calendar dates in its own timezone; a club may have no end), its price (billing mode and the amount in each currency, in cents), its public page (a municipality club's is under its town's schools page), and listing. ${LISTING} The first page says how many products match (total); when more follow, nextCursor is set: pass it back as cursor for the next page, with the same filters. Use the ids as a landing page products section's productIds. ${PICKING}`,
+      description: `School of Gaming's products, every type — clubs, municipality clubs, camps and events, listed or not — newest first, ${ADMIN_PRODUCT_LIST_PAGE_SIZE} to a page, as the admin product list in Sogverse shows them, narrowed by type, a name search, spoken language and weekday. Each one's id, its name in every language it is written in, its type and topic, how it is delivered (deliveryMode: online in a voice room, in_person at a site, or hybrid — children at a site and the gedu in the Sogverse voice room), its start and end dates (calendar dates in its own timezone; a club may have no end), its price (billing mode and the amount in each currency, in cents), its public page (a municipality club's is under its town's schools page), and listing. ${LISTING} The first page says how many products match (total); when more follow, nextCursor is set: pass it back as cursor for the next page, with the same filters. Use the ids as a landing page products section's productIds. ${PICKING}`,
       inputSchema: input,
       annotations: READ_ONLY,
     },
@@ -154,7 +154,7 @@ export function registerProductTools(server: McpServer): void {
             })),
             type: product.product_type,
             topic: product.topic,
-            online: product.is_remote,
+            deliveryMode: product.delivery_mode,
             startDate: product.start_date,
             endDate: product.end_date,
             timezone: product.timezone,

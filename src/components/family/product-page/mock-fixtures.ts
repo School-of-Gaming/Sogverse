@@ -17,6 +17,7 @@ import type {
 import type { MaybeInertHrefObject } from "@/lib/constants/routes";
 import type { PlannedSession } from "@/lib/planned-sessions";
 import type { ProductVoiceRoom } from "@/lib/products/voice-room";
+import type { DeliveryMode } from "@/types";
 import { ROUTES } from "@/lib/constants/routes";
 
 /**
@@ -79,7 +80,7 @@ export function isFamilyProductScenario(s: string): s is FamilyProductScenario {
 export interface FamilyProductPageFixture {
   productName: string;
   schedule: FamilyProductSchedule;
-  isRemote: boolean;
+  deliveryMode: DeliveryMode;
   voiceRoom: ProductVoiceRoom;
   /** Whoever holds the seat — a child on every scenario but `my-own-club`. */
   participant: { id: string; firstName: string };
@@ -700,7 +701,7 @@ interface ScenarioConfig {
   anchor: Anchor;
   specs: readonly FamilyEntrySpec[];
   durationMinutes: number;
-  isRemote: boolean;
+  deliveryMode: DeliveryMode;
   groupName: string;
   gedus: readonly FamilyProductGedu[];
   groupPublicNote: string | null;
@@ -737,7 +738,7 @@ interface ScenarioConfig {
 
 const SCENARIOS: Record<FamilyProductScenario, ScenarioConfig> = {
   /**
-   * **The kitchen sink**, and the only scenario with a live room: a remote
+   * **The kitchen sink**, and the only scenario with a live room: an online
    * weekly club four months into its run, with a session in progress, seven
    * more ahead of it and eighteen behind.
    *
@@ -754,7 +755,7 @@ const SCENARIOS: Record<FamilyProductScenario, ScenarioConfig> = {
     anchor: { kind: "live" },
     specs: ACTIVE_CLUB_SPECS,
     durationMinutes: 90,
-    isRemote: true,
+    deliveryMode: "online",
     groupName: "Builders A",
     gedus: [SANNA, PETRA],
     groupPublicNote:
@@ -802,7 +803,7 @@ const SCENARIOS: Record<FamilyProductScenario, ScenarioConfig> = {
     anchor: { kind: "next-occurrence", weekday: 2, startTime: "15:30" },
     specs: IN_PERSON_CLUB_SPECS,
     durationMinutes: 90,
-    isRemote: false,
+    deliveryMode: "in_person",
     groupName: "Wednesday green",
     gedus: [PETRA, JOONAS],
     groupPublicNote:
@@ -823,8 +824,8 @@ const SCENARIOS: Record<FamilyProductScenario, ScenarioConfig> = {
    * **A product whose run is over.** Five consecutive weekdays, all of them
    * behind us, so the feed is history end to end: no future block, no divider,
    * and nothing for the scroll sentinel to reveal either, since five entries fit
-   * inside the opening slice. It is remote, which makes it the one scenario proving that a
-   * *finished* remote product renders no Join — a locked button promises an
+   * inside the opening slice. It is online, which makes it the one scenario proving that a
+   * *finished* online product renders no Join — a locked button promises an
    * unlock, and this room will never open again.
    */
   camp: {
@@ -839,7 +840,7 @@ const SCENARIOS: Record<FamilyProductScenario, ScenarioConfig> = {
     },
     specs: CAMP_SPECS,
     durationMinutes: 180,
-    isRemote: true,
+    deliveryMode: "online",
     groupName: "Builders red",
     gedus: [SANNA, JOONAS],
     groupPublicNote:
@@ -874,6 +875,10 @@ const SCENARIOS: Record<FamilyProductScenario, ScenarioConfig> = {
    * scenario can show. Dressed as a club bought last week with its first
    * session still to come, so the feed also happens to demonstrate that an
    * empty history simply ends at the divider — absence, not a placeholder.
+   *
+   * It is the hybrid page too: the gamers meet at a school and the Gedu joins
+   * online, so the masthead carries the site's address and the Join under it —
+   * both, which no online or in-person scenario can show.
    */
   "locked-join": {
     productName: "Minecraft Starters Club",
@@ -882,19 +887,23 @@ const SCENARIOS: Record<FamilyProductScenario, ScenarioConfig> = {
     anchor: { kind: "next-occurrence", weekday: 0, startTime: "17:00" },
     specs: NEW_CLUB_SPECS,
     durationMinutes: 90,
-    isRemote: true,
+    deliveryMode: "hybrid",
     groupName: "Starters B",
     gedus: [SANNA],
     groupPublicNote:
       "Starters B is a brand-new group and everybody in it is starting from the same place. The first couple of sessions are mostly getting set up and getting to know each other.",
-    site: null,
+    site: {
+      name: "Kallio Primary School, Helsinki",
+      address: "Porvoonkatu 2, 00510 Helsinki",
+      publicNote: null,
+    },
     startsWithFeed: true,
   },
 
   /**
    * **The parent's own seat**, and the only page here the reader is *in*.
    *
-   * A parents' evening club, remote and running right now, so the two things
+   * A parents' evening club, online and running right now, so the two things
    * the self variant changes are both on screen at once: the masthead reads
    * "for you" over the reader's own identicon, and the Join is lit with no
    * account switch behind it — the live page hands this seat no join handler at
@@ -914,7 +923,7 @@ const SCENARIOS: Record<FamilyProductScenario, ScenarioConfig> = {
     anchor: { kind: "live" },
     specs: PARENTS_CLUB_SPECS,
     durationMinutes: 90,
-    isRemote: true,
+    deliveryMode: "online",
     groupName: "Parents’ evening",
     gedus: [JOONAS],
     groupPublicNote:
@@ -988,7 +997,7 @@ export function buildFamilyProductPageFixture(
       end_date: config.productType === "camp" ? dateIn(newest) : null,
       schedule_slots: slotsFor(config, slot),
     },
-    isRemote: config.isRemote,
+    deliveryMode: config.deliveryMode,
     voiceRoom: { mode: "sogverse" },
     participant: config.participant ?? AINO,
     isSelfSeat: config.selfSeat === true,

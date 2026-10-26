@@ -56,19 +56,19 @@ const L_REGION = "80000000-0000-4000-8000-000000000002";
 const ACTIVITIES = {
   [P_CAMP]: {
     product_type: "camp",
-    is_remote: false,
+    delivery_mode: "in_person",
     start_date: "2026-10-19",
     spoken_language_code: "fr",
   },
   [P_CLUB]: {
     product_type: "consumer_club",
-    is_remote: true,
+    delivery_mode: "online",
     start_date: "2026-09-14",
     spoken_language_code: "fi",
   },
   [P_EVENT]: {
     product_type: "event",
-    is_remote: true,
+    delivery_mode: "online",
     start_date: "2026-11-02",
     spoken_language_code: "fi",
   },

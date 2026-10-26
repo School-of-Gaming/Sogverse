@@ -179,12 +179,12 @@ export const sessionProductDocument = z.object({
   topic: z.enum(Constants.public.Enums.product_topic),
   spoken_language_code: z.enum(Constants.public.Enums.spoken_language),
   timezone: z.string(),
-  is_remote: z.boolean(),
+  delivery_mode: z.enum(Constants.public.Enums.delivery_mode),
   /** How the sessions are joined — `src/lib/products/voice-room.ts`. */
   ...voiceRoomWireFields,
   start_date: z.string().nullable(),
   end_date: z.string().nullable(),
-  /** The venue, on in-person products only; null on anything remote. */
+  /** The venue, on in-person and hybrid products; null on an online one. */
   site_name: z.string().nullable(),
   translations: z.array(sessionProductTranslation),
   schedule_slots: z.array(sessionScheduleSlot),

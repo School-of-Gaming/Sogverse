@@ -158,10 +158,8 @@ function toPublicProfile(row: PublicTeamProfileRow): PublicTeamProfile {
     ? {
         ...common,
         kind: "admin",
-        // Never NULL for an admin: the column is NOT NULL, and a public
-        // admin's profile was complete, title included, when it was saved.
-        lastName: row.last_name ?? "",
-        title: row.title ?? "",
+        lastName: row.last_name,
+        title: row.title,
       }
     : { ...common, kind: "gedu" };
 }

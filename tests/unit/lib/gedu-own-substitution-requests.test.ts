@@ -42,7 +42,7 @@ function request(
       topic: "minecraft_java",
       spoken_language_code: "fi",
       timezone: "Europe/Helsinki",
-      is_remote: true,
+      delivery_mode: "online",
       voice_room_mode: "sogverse",
       external_voice_url: null,
       start_date: "2026-09-01",

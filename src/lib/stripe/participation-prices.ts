@@ -4,7 +4,7 @@ import type { SupabaseClient } from "@supabase/supabase-js";
 import type { Database, ProductType, SpokenLanguageCode } from "@/types";
 import type { SupportedCurrency } from "@/lib/constants/currency";
 import { DEFAULT_LOCALE } from "@/lib/constants/locales";
-import { resolveTranslation } from "@/lib/i18n/resolve-translation";
+import { resolveRequiredTranslation } from "@/lib/i18n/resolve-translation";
 import { stripe } from "@/lib/stripe/client";
 import { vatForProductType } from "@/lib/stripe/vat";
 
@@ -33,9 +33,9 @@ export interface StripeProductSource {
    * Stripe verbatim — re-anchoring a zoneless date to anyone's timezone shifts
    * it off by a day.
    */
-  start_date: string | null;
+  start_date: string;
   end_date: string | null;
-  product_translations: { locale: string; name: string }[] | null;
+  product_translations: { locale: string; name: string }[];
 }
 
 /**
@@ -211,27 +211,16 @@ function desiredStripeProduct(
   // walk the shared fallback chain. The pick depends only on which locales are
   // written, never on the rows' order, so the name does not flap — a flapping
   // name would reconcile on every purchase and break the idempotency key below.
-  const name = resolveTranslation(
-    product.product_translations,
-    DEFAULT_LOCALE,
-  )?.name;
-  // Fail closed. Every product is guaranteed at least one translation, so an
-  // empty array means the row was not read properly — and the same read decides
-  // the tax code, where degrading quietly would mint a camp's Stripe Product at
-  // the standard rate and keep it there.
-  if (!name) {
-    throw new Error(
-      `Product ${product.id} has no translation to name its Stripe Product with`,
-    );
-  }
+  const name = resolveRequiredTranslation(product.product_translations, DEFAULT_LOCALE).name;
 
   const metadata: Record<string, string> = {
     product_id: product.id,
     spoken_language_code: product.spoken_language_code,
+    delivery_start: product.start_date,
   };
-  // A null date is an absent key rather than an empty one — see the reconcile
-  // below for how an absent key is expressed on an update.
-  if (product.start_date) metadata.delivery_start = product.start_date;
+  // An open-ended product's null end date is an absent key rather than an empty
+  // one — see the reconcile below for how an absent key is expressed on an
+  // update.
   if (product.end_date) metadata.delivery_end = product.end_date;
 
   return {

@@ -321,7 +321,6 @@ function FamilyBlockRow({
   errorById,
   onAdd,
 }: FamilyBlockRowProps) {
-  const t = useTranslations("admin.products.participantPicker");
   const c = useTranslations("common");
   return (
     <div className="rounded-lg border border-border">
@@ -332,7 +331,7 @@ function FamilyBlockRow({
           </Avatar>
           <div className="min-w-0">
             <p className="truncate font-medium">
-              {parent.first_name || t("unnamedParent")}
+              {parent.first_name}
             </p>
             {parent.email && (
               <p className="truncate text-xs text-muted-foreground">
@@ -410,8 +409,6 @@ function GamerPickerRow({
   error,
   onAdd,
 }: GamerPickerRowProps) {
-  const t = useTranslations("admin.products.participantPicker");
-
   return (
     <div className="flex items-center justify-between gap-3 py-2.5 pl-14 pr-3">
       <div className="flex min-w-0 items-center gap-3">
@@ -420,7 +417,7 @@ function GamerPickerRow({
         </Avatar>
         <div className="min-w-0">
           <p className="truncate text-sm font-medium">
-            {gamer.first_name || t("unnamedGamer")}
+            {gamer.first_name}
           </p>
           {error && (
             <p className="flex items-center gap-1.5 text-xs text-foreground">

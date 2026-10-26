@@ -126,7 +126,7 @@ function baseProduct(id: string) {
     billing_mode: "free" as const,
     topic: "minecraft_java" as const,
     spoken_language_code: "en" as const,
-    is_remote: true,
+    delivery_mode: "online" as const,
     location_id: null,
     timezone: "UTC",
     registration_opens_at: "2025-12-01T00:00:00Z",

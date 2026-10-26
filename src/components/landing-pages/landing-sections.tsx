@@ -19,7 +19,7 @@ import {
 import { FaqAccordion } from "@/components/ui/faq-accordion";
 import { Markdown } from "@/components/ui/markdown";
 import type { SupportedLocale } from "@/lib/constants/locales";
-import { resolveTranslation } from "@/lib/i18n/resolve-translation";
+import { resolveRequiredTranslation } from "@/lib/i18n/resolve-translation";
 import {
   landingPictureSize,
   type LandingPictureShape,
@@ -713,9 +713,8 @@ function TestimonialsSection({ section, text, context }: LandingSectionProps<"te
   const pick = (ids: readonly string[]): ShownTestimonial[] =>
     ids.flatMap((id) => {
       const testimonial = context.testimonial(id);
-      const version =
-        testimonial === null ? null : resolveTranslation(testimonial.versions, context.locale);
-      if (version === null) return [];
+      if (testimonial === null) return [];
+      const version = resolveRequiredTranslation(testimonial.versions, context.locale);
       return [
         {
           key: id,

@@ -18,7 +18,7 @@ import {
 import { resolveLocale, type SupportedLocale } from "@/lib/constants/locales";
 import { isSupportedCurrency } from "@/lib/constants/currency";
 import { countryDisplayName } from "@/components/public/products/region-lock/region-gate";
-import { resolveTranslation } from "@/lib/i18n/resolve-translation";
+import { resolveRequiredTranslation } from "@/lib/i18n/resolve-translation";
 import { effectiveStatus } from "@/lib/products/effective-status";
 import {
   formatProductSchedule,
@@ -565,8 +565,7 @@ export function SwitchClubSheet({
                 <div className="rounded-lg border border-border p-3">
                   <div className="flex items-start justify-between gap-2">
                     <p className="font-medium">
-                      {resolveTranslation(target.product_translations, uiLocale)
-                        ?.name ?? ""}
+                      {resolveRequiredTranslation(target.product_translations, uiLocale).name}
                     </p>
                     <ProductStatusChip status={targetStatus} />
                   </div>
@@ -863,8 +862,7 @@ function ClubList({
             >
               <span className="flex items-start justify-between gap-2">
                 <span className="min-w-0 truncate font-medium">
-                  {resolveTranslation(row.product_translations, locale)?.name ??
-                    ""}
+                  {resolveRequiredTranslation(row.product_translations, locale).name}
                 </span>
                 {/* One pill in this slot, never two: a disabled row's reason
                     REPLACES the status chip rather than joining it, because

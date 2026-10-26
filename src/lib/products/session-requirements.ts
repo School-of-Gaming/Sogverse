@@ -1,4 +1,6 @@
+import { geduAttendsSite } from "@/lib/products/delivery-mode";
 import type {
+  DeliveryMode,
   GeduQualification,
   ProductTag,
   ProductType,
@@ -45,7 +47,8 @@ export function productRequiredQualifications(product: {
 /**
  * What whoever runs a session of a product has to bring: the qualifications it
  * requires, the language it is run in, which they must speak, and — for an
- * in-person product only — a coverage area reaching its site.
+ * in-person product only, never a hybrid one — a coverage area reaching its
+ * site.
  *
  * The database holds a gedu to all three on the paths they start themselves —
  * the substitution pool and offering — and the admin surfaces read them here
@@ -57,8 +60,9 @@ export interface SessionRequirements {
   language: SpokenLanguageCode;
   /**
    * The site an in-person product runs at, which one of the gedu's coverage
-   * ticks has to reach; `null` for an online product, which requires no
-   * coverage at all — an online municipality club's location included.
+   * ticks has to reach; `null` for an online or hybrid product, which requires
+   * no coverage at all — an online municipality club's location included, and
+   * a hybrid product's site, since its gedu joins through the voice room.
    *
    * Only the product's id and the site's name: whether a gedu's ticks reach
    * the site is a walk up the location tree, which the database answers for
@@ -71,7 +75,7 @@ export interface SessionRequirements {
 /**
  * A product's session requirements. `siteName` is the name of the product's
  * location, which on an in-person product is its site; it is ignored on an
- * online one.
+ * online or hybrid one.
  */
 export function sessionRequirements(
   product: {
@@ -79,14 +83,16 @@ export function sessionRequirements(
     product_type: ProductType;
     tag: ProductTag | null;
     spoken_language_code: SpokenLanguageCode;
-    is_remote: boolean;
+    delivery_mode: DeliveryMode;
   },
   siteName: string | null,
 ): SessionRequirements {
   return {
     qualifications: productRequiredQualifications(product),
     language: product.spoken_language_code,
-    site: product.is_remote ? null : { productId: product.id, name: siteName },
+    site: geduAttendsSite(product.delivery_mode)
+      ? { productId: product.id, name: siteName }
+      : null,
   };
 }
 

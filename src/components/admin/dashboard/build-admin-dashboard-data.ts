@@ -4,7 +4,7 @@ import {
   formattingLocale,
   type SupportedLocale,
 } from "@/lib/constants/locales";
-import { resolveTranslation } from "@/lib/i18n/resolve-translation";
+import { resolveRequiredTranslation } from "@/lib/i18n/resolve-translation";
 import { breakName } from "@/lib/holiday-breaks";
 import { formatDate } from "@/lib/date-format";
 import type {
@@ -317,16 +317,10 @@ function toUncertifiedGedu(
   now: Date,
   viewerTimeZone: string,
 ): UncertifiedGedu {
-  const name = [candidate.first_name, candidate.last_name]
-    .filter((part) => part.trim().length > 0)
-    .join(" ");
-
   return {
     id: candidate.id,
-    // The account is real and the name may not be; an unnamed row still has to
-    // be actionable, and its identicon is keyed to the id either way. The
-    // stand-in wording belongs to the card, so the absence travels as `null`.
-    name: name.length > 0 ? name : null,
+    // The last name may be empty on an older account.
+    name: [candidate.first_name, candidate.last_name].filter(Boolean).join(" "),
     registeredAgo: relativeWait(candidate.created_at, now, locale),
     // The wire's null already means "not standing under the terms in force",
     // whether that is because nothing was ever signed or because what was
@@ -764,12 +758,11 @@ export function productCancellations(
 
 /**
  * A product's name in the reader's locale, through the admin surfaces' own
- * fallback chain (locale → English → whatever exists). Every product is
- * DB-guaranteed at least one translation, so the empty fallback is defensive.
+ * fallback chain (locale → English → whatever exists).
  */
 function productName(
   translations: readonly { locale: string; name: string }[],
   locale: SupportedLocale,
 ): string {
-  return resolveTranslation(translations, locale)?.name ?? "";
+  return resolveRequiredTranslation(translations, locale).name;
 }

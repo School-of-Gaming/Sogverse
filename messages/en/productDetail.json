@@ -65,6 +65,7 @@
     "audience": "Audience",
     "language": "Language",
     "online": "Online",
+    "hybrid": "In person and online",
     "tbd": "To be confirmed",
     "holidayBreaks": "Holiday breaks"
   },

@@ -2781,6 +2781,7 @@ export type Database = {
           billing_mode: Database["public"]["Enums"]["billing_mode"]
           created_at: string
           created_by: string
+          delivery_mode: Database["public"]["Enums"]["delivery_mode"]
           end_date: string | null
           external_voice_url: string | null
           for_gamers: boolean
@@ -2789,7 +2790,6 @@ export type Database = {
           image_id: string | null
           image_path: string | null
           invoice_customer_id: string | null
-          is_remote: boolean
           is_visible: boolean
           location_id: string | null
           max_age: number | null
@@ -2815,6 +2815,7 @@ export type Database = {
           billing_mode: Database["public"]["Enums"]["billing_mode"]
           created_at?: string
           created_by: string
+          delivery_mode: Database["public"]["Enums"]["delivery_mode"]
           end_date?: string | null
           external_voice_url?: string | null
           for_gamers?: boolean
@@ -2823,7 +2824,6 @@ export type Database = {
           image_id?: string | null
           image_path?: string | null
           invoice_customer_id?: string | null
-          is_remote: boolean
           is_visible?: boolean
           location_id?: string | null
           max_age?: number | null
@@ -2849,6 +2849,7 @@ export type Database = {
           billing_mode?: Database["public"]["Enums"]["billing_mode"]
           created_at?: string
           created_by?: string
+          delivery_mode?: Database["public"]["Enums"]["delivery_mode"]
           end_date?: string | null
           external_voice_url?: string | null
           for_gamers?: boolean
@@ -2857,7 +2858,6 @@ export type Database = {
           image_id?: string | null
           image_path?: string | null
           invoice_customer_id?: string | null
-          is_remote?: boolean
           is_visible?: boolean
           location_id?: string | null
           max_age?: number | null
@@ -4548,13 +4548,13 @@ export type Database = {
         Args: {
           p_assistant_gedu_fee_cents?: number
           p_billing_mode: Database["public"]["Enums"]["billing_mode"]
+          p_delivery_mode: Database["public"]["Enums"]["delivery_mode"]
           p_end_date?: string
           p_external_voice_url?: string
           p_for_gamers: boolean
           p_for_parents: boolean
           p_holiday_calendar_ids?: string[]
           p_invoice_customer_id?: string
-          p_is_remote: boolean
           p_is_visible?: boolean
           p_location_id?: string
           p_material_url?: string
@@ -5139,6 +5139,13 @@ export type Database = {
         Args: { p_breaks: Json; p_calendar_id: string }
         Returns: undefined
       }
+      location_lineage: {
+        Args: { p_location_id: string }
+        Returns: {
+          distance: number
+          location_id: string
+        }[]
+      }
       location_search_blob: {
         Args: { p_external_code: string; p_name: string; p_name_i18n: Json }
         Returns: string
@@ -5664,6 +5671,7 @@ export type Database = {
         Args: {
           p_assistant_gedu_fee_cents?: number
           p_billing_mode: Database["public"]["Enums"]["billing_mode"]
+          p_delivery_mode: Database["public"]["Enums"]["delivery_mode"]
           p_end_date?: string
           p_external_voice_url?: string
           p_for_gamers: boolean
@@ -5671,7 +5679,6 @@ export type Database = {
           p_holiday_calendar_ids?: string[]
           p_id: string
           p_invoice_customer_id?: string
-          p_is_remote: boolean
           p_is_visible?: boolean
           p_location_id?: string
           p_material_url?: string
@@ -5736,6 +5743,7 @@ export type Database = {
         | "landing_portrait_image"
         | "spotlight_image"
       chat_channel_type: "group_session"
+      delivery_mode: "online" | "in_person" | "hybrid"
       effective_product_status: "pending" | "running" | "completed"
       gamer_photo_consent_type: "lynx_educate"
       gamer_sign_in: "parent" | "username" | "email"
@@ -5924,6 +5932,7 @@ export const Constants = {
         "spotlight_image",
       ],
       chat_channel_type: ["group_session"],
+      delivery_mode: ["online", "in_person", "hybrid"],
       effective_product_status: ["pending", "running", "completed"],
       gamer_photo_consent_type: ["lynx_educate"],
       gamer_sign_in: ["parent", "username", "email"],

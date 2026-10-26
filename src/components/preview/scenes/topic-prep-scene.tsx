@@ -8,7 +8,7 @@ import {
   resolveTopicPrep,
   topicHasPrep,
 } from "@/lib/products/topics";
-import type { ProductTopic } from "@/types";
+import type { DeliveryMode, ProductTopic } from "@/types";
 
 /**
  * Every topic's "Before the first session" guide, one after another.
@@ -35,9 +35,11 @@ import type { ProductTopic } from "@/types";
  * simply skipped them would look identical to one where the guides had gone
  * missing.
  *
- * The `remote` column carries one card the topic registry cannot name: the
- * one-step guide every label-only topic gets, which is the shared
- * remote-session step under the generic intro. It is written once and rendered
+ * The `remote` column is an online product's guide; a hybrid product's is
+ * whatever the resolver answers for its mode, which today is this one. It
+ * carries one card the topic registry cannot name: the one-step guide every
+ * label-only topic gets, which is the shared voice-room step under the generic
+ * intro. It is written once and rendered
  * on every label-only topic, so it is read once here rather than once per topic — and it only
  * exists in this column, which is why `in-person` is unchanged.
  */
@@ -62,12 +64,13 @@ export function TopicPrepScene({
 }: {
   scenario: TopicPrepSceneScenario;
 }) {
-  const isRemote = scenario === "remote";
+  const isOnline = scenario === "remote";
+  const mode: DeliveryMode = isOnline ? "online" : "in_person";
   const topics = PRODUCT_TOPIC_VALUES.filter(topicHasPrep);
-  // Never null on a remote product — every one of them has the shared
-  // voice-room step — but asked rather than asserted, and the card below is
-  // conditional on the answer like every other card on this page.
-  const labelOnlyPlan = resolveTopicPrep(LABEL_ONLY_SAMPLE, true);
+  // Null in person, and never null online — every product with a room has the
+  // shared voice-room step — so the card below is conditional on the answer
+  // like every other card on this page.
+  const labelOnlyPlan = resolveTopicPrep(LABEL_ONLY_SAMPLE, mode);
 
   return (
     <div className="container mx-auto px-4 py-8 sm:py-12">
@@ -75,11 +78,11 @@ export function TopicPrepScene({
         <div className="space-y-1">
           <Heading level={1} step="section">
             Topic prep guides &mdash;{" "}
-            {isRemote ? "remote products" : "in-person products"}
+            {isOnline ? "online products" : "in-person products"}
           </Heading>
           <p className="text-sm text-muted-foreground">
-            {isRemote
-              ? "Every step of every guide, plus the shared voice-room step every remote product ends on."
+            {isOnline
+              ? "Every step of every guide, plus the shared voice-room step every product with a voice room ends on."
               : "Only what is still the family's to do: School of Gaming brings the machines with the software already on them, and the Minecraft logins as well."}
           </p>
         </div>
@@ -87,7 +90,7 @@ export function TopicPrepScene({
         {topics.map((topic) => {
           // The one resolve per card: the same answer decides whether there is
           // a guide here at all and what the guide is.
-          const plan = resolveTopicPrep(topic, isRemote);
+          const plan = resolveTopicPrep(topic, mode);
           return (
             <Card key={topic}>
               <CardContent className="space-y-4 p-5 sm:p-6">
@@ -108,9 +111,9 @@ export function TopicPrepScene({
         })}
 
         {/* The label-only topics render one identical guide, so they get
-            one card rather than one each. Remote only: in person they have nothing
-            to say, which is what they had before the shared step existed. */}
-        {isRemote && labelOnlyPlan !== null && (
+            one card rather than one each. Online only: in person they have
+            nothing to say. */}
+        {labelOnlyPlan !== null && (
           <Card>
             <CardContent className="space-y-4 p-5 sm:p-6">
               <Heading level={2} step="card-title">

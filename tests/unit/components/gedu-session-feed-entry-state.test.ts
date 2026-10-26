@@ -1295,25 +1295,6 @@ describe("resolveInGroupSince", () => {
       new Date("2026-02-01T10:00:00.000Z"),
     );
   });
-
-  it("resolves an absent stamp to before every session, never after", () => {
-    // Every seat holding a group carries a stamp — the trigger stamps each
-    // write path, and the rows that predated the column were backfilled — so
-    // this is a state a roster should not be able to produce. It still gets a
-    // decided answer rather than an accidental one, and the answer is the safe
-    // direction: expected everywhere, which is the behaviour that predates this
-    // rule. A missing stamp can cost a mark nobody needed; it can never produce
-    // a false "complete".
-    const resolved = resolveInGroupSince(null);
-    expect(resolved.getTime()).toBeLessThanOrEqual(END.getTime());
-    expect(
-      isExpectedOnEntry(past("e"), {
-        id: "d",
-        firstName: "Linnéa",
-        inGroupSince: resolved,
-      }),
-    ).toBe(true);
-  });
 });
 
 describe("attendanceTally — the expected members", () => {

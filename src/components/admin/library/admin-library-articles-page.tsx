@@ -21,7 +21,7 @@ import { LibraryCover } from "@/components/library/library-cover";
 import { catalogueImageSrc } from "@/lib/images/catalogue-image-url";
 import { ROUTES } from "@/lib/constants/routes";
 import { resolveLocale } from "@/lib/constants/locales";
-import { resolveTranslation } from "@/lib/i18n/resolve-translation";
+import { resolveRequiredTranslation } from "@/lib/i18n/resolve-translation";
 import { formatDate } from "@/lib/date-format";
 import { useTimezone } from "@/providers";
 import type {
@@ -116,7 +116,7 @@ function SearchableArticles({
     () =>
       articles.map((article) => ({
         article,
-        version: resolveTranslation(article.versions, uiLocale),
+        version: resolveRequiredTranslation(article.versions, uiLocale),
         categoryLabel:
           article.category === null
             ? t("noCategory")
@@ -182,8 +182,8 @@ function SearchableArticles({
             <ArticleRow
               key={article.id}
               article={article}
-              title={version?.title ?? ""}
-              summary={version?.summary ?? ""}
+              title={version.title}
+              summary={version.summary}
               categoryLabel={categoryLabel}
             />
           ))}

@@ -33,7 +33,8 @@ import {
   productWhoItsFor,
 } from "@/lib/products/product-overview-facts";
 import type { EmailTranslator, TopicPrepTranslator } from "./translator";
-import type { ProductTopic, ProductType } from "@/types";
+import { gamersAttendSite, hasVoiceRoom } from "@/lib/products/delivery-mode";
+import type { DeliveryMode, ProductTopic, ProductType } from "@/types";
 
 /**
  * The mail that follows a signup: **the full record of what was joined, plus
@@ -149,7 +150,7 @@ export interface ProductConfirmationOverviewInput {
     start_time: string;
     duration_minutes: number;
   }[];
-  isRemote: boolean;
+  deliveryMode: DeliveryMode;
   /**
    * Where it happens, already resolved to display names in the reader's locale
    * by the shared location rule — the same value the page hands its card.
@@ -184,12 +185,13 @@ export interface ProductConfirmationEmailOptions {
    */
   topic: ProductTopic;
   /**
-   * The product's `is_remote`, and the guide's filter: in person we bring the
-   * machines with everything installed, so an in-person product states only the
-   * account steps and a topic whose every step belongs to our machines states
-   * nothing at all. It also picks the "what happens next" bullet about the
-   * sessions: a remote seat is told how it joins, an in-person one where its
-   * sessions are listed.
+   * The product's `delivery_mode`, and the guide's input: the guide's resolver
+   * asks it whether the family brings their own machine (in person we bring the
+   * machines with everything installed, so only the account steps apply) and
+   * whether there is a voice room to get ready for. It also picks the "what
+   * happens next" bullet about the sessions: an online seat is told how it
+   * joins, an in-person one where its sessions are listed, and a hybrid one
+   * both.
    *
    * **Carried here rather than read out of `overview`, though that bundle holds
    * the same column.** `overview` is the "Good to know" card's input and is
@@ -198,10 +200,10 @@ export interface ProductConfirmationEmailOptions {
    * family is told to take is not a fact about that card: telling an in-person
    * family to install software they will never need is a wrong instruction
    * rather than a missing row, so the filter does not travel inside an optional
-   * bundle. Both come off the one `products.is_remote` at each call site, which
-   * is what keeps them from disagreeing.
+   * bundle. Both come off the one `products.delivery_mode` at each call site,
+   * which is what keeps them from disagreeing.
    */
-  isRemote: boolean;
+  deliveryMode: DeliveryMode;
   mode: ProductConfirmationMode;
   /**
    * The price, already formatted in the reader's locale and currency by the
@@ -435,7 +437,7 @@ function resolveTopicPrepSection(
   // Resolved **once**, here, and handed to both builders — which is what makes
   // the docblock above true: one plan cannot shorten the body and leave the
   // plain-text twin long.
-  const plan = resolveTopicPrep(options.topic, options.isRemote);
+  const plan = resolveTopicPrep(options.topic, options.deliveryMode);
   if (plan === null) return null;
   return {
     html: buildTopicPrepSection(tPrep, plan),
@@ -479,7 +481,7 @@ function resolveOverview(
     }),
   });
 
-  const labelIsFormat = productLocationLabelIsFormat(input.isRemote, input.location);
+  const labelIsFormat = productLocationLabelIsFormat(input.deliveryMode, input.location);
   facts.push({
     label: labelIsFormat
       ? t("productConfirmation.overview.format")
@@ -487,10 +489,15 @@ function resolveOverview(
     lines: [
       renderProductLocationLine({
         location: input.location,
-        isRemote: input.isRemote,
+        deliveryMode: input.deliveryMode,
         online: t("productConfirmation.overview.online"),
         tbd: t("productConfirmation.overview.tbd"),
       }),
+      // A hybrid product's place is its site, and it is joined online as
+      // well: the line under the site says so.
+      ...(gamersAttendSite(input.deliveryMode) && hasVoiceRoom(input.deliveryMode)
+        ? [t("productConfirmation.overview.inPersonAndOnline")]
+        : []),
     ],
   });
 
@@ -500,26 +507,19 @@ function resolveOverview(
     min_age: input.minAge,
     max_age: input.maxAge,
   });
-  if (whoItsFor !== null) {
-    facts.push({
-      label:
-        whoItsFor.label === "ageRange"
-          ? t("productConfirmation.overview.ageRange")
-          : t("productConfirmation.overview.audience"),
-      lines: [
-        whoItsFor.value.kind === "ages"
-          ? t("productConfirmation.overview.ages", whoItsFor.value)
-          : whoItsFor.value.kind === "parents"
-            ? t("productConfirmation.overview.audienceParents")
-            : whoItsFor.value.kind === "families"
-              ? t("productConfirmation.overview.audienceFamilies")
-              : t(
-                  "productConfirmation.overview.audienceFamiliesWithAges",
-                  whoItsFor.value,
-                ),
-      ],
-    });
-  }
+  facts.push({
+    label:
+      whoItsFor.label === "ageRange"
+        ? t("productConfirmation.overview.ageRange")
+        : t("productConfirmation.overview.audience"),
+    lines: [
+      whoItsFor.value.kind === "ages"
+        ? t("productConfirmation.overview.ages", whoItsFor.value)
+        : whoItsFor.value.kind === "parents"
+          ? t("productConfirmation.overview.audienceParents")
+          : t("productConfirmation.overview.audienceFamiliesWithAges", whoItsFor.value),
+    ],
+  });
 
   facts.push({
     label: t("productConfirmation.overview.language"),
@@ -794,7 +794,7 @@ function holidayBreaksText(
  * When the first session is, first — its weekday, date and time, so nobody has
  * to work it out from the schedule row — on a mail that has one to name (on an
  * event, when the event is); then
- * where the sessions are (on a remote product, how they are joined); then the
+ * where the sessions are (on a product with a voice room, how it is joined); then the
  * deferred first charge, on the one signup that has one — the parent has just
  * seen €0 at checkout and is owed the real date in the same breath; then the
  * price-shape line; and on a subscription, last, the 30-day money-back
@@ -891,9 +891,11 @@ function plainNextItems(t: EmailTranslator, content: ProductConfirmationContent)
 }
 
 /**
- * The "what happens next" bullet saying where the sessions are, or, on a remote
- * product, how they are joined — online in My SOG, through the voice room that
- * opens a set number of minutes before each one starts.
+ * The "what happens next" bullet saying where the sessions are, or, on an
+ * online product, how they are joined — online in My SOG, through the voice
+ * room that opens a set number of minutes before each one starts. A hybrid
+ * product says both: the participant attends at the site, and the sessions
+ * are joined online through the same room.
  *
  * The minutes come from the constant the voice room itself reads, the same one
  * the calendar entry's notes state, so the mail, the file and the room cannot
@@ -905,15 +907,21 @@ function sessionsItem(
   participantName: string,
 ): string {
   const secondPerson = readerIsParticipant(options);
-  if (options.isRemote) {
-    const minutes = VOICE_CONFIG.SESSION_WINDOW_BEFORE_MINUTES;
-    return secondPerson
-      ? t("productConfirmation.next.sessionsOnlineSelf", { minutes })
-      : t("productConfirmation.next.sessionsOnline", { participantName, minutes });
+  const minutes = VOICE_CONFIG.SESSION_WINDOW_BEFORE_MINUTES;
+  switch (options.deliveryMode) {
+    case "online":
+      return secondPerson
+        ? t("productConfirmation.next.sessionsOnlineSelf", { minutes })
+        : t("productConfirmation.next.sessionsOnline", { participantName, minutes });
+    case "hybrid":
+      return secondPerson
+        ? t("productConfirmation.next.sessionsHybridSelf", { minutes })
+        : t("productConfirmation.next.sessionsHybrid", { participantName, minutes });
+    case "in_person":
+      return secondPerson
+        ? t("productConfirmation.next.sessionsSelf")
+        : t("productConfirmation.next.sessions", { participantName });
   }
-  return secondPerson
-    ? t("productConfirmation.next.sessionsSelf")
-    : t("productConfirmation.next.sessions", { participantName });
 }
 
 /**

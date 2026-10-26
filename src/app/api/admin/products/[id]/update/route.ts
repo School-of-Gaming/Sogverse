@@ -109,7 +109,7 @@ export const POST = defineRoute({
       // fail to.
       p_requires_gamer_creations: body.requires_gamer_creations,
       p_spoken_language_code: body.spoken_language_code,
-      p_is_remote: body.is_remote,
+      p_delivery_mode: body.delivery_mode,
       // How the sessions are joined. The mode is unconditional, never
       // `?? undefined`: its parameter defaults to 'sogverse', so an omission
       // would move a product off an outside link or instructions on an edit made

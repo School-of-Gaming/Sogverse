@@ -36,7 +36,7 @@ const READY = "topicPrep.readyLabel";
  * the fixture cannot drift from the shape a surface actually passes.
  */
 function remoteOnlyPlan(): TopicPrepPlan {
-  const plan = resolveTopicPrep("esports", true);
+  const plan = resolveTopicPrep("esports", "online");
   if (!plan) throw new Error("a remote product always has a guide");
   return plan;
 }
