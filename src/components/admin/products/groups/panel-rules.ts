@@ -788,6 +788,26 @@ export function noSubscriptionMoveTarget(
     : "target";
 }
 
+/**
+ * Why a product is closed to this seat's holder in the no-subscription move,
+ * or null when it is open to them — the audience rule the move's RPC refuses
+ * on, asked of the picker's rows so the admin meets it as a disabled row:
+ *
+ *  - `gamersOnly` — the holder is an adult on their own seat, and the product
+ *    is not open to parents.
+ *  - `parentsOnly` — the holder is a child, and the product is not open to
+ *    gamers.
+ */
+export type MoveAudienceBlock = "gamersOnly" | "parentsOnly";
+
+export function moveAudienceBlock(
+  candidate: { for_gamers: boolean; for_parents: boolean },
+  holderIsAdult: boolean,
+): MoveAudienceBlock | null {
+  if (holderIsAdult) return candidate.for_parents ? null : "gamersOnly";
+  return candidate.for_gamers ? null : "parentsOnly";
+}
+
 /** What the held-place derivation reads off one of the gamer's participations. */
 export interface HeldPlaceRow {
   status: string;

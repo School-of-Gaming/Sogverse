@@ -359,8 +359,9 @@ export const adminRemoveParticipationRpcResult = z.discriminatedUnion("kind", [
 /**
  * `admin_move_participation` RPC result — the ids the club-switch commit route
  * logs. There is no `kind`: the function either moves the seat or raises, so
- * every success has one shape. `group_id` is the shared placement rule's answer
- * for the target, which for the paid target this RPC insists on is always null;
+ * every success has one shape. `group_id` is the admin's chosen group on the
+ * target, or null when none was named — the shared placement rule then leaves
+ * a seat on the paid target this RPC insists on in the unassigned inbox;
  * `stripe_subscription_id` is the live subscription the seat carried in, echoed
  * back so the audit line names it without a second read.
  */

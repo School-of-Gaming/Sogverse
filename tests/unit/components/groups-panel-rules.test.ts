@@ -6,6 +6,7 @@ import {
   heldProductIds,
   isSubscriptionShaped,
   isSwitchTarget,
+  moveAudienceBlock,
   noSubscriptionMoveTarget,
   orderSwitchTargets,
   readDropData,
@@ -1030,6 +1031,30 @@ describe("seatMenuItems", () => {
     expect(
       seatMenuItems({ ...waitlisted, hasLiveSubscription: true }),
     ).toEqual([{ action: "remove", disabledReason: "subscriptionLive" }]);
+  });
+});
+
+describe("moveAudienceBlock", () => {
+  const audiences = [
+    { for_gamers: true, for_parents: false },
+    { for_gamers: false, for_parents: true },
+    { for_gamers: true, for_parents: true },
+  ] as const;
+
+  it("closes a product not open to parents to an adult's own seat, as gamers only", () => {
+    expect(audiences.map((a) => moveAudienceBlock(a, true))).toEqual([
+      "gamersOnly",
+      null,
+      null,
+    ]);
+  });
+
+  it("closes a product not open to gamers to a child's seat, as parents only", () => {
+    expect(audiences.map((a) => moveAudienceBlock(a, false))).toEqual([
+      null,
+      "parentsOnly",
+      null,
+    ]);
   });
 });
 

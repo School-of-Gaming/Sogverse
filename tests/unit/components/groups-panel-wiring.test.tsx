@@ -128,15 +128,18 @@ vi.mock("@/components/admin/products/groups/switch-club-sheet", () => ({
     open,
     participationId,
     mode,
+    holderIsAdult,
   }: {
     open: boolean;
     participationId: string;
     mode: string;
+    holderIsAdult: boolean;
   }) => (
     <div
       data-testid="switch-club-sheet"
       data-open={String(open)}
       data-mode={mode}
+      data-adult={String(holderIsAdult)}
     >
       {participationId}
     </div>
@@ -552,8 +555,24 @@ describe("GroupsPanel — the seat menu", () => {
     const sheet = screen.getByTestId("switch-club-sheet");
     expect(sheet.dataset.open).toBe("true");
     expect(sheet.dataset.mode).toBe("no_subscription");
+    // A child's seat: the picker closes products not open to gamers.
+    expect(sheet.dataset.adult).toBe("false");
     expect(sheet.textContent).toBe(INBOX_SEAT);
     expect(screen.queryByRole("menu")).toBeNull();
+  });
+
+  it("tells the sheet a parent's own seat is an adult's", () => {
+    // The chip's discriminator: the holder's address is emitted on a parent's
+    // own seat alone, and it is what the picker's audience rule reads.
+    seatInInbox({ participant_email: "parent@example.com" });
+    renderPanel("event", "paid");
+    openMenu();
+
+    fireEvent.click(screen.getByRole("menuitem", { name: `${MENU}.move` }));
+
+    const sheet = screen.getByTestId("switch-club-sheet");
+    expect(sheet.dataset.mode).toBe("no_subscription");
+    expect(sheet.dataset.adult).toBe("true");
   });
 
   it("stages the removal confirm, writing nothing until it is confirmed", () => {

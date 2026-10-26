@@ -25,4 +25,6 @@ Three things follow for whoever reads the account afterwards. **A switch adds pr
 
 The paid-invoice gate reads the **latest** invoice only, so an *earlier* invoice that went uncollectible passes it unnoticed — open the customer's invoice list in Stripe before switching a family with any history of payment trouble.
 
+A seat with no subscription behind it — a free or municipality seat, or a camp or event paid for once — moves from the same seat menu (Move…) onto any product that is not a monthly club, and no money moves at all. Where the two products cost different amounts, settle the difference in Stripe: money owed back is a credit note against the original invoice (above), never a raw refund.
+
 Refunds stay where they are: the switch never issues one, and a family owed money back is handled by the credit-note procedure above.

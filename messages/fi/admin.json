@@ -1322,7 +1322,9 @@
           "empty": "Muuta kerhoa ei ole tarjolla. Kohteen pitää olla kuukausittain laskutettava kerho, joka ei ole vielä päättynyt.",
           "noMatch": "Haku ei osu yhteenkään kerhoon. Kokeile toista nimeä.",
           "alreadyHolds": "On jo paikka",
-          "needsSubscription": "Vaatii tilauksen"
+          "needsSubscription": "Vaatii tilauksen",
+          "gamersOnly": "Vain pelaajille",
+          "parentsOnly": "Vain vanhemmille"
         },
         "facts": {
           "ageRange": "{ends, select, both {Ikä {min}–{max} vuotta} from {Ikä vähintään {min} vuotta} other {Ikä enintään {max} vuotta}}",
@@ -1354,7 +1356,10 @@
           "noLiveSubscription": "Tämän paikan takana ei ole voimassa olevaa tilausta, joten tämä ei ole oikea työkalu: poista paikka ja ilmoita pelaaja toiseen kerhoon.",
           "targetNotPaidSubscriptionClub": "Kyseinen tuote ei ole kuukausittain laskutettava kerho, joten tilaus ei voi seurata paikkaa sinne.",
           "sameProduct": "Pelaaja on jo tässä kerhossa.",
-          "alreadyOnTarget": "Pelaajalla on jo paikka kyseisessä kerhossa."
+          "alreadyOnTarget": "Pelaajalla on jo paikka kyseisessä kerhossa.",
+          "targetIsSubscriptionClub": "Kerho laskutetaan kuukausittain, joten paikka siellä vaatii tilauksen, jota tämä siirto ei voi luoda.",
+          "targetNotOpenToParents": "Tuote ei ole avoin vanhemmille, joten vanhemman omaa paikkaa ei voi siirtää sinne.",
+          "targetNotOpenToGamers": "Tuote ei ole avoin pelaajille, joten tämän pelaajan paikkaa ei voi siirtää sinne."
         },
         "commit": {
           "stripeUpdated": "Tilaus on jo uuden kerhon hinnassa, mutta paikka ei siirtynyt. Paina Vaihda kerhoa uudelleen, niin siirto viedään loppuun. Uusi painallus ei veloita perhettä kahteen kertaan.",
@@ -1379,7 +1384,8 @@
           },
           "notStarted": "Alkaa {date}.",
           "confirm": "Siirrä",
-          "commitFailed": "Siirto ei mennyt loppuun asti. Paina Siirrä uudelleen."
+          "commitFailed": "Siirto ei mennyt loppuun asti. Paina Siirrä uudelleen.",
+          "commitConflict": "Paikka muuttui siirron aikana, joten mitään ei siirretty. Sulje tämä ja avaa paikan valikko uudelleen."
         }
       },
       "requirementGaps": {

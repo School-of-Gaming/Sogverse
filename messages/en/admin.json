@@ -1322,7 +1322,9 @@
           "empty": "There is no other club to switch to. A target has to be a club billed monthly that has not finished.",
           "noMatch": "No club matches this search. Try another name.",
           "alreadyHolds": "Already has seat",
-          "needsSubscription": "Needs a subscription"
+          "needsSubscription": "Needs a subscription",
+          "gamersOnly": "Gamers only",
+          "parentsOnly": "Parents only"
         },
         "facts": {
           "ageRange": "{ends, select, both {Ages {min}–{max}} from {Ages {min} and up} other {Ages {max} and under}}",
@@ -1354,7 +1356,10 @@
           "noLiveSubscription": "No live subscription stands behind this seat, so this is not the tool for it: remove the seat and enroll the gamer on the other club instead.",
           "targetNotPaidSubscriptionClub": "That product is not a club billed monthly, so a subscription cannot follow the seat onto it.",
           "sameProduct": "That is the club the gamer is already on.",
-          "alreadyOnTarget": "This gamer already holds a place on that club."
+          "alreadyOnTarget": "This gamer already holds a place on that club.",
+          "targetIsSubscriptionClub": "That club is billed monthly, so a seat there needs a subscription, which this move cannot create.",
+          "targetNotOpenToParents": "That product is not open to parents, so a parent’s own seat cannot move onto it.",
+          "targetNotOpenToGamers": "That product is not open to gamers, so this gamer’s seat cannot move onto it."
         },
         "commit": {
           "stripeUpdated": "The subscription is already on the new club's price, but the seat did not move. Press Switch club again to finish — pressing again does not charge the family twice.",
@@ -1379,7 +1384,8 @@
           },
           "notStarted": "Starts {date}.",
           "confirm": "Move",
-          "commitFailed": "The move did not complete. Press Move again."
+          "commitFailed": "The move did not complete. Press Move again.",
+          "commitConflict": "The seat changed while it was being moved, so nothing was moved. Close this and open the seat menu again."
         }
       },
       "requirementGaps": {

@@ -14,15 +14,29 @@ import {
   checkSwitchClub,
   commitSwitchClub,
 } from "@/services/participations/switch-club.server";
+import {
+  checkNoSubscriptionMove,
+  commitNoSubscriptionMove,
+  hasLiveSubscription,
+} from "@/services/participations/move-seat.server";
+import type { AppSupabaseClient } from "@/types";
 
 /**
- * The admin club switch — one path, two handlers.
+ * The admin seat move — one path, two handlers, two kinds of move.
  *
  *   GET  ?target=<product id>  the check: what the dialog shows, and whether
  *                              the commit is allowed. Mints nothing.
- *   POST                       the commit: the same checks re-run, then the
- *                              Stripe plan change, then the RPC that moves the
- *                              row.
+ *   POST                       the commit: the same checks re-run, then — for
+ *                              a subscribed seat — the Stripe plan change, then
+ *                              the RPC that moves the row.
+ *
+ * **The kind is the seat's, never the client's.** Both handlers first ask
+ * whether a live subscription stands behind the seat: one does → the club
+ * switch (`switch-club.server.ts`); none does → the no-subscription move
+ * (`move-seat.server.ts`), which calls no Stripe at all. The two moves' targets
+ * are disjoint — a subscription-shaped product for the switch, anything else
+ * for the move — so a sheet whose idea of the seat went stale meets a refusal
+ * from the other kind's check rather than committing a move it never showed.
  *
  * Both are role-gated admin like the sibling handlers on
  * `[participationId]/route.ts`, and both run the reads on the CALLER's client:
@@ -57,6 +71,16 @@ export const GET = defineRoute({
   response: switchClubCheckResponse,
 
   handler: async ({ supabase, params, query }) => {
+    if (!(await hasLiveSubscription(supabase, params.participationId))) {
+      const move = await checkNoSubscriptionMove({
+        supabase,
+        productId: params.id,
+        participationId: params.participationId,
+        targetProductId: query.target,
+      });
+      return { kind: "no_subscription" as const, refusals: move.refusals };
+    }
+
     const check = await checkSwitchClub({
       supabase,
       productId: params.id,
@@ -68,8 +92,6 @@ export const GET = defineRoute({
     // part of the wire contract; the response schema would strip it anyway, and
     // dropping it here says so deliberately.
     return {
-      // The route answers for a subscribed seat; the no-subscription arm is not
-      // served here yet (the UI-STUB in switch-club.queries.ts stands in).
       kind: "subscription" as const,
       currency: check.currency,
       currentAmountCents: check.currentAmountCents,
@@ -115,6 +137,17 @@ export const POST = defineRoute({
 
   handler: async ({ request, supabase, user, params, body }) => {
     const { id: productId, participationId } = params;
+
+    if (!(await hasLiveSubscription(supabase, participationId))) {
+      return moveUnsubscribedSeat({
+        request,
+        supabase,
+        adminId: user.id,
+        productId,
+        participationId,
+        body,
+      });
+    }
 
     const check = await checkSwitchClub({
       supabase,
@@ -264,6 +297,7 @@ export const POST = defineRoute({
     );
 
     const response = {
+      kind: "subscription" as const,
       participationId: outcome.result.participation_id,
       sourceProductId: outcome.result.source_product_id,
       targetProductId: outcome.result.target_product_id,
@@ -278,6 +312,189 @@ export const POST = defineRoute({
     return NextResponse.json(parsed.data);
   },
 });
+
+/**
+ * The no-subscription move's commit: the same check re-run, then the RPC, then
+ * the target's confirmation mail. Nothing outside the database moves, so a
+ * failure carries no `stripeUpdated` — whatever went wrong, nothing moved
+ * anywhere.
+ */
+async function moveUnsubscribedSeat({
+  request,
+  supabase,
+  adminId,
+  productId,
+  participationId,
+  body,
+}: {
+  request: Request;
+  supabase: AppSupabaseClient;
+  adminId: string;
+  productId: string;
+  participationId: string;
+  body: z.infer<typeof switchClubCommitBody>;
+}): Promise<NextResponse> {
+  const check = await checkNoSubscriptionMove({
+    supabase,
+    productId,
+    participationId,
+    targetProductId: body.targetProductId,
+    groupId: body.groupId,
+  });
+
+  // The club switch's posture, for its reason: a group of another product is
+  // a malformed request from the sheet, not a fact about this seat.
+  if (check.groupNotOnTarget) {
+    return NextResponse.json(
+      { error: "That group is not a group of the target product." },
+      { status: 400 },
+    );
+  }
+
+  if (check.refusals.length > 0 || !check.commitFacts) {
+    return NextResponse.json(
+      {
+        error:
+          "This seat can't be moved to that product — the dialog lists why.",
+        refusals: check.refusals,
+      },
+      { status: 400 },
+    );
+  }
+
+  const outcome = await commitNoSubscriptionMove({
+    supabase,
+    request,
+    participationId,
+    targetProductId: body.targetProductId,
+    groupId: body.groupId,
+    facts: check.commitFacts,
+  });
+
+  if (outcome.kind === "db_failed") {
+    console.error(
+      JSON.stringify({
+        event: "admin_move_seat_db_failed",
+        admin_id: adminId,
+        participation_id: participationId,
+        source_product_id: check.commitFacts.sourceProductId,
+        target_product_id: body.targetProductId,
+        code: outcome.code,
+        detail: outcome.message,
+        request_id: body.requestId,
+        at: new Date().toISOString(),
+      }),
+    );
+    const refusal = refusalForFailedUnsubscribedMove(
+      outcome.code,
+      outcome.message,
+    );
+    return NextResponse.json(
+      {
+        error: messageForFailedUnsubscribedMove(outcome.code, outcome.message),
+        ...(refusal ? { refusals: [refusal] } : {}),
+      },
+      {
+        status: statusForFailedUnsubscribedMove(outcome.code, outcome.message),
+      },
+    );
+  }
+
+  // The audit line, in the club switch's field shape minus the Stripe ids: the
+  // one record of who moved which seat between which products. The request id
+  // ties it to the dialog that pressed; nothing here is idempotent on it.
+  console.info(
+    JSON.stringify({
+      event: "admin_move_seat",
+      admin_id: adminId,
+      participation_id: outcome.result.participation_id,
+      source_product_id: outcome.result.source_product_id,
+      target_product_id: outcome.result.target_product_id,
+      group_id: outcome.result.group_id,
+      request_id: body.requestId,
+      at: new Date().toISOString(),
+    }),
+  );
+
+  const parsed = switchClubCommitResponse.safeParse({
+    kind: "no_subscription",
+    participationId: outcome.result.participation_id,
+    sourceProductId: outcome.result.source_product_id,
+    targetProductId: outcome.result.target_product_id,
+    groupId: outcome.result.group_id,
+  });
+  if (!parsed.success) {
+    throw new ApiError("Failed to move the seat", 500);
+  }
+  return NextResponse.json(parsed.data);
+}
+
+/**
+ * `admin_move_unsubscribed_participation`'s codes. Its 23514s carry no
+ * constraint name, so the raised message is what separates them — the
+ * substrings are the load-bearing halves of its `RAISE EXCEPTION` lines
+ * (`supabase/schema/functions/admin_move_unsubscribed_participation.sql`).
+ *
+ * - P0002: the participation or the target vanished → 404.
+ * - 23505, the seat has moved, and 55000 (a subscription now stands behind the
+ *   seat): the world changed between the check and the write → 409.
+ * - Every other 23514 is a refusal the check pre-flights, or the group guard
+ *   → 400.
+ * - Anything else is an outage → 500, the one answer another press can fix.
+ */
+function statusForFailedUnsubscribedMove(
+  code: string | null,
+  message: string,
+): number {
+  if (code === "P0002") return 404;
+  if (code === "23505" || code === "55000") return 409;
+  if (code === "23514" && message.includes("the seat has moved")) return 409;
+  if (code === "23514") return 400;
+  return 500;
+}
+
+function refusalForFailedUnsubscribedMove(
+  code: string | null,
+  message: string,
+): SwitchClubRefusal | null {
+  if (code === "23505") return "already_on_target";
+  if (code !== "23514") return null;
+  // The two guards with no refusal to give, ruled out before the substrings
+  // below can read their wording as one.
+  if (message.includes("the seat has moved")) return null;
+  if (message.includes("is not a group of the target")) return null;
+  if (message.includes("(same product)")) return "same_product";
+  if (message.includes("not active")) return "participation_not_active";
+  if (message.includes("is a subscription club")) {
+    return "target_is_subscription_club";
+  }
+  if (message.includes("not open to parents")) {
+    return "target_not_open_to_parents";
+  }
+  if (message.includes("not open to gamers")) {
+    return "target_not_open_to_gamers";
+  }
+  return null;
+}
+
+function messageForFailedUnsubscribedMove(
+  code: string | null,
+  message: string,
+): string {
+  if (code === "P0002") {
+    return "The seat or the target product no longer exists, so nothing was moved.";
+  }
+  if (code === "55000") {
+    return "A subscription now stands behind this seat, so it moves through the club switch. Nothing was moved.";
+  }
+  if (code === "23514" && message.includes("the seat has moved")) {
+    return "The seat is no longer on the product this move was checked against, so it was not moved.";
+  }
+  if (code === "23505" || code === "23514") {
+    return "The seat changed while it was being moved, so it was not moved.";
+  }
+  return "The seat could not be moved in the database. Nothing was moved — press Move again.";
+}
 
 /**
  * The RPC's own refusals, mapped where they could still occur as a race the

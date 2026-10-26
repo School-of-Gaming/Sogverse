@@ -103,7 +103,9 @@ async function readCommitError(response: Response): Promise<never> {
 
 /**
  * What the dialog shows for one candidate target, and whether the commit is
- * allowed: the two amounts, and the hard refusals.
+ * allowed: the two amounts and the hard refusals for the paid switch, the
+ * refusals alone for the no-subscription move. The route answers whichever
+ * kind the seat is, and the answer's `kind` says which.
  *
  * Disabled until a target is picked, and keyed on the pair — choosing another
  * club is a different question with a different answer, so the previous one is
@@ -123,18 +125,10 @@ export function useSwitchClubCheck(
   productId: string,
   participationId: string,
   targetProductId: string | null,
-  mode: SwitchClubMode,
 ) {
   return useQuery({
     queryKey: switchClubKeys.check(participationId, targetProductId ?? ""),
     queryFn: async (): Promise<SwitchClubCheckResponse> => {
-      // UI-STUB: the no-subscription move has no route answer yet, so the
-      // check is synthesized here with no refusals and the route is not
-      // called. The logic step replaces this with the route's own
-      // `no_subscription` answer.
-      if (mode === "no_subscription") {
-        return { kind: "no_subscription", refusals: [] };
-      }
       const response = await fetch(
         `${switchPath(productId, participationId)}?target=${encodeURIComponent(
           targetProductId!,
@@ -169,7 +163,9 @@ interface CommitVars {
 }
 
 /**
- * Move the seat and swap the subscription.
+ * Move the seat — swapping the subscription with it where one stands behind
+ * the seat. The route decides which from the seat itself, so the hook takes no
+ * mode.
  *
  * On success both products' snapshots have changed — the seat left one and
  * landed unassigned on the other — so the invalidation is the groups **root**
@@ -179,16 +175,11 @@ interface CommitVars {
 export function useSwitchClub(
   productId: string,
   participationId: string,
-  mode: SwitchClubMode,
 ) {
   const queryClient = useQueryClient();
 
   return useMutation({
     mutationFn: async (vars: CommitVars): Promise<SwitchClubCommitResponse> => {
-      // UI-STUB: the no-subscription move's commit is not wired, so it
-      // refuses before reaching the route. The logic step replaces this with
-      // the route's own no-subscription commit.
-      if (mode === "no_subscription") throw new Error("Not wired yet");
       const response = await fetch(switchPath(productId, participationId), {
         method: "POST",
         headers: { "Content-Type": "application/json" },

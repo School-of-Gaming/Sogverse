@@ -205,6 +205,9 @@ export function GroupsPanel({
       participantId: row.participant_id,
       name: row.participant_first_name,
       age: birth === null ? null : computeAge(birth, timeZone),
+      // The chip's own discriminator: the holder's address is emitted on a
+      // parent's own seat and nowhere else.
+      isAdult: row.participant_email !== null,
       // Which of the sheet's two actions this seat gets: a live subscription
       // behind it is the paid club switch, and none behind it is the
       // no-subscription move, whatever the product charges.
@@ -443,6 +446,7 @@ export function GroupsPanel({
             participantId={switching?.participantId ?? ""}
             gamerName={switching?.name ?? ""}
             gamerAge={switching?.age ?? null}
+            holderIsAdult={switching?.isAdult ?? false}
             mode={switching?.mode ?? "subscription"}
             onCommittingChange={setSwitchCommitting}
           />

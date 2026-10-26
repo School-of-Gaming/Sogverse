@@ -1322,7 +1322,9 @@
           "empty": "Il n’y a aucun autre club vers lequel basculer. La destination doit être un club facturé chaque mois et qui n’est pas terminé.",
           "noMatch": "Aucun club ne correspond à cette recherche. Essayez un autre nom.",
           "alreadyHolds": "A déjà une place",
-          "needsSubscription": "Abonnement requis"
+          "needsSubscription": "Abonnement requis",
+          "gamersOnly": "Joueurs uniquement",
+          "parentsOnly": "Parents uniquement"
         },
         "facts": {
           "ageRange": "{ends, select, both {Âges {min}–{max}} from {À partir de {min} ans} other {Jusqu’à {max} ans}}",
@@ -1354,7 +1356,10 @@
           "noLiveSubscription": "Aucun abonnement actif ne se trouve derrière cette place : ce n’est pas le bon outil. Retirez la place et inscrivez le joueur sur l’autre club.",
           "targetNotPaidSubscriptionClub": "Ce produit n’est pas un club facturé chaque mois, un abonnement ne peut donc pas suivre la place jusque-là.",
           "sameProduct": "C’est le club où le joueur se trouve déjà.",
-          "alreadyOnTarget": "Ce joueur a déjà une place dans ce club."
+          "alreadyOnTarget": "Ce joueur a déjà une place dans ce club.",
+          "targetIsSubscriptionClub": "Ce club est facturé chaque mois : une place y exige un abonnement, que ce déplacement ne peut pas créer.",
+          "targetNotOpenToParents": "Ce produit n’est pas ouvert aux parents, la place d’un parent ne peut donc pas y être déplacée.",
+          "targetNotOpenToGamers": "Ce produit n’est pas ouvert aux joueurs, la place de ce joueur ne peut donc pas y être déplacée."
         },
         "commit": {
           "stripeUpdated": "L’abonnement est déjà au prix du nouveau club, mais la place n’a pas bougé. Appuyez de nouveau sur Changer de club pour terminer — appuyer une seconde fois ne facture pas la famille deux fois.",
@@ -1379,7 +1384,8 @@
           },
           "notStarted": "Commence le {date}.",
           "confirm": "Déplacer",
-          "commitFailed": "Le déplacement n’est pas allé jusqu’au bout. Appuyez de nouveau sur Déplacer."
+          "commitFailed": "Le déplacement n’est pas allé jusqu’au bout. Appuyez de nouveau sur Déplacer.",
+          "commitConflict": "La place a changé pendant le déplacement, rien n’a donc été déplacé. Fermez ceci et rouvrez le menu de la place."
         }
       },
       "requirementGaps": {

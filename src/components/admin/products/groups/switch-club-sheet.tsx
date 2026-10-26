@@ -47,8 +47,10 @@ import { PRODUCT_TYPE_PRESENTATION } from "@/components/admin/dashboard/product-
 import {
   heldProductIds,
   isSwitchTarget,
+  moveAudienceBlock,
   noSubscriptionMoveTarget,
   orderSwitchTargets,
+  type MoveAudienceBlock,
   switchTargetFacts,
   type SwitchTargetFact,
 } from "./panel-rules";
@@ -67,7 +69,17 @@ const REFUSAL_KEY = {
   target_not_paid_subscription_club: "targetNotPaidSubscriptionClub",
   same_product: "sameProduct",
   already_on_target: "alreadyOnTarget",
+  target_is_subscription_club: "targetIsSubscriptionClub",
+  target_not_open_to_parents: "targetNotOpenToParents",
+  target_not_open_to_gamers: "targetNotOpenToGamers",
 } as const satisfies Record<SwitchClubRefusal, string>;
+
+/**
+ * Why a picker row cannot be chosen in the no-subscription move, beyond a place
+ * already held: the club needs a subscription, or its audience excludes the
+ * seat holder. Each value is its own `picker` message key.
+ */
+type MoveBlock = "needsSubscription" | MoveAudienceBlock;
 
 /**
  * One line of facts, with whatever the row could not answer left out rather
@@ -97,6 +109,12 @@ interface SwitchClubSheetProps {
    * birth month. Stated beside the target's own age range on stage two.
    */
   gamerAge: number | null;
+  /**
+   * The seat is an adult's own (a parent holding it themselves) rather than a
+   * child's. The no-subscription move draws a product closed to the holder's
+   * audience disabled, because its RPC refuses one.
+   */
+  holderIsAdult: boolean;
   /**
    * Told whenever the commit starts or fails, so the panel can mark the chip
    * busy for as long as money is moving. Not derived from the mutation's own
@@ -146,6 +164,7 @@ export function SwitchClubSheet({
   participantId,
   gamerName,
   gamerAge,
+  holderIsAdult,
   onCommittingChange,
   mode,
 }: SwitchClubSheetProps) {
@@ -268,8 +287,8 @@ export function SwitchClubSheet({
     [heldPlaces.data],
   );
 
-  const check = useSwitchClubCheck(productId, participationId, targetId, mode);
-  const commit = useSwitchClub(productId, participationId, mode);
+  const check = useSwitchClubCheck(productId, participationId, targetId);
+  const commit = useSwitchClub(productId, participationId);
   // The paid switch's answer, which is the only one with money in it.
   const subscriptionCheck =
     check.data?.kind === "subscription" ? check.data : undefined;
@@ -282,12 +301,14 @@ export function SwitchClubSheet({
   const source = products?.find((p) => p.id === productId) ?? null;
   const target = products?.find((p) => p.id === targetId) ?? null;
 
-  // The rows the picker lists, and among them the monthly clubs the
-  // no-subscription move shows disabled rather than hides: the seat would need
-  // a subscription there, which only checkout creates.
-  const { candidates, needsSubscription } = useMemo(() => {
+  // The rows the picker lists, and among them the ones the no-subscription
+  // move shows disabled rather than hides: a monthly club, where the seat would
+  // need a subscription only checkout creates, and a product whose audience
+  // the seat holder is not in. The subscription reason wins where both hold —
+  // no audience makes a monthly club reachable by this move.
+  const { candidates, blocked } = useMemo(() => {
     const listed: ProductWithDetails[] = [];
-    const disabled = new Set<string>();
+    const reasons = new Map<string, MoveBlock>();
     for (const p of products ?? []) {
       if (!noSubscription) {
         if (isSwitchTarget(p, productId, now)) listed.push(p);
@@ -296,10 +317,14 @@ export function SwitchClubSheet({
       const standing = noSubscriptionMoveTarget(p, productId, now);
       if (standing === "hidden") continue;
       listed.push(p);
-      if (standing === "needsSubscription") disabled.add(p.id);
+      const reason =
+        standing === "needsSubscription"
+          ? standing
+          : moveAudienceBlock(p, holderIsAdult);
+      if (reason !== null) reasons.set(p.id, reason);
     }
-    return { candidates: listed, needsSubscription: disabled };
-  }, [products, productId, now, noSubscription]);
+    return { candidates: listed, blocked: reasons };
+  }, [products, productId, now, noSubscription, holderIsAdult]);
 
   // Where the list mixes types — a free club beside a paid camp — each row
   // says which it is, because a camp and a club of the same name are told
@@ -381,12 +406,28 @@ export function SwitchClubSheet({
     failure?.stripeUpdated === true &&
     commitRefusals.length === 0 &&
     failure.status >= 500;
+  // The no-subscription move's permanent no with no refusal to name: the seat
+  // moved elsewhere, a subscription appeared behind it, or the chosen group
+  // stopped being the target's. Nothing moved, and another press meets the same
+  // answer, so the confirm dies; only its 500 — the outage — invites one.
+  const conflicted =
+    noSubscription &&
+    failure !== null &&
+    commitRefusals.length === 0 &&
+    failure.status >= 400 &&
+    failure.status < 500;
+  // The answer has to be about the move this sheet is showing. The route
+  // decides the kind from the seat, so a seat whose subscription state changed
+  // after the panel drew it is answered as the other kind — whose targets the
+  // picker never offered, so that answer already carries a refusal. Requiring
+  // the kinds to agree states the same thing directly: the sheet never commits
+  // a move it did not describe.
   const answered =
     targetId !== null &&
-    check.data !== undefined &&
+    check.data?.kind === mode &&
     refusals.length === 0 &&
     commitRefusals.length === 0;
-  const confirmDisabled = committing || !(answered || retryable);
+  const confirmDisabled = committing || conflicted || !(answered || retryable);
 
   // Each stage replaces the control the admin was standing on: picking a club
   // unmounts the row they pressed, and Back unmounts itself. Focus would fall
@@ -502,7 +543,7 @@ export function SwitchClubSheet({
             <ClubList
               rows={rows}
               held={held}
-              needsSubscription={needsSubscription}
+              blocked={blocked}
               loading={productsLoading}
               empty={
                 noSubscription
@@ -588,6 +629,11 @@ export function SwitchClubSheet({
                   <p className="text-sm text-muted-foreground">
                     {t("prices.error")}
                   </p>
+                ) : refusals.length > 0 ? (
+                  // Ahead of the skeleton: an answer of the other kind (the
+                  // seat lost its subscription under the sheet) carries its
+                  // refusal and no money, and must not read as still loading.
+                  <RefusalList refusals={refusals} />
                 ) : subscriptionCheck === undefined ? (
                   <div className="space-y-2">
                     <div className="h-4 w-24 animate-pulse rounded bg-lifted" />
@@ -595,8 +641,6 @@ export function SwitchClubSheet({
                     <div className="h-4 w-full animate-pulse rounded bg-lifted" />
                     <div className="h-4 w-3/4 animate-pulse rounded bg-lifted" />
                   </div>
-                ) : refusals.length > 0 ? (
-                  <RefusalList refusals={refusals} />
                 ) : (
                   <div className="space-y-2">
                     <div className="flex items-end gap-3">
@@ -686,6 +730,8 @@ export function SwitchClubSheet({
                       ) : (
                         t("commit.stripeUpdatedStuck")
                       )
+                    ) : conflicted ? (
+                      tn("commitConflict")
                     ) : noSubscription ? (
                       tn("commitFailed")
                     ) : (
@@ -731,7 +777,9 @@ export function SwitchClubSheet({
  * The exceptions are dead ends, not flags: a club the gamer already holds a
  * place on (the unique index covers it, the commit refuses it), and — in the
  * no-subscription move — a club billed monthly, where a seat exists only behind
- * a subscription that checkout alone creates. A row that leads only to a
+ * a subscription that checkout alone creates, and a product not open to the
+ * seat holder's audience (a parent's own seat, a children's product, or the
+ * reverse). A row that leads only to a
  * refusal is drawn disabled and says why. It keeps its ordered position — the
  * club is still where the admin expects to find it, it simply cannot be
  * pressed.
@@ -739,7 +787,7 @@ export function SwitchClubSheet({
 function ClubList({
   rows,
   held,
-  needsSubscription,
+  blocked,
   loading,
   empty,
   locale,
@@ -749,7 +797,7 @@ function ClubList({
 }: {
   rows: ProductWithDetails[];
   held: ReadonlySet<string>;
-  needsSubscription: ReadonlySet<string>;
+  blocked: ReadonlyMap<string, MoveBlock>;
   loading: boolean;
   empty: string;
   locale: SupportedLocale;
@@ -783,10 +831,11 @@ function ClubList({
         // Held first: where both are true, the place the gamer already holds
         // is the nearer reason.
         const isHeld = held.has(row.id);
+        const block = blocked.get(row.id);
         const disabledReason = isHeld
           ? t("alreadyHolds")
-          : needsSubscription.has(row.id)
-            ? t("needsSubscription")
+          : block !== undefined
+            ? t(block)
             : null;
         const disabled = disabledReason !== null;
         return (

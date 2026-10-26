@@ -1322,7 +1322,9 @@
           "empty": "latlh ghom’a’ tu’lu’be’. jarmey Huch poQnIS ghom’a’, ’ej rInbe’nIS.",
           "noMatch": "ghom’a’ tu’lu’be’ QulmeHvam. latlh pong yInID.",
           "alreadyHolds": "quS ghaj",
-          "needsSubscription": "jarmey Huch poQ"
+          "needsSubscription": "jarmey Huch poQ",
+          "gamersOnly": "QujwI’pu’ neH",
+          "parentsOnly": "vavpu’ SoSpu’ je neH"
         },
         "facts": {
           "ageRange": "{ends, select, both {DIS {min}–{max}} from {DIS {min} pagh nIvbogh} other {DIS {max} pagh puSbogh}}",
@@ -1354,7 +1356,10 @@
           "noLiveSubscription": "pa’vam DungDaq taHbogh Huch nge’ghach tu’lu’be’, vaj jan lughbe’ ’oH: pa’ yIteq, ’ej latlh ghom’a’Daq SuvwI’ yIngu’.",
           "targetNotPaidSubscriptionClub": "jarmey Huch poQbogh ghom’a’ ’oHbe’ ngoptlhInvam’e’, vaj pa’ tlha’laHbe’ Huch nge’ghach.",
           "sameProduct": "ghom’a’vamDaq ghaHtaH SuvwI’’e’.",
-          "alreadyOnTarget": "ghom’a’vamDaq pa’ ghaj SuvwI’."
+          "alreadyOnTarget": "ghom’a’vamDaq pa’ ghaj SuvwI’.",
+          "targetIsSubscriptionClub": "jarmey Huch poQ ghom’a’vam. jarmey Huch chenmoHlaHbe’ vIHghachvam.",
+          "targetNotOpenToParents": "vavpu’ SoSpu’ je lajbe’ ngoptlhInvam. pa’vetlh yIvIHQo’!",
+          "targetNotOpenToGamers": "QujwI’pu’ lajbe’ ngoptlhInvam. pa’vetlh yIvIHQo’!"
         },
         "commit": {
           "stripeUpdated": "ghom’a’ chu’ HuchDaq ’oHtaH Huch nge’ghach’e’, ’ach vIHbe’ pa’. rInmeH ghom’a’ yIchIj yI’uy’qa’ — cha’logh qorDu’ nge’lu’be’.",
@@ -1379,7 +1384,8 @@
           },
           "notStarted": "{date} tagh.",
           "confirm": "yIvIH",
-          "commitFailed": "rInbe’ vIHghach. yIvIH yI’uy’qa’."
+          "commitFailed": "rInbe’ vIHghach. yIvIH yI’uy’qa’.",
+          "commitConflict": "vIHtaHvIS pa’ choH, vaj pagh vIHlu’. yISoQmoH ’ej pa’ HIDjolev yIpoSmoHqa’."
         }
       },
       "requirementGaps": {
