@@ -12,6 +12,10 @@ import type {
   MyAssignedProductSessionRow,
 } from "@/services/assignments/assignments.service";
 import type { ProductType } from "@/types";
+import {
+  gamersAttendSite,
+  hasVoiceRoom as productHasVoiceRoom,
+} from "@/lib/products/delivery-mode";
 import type { ProductVoiceRoom } from "@/lib/products/voice-room";
 import type {
   AppHrefObject,
@@ -147,8 +151,8 @@ export interface GeduAssignmentSummary {
    */
   cancelledAhead: readonly Date[];
   /**
-   * Whether this assignment has a voice room at all — true only for a remote
-   * product. **An in-person assignment renders no Join affordance**, rather
+   * Whether this assignment has a voice room at all — true for an online or
+   * hybrid product. **An in-person assignment renders no Join affordance**, rather
    * than a locked one: a locked button promises it will unlock, and a camp in a
    * library has no room behind it that ever will.
    *
@@ -168,13 +172,14 @@ export interface GeduAssignmentSummary {
   /** Where the Join button navigates. `"#"` keeps it inert. */
   voiceHref: MaybeInertHrefObject;
   /**
-   * The site an in-person assignment runs at, `null` for a remote one.
+   * The site an in-person or hybrid assignment runs at, `null` for an online
+   * one.
    *
-   * It is the **in-person counterpart of the Join button**: the card's one
+   * It is the **in-person counterpart of the Join button**: the card's
    * outward-facing line, answering the question the gedu actually has about a
-   * product with no room — where am I going. The two are exclusive by
-   * construction, so one card zone holds whichever of them applies and is never
-   * empty on either kind of product.
+   * product at a site — where the group meets. An online product carries only
+   * the Join and an in-person one only the site; a hybrid product carries both,
+   * because its gamers are at the site while everyone shares the voice room.
    */
   siteName: string | null;
   /** Where a click anywhere on the card navigates — the product's feed. */
@@ -249,7 +254,7 @@ export function rollUpGeduAssignments({
       now,
       windowCloseMs,
     );
-    const hasVoiceRoom = row.product.isRemote === true;
+    const hasVoiceRoom = productHasVoiceRoom(row.product.deliveryMode);
     const key = geduAssignmentKey(row.product.id, row.groupId);
     return {
       productId: row.product.id,
@@ -271,10 +276,11 @@ export function rollUpGeduAssignments({
       voiceHref: hasVoiceRoom
         ? (voiceHrefByAssignment?.[key] ?? INERT_HREF)
         : INERT_HREF,
-      // Never carried by a remote product, whatever the row says: a product
-      // with a voice room has no building, and a card showing both would be
-      // claiming the group meets in two places.
-      siteName: hasVoiceRoom ? null : row.product.siteName,
+      // Never carried by an online product, whatever the row says: an online
+      // municipality club's location is the municipality, not a building.
+      siteName: gamersAttendSite(row.product.deliveryMode)
+        ? row.product.siteName
+        : null,
       openHref: hrefByAssignment[key] ?? INERT_HREF,
       // A trainee owes no session anything — what a session owes is the
       // staff's work — so their card never carries a count, whatever a map
@@ -403,7 +409,7 @@ export interface GeduSubstitutionSummary {
    * it offers no Join and no building for a session that is not happening.
    */
   cancelled: boolean;
-  /** Whether there is a room at all — true only on a remote product. */
+  /** Whether there is a room at all — true on an online or hybrid product. */
   hasVoiceRoom: boolean;
   /**
    * How the product's sessions are joined, with the join instructions still
@@ -518,7 +524,7 @@ export function rollUpGeduSubstitutions({
       endsAt: row.substitutionEndsAt,
       locale,
     });
-    const hasVoiceRoom = row.product.isRemote === true;
+    const hasVoiceRoom = productHasVoiceRoom(row.product.deliveryMode);
     return [
       {
         groupId: row.groupId,

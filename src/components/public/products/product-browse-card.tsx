@@ -206,9 +206,9 @@ export function useBrowseCardViewProps(
   };
 }
 
-// Card stays compact: site name only (no parent) for in-person, city
-// name for online municipality clubs, and a generic "Online" label for
-// online non-muni products. The online row shows even though it's
+// Card stays compact: site name only (no parent) for in-person, the site
+// name and "Online" beside it for hybrid, city name for online municipality
+// clubs, and a generic "Online" label for online non-muni products. The online row shows even though it's
 // content-light — the parallel structure keeps every card visually
 // stable across formats so the eye lands on the same meta line.
 //
@@ -224,7 +224,9 @@ function resolveLocationLine(
   const loc = formatProductLocation(product, locale);
   if (!loc) return { kind: "online", label: onlineLabel };
   if (loc.kind === "site") {
-    return { kind: "in_person", label: loc.site };
+    return product.delivery_mode === "hybrid"
+      ? { kind: "hybrid", label: loc.site, onlineLabel }
+      : { kind: "in_person", label: loc.site };
   }
   if (municipalityScoped) return { kind: "online", label: onlineLabel };
   return { kind: "online_muni", label: loc.name };

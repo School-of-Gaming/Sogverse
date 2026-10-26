@@ -3,6 +3,7 @@ import {
   buildSessionFacts,
   sessionClockFace,
   sessionFactsProduct,
+  sessionWhere,
   sessionWindowOf,
 } from "@/lib/substitution-session-facts";
 import type {
@@ -49,7 +50,7 @@ function document(
     topic: "minecraft_java",
     spoken_language_code: "fi",
     timezone: "Europe/Helsinki",
-    is_remote: false,
+    delivery_mode: "in_person",
     voice_room_mode: "sogverse",
     external_voice_url: null,
     start_date: null,
@@ -87,26 +88,42 @@ describe("buildSessionFacts", () => {
       productType: "consumer_club",
       topic: "minecraft_java",
       spokenLanguageCode: "fi",
-      isRemote: false,
+      deliveryMode: "in_person",
       siteName: "Sellon kirjasto, Espoo",
     });
     expect(result.startsAt?.toISOString()).toBe("2026-08-17T14:00:00.000Z");
     expect(result.endsAt?.toISOString()).toBe("2026-08-17T15:30:00.000Z");
   });
 
-  it("states a remote session as remote, never at a building", () => {
-    // A remote municipality club can carry a location; it still has no venue.
-    const result = facts({ is_remote: true, site_name: "Vantaan kaupungintalo" });
+  it("states an online session as online, never at a building", () => {
+    // An online municipality club can carry a location; it still has no venue.
+    const result = facts({ delivery_mode: "online", site_name: "Vantaan kaupungintalo" });
 
-    expect(result.isRemote).toBe(true);
+    expect(result.deliveryMode).toBe("online");
     expect(result.siteName).toBeNull();
+    expect(sessionWhere(result)).toEqual({ kind: "online" });
   });
 
   it("keeps an in-person session with no site in person", () => {
-    const result = facts({ is_remote: false, site_name: null });
+    const result = facts({ delivery_mode: "in_person", site_name: null });
 
-    expect(result.isRemote).toBe(false);
+    expect(result.deliveryMode).toBe("in_person");
     expect(result.siteName).toBeNull();
+    // "Place to be confirmed", never "online".
+    expect(sessionWhere(result)).toEqual({ kind: "site", siteName: null });
+  });
+
+  it("states a hybrid session as taught online, naming the gamers' site", () => {
+    // The gedu joins a hybrid session through the voice room, so a sub is not
+    // sent to the building — but the gamers are there, so it is still named.
+    const result = facts({ delivery_mode: "hybrid", site_name: "Kallion ala-aste" });
+
+    expect(result.deliveryMode).toBe("hybrid");
+    expect(result.siteName).toBe("Kallion ala-aste");
+    expect(sessionWhere(result)).toEqual({
+      kind: "hybrid",
+      siteName: "Kallion ala-aste",
+    });
   });
 
   it("keeps an orphaned date's date and gives it no instants", () => {

@@ -129,9 +129,9 @@
           "id": "Tuotteen tunniste.",
           "name": "Tuotteen nimi kaikilla kielillä, joilla se on kirjoitettu, avaimena kielikoodi. Vähintään yksi on aina mukana; se, mitkä niistä, riippuu tuotteesta.",
           "type": "Minkätyyppinen tuote on. Kerho kokoontuu viikoittain ilman kiinteää päättymistä; leiri ja tapahtuma järjestetään sovittuina päivinä.",
-          "delivery": "Miten tuote toteutetaan. Lynxin omia nimiä sen tavoille toteuttaa Ohjelmaa ei ole tallennettu mihinkään; <code>type</code> ja <code>delivery</code> ovat yhdessä ne kaksi tietoa, joihin nuo nimet kiinnittyvät.",
+          "delivery": "Miten tuote toteutetaan: <code>online</code> Sogversen äänihuoneessa tai muussa verkkotapaamisessa, <code>in_person</code> paikan päällä tai <code>hybrid</code>, jolloin lapset osallistuvat paikan päällä ja peliopettaja sekä ne lapset, jotka eivät pääse paikalle, liittyvät Sogversen äänihuoneeseen. Lynxin omia nimiä sen tavoille toteuttaa Ohjelmaa ei ole tallennettu mihinkään; <code>type</code> ja <code>delivery</code> ovat yhdessä ne kaksi tietoa, joihin nuo nimet kiinnittyvät.",
           "audience": "Kuka voi saada paikan tuotteessa: <code>gamers</code> on <code>true</code>, kun paikka voi olla lapsella, ja <code>parents</code> on <code>true</code>, kun aikuinen voi itse ottaa paikan. Vähintään toinen on aina <code>true</code>, ja tuote, jossa molemmat ovat <code>true</code>, on tarkoitettu vanhemmille ja lapsille yhdessä.",
-          "location": "Kunta, jonka alueella tuotteen sijainti on, ja kunnan kaksikirjaiminen maakoodi; <code>city</code> on kunnan nimi. Sääntö on sama verkko- ja lähitoteutuksille: arvo on <code>null</code>, jos tuotteella ei ole sijaintia tai sen sijainti ei ole minkään kunnan alueella.",
+          "location": "Kunta, jonka alueella tuotteen sijainti on, ja kunnan kaksikirjaiminen maakoodi; <code>city</code> on kunnan nimi. Sääntö on sama verkko-, lähi- ja hybriditoteutuksille: arvo on <code>null</code>, jos tuotteella ei ole sijaintia tai sen sijainti ei ole minkään kunnan alueella.",
           "status": "<code>pending</code> ennen alkamispäivää, <code>running</code> alkamispäivästä lähtien ja <code>completed</code>, kun päättymispäivä on mennyt. Arvo johdetaan lukuhetkellä tuotteen päivämääristä sen omalla aikavyöhykkeellä, joten se ei vanhene koskaan.",
           "dates": "Milloin tuote toteutetaan. Kuluttajakerholla ei välttämättä ole päättymispäivää; kaikilla muilla tuotteilla on.",
           "timezone": "IANA-aikavyöhyke, jonka mukaan tuotteen päivämäärät ja istunnot on aikataulutettu.",
@@ -206,7 +206,7 @@
       },
       "feedback": {
         "title": "mitä lapsi sanoi lähtiessään",
-        "intro": "Mitä yksi lapsi vastasi yhden istunnon lopuksi: viisi väittämää arvioituna viisiportaisella palkilla ja vapaaehtoinen viesti hänen omin sanoin. Tällä hetkellä palautetta kerätään vain verkossa pidettyjen istuntojen jälkeen. Lapsi, joka ei arvioi yhtään väittämää eikä kirjoita viestiä, ei jätä riviä, joten vastausprosentti saadaan vertaamalla tätä listaa <code>/sessions</code>-resurssin verkkoistuntoihin; yksi rivi on yksi lapsi yhdessä istunnossa, joten riveistä laskettu prosenttiosuus laskee lapsen kerran kutakin istuntoa kohti, johon hän vastasi.",
+        "intro": "Mitä yksi lapsi vastasi yhden istunnon lopuksi: viisi väittämää arvioituna viisiportaisella palkilla ja vapaaehtoinen viesti hänen omin sanoin. Tällä hetkellä palautetta kerätään vain lapsilta, jotka liittyvät istuntoon sen äänihuoneen kautta, verkko- ja hybriditoteutuksissa. Lapsi, joka ei arvioi yhtään väittämää eikä kirjoita viestiä, ei jätä riviä, joten vastausprosentti saadaan vertaamalla tätä listaa <code>/sessions</code>-resurssin verkko- ja hybriditoteutusten istuntoihin; yksi rivi on yksi lapsi yhdessä istunnossa, joten riveistä laskettu prosenttiosuus laskee lapsen kerran kutakin istuntoa kohti, johon hän vastasi.",
         "params": {
           "productId": "Vain tämän tuotteen ryhmien palautteet.",
           "groupId": "Vain tämän ryhmän palautteet.",
@@ -306,7 +306,7 @@
       "items": {
         "childIdentity": "Lasten sukunimet, syntymäpäivät ja sukupuoli sekä vanhempien puhelinnumerot. Ohjelman tietosuojaseloste lupaa syntymäkuukauden eikä syntymäaikaa, eikä loppuja tarvita näkymissä tai Robloxin raportissa.",
         "releases": "Tapaustutkimus- ja suositteluluvat. Sogversen hallussa oleva yksi medialupa kattaa jo sen, että Lynx Educate, School of Gaming ja Roblox käyttävät valokuvaa julkisesti; lapsen koko nimi, tapaustutkimus, sitaatti tai lapseen yhdistetty sisältö vaativat erillisen kirjallisen luvan, joka hankitaan alustan ulkopuolella.",
-        "deliveryModel": "Toteutusmallin nimike. Sogverse tietää tuotteen tyypin ja sen, onko tuote verkossa vai paikan päällä; mallien luokittelu on Lynxin asia rakentaa näiden kahden kentän päälle.",
+        "deliveryModel": "Toteutusmallin nimike. Sogverse tietää tuotteen tyypin ja sen, onko tuote verkossa, paikan päällä vai hybridi; mallien luokittelu on Lynxin asia rakentaa näiden kahden kentän päälle.",
         "analytics": "Muiden kuin laskeutumissivun, kaupan ja Ohjelman tuotesivujen liikenne sekä kaikki yksittäistä kävijää koskeva tieto. Päätepisteen <code>/traffic</code> taustalla oleva analytiikka on suunniteltu tietosuoja edellä: sivu, jolle perhe päätyy kirjautumisen jälkeen, on perheen oma, ja kävijä on luku, ei koskaan tietue."
       }
     }

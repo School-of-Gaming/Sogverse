@@ -1,5 +1,6 @@
 import type {
   AppSupabaseClient,
+  DeliveryMode,
   ProductType,
   ProductTopic,
   ProductTag,
@@ -96,7 +97,7 @@ function buildVisibleProductsQuery<Select extends string>(
  * (`buildProductDetailQuery`) and keeps `product_translations(*)`.
  */
 const BROWSE_SELECT =
-  "id, product_type, billing_mode, topic, tag, min_age, max_age, for_gamers, for_parents, spoken_language_code, image_path, is_remote, seat_count, waitlist_enabled, registration_opens_at, start_date, end_date, timezone, product_translations(locale, name, short_description), product_prices(currency, price_cents), schedule_slots(weekday, start_time, duration_minutes), locations(id, name, name_i18n, type, parent:parent_id(id, name, name_i18n, type))";
+  "id, product_type, billing_mode, topic, tag, min_age, max_age, for_gamers, for_parents, spoken_language_code, image_path, delivery_mode, seat_count, waitlist_enabled, registration_opens_at, start_date, end_date, timezone, product_translations(locale, name, short_description), product_prices(currency, price_cents), schedule_slots(weekday, start_time, duration_minutes), locations(id, name, name_i18n, type, parent:parent_id(id, name, name_i18n, type))";
 
 /**
  * The same listing read by a caller that wants only *where* each product is:
@@ -515,12 +516,12 @@ export type CreateProductInput = {
    */
   material_url: string | null;
   location_id: string | null;
-  is_remote: boolean;
+  delivery_mode: DeliveryMode;
   /**
    * How an online product's sessions are joined: `sogverse` (the Sogverse
    * voice room), `external` (a meeting on another service at
    * `external_voice_url`), or `none` (no room; families read the join
-   * instructions each translation carries). An in-person product is always
+   * instructions each translation carries). An in-person or hybrid product is always
    * `sogverse` with no link — the CHECKs on `products` refuse anything else —
    * and the RPC refuses mode `none` without instructions in any translation,
    * or instructions under any other mode.
@@ -646,7 +647,7 @@ export type UpdateProductInput = {
    */
   material_url: string | null;
   location_id: string | null;
-  is_remote: boolean;
+  delivery_mode: DeliveryMode;
   /** How the sessions are joined — see CreateProductInput. Required on the
    *  update half too, and that is the load-bearing one: the RPC assigns both
    *  on every call, so an omission resets the product to a Sogverse room. */

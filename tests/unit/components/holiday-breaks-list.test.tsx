@@ -57,7 +57,7 @@ const CLUB: CardProduct = {
   end_date: "2027-05-31",
   timezone: "Europe/Helsinki",
   schedule_slots: [{ weekday: 0, start_time: "16:00:00", duration_minutes: 60 }],
-  is_remote: true,
+  delivery_mode: "online",
   locations: null,
   min_age: 8,
   max_age: 12,

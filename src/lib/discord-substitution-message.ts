@@ -9,6 +9,7 @@ import {
   type SupportedLocale,
 } from "@/lib/constants/locales";
 import { type GeduUpcomingSession } from "@/lib/gedu-upcoming-sessions";
+import { sessionWhere } from "@/lib/substitution-session-facts";
 import { formatDate, formatDateOnly, formatTimeRange } from "@/lib/date-format";
 import type { Messages } from "@/i18n/messages";
 import { loadNamespace } from "@/i18n/namespace-loader";
@@ -347,17 +348,23 @@ function sessionWhat(session: GeduUpcomingSession): string {
     : `${session.productName} — ${session.groupName}`;
 }
 
-/** Where it is: the remote line or the building, as the web picker's row says. */
-function sessionWhere(copy: DiscordSubCopy, session: GeduUpcomingSession): string {
-  return session.isRemote
+/**
+ * Where the gedu teaches it from: the building, the remote line, or — on a
+ * hybrid session — the remote line naming the site the gamers are at, as the
+ * web picker's row says.
+ */
+function sessionWhereLine(copy: DiscordSubCopy, session: GeduUpcomingSession): string {
+  const at = sessionWhere(session);
+  if (at.kind === "site") return at.siteName ?? copy.facts("siteUnknown");
+  return at.kind === "online"
     ? copy.facts("remote")
-    : (session.siteName ?? copy.facts("siteUnknown"));
+    : copy.facts("hybrid", { site: at.siteName });
 }
 
 /** The session a step is about, as three short lines. */
 function sessionSummary(copy: DiscordSubCopy, session: GeduUpcomingSession): DiscordComponent {
   return text(
-    `**${discordSessionWhen(session, copy.locale)}**\n${sessionWhat(session)}\n-# ${sessionWhere(copy, session)}`,
+    `**${discordSessionWhen(session, copy.locale)}**\n${sessionWhat(session)}\n-# ${sessionWhereLine(copy, session)}`,
   );
 }
 
@@ -400,7 +407,7 @@ export function buildSessionPickerMessage({
           options: sessions.slice(0, SELECT_OPTION_CAP).map((session) => ({
             label: clip(discordSessionWhen(session, copy.locale), OPTION_TEXT_MAX),
             description: clip(
-              `${sessionWhat(session)} · ${sessionWhere(copy, session)}`,
+              `${sessionWhat(session)} · ${sessionWhereLine(copy, session)}`,
               OPTION_TEXT_MAX,
             ),
             value: session.key,
@@ -728,17 +735,17 @@ export function buildSubNotLinkedMessage({
 
 /**
  * Sample sessions for the admin tool's preview, laid out around `now` the way a
- * working gedu's next few weeks look: a few clubs, one of them remote, soonest
- * first.
+ * working gedu's next few weeks look: a few clubs, one of them online and one
+ * hybrid, soonest first.
  */
 export function buildSubPreviewSessions(now: Date): GeduUpcomingSession[] {
   const timezone = DEFAULT_TIMEZONE;
   const today = formatInTimeZone(now, timezone, "yyyy-MM-dd");
 
   const groups = [
-    { groupId: "00000000-0000-4000-8000-000000000001", productName: "Minecraft Club", groupName: "A", isRemote: false, siteName: "Sample School" },
-    { groupId: "00000000-0000-4000-8000-000000000002", productName: "Roblox Studio Club", groupName: null, isRemote: true, siteName: null },
-    { groupId: "00000000-0000-4000-8000-000000000003", productName: "Fortnite Creative Club", groupName: "B", isRemote: false, siteName: "Sample Library" },
+    { groupId: "00000000-0000-4000-8000-000000000001", productName: "Minecraft Club", groupName: "A", deliveryMode: "in_person", siteName: "Sample School" },
+    { groupId: "00000000-0000-4000-8000-000000000002", productName: "Roblox Studio Club", groupName: null, deliveryMode: "online", siteName: null },
+    { groupId: "00000000-0000-4000-8000-000000000003", productName: "Fortnite Creative Club", groupName: "B", deliveryMode: "hybrid", siteName: "Sample Library" },
   ] as const;
 
   const sessions: GeduUpcomingSession[] = [];
@@ -757,7 +764,7 @@ export function buildSubPreviewSessions(now: Date): GeduUpcomingSession[] {
         productName: group.productName,
         productType: "consumer_club",
         groupName: group.groupName,
-        isRemote: group.isRemote,
+        deliveryMode: group.deliveryMode,
         siteName: group.siteName,
       });
     });

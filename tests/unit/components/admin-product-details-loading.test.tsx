@@ -86,7 +86,7 @@ function remoteClub(): ProductAdminDetailRow {
     catalogue_images: null,
     product_staff_details: null,
     location_id: null,
-    is_remote: true,
+    delivery_mode: "online",
     start_date: "2026-01-05",
     end_date: null,
     timezone: "Europe/Helsinki",

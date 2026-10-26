@@ -71,7 +71,7 @@ const PRODUCT_EDIT: UpdateProductInput = {
   image_id: null,
   material_url: null,
   location_id: null,
-  is_remote: true,
+  delivery_mode: "online",
   voice_room_mode: "sogverse",
   external_voice_url: null,
   start_date: "2026-09-01",

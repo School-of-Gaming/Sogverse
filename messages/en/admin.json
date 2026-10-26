@@ -666,6 +666,7 @@
       "ageRange": "{min}–{max} yrs",
       "seats": "{count} seats",
       "online": "Online",
+      "hybrid": "Hybrid",
       "unlisted": "unlisted",
       "untitled": "(untitled)",
       "missingGeduFee": "Gedu fee missing",
@@ -729,6 +730,7 @@
         "gamerPhotoConsents": "Photo asks",
         "marketingConsents": "Marketing asks",
         "format": "Format",
+        "deliveryMode": "Delivery",
         "ageRange": "Age range",
         "publicLink": "Public link",
         "createdBy": "Created by",
@@ -819,6 +821,7 @@
       "spokenLanguage": "Spoken language",
       "online": "Online",
       "inPerson": "In person",
+      "hybrid": "Hybrid",
       "municipality": "Municipality this is for",
       "site": "Site",
       "startDate": "Start date",
@@ -913,6 +916,11 @@
       "none": "No voice room",
       "noneDescription": "Families are shown the join instructions you write for each language instead."
     },
+    "deliveryModes": {
+      "online": "Online",
+      "in_person": "In person",
+      "hybrid": "Hybrid"
+    },
     "endDateModes": {
       "ongoing": "No end date",
       "ongoingDescription": "The club runs indefinitely until you decide to wind it down.",
@@ -958,6 +966,7 @@
       "externalVoiceUrlHint": "Public: anyone can read this link, including visitors who are not signed in.",
       "municipalityHint": "Municipality clubs are always tied to a specific Finnish municipality — the one paying for it. Parents from that municipality will see it when they browse.",
       "siteHint": "Where sessions physically happen.",
+      "hybridHint": "Gamers come to the site. The Gedu, and any gamer who can’t make it there, joins through the Sogverse voice room.",
       "eventSingleDay": "Events happen on a single date.",
       "timezoneEntry": "Session times below are entered in this timezone. Parents see them converted to their own automatically.",
       "timezoneChangeMoves": "Session times below are entered in this timezone. Changing it moves every upcoming session to the same clock time in the new zone, while sessions that already have a report or attendance recorded keep the times they were held at.",

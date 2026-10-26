@@ -99,6 +99,12 @@
 -- Substitutions page has an offer to approve, and gedu@example.com, who has
 -- not answered, finds it in their pool with Offer and Decline (section 11).
 --
+-- ONE CLUB IS HYBRID. The Minecraft Build Club meets at Sogverse-studio,
+-- Kamppi, with gedu@example.com in its Sogverse voice room rather than in the
+-- room, and parent@example.com's Milo and Otso hold seats on it, so the admin,
+-- the gedu and the family each see a product with both a site and a voice room
+-- (section 6, product 20).
+--
 -- TWO CLUBS FOLLOW A HOLIDAY CALENDAR. "Helsinki schools" breaks for a holiday
 -- week that ended a week before the build and for Christmas ahead, and the
 -- Creator Studio Club (gedu@example.com's, with parent@example.com's Otso and
@@ -1226,6 +1232,32 @@ BEGIN
     p_primary_gedu_fee_cents => 6000, p_municipality_fee_cents => 15500
   );
 
+  -- 20. Running, free and HYBRID, six weeks in: the children come to the
+  --     Kamppi studio, and the educator, with any child who cannot make it,
+  --     joins through the Sogverse voice room. A hybrid product holds a site
+  --     like an in-person one and only ever a Sogverse room.
+  PERFORM public.create_product(
+    'consumer_club', 'free',
+    jsonb_build_array(
+      jsonb_build_object('locale','en','name','Minecraft Build Club',
+        'short_description','A free weekly club at the Kamppi studio, with the educator joining on voice chat.',
+        'long_description','The group builds together at the studio once a week while the educator leads from the voice room. A child who cannot come in joins the same room from home.'),
+      jsonb_build_object('locale','fi','name','Minecraft-rakennuskerho',
+        'short_description','Maksuton viikkokerho Kampin studiolla, ohjaaja mukana puhekanavalla.',
+        'long_description','Ryhmä rakentaa yhdessä studiolla kerran viikossa, ja ohjaaja vetää kerhoa puhekanavalta. Lapsi, joka ei pääse paikalle, liittyy samaan kanavaan kotoa.')
+    ),
+    'minecraft_java', 'fi', 'hybrid', v_tz,
+    now() - interval '60 days', true, false,
+    p_min_age => 7, p_max_age => 12, p_is_visible => true,
+    p_location_id => v_helsinki,
+    p_start_date => current_date - 42,
+    p_seat_count => 10,
+    p_schedule_slots => jsonb_build_array(
+      jsonb_build_object('weekday', 3, 'start_time', '17:30', 'duration_minutes', 90)),
+    p_prices => jsonb_build_array(jsonb_build_object('currency','eur','price_cents',0)),
+    p_primary_gedu_fee_cents => 6000
+  );
+
 END;
 $$;
 
@@ -1266,6 +1298,7 @@ BEGIN
     ('Minecraft Bedrock Club',                   'Ryhmä A',      v_gedu,  'primary', NULL,           NULL),
     ('Roblox Builders Club',                     'Ryhmä A',      v_sofia, 'primary', NULL,           NULL),
     ('Minecraft Redstone Club',                  'Ryhmä A',      v_aino,  'primary', NULL,           NULL),
+    ('Minecraft Build Club',                     'Ryhmä A',      v_gedu,  'primary', NULL,           NULL),
     ('Schools Game Club',                        'Ryhmä 1',      v_gedu,  'primary', NULL,           NULL),
     ('Autumn Term Game Club',                    'Ryhmä 1',      v_sofia, 'primary', NULL,           NULL),
     ('Library Game Club',                        'Ryhmä 1',      v_mikko, 'primary', NULL,           NULL),
@@ -1400,6 +1433,11 @@ BEGIN
     ('Minecraft Redstone Club', 'aada@gamer.example.com',   'free'),
     ('Minecraft Redstone Club', 'oskari@gamer.example.com', 'free'),
     ('Minecraft Redstone Club', 'eino@gamer.example.com',   'free'),
+    ('Minecraft Build Club', 'milo@gamer.example.com',  'free'),
+    ('Minecraft Build Club', 'otso@gamer.example.com',  'free'),
+    ('Minecraft Build Club', 'onni@gamer.example.com',  'free'),
+    ('Minecraft Build Club', 'sanni@gamer.example.com', 'free'),
+    ('Minecraft Build Club', 'hugo@gamer.example.com',  'free'),
     ('Schools Game Club', 'milo@gamer.example.com',   'external'),
     ('Schools Game Club', 'elias@gamer.example.com',  'external'),
     ('Schools Game Club', 'venla@gamer.example.com',  'external'),
@@ -1638,7 +1676,8 @@ COMMIT;
 -- invoicing page: the Association Game Club, so its sessions bill without a
 -- record, and the Esports Pilot Club, whose every session was called off.
 --
--- On the ONLINE clubs, about seven in ten of the children marked present then
+-- On the ONLINE and HYBRID clubs — the ones with a voice room — about seven
+-- in ten of the children marked present then
 -- answer the feedback screen on the way out — written as the child, the way
 -- the screen writes it, under the child's own claims — and so does one in four
 -- of those marked absent, who joined late or left before the register. The
@@ -1706,7 +1745,7 @@ DECLARE
 BEGIN
   FOR grp IN
     SELECT g.id AS group_id, a.gedu_id, p.start_date, p.end_date, s.weekday,
-           p.delivery_mode = 'online' AS online, p.timezone, s.start_time, s.duration_minutes,
+           p.delivery_mode IN ('online', 'hybrid') AS online, p.timezone, s.start_time, s.duration_minutes,
            -- The groups whose answers lean, or never come, as the comment above says.
            (t.name = 'Creator Studio Club' AND g.name = 'Ryhmä A') AS weak_listening,
            (t.name = 'Minecraft Java Club' AND g.name = 'Ryhmä B') AS rising_gedu,

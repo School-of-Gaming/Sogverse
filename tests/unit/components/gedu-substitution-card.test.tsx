@@ -183,10 +183,28 @@ describe("GeduSubstitutionCard", () => {
     // the card from the moment the substitution is theirs — not only once the
     // workspace opens, which is when the footer would have said it.
     const locked = fixtureLockedSubstitution();
-    expect(locked.session.isRemote).toBe(true);
+    expect(locked.session.deliveryMode).toBe("online");
     const html = cardHtml(locked);
     expect(html).toContain(OPENS_AT);
     expect(html).toContain(messages.sessionFacts.remote);
+  });
+
+  it("says a hybrid session is taught online, naming the site the gamers are at", () => {
+    // The gedu joins a hybrid session through the voice room, so the card must
+    // not send them to the building; the site is still named, because that is
+    // where the group is.
+    const html = cardHtml({
+      ...fixtureLockedSubstitution(),
+      session: {
+        ...fixtureLockedSubstitution().session,
+        deliveryMode: "hybrid",
+        siteName: "Kallion ala-aste",
+      },
+      hasVoiceRoom: true,
+    });
+    expect(html).toContain(
+      messages.sessionFacts.hybrid.replace("{site}", "Kallion ala-aste"),
+    );
   });
 
   it("names the building while locked, and once more is not added when it opens", () => {
@@ -194,7 +212,7 @@ describe("GeduSubstitutionCard", () => {
       ...fixtureLockedSubstitution(),
       session: {
         ...fixtureLockedSubstitution().session,
-        isRemote: false,
+        deliveryMode: "in_person",
         siteName: "Sello Library, Espoo",
       },
       hasVoiceRoom: false,
@@ -216,7 +234,7 @@ describe("GeduSubstitutionCard", () => {
       ...fixtureLockedSubstitution(),
       session: {
         ...fixtureLockedSubstitution().session,
-        isRemote: false,
+        deliveryMode: "in_person",
         siteName: null,
       },
       hasVoiceRoom: false,

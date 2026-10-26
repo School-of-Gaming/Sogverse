@@ -3,8 +3,9 @@ import {
   type EmbeddedLocation,
 } from "@/lib/locations/embedded-chain";
 import { localizedLocationName } from "@/lib/locations/localized-name";
+import { gamersAttendSite } from "@/lib/products/delivery-mode";
 import { joinParts } from "./join-parts";
-import type { ProductType } from "@/types";
+import type { DeliveryMode, ProductType } from "@/types";
 
 /**
  * The columns the "where" line reads. Both product queries embed the location
@@ -14,7 +15,7 @@ import type { ProductType } from "@/types";
  */
 export interface ProductWhereSource {
   product_type: ProductType;
-  is_remote: boolean;
+  delivery_mode: DeliveryMode;
   locations: EmbeddedLocation | null;
 }
 
@@ -26,30 +27,34 @@ export interface ProductWhereSource {
  * is to the Finnish kunta that funds it rather than to a building, so "Online"
  * on its own would drop the single most identifying fact about the row — and an
  * admin scanning for Espoo's clubs would find only the ones that meet in a
- * school hall. Every other type is a place or it is remote, never both: an
- * online camp is just online, and naming a town for it would invent a tie the
- * product does not have.
+ * school hall. Every other online type is just online: an online camp is just
+ * online, and naming a town for it would invent a tie the product does not
+ * have.
+ *
+ * **A hybrid product names its site and then says it is hybrid**, because both
+ * halves are true of it: the gamers meet in the school hall and the gedu is in
+ * the voice room.
  *
  * `null` is a real answer — an in-person product with no location set has
  * nothing to say here, and the caller renders no chip rather than an em dash
  * standing in for a fact nobody entered.
  *
- * The online label is passed in rather than translated here so this stays a
- * pure function the unit tests can drive without a locale provider.
+ * The labels are passed in rather than translated here so this stays a pure
+ * function the unit tests can drive without a locale provider.
  */
 export function productWhereLine(
   product: ProductWhereSource,
   locale: string,
-  onlineLabel: string,
+  labels: { online: string; hybrid: string },
 ): string | null {
   const municipality = municipalityOf(product.locations);
   const municipalityName =
     municipality === null ? null : localizedLocationName(municipality, locale);
 
-  if (product.is_remote) {
+  if (!gamersAttendSite(product.delivery_mode)) {
     return product.product_type === "municipality_club"
-      ? joinParts([onlineLabel, municipalityName])
-      : onlineLabel;
+      ? joinParts([labels.online, municipalityName])
+      : labels.online;
   }
 
   const site = product.locations;
@@ -61,5 +66,6 @@ export function productWhereLine(
   return joinParts([
     localizedLocationName(site, locale),
     municipality !== null && municipality.id !== site.id ? municipalityName : null,
+    product.delivery_mode === "hybrid" ? labels.hybrid : null,
   ]);
 }

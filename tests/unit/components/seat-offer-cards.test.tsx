@@ -221,7 +221,7 @@ function waitlistedEnrollment(
     productName: "Fortnite Creative Club",
     productType: "consumer_club",
     topic: "fortnite",
-    isRemote: true,
+    deliveryMode: "online",
     voiceRoom: { mode: "sogverse" },
     // A queue place carries no prep window: it never offers the guide, so
     // there is nothing to bound. See the roll-up.

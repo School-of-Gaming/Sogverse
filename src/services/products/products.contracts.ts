@@ -138,7 +138,7 @@ const productDataBase = z.object({
   // holds. Null (or blank) means no row.
   material_url: z.string().nullable(),
   location_id: z.string().nullable(),
-  is_remote: z.boolean(),
+  delivery_mode: z.enum(Constants.public.Enums.delivery_mode),
   // How an online product's sessions are joined: the Sogverse voice room, a
   // meeting on another service at `external_voice_url`, or no room and the
   // join instructions each translation carries. Both are required, and the
@@ -148,7 +148,7 @@ const productDataBase = z.object({
   // back on a Sogverse room without anybody asking.
   //
   // Only shape is checked here. That the link belongs to the external mode and
-  // is http(s), that an in-person product stays on `sogverse`, and that the
+  // is http(s), that an in-person or hybrid product stays on `sogverse`, and that the
   // instructions go with mode `none`, are the database's rules — CHECKs on
   // `products` and the RPC's own refusal — not rules restated at the boundary.
   voice_room_mode: z.enum(Constants.public.Enums.voice_room_mode),

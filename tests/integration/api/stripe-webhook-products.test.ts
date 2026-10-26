@@ -334,7 +334,7 @@ function mockAdmin(opts: AdminMockOptions = {}) {
                         timezone: "Europe/Helsinki",
                         start_date: null,
                         end_date: null,
-                        is_remote: true,
+                        delivery_mode: "online",
                         // The "Good to know" facts the mail mirrors from the
                         // confirmation page.
                         min_age: 8,

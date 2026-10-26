@@ -12,7 +12,7 @@ import {
  * depends on.
  *
  * **`topic` is the "Before the first session" guide's only input beyond
- * `is_remote`, and it states no row of its own** — no fact list mentions it and
+ * `delivery_mode`, and it states no row of its own** — no fact list mentions it and
  * no sentence names it — so a later tidy-up of this select has nothing in the
  * rendered mail to warn it that dropping the column deletes a whole section.
  * The sender's only handler for a failure is a `console.error`, so a read that
@@ -71,7 +71,7 @@ describe("sendProductConfirmationEmail's product read", () => {
     expect(selects.length).toBeGreaterThan(0);
     expect(selects.some((select) => /\btopic\b/.test(select))).toBe(true);
     // Its companion, and the other half of what the guide is resolved from.
-    expect(selects.some((select) => select.includes("is_remote"))).toBe(true);
+    expect(selects.some((select) => select.includes("delivery_mode"))).toBe(true);
 
     errors.mockRestore();
   });
@@ -134,7 +134,7 @@ describe("sendProductConfirmationEmail's plan read", () => {
         timezone: "Europe/Helsinki",
         start_date: "2027-01-04",
         end_date: endDate,
-        is_remote: true,
+        delivery_mode: "online",
         min_age: 8,
         max_age: 12,
         for_gamers: true,

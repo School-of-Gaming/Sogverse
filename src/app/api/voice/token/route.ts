@@ -11,6 +11,7 @@ import {
   groupVoiceRoomName,
 } from "@/lib/daily";
 import { VOICE_CONFIG } from "@/lib/constants/voice";
+import { hasVoiceRoom } from "@/lib/products/delivery-mode";
 import { platformForTopic } from "@/lib/products/topics";
 import type { GamePlatform } from "@/lib/constants/game-platforms";
 import type { GameExternalId } from "@/lib/voice/user-name";
@@ -86,17 +87,17 @@ export const POST = defineRoute({
     const { data: group, error: groupErr } = await admin
       .from("product_groups")
       .select(
-        "id, product_id, product:products!inner(id, timezone, is_remote, topic, voice_room_mode)",
+        "id, product_id, product:products!inner(id, timezone, delivery_mode, topic, voice_room_mode)",
       )
       .eq("id", groupId)
       .maybeSingle();
 
     if (groupErr) throw groupErr;
-    // In-person products have no voice room. 404 (not 403) matches the
+    // An in-person product has no voice room; an online or hybrid one does. 404 (not 403) matches the
     // dashboard's "no destination" stance — the URL shape isn't a valid voice
     // room — and it is the same answer as an unknown group, so this route
     // cannot be used to probe which group ids exist.
-    if (!group || !group.product.is_remote) {
+    if (!group || !hasVoiceRoom(group.product.delivery_mode)) {
       return NextResponse.json({ error: "Room not found" }, { status: 404 });
     }
 

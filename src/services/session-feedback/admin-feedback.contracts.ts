@@ -1,7 +1,7 @@
 import { z } from "zod";
 import type { SupportedLocale } from "@/lib/constants/locales";
 import { resolveTranslation } from "@/lib/i18n/resolve-translation";
-import { Constants, type ProductType } from "@/types";
+import { Constants, type DeliveryMode, type ProductType } from "@/types";
 
 /**
  * Who answered, and through which channel. One question asked two ways is two
@@ -33,7 +33,7 @@ export interface AdminFeedbackGroupRef {
   productId: string;
   productName: string;
   productType: ProductType;
-  isRemote: boolean;
+  deliveryMode: DeliveryMode;
 }
 
 /**
@@ -109,7 +109,7 @@ const wireEntry = {
   productId: z.string(),
   productTranslations: z.array(productTranslation),
   productType: z.enum(Constants.public.Enums.product_type),
-  isRemote: z.boolean(),
+  deliveryMode: z.enum(Constants.public.Enums.delivery_mode),
   sessionDate: z.string(),
   gedus: z.array(adminFeedbackGedu),
 };

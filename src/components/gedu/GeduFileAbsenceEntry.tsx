@@ -32,6 +32,7 @@ import {
   substitutionRequestRefusalMeansAlreadyFiled,
 } from "@/services/session-substitution/session-substitution.refusals";
 import { cn } from "@/lib/cn";
+import { sessionWhere } from "@/lib/substitution-session-facts";
 import { formatDate, formatDateOnly, formatTimeRange } from "@/lib/date-format";
 
 /**
@@ -527,6 +528,7 @@ function SessionPickerRow({
   onPick: () => void;
 }) {
   const t = useTranslations("sessionFacts");
+  const where = sessionWhere(session);
 
   return (
     <button
@@ -543,15 +545,19 @@ function SessionPickerRow({
     >
       <SessionSummaryLine session={session} />
       <span className="text-xs text-muted-foreground">
-        {session.isRemote ? (
-          <span className="inline-flex items-center gap-1.5">
-            <Radio className="h-3.5 w-3.5 shrink-0" aria-hidden />
-            {t("remote")}
-          </span>
-        ) : (
+        {where.kind === "site" ? (
           <span className="inline-flex items-center gap-1.5">
             <MapPin className="h-3.5 w-3.5 shrink-0" aria-hidden />
-            {session.siteName ?? t("siteUnknown")}
+            {where.siteName ?? t("siteUnknown")}
+          </span>
+        ) : (
+          // Where the gedu teaches from: online, naming the gamers' site on a
+          // hybrid session.
+          <span className="inline-flex items-center gap-1.5">
+            <Radio className="h-3.5 w-3.5 shrink-0" aria-hidden />
+            {where.kind === "online"
+              ? t("remote")
+              : t("hybrid", { site: where.siteName })}
           </span>
         )}
       </span>

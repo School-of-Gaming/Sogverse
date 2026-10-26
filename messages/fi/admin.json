@@ -666,6 +666,7 @@
       "ageRange": "{min}–{max} v",
       "seats": "{count} paikkaa",
       "online": "Etänä",
+      "hybrid": "Hybridi",
       "unlisted": "ei listattu",
       "untitled": "(nimetön)",
       "missingGeduFee": "Gedun palkkio puuttuu",
@@ -729,6 +730,7 @@
         "gamerPhotoConsents": "Valokuvakysymykset",
         "marketingConsents": "Markkinointikysymykset",
         "format": "Muoto",
+        "deliveryMode": "Toteutustapa",
         "ageRange": "Ikähaarukka",
         "publicLink": "Julkinen linkki",
         "createdBy": "Luonut",
@@ -819,6 +821,7 @@
       "spokenLanguage": "Puhuttu kieli",
       "online": "Verkossa",
       "inPerson": "Paikan päällä",
+      "hybrid": "Hybridi",
       "municipality": "Mille kunnalle tämä on",
       "site": "Toimipiste",
       "startDate": "Alkupäivä",
@@ -913,6 +916,11 @@
       "none": "Ei äänihuonetta",
       "noneDescription": "Perheille näytetään sen sijaan liittymisohjeet, jotka kirjoitat kullekin kielelle."
     },
+    "deliveryModes": {
+      "online": "Verkossa",
+      "in_person": "Paikan päällä",
+      "hybrid": "Hybridi"
+    },
     "endDateModes": {
       "ongoing": "Ei loppupäivää",
       "ongoingDescription": "Kerho jatkuu toistaiseksi, kunnes päätät lopettaa sen.",
@@ -958,6 +966,7 @@
       "externalVoiceUrlHint": "Julkinen: kuka tahansa voi lukea linkin, myös kirjautumattomat vierailijat.",
       "municipalityHint": "Kuntakerhot on aina sidottu tiettyyn Suomen kuntaan — siihen, joka sen maksaa. Sen kunnan vanhemmat näkevät kerhon selatessaan.",
       "siteHint": "Missä kerrat fyysisesti tapahtuvat.",
+      "hybridHint": "Pelaajat tulevat paikan päälle. Gedu ja pelaajat, jotka eivät pääse paikalle, liittyvät Sogversen äänihuoneeseen.",
       "eventSingleDay": "Tapahtumat ovat yhden päivän mittaisia.",
       "timezoneEntry": "Alla olevat kertojen ajat syötetään tällä aikavyöhykkeellä. Vanhemmat näkevät ne automaattisesti omalla aikavyöhykkeellään.",
       "timezoneChangeMoves": "Alla olevat kertojen ajat syötetään tällä aikavyöhykkeellä. Vaihto siirtää jokaisen tulevan kerran samaan kellonaikaan uudella aikavyöhykkeellä, mutta kerrat, joille on jo kirjattu raportti tai läsnäolot, säilyttävät ajat, joina ne pidettiin.",

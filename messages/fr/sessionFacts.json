@@ -1,4 +1,5 @@
 {
   "remote": "En ligne",
+  "hybrid": "En ligne, joueurs à {site}",
   "siteUnknown": "Lieu à confirmer"
 }

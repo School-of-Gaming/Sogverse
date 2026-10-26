@@ -9,7 +9,8 @@ import {
 } from "@/lib/planned-sessions";
 import { sessionEntryId } from "@/lib/session-occurrence";
 import type { GeduAssignmentRow } from "@/lib/gedu-assignment-rollup";
-import type { ProductType } from "@/types";
+import { gamersAttendSite } from "@/lib/products/delivery-mode";
+import type { DeliveryMode, ProductType } from "@/types";
 
 /**
  * **The sessions a gedu is expected at and could file an absence for**, built
@@ -47,8 +48,8 @@ export interface GeduUpcomingSession {
   productType: ProductType;
   /** The viewer's group on this product, or `null` while it is unknown. */
   groupName: string | null;
-  isRemote: boolean;
-  /** The building, on an in-person product; `null` on a remote one. */
+  deliveryMode: DeliveryMode;
+  /** The building, on an in-person or hybrid product; `null` on an online one. */
   siteName: string | null;
 }
 
@@ -130,11 +131,12 @@ export function buildGeduUpcomingSessions({
           resolveTranslation(row.product.translations, locale)?.name ?? "",
         productType: row.product.productType,
         groupName: row.groupName,
-        isRemote: row.product.isRemote,
-        // Never carried by a remote product, whatever the row says: a product
-        // with a voice room has no building, and a row showing both would be
-        // claiming the group meets in two places.
-        siteName: row.product.isRemote ? null : row.product.siteName,
+        deliveryMode: row.product.deliveryMode,
+        // Never carried by an online product, whatever the row says: an online
+        // municipality club's location is the municipality, not a building.
+        siteName: gamersAttendSite(row.product.deliveryMode)
+          ? row.product.siteName
+          : null,
       });
     }
   }

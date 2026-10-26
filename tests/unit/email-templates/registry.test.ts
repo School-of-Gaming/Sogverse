@@ -44,7 +44,7 @@ const PRODUCT_CONFIRMATION_SCHEDULE = {
   startDate: calendarInvitationStartDate(),
   endDate: calendarInvitationUntilDate(),
   slots: "mon 16:00 60",
-  isRemote: "no",
+  deliveryMode: "in_person",
   siteName: "Kallion kirjasto",
   siteAddress: "Viides linja 11, 00530 Helsinki",
   siteNote: "The door on the north side. Ring the bell.",
@@ -319,7 +319,7 @@ describe("templateRegistry render()", () => {
       it("states the selected topic's guide when the guide's translator is handed over", async () => {
         const tPrep = await getTopicPrepTranslator("en");
         const { html } = templateRegistry.productConfirmation.render(
-          { ...signup, isSelfSeat: false, topic: "roblox_studio", isRemote: "yes" },
+          { ...signup, isSelfSeat: false, topic: "roblox_studio", deliveryMode: "online" },
           t,
           "en",
           undefined,
@@ -333,7 +333,7 @@ describe("templateRegistry render()", () => {
       it("states none for a label-only topic on the shared IN-PERSON fixture", async () => {
         // **In person is half the reason this renders nothing, and the fixture
         // is where that half comes from**: `PRODUCT_CONFIRMATION_SCHEDULE` sets
-        // `isRemote: "no"`, and a label-only topic brings no steps of its own,
+        // `deliveryMode: "in_person"`, and a label-only topic brings no steps of its own,
         // so there is nothing left after the filter. Remotely the same topic
         // has the shared voice-room step and does render — the case below.
         const tPrep = await getTopicPrepTranslator("en");
@@ -354,7 +354,7 @@ describe("templateRegistry render()", () => {
         // the guide opens on the generic intro rather than a topic's.
         const tPrep = await getTopicPrepTranslator("en");
         const { html } = templateRegistry.productConfirmation.render(
-          { ...signup, isSelfSeat: false, topic: "programming", isRemote: "yes" },
+          { ...signup, isSelfSeat: false, topic: "programming", deliveryMode: "online" },
           t,
           "en",
           undefined,

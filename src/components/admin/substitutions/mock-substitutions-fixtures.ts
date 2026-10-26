@@ -95,7 +95,7 @@ function product(args: {
     topic: args.topic,
     spoken_language_code: args.language,
     timezone: args.timezone,
-    is_remote: args.site === "remote",
+    delivery_mode: args.site === "remote" ? "online" : "in_person",
     voice_room_mode: "sogverse",
     external_voice_url: null,
     start_date: null,

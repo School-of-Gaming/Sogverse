@@ -26,6 +26,7 @@ import { formatTimezoneOptionLabel } from "@/lib/timezone";
 import { ProductBanner } from "@/components/ui/product-banner";
 import { catalogueImageSrc } from "@/lib/images/catalogue-image-url";
 import { productAudience } from "@/lib/products/product-audience";
+import { hasVoiceRoom } from "@/lib/products/delivery-mode";
 import {
   formatAdminTermWeeks,
   formatClubTermDates,
@@ -206,7 +207,7 @@ export function ProductDetailsPage({
     locale,
     timeZone,
   });
-  const voiceAvailable = product.is_remote && voice.hasUpcomingSession;
+  const voiceAvailable = hasVoiceRoom(product.delivery_mode) && voice.hasUpcomingSession;
   const voiceRoom = productVoiceRoom(product, product.product_translations);
   // The same pick a family's "How to join" dialog makes, so a locale with no
   // instructions of its own falls back exactly as theirs does.
@@ -532,11 +533,11 @@ function ProductDetailsCard({
 
   // Where the product happens, and who it is for — the shop card's own rules
   // (`formatProductLocation`, `productWhoItsFor`), so the label each row wears
-  // follows the same shape: "Format" for a genuinely remote product and "Where"
-  // for one with a place behind it; "Age range" where the answer is a range and
+  // follows the same shape: "Format" for an online product with no place and
+  // "Where" for one with a place behind it; "Age range" where the answer is a range and
   // "Audience" where it leads with the audience word.
   const location = formatProductLocation(product, uiLocale);
-  const labelIsFormat = productLocationLabelIsFormat(product.is_remote, location);
+  const labelIsFormat = productLocationLabelIsFormat(product.delivery_mode, location);
   const whoItsFor = productWhoItsFor(product);
 
   const seatsLine =
@@ -668,6 +669,10 @@ function ProductDetailsCard({
             </DetailsSection>
 
             <DetailsSection title={t("detailsPage.sections.placeAndAudience")}>
+              <DetailRow label={t("detailsPage.fields.deliveryMode")}>
+                {t(`deliveryModes.${product.delivery_mode}`)}
+              </DetailRow>
+
               <DetailRow
                 label={
                   labelIsFormat
@@ -677,17 +682,17 @@ function ProductDetailsCard({
               >
                 {renderProductLocationLine({
                   location,
-                  isRemote: product.is_remote,
+                  deliveryMode: product.delivery_mode,
                   online: tFamily("online"),
                   tbd: tFamily("tbd"),
                 })}
               </DetailRow>
 
-              {/* How an online product's sessions are joined. The meeting link
+              {/* How an online or hybrid product's sessions are joined. The meeting link
                   is shown whole, since it is what an admin checks; the join
                   instructions are the version the header's copy comes from,
                   one locale's, like the rest of that copy. */}
-              {product.is_remote && (
+              {hasVoiceRoom(product.delivery_mode) && (
                 <DetailRow label={t("detailsPage.fields.voiceRoom")}>
                   <div>{t(`voiceRoomModes.${product.voice_room_mode}`)}</div>
                   {product.voice_room_mode === "external" &&

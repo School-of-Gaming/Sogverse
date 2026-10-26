@@ -271,9 +271,13 @@ export type ProductTopic = Database["public"]["Enums"]["product_topic"];
 // the tag module under src/components/public/products/ re-exports it and owns the
 // label-key resolution.
 export type ProductTag = Database["public"]["Enums"]["product_tag"];
+// How a product is delivered: online (a voice room, no site), in person (a
+// site, no room) or hybrid (gamers at a site, everyone in the Sogverse voice
+// room). Ask it through the helpers in src/lib/products/delivery-mode.ts.
+export type DeliveryMode = Database["public"]["Enums"]["delivery_mode"];
 // How an online product's sessions are joined: the Sogverse voice room, a link
-// to a meeting elsewhere, or no room and written instructions. An in-person
-// product is always `sogverse` (a CHECK on products).
+// to a meeting elsewhere, or no room and written instructions. An in-person or
+// hybrid product is always `sogverse` (a CHECK on products).
 export type VoiceRoomMode = Database["public"]["Enums"]["voice_room_mode"];
 // A human language a club is delivered in / a person speaks — the value in
 // `products.spoken_language_code` and each entry of `profiles.spoken_languages`.
@@ -897,7 +901,7 @@ export interface GeduAssignedProductShell {
   timezone: string;
   start_date: string | null;
   end_date: string | null;
-  is_remote: boolean;
+  delivery_mode: DeliveryMode;
   /**
    * How the sessions are joined, and the meeting link when that is
    * `external`. Folded with each translation's instructions by

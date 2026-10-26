@@ -65,11 +65,12 @@ import {
  *   page saying the same word four times down one column. On the gamer's own
  *   dashboard there was never anyone else it could belong to.
  * - **The footer answers "where is this happening" — and is absent when there is
- *   no answer.** A remote product answers with the Join button (lit inside its
+ *   no answer.** An online product answers with the Join button (lit inside its
  *   window, locked and naming the next session outside it); an in-person one
- *   with its site and a pin; a waitlisted one with the family's place in line
- *   and what happens when a seat opens; a finished one with the day it ended.
- *   Those are exclusive by construction, so the row is populated rather than
+ *   with its site and a pin; a hybrid one with both; a waitlisted one with the
+ *   family's place in line and what happens when a seat opens; a finished one
+ *   with the day it ended. Those are exclusive by construction, apart from a
+ *   hybrid card's pair, so the row is populated rather than
  *   reserved — and on the one card where every branch comes up empty (a running
  *   enrollment whose product has no schedule slots yet, so there is no session
  *   for a Join to name and no site to name instead) the row is not drawn at
@@ -361,7 +362,7 @@ export function EnrollmentCard(props: EnrollmentCardProps) {
     productName,
     productType,
     topic,
-    isRemote,
+    deliveryMode,
     prepWindowEnd,
     nextSessionStart,
     nextSessionEnd,
@@ -468,7 +469,7 @@ export function EnrollmentCard(props: EnrollmentCardProps) {
    * The dismissal comes in as a prop, so all three questions are answerable on
    * the server and this card paints its final footer on the first frame.
    */
-  const prepPlan = seated ? resolveTopicPrep(topic, isRemote) : null;
+  const prepPlan = seated ? resolveTopicPrep(topic, deliveryMode) : null;
   const prepDismissal = useTopicPrepDismissal(
     participationId,
     prepDismissed.has(participationId),
@@ -560,14 +561,14 @@ export function EnrollmentCard(props: EnrollmentCardProps) {
   // where every sentence branch comes up empty and the guide is on offer would
   // drop the whole footer and take the affordance down with it. Two real cards
   // are in exactly that state: an in-person seat whose site has no name yet,
-  // and a remote one with a room but nothing left on its schedule. Both are a
+  // and an online one with a room but nothing left on its schedule. Both are a
   // family who has just paid and has a setup to do, which is the one moment
   // this guide exists for.
   const hasFooter =
     endedOn !== null ||
     showsWaitlistPosition ||
     hasJoin ||
-    (seated && !hasVoiceRoom && siteName !== null) ||
+    (seated && siteName !== null) ||
     prepUnderSentence;
 
   return (
@@ -732,10 +733,13 @@ export function EnrollmentCard(props: EnrollmentCardProps) {
             </p>
           )}
 
-          {/* Four flat conditions rather than a nested chain — they are mutually
-              exclusive by construction, and a run that is over has neither a
-              session left to join nor a site anybody is travelling to, so the
-              end date wins over all of them.
+          {/* Four flat conditions rather than a nested chain. A run that is
+              over has neither a session left to join nor a site anybody is
+              travelling to, so the end date wins over all of them; the rest
+              are exclusive by construction except the Join and the site, which
+              a hybrid seat draws side by side — its sessions happen at the
+              site and in the room at once — wrapping onto two lines where the
+              row is too narrow for both.
 
               No minimum height: these cards stack in one column on a phone, so
               there is no grid row to square off, and every branch below puts
@@ -753,7 +757,7 @@ export function EnrollmentCard(props: EnrollmentCardProps) {
               again in the row beneath it. Text takes none of it. */}
           {hasFooter && (
             <div className="flex flex-col items-center gap-2">
-              <div className="flex w-full items-center justify-center">
+              <div className="flex w-full flex-wrap items-center justify-center gap-x-4 gap-y-2">
                 {endedOn !== null && (
                   // Date-only and UTC-pinned: an end date is a calendar date with no
                   // clock face on it, so it must read the same everywhere rather
@@ -831,8 +835,10 @@ export function EnrollmentCard(props: EnrollmentCardProps) {
                   </span>
                 )}
                 {/* The site is the product's, so a seat not yet in a group
-                    names it like any other. */}
-                {seated && !hasVoiceRoom && siteName !== null && (
+                    names it like any other. It is carried exactly when the
+                    gamers attend one, so a hybrid card names it after its
+                    Join. */}
+                {seated && siteName !== null && (
                   <span className="flex min-w-0 items-center gap-1.5 text-sm text-muted-foreground">
                     <MapPin className="h-4 w-4 shrink-0" aria-hidden />
                     <span className="truncate">{siteName}</span>

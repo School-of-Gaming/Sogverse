@@ -290,7 +290,7 @@ export type SessionCancellation = z.infer<typeof sessionCancellation>;
  */
 export const SESSION_CANCELLED_SQLSTATE = "P0026";
 
-/** The site, on in-person products. `null` on anything remote. */
+/** The site, on in-person and hybrid products. `null` on an online one. */
 export const geduFeedSite = z.object({
   location_id: z.string(),
   name: z.string(),
@@ -319,7 +319,7 @@ export const geduGroupFeed = z.object({
     timezone: z.string(),
     start_date: z.string().nullable(),
     end_date: z.string().nullable(),
-    is_remote: z.boolean(),
+    delivery_mode: z.enum(Constants.public.Enums.delivery_mode),
     /** How the sessions are joined — `src/lib/products/voice-room.ts`. */
     ...voiceRoomWireFields,
     /** Gedu/admin-only lesson material. Never rendered to a family. */

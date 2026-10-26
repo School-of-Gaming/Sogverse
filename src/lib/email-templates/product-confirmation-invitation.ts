@@ -12,7 +12,8 @@ import {
 import { SENDER_NAME, SUPPORT_EMAIL } from "@/lib/constants/brand";
 import { VOICE_CONFIG } from "@/lib/constants/voice";
 import type { PlannedSession } from "@/lib/planned-sessions";
-import type { ProductType } from "@/types";
+import { gamersAttendSite, hasVoiceRoom } from "@/lib/products/delivery-mode";
+import type { DeliveryMode, ProductType } from "@/types";
 import type { EmailTranslator } from "./translator";
 
 /**
@@ -87,8 +88,15 @@ export interface ProductConfirmationInvitationInput {
    * comes from here.
    */
   plannedSessions: readonly InvitationPlannedSession[];
-  isRemote: boolean;
-  /** The site's display name in the reader's locale, for an in-person product. */
+  /**
+   * How the product is delivered. A hybrid product's location is its site, and
+   * its notes say how to join the voice room as well as where the site is.
+   */
+  deliveryMode: DeliveryMode;
+  /**
+   * The site's display name in the reader's locale, for an in-person or hybrid
+   * product.
+   */
   siteName: string | null;
   siteAddress: string | null;
   /** The FAMILY-facing site note — how to find the room, where to park. */
@@ -364,29 +372,29 @@ function resolveSchedule({
   };
 }
 
-/** Where the sessions happen — online, or at a named site with its own note. */
+/**
+ * Where the sessions happen — online, at a named site with its own note, or on
+ * a hybrid product both: the site first, then how the voice room is joined.
+ */
 function placeInWords({
   t,
-  isRemote,
+  deliveryMode,
   siteName,
   siteAddress,
   siteNote,
 }: {
   t: EmailTranslator;
-  isRemote: boolean;
+  deliveryMode: DeliveryMode;
   siteName: string | null;
   siteAddress: string | null;
   siteNote: string | null;
 }): string[] {
-  if (isRemote) {
-    return [
-      t("productConfirmation.invite.whereOnline", {
-        // Interpolated from the constant the voice room itself reads, never
-        // typed: the two would drift the first time the window moved, and the
-        // mail is the copy a parent plans around.
-        minutes: VOICE_CONFIG.SESSION_WINDOW_BEFORE_MINUTES,
-      }),
-    ];
+  // Interpolated from the constant the voice room itself reads, never typed:
+  // the two would drift the first time the window moved, and the mail is the
+  // copy a parent plans around.
+  const minutes = VOICE_CONFIG.SESSION_WINDOW_BEFORE_MINUTES;
+  if (!gamersAttendSite(deliveryMode)) {
+    return [t("productConfirmation.invite.whereOnline", { minutes })];
   }
 
   const lines: string[] = [];
@@ -398,6 +406,9 @@ function placeInWords({
   // lives. It is admin-authored content rather than copy, so it travels
   // verbatim in whatever language it was written in.
   if (siteNote) lines.push(siteNote);
+  if (hasVoiceRoom(deliveryMode)) {
+    lines.push(t("productConfirmation.invite.whereHybridRoom", { minutes }));
+  }
   return lines;
 }
 
@@ -427,16 +438,21 @@ function summaryOf(
     : t("productConfirmation.invite.summary", { productName, participantName });
 }
 
-/** The `LOCATION` property: a site and its address, or the online answer. */
+/**
+ * The `LOCATION` property: a site and its address — a hybrid product's too,
+ * since that is where the gamers go — or the online answer.
+ */
 function locationOf(
   t: EmailTranslator,
-  { isRemote, siteName, siteAddress }: {
-    isRemote: boolean;
+  { deliveryMode, siteName, siteAddress }: {
+    deliveryMode: DeliveryMode;
     siteName: string | null;
     siteAddress: string | null;
   },
 ): string {
-  if (isRemote) return t("productConfirmation.invite.locationOnline");
+  if (!gamersAttendSite(deliveryMode)) {
+    return t("productConfirmation.invite.locationOnline");
+  }
   if (!siteName) return "";
   return siteAddress
     ? t("productConfirmation.invite.locationInPerson", {
@@ -581,7 +597,7 @@ export function composeProductConfirmationInvitation(
 
   const placeLines = placeInWords({
     t,
-    isRemote: input.isRemote,
+    deliveryMode: input.deliveryMode,
     siteName: input.siteName,
     siteAddress: input.siteAddress,
     siteNote: input.siteNote,

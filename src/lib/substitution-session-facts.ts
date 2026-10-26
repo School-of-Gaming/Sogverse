@@ -4,7 +4,9 @@ import { resolveTranslation } from "@/lib/i18n/resolve-translation";
 import type {
   SessionProductDocument,
 } from "@/services/session-substitution/session-substitution.contracts";
+import { gamersAttendSite, geduAttendsSite } from "@/lib/products/delivery-mode";
 import type {
+  DeliveryMode,
   ProductTopic,
   ProductType,
   SpokenLanguageCode,
@@ -50,11 +52,16 @@ export interface SessionFacts {
   productType: ProductType;
   topic: ProductTopic;
   spokenLanguageCode: SpokenLanguageCode;
-  isRemote: boolean;
   /**
-   * The venue on an in-person product. `null` on a remote one, and `null` on an
-   * in-person product with no site recorded — which is "place to be confirmed",
-   * not "online": `isRemote` is what says online.
+   * How the session is delivered, which is what says where the gedu teaches
+   * from: at the site in person, online otherwise — a hybrid gedu joins online
+   * while the gamers are at the site.
+   */
+  deliveryMode: DeliveryMode;
+  /**
+   * The site the gamers attend, on an in-person or hybrid product. `null` on an
+   * online one, and `null` on a product with no site recorded — which is "place
+   * to be confirmed", not "online": `deliveryMode` is what says online.
    */
   siteName: string | null;
 }
@@ -73,7 +80,7 @@ export interface SessionFactsProduct {
   topic: ProductTopic;
   spokenLanguageCode: SpokenLanguageCode;
   timezone: string;
-  isRemote: boolean;
+  deliveryMode: DeliveryMode;
   siteName: string | null;
   translations: readonly { locale: string; name: string }[];
 }
@@ -87,7 +94,7 @@ export function sessionFactsProduct(
     topic: document.topic,
     spokenLanguageCode: document.spoken_language_code,
     timezone: document.timezone,
-    isRemote: document.is_remote,
+    deliveryMode: document.delivery_mode,
     siteName: document.site_name,
     translations: document.translations,
   };
@@ -139,12 +146,35 @@ export function buildSessionFacts({
     productType: product.productType,
     topic: product.topic,
     spokenLanguageCode: product.spokenLanguageCode,
-    isRemote: product.isRemote,
-    // Never a building on a remote product, whatever the row says: a session
-    // with a room has no venue, and a line naming both would claim it meets in
-    // two places. The reads already apply this; the facts do not depend on it.
-    siteName: product.isRemote ? null : product.siteName,
+    deliveryMode: product.deliveryMode,
+    // Never a building on an online product, whatever the row says. The reads
+    // already apply this; the facts do not depend on it.
+    siteName: gamersAttendSite(product.deliveryMode) ? product.siteName : null,
   };
+}
+
+/**
+ * Where the gedu teaches the session from, as every substitution surface words
+ * it: at the site in person (`null` while no site is recorded — "place to be
+ * confirmed", never "online"), online otherwise, and on a hybrid session online
+ * with the site the gamers are at named beside it.
+ */
+export type SessionWhere =
+  | { kind: "site"; siteName: string | null }
+  | { kind: "online" }
+  | { kind: "hybrid"; siteName: string };
+
+export function sessionWhere(
+  facts: Pick<SessionFacts, "deliveryMode" | "siteName">,
+): SessionWhere {
+  if (geduAttendsSite(facts.deliveryMode)) {
+    return { kind: "site", siteName: facts.siteName };
+  }
+  // The facts never carry a site on an online product, and a hybrid product
+  // always holds one, so a missing site here is an online session.
+  return facts.siteName === null
+    ? { kind: "online" }
+    : { kind: "hybrid", siteName: facts.siteName };
 }
 
 /**

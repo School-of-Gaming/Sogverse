@@ -205,9 +205,9 @@ async function send({
         // The last five are the "Good to know" facts the mail states, read
         // through the same formatters the product page's card uses.
         // `topic` is the "Before the first session" guide's one input beyond
-        // `is_remote`: which guide the mail carries, if any. It states no row
+        // `delivery_mode`: which guide the mail carries, if any. It states no row
         // of its own and is not one of the "Good to know" facts.
-        "product_type, billing_mode, topic, timezone, start_date, end_date, is_remote, min_age, max_age, for_gamers, for_parents, spoken_language_code, product_translations(locale, name, short_description)",
+        "product_type, billing_mode, topic, timezone, start_date, end_date, delivery_mode, min_age, max_age, for_gamers, for_parents, spoken_language_code, product_translations(locale, name, short_description)",
       )
       .eq("id", productId)
       .single(),
@@ -403,7 +403,7 @@ async function send({
       // gamer — and a waitlist join carries none, which the resolver decides
       // from the mode rather than this call site.
       topic: product.topic,
-      isRemote: product.is_remote,
+      deliveryMode: product.delivery_mode,
       mode,
       // The child's copy states no price, so it never reads one.
       priceAmount: gamerCopy
@@ -436,9 +436,13 @@ async function send({
         startDate: product.start_date,
         endDate: product.end_date,
         slots,
-        isRemote: product.is_remote,
+        deliveryMode: product.delivery_mode,
         location: formatProductLocation(
-          { is_remote: product.is_remote, product_type: product.product_type, locations: site },
+          {
+            delivery_mode: product.delivery_mode,
+            product_type: product.product_type,
+            locations: site,
+          },
           locale,
         ),
         minAge: product.min_age,
@@ -475,7 +479,7 @@ async function send({
                 durationMinutes: slot.duration_minutes,
               }),
             ),
-            isRemote: product.is_remote,
+            deliveryMode: product.delivery_mode,
             // The shared `name_i18n[locale] ?? name` resolution every other
             // surface makes on a location row.
             siteName: site ? localizedLocationName(site, locale) : null,

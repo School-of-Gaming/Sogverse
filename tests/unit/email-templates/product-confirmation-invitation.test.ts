@@ -74,7 +74,7 @@ const base: ProductFixture = {
   startDate: "2027-01-04",
   endDate: null,
   slots: [{ weekday: 0, startTime: "16:00", durationMinutes: 60 }],
-  isRemote: true,
+  deliveryMode: "online",
   siteName: null,
   siteAddress: null,
   siteNote: null,
@@ -689,7 +689,7 @@ describe("the entry's title", () => {
 describe("where it happens", () => {
   it("names the site and its address in person", () => {
     const invitation = compose({
-      isRemote: false,
+      deliveryMode: "in_person",
       siteName: "Kallion kirjasto",
       siteAddress: "Viides linja 11, 00530 Helsinki",
     });
@@ -700,11 +700,26 @@ describe("where it happens", () => {
   });
 
   it("names the site alone when there is no address", () => {
-    const invitation = compose({ isRemote: false, siteName: "Kallion kirjasto" });
+    const invitation = compose({ deliveryMode: "in_person", siteName: "Kallion kirjasto" });
 
     expect(lineStartingWith(invitation!.ics, "LOCATION")).toBe(
       "LOCATION:Kallion kirjasto",
     );
+  });
+
+  it("puts a hybrid club at its site, and says how the voice room is joined too", () => {
+    const invitation = compose({
+      deliveryMode: "hybrid",
+      siteName: "Kallion kirjasto",
+      siteAddress: "Viides linja 11, 00530 Helsinki",
+    });
+
+    expect(lineStartingWith(invitation!.ics, "LOCATION")).toBe(
+      "LOCATION:Kallion kirjasto\\, Viides linja 11\\, 00530 Helsinki",
+    );
+    const notes = description(invitation!.ics);
+    expect(notes).toContain("Sessions run at Kallion kirjasto.");
+    expect(notes).toContain("also joined online through the voice room");
   });
 
   it("says where an online club happens, which is My SOG", () => {
@@ -717,7 +732,7 @@ describe("where it happens", () => {
    */
   it("carries the public site note into the entry's own notes", () => {
     const invitation = compose({
-      isRemote: false,
+      deliveryMode: "in_person",
       siteName: "Kallion kirjasto",
       siteNote: "The door on the north side.",
     });
@@ -748,7 +763,7 @@ describe("what the entry's notes say", () => {
   it("states the place, then My SOG, then the description, then support", () => {
     const text = description(
       compose({
-        isRemote: false,
+        deliveryMode: "in_person",
         siteName: "Kallion kirjasto",
         siteNote: "The door on the north side.",
       })!.ics,
