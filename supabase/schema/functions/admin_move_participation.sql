@@ -138,10 +138,12 @@ BEGIN
     -- it. Read under the target's lock taken above, so the group list cannot
     -- change between this check and the write. A group of the SOURCE is the
     -- mistake this refuses in practice — the dialog is opened from the source
-    -- club's panel — and writing it would leave the seat pointing at a group of
-    -- a product it is not on: a state no UI can produce, which every
-    -- group-scoped read (rosters, attendance, the feed) would then answer
-    -- wrongly about rather than fail on.
+    -- club's panel. trg_validate_participations_group would refuse the write
+    -- below as well (check_violation for another product's group,
+    -- foreign_key_violation for one that does not exist); this check comes
+    -- first so both cases are refused with the one message the switch route
+    -- recognises, which matters because by then the route has already moved
+    -- the Stripe subscription.
     PERFORM 1
        FROM public.product_groups
       WHERE id = p_group_id

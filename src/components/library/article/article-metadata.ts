@@ -125,7 +125,6 @@ export async function libraryArticleMetadata(
 ): Promise<Metadata> {
   const locale = resolveLocale(requestLocale);
   const shown = localizeArticle(article, locale);
-  if (shown === null) return {};
   const images = article.coverPath
     ? [ogPictureImage("library_cover", article.coverPath, shown.title)]
     : [await ogCardImage("site", locale)];

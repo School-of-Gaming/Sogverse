@@ -878,6 +878,10 @@ const SELF_SCOPING: Record<string, { scopeTest: string; why: string }> = {
     scopeTest: "tests/db/location-search.test.ts",
     why: "SECURITY INVOKER over `locations` and `postal_codes` — two tables of public reference data whose policies grant every row to anon and authenticated alike, so the caller's own RLS decides every row it can see exactly as a direct select would. It cannot answer with anything a plain read of either table would not already return, and the scope test proves an anonymous caller and a privileged one get the identical answer. Self-scoping by the same reading as can_read_product: the scope is the caller's, not a uid the arguments could aim elsewhere. Its arguments — needle, levels, page size and an optional country — only ever NARROW that set; none of them names a user or widens what the caller's own RLS already permits",
   },
+  location_lineage: {
+    scopeTest: "tests/db/location-lineage.test.ts",
+    why: "SECURITY INVOKER climb of `locations`, a table of public reference data whose policies grant every row to anon and authenticated alike, so it can answer with nothing a plain read of the table would not already return — a place's id and those of the places above it. It names no user and reads no uid; its one argument picks the place to climb from. Reachable because search_locations runs as its caller and climbs with it, and because the loop trigger an admin's write to locations fires climbs with it as that admin. The scope test proves an anonymous caller and the service role get the identical answer",
+  },
   planned_session_dates: {
     scopeTest: "tests/db/planned-sessions.test.ts",
     why: "public catalogue facts over two anon-readable tables, identical for every caller. SECURITY INVOKER over `products` and `schedule_slots`, whose read policies admit every row to anon and authenticated alike, so it can answer with nothing a plain read of the two would not already return — it only expands a product's term and weekly slots into dated sessions. It names no user and reads no uid; its arguments only pick a product and narrow a date span, clamped to 3660 days. The scope test proves an anonymous caller and the service role get identical rows",
@@ -996,12 +1000,14 @@ const SELF_SCOPING_VIEWS: Record<string, { scopeTest: string; why: string }> = {
  * rests on is unchanged, because the optional country argument only narrows
  * the result.
  *
- * `immutable_unaccent` and `location_search_separator` are here because
- * `search_locations` calls them and runs as its caller — granting the entry
- * point alone yields 42501 on the first anonymous search. Both are pure
- * functions over their arguments that read no table, so anon reaching them
- * exposes nothing; `location_search_blob` is deliberately *not* here, because
- * only the write path needs it and anon never writes to `locations`.
+ * `immutable_unaccent`, `location_search_separator` and `location_lineage`
+ * are here because `search_locations` calls them and runs as its caller —
+ * granting the entry point alone yields 42501 on the first anonymous search.
+ * The first two are pure functions over their arguments that read no table,
+ * and the third reads only `locations`, which anon already reads in full, so
+ * anon reaching them exposes nothing; `location_search_blob` is deliberately
+ * *not* here, because only the write path needs it and anon never writes to
+ * `locations`.
  *
  * The public team page's reads are here because the page is public:
  * `list_public_team_profiles` and `get_public_team_profile` return the
@@ -1028,6 +1034,7 @@ const SELF_SCOPING_VIEWS: Record<string, { scopeTest: string; why: string }> = {
 const ANON_ALLOWLIST = new Set([
   "can_read_product",
   "search_locations",
+  "location_lineage",
   "planned_session_dates",
   "product_holiday_breaks",
   "holiday_breaks_document",

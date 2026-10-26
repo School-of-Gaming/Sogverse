@@ -3,7 +3,7 @@ import { z } from "zod-v4";
 import { getPathname } from "@/i18n/navigation";
 import { LOCALE_CONFIG, SUPPORTED_LOCALES } from "@/lib/constants/locales";
 import { ROUTES } from "@/lib/constants/routes";
-import { resolveTranslation } from "@/lib/i18n/resolve-translation";
+import { resolveRequiredTranslation } from "@/lib/i18n/resolve-translation";
 import { readMcpCaller } from "@/lib/mcp/auth";
 import { UPLOADER_VIEW_META, registerGuideUploadTool } from "@/lib/mcp/image-uploader";
 import { adminLink } from "@/lib/mcp/landing-pages-call";
@@ -135,7 +135,7 @@ function guideLink(origin: string, id: string | null): string {
 function usageView(origin: string, usage: GuideUsage) {
   return {
     pageId: usage.pageId,
-    title: resolveTranslation(usage.titles, "en")?.title ?? null,
+    title: resolveRequiredTranslation(usage.titles, "en").title,
     inLiveCopy: usage.inLiveCopy,
     inWorkingCopy: usage.inWorkingCopy,
     adminLink: adminLink(origin, usage.pageId),

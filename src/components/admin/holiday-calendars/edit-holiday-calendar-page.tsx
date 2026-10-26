@@ -11,7 +11,7 @@ import {
   resolveLocale,
   type SupportedLocale,
 } from "@/lib/constants/locales";
-import { resolveTranslation } from "@/lib/i18n/resolve-translation";
+import { resolveRequiredTranslation } from "@/lib/i18n/resolve-translation";
 import {
   useHolidayCalendar,
   usePreviewHolidayCalendarChange,
@@ -34,9 +34,7 @@ function namedProducts(
   return products
     .map((product) => ({
       ...product,
-      name:
-        resolveTranslation(product.translations, uiLocale)?.name ??
-        "",
+      name: resolveRequiredTranslation(product.translations, uiLocale).name,
     }))
     .sort((a, b) => a.name.localeCompare(b.name, formattingLocale(uiLocale)));
 }

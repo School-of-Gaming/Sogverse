@@ -78,9 +78,7 @@ export function deriveVoiceMemberFlair(
   const creations: Record<string, readonly GamerCreation[]> = {};
 
   for (const [userId, member] of Object.entries(overlay.members)) {
-    if (drawsNewcomerBadge && member.group_joined_at !== null) {
-      newcomers[userId] = member.group_joined_at;
-    }
+    if (drawsNewcomerBadge) newcomers[userId] = member.group_joined_at;
     if ("has_note" in member) {
       if (member.has_note) notes[userId] = WITHHELD;
     } else {

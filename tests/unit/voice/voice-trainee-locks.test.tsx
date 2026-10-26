@@ -270,7 +270,7 @@ describe("the trainee tag on the participant rail", () => {
       {
         product_type: "consumer_club",
         members: {
-          [IDS.aino]: { group_joined_at: null, has_note: false, creations: [] },
+          [IDS.aino]: { group_joined_at: "2020-01-01T00:00:00.000Z", has_note: false, creations: [] },
         },
       },
       new Date("2026-09-29T12:00:00.000Z"),

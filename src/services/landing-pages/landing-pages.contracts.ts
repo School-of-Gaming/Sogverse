@@ -1,5 +1,5 @@
 import { z } from "zod";
-import { resolveTranslation } from "@/lib/i18n/resolve-translation";
+import { resolveRequiredTranslation } from "@/lib/i18n/resolve-translation";
 import {
   SUPPORTED_LOCALES,
   type SupportedLocale,
@@ -431,33 +431,26 @@ export function readSectionTexts(
 
 /**
  * The version a reader of `locale` is shown: theirs, else English, else the
- * first written. Null only for a page with no version, which a published one
- * never is.
+ * first written. Every published copy has one: publishing refuses a page with
+ * no complete version and copies only the complete ones, unpublishing removes
+ * the versions with the publication, and the working copy as a publish would
+ * leave it is null without one.
  */
 export function localizeLandingPageSummary(
   page: PublishedLandingPageSummary,
   locale: SupportedLocale,
-): LocalizedLandingPageSummary | null {
+): LocalizedLandingPageSummary {
   const { versions, ...shared } = page;
-  const version = resolveTranslation(versions, locale);
-  return version === null ? null : { ...shared, ...version };
+  return { ...shared, ...resolveRequiredTranslation(versions, locale) };
 }
 
-/**
- * The version a reader of `locale` is shown, as `localizeLandingPageSummary`
- * picks it. Every published copy has a version — publishing copies only the
- * complete ones and refuses when there are none, and the working copy as a
- * publish would leave it is null without one — so a copy with none is a
- * broken invariant and throws.
- */
+/** The version a reader of `locale` is shown, as `localizeLandingPageSummary` picks it. */
 export function localizeLandingPage(
   page: PublishedLandingPage,
   locale: SupportedLocale,
 ): LocalizedLandingPage {
   const { versions, ...shared } = page;
-  const version = resolveTranslation(versions, locale);
-  if (version === null) throw new Error(`Landing page ${page.id} has no version`);
-  return { ...shared, ...version };
+  return { ...shared, ...resolveRequiredTranslation(versions, locale) };
 }
 
 // ---------------------------------------------------------------------------

@@ -5,7 +5,7 @@ import {
 } from "@/components/public/products/format-product-price";
 import { CURRENCY_CONFIG, DEFAULT_CURRENCY } from "@/lib/constants/currency";
 import type { SupportedLocale } from "@/lib/constants/locales";
-import { resolveTranslation } from "@/lib/i18n/resolve-translation";
+import { resolveRequiredTranslation } from "@/lib/i18n/resolve-translation";
 import { catalogueImageSrc } from "@/lib/images/catalogue-image-url";
 import { formatProductLocation } from "@/lib/products/format-product-location";
 import { dateTimeInstant } from "@/lib/schedule-occurrence";
@@ -248,11 +248,11 @@ export function productJsonLd({
   plannedDates,
 }: ProductJsonLdInput) {
   const url = `${siteUrl}${canonicalPath}`;
-  const shown = resolveTranslation(
+  const shown = resolveRequiredTranslation(
     product.product_translations,
     locale,
   );
-  const description = shown?.short_description ?? "";
+  const description = shown.short_description;
   const image = catalogueImageSrc("product", product.image_path);
   const offer = offerOf(product, url);
   const audience = audienceOf(product);
@@ -266,7 +266,7 @@ export function productJsonLd({
 
   const common = {
     "@context": "https://schema.org",
-    name: shown?.name ?? "",
+    name: shown.name,
     ...(description !== "" && { description }),
     url,
     ...(image !== null && { image }),

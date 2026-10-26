@@ -1,5 +1,5 @@
 import { CHAT_GROUP_WINDOW_MS } from "@/lib/constants/chat";
-import type { ChatMessage } from "./types";
+import type { ChatImageRef, ChatMessage } from "./types";
 
 /**
  * Sender grouping — the arithmetic that turns a flat log into something
@@ -23,10 +23,13 @@ import type { ChatMessage } from "./types";
  * run, because there is no longer a picture to put in one.
  */
 
+/** A message that can sit inside a wrapping thumbnail row: it holds a picture. */
+export type ChatImageMessage = ChatMessage & { image: ChatImageRef };
+
 /** One rendered unit inside a run. */
 export type ChatGroupItem =
   | { kind: "message"; message: ChatMessage }
-  | { kind: "images"; messages: readonly ChatMessage[] };
+  | { kind: "images"; messages: readonly ChatImageMessage[] };
 
 /** A run of messages from one sender, drawn under one header. */
 export interface ChatMessageGroup {
@@ -60,7 +63,7 @@ function continuesRun(
 }
 
 /** Whether a message can sit inside a wrapping thumbnail row. */
-function joinsImageRun(message: ChatMessage): boolean {
+function joinsImageRun(message: ChatMessage): message is ChatImageMessage {
   return message.image !== null && message.hiddenAt === null;
 }
 

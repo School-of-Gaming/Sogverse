@@ -32,6 +32,7 @@ import { normalizeGamerUsername } from "@/lib/gamer-sign-in";
 import { cn } from "@/lib/cn";
 import type { CreateGamerInput, GamerSignIn } from "@/types";
 import { GamerSignInRadios } from "./gamer-sign-in-radios";
+import { trimPersonName } from "@/lib/person-name-trim";
 import {
   findGamerCredentialProblem,
   GamerCredentialFields,
@@ -302,7 +303,7 @@ export function AddGamerFormCard({
   // the future.
   const months = useMemo(() => gamerBirthMonthOptions(locale), [locale]);
 
-  const trimmedName = firstName.trim();
+  const trimmedName = trimPersonName(firstName);
 
   /**
    * The card's title, which is the page's own question.

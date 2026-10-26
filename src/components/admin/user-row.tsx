@@ -137,9 +137,9 @@ export function UserRow({
           </Avatar>
           <div>
             <p className="font-medium">
-              {(user.role !== "gamer"
+              {user.role !== "gamer"
                 ? [user.first_name, user.last_name].filter(Boolean).join(" ")
-                : user.first_name) || t('unnamedUser')}
+                : user.first_name}
             </p>
             {user.role !== "gamer" && user.email && (
               <p className="text-sm text-muted-foreground">{user.email}</p>
@@ -206,7 +206,7 @@ export function UserRow({
                   <Identicon id={gamer.id} size={28} />
                 </Avatar>
                 <p className="text-sm font-medium">
-                  {gamer.first_name || t('unnamedGamer')}
+                  {gamer.first_name}
                 </p>
               </div>
               <div className="flex items-center gap-2">

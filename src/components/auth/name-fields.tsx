@@ -6,13 +6,14 @@ import { Input } from "@/components/ui/input";
 import { Field } from "@/components/ui/field";
 import { cn } from "@/lib/cn";
 import { DISPLAY_NAME_MIN, DISPLAY_NAME_MAX } from "@/lib/constants/account-limits";
+import { trimPersonName } from "@/lib/person-name-trim";
 
 /**
  * The name rules every registration form holds a parent or a Gedu to, as
  * fields to spread into the form's own schema, with their refusals in the
  * reader's language.
  *
- * `.trim()` before the length checks, so they measure the name rather than
+ * Trimmed before the length checks, so they measure the name rather than
  * the whitespace around it — " A" is not a two-character first name. The
  * routes' own contracts trim again for the same reason: they are the ones
  * that have to hold, because the name goes from there into the profile. This
@@ -23,14 +24,22 @@ export function useNameSchemaFields() {
   return {
     firstName: z
       .string()
-      .trim()
-      .min(DISPLAY_NAME_MIN, t("firstNameTooShort", { min: DISPLAY_NAME_MIN }))
-      .max(DISPLAY_NAME_MAX, t("firstNameTooLong", { max: DISPLAY_NAME_MAX })),
+      .transform(trimPersonName)
+      .pipe(
+        z
+          .string()
+          .min(DISPLAY_NAME_MIN, t("firstNameTooShort", { min: DISPLAY_NAME_MIN }))
+          .max(DISPLAY_NAME_MAX, t("firstNameTooLong", { max: DISPLAY_NAME_MAX })),
+      ),
     lastName: z
       .string()
-      .trim()
-      .min(DISPLAY_NAME_MIN, t("lastNameTooShort", { min: DISPLAY_NAME_MIN }))
-      .max(DISPLAY_NAME_MAX, t("lastNameTooLong", { max: DISPLAY_NAME_MAX })),
+      .transform(trimPersonName)
+      .pipe(
+        z
+          .string()
+          .min(DISPLAY_NAME_MIN, t("lastNameTooShort", { min: DISPLAY_NAME_MIN }))
+          .max(DISPLAY_NAME_MAX, t("lastNameTooLong", { max: DISPLAY_NAME_MAX })),
+      ),
   };
 }
 

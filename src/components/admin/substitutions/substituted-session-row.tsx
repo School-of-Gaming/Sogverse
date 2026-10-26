@@ -45,7 +45,7 @@ export function SubstitutedSessionRow({
             <span className="text-muted-foreground">{t("substitute")}</span>
             <PersonChip
               id={session.substituteId}
-              name={session.substituteName ?? t("unnamed")}
+              name={session.substituteName}
             />
           </div>
           <div className="flex flex-wrap items-center gap-2 pt-1">

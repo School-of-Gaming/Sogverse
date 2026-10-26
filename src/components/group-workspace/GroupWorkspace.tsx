@@ -28,7 +28,7 @@ import {
 } from "@/components/gedu/session-feed";
 import { ROUTES } from "@/lib/constants/routes";
 import { resolveLocale } from "@/lib/constants/locales";
-import { resolveTranslation } from "@/lib/i18n/resolve-translation";
+import { resolveRequiredTranslation } from "@/lib/i18n/resolve-translation";
 import { sessionEntryId } from "@/lib/session-occurrence";
 import { cn } from "@/lib/cn";
 import { computeVoiceState, markCancelled } from "@/lib/voice-window";
@@ -572,7 +572,7 @@ export function GroupWorkspace({
   const [openFor, setOpenFor] = useState<string | null>(null);
 
   const productName =
-    resolveTranslation(data.product.translations, uiLocale)?.name ?? "";
+    resolveRequiredTranslation(data.product.translations, uiLocale).name;
 
   /**
    * Which game identity this page's roster shows, or `null` for a product about

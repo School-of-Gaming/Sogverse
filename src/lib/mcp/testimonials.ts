@@ -3,7 +3,7 @@ import { z } from "zod-v4";
 import { getPathname } from "@/i18n/navigation";
 import { ROUTES } from "@/lib/constants/routes";
 import { LOCALE_CONFIG, SUPPORTED_LOCALES } from "@/lib/constants/locales";
-import { resolveTranslation } from "@/lib/i18n/resolve-translation";
+import { resolveRequiredTranslation } from "@/lib/i18n/resolve-translation";
 import { readMcpCaller } from "@/lib/mcp/auth";
 import { adminLink } from "@/lib/mcp/landing-pages-call";
 import { OVERWRITES, READ_ONLY, answer, refusal } from "@/lib/mcp/library-call";
@@ -142,7 +142,7 @@ function editorLink(origin: string, id: string): string {
 function usageView(origin: string, usage: TestimonialUsage) {
   return {
     pageId: usage.pageId,
-    title: resolveTranslation(usage.titles, "en")?.title ?? null,
+    title: resolveRequiredTranslation(usage.titles, "en").title,
     inLiveCopy: usage.inLiveCopy,
     inWorkingCopy: usage.inWorkingCopy,
     adminLink: adminLink(origin, usage.pageId),

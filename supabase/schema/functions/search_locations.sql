@@ -6,7 +6,7 @@ CREATE FUNCTION public.search_locations(p_query text, p_types public.location_ty
     LANGUAGE sql STABLE
     SET search_path TO ''
     AS $$
-WITH RECURSIVE
+WITH
 probe AS (
   SELECT
     folded.needle,
@@ -104,21 +104,17 @@ page AS (
    ORDER BY m.match_rank, (m.type = 'site'), m.depth, m.name, m.id
    LIMIT (SELECT cap FROM probe)
 ),
--- The chain of every hit on this page, at most `cap` rows walking at most a
--- handful of levels. Bounded by depth as well as by the parent FK in case a
--- hand-made row ever forms a cycle.
+-- The chain of every hit on this page: its lineage without the hit itself,
+-- at most `cap` lineages of a handful of levels each.
 --
 -- Deliberately unfiltered on `retired_at`: a hit's ancestors are rendered as a
 -- path, and a path with a link missing is unreadable. Retirement hides a place
 -- from being *chosen*, not from being *named*.
 walk AS (
-  SELECT p.id AS anchor_id, p.parent_id AS node_id, 1 AS depth
+  SELECT p.id AS anchor_id, lin.location_id AS node_id, lin.distance AS depth
     FROM page p
-  UNION ALL
-  SELECT w.anchor_id, up.parent_id, w.depth + 1
-    FROM walk w
-    JOIN public.locations up ON up.id = w.node_id
-   WHERE w.depth < 10
+   CROSS JOIN LATERAL public.location_lineage(p.id) AS lin
+   WHERE lin.distance > 0
 ),
 chains AS (
   SELECT w.anchor_id,

@@ -17,8 +17,8 @@ import { Constants, type VoiceRoomMode } from "@/types";
 // columns.
 //
 // The instructions stay per locale here, never picked: the surface that shows
-// them picks the reader's version with `resolveTranslation()`, as it does the
-// product's name.
+// them picks the reader's version with `resolveRequiredTranslation()`, as it
+// does the product's name.
 
 /** The two product-level wire fields, for a read's product shell schema. */
 export const voiceRoomWireFields = {
@@ -43,9 +43,10 @@ export interface VoiceJoinInstructions {
  * - `sogverse` — the Sogverse group voice room, during the session window.
  * - `external` — the meeting at `url`, on another service. Public by design.
  * - `none` — no room; the reader is shown `instructions` in their locale,
- *   picked with `resolveTranslation()`. Only the locales that have
- *   instructions written are listed; the product writers refuse mode `none`
- *   with none at all, so the list is never empty for real data.
+ *   picked with `resolveRequiredTranslation()`. Only the locales that have
+ *   instructions written are listed, and the list is never empty:
+ *   `create_product` and `update_product`, the only writers of either column,
+ *   refuse mode `none` with instructions in no locale.
  */
 export type ProductVoiceRoom =
   | { mode: "sogverse" }

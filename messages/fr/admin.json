@@ -36,7 +36,6 @@
       "title": "Certification des Gedus",
       "justNow": "{count} certifiés à l’instant",
       "empty": "Aucun Gedu n’est en attente de certification.",
-      "unnamed": "Gedu sans nom",
       "registered": "inscrit {when}",
       "certify": "Certifier",
       "certifying": "Certification…",
@@ -504,8 +503,7 @@
           "pair": "deux côte à côte",
           "row": "trois en ligne",
           "showcase": "une grande citation, deux côte à côte, puis trois en ligne"
-        },
-        "missing": "Un témoignage qui n’est plus conservé"
+        }
       }
     },
     "status": {
@@ -1212,8 +1210,6 @@
       "searchHint": "Saisissez au moins 2 caractères pour lancer la recherche.",
       "noParents": "Aucun parent pour l’instant.",
       "noSearchResults": "Aucun parent ni joueur ne correspond à votre recherche.",
-      "unnamedParent": "Parent sans nom",
-      "unnamedGamer": "Joueur sans nom",
       "add": "Ajouter",
       "adding": "Ajout…",
       "added": "Ajouté",
@@ -1475,14 +1471,11 @@
     "unknown": "Inconnu",
     "linkedGamers": "Joueurs associés",
     "linkedParents": "Parents associés",
-    "unnamedGamer": "Joueur sans nom",
-    "unnamedUser": "Utilisateur sans nom",
     "noConnectedGamers": "Aucun joueur associé",
     "assignedProducts": "Produits affectés",
     "noAssignedProducts": "Aucun produit affecté",
     "unassignedGroup": "Aucun groupe attribué",
     "needsGroup": "Doit être affecté à un groupe",
-    "untitledProduct": "Produit sans titre",
     "gamerDetails": {
       "title": "Informations personnelles",
       "edit": "Modifier les informations personnelles",
@@ -1564,7 +1557,6 @@
     "slackNotLinked": "Non associé"
   },
   "locations": {
-    "editName": "Modifier {name}",
     "addChildUnder": "Ajouter {type} sous {parent}",
     "location": "Lieu",
     "nameRequired": "Le nom est obligatoire",
@@ -1669,7 +1661,6 @@
     "justNow": "{count, plural, one {# remplacement validé à l’instant} other {# remplacements validés à l’instant}}",
     "offersLabel": "Gedus proposant de remplacer",
     "away": "Absence :",
-    "unnamed": "Gedu sans nom",
     "reason": {
       "sick": "Maladie",
       "other": "Autre"

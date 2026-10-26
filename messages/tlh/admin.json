@@ -36,7 +36,6 @@
       "title": "Gedu patlh",
       "justNow": "DaH patlh nobta’: {count}",
       "empty": "patlh ghaj Hoch Gedupu’.",
-      "unnamed": "pong Hutlh Gedu",
       "registered": "ghItlhta’ {when}",
       "certify": "patlh yInob",
       "certifying": "patlh noblI’…",
@@ -504,8 +503,7 @@
           "pair": "cha’ jatlh retlhDaq",
           "row": "wej jatlh tlhegh",
           "showcase": "wa’ jatlh tIn, cha’ retlhDaq, wej tlhegh"
-        },
-        "missing": "jatlh polbe’lu’choH"
+        }
       }
     },
     "status": {
@@ -1212,8 +1210,6 @@
       "searchHint": "cha’ mu’ pIm yIghItlh, vaj yInej.",
       "noParents": "vav pagh tu’lu’.",
       "noSearchResults": "vav qoj SuvwI’ tu’be’lu’.",
-      "unnamedParent": "vav pongHa’",
-      "unnamedGamer": "SuvwI’ pongHa’",
       "add": "chel",
       "adding": "chellu’taH…",
       "added": "chellu’pu’",
@@ -1475,14 +1471,11 @@
     "unknown": "Sovbe’lu’",
     "linkedGamers": "toy’wI’pu’ jonlu’",
     "linkedParents": "vav/SoSmey jonlu’",
-    "unnamedGamer": "pong Hutlh toy’wI’",
-    "unnamedUser": "pong Hutlh lo’wI’",
     "noConnectedGamers": "toy’wI’pu’ jonbe’lu’",
     "assignedProducts": "Dochmey nobbogh",
     "noAssignedProducts": "Dochmey noblu’pu’be’",
     "unassignedGroup": "ghom Sambe’",
     "needsGroup": "ghom poQlu’",
-    "untitledProduct": "Doch pong Hutlh",
     "gamerDetails": {
       "title": "QujwI’ De’",
       "edit": "De’ yIchoH!",
@@ -1564,7 +1557,6 @@
     "slackNotLinked": "rarlu'be'"
   },
   "locations": {
-    "editName": "{name} yIchoH",
     "addChildUnder": "{type} {parent}Daq yIchel",
     "location": "Dap",
     "nameRequired": "pong nIS",
@@ -1669,7 +1661,6 @@
     "justNow": "{count, plural, one {DaH # lIw lajlu’} other {DaH # lIwmey lajlu’}}",
     "offersLabel": "lIwmeH tlhobbogh Gedupu’",
     "away": "pawbe’:",
-    "unnamed": "pong Hutlh Gedu",
     "reason": {
       "sick": "rop",
       "other": "latlh"

@@ -8,7 +8,7 @@ import {
   type LandingBreadcrumb,
 } from "@/components/landing-pages/landing-page-breadcrumb";
 import { resolveLocale } from "@/lib/constants/locales";
-import { resolveTranslation } from "@/lib/i18n/resolve-translation";
+import { resolveRequiredTranslation } from "@/lib/i18n/resolve-translation";
 import { landingPlacedGuideIds } from "@/lib/landing-pages/sections";
 import { createClient, getUserWithProfile } from "@/lib/supabase/server";
 import { GuidesService } from "@/services/guides/guides.service";
@@ -63,8 +63,7 @@ export default async function LandingPagePreviewPage({
 
   const locale = resolveLocale(await getLocale());
   const { draft } = page;
-  const version = resolveTranslation(draft.versions, locale);
-  if (version === null) notFound();
+  const version = resolveRequiredTranslation(draft.versions, locale);
 
   // The working copy's guides, through the admin read the public one would
   // not answer for a guide placed only here.
