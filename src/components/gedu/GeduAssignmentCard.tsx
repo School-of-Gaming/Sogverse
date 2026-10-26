@@ -429,7 +429,7 @@ export function GeduAssignmentCard({
               where a click hit nothing at all. The button is the only thing here
               with a click of its own to receive, so it is the only thing that
               takes the `z-10`. */}
-          <div className="mt-auto flex min-h-9 items-center justify-center">
+          <div className="mt-auto flex min-h-9 flex-wrap items-center justify-center gap-x-4 gap-y-2">
             {endedOn !== null && (
               // Date-only and UTC-pinned, via the shared bare-date formatter: an
               // end date is a calendar date with no clock face on it, so it must
@@ -465,7 +465,8 @@ export function GeduAssignmentCard({
                 />
               </span>
             )}
-            {endedOn === null && !hasVoiceRoom && siteName !== null && (
+            {/* Beside the Join on a hybrid club, which has both a room and a site. */}
+            {endedOn === null && siteName !== null && (
               <span className="flex min-w-0 items-center gap-1.5 text-sm text-muted-foreground">
                 <MapPin className="h-4 w-4 shrink-0" aria-hidden />
                 <span className="truncate">{siteName}</span>
