@@ -577,7 +577,7 @@ function Workspace({
         timezone: sessions.product.timezone,
         start_date: sessions.product.start_date,
         end_date: sessions.product.end_date,
-        is_remote: sessions.product.is_remote,
+        delivery_mode: sessions.product.delivery_mode,
         // The feed's copy, beside the translations whose instructions go
         // with it.
         voice_room_mode: feed.product.voice_room_mode,

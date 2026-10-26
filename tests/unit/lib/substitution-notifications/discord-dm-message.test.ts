@@ -163,6 +163,21 @@ describe("buildSubstitutionOfferDm", () => {
     expect(body).toContain("€45.00 per session");
   });
 
+  it("says a hybrid session is taught remotely, naming the site the gamers are at", () => {
+    const base = notificationSnapshot();
+    const snapshot = notificationSnapshot({
+      product: { ...base.product, delivery_mode: "hybrid" },
+    });
+    const message = buildSubstitutionOfferDm({
+      copy: en,
+      logoUrl: null,
+      session: substitutionDmSession(snapshot, "en"),
+      response: null,
+      state: "open",
+    });
+    expect(texts(message)).toContain("Remote, gamers at Kallio School");
+  });
+
   it("never names the absent gedu or the reason", () => {
     const snapshot = notificationSnapshot({ request: { reason_note: "Flu, sorry" } });
     const json = JSON.stringify(

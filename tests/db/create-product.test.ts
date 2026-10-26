@@ -127,7 +127,7 @@ describe("create_product", () => {
       ],
       p_topic: "minecraft_java",
       p_spoken_language_code: "en",
-      p_is_remote: true,
+      p_delivery_mode: "online",
       p_timezone: "Europe/Helsinki",
       p_registration_opens_at: new Date(Date.now() - 60_000).toISOString(),
       p_start_date: "2099-01-01",
@@ -280,7 +280,7 @@ describe("create_product", () => {
       ],
       p_topic: "minecraft_java",
       p_spoken_language_code: "en",
-      p_is_remote: true,
+      p_delivery_mode: "online",
       p_timezone: "Europe/Helsinki",
       p_registration_opens_at: new Date(Date.now() - 60_000).toISOString(),
       p_start_date: "2099-01-01",
@@ -316,7 +316,7 @@ describe("create_product", () => {
       ],
       p_topic: "minecraft_java",
       p_spoken_language_code: "en",
-      p_is_remote: true,
+      p_delivery_mode: "online",
       p_timezone: "Europe/Helsinki",
       p_registration_opens_at: new Date(Date.now() - 60_000).toISOString(),
       p_start_date: "2099-06-01",
@@ -348,7 +348,7 @@ describe("create_product", () => {
       ],
       p_topic: "minecraft_java",
       p_spoken_language_code: "en",
-      p_is_remote: true,
+      p_delivery_mode: "online",
       p_location_id: TEST_IDS.LOCATION_MUNICIPALITY,
       p_timezone: "Europe/Helsinki",
       p_registration_opens_at: new Date(Date.now() - 60_000).toISOString(),
@@ -405,7 +405,7 @@ describe("create_product", () => {
       ],
       p_topic: "minecraft_java",
       p_spoken_language_code: "en",
-      p_is_remote: true,
+      p_delivery_mode: "online",
       p_timezone: "Europe/Helsinki",
       p_registration_opens_at: new Date(Date.now() - 60_000).toISOString(),
       p_start_date: "2099-01-01",
@@ -436,7 +436,7 @@ describe("create_product", () => {
       ],
       p_topic: "minecraft_java",
       p_spoken_language_code: "en",
-      p_is_remote: true,
+      p_delivery_mode: "online",
       p_timezone: "Europe/Helsinki",
       p_registration_opens_at: new Date(Date.now() - 60_000).toISOString(),
       p_start_date: "2099-01-01",
@@ -461,7 +461,7 @@ describe("create_product", () => {
       voice: {
         p_voice_room_mode?: "sogverse" | "external" | "none";
         p_external_voice_url?: string;
-        p_is_remote?: boolean;
+        p_delivery_mode?: "online" | "in_person" | "hybrid";
         p_location_id?: string;
       },
       instructions: Record<string, string | null> = {},
@@ -480,7 +480,7 @@ describe("create_product", () => {
         })),
         p_topic: "minecraft_java",
         p_spoken_language_code: "en",
-        p_is_remote: true,
+        p_delivery_mode: "online",
         p_timezone: "Europe/Helsinki",
         p_registration_opens_at: new Date(Date.now() - 60_000).toISOString(),
         p_start_date: "2099-01-01",
@@ -545,15 +545,28 @@ describe("create_product", () => {
       }
     });
 
-    it("refuses anything but a Sogverse room on an in-person product", async () => {
-      const { data, error } = await createWithVoice({
-        p_is_remote: false,
-        p_location_id: TEST_IDS.LOCATION_SITE,
-        p_voice_room_mode: "none",
-      });
-      expect(data).toBeNull();
-      expect(error?.code).toBe("23514");
-      expect(error?.message).toMatch(/in_person_voice_room/);
+    it("refuses anything but a Sogverse room on an in-person or a hybrid product", async () => {
+      for (const p_delivery_mode of ["in_person", "hybrid"] as const) {
+        for (const voice of [
+          { p_voice_room_mode: "none" as const },
+          {
+            p_voice_room_mode: "external" as const,
+            p_external_voice_url: "https://meet.example.com/x",
+          },
+        ]) {
+          const { data, error } = await createWithVoice(
+            {
+              p_delivery_mode,
+              p_location_id: TEST_IDS.LOCATION_SITE,
+              ...voice,
+            },
+            voice.p_voice_room_mode === "none" ? { en: "Call 0800 123 456." } : {},
+          );
+          expect(data).toBeNull();
+          expect(error?.code).toBe("23514");
+          expect(error?.message).toMatch(/sogverse_room_unless_online/);
+        }
+      }
     });
 
     it("stores join instructions per locale on the no-room mode", async () => {
@@ -599,6 +612,43 @@ describe("create_product", () => {
       expect(error?.code).toBe("23514");
       expect(error?.message).toMatch(/voice_join_instructions/);
     });
+
+    describe("a hybrid product", () => {
+      it("is created at a site, on a Sogverse room", async () => {
+        const { data: id, error } = await createWithVoice({
+          p_delivery_mode: "hybrid",
+          p_location_id: TEST_IDS.LOCATION_SITE,
+        });
+        expect(error).toBeNull();
+        const { data: row } = await admin
+          .from("products")
+          .select("delivery_mode, location_id, voice_room_mode")
+          .eq("id", id!)
+          .single();
+        expect(row).toEqual({
+          delivery_mode: "hybrid",
+          location_id: TEST_IDS.LOCATION_SITE,
+          voice_room_mode: "sogverse",
+        });
+      });
+
+      it("is refused with no location, because its gamers attend a site", async () => {
+        const { data, error } = await createWithVoice({ p_delivery_mode: "hybrid" });
+        expect(data).toBeNull();
+        expect(error?.code).toBe("23514");
+        expect(error?.message).toMatch(/chk_products_in_person_has_location/);
+      });
+
+      it("is refused at a location that is not a site", async () => {
+        const { data, error } = await createWithVoice({
+          p_delivery_mode: "hybrid",
+          p_location_id: TEST_IDS.LOCATION_MUNICIPALITY,
+        });
+        expect(data).toBeNull();
+        expect(error?.code).toBe("23514");
+        expect(error?.message).toMatch(/must be a site/);
+      });
+    });
   });
 
   it("non-admin (customer) is rejected with 42501", async () => {
@@ -615,7 +665,7 @@ describe("create_product", () => {
       ],
       p_topic: "minecraft_java",
       p_spoken_language_code: "en",
-      p_is_remote: true,
+      p_delivery_mode: "online",
       p_timezone: "Europe/Helsinki",
       p_registration_opens_at: new Date().toISOString(),
       p_start_date: "2099-01-01",

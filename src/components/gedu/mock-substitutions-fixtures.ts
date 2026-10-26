@@ -29,6 +29,8 @@ import type {
   OpenSubstitutionRequest,
 } from "@/services/session-substitution/session-substitution.contracts";
 import { buildGeduDashboardFixture } from "./mock-dashboard-fixtures";
+import { gamersAttendSite } from "@/lib/products/delivery-mode";
+import type { DeliveryMode } from "@/types";
 
 /**
  * Fixtures for the **Substitutions** page scene: the gedu's own live requests,
@@ -167,7 +169,7 @@ function pickerSeats(now: Date): GeduAssignmentRow[] {
     group: string;
     slots: GeduAssignmentRow["slots"];
     endsInDays: number | null;
-    isRemote: boolean;
+    deliveryMode: DeliveryMode;
     siteName?: string | null;
     productType?: GeduAssignmentRow["product"]["productType"];
   }): GeduAssignmentRow => {
@@ -182,9 +184,9 @@ function pickerSeats(now: Date): GeduAssignmentRow[] {
       timezone: SESSION_FEED_TIMEZONE,
       startDate,
       endDate,
-      isRemote: opts.isRemote,
+      deliveryMode: opts.deliveryMode,
       voiceRoom: { mode: "sogverse" },
-      siteName: opts.isRemote ? null : (opts.siteName ?? null),
+      siteName: gamersAttendSite(opts.deliveryMode) ? (opts.siteName ?? null) : null,
       topic: "minecraft_java",
       spokenLanguageCode: "fi",
       productType: opts.productType ?? "consumer_club",
@@ -218,7 +220,7 @@ function pickerSeats(now: Date): GeduAssignmentRow[] {
       group: "Redstone A",
       slots: slot(1, "16:30", 90),
       endsInDays: null,
-      isRemote: true,
+      deliveryMode: "online",
     }),
     seat({
       id: "mock-picker-tuesday",
@@ -226,7 +228,7 @@ function pickerSeats(now: Date): GeduAssignmentRow[] {
       group: "Builders B",
       slots: slot(2, "17:00", 90),
       endsInDays: null,
-      isRemote: true,
+      deliveryMode: "online",
     }),
     seat({
       id: "mock-picker-wednesday",
@@ -236,7 +238,7 @@ function pickerSeats(now: Date): GeduAssignmentRow[] {
       // its rows simply run out while the others go on.
       slots: slot(3, "16:00", 90),
       endsInDays: 10,
-      isRemote: false,
+      deliveryMode: "in_person",
       siteName: "Sello Library, Espoo",
     }),
     seat({
@@ -245,7 +247,7 @@ function pickerSeats(now: Date): GeduAssignmentRow[] {
       group: "Studio A",
       slots: slot(4, "15:30", 90),
       endsInDays: 80,
-      isRemote: true,
+      deliveryMode: "online",
     }),
     seat({
       id: "mock-picker-friday",
@@ -253,7 +255,9 @@ function pickerSeats(now: Date): GeduAssignmentRow[] {
       group: "Bedrock D",
       slots: slot(5, "17:30", 90),
       endsInDays: null,
-      isRemote: false,
+      // Hybrid: the gedu joins online, so the row says so and names the site
+      // the gamers are at.
+      deliveryMode: "hybrid",
       siteName: "Kaapelitehdas, Helsinki",
     }),
     seat({
@@ -268,7 +272,7 @@ function pickerSeats(now: Date): GeduAssignmentRow[] {
         ...slot(7, "10:00", 180),
       ],
       endsInDays: 20,
-      isRemote: false,
+      deliveryMode: "in_person",
       siteName: "Sello Library, Espoo",
     }),
   ];
@@ -334,7 +338,7 @@ function ownLiveRequests(
         topic: seat.product.topic,
         spoken_language_code: seat.product.spokenLanguageCode,
         timezone: seat.product.timezone,
-        is_remote: seat.product.isRemote,
+        delivery_mode: seat.product.deliveryMode,
         voice_room_mode: "sogverse",
         external_voice_url: null,
         start_date: seat.product.startDate,
@@ -433,7 +437,7 @@ function openRequestsWithoutInstants(
         topic: "minecraft_java",
         spoken_language_code: "fi",
         timezone: SESSION_FEED_TIMEZONE,
-        is_remote: true,
+        delivery_mode: "online",
         voice_room_mode: "sogverse",
         external_voice_url: null,
         start_date: calendarDate(now, -60, SESSION_FEED_TIMEZONE),
@@ -463,7 +467,7 @@ function openRequestsWithoutInstants(
         topic: "roblox_studio",
         spoken_language_code: "en",
         timezone: SESSION_FEED_TIMEZONE,
-        is_remote: false,
+        delivery_mode: "in_person",
         voice_room_mode: "sogverse",
         external_voice_url: null,
         start_date: calendarDate(now, -2, SESSION_FEED_TIMEZONE),
@@ -492,7 +496,7 @@ function openRequestsWithoutInstants(
         topic: "fortnite",
         spoken_language_code: "sv",
         timezone: SESSION_FEED_TIMEZONE,
-        is_remote: true,
+        delivery_mode: "online",
         voice_room_mode: "sogverse",
         external_voice_url: null,
         start_date: calendarDate(now, -90, SESSION_FEED_TIMEZONE),
@@ -521,7 +525,7 @@ function openRequestsWithoutInstants(
         topic: "minecraft_bedrock",
         spoken_language_code: "fi",
         timezone: SESSION_FEED_TIMEZONE,
-        is_remote: false,
+        delivery_mode: "hybrid",
         voice_room_mode: "sogverse",
         external_voice_url: null,
         start_date: calendarDate(now, 3, SESSION_FEED_TIMEZONE),
@@ -548,7 +552,7 @@ function openRequestsWithoutInstants(
         topic: "creator_studio",
         spoken_language_code: "en",
         timezone: SESSION_FEED_TIMEZONE,
-        is_remote: true,
+        delivery_mode: "online",
         voice_room_mode: "sogverse",
         external_voice_url: null,
         start_date: calendarDate(now, -120, SESSION_FEED_TIMEZONE),
@@ -575,7 +579,7 @@ function openRequestsWithoutInstants(
         topic: "fortnite",
         spoken_language_code: "sv",
         timezone: SESSION_FEED_TIMEZONE,
-        is_remote: true,
+        delivery_mode: "online",
         voice_room_mode: "sogverse",
         external_voice_url: null,
         start_date: calendarDate(now, -30, SESSION_FEED_TIMEZONE),

@@ -128,7 +128,7 @@ export function notificationSnapshot(
       topic: "minecraft_java",
       spoken_language_code: "fi",
       timezone: "Europe/Helsinki",
-      is_remote: false,
+      delivery_mode: "in_person",
       voice_room_mode: "sogverse",
       external_voice_url: null,
       start_date: "2026-08-10",

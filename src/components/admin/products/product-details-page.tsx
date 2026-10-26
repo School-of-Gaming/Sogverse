@@ -30,6 +30,7 @@ import { formatTimezoneOptionLabel } from "@/lib/timezone";
 import { ProductBanner } from "@/components/ui/product-banner";
 import { catalogueImageSrc } from "@/lib/images/catalogue-image-url";
 import { productAudience } from "@/lib/products/product-audience";
+import { hasVoiceRoom } from "@/lib/products/delivery-mode";
 import {
   formatAdminTermWeeks,
   formatClubTermDates,
@@ -213,7 +214,7 @@ export function ProductDetailsPage({
     locale,
     timeZone,
   });
-  const voiceAvailable = product.is_remote && voice.hasUpcomingSession;
+  const voiceAvailable = hasVoiceRoom(product.delivery_mode) && voice.hasUpcomingSession;
   const voiceRoom = productVoiceRoom(product, product.product_translations);
   const topicName = topicLabel(product.topic);
 
@@ -531,12 +532,11 @@ function ProductDetailsCard({
   const lastSession = formatSessionDate(plannedSessions?.at(-1));
 
   // Where the product happens, and who it is for — the shop card's own rules
-  // (`formatProductLocation`, `productWhoItsFor`), so the label each row wears
-  // follows the same shape: "Format" for a genuinely remote product and "Where"
-  // for one with a place behind it; "Age range" where the answer is a range and
+  // (`formatProductLocation`, `productWhoItsFor`): a "Where" row only for a
+  // product with a place behind it; "Age range" where the answer is a range and
   // "Audience" where it leads with the audience word.
   const location = formatProductLocation(product, uiLocale);
-  const labelIsFormat = productLocationLabelIsFormat(product.is_remote, location);
+  const hasPlace = !productLocationLabelIsFormat(product.delivery_mode, location);
   const whoItsFor = productWhoItsFor(product);
 
   const seatsLine =
@@ -668,26 +668,29 @@ function ProductDetailsCard({
             </DetailsSection>
 
             <DetailsSection title={t("detailsPage.sections.placeAndAudience")}>
-              <DetailRow
-                label={
-                  labelIsFormat
-                    ? t("detailsPage.fields.format")
-                    : t("sections.where")
-                }
-              >
-                {renderProductLocationLine({
-                  location,
-                  isRemote: product.is_remote,
-                  online: tFamily("online"),
-                  tbd: tFamily("tbd"),
-                })}
+              <DetailRow label={t("detailsPage.fields.deliveryMode")}>
+                {t(`deliveryModes.${product.delivery_mode}`)}
               </DetailRow>
 
-              {/* How an online product's sessions are joined. The meeting link
+              {/* The place alone, since the row above already says how the
+                  product is delivered. An online product with no place behind
+                  it has nothing to show here. */}
+              {hasPlace && (
+                <DetailRow label={t("sections.where")}>
+                  {renderProductLocationLine({
+                    location,
+                    deliveryMode: product.delivery_mode,
+                    online: tFamily("online"),
+                    tbd: tFamily("tbd"),
+                  })}
+                </DetailRow>
+              )}
+
+              {/* How an online or hybrid product's sessions are joined. The meeting link
                   is shown whole, since it is what an admin checks; the join
                   instructions are the version the header's copy comes from,
                   one locale's, like the rest of that copy. */}
-              {product.is_remote && (
+              {hasVoiceRoom(product.delivery_mode) && (
                 <DetailRow label={t("detailsPage.fields.voiceRoom")}>
                   <div>{t(`voiceRoomModes.${product.voice_room_mode}`)}</div>
                   {voiceRoom.mode === "external" && (

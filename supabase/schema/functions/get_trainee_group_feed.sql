@@ -55,7 +55,7 @@ BEGIN
     'timezone',                 p.timezone,
     'start_date',               p.start_date,
     'end_date',                 p.end_date,
-    'is_remote',                p.is_remote,
+    'delivery_mode',            p.delivery_mode,
     'voice_room_mode',          p.voice_room_mode,
     'external_voice_url',       p.external_voice_url,
     'material_url',             psd.material_url,
@@ -92,7 +92,7 @@ BEGIN
   INTO v_group
   FROM public.product_groups g WHERE g.id = p_group_id;
 
-  -- The venue on in-person products, without its staff note.
+  -- The venue on in-person and hybrid products, without its staff note.
   SELECT jsonb_build_object(
     'location_id', l.id,
     'name',        l.name,
@@ -104,7 +104,7 @@ BEGIN
   JOIN public.locations l ON l.id = p.location_id
   LEFT JOIN public.site_details sd ON sd.location_id = l.id
   WHERE p.id = v_product_id
-    AND p.is_remote = false;
+    AND p.delivery_mode <> 'online';
 
   -- The current roster, keyed by participant_id like the gedu document's.
   -- An age rather than a birth year and month, no contact address of any kind, and

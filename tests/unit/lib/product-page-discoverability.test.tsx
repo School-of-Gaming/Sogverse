@@ -88,7 +88,7 @@ const DETAIL_ROW = {
   id: ID,
   product_type: "consumer_club",
   billing_mode: "paid",
-  is_remote: true,
+  delivery_mode: "online",
   for_gamers: true,
   for_parents: false,
   min_age: 8,

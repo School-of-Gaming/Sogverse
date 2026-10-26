@@ -128,7 +128,7 @@ export function buildTraineeWorkspaceFixture(now: Date): {
       timezone: data.product.timezone,
       start_date: data.product.start_date,
       end_date: data.product.end_date,
-      is_remote: data.product.is_remote,
+      delivery_mode: data.product.delivery_mode,
       voice_room_mode: data.product.voice_room_mode,
       external_voice_url: data.product.external_voice_url,
       material_url: club.materialUrl,

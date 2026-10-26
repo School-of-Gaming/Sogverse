@@ -26,7 +26,7 @@ function row(
     start_date: "2026-01-12",
     end_date: null,
     image_path: null,
-    is_remote: true,
+    delivery_mode: "online",
     for_gamers: true,
     for_parents: false,
     min_age: 7,

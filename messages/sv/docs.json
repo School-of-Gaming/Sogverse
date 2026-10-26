@@ -129,9 +129,9 @@
           "id": "Produktens identifierare.",
           "name": "Produktens namn på varje språk det har skrivits på, med språkkoden som nyckel. Minst ett finns alltid med; vilka beror på produkten.",
           "type": "Vilken sorts produkt det är. En klubb går varje vecka utan fast slut; ett läger och ett evenemang går över bestämda datum.",
-          "delivery": "Hur den levereras. Lynx egna namn på sina sätt att genomföra Programmet lagras ingenstans; <code>type</code> och <code>delivery</code> är tillsammans de två fakta som de namnen avbildas på.",
+          "delivery": "Hur den levereras: <code>online</code>, på distans via Sogverses röstrum, ett annat möte eller skriftliga anslutningsinstruktioner, <code>in_person</code> på en plats, eller <code>hybrid</code>, där barnen är på en plats och spelpedagogen, liksom de barn som inte kan komma, ansluter via Sogverses röstrum. Lynx egna namn på sina sätt att genomföra Programmet lagras ingenstans; <code>type</code> och <code>delivery</code> är tillsammans de två fakta som de namnen avbildas på.",
           "audience": "Vem som kan ha en plats på produkten: <code>gamers</code> är <code>true</code> när barn kan det, och <code>parents</code> är <code>true</code> när vuxna själva kan ta en plats. Minst en av de två är alltid <code>true</code>, och en produkt där båda är <code>true</code> är en som föräldrar och barn går på tillsammans.",
-          "location": "Kommunen som produktens plats är eller ligger inom, och dess tvåbokstaviga landskod; <code>city</code> är kommunens namn. Regeln är densamma för online- och fysiska produkter: <code>null</code> när produkten saknar plats eller dess plats inte ligger inom någon kommun.",
+          "location": "Kommunen som produktens plats är eller ligger inom, och dess tvåbokstaviga landskod; <code>city</code> är kommunens namn. Regeln är densamma för online-, fysiska och hybridprodukter: <code>null</code> när produkten saknar plats eller dess plats inte ligger inom någon kommun.",
           "status": "<code>pending</code> före startdatumet, <code>running</code> från startdatumet och <code>completed</code> när slutdatumet har passerat. Värdet härleds vid läsningen ur produktens datum i dess egen tidszon, så det är aldrig inaktuellt.",
           "dates": "När den pågår. En konsumentklubb behöver inte ha något slutdatum; alla andra produkter har ett.",
           "timezone": "Den IANA-tidszon som produktens datum och sessioner är schemalagda i.",
@@ -206,7 +206,7 @@
       },
       "feedback": {
         "title": "vad ett barn sa på vägen ut",
-        "intro": "Vad ett barn svarade i slutet av en session: fem påståenden graderade på en femgradig stapel och en frivillig kommentar med barnets egna ord. I dag samlas feedback bara in efter sessioner online. Ett barn som inte graderar något påstående och inte skriver någon kommentar lämnar ingen rad, så svarsfrekvensen är den här listan ställd mot onlinesessionerna i <code>/sessions</code>; en rad är ett barn vid en session, så en procentsats över rader räknar ett barn en gång per session det svarade om.",
+        "intro": "Vad ett barn svarade i slutet av en session: fem påståenden graderade på en femgradig stapel och en frivillig kommentar med barnets egna ord. I dag samlas feedback bara in från de barn som ansluter till en session via dess onlinerum, på online- och hybridprodukter. Ett barn som inte graderar något påstående och inte skriver någon kommentar lämnar ingen rad, så svarsfrekvensen är den här listan ställd mot sessionerna för online- och hybridprodukter i <code>/sessions</code>; en rad är ett barn vid en session, så en procentsats över rader räknar ett barn en gång per session det svarade om.",
         "params": {
           "productId": "Bara feedback från den här produktens grupper.",
           "groupId": "Bara den här gruppens feedback.",
@@ -306,7 +306,7 @@
       "items": {
         "childIdentity": "Barnens efternamn, födelsedagar och kön, och föräldrarnas telefonnummer. Programmets integritetspolicy utlovar en födelsemånad snarare än ett födelsedatum, och resten är inget som dashboarderna eller Roblox-rapporten använder.",
         "releases": "Medgivanden för fallstudier och omdömen. Det enda mediatillstånd Sogverse håller täcker redan att Lynx Educate, School of Gaming och Roblox använder ett fotografi offentligt; ett barns fullständiga namn, en fallstudie, ett citat eller innehåll kopplat till barnet kräver ett separat skriftligt medgivande som hämtas in utanför plattformen.",
-        "deliveryModel": "En etikett för leveransmodell. Sogverse håller en produkts typ och om den är online eller på plats; en modelltaxonomi är Lynx sak att lägga över de två fälten.",
+        "deliveryModel": "En etikett för leveransmodell. Sogverse håller en produkts typ och om den är online, på plats eller hybrid; en modelltaxonomi är Lynx sak att lägga över de två fälten.",
         "analytics": "Trafik på någon annan sida än landningssidan, butiken och Programmets produktsidor, och allt som rör en enskild besökare. Analysen bakom <code>/traffic</code> är integritetsvänlig från grunden: en sida som en familj når efter inloggning tillhör familjen, och en besökare är ett antal, aldrig en post."
       }
     }

@@ -24,6 +24,7 @@ import {
 } from "@/lib/session-staffing";
 import type { GamePlatform } from "@/lib/constants/game-platforms";
 import type {
+  DeliveryMode,
   GamerCreation,
   GamerPhotoConsent,
   GeduAssignedProduct,
@@ -59,7 +60,7 @@ import type {
  * that can coexist belong in the same scenario, because a reviewer who has to
  * open five pages to see five things will see three of them.
  *
- * The two that survived that cull are the product shapes: `club` is remote and
+ * The two that survived that cull are the product shapes: `club` is online and
  * weekly, `camp` is in-person and daily. Everything else the *page* can do — a
  * year of history, a session written up but never marked off, a skipped week,
  * an unstaffed sister group, a site's shared notes — is packed into whichever
@@ -116,7 +117,7 @@ export interface GroupNotesFixture {
  * Site notes belong to the *location*, not the product: the schema keeps the
  * family-facing pair (address + note) and the Gedu-only note on the site row,
  * so every product running there reads and writes the same two paragraphs.
- * `null` on a remote product, which has no building at all.
+ * `null` on an online product, which has no building at all.
  */
 export interface SiteFixture {
   name: string;
@@ -160,7 +161,7 @@ export interface GroupWorkspaceFixture {
   sourceTimeZone: string;
   /** Standing notes about the group, distinct from any one session's. */
   groupNotes: GroupNotesFixture;
-  /** The site and its shared notes, or `null` for a remote product. */
+  /** The site and its shared notes, or `null` for an online product. */
   site: SiteFixture | null;
   /**
    * Staff-facing lesson/material URL, read from the product's staff-details
@@ -323,13 +324,13 @@ interface ScenarioConfig {
    */
   asksGamerPhotoConsent: boolean;
   /**
-   * Remote products have a voice room; in-person ones have a building. The two
-   * are exclusive, and the flag drives both — an in-person page renders **no
-   * Join affordance at all** (not a locked one: there is no room, so there is
-   * nothing to lock), and only an in-person page carries site notes.
+   * Online products have a voice room; in-person ones have a building; a
+   * hybrid one has both. An in-person page renders **no Join affordance at
+   * all** (not a locked one: there is no room, so there is nothing to lock),
+   * and only a page with a building carries site notes.
    */
-  isRemote: boolean;
-  /** The site, on in-person products only. */
+  deliveryMode: DeliveryMode;
+  /** The site, on in-person and hybrid products only. */
   site: SiteFixture | null;
   materialUrl: string | null;
   groupName: string;
@@ -1224,7 +1225,7 @@ const OWED_SPECS: readonly EntrySpec[] = [
 
 const SCENARIOS: Record<GroupWorkspaceScenario, ScenarioConfig> = {
   /**
-   * **The kitchen sink.** A remote weekly club a year and a bit into its run,
+   * **The kitchen sink.** An online weekly club a year and a bit into its run,
    * carrying every state the feed can be in at once: sessions finished on both
    * halves (marked off *and* reported), sessions flagged for a missing report,
    * sessions flagged for a missing register, bare gaps, a week reported but
@@ -1251,8 +1252,8 @@ const SCENARIOS: Record<GroupWorkspaceScenario, ScenarioConfig> = {
     endsInDays: null,
     requiresGamerCreations: false,
     asksGamerPhotoConsent: false,
-    isRemote: true,
-    // Remote: no building, so no site-notes panel on the page.
+    deliveryMode: "online",
+    // Online: no building, so no site-notes panel on the page.
     site: null,
     materialUrl: "https://drive.sog.gg/minecraft-monday-club/lesson-plans",
     groupName: "Monday A",
@@ -1365,7 +1366,7 @@ const SCENARIOS: Record<GroupWorkspaceScenario, ScenarioConfig> = {
     // has ended, and the two are the whole of what the block can look like.
     requiresGamerCreations: true,
     asksGamerPhotoConsent: false,
-    isRemote: false,
+    deliveryMode: "in_person",
     // The site pair is deliberately half-written: the family note is there and
     // the staff note is not, so the partial-fill ghost is reviewable on a real
     // page. It costs nothing here because the group notes one panel over are
@@ -1445,7 +1446,7 @@ const SCENARIOS: Record<GroupWorkspaceScenario, ScenarioConfig> = {
     endsInDays: null,
     requiresGamerCreations: false,
     asksGamerPhotoConsent: true,
-    isRemote: true,
+    deliveryMode: "online",
     site: null,
     materialUrl: "https://drive.sog.gg/roblox-studio-thursday/lesson-plans",
     groupName: "Thursday A",
@@ -1496,7 +1497,7 @@ const SCENARIOS: Record<GroupWorkspaceScenario, ScenarioConfig> = {
     endsInDays: null,
     requiresGamerCreations: false,
     asksGamerPhotoConsent: false,
-    isRemote: true,
+    deliveryMode: "online",
     site: null,
     materialUrl: null,
     groupName: "Tuesday A",
@@ -1578,7 +1579,7 @@ const SCENARIOS: Record<GroupWorkspaceScenario, ScenarioConfig> = {
     endsInDays: "last-session",
     requiresGamerCreations: true,
     asksGamerPhotoConsent: false,
-    isRemote: true,
+    deliveryMode: "online",
     site: null,
     materialUrl: "https://drive.sog.gg/roblox-programme/autumn",
     groupName: "Autumn A",
@@ -1749,7 +1750,7 @@ export function buildGroupWorkspaceFixture(
         timezone: SESSION_FEED_TIMEZONE,
         start_date: startDate,
         end_date: endDate,
-        is_remote: config.isRemote,
+        delivery_mode: config.deliveryMode,
         voice_room_mode: "sogverse",
         external_voice_url: null,
         // Flagged on two scenarios, one per tone of the session card's

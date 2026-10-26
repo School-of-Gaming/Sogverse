@@ -513,7 +513,7 @@ export async function createTestProduct(
     timezone,
     waitlist_enabled: options.waitlistEnabled ?? true,
     is_visible: options.isVisible ?? true,
-    is_remote: true,
+    delivery_mode: "online",
     for_gamers: forGamers,
     for_parents: options.forParents ?? false,
     min_age: forGamers ? 8 : null,

@@ -664,6 +664,7 @@
       "ageRange": "{min}–{max} år",
       "seats": "{count} platser",
       "online": "På distans",
+      "hybrid": "Hybrid",
       "unlisted": "olistad",
       "untitled": "(utan titel)",
       "missingGeduFee": "Gedu-arvode saknas",
@@ -726,7 +727,7 @@
         "visibility": "Synlighet",
         "gamerPhotoConsents": "Fotofrågor",
         "marketingConsents": "Marknadsföringsfrågor",
-        "format": "Format",
+        "deliveryMode": "Genomförande",
         "ageRange": "Åldersintervall",
         "publicLink": "Offentlig länk",
         "createdBy": "Skapad av",
@@ -817,6 +818,7 @@
       "spokenLanguage": "Talat språk",
       "online": "Online",
       "inPerson": "På plats",
+      "hybrid": "Hybrid",
       "municipality": "Vilken kommun detta är för",
       "site": "Lokal",
       "startDate": "Startdatum",
@@ -911,6 +913,11 @@
       "none": "Inget röstrum",
       "noneDescription": "Familjerna får i stället se de anslutningsinstruktioner du skriver för varje språk."
     },
+    "deliveryModes": {
+      "online": "Online",
+      "in_person": "På plats",
+      "hybrid": "Hybrid"
+    },
     "endDateModes": {
       "ongoing": "Inget slutdatum",
       "ongoingDescription": "Klubben pågår tills vidare tills du bestämmer dig för att avsluta den.",
@@ -956,6 +963,7 @@
       "externalVoiceUrlHint": "Offentlig: vem som helst kan läsa länken, även besökare som inte är inloggade.",
       "municipalityHint": "Kommunklubbar är alltid kopplade till en specifik finländsk kommun — den som betalar. Föräldrar från den kommunen ser den när de bläddrar.",
       "siteHint": "Var tillfällena fysiskt äger rum.",
+      "hybridHint": "Gamers kommer till platsen. Gedun, och de gamers som inte kan komma dit, ansluter via Sogverse-röstrummet.",
       "eventSingleDay": "Evenemang äger rum ett enda datum.",
       "timezoneEntry": "Tiderna för tillfällena nedan anges i den här tidszonen. Föräldrar ser dem omräknade till sin egen tidszon automatiskt.",
       "timezoneChangeMoves": "Tiderna för tillfällena nedan anges i den här tidszonen. Byter du zon flyttas varje kommande tillfälle till samma klockslag i den nya zonen, medan tillfällen som redan har en rapport eller närvaro registrerad behåller de tider de hölls på.",

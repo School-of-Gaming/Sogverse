@@ -218,7 +218,7 @@ export function FamilyProductPage({
           schedule_slots: feed.product.schedule_slots,
         }}
         plannedSessions={feed.planned_sessions}
-        isRemote={feed.product.is_remote}
+        deliveryMode={feed.product.delivery_mode}
         voiceRoom={voiceRoom}
         participant={participant}
         groupName={feed.group.name}

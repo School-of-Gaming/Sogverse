@@ -9,7 +9,7 @@ import { Constants, type VoiceRoomMode } from "@/types";
 // How a product's sessions are joined, as every Join surface receives it.
 //
 // An online product picks one of three ways in: the Sogverse voice room (the
-// default, and the only one an in-person product may hold), a meeting held on
+// default, and the only one a product that is not online may hold), a meeting held on
 // another service at a link, or no room at all and join instructions written
 // per locale. Each read that draws a Join carries the product's mode and link
 // and every translation's instructions; `productVoiceRoom` folds them into the

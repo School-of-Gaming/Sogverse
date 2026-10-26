@@ -99,7 +99,7 @@ export const geduAssignedProduct = z.object({
     timezone: z.string(),
     start_date: z.string().nullable(),
     end_date: z.string().nullable(),
-    is_remote: z.boolean(),
+    delivery_mode: z.enum(Constants.public.Enums.delivery_mode),
     /** How the sessions are joined — `src/lib/products/voice-room.ts`. */
     ...voiceRoomWireFields,
     /**

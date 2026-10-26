@@ -14,7 +14,11 @@ import type {
   MyUpcomingSessionRow,
   MyWaitlistRow,
 } from "@/services/participations/participations.service";
-import type { ProductTopic, ProductType } from "@/types";
+import type { DeliveryMode, ProductTopic, ProductType } from "@/types";
+import {
+  gamersAttendSite,
+  hasVoiceRoom as modeHasVoiceRoom,
+} from "@/lib/products/delivery-mode";
 import type { ProductVoiceRoom } from "@/lib/products/voice-room";
 import type { SessionCancellation } from "@/components/parent/session-card-badge";
 import type {
@@ -59,18 +63,15 @@ export interface FamilyEnrollmentSummary {
    */
   topic: ProductTopic;
   /**
-   * Whether the product runs remotely — the family on their own machines.
+   * How the product is delivered: online, in person or hybrid.
    *
-   * **The same fact `hasVoiceRoom` is derived from, carried separately because
-   * it answers a different question.** `hasVoiceRoom` asks whether there is a
-   * room to join; this asks whose computers the sessions happen on, which is
-   * what decides whether a prep guide includes the install and the test or only
-   * the accounts. They agree today because a remote product is exactly the one
-   * with a room, and the day that stops being true — a remote product with no
-   * room, an in-person one with a room for the family who cannot travel — a
-   * card reading one for the other would print the wrong guide.
+   * **The fact `hasVoiceRoom` is derived from, carried whole because the prep
+   * guide asks it a different question.** `hasVoiceRoom` asks whether there is
+   * a room to join; the guide also asks whose machines the sessions happen on,
+   * which decides whether it includes the install and the test or only the
+   * accounts. The guide's resolver asks both of the mode itself.
    */
-  isRemote: boolean;
+  deliveryMode: DeliveryMode;
   /**
    * The instant this enrollment stops being offered the prep guide, or `null`
    * for an offer with no end in sight.
@@ -106,7 +107,7 @@ export interface FamilyEnrollmentSummary {
    */
   cancelledAhead: readonly Date[];
   /**
-   * Whether this product has a voice room at all — true only for a remote one.
+   * Whether this product has a voice room at all — an online or hybrid one.
    * An in-person enrollment renders **no** Join affordance rather than a locked
    * one: a locked button promises it will open, and a camp in a library has no
    * room behind it that ever will.
@@ -121,9 +122,10 @@ export interface FamilyEnrollmentSummary {
   /** Where the Join navigates. `"#"` keeps it inert. */
   voiceHref: MaybeInertHrefObject;
   /**
-   * The site an in-person enrollment runs at, `null` for a remote one. The
-   * in-person counterpart of the Join button — the same question (where is this
-   * happening) answered the other way a product can answer it.
+   * The site the gamers attend — an in-person or hybrid enrollment's — `null`
+   * for an online one. The in-person counterpart of the Join button; a hybrid
+   * card carries both, because a hybrid product happens at the site and in the
+   * room at once.
    */
   siteName: string | null;
   /** Where a click anywhere on the card navigates — the product's own page. */
@@ -805,7 +807,7 @@ function sessionSummary(
 ): FamilyEnrollmentSummary {
   const { product } = row;
   const awaiting = row.groupId === null;
-  const hasVoiceRoom = product.isRemote;
+  const hasVoiceRoom = modeHasVoiceRoom(product.deliveryMode);
   const subEnd = row.subscriptionEndsAt;
 
   const closeMarginMs = VOICE_CONFIG.SESSION_WINDOW_AFTER_MINUTES * 60_000;
@@ -845,7 +847,7 @@ function sessionSummary(
     productName: resolveRequiredTranslation(product.translations, locale).name,
     productType: product.type,
     topic: product.topic,
-    isRemote: product.isRemote,
+    deliveryMode: product.deliveryMode,
     nextSessionStart: next === null ? null : next.startsAt,
     nextSessionEnd: next === null ? null : next.endsAt,
     cancelledAhead: cancelledAhead.map((session) => session.startsAt),
@@ -859,14 +861,14 @@ function sessionSummary(
       hasVoiceRoom && row.groupId !== null
         ? ROUTES.voice.groupSession(row.groupId)
         : INERT_HREF,
-    // Never carried by a remote product, whatever the row says: a product with
-    // a voice room has no building, and a card showing both would be claiming
-    // the family meets in two places. The read already gates this, so this is
-    // belt and braces on a claim the card makes visually.
+    // Named exactly where the gamers attend a site — in person or hybrid — so
+    // a hybrid card names it beside its Join, and an online one never does
+    // whatever the row says. The read already gates this; the card's claim
+    // about where the family goes does not depend on it.
     siteName:
-      hasVoiceRoom || product.site === null
-        ? null
-        : localizedLocationName(product.site, locale),
+      gamersAttendSite(product.deliveryMode) && product.site !== null
+        ? localizedLocationName(product.site, locale)
+        : null,
     // Nothing to open behind an unplaced seat: no group means no feed and no
     // page, which is the same reason the card drops its chevron and its anchor.
     openHref:
@@ -923,7 +925,7 @@ function waitlistSummary(
     productName: resolveRequiredTranslation(product.translations, locale).name,
     productType: product.type,
     topic: product.topic,
-    isRemote: product.isRemote,
+    deliveryMode: product.deliveryMode,
     // A queue place never offers the guide — there is no seat to get ready for
     // — so there is no window to state either. `null` here would mean "no end
     // in sight", which is the *opposite* of what a waitlist place is, and it is
@@ -933,7 +935,7 @@ function waitlistSummary(
     nextSessionStart: null,
     nextSessionEnd: null,
     cancelledAhead: [],
-    hasVoiceRoom: product.isRemote,
+    hasVoiceRoom: modeHasVoiceRoom(product.deliveryMode),
     voiceRoom: product.voiceRoom,
     voiceHref: INERT_HREF,
     siteName: null,

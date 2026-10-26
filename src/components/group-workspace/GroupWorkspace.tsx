@@ -44,7 +44,8 @@ import {
   type ProductVoiceRoom,
 } from "@/lib/products/voice-room";
 import type { Withheld } from "@/lib/withheld";
-import type { GamerCreation } from "@/types";
+import type { DeliveryMode, GamerCreation } from "@/types";
+import { hasVoiceRoom } from "@/lib/products/delivery-mode";
 import {
   CopyAllEmailsButton,
   deduplicateEmails,
@@ -118,12 +119,12 @@ import type { AppHref } from "@/lib/constants/routes";
  *   than being capped at the timeline's reading width: capped, they sat in the
  *   left third of a wide workspace with the rest of the row blank, which read as
  *   a rendering fault rather than as a choice.
- * - **An in-person product also carries its site**, beside the group's own
+ * - **An in-person or hybrid product also carries its site**, beside the group's own
  *   notes on the same row and inside the same card — a bordered column, not a
  *   second card, because a card inside a card says "different kind of thing"
  *   when these are two instances of one kind. A site's name, address and two
  *   notes belong to the *building* and every product running there reads the
- *   same four fields, so the panel names the site and says so; a remote product
+ *   same four fields, so the panel names the site and says so; an online product
  *   has no building and the row collapses back to one column. **What is
  *   writable here is the same on both shells**: the two notes, which describe
  *   the building. The name and the address are the site *record* and are edited
@@ -310,13 +311,15 @@ interface GroupWorkspaceProps {
     | ((draft: GroupNotesDraft) => void | Promise<void>)
     | Locked;
   /**
-   * The site an in-person product runs at, or `null` for a remote one.
+   * The site the gamers attend — an in-person or hybrid product's — or `null`
+   * for an online one. A hybrid workspace shows it beside the voice rooms: the
+   * gamers are there even when the gedu joins online.
    *
-   * **The question is `is_remote`, never "does it have a location".** A remote
-   * municipality club carries a `location_id` by CHECK — the town it is run
-   * for — so a caller testing for a location would put a door code and a
+   * **The question is the delivery mode, never "does it have a location".** An
+   * online municipality club carries a `location_id` by CHECK — the town it is
+   * run for — so a caller testing for a location would put a door code and a
    * caretaker's name on a club that meets in a voice room. The workspace's data
-   * source resolves the site itself and hands over `null` for anything remote,
+   * source resolves the site itself and hands over `null` for anything online,
    * so this prop being null is exactly "no building involved", never "we didn't
    * load it".
    */
@@ -853,7 +856,7 @@ export function GroupWorkspace({
             <GroupRailCard
               group={assignedGroup}
               heading={groupHeading}
-              isRemote={data.product.is_remote}
+              deliveryMode={data.product.delivery_mode}
               voiceRoom={voiceRoom}
               voiceIsOpen={ownVoiceState.voiceIsOpen}
               opensDate={ownVoiceState.opensDate}
@@ -872,7 +875,7 @@ export function GroupWorkspace({
 
           <OtherGroupsRailCard
             peerGroups={peerGroups}
-            isRemote={data.product.is_remote}
+            deliveryMode={data.product.delivery_mode}
             voiceRoom={voiceRoom}
             voiceIsOpen={voiceState.voiceIsOpen}
             opensDate={voiceState.opensDate}
@@ -1072,7 +1075,7 @@ function ParticipantCount({ count }: { count: number }) {
 
 /**
  * The peer-cover card: every other group running on this product, each one
- * name + how many children + who teaches it, and — on a remote product — a
+ * name + how many children + who teaches it, and — on a product with a voice room — a
  * live-state Join.
  *
  * This is the "can you watch my room for ten minutes?" surface. It sits *below*
@@ -1098,7 +1101,7 @@ function ParticipantCount({ count }: { count: number }) {
  */
 function OtherGroupsRailCard({
   peerGroups,
-  isRemote,
+  deliveryMode,
   voiceRoom,
   voiceIsOpen,
   opensDate,
@@ -1112,7 +1115,8 @@ function OtherGroupsRailCard({
    * on the row to draw, and its Join as the locked control.
    */
   peerGroups: readonly WorkspaceGroupRow[];
-  isRemote: boolean;
+  /** Each row draws its Join where the product has a voice room. */
+  deliveryMode: DeliveryMode;
   voiceRoom: ProductVoiceRoom;
   voiceIsOpen: boolean;
   opensDate: string;
@@ -1146,7 +1150,7 @@ function OtherGroupsRailCard({
                 )}
               </div>
               {isNamedOnlyGroup(group) ? (
-                isRemote &&
+                hasVoiceRoom(deliveryMode) &&
                 namedOnlyRoomLock !== null && (
                   <div className="flex justify-center pt-0.5">
                     <LockedButton
@@ -1179,7 +1183,7 @@ function OtherGroupsRailCard({
                   />
                 )}
               </div>
-              {isRemote && (
+              {hasVoiceRoom(deliveryMode) && (
                 <div className="flex justify-center pt-0.5">
                   <JoinVoiceButton
                     voiceRoom={voiceRoom}
@@ -1272,7 +1276,7 @@ function rosterAvatarUrl(
 function GroupRailCard({
   group,
   heading,
-  isRemote,
+  deliveryMode,
   voiceRoom,
   voiceIsOpen,
   opensDate,
@@ -1290,7 +1294,8 @@ function GroupRailCard({
   group: WorkspaceGroup;
   /** The card's heading, or `undefined` for the gedu's "My Group". */
   heading?: string;
-  isRemote: boolean;
+  /** The card draws the group's Join where the product has a voice room. */
+  deliveryMode: DeliveryMode;
   voiceRoom: ProductVoiceRoom;
   voiceIsOpen: boolean;
   opensDate: string;
@@ -1343,7 +1348,7 @@ function GroupRailCard({
       title={heading ?? t("railGroupHeading")}
       trailing={<ParticipantCount count={group.participant_count} />}
     >
-      {isRemote && (
+      {hasVoiceRoom(deliveryMode) && (
         <div className="flex justify-center">
           <JoinVoiceButton
             voiceRoom={voiceRoom}

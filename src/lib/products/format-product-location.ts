@@ -1,17 +1,19 @@
-import type { Json, ProductType } from "@/types";
+import type { DeliveryMode, Json, ProductType } from "@/types";
+import { gamersAttendSite } from "@/lib/products/delivery-mode";
 import { localizedLocationName } from "@/lib/locations/localized-name";
 
 // Resolve the location strings the parent-facing card and detail page
 // render. The schema invariants (the validate_products_location trigger)
 // constrain what's possible:
 //
-//   - In-person (any type): location_id required, must be type='site'.
+//   - In-person or hybrid (any type): location_id required, must be
+//     type='site'.
 //   - Online municipality_club: location_id required, type ∈
 //     {country, region, municipality} (NEVER site).
 //   - Online non-muni: location_id must be NULL.
 //
 // Three return shapes:
-//   - { kind: "site", site, parent }   in-person
+//   - { kind: "site", site, parent }   in-person or hybrid
 //   - { kind: "muni", name }            online municipality_club
 //   - null                              online non-muni, or join missing
 //
@@ -49,7 +51,7 @@ export interface ProductLocationRowSubset {
 }
 
 export interface ProductLocationSubject {
-  is_remote: boolean;
+  delivery_mode: DeliveryMode;
   product_type: ProductType;
   locations: ProductLocationRowSubset | null;
 }
@@ -61,7 +63,7 @@ export function formatProductLocation(
   const loc = product.locations;
   if (!loc) return null;
 
-  if (!product.is_remote) {
+  if (gamersAttendSite(product.delivery_mode)) {
     return {
       kind: "site",
       site: localizedLocationName(loc, locale),
@@ -83,7 +85,7 @@ export function formatProductLocation(
  * It lives here rather than beside any one surface because the product pages,
  * the confirmation page and the confirmation mail have to say the same words
  * about the same product — a site with its parent joined by a comma, a
- * municipality on its own, "Online" for a remote product with no municipality
+ * municipality on its own, "Online" for an online product with no municipality
  * behind it, and "to be confirmed" for one whose place is not settled. Two copies of that rule would
  * be two answers the first time one of them was corrected.
  *
@@ -92,18 +94,18 @@ export function formatProductLocation(
  */
 export function renderProductLocationLine({
   location,
-  isRemote,
+  deliveryMode,
   online,
   tbd,
 }: {
   location: ProductLocationDisplay | null;
-  isRemote: boolean;
+  deliveryMode: DeliveryMode;
   /** Already-translated "Online". */
   online: string;
   /** Already-translated "To be confirmed". */
   tbd: string;
 }): string {
-  if (!location) return isRemote ? online : tbd;
+  if (!location) return gamersAttendSite(deliveryMode) ? tbd : online;
   switch (location.kind) {
     case "site":
       return location.parent ? `${location.site}, ${location.parent}` : location.site;
@@ -113,16 +115,18 @@ export function renderProductLocationLine({
 }
 
 /**
- * Which of the two labels that line wears — "Format" for a genuinely remote
- * product, "Where" for one with a place behind it.
+ * Which of the two labels that line wears — "Format" for a product with no
+ * place behind it, "Where" for one with a place.
  *
- * A municipality club is remote *and* names a municipality, and it takes
+ * A municipality club is online *and* names a municipality, and it takes
  * "Where": the value is a place, so a label reading "Format" would be answering
- * a different question than the value does.
+ * a different question than the value does. A hybrid product has a site, so it
+ * takes "Where" too; that it is also joined online is said beside the line, by
+ * whichever surface renders it.
  */
 export function productLocationLabelIsFormat(
-  isRemote: boolean,
+  deliveryMode: DeliveryMode,
   location: ProductLocationDisplay | null,
 ): boolean {
-  return isRemote && location?.kind !== "muni";
+  return !gamersAttendSite(deliveryMode) && location?.kind !== "muni";
 }

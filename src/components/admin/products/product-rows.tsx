@@ -132,7 +132,10 @@ export function ProductRows({ products, showType }: ProductRowsProps) {
         // Where it happens — the school hall and its town, or the voice room.
         // Two clubs can be identical but for the school they meet in, so this
         // sits beside the cadence rather than waiting on the detail page.
-        const whereLine = productWhereLine(p, uiLocale, t("list.online"));
+        const whereLine = productWhereLine(p, uiLocale, {
+          online: t("list.online"),
+          hybrid: t("list.hybrid"),
+        });
         // Nudge the admin to fill in fees they may not have known at creation.
         // A null primary gedu fee is "unknown" (0 would be volunteer — set);
         // the municipality fee only applies to muni clubs. The assistant fee

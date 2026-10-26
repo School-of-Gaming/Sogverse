@@ -3,6 +3,7 @@ import { filterProducts } from "@/components/public/products/filter-products";
 import { PRODUCT_TAG_VALUES } from "@/components/public/products/product-tag";
 import type {
   BillingMode,
+  DeliveryMode,
   ProductBrowseRow,
   ProductTag,
   ProductTopic,
@@ -17,7 +18,7 @@ function row(overrides: {
   id: string;
   topic: ProductTopic;
   productType?: ProductType;
-  isRemote?: boolean;
+  deliveryMode?: DeliveryMode;
   spokenLanguageCode?: SpokenLanguageCode;
   // Null on both is the adults-only shape: a product with no gamer audience
   // carries no age range at all.
@@ -44,7 +45,7 @@ function row(overrides: {
     start_date: "2026-01-12",
     end_date: null,
     image_path: null,
-    is_remote: overrides.isRemote ?? false,
+    delivery_mode: overrides.deliveryMode ?? "in_person",
     for_gamers: overrides.forGamers ?? true,
     for_parents: overrides.forParents ?? false,
     min_age: overrides.minAge === undefined ? 7 : overrides.minAge,
@@ -74,7 +75,7 @@ function row(overrides: {
 const A = row({
   id: "a",
   topic: "minecraft_java",
-  isRemote: true,
+  deliveryMode: "online",
   spokenLanguageCode: "en",
   minAge: 7,
   maxAge: 9,
@@ -83,7 +84,7 @@ const A = row({
 const B = row({
   id: "b",
   topic: "fortnite",
-  isRemote: false,
+  deliveryMode: "in_person",
   spokenLanguageCode: "fi",
   minAge: 12,
   maxAge: 17,
@@ -92,7 +93,7 @@ const B = row({
 const C = row({
   id: "c",
   topic: "roblox_studio",
-  isRemote: true,
+  deliveryMode: "online",
   spokenLanguageCode: "fi",
   minAge: 7,
   maxAge: 17,
@@ -162,7 +163,7 @@ describe("filterProducts", () => {
     ).toEqual([]);
   });
 
-  it("format=online keeps only remote products", () => {
+  it("format=online keeps only online products", () => {
     const ids = filterProducts(ALL, {
       topics: [],
       format: "online",
@@ -173,7 +174,7 @@ describe("filterProducts", () => {
       age: null,
       days: [],
     }).map((p) => p.id);
-    // A and C are remote.
+    // A and C are online.
     expect(ids.sort()).toEqual(["a", "c"]);
   });
 
@@ -189,6 +190,27 @@ describe("filterProducts", () => {
       days: [],
     }).map((p) => p.id);
     expect(ids).toEqual(["b"]);
+  });
+
+  // A hybrid product has a voice room and a site, so each chip finds it: there
+  // is no third chip, and a family choosing either way would want to see it.
+  it("shows a hybrid product under both format chips", () => {
+    const hybrid = row({ id: "h", topic: "minecraft_java", deliveryMode: "hybrid" });
+    const idsFor = (format: "online" | "in_person") =>
+      filterProducts([...ALL, hybrid], {
+        topics: [],
+        format,
+        price: null,
+        languages: [],
+        audiences: [],
+        tags: [],
+        age: null,
+        days: [],
+      })
+        .map((p) => p.id)
+        .sort();
+    expect(idsFor("online")).toEqual(["a", "c", "h"]);
+    expect(idsFor("in_person")).toEqual(["b", "h"]);
   });
 
   it("ANDs format with topic filters", () => {
@@ -594,7 +616,7 @@ describe("filterProducts", () => {
       id: "beginner",
       topic: "minecraft_java",
       tag: "beginner",
-      isRemote: true,
+      deliveryMode: "online",
     });
     const advanced = row({
       id: "advanced",

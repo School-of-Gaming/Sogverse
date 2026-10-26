@@ -75,8 +75,7 @@ type WireProduct = AdminSubstitutionRequest["product"];
 
 /**
  * One product shell. `site` is what decides online or in person: `"remote"`,
- * a building, or `null` for an in-person product with no site recorded
- * yet — the three answers the session facts line can give, all on the page.
+ * or the building an in-person product is held at.
  */
 function product(args: {
   id: string;
@@ -84,7 +83,7 @@ function product(args: {
   productType: WireProduct["product_type"];
   topic: WireProduct["topic"];
   language: WireProduct["spoken_language_code"];
-  site: "remote" | { building: string } | null;
+  site: "remote" | { building: string };
   timezone: string;
   slots: readonly { weekday: number; startTime: string; minutes: number }[];
 }): WireProduct {
@@ -95,13 +94,12 @@ function product(args: {
     topic: args.topic,
     spoken_language_code: args.language,
     timezone: args.timezone,
-    is_remote: args.site === "remote",
+    delivery_mode: args.site === "remote" ? "online" : "in_person",
     voice_room_mode: "sogverse",
     external_voice_url: null,
     start_date: null,
     end_date: null,
-    site_name:
-      args.site === "remote" || args.site === null ? null : args.site.building,
+    site_name: args.site === "remote" ? null : args.site.building,
     translations: [{ locale: "en", name: args.name, description: "", voice_join_instructions: null }],
     schedule_slots: args.slots.map((slot) => ({
       weekday: slot.weekday,
@@ -166,9 +164,7 @@ const ROBLOX_CAMP = product({
   productType: "camp",
   topic: "roblox_studio",
   language: "fi",
-  // In person with the venue still being arranged: "place to be confirmed",
-  // which must not read as online.
-  site: null,
+  site: { building: "Leppävaaran kirjasto, Espoo" },
   timezone: "Europe/Helsinki",
   slots: [
     { weekday: MON, startTime: "10:00", minutes: 300 },

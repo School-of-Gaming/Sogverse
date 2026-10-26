@@ -279,7 +279,7 @@ function assignedProduct(productType: ProductType): GeduAssignedProduct {
       start_date: "2025-09-01",
       end_date: null,
       // In person, so the rail draws no Join button and no room is involved.
-      is_remote: false,
+      delivery_mode: "in_person",
       voice_room_mode: "sogverse",
       external_voice_url: null,
       requires_gamer_creations: false,
@@ -312,7 +312,7 @@ function groupFeed(productType: ProductType): GeduGroupFeed {
       timezone: "Europe/Helsinki",
       start_date: "2025-09-01",
       end_date: null,
-      is_remote: false,
+      delivery_mode: "in_person",
       voice_room_mode: "sogverse",
       external_voice_url: null,
       material_url: null,

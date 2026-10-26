@@ -23,12 +23,12 @@ BEGIN
       JOIN public.products p ON p.id = ga.product_id
      WHERE ga.gedu_id     = (SELECT auth.uid())
        AND p.location_id  = p_location_id
-       AND p.is_remote    = false
+       AND p.delivery_mode <> 'online'
   )
   -- The substitution branch, shaped like the assignment one above rather than borrowed
   -- from a group predicate: the question this function asks is about a BUILDING,
-  -- so the substitution arm is "I hold a live substitution on some group of an in-person
-  -- product at this site". The owner's rule is that a sub sees everything the
+  -- so the substitution arm is "I hold a live substitution on some group of a product
+  -- held at this site, in person or hybrid". The owner's rule is that a sub sees everything the
   -- main gedu sees, and a site note is low-risk enough not to earn a special
   -- case of its own.
   AND NOT EXISTS (
@@ -36,7 +36,7 @@ BEGIN
       FROM public.product_groups g
       JOIN public.products p2 ON p2.id = g.product_id
      WHERE p2.location_id = p_location_id
-       AND p2.is_remote   = false
+       AND p2.delivery_mode <> 'online'
        AND public.gedu_substitutes_group(g.id)
   ) THEN
     RAISE EXCEPTION 'Forbidden' USING ERRCODE = '42501';
@@ -72,7 +72,7 @@ $$;
 -- Name: FUNCTION set_site_notes(p_location_id uuid, p_public_note text, p_gedu_note text); Type: COMMENT; Schema: public; Owner: -
 --
 
-COMMENT ON FUNCTION public.set_site_notes(p_location_id uuid, p_public_note text, p_gedu_note text) IS 'Write a site''s shared family note and its gedu note. The venue ADDRESS is not a parameter and is never touched — it belongs to the location record and is an admin''s to edit through the location itself. Open to an ADMIN, or to a gedu who teaches on an in-person product at that site. Last-write-wins on the notes, across products. A live SUBSTITUTION on any group of an in-person product at that site passes the site half too. The arm is location-shaped like the assignment one beside it rather than borrowed from a group predicate, because the question this function asks is about a BUILDING. It is the owner''s "a sub sees everything the main gedu sees" applied to the lowest-risk write on the surface, which is one fewer special case than carving it out would be.';
+COMMENT ON FUNCTION public.set_site_notes(p_location_id uuid, p_public_note text, p_gedu_note text) IS 'Write a site''s shared family note and its gedu note. The venue ADDRESS is not a parameter and is never touched — it belongs to the location record and is an admin''s to edit through the location itself. Open to an ADMIN, or to a gedu who teaches on a product held at that site — in person or hybrid, the two delivery modes with a site, a hybrid product''s gedu included although they join it online. Last-write-wins on the notes, across products. A live SUBSTITUTION on any group of such a product passes the site half too. The arm is location-shaped like the assignment one beside it rather than borrowed from a group predicate, because the question this function asks is about a BUILDING. It is the owner''s "a sub sees everything the main gedu sees" applied to the lowest-risk write on the surface, which is one fewer special case than carving it out would be.';
 
 
 --

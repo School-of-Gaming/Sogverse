@@ -65,6 +65,7 @@
     "audience": "Kohderyhmä",
     "language": "Kieli",
     "online": "Verkossa",
+    "hybrid": "Paikan päällä ja verkossa",
     "tbd": "Vahvistetaan myöhemmin",
     "holidayBreaks": "Loma-ajat"
   },

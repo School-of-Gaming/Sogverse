@@ -32,7 +32,6 @@ import {
   requireWeekday,
   requireWholeNumber,
   FORM_NONE_TOKEN,
-  FORM_YES_NO,
 } from "./form-fields";
 import { buildVerifyEmailEmail } from "./verify-email";
 import { buildGamerWelcomeEmail } from "./gamer-welcome";
@@ -105,7 +104,7 @@ import { formattingLocale } from "@/lib/constants/locales";
 import { formatCompactDateRange, formatDate, formatTimeRange } from "@/lib/date-format";
 import { ROLE_LABEL_KEYS } from "@/lib/constants/roles";
 import { SENDER_EMAIL, SENDER_NAME, SUPPORT_EMAIL } from "@/lib/constants/brand";
-import { Constants } from "@/types";
+import { Constants, type DeliveryMode } from "@/types";
 
 // --- Field types for the testing UI ---
 
@@ -403,6 +402,16 @@ const PRODUCT_CONFIRMATION_SEAT_OPTIONS = [
  * values: this form is admin-only developer-facing tooling, and `consumer_club`
  * is the name the person testing this actually works with.
  */
+const DELIVERY_MODE_LABELS: Record<DeliveryMode, string> = {
+  in_person: "In person",
+  online: "Online",
+  hybrid: "Hybrid (site and voice room)",
+};
+
+const DELIVERY_MODE_OPTIONS = (["in_person", "online", "hybrid"] as const).map(
+  (value) => ({ label: DELIVERY_MODE_LABELS[value], value }),
+);
+
 const PRODUCT_TYPE_OPTIONS = Constants.public.Enums.product_type.map((value) => ({
   label: value,
   value,
@@ -641,7 +650,7 @@ function resolveProductConfirmationOptions(
   const startDate = optionalDate(params.startDate, "Start date");
   const endDate = noneOrDate(params.endDate, "End date");
   const slots = parseInvitationSlots(params.slots);
-  const isRemote = params.isRemote === "yes";
+  const { deliveryMode } = params;
   const siteName = params.siteName.trim() || null;
   // The location as the pages' own rule resolves it — the mail states "Where"
   // in exactly the words the product pages do, so the shape it renders is
@@ -649,7 +658,7 @@ function resolveProductConfirmationOptions(
   // form has no parent-location field, so a test send shows a bare site.
   const location = formatProductLocation(
     {
-      is_remote: isRemote,
+      delivery_mode: deliveryMode,
       product_type: params.productType,
       // `parent: null` is a real answer here, not a forgotten join: the form
       // has one site field and no municipality field, so a test send shows a
@@ -675,13 +684,13 @@ function resolveProductConfirmationOptions(
     gamerCopy: params.gamerCopy,
     productName: params.productName,
     productType: params.productType,
-    // The guide's two inputs. `isRemote` is the same form field the invitation
-    // and the "Where" line read, so one select decides the document a family is
-    // sent and which half of the guide they are shown — a form that could tell
-    // them to install a launcher for a session we bring the machines to would
-    // be a form whose mail contradicts itself.
+    // The guide's two inputs. `deliveryMode` is the same form field the
+    // invitation and the "Where" line read, so one select decides the document
+    // a family is sent and which half of the guide they are shown — a form that
+    // could tell them to install a launcher for a session we bring the machines
+    // to would be a form whose mail contradicts itself.
     topic: params.topic,
-    isRemote,
+    deliveryMode,
     mode: params.mode,
     priceAmount: params.priceAmount,
     // Only a subscription ever states one, and the live send only knows the
@@ -702,7 +711,7 @@ function resolveProductConfirmationOptions(
         start_time: slot.startTime,
         duration_minutes: slot.durationMinutes,
       })),
-      isRemote,
+      deliveryMode,
       location,
       minAge: ages?.min ?? null,
       maxAge: ages?.max ?? null,
@@ -751,7 +760,7 @@ function resolveProductConfirmationOptions(
         timezone: params.timezone,
         now,
       }),
-      isRemote,
+      deliveryMode,
       siteName,
       siteAddress: noneOrText(params.siteAddress),
       siteNote: noneOrText(params.siteNote),
@@ -983,7 +992,7 @@ const productConfirmationParamsSchema = z.object({
   startDate: z.string(),
   endDate: z.string(),
   slots: z.string(),
-  isRemote: z.enum(FORM_YES_NO),
+  deliveryMode: z.enum(Constants.public.Enums.delivery_mode),
   siteName: z.string(),
   siteAddress: z.string(),
   siteNote: z.string(),
@@ -1751,13 +1760,13 @@ export const templateRegistry: Record<string, TemplateDefinition> = {
         },
       },
       {
-        key: "isRemote",
-        label: "Invite – Runs online",
+        key: "deliveryMode",
+        label: "Invite – Delivered",
         type: "select",
-        // "No" first, so the untouched form composes the in-person document —
-        // the one with a site, an address and a note in it, which is the case
-        // with more to look at.
-        options: yesNoOptions("no"),
+        // In person first, so the untouched form composes the in-person
+        // document — the one with a site, an address and a note in it, which is
+        // the case with more to look at. Hybrid carries the site and the room.
+        options: DELIVERY_MODE_OPTIONS,
       },
       { key: "siteName", label: "Invite – Site name", placeholder: "Kallion kirjasto" },
       {

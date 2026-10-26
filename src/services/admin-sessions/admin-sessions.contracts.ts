@@ -1,4 +1,5 @@
 import { z } from "zod";
+import { Constants } from "@/types";
 import {
   geduFeedSession,
   geduGroupFeed,
@@ -99,10 +100,10 @@ export const adminProductSessions = z.object({
     start_date: z.string().nullable(),
     end_date: z.string().nullable(),
     /** Decides whether there is a building — and so a site panel — at all. */
-    is_remote: z.boolean(),
+    delivery_mode: z.enum(Constants.public.Enums.delivery_mode),
     schedule_slots: z.array(scheduleSlotSummary),
   }),
-  /** The site, on in-person products. `null` on anything remote. */
+  /** The site, on in-person and hybrid products. `null` on an online one. */
   site: geduFeedSite.nullable(),
   groups: z.array(adminSessionGroup),
   /**

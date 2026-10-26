@@ -128,6 +128,18 @@ describe("buildSubstitutionSlackMessage", () => {
     expect(text).toMatch(/^Substitute needed: Minecraft Club – A, Wed 14 Oct/);
   });
 
+  it("says a hybrid session is taught remotely, naming the site the gamers are at", () => {
+    // A sub on a hybrid session joins through the voice room, so the message
+    // must not send them to the building; the gamers' site is still named.
+    const base = notificationSnapshot();
+    const { blocks } = render(
+      notificationSnapshot({ product: { ...base.product, delivery_mode: "hybrid" } }),
+    );
+    expect(Object.fromEntries(tableRows(blocks, FACTS_CAPTION))).toMatchObject({
+      Where: "Remote, gamers at Kallio School",
+    });
+  });
+
   it("never sends an alert block, which Slack refuses in a message", () => {
     const { blocks } = render(notificationSnapshot({ candidates: offers }));
     expect(blocks.map((block) => block.type)).not.toContain("alert");

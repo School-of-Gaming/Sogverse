@@ -30,11 +30,12 @@ import type { EffectiveProductStatusDB, ParticipationStatus } from "@/types";
 // ---------------------------------------------------------------------------
 
 /**
- * API-only vocabulary: how a product is delivered. The database holds this as a
- * property of the product's location and topic rather than as an enum of its
- * own, and the documentation page names these two words, so they are the API's.
+ * How a product is delivered: the database's `delivery_mode` values, which the
+ * documentation page names word for word. Spelled out rather than derived from
+ * the generated enum, because the API's vocabulary is a published contract
+ * that must not change when the schema does.
  */
-export const DELIVERY = ["online", "in_person"] as const;
+export const DELIVERY = ["online", "in_person", "hybrid"] as const;
 
 /**
  * API-only vocabulary: the kinds of page `/traffic` counts. These are pages of

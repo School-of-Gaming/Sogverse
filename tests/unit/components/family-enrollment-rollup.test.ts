@@ -14,7 +14,7 @@ import type {
   MyUpcomingSessionRow,
   MyWaitlistRow,
 } from "@/services/participations/participations.service";
-import type { ProductTranslation } from "@/types";
+import type { DeliveryMode, ProductTranslation } from "@/types";
 import { INERT_HREF, type AppHref } from "@/lib/constants/routes";
 import { planSessions } from "../../mocks/planned-sessions";
 
@@ -69,7 +69,7 @@ function enrollment(
     // Neither is read by the sort; both are required of the shape, and the
     // card is where they mean anything.
     topic: "minecraft_java",
-    isRemote: true,
+    deliveryMode: "online",
     voiceRoom: { mode: "sogverse" },
     // Not read by the sort either; the window rule has its own describe below.
     prepWindowEnd: null,
@@ -268,7 +268,7 @@ function sessionRow(
     timezone: PRODUCT_TZ,
     startDate: null,
     endDate: null,
-    isRemote: true,
+    deliveryMode: "online",
     voiceRoom: { mode: "sogverse" },
     site: null,
     translations: translations("Minecraft Explorers Club"),
@@ -318,7 +318,7 @@ function waitlistRow(
       timezone: PRODUCT_TZ,
       startDate: null,
       endDate: null,
-      isRemote: true,
+      deliveryMode: "online",
       voiceRoom: { mode: "sogverse" },
       translations: translations("Fortnite Creative Club"),
       ...(product ?? {}),
@@ -399,40 +399,53 @@ describe("toFamilyEnrollments — a seat", () => {
    * inventing a topic or a form for it would be stating something untrue about
    * the thing the family is queueing for.
    *
-   * `isRemote` travels beside `hasVoiceRoom` rather than being read off it:
-   * they agree today because a remote product is exactly the one with a room,
-   * and the assertion is what keeps a later divergence from silently printing
-   * the in-person guide on a remote club.
+   * `deliveryMode` travels whole beside `hasVoiceRoom` rather than being read
+   * off it: the prep guide asks the mode two questions of its own, and the
+   * assertion is what keeps a later divergence from silently printing the
+   * in-person guide on an online club.
    */
   it("carries the topic and the product's form onto both kinds of card", () => {
     const seat = mapOne({
       sessionRows: [
-        sessionRow({ product: { topic: "roblox_studio", isRemote: false } }),
+        sessionRow({ product: { topic: "roblox_studio", deliveryMode: "in_person" } }),
       ],
     });
     expect(seat.topic).toBe("roblox_studio");
-    expect(seat.isRemote).toBe(false);
+    expect(seat.deliveryMode).toBe("in_person");
 
     const queued = mapOne({
       waitlistRows: [waitlistRow({ product: { topic: "pokemon_go" } })],
     });
     expect(queued.topic).toBe("pokemon_go");
-    expect(queued.isRemote).toBe(true);
+    expect(queued.deliveryMode).toBe("online");
   });
 
-  it("names the site on an in-person product and never on a remote one", () => {
+  it("names the site on an in-person product and never on an online one", () => {
     const site = { name: "Kirjasto Oodi", name_i18n: null };
     expect(
       mapOne({
-        sessionRows: [sessionRow({ product: { isRemote: false, site } })],
+        sessionRows: [sessionRow({ product: { deliveryMode: "in_person", site } })],
       }).siteName,
     ).toBe("Kirjasto Oodi");
-    // A remote product has no building; a card claiming both would be saying
-    // the family meets in two places.
+    // An online product has no building, whatever the row carries.
     expect(
-      mapOne({ sessionRows: [sessionRow({ product: { isRemote: true, site } })] })
+      mapOne({ sessionRows: [sessionRow({ product: { deliveryMode: "online", site } })] })
         .siteName,
     ).toBeNull();
+  });
+
+  it("gives a hybrid seat both the voice room and the site", () => {
+    // Hybrid is hybrid for everyone on it: the gamers meet at the site and the
+    // sessions are joined in the room too, so the card carries the Join's
+    // destination and names the building beside it.
+    const site = { name: "Kallion ala-aste", name_i18n: null };
+    const seat = mapOne({
+      sessionRows: [sessionRow({ product: { deliveryMode: "hybrid", site } })],
+    });
+    expect(seat.deliveryMode).toBe("hybrid");
+    expect(seat.hasVoiceRoom).toBe(true);
+    expect(seat.voiceHref).not.toBe(INERT_HREF);
+    expect(seat.siteName).toBe("Kallion ala-aste");
   });
 
   it("resolves the site name into the viewer's locale", () => {
@@ -440,7 +453,7 @@ describe("toFamilyEnrollments — a seat", () => {
       sessionRows: [
         sessionRow({
           product: {
-            isRemote: false,
+            deliveryMode: "in_person",
             site: { name: "Helsinki", name_i18n: { sv: "Helsingfors" } },
           },
         }),
@@ -577,11 +590,11 @@ describe("toFamilyEnrollments — an unplaced seat's next session", () => {
     at: string,
     groupId: string | null,
     cancelledDates?: string[],
-    isRemote = true,
+    deliveryMode: DeliveryMode = "online",
   ) {
     const [entry] = toFamilyEnrollments({
       sessionRows: [
-        sessionRow({ groupId, cancelledDates, product: { isRemote, site: null } }),
+        sessionRow({ groupId, cancelledDates, product: { deliveryMode, site: null } }),
       ],
       waitlistRows: [],
       now: new Date(at),
@@ -614,7 +627,7 @@ describe("toFamilyEnrollments — an unplaced seat's next session", () => {
 
   it("leaves an unplaced in-person seat on the session in progress, having no Join to lock", () => {
     expect(
-      nextAt("2026-02-13T17:30:00Z", null, undefined, false).nextSessionStart?.toISOString(),
+      nextAt("2026-02-13T17:30:00Z", null, undefined, "in_person").nextSessionStart?.toISOString(),
     ).toBe(FIRST_FRIDAY);
   });
 
@@ -647,7 +660,7 @@ describe("toFamilyEnrollments — a place in line", () => {
 
   it("still says whether the product has a room at all", () => {
     expect(
-      mapOne({ waitlistRows: [waitlistRow({ product: { isRemote: false } })] })
+      mapOne({ waitlistRows: [waitlistRow({ product: { deliveryMode: "in_person" } })] })
         .hasVoiceRoom,
     ).toBe(false);
   });

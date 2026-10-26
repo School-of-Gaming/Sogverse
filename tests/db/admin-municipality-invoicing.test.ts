@@ -203,7 +203,7 @@ describe("get_admin_municipality_invoicing", () => {
     // behind the ancestor-or-self case.
     const inPerson = await admin
       .from("products")
-      .update({ is_remote: false, location_id: TEST_IDS.LOCATION_SITE })
+      .update({ delivery_mode: "in_person", location_id: TEST_IDS.LOCATION_SITE })
       .in("id", IN_PERSON_PRODUCTS);
     expect(inPerson.error).toBeNull();
 
@@ -442,7 +442,7 @@ describe("get_admin_municipality_invoicing", () => {
       // take: an in-person product's location must be a site.
       const moved = await admin
         .from("products")
-        .update({ is_remote: false, location_id: L_REGION_SITE })
+        .update({ delivery_mode: "in_person", location_id: L_REGION_SITE })
         .eq("id", P_NO_MUNICIPALITY);
       expect(moved.error).toBeNull();
 

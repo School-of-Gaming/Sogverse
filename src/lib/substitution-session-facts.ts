@@ -4,7 +4,9 @@ import { resolveRequiredTranslation } from "@/lib/i18n/resolve-translation";
 import type {
   SessionProductDocument,
 } from "@/services/session-substitution/session-substitution.contracts";
+import { gamersAttendSite, geduAttendsSite } from "@/lib/products/delivery-mode";
 import type {
+  DeliveryMode,
   ProductTopic,
   ProductType,
   SpokenLanguageCode,
@@ -50,11 +52,16 @@ export interface SessionFacts {
   productType: ProductType;
   topic: ProductTopic;
   spokenLanguageCode: SpokenLanguageCode;
-  isRemote: boolean;
   /**
-   * The venue on an in-person product. `null` on a remote one, and `null` on an
-   * in-person product with no site recorded — which is "place to be confirmed",
-   * not "online": `isRemote` is what says online.
+   * How the session is delivered, which is what says where the gedu teaches
+   * from: at the site in person, online otherwise — a hybrid gedu joins online
+   * while the gamers are at the site.
+   */
+  deliveryMode: DeliveryMode;
+  /**
+   * The site the gamers attend, on an in-person or hybrid product; `null` on an
+   * online one. A product that is not online always holds a site, which
+   * {@link sessionWhere} enforces.
    */
   siteName: string | null;
 }
@@ -73,7 +80,7 @@ export interface SessionFactsProduct {
   topic: ProductTopic;
   spokenLanguageCode: SpokenLanguageCode;
   timezone: string;
-  isRemote: boolean;
+  deliveryMode: DeliveryMode;
   siteName: string | null;
   translations: readonly { locale: string; name: string }[];
 }
@@ -87,7 +94,7 @@ export function sessionFactsProduct(
     topic: document.topic,
     spokenLanguageCode: document.spoken_language_code,
     timezone: document.timezone,
-    isRemote: document.is_remote,
+    deliveryMode: document.delivery_mode,
     siteName: document.site_name,
     translations: document.translations,
   };
@@ -139,12 +146,60 @@ export function buildSessionFacts({
     productType: product.productType,
     topic: product.topic,
     spokenLanguageCode: product.spokenLanguageCode,
-    isRemote: product.isRemote,
-    // Never a building on a remote product, whatever the row says: a session
-    // with a room has no venue, and a line naming both would claim it meets in
-    // two places. The reads already apply this; the facts do not depend on it.
-    siteName: product.isRemote ? null : product.siteName,
+    deliveryMode: product.deliveryMode,
+    // Never a building on an online product, whatever the row says. The reads
+    // already apply this; the facts do not depend on it.
+    siteName: gamersAttendSite(product.deliveryMode) ? product.siteName : null,
   };
+}
+
+/**
+ * Where the gedu teaches the session from, as every substitution surface words
+ * it: at the site in person, online otherwise, and on a hybrid session online
+ * with the site the gamers are at named beside it.
+ */
+export type SessionWhere =
+  | { kind: "site"; siteName: string }
+  | { kind: "online" }
+  | { kind: "hybrid"; siteName: string };
+
+export function sessionWhere(
+  facts: Pick<SessionFacts, "deliveryMode" | "siteName">,
+): SessionWhere {
+  if (!gamersAttendSite(facts.deliveryMode)) return { kind: "online" };
+  // A product that is not online always holds a site: the schema requires its
+  // location, and the site-name reads join on that restricting foreign key.
+  if (facts.siteName === null) {
+    throw new Error(
+      `A ${facts.deliveryMode} session reached the substitution facts without its site`,
+    );
+  }
+  return geduAttendsSite(facts.deliveryMode)
+    ? { kind: "site", siteName: facts.siteName }
+    : { kind: "hybrid", siteName: facts.siteName };
+}
+
+/** The words a surface states a {@link SessionWhere} in. */
+export interface SessionWhereWording {
+  /** An online session. */
+  remote: string;
+  /** A hybrid session: online, with the site the gamers are at. */
+  hybrid: (siteName: string) => string;
+}
+
+/** A {@link SessionWhere} as one line: the site's name, or the surface's words. */
+export function sessionWhereLabel(
+  where: SessionWhere,
+  wording: SessionWhereWording,
+): string {
+  switch (where.kind) {
+    case "site":
+      return where.siteName;
+    case "online":
+      return wording.remote;
+    case "hybrid":
+      return wording.hybrid(where.siteName);
+  }
 }
 
 /**

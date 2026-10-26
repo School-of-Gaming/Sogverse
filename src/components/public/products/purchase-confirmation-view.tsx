@@ -118,7 +118,7 @@ export function PurchaseConfirmationView({
     schedule.kind === "tbd" ? [] : renderScheduleLinesForDetail(schedule);
   const where = renderProductLocationLine({
     location: formatProductLocation(product, locale),
-    isRemote: product.is_remote,
+    deliveryMode: product.delivery_mode,
     online: tProduct("info.online"),
     tbd: tProduct("info.tbd"),
   });
@@ -182,6 +182,9 @@ export function PurchaseConfirmationView({
         </p>
       ))}
       <p>{where}</p>
+      {/* A hybrid product's line names its site, which is half of the answer:
+          the other half is that the group is also in the voice room. */}
+      {product.delivery_mode === "hybrid" && <p>{tProduct("info.hybrid")}</p>}
       {closingLines.map((line) => (
         <p key={line}>{line}</p>
       ))}

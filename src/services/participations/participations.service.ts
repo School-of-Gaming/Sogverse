@@ -1,5 +1,6 @@
 import type {
   AppSupabaseClient,
+  DeliveryMode,
   Json,
   ParticipationStatus,
   ParticipationSubscriptionState,
@@ -10,6 +11,7 @@ import type {
   SessionAudience,
 } from "@/types";
 import type { SupportedCurrency } from "@/lib/constants/currency";
+import { gamersAttendSite } from "@/lib/products/delivery-mode";
 import type { QueryData } from "@supabase/supabase-js";
 import {
   parseJsonResponse,
@@ -105,17 +107,17 @@ export interface MyUpcomingSessionRow {
      */
     endDate: string | null;
     /**
-     * `false` for in-person products. The dashboard uses this together with
-     * `groupId` to gate whether the Join Voice link gets a real
-     * destination — in-person products have no voice room, so the button
+     * How the product is delivered. The dashboard asks `hasVoiceRoom` of it,
+     * together with `groupId`, to gate whether the Join Voice link gets a real
+     * destination — an in-person product has no voice room, so the button
      * stays inert.
      */
-    isRemote: boolean;
+    deliveryMode: DeliveryMode;
     /**
-     * The site an **in-person** product runs at, `null` on a remote one.
+     * The site an in-person or hybrid product runs at, `null` on an online one.
      *
-     * Gated on `is_remote` rather than on whether the join found a row: a
-     * remote municipality club carries a `location_id` too (the municipality
+     * Gated on `gamersAttendSite` rather than on whether the join found a row:
+     * an online municipality club carries a `location_id` too (the municipality
      * that commissioned it), and that is an administrative fact, not a
      * building anybody travels to. Answering "where is this happening" with a
      * municipality name on a card whose sessions are in a voice room would be
@@ -255,15 +257,15 @@ export interface MyWaitlistRow {
     /** Inclusive end date in the product's local calendar, null when open-ended. */
     endDate: string | null;
     /**
-     * `false` for in-person products. No Join is ever drawn on a waitlisted
+     * How the product is delivered. No Join is ever drawn on a waitlisted
      * card — there is no seat behind it — but the summary this row becomes says
-     * whether the product *has* a room, and inventing `false` for every
+     * whether the product *has* a room, and inventing "no room" for every
      * waitlist place would be stating something untrue about the product.
      */
-    isRemote: boolean;
+    deliveryMode: DeliveryMode;
     /**
      * How the product's sessions are joined. Nothing is joined from a
-     * waitlisted card; it is carried for the same reason `isRemote` is.
+     * waitlisted card; it is carried for the same reason `deliveryMode` is.
      */
     voiceRoom: ProductVoiceRoom;
     /**
@@ -996,7 +998,7 @@ function buildMyUpcomingSessionsQuery(
         signed_up_at,
         group_joined_at,
         product:products!inner(
-          id, product_type, topic, timezone, start_date, end_date, is_remote,
+          id, product_type, topic, timezone, start_date, end_date, delivery_mode,
           voice_room_mode, external_voice_url,
           product_translations(*),
           schedule_slots(weekday, start_time, duration_minutes),
@@ -1050,7 +1052,7 @@ function buildMyWaitlistQuery(
         participant_id,
         seat_offer_sent_at,
         product:products!inner(
-          product_type, topic, timezone, start_date, end_date, is_remote,
+          product_type, topic, timezone, start_date, end_date, delivery_mode,
           voice_room_mode, external_voice_url,
           product_translations(*),
           schedule_slots(weekday, start_time, duration_minutes)
@@ -1086,11 +1088,11 @@ function toMyUpcomingSessionRow(
       timezone: product.timezone,
       startDate: product.start_date,
       endDate: product.end_date,
-      isRemote: product.is_remote,
+      deliveryMode: product.delivery_mode,
       // The join is gated here rather than in the select, because the select
-      // cannot express it: a remote municipality club has a `location_id` and
+      // cannot express it: an online municipality club has a `location_id` and
       // no site. See `MyUpcomingSessionRow.product.site`.
-      site: product.is_remote ? null : product.location,
+      site: gamersAttendSite(product.delivery_mode) ? product.location : null,
       voiceRoom: productVoiceRoom(product, product.product_translations),
       translations: product.product_translations,
     },
@@ -1126,7 +1128,7 @@ function toMyWaitlistRow(
       timezone: product.timezone,
       startDate: product.start_date,
       endDate: product.end_date,
-      isRemote: product.is_remote,
+      deliveryMode: product.delivery_mode,
       voiceRoom: productVoiceRoom(product, product.product_translations),
       translations: product.product_translations,
     },

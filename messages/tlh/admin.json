@@ -664,6 +664,7 @@
       "ageRange": "{min}–{max} DIS",
       "seats": "{count} pa’",
       "online": "HeHDaq",
+      "hybrid": "rurmey Daq je",
       "unlisted": "tetlhDaq pagh",
       "untitled": "(pong pagh)",
       "missingGeduFee": "Gedu Huch Hutlh",
@@ -726,7 +727,7 @@
         "visibility": "leghlu",
         "gamerPhotoConsents": "mIllogh tlhobmey",
         "marketingConsents": "QIn tlhobmey",
-        "format": "rurmeH",
+        "deliveryMode": "qaSmoHmeH mIw",
         "ageRange": "qan SaH",
         "publicLink": "Hoch rap Dorgh",
         "createdBy": "chenmoHpu’wI’",
@@ -817,6 +818,7 @@
       "spokenLanguage": "Hol jatlhlu’bogh",
       "online": "rurmey",
       "inPerson": "Daq",
+      "hybrid": "rurmey Daq je",
       "municipality": "Doch veng",
       "site": "Daq",
       "startDate": "jaj tagh",
@@ -911,6 +913,11 @@
       "none": "ghogh pa’ tu’lu’be’",
       "noneDescription": "Hol Hoch ghItlhbogh muv ra’ghom’e’ legh qorDu’pu’."
     },
+    "deliveryModes": {
+      "online": "rurmey",
+      "in_person": "Daq",
+      "hybrid": "rurmey Daq je"
+    },
     "endDateModes": {
       "ongoing": "jaj van Hutlh",
       "ongoingDescription": "ghom taH; bImevqang ’e’ DawIvDI’ mev.",
@@ -956,6 +963,7 @@
       "externalVoiceUrlHint": "Hoch laD laH: ’el’be’bogh ghotpu’ je.",
       "municipalityHint": "ghomHom veng Sub veng — Huch nob veng. veng vavmey neH lulegh.",
       "siteHint": "qaStaHvIS Daq mab.",
+      "hybridHint": "Daq ghoS QujwI'pu'. Sogverse ghogh pa' muv Gedu, Daq ghoSlaHbe'bogh QujwI'pu' je.",
       "eventSingleDay": "Qu’mey wa’ jaj qaS.",
       "timezoneEntry": "poH Sepvamdaq ghItlhlu’ bIng poHmey. vavpu’ Daq poHchaj choHlu’.",
       "timezoneChangeMoves": "poH Sepvamdaq ghItlhlu’ bIng poHmey. poH Sep DachoHchugh, vIH Hoch qep pIq: poH rap, Sep chu’. ’ach qepmey ghItlhlu’pu’bogh — ja’chuq ghojwI’pu’ ghap — poHchaj tIQ luSaH: not choHlu’ qun.",

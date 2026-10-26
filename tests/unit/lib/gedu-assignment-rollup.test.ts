@@ -1,4 +1,5 @@
 import { describe, expect, it } from "vitest";
+import type { DeliveryMode } from "@/types";
 import {
   geduAssignmentKey,
   geduSubstitutionKey,
@@ -38,7 +39,7 @@ function row(over: {
   durationMinutes?: number;
   startDate?: string | null;
   endDate?: string | null;
-  isRemote?: boolean;
+  deliveryMode?: DeliveryMode;
   siteName?: string | null;
   slots?: GeduAssignmentRow["slots"];
   cancelledDates?: string[];
@@ -61,7 +62,7 @@ function row(over: {
       timezone: TZ,
       startDate,
       endDate,
-      isRemote: over.isRemote ?? true,
+      deliveryMode: over.deliveryMode ?? "online",
       voiceRoom: { mode: "sogverse" },
       siteName: over.siteName ?? null,
       topic: "minecraft_java",
@@ -415,9 +416,9 @@ describe("rollUpGeduAssignments", () => {
     expect(byId.get("p2")).toBe(0);
   });
 
-  it("hands a remote product the caller's own room href", () => {
+  it("hands an online product the caller's own room href", () => {
     const summaries = rollUp(
-      [row({ id: "p1", name: "Remote Club", isRemote: true })],
+      [row({ id: "p1", name: "Remote Club", deliveryMode: "online" })],
       now,
       {
         voiceHrefByAssignment: {
@@ -437,7 +438,7 @@ describe("rollUpGeduAssignments", () => {
 
   it("gives an in-person product an inert Join href", () => {
     const summaries = rollUp(
-      [row({ id: "onsite", name: "Onsite Club", isRemote: false })],
+      [row({ id: "onsite", name: "Onsite Club", deliveryMode: "in_person" })],
       now,
       {
         voiceHrefByAssignment: {
@@ -465,9 +466,9 @@ describe("rollUpGeduAssignments", () => {
   });
 
   /**
-   * The footer's two answers to "where is this happening", and the invariant
-   * that keeps a card from claiming both: a site is carried only by a product
-   * with no room, whatever the row underneath says.
+   * The footer's two answers to "where is this happening": a site is carried
+   * by a product gamers attend, and a room by one with a voice room — a hybrid
+   * product carries both, an online one never a site.
    */
   it("carries an in-person product's site through to the card", () => {
     const summaries = rollUp(
@@ -475,7 +476,7 @@ describe("rollUpGeduAssignments", () => {
         row({
           id: "onsite",
           name: "Onsite Camp",
-          isRemote: false,
+          deliveryMode: "in_person",
           siteName: "Sello Library, Espoo",
         }),
       ],
@@ -485,15 +486,33 @@ describe("rollUpGeduAssignments", () => {
     expect(summaries[0].siteName).toBe("Sello Library, Espoo");
   });
 
-  it("drops a site from a remote product even when the row supplies one", () => {
-    // A product with a voice room has no building, and a card showing both
-    // would be claiming the group meets in two places at once.
+  it("carries both the room and the site on a hybrid product", () => {
+    // Its gamers are at the site and everyone shares the voice room, so the
+    // card answers "where" both ways.
+    const summaries = rollUp(
+      [
+        row({
+          id: "hybrid",
+          name: "Hybrid Club",
+          deliveryMode: "hybrid",
+          siteName: "Sello Library, Espoo",
+        }),
+      ],
+      now,
+    );
+    expect(summaries[0].hasVoiceRoom).toBe(true);
+    expect(summaries[0].siteName).toBe("Sello Library, Espoo");
+  });
+
+  it("drops a site from an online product even when the row supplies one", () => {
+    // An online product has no building: an online municipality club's
+    // location is the municipality, not somewhere the group meets.
     const summaries = rollUp(
       [
         row({
           id: "remote",
           name: "Remote Club",
-          isRemote: true,
+          deliveryMode: "online",
           siteName: "Sello Library, Espoo",
         }),
       ],
@@ -505,7 +524,7 @@ describe("rollUpGeduAssignments", () => {
 
   it("leaves a site null on an in-person product that has none recorded", () => {
     const summaries = rollUp(
-      [row({ id: "onsite", name: "Onsite Camp", isRemote: false })],
+      [row({ id: "onsite", name: "Onsite Camp", deliveryMode: "in_person" })],
       now,
     );
     expect(summaries[0].siteName).toBeNull();
@@ -649,7 +668,7 @@ describe("rollUpGeduSubstitutions", () => {
     name: string;
     groupId?: string;
     substitutionDate: string;
-    isRemote?: boolean;
+    deliveryMode?: DeliveryMode;
     siteName?: string | null;
     weekday?: number;
     /** The PRODUCT's zone — every instant on the card is derived in it. */
@@ -659,7 +678,7 @@ describe("rollUpGeduSubstitutions", () => {
       id: over.id,
       name: over.name,
       weekday: over.weekday ?? 0,
-      isRemote: over.isRemote ?? true,
+      deliveryMode: over.deliveryMode ?? "online",
       siteName: over.siteName ?? null,
     });
     const timezone = over.timezone ?? base.product.timezone;
@@ -877,7 +896,7 @@ describe("rollUpGeduSubstitutions", () => {
         id: "p1",
         name: "Camp",
         substitutionDate: "2026-02-16",
-        isRemote: false,
+        deliveryMode: "in_person",
         siteName: "Sello Library, Espoo",
       }),
     ]);
