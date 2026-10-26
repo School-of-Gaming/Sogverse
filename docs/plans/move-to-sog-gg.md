@@ -49,8 +49,9 @@ Decided by the owner on 2026-10-15 and 2026-10-26.
     sync every minute.
   - Meta retries WhatsApp webhooks.
   - Lynx only reads; the partner API has no write route.
-  - Discord, Slack, the Claude connectors and the Minecraft servers fail visibly, and the
-    person retries.
+  - Discord, Slack and the Claude connectors fail visibly, and the person retries.
+  - The Minecraft servers' join check keeps players out while it fails. Their team
+    changes the URL within the hour, and the quiet hour falls outside sessions.
 - **`sogverse.sog.gg` becomes a pure domain-level permanent redirect in Vercel,
   preserving the path** (`sogverse.sog.gg/<path>` → `sog.gg/<path>`), in the same hour.
   There is no app code and no splash page. The DNS record is kept for about a year and
@@ -85,8 +86,9 @@ Decided by the owner on 2026-10-15 and 2026-10-26.
 - **`www.sog.gg` as the official address.** It's longer, and the brief named `sog.gg`.
 - **Serving the site on several domains as copies.** It produces duplicate content and
   splits sign-ins by host.
-- **Relying on the `sogverse.sog.gg` redirect for Lynx.** Their HTTP client would drop the
-  body or the key; they change the base URL on their side.
+- **Relying on the `sogverse.sog.gg` redirect for Lynx or the Minecraft servers.** An API
+  client would drop the body or the key on a redirect, so both change the base URL on
+  their side.
 
 ## Constraints discovered while deciding
 
@@ -164,9 +166,15 @@ Every write outside the repo is confirmed with the owner before it is made.
    `npm run gates` passes. Staging's `sogverse-staging.sog.gg` is out of scope.
    Until this branch is released, `supabase/config.toml` documents the old prod values.
    That's accepted, since the file is never pushed to prod.
-3. **Message Lynx** (draft with `/slack-msg` or `/whatsapp-msg`). Give the date and the
-   hour. Their base URL moves from `https://sogverse.sog.gg` to `https://sog.gg`, nothing
-   changes for their key, and their calls fail from the cutover until they switch.
+3. **Message the two external API users: Lynx and the Minecraft server team.** Draft each
+   with `/slack-msg` or `/whatsapp-msg`. Each message gives the date and the hour, and
+   says:
+   - their base URL moves from `https://sogverse.sog.gg` to `https://sog.gg`;
+   - nothing changes for their key;
+   - their calls fail from the cutover until they switch.
+
+   For the Minecraft servers, a failing join check keeps players out, so their change has
+   to land within the hour. Agree with them who makes it, at that time.
 4. **Re-pull the machine-caller list**, and add anything new to step 1.6:
 
    ```bash
@@ -182,8 +190,9 @@ Every write outside the repo is confirmed with the owner before it is made.
    - The `python-httpx` MCP caller came from Google Cloud addresses, and every one of its
      calls was refused with 401: it never held a token. So no working connector depends on
      it, and the cutover cannot break it (checked 2026-10-26).
-   - Find out whether the Minecraft servers call the join check in production. Its 30-day
-     log held one manual `curl`. If a server is configured, its base URL moves in step 1.6.
+   - The Minecraft servers do use the join check (owner, 2026-10-26), though its 30-day
+     log held only one manual `curl`. Their base URL is the Minecraft server team's to
+     change (step 0.3).
 5. **Check the dashboards that may hold `sogverse.sog.gg` or depend on the Webflow site**,
    and write what each needs into step 1.6's table, in this file. None of these shows up
    in a request log:
@@ -283,7 +292,7 @@ back to `sog.gg` while that is still Webflow.
    | Slack | Interactivity URL and the `/link` command's URL | `/link` answers |
    | WhatsApp | Webhook callback URL in the Meta app | Meta's verification handshake passes on save |
    | Claude connectors | Re-add with `https://sog.gg/api/mcp`, for the owner and Reksi | `whoami` answers |
-   | Minecraft servers | The Sogverse base URL in their config | A join check succeeds |
+   | Minecraft servers | The Minecraft server team changes the base URL in their config, as agreed in step 0.3 | A join check succeeds |
    | Google Cloud OAuth | Consent screen URLs, and JavaScript origins if they list the old host | Saved |
    | Anything step 0.5 found | As found | As found |
 7. **Confirm nothing was dropped.**
