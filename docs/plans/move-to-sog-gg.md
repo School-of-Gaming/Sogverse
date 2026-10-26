@@ -193,6 +193,12 @@ Every write outside the repo is confirmed with the owner before it is made.
    - The Minecraft servers do use the join check (owner, 2026-10-26), though its 30-day
      log held only one manual `curl`. Their base URL is the Minecraft server team's to
      change (step 0.3).
+   - Re-pulled 2026-10-26 (needs `--project sogverse --scope school-of-gaming` when run
+     outside a linked checkout): the same callers as the Scale table, plus some that need
+     no step. `vercel-image-optimization` fetching `/api/team/photos/*` (3,133) is
+     Vercel's optimiser fetching a relative image address on whichever host the visitor
+     is on, so it moves with them. Googlebot-Image, Slack link previews of the MCP
+     address, a scanner probe and our own `curl`s are the rest.
 5. **Check the dashboards that may hold `sogverse.sog.gg` or depend on the Webflow site**,
    and write what each needs into step 1.6's table, in this file. None of these shows up
    in a request log:
@@ -207,6 +213,10 @@ Every write outside the repo is confirmed with the owner before it is made.
      Webflow pages, which will now say "not found". `sogverse.sog.gg` links keep working
      through the redirect.
    - **Daily.co:** any domain restriction.
+   - **Sogverse's own stored content:** product descriptions, Library articles, landing
+     pages and spotlights that link to `www.sog.gg` or bare `sog.gg` Webflow pages. After
+     the cutover those links open this app's 404. Find them with a read-only prod query
+     over the authored text columns, and fix them in the admin UI.
 6. **Add `https://sog.gg/**` to Supabase Auth's redirect allow-list**, keeping
    `sogverse.sog.gg/**`. It is harmless before the cutover.
    - Every Supabase Auth change in this plan goes through the Management API:
@@ -325,7 +335,9 @@ retry through the rollback the same way they do through the cutover.
 1. **About a week later, look for stragglers.** Run the step 0.4 query again over the
    days since the cutover. Every non-browser caller on `sogverse.sog.gg` is now getting
    308s; move each one, Lynx included if they haven't switched.
-2. **Land `feat/move-to-sog-gg`** in the next normal release.
+2. **Land `feat/move-to-sog-gg`** in the next normal release. Before merging, re-verify
+   the domain → branch mapping in the `vercel-analytics` skill and change its
+   "verified" date to the day of the check.
 3. **Remove `sogverse.sog.gg/**` from the Supabase allow-list.**
 4. **Remove the old sitemaps a few weeks later:** `https://sogverse.sog.gg/sitemap.xml`
    and the Webflow sitemap `https://www.sog.gg/sitemap.xml`, from both Search Console and
