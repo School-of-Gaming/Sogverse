@@ -371,3 +371,20 @@ export const adminMoveParticipationRpcResult = z.object({
   group_id: z.string().nullable(),
   stripe_subscription_id: z.string(),
 });
+
+/**
+ * `admin_move_unsubscribed_participation` RPC result — the move for a seat with
+ * nothing to bill. Like the club switch it either moves the seat or raises, so
+ * every success has one shape. `group_id` is the admin's placement, or the
+ * shared placement rule's answer for the target (null when the seat lands in
+ * the unassigned inbox); `customer_id` and `participant_id` are the seat's own,
+ * which the route needs to name whose consents were recorded on the target.
+ */
+export const adminMoveUnsubscribedParticipationRpcResult = z.object({
+  participation_id: z.string(),
+  source_product_id: z.string(),
+  target_product_id: z.string(),
+  group_id: z.string().nullable(),
+  customer_id: z.string(),
+  participant_id: z.string(),
+});

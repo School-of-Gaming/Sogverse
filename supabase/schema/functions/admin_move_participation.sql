@@ -91,8 +91,8 @@ BEGIN
   -- anything but `cancelled`. The predicate is deliberately the same one, read
   -- from the opposite side — those two refuse BECAUSE a subscription is live,
   -- and this one refuses because none is. A seat with nothing to bill is not
-  -- this function's business: an admin moves one with the panel's remove zone
-  -- and a comp-enrolment on the other club, and there is no price to swap.
+  -- this function's business: admin_move_unsubscribed_participation moves
+  -- one, and there is no price to swap.
   SELECT stripe_subscription_id, stripe_price_id
     INTO v_live_sub, v_live_price
     FROM public.family_subscriptions

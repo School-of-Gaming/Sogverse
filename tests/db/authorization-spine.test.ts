@@ -252,6 +252,9 @@ const ROLE_GATED_RPCS: Record<string, RoleGatedRpc> = {
   // so the positive half of the matrix is assertable here with no fixture,
   // exactly as it is for the two RPCs above.
   admin_move_participation: { permittedRoles: ["admin"] },
+  // Its sibling for a seat with nothing to bill, the same shape: past the
+  // admin guard an all-NULL call hits "no such participation".
+  admin_move_unsubscribed_participation: { permittedRoles: ["admin"] },
 
   // --- the admin half of session substitutions -----------------------------
   //

@@ -4345,6 +4345,15 @@ export type Database = {
         }
         Returns: Json
       }
+      admin_move_unsubscribed_participation: {
+        Args: {
+          p_expected_source_product_id: string
+          p_group_id?: string
+          p_participation_id: string
+          p_target_product_id: string
+        }
+        Returns: Json
+      }
       admin_remove_participation: {
         Args: { p_participation_id: string; p_product_id: string }
         Returns: Json
