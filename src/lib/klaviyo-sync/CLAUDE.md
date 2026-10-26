@@ -112,3 +112,20 @@ SELECT vault.create_secret('<that environment''s KLAVIYO_SYNC_SECRET>', 'klaviyo
 Prod points at `sogverse.sog.gg`. The order against the deployment does not matter: a kick
 the route refuses leaves its rows due, and the next observation kicks again once both sides
 hold the same secret.
+
+## Before the first deploy
+
+The deploy that brings the sync deletes Sogverse's own `school_of_gaming` marketing
+consents, so a yes given in Settings or a product signup panel must reach Klaviyo first.
+`scripts/klaviyo-consent-handover/run.ts` subscribes, with no list, every parent whose
+current consent is granted — never one Klaviyo holds as unsubscribed or suppressed, and
+writing nothing for one already subscribed — so it is safe to run again. It is run against
+prod by the owner, or with the owner's say, from a checkout holding `.env.local`, in this
+order:
+
+1. Dry run: `npx tsx scripts/klaviyo-consent-handover/run.ts --prod` — counts only.
+2. Apply: the same with `--apply`. It exits non-zero, naming profile ids, if any parent failed.
+3. Check the count subscribed against Klaviyo: the profiles whose consent source is
+   `Sogverse account (consent given before the Klaviyo sync)`.
+4. Apply again right before merging, for the consents given since.
+5. Deploy.

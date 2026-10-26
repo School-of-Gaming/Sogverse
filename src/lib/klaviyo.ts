@@ -4,10 +4,12 @@ import "server-only";
  * **Klaviyo's API, the one client.** Two callers: a landing page's email
  * sign-up, which writes a profile and a list subscription, and the parent sync
  * (`src/lib/klaviyo-sync/`), which keeps every parent's profile and events up
- * to date and deletes the profile of a parent who is gone. The only read is
- * finding a profile's Klaviyo id by its external id, which the sync needs to
- * update or delete the profile it wrote. Every write is idempotent, so a
- * caller that failed part-way can simply be retried.
+ * to date and deletes the profile of a parent who is gone. The sync's only
+ * read is finding a profile's Klaviyo id by its external id, which it needs to
+ * update or delete the profile it wrote; the consent handover script
+ * (`scripts/klaviyo-consent-handover/`) also reads a profile's email marketing
+ * standing, so it never subscribes anyone Klaviyo has unsubscribed. Every
+ * write is idempotent, so a caller that failed part-way can simply be retried.
  *
  * The private key's scopes, all of them needed: Profiles read and write,
  * Lists write, Subscriptions write, Events write, Data Privacy write.
@@ -194,6 +196,52 @@ export async function findKlaviyoProfileIdByExternalId(
   return typeof id === "string" ? id : null;
 }
 
+/** A profile's email marketing standing, as Klaviyo holds it. */
+export interface KlaviyoEmailMarketing {
+  profileId: string;
+  /** The address the profile holds, to tell whether it is the one being subscribed. */
+  email: string | null;
+  /** `SUBSCRIBED`, `UNSUBSCRIBED` or `NEVER_SUBSCRIBED`. */
+  consent: string | null;
+  /**
+   * Any global suppression — an unsubscribe, a bounce, an invalid address, a
+   * spam complaint, a hand suppression. A subscribe call lifts some of these,
+   * so a caller that must respect them has to read this first.
+   */
+  suppressed: boolean;
+}
+
+/**
+ * The email marketing standing of the profile with this external id or this
+ * address, or null when Klaviyo holds none.
+ */
+export async function findKlaviyoEmailMarketing(
+  by: { externalId: string } | { email: string },
+): Promise<KlaviyoEmailMarketing | null> {
+  const condition =
+    "externalId" in by ? `equals(external_id,"${by.externalId}")` : `equals(email,"${by.email}")`;
+  const answer = await klaviyoCall(
+    "GET",
+    `/profiles?filter=${encodeURIComponent(condition)}` +
+      "&additional-fields[profile]=subscriptions&page[size]=1",
+  );
+  const data = isRecord(answer) ? answer.data : undefined;
+  const first: unknown = Array.isArray(data) ? data[0] : undefined;
+  if (!isRecord(first) || typeof first.id !== "string") return null;
+
+  const attributes = isRecord(first.attributes) ? first.attributes : {};
+  const subscriptions = isRecord(attributes.subscriptions) ? attributes.subscriptions : {};
+  const email = isRecord(subscriptions.email) ? subscriptions.email : {};
+  const marketing = isRecord(email.marketing) ? email.marketing : {};
+  const suppression = Array.isArray(marketing.suppression) ? marketing.suppression : [];
+  return {
+    profileId: first.id,
+    email: typeof attributes.email === "string" ? attributes.email : null,
+    consent: typeof marketing.consent === "string" ? marketing.consent : null,
+    suppressed: marketing.can_receive_email_marketing === false || suppression.length > 0,
+  };
+}
+
 /**
  * Ask Klaviyo to delete a profile and everything it holds about it — events,
  * consent and list memberships included. Klaviyo queues the job (202) and
@@ -258,6 +306,12 @@ interface KlaviyoMarketingSubscription {
   listId?: string;
   /** Recorded on the consent record: where the person gave it. */
   customSource: string;
+  /**
+   * When the person consented, ISO 8601 and in the past — given only for a
+   * consent collected before it reached Klaviyo. It makes the call a
+   * historical import, which subscribes at once with no confirmation mail.
+   */
+  consentedAt?: string;
 }
 
 /**
@@ -266,23 +320,33 @@ interface KlaviyoMarketingSubscription {
  * is subscribed at once with no confirmation mail, and an address that had
  * unsubscribed is subscribed again: the call lifts its suppression. With no
  * list, the Klaviyo account's default opt-in setting decides whether a
- * confirmation mail goes.
+ * confirmation mail goes — unless `consentedAt` is given, which subscribes at
+ * once.
  */
 export async function subscribeKlaviyoProfile(
   subscription: KlaviyoMarketingSubscription,
 ): Promise<void> {
+  const { consentedAt } = subscription;
   await klaviyoCall("POST", "/profile-subscription-bulk-create-jobs", {
     data: {
       type: "profile-subscription-bulk-create-job",
       attributes: {
         custom_source: subscription.customSource,
+        ...(consentedAt === undefined ? {} : { historical_import: true }),
         profiles: {
           data: [
             {
               type: "profile",
               attributes: {
                 email: subscription.email,
-                subscriptions: { email: { marketing: { consent: "SUBSCRIBED" } } },
+                subscriptions: {
+                  email: {
+                    marketing: {
+                      consent: "SUBSCRIBED",
+                      ...(consentedAt === undefined ? {} : { consented_at: consentedAt }),
+                    },
+                  },
+                },
               },
             },
           ],
