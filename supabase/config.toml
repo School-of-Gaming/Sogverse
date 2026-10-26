@@ -113,5 +113,5 @@ additional_redirect_urls = ["https://sog.gg/**"]
 project_id = "dbcozhkmfsczwgduizkg"
 
 [remotes.staging.auth]
-site_url = "https://sogverse-staging.sog.gg"
-additional_redirect_urls = ["https://sogverse-staging.sog.gg/**"]
+site_url = "https://staging.sog.gg"
+additional_redirect_urls = ["https://staging.sog.gg/**"]

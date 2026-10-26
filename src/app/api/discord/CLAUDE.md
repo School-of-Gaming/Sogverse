@@ -131,6 +131,6 @@ All in `.env.local` and Vercel:
 
 Each app is set up the same way, pointed at its own deployment:
 
-- General Information → Interactions Endpoint URL: `https://sog.gg/api/discord/interactions` for prod, `https://sogverse-staging.sog.gg/api/discord/interactions` for staging. Discord verifies the URL on save with a request signed by that app's key, so the deployment must already hold the app's `DISCORD_PUBLIC_KEY` — set the env vars and redeploy first, then save the URL.
+- General Information → Interactions Endpoint URL: `https://sog.gg/api/discord/interactions` for prod, `https://staging.sog.gg/api/discord/interactions` for staging. Discord verifies the URL on save with a request signed by that app's key, so the deployment must already hold the app's `DISCORD_PUBLIC_KEY` — set the env vars and redeploy first, then save the URL.
 - Bot → Message Content Intent: enabled.
 - Invite via OAuth2 URL with `bot` scope + `Send Messages` and `Read Message History` permissions.

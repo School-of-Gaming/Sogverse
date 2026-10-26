@@ -222,7 +222,7 @@ the `prod-incident-investigation` skill, which owns incident forensics via `verc
   role dashboards sit roughly an order of magnitude below the landing pages, and the
   per-product and voice-room routes an order below those, in the high hundreds per month.
 - **Domain → branch mapping (verified 2026-08-18):** `sog.gg` = production,
-  serves `main`. `sogverse-staging.sog.gg` = staging, serves the latest `dev` preview
+  serves `main`. `staging.sog.gg` = staging, serves the latest `dev` preview
   deployment (updates on every dev push, no release needed).
   `sogverse-git-dev-school-of-gaming.vercel.app` is the stable raw alias for the same
   dev tip.

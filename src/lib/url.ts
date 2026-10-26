@@ -13,7 +13,7 @@
  *   2. `VERCEL_BRANCH_URL` — Vercel-injected branch alias hostname.
  *   3. The host of `NEXT_PUBLIC_SITE_URL` — configured per environment in
  *      Vercel's project settings: prod = sog.gg, preview =
- *      sogverse-staging.sog.gg, local = localhost:3000.
+ *      staging.sog.gg, local = localhost:3000.
  *   4. localhost (only when NODE_ENV !== "production") for `npm run dev`.
  *
  * If the incoming Host matches a trusted source, return its origin (so the
