@@ -584,11 +584,15 @@ Same tool, same queries, same recording, so two entries compare cleanly:
 ### 2026-09-10 — before
 
 Captured before any of the mechanisms above shipped. Position is the rank in the list the
-tool returned; "—" means no School of Gaming property appeared at all.
+tool returned; "—" means no School of Gaming property appeared at all. Hosts are named as
+they were that day: this app was on its own subdomain, and both `sog.gg` and `www.sog.gg`
+were the legacy marketing site.
 
 **The domain estate this app sits in.** `www.sog.gg` is the marketing site (club
 catalogue under `/lessons/`, locations, municipality pages, blog; `robots.txt` names it as
-host). `sog.gg` is this app. Also indexed: `en.sog.gg` (older English site), `lat.sog.gg` (Spanish / Latin America), `start.sog.gg`
+host). `sogverse.sog.gg` is this app. Also indexed: the bare apex `sog.gg` serving
+marketing content under its own URLs (confirm it redirects rather than duplicates),
+`en.sog.gg` (older English site), `lat.sog.gg` (Spanish / Latin America), `start.sog.gg`
 (campaign landing), `www.geduacademy.com` (Game Educator recruiting), and a stale
 `sogverse-fi.sog.gg` sign-in page whose hostname no longer resolves. **Every non-brand
 query that surfaces the company at all surfaces `www.sog.gg`; this app is found only on
@@ -599,7 +603,7 @@ this repo does not control, and the estate competes with itself for the same ter
 |---|---|---|
 | School of Gaming | ~7–8 | own Facebook, YouTube and LinkedIn pages above the site; the generic "school for gamers" sense and Xamk's "Summer School of Gaming" dilute it |
 | School of Gaming Finland | ~6 | `www.sog.gg/lauttasaari`; Xamk name collision at 3 |
-| Sogverse | 3 | `sog.gg/`, `/privacy` at 4 |
+| Sogverse | 3 | `sogverse.sog.gg/`, `/privacy` at 4 |
 | school of gaming minecraft club | 1 | `www.sog.gg/lessons/…` |
 | minecraft club for kids online | — | Connected Camps, Outschool, minecraftclub.co.uk |
 | minecraft club for kids Finland | ~6 | one `/lessons/` page; exen.fi present |
@@ -607,7 +611,7 @@ this repo does not control, and the estate competes with itself for the same ter
 | online gaming club for children | ~5 | `www.sog.gg/` |
 | gaming hobby for children with a coach | — | "how to quit gaming" content; the intent is unclaimed |
 | game educator children | — | NGO and academic results; the job title is unowned |
-| (fi) minecraft kerho lapsille | 4, 5, 6, 8 | four distinct legacy-site URLs; harrastamisensuomenmalli.fi's page *about* us at 1 |
+| (fi) minecraft kerho lapsille | 4, 5, 6, 8 | four distinct sog.gg URLs; harrastamisensuomenmalli.fi's page *about* us at 1 |
 | (fi) pelikerho lapsille | — | municipal and parish free clubs end to end |
 | (fi) School of Gaming pelikoulu | ~4 | press and partner pages above the site |
 | (fi) roblox leiri lapsille | — | toy shops and safety pieces; no camp provider at all |

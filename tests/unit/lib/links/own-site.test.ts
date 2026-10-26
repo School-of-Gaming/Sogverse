@@ -54,7 +54,7 @@ describe("canonicalizeHref", () => {
 
   it.each([
     ["another site", "https://example.com/fi/kauppa"],
-    ["a www variant of our host", "https://www.sog.gg/fi/kauppa"],
+    ["the www host, which only redirects to ours", "https://www.sog.gg/fi/kauppa"],
     ["our host on another port", "https://sog.gg:8443/shop"],
     ["a subdomain of ours", "https://evil.sog.gg/shop"],
     ["a protocol-relative address", "//example.com/x"],
@@ -171,7 +171,7 @@ describe("localizeOwnSiteHref", () => {
 
   it.each([
     ["another site", "https://example.com/shop"],
-    ["a www variant of our host", "https://www.sog.gg/shop"],
+    ["the www host, which only redirects to ours", "https://www.sog.gg/shop"],
     ["a mailto: address", "mailto:hi@sog.gg"],
     ["a fragment", "#faq"],
     ["a path no route matches", "/llms.txt"],

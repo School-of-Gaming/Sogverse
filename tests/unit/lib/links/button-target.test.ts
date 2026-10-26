@@ -40,7 +40,7 @@ describe("canonicalizeButtonTarget", () => {
 
   it.each([
     ["another site", "https://example.com/x"],
-    ["a www variant of our host", "https://www.sog.gg/fi/kauppa"],
+    ["the www host, which only redirects to ours", "https://www.sog.gg/fi/kauppa"],
   ])("keeps %s external, as written", async (_name, url) => {
     await expect(canonicalizeButtonTarget(`  ${url} `, resolver, SITE)).resolves.toEqual({
       ok: true,
