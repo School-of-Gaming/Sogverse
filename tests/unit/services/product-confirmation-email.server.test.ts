@@ -1,4 +1,5 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
+import { SITE_ORIGIN } from "../../mocks/site-origin";
 import {
   createFetchStubbedClient,
   postgrestError,
@@ -55,7 +56,7 @@ describe("sendProductConfirmationEmail's product read", () => {
 
     await sendProductConfirmationEmail({
       client: createFetchStubbedClient(fetchMock),
-      request: new Request("https://sogverse.example/api/checkout"),
+      request: new Request(`${SITE_ORIGIN}/api/checkout`),
       customerId: "11111111-1111-1111-1111-111111111111",
       participantId: "22222222-2222-2222-2222-222222222222",
       productId: "33333333-3333-3333-3333-333333333333",
@@ -149,13 +150,13 @@ describe("sendProductConfirmationEmail's plan read", () => {
     // 23:30 UTC on 10 January is already the 11th in Helsinki.
     vi.useFakeTimers({ toFake: ["Date"] });
     vi.setSystemTime(new Date("2027-01-10T23:30:00Z"));
-    vi.stubEnv("NEXT_PUBLIC_SITE_URL", "https://sogverse.example");
+    vi.stubEnv("NEXT_PUBLIC_SITE_URL", SITE_ORIGIN);
     const planBodies: unknown[] = [];
     const errors = vi.spyOn(console, "error").mockImplementation(() => {});
 
     await sendProductConfirmationEmail({
       client: createFetchStubbedClient(respondTo(planBodies)),
-      request: new Request("https://sogverse.example/api/checkout"),
+      request: new Request(`${SITE_ORIGIN}/api/checkout`),
       customerId: PARENT,
       participantId: CHILD,
       productId: PRODUCT,
@@ -187,7 +188,7 @@ describe("sendProductConfirmationEmail's plan read", () => {
   async function send(fetchMock: FetchMock) {
     await sendProductConfirmationEmail({
       client: createFetchStubbedClient(fetchMock),
-      request: new Request("https://sogverse.example/api/checkout"),
+      request: new Request(`${SITE_ORIGIN}/api/checkout`),
       customerId: PARENT,
       participantId: CHILD,
       productId: PRODUCT,
@@ -199,7 +200,7 @@ describe("sendProductConfirmationEmail's plan read", () => {
   it("reads a dated club's holiday breaks from product-local today to its end and lists those that took a session", async () => {
     vi.useFakeTimers({ toFake: ["Date"] });
     vi.setSystemTime(new Date("2027-01-10T23:30:00Z"));
-    vi.stubEnv("NEXT_PUBLIC_SITE_URL", "https://sogverse.example");
+    vi.stubEnv("NEXT_PUBLIC_SITE_URL", SITE_ORIGIN);
     const breakBodies: unknown[] = [];
     const errors = vi.spyOn(console, "error").mockImplementation(() => {});
 
@@ -233,7 +234,7 @@ describe("sendProductConfirmationEmail's plan read", () => {
   it("reads no breaks for a dated club whose term has ended, and states no row for them", async () => {
     vi.useFakeTimers({ toFake: ["Date"] });
     vi.setSystemTime(new Date("2027-01-10T23:30:00Z"));
-    vi.stubEnv("NEXT_PUBLIC_SITE_URL", "https://sogverse.example");
+    vi.stubEnv("NEXT_PUBLIC_SITE_URL", SITE_ORIGIN);
     const breakBodies: unknown[] = [];
     const errors = vi.spyOn(console, "error").mockImplementation(() => {});
 
@@ -250,7 +251,7 @@ describe("sendProductConfirmationEmail's plan read", () => {
   it("reads an open-ended club's breaks from product-local today a year and a day ahead", async () => {
     vi.useFakeTimers({ toFake: ["Date"] });
     vi.setSystemTime(new Date("2027-01-10T23:30:00Z"));
-    vi.stubEnv("NEXT_PUBLIC_SITE_URL", "https://sogverse.example");
+    vi.stubEnv("NEXT_PUBLIC_SITE_URL", SITE_ORIGIN);
     const breakBodies: unknown[] = [];
     const errors = vi.spyOn(console, "error").mockImplementation(() => {});
 

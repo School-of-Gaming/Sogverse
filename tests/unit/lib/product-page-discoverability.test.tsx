@@ -1,4 +1,5 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
+import { SITE_ORIGIN } from "../../mocks/site-origin";
 import { Children, Suspense, isValidElement } from "react";
 import { renderToStaticMarkup } from "react-dom/server";
 import type { ResolvedMetadata } from "next";
@@ -28,7 +29,7 @@ import { planRows, planSessions } from "../../mocks/planned-sessions";
 vi.unmock("@/i18n/navigation");
 vi.unmock("next/navigation");
 
-const SITE = "https://test.sogverse.local";
+const SITE = SITE_ORIGIN;
 vi.stubEnv("NEXT_PUBLIC_SITE_URL", SITE);
 vi.stubEnv("NEXT_PUBLIC_SUPABASE_URL", "http://127.0.0.1:54321");
 

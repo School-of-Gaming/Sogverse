@@ -1,6 +1,10 @@
 import { describe, it, expect, beforeAll, vi } from "vitest";
 import { SITE_HOST, SITE_ORIGIN } from "../../mocks/site-origin";
-import { templateRegistry, type TemplateDefinition } from "@/lib/email-templates/registry";
+import {
+  templateRegistry,
+  untouchedTextValue,
+  type TemplateDefinition,
+} from "@/lib/email-templates/registry";
 import { BRAND, DARK_THEME, STATUS } from "@/lib/constants/colors";
 import { styledName } from "@/lib/email-templates/utils";
 import { bulletList, ctaButtonRow, factList } from "@/lib/email-templates/blocks";
@@ -17,13 +21,6 @@ import {
   calendarInvitationStartDate,
   calendarInvitationUntilDate,
 } from "@/lib/email-templates/calendar-invitation";
-
-// The registry builds its form placeholders on the site URL when it loads, so
-// the stub has to land before the import does.
-await vi.hoisted(async () => {
-  const { SITE_ORIGIN: origin } = await import("../../mocks/site-origin");
-  vi.stubEnv("NEXT_PUBLIC_SITE_URL", origin);
-});
 
 /**
  * The product half of the signup form, as a product with a real schedule and a
@@ -63,7 +60,9 @@ const PRODUCT_CONFIRMATION_SCHEDULE = {
  * except the ones `typed` names.
  *
  * This restates the testing page's own rule — a select posts its first option,
- * a text input its placeholder, a textarea what it holds — because that rule is
+ * a text input its placeholder (a site path resolved against the origin, as
+ * the page resolves it against the render's), a textarea what it holds —
+ * because that rule is
  * what decides whether a form nobody has typed into composes a whole mail or a
  * stripped one, and the rule lives in a client component this suite does not
  * render. Keeping it here means a field that changes control type changes what
@@ -87,7 +86,7 @@ function untouchedParams(
           ? field.options[0].value
           : field.type === "textarea"
             ? ""
-            : field.placeholder,
+            : untouchedTextValue(field.placeholder, SITE_ORIGIN),
       ]),
     ),
     ...typed,
@@ -1579,5 +1578,31 @@ describe("templateRegistry componentsReference", () => {
       const tag = headingTags[element] ?? element;
       expect(emitted, `the markdown specimen emits no <${tag}>`).toContain(tag);
     }
+  });
+});
+
+/**
+ * A form link to one of our pages is a path the testing page resolves against
+ * the render's own origin, so no placeholder may name a host: one that did would
+ * send a preview's links to a site other than the one serving its demo art.
+ */
+describe("templateRegistry form placeholders", () => {
+  it("names our own pages as paths, never as absolute URLs", () => {
+    const absolute = Object.entries(templateRegistry).flatMap(([name, definition]) =>
+      definition.fields
+        .filter(
+          (field) =>
+            field.type === undefined && /^[a-z][a-z0-9+.-]*:\/\//i.test(field.placeholder),
+        )
+        .map((field) => `${name}.${field.key}`),
+    );
+    expect(absolute).toEqual([]);
+  });
+
+  it("posts a path placeholder resolved against the origin, and anything else as written", () => {
+    expect(untouchedTextValue("/verify-email?token=abc123", "http://localhost:3005")).toBe(
+      "http://localhost:3005/verify-email?token=abc123",
+    );
+    expect(untouchedTextValue("Aino", SITE_ORIGIN)).toBe("Aino");
   });
 });

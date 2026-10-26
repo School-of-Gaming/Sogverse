@@ -1,8 +1,9 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
+import { SITE_ORIGIN } from "../../mocks/site-origin";
 
 // The confirmation mail's My SOG link comes from getOrigin(), which falls back
 // to NEXT_PUBLIC_SITE_URL when the request carries no trusted Host.
-process.env.NEXT_PUBLIC_SITE_URL = "https://test.sogverse.local";
+process.env.NEXT_PUBLIC_SITE_URL = SITE_ORIGIN;
 
 import { DELETE, POST } from "@/app/api/participations/waitlist/route";
 import { NextResponse } from "next/server";
@@ -701,11 +702,11 @@ describe("POST /api/participations/waitlist", () => {
     expect(mockSendTransactionalEmail).toHaveBeenCalledTimes(2);
     const [parent, child] = mockSendTransactionalEmail.mock.calls.map(([options]) => options);
     expect(parent.toEmail).toBe("parent@example.test");
-    expect(parent.htmlContent).toContain("https://test.sogverse.local/parent");
+    expect(parent.htmlContent).toContain(`${SITE_ORIGIN}/parent`);
 
     expect(child.toEmail).toBe("aino@example.test");
     expect(child.subject).toBe("You are on the waitlist for Test Club");
-    expect(child.htmlContent).toContain("https://test.sogverse.local/gamer");
+    expect(child.htmlContent).toContain(`${SITE_ORIGIN}/gamer`);
     expect(child.htmlContent).not.toContain("/parent");
     expect(child.htmlContent).not.toContain("Price");
     expect(child.replyToEmail).toBe("help@sog.gg");
@@ -747,7 +748,7 @@ describe("POST /api/participations/waitlist", () => {
     expect(htmlContent).toContain("keep track of your waitlist spot");
     // The request carries no trusted Host, so the link falls back to the
     // canonical site URL rather than to anything the request could name.
-    expect(htmlContent).toContain("https://test.sogverse.local/parent");
+    expect(htmlContent).toContain(`${SITE_ORIGIN}/parent`);
   });
 
   // A stale tab resubmitting, or a browser retrying: the RPC hands back the row

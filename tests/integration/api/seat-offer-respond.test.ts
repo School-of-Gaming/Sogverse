@@ -1,9 +1,10 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
+import { SITE_ORIGIN } from "../../mocks/site-origin";
 
 // The token helpers read PIN_COOKIE_SECRET lazily and the staff mail's admin
 // link comes from getOrigin(); set both before the imports.
 process.env.PIN_COOKIE_SECRET = "integration-test-pin-secret";
-process.env.NEXT_PUBLIC_SITE_URL = "https://test.sogverse.local";
+process.env.NEXT_PUBLIC_SITE_URL = SITE_ORIGIN;
 
 import { POST } from "@/app/api/seat-offer/respond/route";
 import { createSeatOfferToken } from "@/lib/seat-offer-token";

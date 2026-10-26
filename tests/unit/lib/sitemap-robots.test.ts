@@ -1,4 +1,5 @@
 import { afterAll, afterEach, beforeEach, describe, it, expect, vi } from "vitest";
+import { SITE_ORIGIN } from "../../mocks/site-origin";
 
 // The real wrapped navigation, not the setup's link-rendering stub: what these
 // two files are for is the locale-prefixed, translated URLs `getPathname`
@@ -9,7 +10,7 @@ vi.unmock("@/i18n/navigation");
 vi.unmock("next/navigation");
 
 // Both modules read the site URL once, at import time.
-process.env.NEXT_PUBLIC_SITE_URL = "https://test.sogverse.local";
+process.env.NEXT_PUBLIC_SITE_URL = SITE_ORIGIN;
 // The sitemap builds its anonymous client from these; the read itself is mocked.
 vi.stubEnv("NEXT_PUBLIC_SUPABASE_URL", "http://127.0.0.1:54321");
 vi.stubEnv("NEXT_PUBLIC_SUPABASE_ANON_KEY", "anon-key");
@@ -17,7 +18,7 @@ vi.stubEnv("NEXT_PUBLIC_SUPABASE_ANON_KEY", "anon-key");
 // robots.txt turns the crawl away (the last block below).
 vi.stubEnv("VERCEL_ENV", "production");
 afterAll(() => vi.unstubAllEnvs());
-const BASE = "https://test.sogverse.local";
+const BASE = SITE_ORIGIN;
 
 // The public team the sitemap reads. Two people deriving one slug, so the
 // second is listed at their id; one who wrote Finnish and English, one who

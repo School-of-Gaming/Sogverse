@@ -1,4 +1,5 @@
 import { describe, expect, it, vi } from "vitest";
+import { SITE_ORIGIN } from "../../../mocks/site-origin";
 import {
   publicAdminProfile,
   publicGeduProfile,
@@ -266,7 +267,7 @@ describe("teamMemberMetadata", () => {
 });
 
 describe("teamMemberJsonLd", () => {
-  const SITE = "https://test.sogverse.local";
+  const SITE = SITE_ORIGIN;
 
   it("is a ProfilePage about a Person who works for the layout's Organization", () => {
     const person = publicGeduProfile({ locales: ["en", "fi"] });

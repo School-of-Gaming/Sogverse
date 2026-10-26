@@ -1,4 +1,5 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
+import { SITE_ORIGIN } from "../../../mocks/site-origin";
 import { render, screen } from "@testing-library/react";
 import { NextIntlClientProvider } from "next-intl";
 import enLibrary from "@/../messages/en/library.json";
@@ -372,11 +373,11 @@ describe("the Library article page", () => {
   });
 
   it("shares its canonical address", async () => {
-    vi.stubEnv("NEXT_PUBLIC_SITE_URL", "https://sogverse.example");
+    vi.stubEnv("NEXT_PUBLIC_SITE_URL", SITE_ORIGIN);
     await renderArticle();
     const block = document.querySelector('script[type="application/ld+json"]');
     expect(JSON.parse(block?.textContent ?? "null").url).toBe(
-      "https://sogverse.example/library/setting-up-a-family-gaming-agreement",
+      `${SITE_ORIGIN}/library/setting-up-a-family-gaming-agreement`,
     );
   });
 

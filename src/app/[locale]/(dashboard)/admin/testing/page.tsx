@@ -36,6 +36,7 @@ import { DEFAULT_LOCALE, type SupportedLocale } from "@/lib/constants/locales";
 import { cn } from "@/lib/cn";
 import {
   templateRegistry,
+  untouchedTextValue,
   type TemplateDefinition,
   type TemplateField,
 } from "@/lib/email-templates/registry";
@@ -83,7 +84,10 @@ interface EmailResult {
 
 /**
  * What an untouched field posts: a select its first option, a text input its
- * placeholder — and a textarea whatever it holds, empty included.
+ * placeholder — and a textarea whatever it holds, empty included. A text
+ * placeholder naming one of our pages is a path, posted resolved against
+ * `origin`, the same origin the render is handed, so the mail's links and its
+ * demo art sit on one site.
  *
  * The placeholder fallback is what makes an untouched form compose a whole
  * mail rather than a stripped one, and it is also why a text input can never
@@ -92,14 +96,18 @@ interface EmailResult {
  * so in its own label — see `FORM_NONE_TOKEN` in `form-fields.ts`. Only a
  * textarea can let an empty value mean "none".
  */
-function fieldValue(field: TemplateField, typed: string | undefined): string {
+function fieldValue(
+  field: TemplateField,
+  typed: string | undefined,
+  origin: string,
+): string {
   switch (field.type) {
     case "select":
       return typed || field.options[0].value;
     case "textarea":
       return typed ?? "";
     default:
-      return typed || field.placeholder;
+      return typed || untouchedTextValue(field.placeholder, origin);
   }
 }
 
@@ -114,9 +122,13 @@ function fieldValue(field: TemplateField, typed: string | undefined): string {
 function templateApiParams(
   definition: TemplateDefinition,
   typed: Record<string, string>,
+  origin: string,
 ): Record<string, string | boolean | null> {
   const raw = Object.fromEntries(
-    definition.fields.map((field) => [field.key, fieldValue(field, typed[field.key])]),
+    definition.fields.map((field) => [
+      field.key,
+      fieldValue(field, typed[field.key], origin),
+    ]),
   );
   return definition.resolveParams ? definition.resolveParams(raw) : raw;
 }
@@ -200,7 +212,7 @@ export default function TestingPage() {
         ]);
         if (previewRun.current !== run) return;
         const rendered = definition.render(
-          templateApiParams(definition, params),
+          templateApiParams(definition, params, window.location.origin),
           translate,
           locale,
           { origin: window.location.origin },
@@ -245,7 +257,7 @@ export default function TestingPage() {
           template: templateName,
           toEmail,
           locale: templateLocale,
-          params: templateApiParams(selectedTemplate, templateParams),
+          params: templateApiParams(selectedTemplate, templateParams, window.location.origin),
         }),
       });
 

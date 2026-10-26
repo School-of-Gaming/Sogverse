@@ -1,4 +1,5 @@
 import { afterAll, describe, expect, it, vi } from "vitest";
+import { SITE_ORIGIN } from "../../../mocks/site-origin";
 import type {
   LocalizedLandingPage,
   PublishedLandingPage,
@@ -372,8 +373,6 @@ describe("landingPageMetadata", () => {
   });
 });
 
-const SITE = "https://site.test";
-
 /** PAGE with its English share card overridden whole. */
 const SHARED: PublishedLandingPage = {
   ...PAGE,
@@ -396,20 +395,20 @@ describe("renderedLandingSeo", () => {
   it("reads the metadata out as served: the template's suffix, absolute addresses, hreflang with x-default", async () => {
     const seo = await landingPageSeo(PAGE, "fi");
 
-    expect(renderedLandingSeo(seo, SITE)).toEqual({
+    expect(renderedLandingSeo(seo, SITE_ORIGIN)).toEqual({
       title: "Pelikerhot Espoossa | School of Gaming",
       titleLength: 38,
       description: "Iltapäiväkerhot.",
-      canonical: `${SITE}/fi/tutustu/pelikerhot-espoo`,
+      canonical: `${SITE_ORIGIN}/fi/tutustu/pelikerhot-espoo`,
       hreflang: {
-        en: `${SITE}/en/discover/gaming-clubs-espoo`,
-        fi: `${SITE}/fi/tutustu/pelikerhot-espoo`,
-        "x-default": `${SITE}/en/discover/gaming-clubs-espoo`,
+        en: `${SITE_ORIGIN}/en/discover/gaming-clubs-espoo`,
+        fi: `${SITE_ORIGIN}/fi/tutustu/pelikerhot-espoo`,
+        "x-default": `${SITE_ORIGIN}/en/discover/gaming-clubs-espoo`,
       },
       shareCard: {
         title: "Pelikerhot Espoossa",
         description: "Iltapäiväkerhot.",
-        imageUrl: `${SITE}/opengraph-images/picture/landing_image/pictures/club.jpg`,
+        imageUrl: `${SITE_ORIGIN}/opengraph-images/picture/landing_image/pictures/club.jpg`,
         imageAlt: "Lapsia",
       },
     });
@@ -421,8 +420,8 @@ describe("renderedLandingSeo", () => {
       "en",
     );
 
-    expect(renderedLandingSeo(seo, SITE).shareCard).toMatchObject({
-      imageUrl: `${SITE}/opengraph-images/site?locale=en`,
+    expect(renderedLandingSeo(seo, SITE_ORIGIN).shareCard).toMatchObject({
+      imageUrl: `${SITE_ORIGIN}/opengraph-images/site?locale=en`,
       imageAlt: "en:metadata.og.site.alt",
     });
   });
@@ -430,13 +429,13 @@ describe("renderedLandingSeo", () => {
   it("serves the version's own share card when it sets one", async () => {
     const seo = await landingPageSeo(SHARED, "en");
 
-    expect(renderedLandingSeo(seo, SITE)).toMatchObject({
+    expect(renderedLandingSeo(seo, SITE_ORIGIN)).toMatchObject({
       // The <title> stays the page title; only the card takes the share title.
       title: "Gaming clubs in Espoo | School of Gaming",
       shareCard: {
         title: "Join a gaming club in Espoo",
         description: "After-school clubs for Espoo families.",
-        imageUrl: `${SITE}/opengraph-images/picture/landing_image/pictures/share.jpg`,
+        imageUrl: `${SITE_ORIGIN}/opengraph-images/picture/landing_image/pictures/share.jpg`,
         imageAlt: "A club room",
       },
     });
@@ -449,7 +448,7 @@ describe("renderedLandingSeo", () => {
       "en",
     );
 
-    const rendered = renderedLandingSeo(seo, SITE);
+    const rendered = renderedLandingSeo(seo, SITE_ORIGIN);
     expect(rendered.title).toBe(`${long} | School of Gaming`);
     expect(rendered.titleLength).toBe(long.length + " | School of Gaming".length);
     expect(rendered.shareCard.title).toBe(long);
@@ -464,12 +463,12 @@ describe("renderedLandingSeo", () => {
       const metadata = await landingPageMetadata(page, locale);
       expect(metadata).toEqual(landingSeoMetadata(seo));
 
-      const rendered = renderedLandingSeo(seo, SITE);
+      const rendered = renderedLandingSeo(seo, SITE_ORIGIN);
       // Next applies the layout's template to the title and resolves every
       // relative address on `metadataBase`, the site's origin.
       expect(rendered.title).toBe(`${String(metadata.title)} | School of Gaming`);
-      expect(rendered.canonical).toBe(new URL(String(metadata.alternates?.canonical), SITE).href);
-      expect(rendered.shareCard.imageUrl).toBe(new URL(seo.card.image.url, SITE).href);
+      expect(rendered.canonical).toBe(new URL(String(metadata.alternates?.canonical), SITE_ORIGIN).href);
+      expect(rendered.shareCard.imageUrl).toBe(new URL(seo.card.image.url, SITE_ORIGIN).href);
       expect(metadata.openGraph).toMatchObject({
         title: rendered.shareCard.title,
         images: [seo.card.image],
@@ -537,7 +536,7 @@ const SHOWN: LocalizedLandingPage = {
 
 describe("landingPageJsonLd", () => {
   const jsonLd = landingPageJsonLd({
-    siteUrl: "https://sog.test",
+    siteUrl: SITE_ORIGIN,
     canonicalPath: "/en/discover/gaming-clubs-espoo",
     page: SHOWN,
   });
@@ -546,7 +545,7 @@ describe("landingPageJsonLd", () => {
     expect(jsonLd).toMatchObject({
       "@context": "https://schema.org",
       "@type": "FAQPage",
-      url: "https://sog.test/en/discover/gaming-clubs-espoo",
+      url: `${SITE_ORIGIN}/en/discover/gaming-clubs-espoo`,
       name: "Gaming clubs in Espoo",
       description: "After-school clubs for Espoo families.",
       inLanguage: "en",
@@ -568,7 +567,7 @@ describe("landingPageJsonLd", () => {
   it("names the layout's Organization as publisher and the hero's picture", () => {
     expect(jsonLd.publisher).toEqual({
       "@type": "Organization",
-      "@id": "https://sog.test/#organization",
+      "@id": `${SITE_ORIGIN}/#organization`,
       name: "School of Gaming",
     });
     expect(jsonLd.primaryImageOfPage).toEqual({
@@ -579,7 +578,7 @@ describe("landingPageJsonLd", () => {
 
   it("is a plain WebPage without questions or a picture", () => {
     const plain = landingPageJsonLd({
-      siteUrl: "https://sog.test",
+      siteUrl: SITE_ORIGIN,
       canonicalPath: "/en/discover/x",
       page: { ...SHOWN, sections: [{ id: HERO, type: "hero" }] },
     });
@@ -608,7 +607,7 @@ describe("landingProductListsJsonLd", () => {
 
   it("lists each products section's listed picks, in the admin's order, by name and page", () => {
     const lists = landingProductListsJsonLd({
-      siteUrl: "https://sog.test",
+      siteUrl: SITE_ORIGIN,
       locale: "en",
       page: page([
         { id: HERO, type: "hero" },
@@ -623,8 +622,8 @@ describe("landingProductListsJsonLd", () => {
           "@context": "https://schema.org",
           "@type": "ItemList",
           itemListElement: [
-            { "@type": "ListItem", position: 1, name: "Minecraft camp", url: `https://sog.test/en/shop/${P2}` },
-            { "@type": "ListItem", position: 2, name: "Roblox club", url: `https://sog.test/en/shop/${P1}` },
+            { "@type": "ListItem", position: 1, name: "Minecraft camp", url: `${SITE_ORIGIN}/en/shop/${P2}` },
+            { "@type": "ListItem", position: 2, name: "Roblox club", url: `${SITE_ORIGIN}/en/shop/${P1}` },
           ],
         },
       },
@@ -633,15 +632,15 @@ describe("landingProductListsJsonLd", () => {
 
   it("names each product as its card does in the page's locale, at its canonical page", () => {
     const [{ list }] = landingProductListsJsonLd({
-      siteUrl: "https://sog.test",
+      siteUrl: SITE_ORIGIN,
       locale: "fi",
       page: page([{ id: PICKS, type: "products", background: "default", productIds: [P1, P2] }]),
       listing: LISTING,
     });
     expect(list.itemListElement).toEqual([
-      { "@type": "ListItem", position: 1, name: "Roblox-kerho", url: `https://sog.test/fi/kauppa/${P1}` },
+      { "@type": "ListItem", position: 1, name: "Roblox-kerho", url: `${SITE_ORIGIN}/fi/kauppa/${P1}` },
       // Written in English alone, so its page canonicalises to the English one.
-      { "@type": "ListItem", position: 2, name: "Minecraft camp", url: `https://sog.test/en/shop/${P2}` },
+      { "@type": "ListItem", position: 2, name: "Minecraft camp", url: `${SITE_ORIGIN}/en/shop/${P2}` },
     ]);
   });
 
@@ -652,20 +651,20 @@ describe("landingProductListsJsonLd", () => {
       { id: MORE, type: "products" as const, background: "default" as const, productIds: [MUNI] },
     ];
     const lists = landingProductListsJsonLd({
-      siteUrl: "https://sog.test",
+      siteUrl: SITE_ORIGIN,
       locale: "en",
       page: page(sections),
       listing: [...LISTING, browseRow(MUNI, { product_type: "municipality_club", name: "Espoo club" })],
     });
     expect(lists.map((entry) => entry.sectionId)).toEqual([PICKS]);
     expect(lists[0].list.itemListElement).toEqual([
-      { "@type": "ListItem", position: 1, name: "Roblox club", url: `https://sog.test/en/shop/${P1}` },
+      { "@type": "ListItem", position: 1, name: "Roblox club", url: `${SITE_ORIGIN}/en/shop/${P1}` },
     ]);
   });
 
   it("repeats none of a product's own markup", () => {
     const [{ list }] = landingProductListsJsonLd({
-      siteUrl: "https://sog.test",
+      siteUrl: SITE_ORIGIN,
       locale: "en",
       page: page([{ id: PICKS, type: "products", background: "default", productIds: [P1] }]),
       listing: LISTING,
@@ -690,7 +689,7 @@ describe("landingProductListsJsonLd", () => {
 
   it("leaves the page's own node as it was", () => {
     const withPicks = landingPageJsonLd({
-      siteUrl: "https://sog.test",
+      siteUrl: SITE_ORIGIN,
       canonicalPath: "/en/discover/x",
       page: { ...SHOWN, sections: [{ id: HERO, type: "hero" }, { id: PICKS, type: "products", background: "default", productIds: [P1] }] },
     });

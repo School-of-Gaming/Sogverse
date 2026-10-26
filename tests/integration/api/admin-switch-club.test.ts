@@ -1,10 +1,11 @@
 import { describe, it, expect, vi, beforeEach } from "vitest";
+import { SITE_ORIGIN } from "../../mocks/site-origin";
 
 // Both handlers write absolute staff links into the Stripe subscription's
 // metadata through getOrigin(), which falls back to NEXT_PUBLIC_SITE_URL when
 // the request carries no trusted Host. Set before the imports so nothing can
 // capture an unset value.
-process.env.NEXT_PUBLIC_SITE_URL = "https://test.sogverse.local";
+process.env.NEXT_PUBLIC_SITE_URL = SITE_ORIGIN;
 
 import { NextResponse } from "next/server";
 import {

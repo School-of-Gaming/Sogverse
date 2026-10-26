@@ -34,13 +34,6 @@ import { MAIL_TYPE, MAIL_WEIGHT } from "@/lib/email-templates/type-scale";
 import { HOLD_GROUND, TEXT_PINS, framedInnerRadius } from "@/lib/email-templates/utils";
 import { holdViolations } from "../../helpers/email-holds";
 
-// The registry builds its form placeholders on the site URL when it loads, so
-// the stub has to land before the import does.
-await vi.hoisted(async () => {
-  const { SITE_ORIGIN: origin } = await import("../../mocks/site-origin");
-  vi.stubEnv("NEXT_PUBLIC_SITE_URL", origin);
-});
-
 /**
  * The house style, enforced mechanically over the rendered output of every mail
  * this codebase can send.

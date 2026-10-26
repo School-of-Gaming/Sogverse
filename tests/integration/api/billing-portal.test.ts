@@ -1,9 +1,10 @@
 import { describe, it, expect, vi, beforeEach } from "vitest";
+import { SITE_ORIGIN } from "../../mocks/site-origin";
 import { NextResponse } from "next/server";
 import { getString } from "../../helpers/json";
 
 process.env.STRIPE_SECRET_KEY = "sk_test_billing_portal";
-process.env.NEXT_PUBLIC_SITE_URL = "https://test.sogverse.local";
+process.env.NEXT_PUBLIC_SITE_URL = SITE_ORIGIN;
 
 // The billing-portal route hands a parent a Stripe-hosted session URL. Three
 // things make it worth pinning: an unnamed target must resolve from the
@@ -152,7 +153,7 @@ describe("POST /api/parent/billing-portal", () => {
     await POST(portalRequest({}, { host: "evil.example" }));
 
     const returnUrl = getString(mockPortalCreate.mock.calls[0][0], "return_url");
-    expect(returnUrl).toBe("https://test.sogverse.local/parent#billing");
+    expect(returnUrl).toBe(`${SITE_ORIGIN}/parent#billing`);
   });
 
   it("falls back to Stripe's own locale detection for a locale Stripe cannot render", async () => {

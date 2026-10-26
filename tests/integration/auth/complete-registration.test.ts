@@ -1,4 +1,5 @@
 import { describe, it, expect, vi, beforeEach } from "vitest";
+import { SITE_ORIGIN } from "../../mocks/site-origin";
 import { NextResponse } from "next/server";
 
 // Finishing a parent registration that began with Google. The account exists
@@ -14,7 +15,7 @@ import { NextResponse } from "next/server";
 // time; the links come from getOrigin(), which falls back to
 // NEXT_PUBLIC_SITE_URL for these Host-less requests.
 process.env.PIN_COOKIE_SECRET = "route-test-complete-registration-secret";
-process.env.NEXT_PUBLIC_SITE_URL = "https://test.sogverse.local";
+process.env.NEXT_PUBLIC_SITE_URL = SITE_ORIGIN;
 
 const mockRequireRole = vi.fn();
 vi.mock("@/lib/auth", () => ({

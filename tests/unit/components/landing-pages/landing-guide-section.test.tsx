@@ -1,4 +1,5 @@
 import { afterAll, beforeEach, describe, expect, it, vi } from "vitest";
+import { SITE_ORIGIN } from "../../../mocks/site-origin";
 import { render, screen } from "@testing-library/react";
 import { NextIntlClientProvider } from "next-intl";
 import enLandingPage from "@/../messages/en/landingPage.json";
@@ -10,7 +11,7 @@ import type { LandingSection, LandingSectionTexts } from "@/lib/landing-pages/se
 import { LandingPageBody } from "@/components/landing-pages/landing-page-body";
 
 vi.stubEnv("NEXT_PUBLIC_SUPABASE_URL", "https://db.test");
-vi.stubEnv("NEXT_PUBLIC_SITE_URL", "https://sog.test");
+vi.stubEnv("NEXT_PUBLIC_SITE_URL", SITE_ORIGIN);
 afterAll(() => vi.unstubAllEnvs());
 
 /** The raw path the reader is on, as the register and sign-in links carry it. */

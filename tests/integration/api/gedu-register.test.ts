@@ -1,4 +1,5 @@
 import { describe, it, expect, vi, beforeEach } from "vitest";
+import { SITE_ORIGIN } from "../../mocks/site-origin";
 
 // The highest-value public route on the surface: it creates an account, with no
 // session in play, from a body a stranger controls. There is no wrong-role case
@@ -12,7 +13,7 @@ import { describe, it, expect, vi, beforeEach } from "vitest";
 // getOrigin(), which falls back to NEXT_PUBLIC_SITE_URL when the request carries
 // no trusted Host (these mock requests don't).
 process.env.PIN_COOKIE_SECRET = "route-test-gedu-register-secret";
-process.env.NEXT_PUBLIC_SITE_URL = "https://test.sogverse.local";
+process.env.NEXT_PUBLIC_SITE_URL = SITE_ORIGIN;
 
 const mockRequireRole = vi.fn();
 vi.mock("@/lib/auth", () => ({
@@ -610,8 +611,8 @@ describe("POST /api/gedu/register", () => {
     await POST(registerRequest(validBody));
 
     const { htmlContent } = mockSendTransactionalEmail.mock.calls[0][0];
-    expect(htmlContent).toContain("https://test.sogverse.local/gedu");
-    expect(htmlContent).toContain("https://test.sogverse.local/settings");
+    expect(htmlContent).toContain(`${SITE_ORIGIN}/gedu`);
+    expect(htmlContent).toContain(`${SITE_ORIGIN}/settings`);
   });
 
   it("renders the mail in the locale the form was being read in", async () => {
@@ -639,7 +640,7 @@ describe("POST /api/gedu/register", () => {
 
     const { htmlContent } = mockSendTransactionalEmail.mock.calls[0][0];
     expect(htmlContent).toContain(
-      "https://test.sogverse.local/verify-email?token=",
+      `${SITE_ORIGIN}/verify-email?token=`,
     );
     expect(htmlContent).not.toContain("evil.com");
   });

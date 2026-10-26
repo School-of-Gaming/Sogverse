@@ -1,4 +1,5 @@
 import { describe, it, expect, vi, beforeEach } from "vitest";
+import { SITE_ORIGIN } from "../../mocks/site-origin";
 import { NextResponse } from "next/server";
 
 // pin-session reads the secret lazily; set before importing the routes.
@@ -7,7 +8,7 @@ process.env.PIN_COOKIE_SECRET = "route-test-pin-secret";
 // back to NEXT_PUBLIC_SITE_URL when the request carries no trusted Host (these
 // mock requests don't). A fake value keeps the suite hermetic and exercises the
 // production-representative path (untrusted Host → canonical origin).
-process.env.NEXT_PUBLIC_SITE_URL = "https://test.sogverse.local";
+process.env.NEXT_PUBLIC_SITE_URL = SITE_ORIGIN;
 
 // --- Mocks ---
 
@@ -316,7 +317,7 @@ describe("POST /api/auth/pin/forgot", () => {
     await forgotPost(spoofed);
 
     const link = vi.mocked(buildPinResetEmail).mock.calls[0][1];
-    expect(link.startsWith("https://test.sogverse.local")).toBe(true);
+    expect(link.startsWith(SITE_ORIGIN)).toBe(true);
     expect(link).not.toContain("evil.com");
   });
 });

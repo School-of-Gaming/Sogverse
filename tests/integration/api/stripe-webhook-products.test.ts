@@ -1,9 +1,10 @@
 import { describe, it, expect, vi, beforeEach } from "vitest";
+import { SITE_ORIGIN } from "../../mocks/site-origin";
 
 // The confirmation mail's My SOG link comes from getOrigin(), which falls back
 // to NEXT_PUBLIC_SITE_URL when the request carries no trusted Host — which is
 // what a Stripe delivery looks like here.
-process.env.NEXT_PUBLIC_SITE_URL = "https://test.sogverse.local";
+process.env.NEXT_PUBLIC_SITE_URL = SITE_ORIGIN;
 
 import { POST } from "@/app/api/webhooks/stripe/products/route";
 
@@ -1528,7 +1529,7 @@ describe("POST /api/webhooks/stripe/products", () => {
       const { subject, htmlContent } = mockSendTransactionalEmail.mock.calls[0][0];
       expect(subject).toContain("Aino");
       expect(subject).toContain("Test Club");
-      expect(htmlContent).toContain("https://test.sogverse.local/parent");
+      expect(htmlContent).toContain(`${SITE_ORIGIN}/parent`);
     });
 
     it("prices a camp as a one-time payment", async () => {

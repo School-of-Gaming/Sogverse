@@ -7,13 +7,6 @@ import { NextResponse } from "next/server";
 // Monday and four weeks after it — rather than from literals that would rot.
 import { calendarInvitationStartDate } from "@/lib/email-templates/calendar-invitation";
 
-// The registry builds its form placeholders on the site URL when it loads, so
-// the stub has to land before the import does.
-await vi.hoisted(async () => {
-  const { SITE_ORIGIN: origin } = await import("../../mocks/site-origin");
-  vi.stubEnv("NEXT_PUBLIC_SITE_URL", origin);
-});
-
 // --- Mocks ---
 
 const mockRequireRole = vi.fn();

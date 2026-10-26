@@ -1,4 +1,5 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
+import { SITE_ORIGIN } from "../../mocks/site-origin";
 import { GET } from "@/app/api/auth/callback/route";
 
 // --- Mocks ---
@@ -51,7 +52,7 @@ vi.mock("@/lib/supabase/admin", () => ({
 
 // --- Helpers ---
 
-const SITE_URL = "https://sogverse.example";
+const SITE_URL = SITE_ORIGIN;
 
 function createCallbackRequest(
   params: Record<string, string> = {},
