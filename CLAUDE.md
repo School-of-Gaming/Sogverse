@@ -299,6 +299,25 @@ unreachable describes the defect rather than justifying it. The check cuts both 
 comment calling a branch theoretical is a claim to verify before relying on it, because
 deleting a branch something does produce is a bug.
 
+### Derive state when it is read; a recurring job needs an airtight case
+
+**Rule: before anything that runs on a clock — `pg_cron`, Vercel Cron, a scheduled
+workflow — derive the state when it is read, or notice it when somebody looks.** A state a
+job keeps in step with time is a second copy of the truth that can only lag behind it or be
+wrong; a job fails with nobody there to see it; and it can neither be tested without faking
+the clock nor run on a local stack or in CI. A derivation stores the instant and computes
+the status from it — a product's status from its dates, sessions from the schedule. An
+observation point acts at a funnelled set of places where somebody who cares arrives — a
+lapsed seat offer is claimed when an admin or the family looks. The price of both is
+latency while nobody looks, and that price is accepted because a state nobody looks at
+harms nobody.
+
+**A job is not banned, but it needs the owner's ruling on an airtight case:** something
+left unobserved harms somebody, it cannot wait for the next person who looks, and no
+derivation or observation point can deliver it. Make that case to the owner before building
+one. A job the owner accepts says, where it is defined, why it has to be a job and how a run
+that stops would be noticed.
+
 ### A comment describes current behaviour, never a migration number
 
 **Rule: a comment — in TypeScript, in SQL, or on a database object — says what the thing
