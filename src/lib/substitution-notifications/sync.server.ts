@@ -62,11 +62,10 @@ import { deriveNotificationState, type NotificationState } from "./state";
  * Order within one request: the announced row, the DMs, the Slack message,
  * so the Slack message's tags say who was reached, and last the state they
  * were all drawn in, which the close-out reads to find a passed request still
- * drawn open. A DM Discord refuses
- * for good is recorded and never retried; any other DM failure lets the rest
- * of the sync finish and then fails the job, which the outbox retries with
- * backoff. Discord and Slack are each skipped where this environment has no
- * credentials for them.
+ * drawn open. A DM Discord refuses for good is recorded and never retried;
+ * any other DM failure lets the rest of the sync finish and then fails the
+ * job, which the outbox retries with backoff. Discord and Slack are each
+ * skipped where this environment has no credentials for them.
  *
  * Every read and write is the service role's: the snapshot carries the
  * absence reason, and the message tables have no policy at all.

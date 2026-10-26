@@ -7,8 +7,7 @@ import { createHash, timingSafeEqual } from "node:crypto";
  *
  * The callers are the database's own — `pg_net`, on a write or when an
  * observation finds a row due, reading the secret from Vault — and the local
- * drain script, so
- * there is no session to check, only the shared secret. **An unset secret
+ * drain script, so there is no session to check, only the shared secret. **An unset secret
  * refuses everything**: an environment that has not been given one has no
  * caller to admit. Both sides are hashed before the constant-time compare, so
  * neither the compare nor its length check says anything about the secret.

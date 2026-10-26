@@ -1540,7 +1540,6 @@ const ROUTE_REGISTRY: Record<string, RouteEntry> = {
     },
   },
 
-
   "src/app/api/substitution-notifications/sync/route.ts": {
     handlers: {
       POST: {

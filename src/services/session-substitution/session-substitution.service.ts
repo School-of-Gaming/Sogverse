@@ -18,7 +18,9 @@ import { parseJsonResponse, readErrorMessage } from "@/lib/api/json-response";
 /**
  * Reads and writes for session substitutions.
  *
- * **Every read and write is an `.rpc()` call, with no API route between.**
+ * **Every read and write is an `.rpc()` call, with no API route between** —
+ * except the notification observation below, whose two functions are the
+ * service role's alone.
  * Both substitution tables grant `authenticated` nothing, so the
  * `SECURITY DEFINER` functions are the only way in and the authorization lives
  * in one place — guard-first in each function body — rather than being
