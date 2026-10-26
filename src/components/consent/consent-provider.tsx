@@ -165,8 +165,8 @@ export function ConsentProvider({ initial, children }: ConsentProviderProps) {
   // Two things fall out of it that the withdrawal path never covered. Cookies
   // already stranded on real browsers by that race are cleared on the visitor's
   // next page, with nothing to migrate; and so are cookies this app never set,
-  // which matters because the legacy marketing site does not gate its tags behind
-  // consent and writes on the registrable domain our pages can read and expire.
+  // which matters because the legacy marketing site did not gate its tags behind
+  // consent and wrote on the registrable domain our pages can read and expire.
   //
   // Not granted covers a refusal, analytics-only, *and* a visitor who has not
   // answered yet — the answer is only ever `marketing: true` or nothing doing.

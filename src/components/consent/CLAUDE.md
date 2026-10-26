@@ -251,7 +251,7 @@ not in the document yet, and the answer travels with their load.
 
 Two things about the cookies. They are walked across every domain the page could have set
 them on, because both vendors may write on the registrable domain rather than on the
-page's own host, and staging and preview pages are served from subdomains. And the names are **read back off the document by prefix rather than
+page's own host, and staging is served from a subdomain. And the names are **read back off the document by prefix rather than
 expired from a list**: the container's analytics cookies carry a property id in their own
 names, decided in the Tag Manager UI and unknowable here. A cookie that survives a
 withdrawal goes on identifying the same browser to the same platform — including from our
@@ -279,8 +279,8 @@ exist only in a document where marketing is granted.** In a document where it is
 nothing is running to undo the clearing, which is the whole of why it holds. Stating it as
 an invariant rather than as a step in the withdrawal also buys two things the withdrawal
 path could not: it clears whatever an earlier failure stranded, with no migration and no
-list of affected browsers, and it clears what the legacy site leaves on the registrable
-domain, which sets its tags without asking anybody.
+list of affected browsers, and it clears what the legacy marketing site left on the
+registrable domain, which set its tags without asking anybody.
 
 ## What a new recipient does and does not cost
 
