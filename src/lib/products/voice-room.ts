@@ -44,8 +44,9 @@ export interface VoiceJoinInstructions {
  * - `external` — the meeting at `url`, on another service. Public by design.
  * - `none` — no room; the reader is shown `instructions` in their locale,
  *   picked with `resolveRequiredTranslation()`. Only the locales that have
- *   instructions written are listed, and the list is never empty: the
- *   database refuses to commit mode `none` with instructions in no locale.
+ *   instructions written are listed, and the list is never empty:
+ *   `create_product` and `update_product`, the only writers of either column,
+ *   refuse mode `none` with instructions in no locale.
  */
 export type ProductVoiceRoom =
   | { mode: "sogverse" }

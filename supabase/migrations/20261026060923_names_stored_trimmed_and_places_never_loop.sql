@@ -344,6 +344,34 @@ $$;
 -- 2. Places never loop
 -- ---------------------------------------------------------------------------
 
+-- The trigger below guards writes from here on, and location_lineage climbs
+-- with no loop check, so a loop already in the data would spin every climb.
+-- Staging and production hold none; any other database is refused here. The
+-- walk carries its path, so it ends on a loop rather than following it.
+DO $$
+DECLARE
+  v_looped text;
+BEGIN
+  WITH RECURSIVE walk (start_id, cur, path) AS (
+    SELECT id, parent_id, ARRAY[id]
+      FROM public.locations
+    UNION ALL
+    SELECT w.start_id, l.parent_id, w.path || l.id
+      FROM walk w
+      JOIN public.locations l ON l.id = w.cur
+     WHERE NOT l.id = ANY (w.path)
+  )
+  SELECT string_agg(DISTINCT start_id::text, ', ')
+    INTO v_looped
+    FROM walk
+   WHERE cur = ANY (path);
+
+  IF v_looped IS NOT NULL THEN
+    RAISE EXCEPTION 'locations already form a loop above: %', v_looped;
+  END IF;
+END;
+$$;
+
 CREATE FUNCTION public.location_lineage(p_location_id uuid)
     RETURNS TABLE (location_id uuid, distance integer)
     LANGUAGE plpgsql STABLE
@@ -390,12 +418,6 @@ BEGIN
     RETURN NEW;
   END IF;
 
-  -- One writer of parentage at a time. Two re-parents that close a loop only
-  -- together would otherwise each walk a tree the other has not committed
-  -- yet, and both pass. Re-parenting is rare (an admin moving a site, a
-  -- reference-data refresh), so serialising it costs nothing anyone waits on.
-  PERFORM pg_advisory_xact_lock(hashtext('public.locations.parent_id'));
-
   IF EXISTS (
     SELECT 1
       FROM public.location_lineage(NEW.parent_id) AS lin
@@ -411,7 +433,7 @@ $$;
 
 REVOKE ALL ON FUNCTION public.refuse_location_loop() FROM PUBLIC;
 
-COMMENT ON FUNCTION public.refuse_location_loop() IS 'Trigger body of trg_locations_refuse_loop: refuses, with check_violation, a parent_id whose lineage reaches the row being written, so the location tree never holds a loop. Serialises every write of parentage on a transaction-scoped advisory lock first, so two writes that would close a loop only together cannot both pass.';
+COMMENT ON FUNCTION public.refuse_location_loop() IS 'Trigger body of trg_locations_refuse_loop: refuses, with check_violation, a parent_id whose lineage reaches the row being written, so the location tree never holds a loop.';
 
 CREATE TRIGGER trg_locations_refuse_loop
   BEFORE INSERT OR UPDATE OF parent_id ON public.locations

@@ -177,6 +177,14 @@ describe("parseUserName", () => {
       expect(() => parseUserName("uid|gamer|Kid|minecraft")).toThrow(/4 slots/);
     });
 
+    it("ignores slots past the sixth, which a later deploy may append mid-window", () => {
+      const result = parseUserName("uid|gamer|Kid|minecraft|Steve123|abc-uuid|future");
+
+      expect(result.gamePlatform).toBe("minecraft");
+      expect(result.gameUsername).toBe("Steve123");
+      expect(result.gameExternalId).toBe("abc-uuid");
+    });
+
     it("leaves the game fields undefined on the 3-slot instant-room form", () => {
       const result = parseUserName("uid|gedu|Edu");
 

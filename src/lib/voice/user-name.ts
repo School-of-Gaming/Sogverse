@@ -162,8 +162,12 @@ const NO_GAME_CONTEXT = {
  *   throws — it drives moderator UI.)
  * - **3 slots** — a room that surfaces none, which carries no game context.
  *
+ * Slots past the sixth are ignored, for the same mid-window reason: a later
+ * deploy that appends a slot must not break the roster of a peer still
+ * running this bundle.
+ *
  * **Throws** when the role slot isn't a known voice role (including when the
- * name has no pipe separators at all), and on any other slot count. Our token
+ * name has no pipe separators at all), and on a slot count that is neither 3 nor at least 6. Our token
  * routes are the only writers of `user_name`, so either is a token-generation
  * bug — surface it loudly instead of papering over it with a sentinel.
  */
@@ -183,9 +187,9 @@ export function parseUserName(userName: string | null | undefined): ParsedUserNa
   };
 
   if (parts.length === 3) return { ...head, ...NO_GAME_CONTEXT };
-  if (parts.length !== 6) {
+  if (parts.length < 6) {
     throw new Error(
-      `Malformed Daily user_name ${JSON.stringify(userName)}: ${parts.length} slots, not 3 or 6`,
+      `Malformed Daily user_name ${JSON.stringify(userName)}: ${parts.length} slots, not 3 or at least 6`,
     );
   }
 

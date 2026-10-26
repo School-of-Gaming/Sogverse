@@ -22,7 +22,7 @@ CREATE TABLE public.product_translations (
 -- Name: COLUMN product_translations.voice_join_instructions; Type: COMMENT; Schema: public; Owner: -
 --
 
-COMMENT ON COLUMN public.product_translations.voice_join_instructions IS 'PUBLIC TO EVERYONE, LOGGED-OUT VISITORS INCLUDED. product_translations carries a table-level SELECT grant for anon and its read policy admits the translations of every product, so anybody can read these instructions through the Data API without an account or a seat. That is a KNOWN AND ACCEPTED RISK, decided by the owner: do not write anything here that must stay private. How to join the product''s sessions in this locale when the product''s voice_room_mode is none, as plain text the team writes per locale; NULL where this locale has none, never blank. A reader is shown one locale''s version through the app''s translation picker, like the rest of the row. A product of mode none carries instructions in at least one translation, and a product of any other mode in none — a rule across two tables, held at commit by the deferred constraint triggers trg_products_voice_instructions_iff_no_room and trg_product_translations_voice_instructions_iff_no_room, so a direct write cannot break it either. A STOPGAP like products.external_voice_url, to be removed with the none mode once Sogverse rooms can hold more than 50 people — see docs/investigations/voice-room-scale.md.';
+COMMENT ON COLUMN public.product_translations.voice_join_instructions IS 'PUBLIC TO EVERYONE, LOGGED-OUT VISITORS INCLUDED. product_translations carries a table-level SELECT grant for anon and its read policy admits the translations of every product, so anybody can read these instructions through the Data API without an account or a seat. That is a KNOWN AND ACCEPTED RISK, decided by the owner: do not write anything here that must stay private. How to join the product''s sessions in this locale when the product''s voice_room_mode is none, as plain text the team writes per locale; NULL where this locale has none, never blank. A reader is shown one locale''s version through the app''s translation picker, like the rest of the row. create_product and update_product refuse mode none with instructions in no translation, and instructions in any translation under another mode — a rule across two tables, so it is theirs rather than a CHECK. A STOPGAP like products.external_voice_url, to be removed with the none mode once Sogverse rooms can hold more than 50 people — see docs/investigations/voice-room-scale.md.';
 
 
 --
@@ -52,13 +52,6 @@ CREATE TRIGGER product_translations_updated_at BEFORE UPDATE ON public.product_t
 --
 
 CREATE TRIGGER trg_ensure_product_keeps_at_least_one_translation BEFORE DELETE ON public.product_translations FOR EACH ROW EXECUTE FUNCTION public.ensure_product_keeps_at_least_one_translation();
-
-
---
--- Name: product_translations trg_product_translations_voice_instructions_iff_no_room; Type: TRIGGER; Schema: public; Owner: -
---
-
-CREATE CONSTRAINT TRIGGER trg_product_translations_voice_instructions_iff_no_room AFTER INSERT OR DELETE OR UPDATE OF voice_join_instructions, product_id ON public.product_translations DEFERRABLE INITIALLY DEFERRED FOR EACH ROW EXECUTE FUNCTION public.ensure_voice_join_instructions_iff_no_voice_room();
 
 
 --
