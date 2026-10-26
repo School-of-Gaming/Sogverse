@@ -169,22 +169,12 @@ export interface LocationWithChain extends Location {
   ancestors: LocationChainNode[];
 }
 
-/**
- * The embed nests a fixed number of levels, so the walk always ends; a place
- * met twice on it is a loop in the tree, which the database refuses to store,
- * and is thrown rather than rendered as a chain that repeats itself.
- */
 function flattenChain(row: RawChainRow): LocationWithChain {
   const { parent, ...self } = row;
   const ancestors: LocationChainNode[] = [];
-  const seen = new Set([self.id]);
   let node = parent;
   while (node) {
     const { parent: next, ...ancestor } = node;
-    if (seen.has(ancestor.id)) {
-      throw new Error(`locations form a loop through ${ancestor.id}, climbing from ${self.id}`);
-    }
-    seen.add(ancestor.id);
     ancestors.push(ancestor);
     node = next;
   }

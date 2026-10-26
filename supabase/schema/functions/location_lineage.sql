@@ -9,14 +9,9 @@ CREATE FUNCTION public.location_lineage(p_location_id uuid) RETURNS TABLE(locati
 DECLARE
   v_id     uuid := p_location_id;
   v_parent uuid;
-  v_seen   uuid[] := '{}';
 BEGIN
+  distance := 0;
   WHILE v_id IS NOT NULL LOOP
-    IF v_id = ANY (v_seen) THEN
-      RAISE EXCEPTION 'locations form a loop through %, climbing from %', v_id, p_location_id
-        USING ERRCODE = 'data_corrupted';
-    END IF;
-
     SELECT l.parent_id INTO v_parent
       FROM public.locations l
      WHERE l.id = v_id;
@@ -28,10 +23,9 @@ BEGIN
     END IF;
 
     location_id := v_id;
-    distance := cardinality(v_seen);
     RETURN NEXT;
 
-    v_seen := v_seen || v_id;
+    distance := distance + 1;
     v_id := v_parent;
   END LOOP;
 END;
@@ -42,7 +36,7 @@ $$;
 -- Name: FUNCTION location_lineage(p_location_id uuid); Type: COMMENT; Schema: public; Owner: -
 --
 
-COMMENT ON FUNCTION public.location_lineage(p_location_id uuid) IS 'A place and every place above it, as (location_id, distance): the place itself at distance 0, its parent at 1, up to the country. Empty for NULL or an id no place has. The one way any reader climbs the location tree, and it climbs through retired rows, which still sit where they sat. Raises data_corrupted on a loop rather than stopping at some depth and answering with a chain that looks right: trg_locations_refuse_loop keeps loops from being written, so meeting one means that guarantee broke, and nothing built on the tree can be trusted until it is repaired. SECURITY INVOKER over locations, which anon and authenticated read in full; granted to both because search_locations runs as its caller and calls it, and because an admin''s write to locations runs the loop trigger, which calls it, as that admin.';
+COMMENT ON FUNCTION public.location_lineage(p_location_id uuid) IS 'A place and every place above it, as (location_id, distance): the place itself at distance 0, its parent at 1, up to the country. Empty for NULL or an id no place has. The one way any reader climbs the location tree, and it climbs through retired rows, which still sit where they sat. Walks to the root with no depth bound and no loop check: trg_locations_refuse_loop keeps a loop from ever being written, so every climb ends at a country. SECURITY INVOKER over locations, which anon and authenticated read in full; granted to both because search_locations runs as its caller and calls it, and because an admin''s write to locations runs the loop trigger, which calls it, as that admin.';
 
 
 --

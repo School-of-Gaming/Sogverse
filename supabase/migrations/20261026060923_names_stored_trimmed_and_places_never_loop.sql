@@ -18,9 +18,9 @@
 -- * A place can never sit under its own descendant. trg_locations_refuse_loop
 --   walks up from the new parent and refuses a write that would reach the row
 --   itself; locations_no_self_parent stays as the one-step case. Every reader
---   that climbs the tree does it through location_lineage, which raises on a
---   loop instead of stopping at a depth bound and answering with a plausible
---   wrong chain: gedu_covers_product_site, search_locations,
+--   that climbs the tree does it through location_lineage, which walks to the
+--   root with no depth bound, because the trigger leaves no loop to bound:
+--   gedu_covers_product_site, search_locations,
 --   get_admin_municipality_invoicing and gedu_invoicing_document.
 -- * promote_from_waitlist no longer re-checks that the target group belongs to
 --   the seat's product. trg_validate_participations_group refuses that on the
@@ -352,14 +352,9 @@ CREATE FUNCTION public.location_lineage(p_location_id uuid)
 DECLARE
   v_id     uuid := p_location_id;
   v_parent uuid;
-  v_seen   uuid[] := '{}';
 BEGIN
+  distance := 0;
   WHILE v_id IS NOT NULL LOOP
-    IF v_id = ANY (v_seen) THEN
-      RAISE EXCEPTION 'locations form a loop through %, climbing from %', v_id, p_location_id
-        USING ERRCODE = 'data_corrupted';
-    END IF;
-
     SELECT l.parent_id INTO v_parent
       FROM public.locations l
      WHERE l.id = v_id;
@@ -371,16 +366,15 @@ BEGIN
     END IF;
 
     location_id := v_id;
-    distance := cardinality(v_seen);
     RETURN NEXT;
 
-    v_seen := v_seen || v_id;
+    distance := distance + 1;
     v_id := v_parent;
   END LOOP;
 END;
 $$;
 
-COMMENT ON FUNCTION public.location_lineage(p_location_id uuid) IS 'A place and every place above it, as (location_id, distance): the place itself at distance 0, its parent at 1, up to the country. Empty for NULL or an id no place has. The one way any reader climbs the location tree, and it climbs through retired rows, which still sit where they sat. Raises data_corrupted on a loop rather than stopping at some depth and answering with a chain that looks right: trg_locations_refuse_loop keeps loops from being written, so meeting one means that guarantee broke, and nothing built on the tree can be trusted until it is repaired. SECURITY INVOKER over locations, which anon and authenticated read in full; granted to both because search_locations runs as its caller and calls it, and because an admin''s write to locations runs the loop trigger, which calls it, as that admin.';
+COMMENT ON FUNCTION public.location_lineage(p_location_id uuid) IS 'A place and every place above it, as (location_id, distance): the place itself at distance 0, its parent at 1, up to the country. Empty for NULL or an id no place has. The one way any reader climbs the location tree, and it climbs through retired rows, which still sit where they sat. Walks to the root with no depth bound and no loop check: trg_locations_refuse_loop keeps a loop from ever being written, so every climb ends at a country. SECURITY INVOKER over locations, which anon and authenticated read in full; granted to both because search_locations runs as its caller and calls it, and because an admin''s write to locations runs the loop trigger, which calls it, as that admin.';
 
 REVOKE ALL ON FUNCTION public.location_lineage(p_location_id uuid) FROM PUBLIC;
 GRANT EXECUTE ON FUNCTION public.location_lineage(p_location_id uuid) TO anon;
@@ -423,7 +417,7 @@ CREATE TRIGGER trg_locations_refuse_loop
   BEFORE INSERT OR UPDATE OF parent_id ON public.locations
   FOR EACH ROW EXECUTE FUNCTION public.refuse_location_loop();
 
-COMMENT ON TRIGGER trg_locations_refuse_loop ON public.locations IS 'Keeps the location tree free of loops: a place may not be put under itself or under anything below it. locations_no_self_parent is the one-step case of the same rule; this is every other length. The readers rely on it, through location_lineage, which raises on the loop this prevents.';
+COMMENT ON TRIGGER trg_locations_refuse_loop ON public.locations IS 'Keeps the location tree free of loops: a place may not be put under itself or under anything below it. locations_no_self_parent is the one-step case of the same rule; this is every other length. The readers rely on it: location_lineage climbs with no loop check because this leaves no loop to meet.';
 
 CREATE OR REPLACE FUNCTION public.gedu_covers_product_site(p_gedu_id uuid, p_product_id uuid) RETURNS boolean
     LANGUAGE sql STABLE
@@ -1267,9 +1261,8 @@ BEGIN
     RAISE EXCEPTION 'promote_from_waitlist still re-checks the target group';
   END IF;
 
-  -- Both halves of the loop rule, on two throwaway places, all rolled back by
-  -- the closing raise: the write is refused, and a loop that exists anyway is
-  -- met with an error rather than a chain.
+  -- The loop rule, on two throwaway places, all rolled back by the closing
+  -- raise: a place may not move under its own child.
   BEGIN
     INSERT INTO public.locations (id, name, type)
     VALUES (v_a, 'loop probe a', 'site');
@@ -1280,16 +1273,6 @@ BEGIN
       UPDATE public.locations SET parent_id = v_b WHERE id = v_a;
       RAISE EXCEPTION 'locations let a place move under its own child';
     EXCEPTION WHEN check_violation THEN
-      NULL;
-    END;
-
-    ALTER TABLE public.locations DISABLE TRIGGER trg_locations_refuse_loop;
-    UPDATE public.locations SET parent_id = v_b WHERE id = v_a;
-
-    BEGIN
-      PERFORM 1 FROM public.location_lineage(v_b);
-      RAISE EXCEPTION 'location_lineage climbed a loop without raising';
-    EXCEPTION WHEN data_corrupted THEN
       NULL;
     END;
 

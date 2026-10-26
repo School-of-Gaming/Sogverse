@@ -9,14 +9,12 @@ import {
 import { TEST_CREDENTIALS } from "./constants";
 
 /**
- * The location tree never holds a loop, and the one way to climb it says so if
- * it ever does.
+ * The location tree never holds a loop, so the one way to climb it always ends
+ * at a country.
  *
  * `location_lineage` is what every reader climbs the tree with, and
- * `trg_locations_refuse_loop` is the write-side half: a place may not be put
- * under anything below it. The read side's raise on a loop cannot be reached
- * from here — the trigger refuses to store one — so the migration that added it
- * proves it with the trigger switched off inside a rolled-back block.
+ * `trg_locations_refuse_loop` is what keeps the climb finite: a place may not
+ * be put under anything below it.
  */
 describe("location_lineage", () => {
   let service: SupabaseClient<Database>;

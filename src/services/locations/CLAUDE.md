@@ -126,9 +126,9 @@ locations.
 
 **Rule: SQL climbs the tree through `location_lineage()`, never a recursive walk of its
 own.** The tree holds no loop — a trigger refuses any write that would put a place under
-itself or anything below it — and the lineage raises if it ever meets one anyway. A
-hand-written `WITH RECURSIVE` over `parent_id` needs a depth bound to end on a loop, and
-that bound turns a broken tree into a chain that looks right.
+itself or anything below it — so the lineage climbs to the root with no depth bound and
+no loop check. One function is the one place that assumption is made, rather than a
+recursive query per reader, each choosing its own bound.
 
 ## What is seeded
 
