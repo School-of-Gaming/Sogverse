@@ -503,8 +503,7 @@
           "pair": "kaksi rinnakkain",
           "row": "kolme rivissä",
           "showcase": "yksi suuri lainaus, kaksi rinnakkain ja sitten kolme rivissä"
-        },
-        "missing": "Asiakaskokemus, jota ei enää ole tallessa"
+        }
       }
     },
     "status": {

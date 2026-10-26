@@ -503,8 +503,7 @@
           "pair": "two side by side",
           "row": "three in a row",
           "showcase": "one large quote, two side by side, then three in a row"
-        },
-        "missing": "A testimonial no longer in the store"
+        }
       }
     },
     "status": {

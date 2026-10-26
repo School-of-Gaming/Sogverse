@@ -20,10 +20,7 @@ import {
   type SupportedLocale,
 } from "@/lib/constants/locales";
 import { siteDocumentTitle } from "@/lib/metadata/site-title";
-import {
-  resolveRequiredTranslation,
-  resolveTranslation,
-} from "@/lib/i18n/resolve-translation";
+import { resolveRequiredTranslation } from "@/lib/i18n/resolve-translation";
 import {
   describeMissingWords,
   landingSectionName,
@@ -522,11 +519,11 @@ function placedTestimonials(page: AdminLandingPage) {
     arrangement: section.arrangement,
     slots: LANDING_TESTIMONIAL_SLOTS[section.arrangement],
     testimonials: section.testimonials.map(({ testimonialId, versions }) => {
-      const version = resolveTranslation(versions, "en");
+      const version = resolveRequiredTranslation(versions, "en");
       return {
         testimonialId,
-        from: version?.from ?? null,
-        excerpt: version === null ? null : excerpt(version.quote),
+        from: version.from,
+        excerpt: excerpt(version.quote),
         languages: versions.map((v) => v.locale),
       };
     }),

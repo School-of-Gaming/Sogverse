@@ -113,16 +113,16 @@ describe("publishedArticleCard", () => {
 
   it("opens an article written in the page's locale at its slug there", () => {
     const card = publishedArticleCard(swedish, published, "sv");
-    expect(card?.href).toEqual(ROUTES.libraryArticle("ett-spelavtal"));
-    expect(card?.textLocale).toBe("sv");
+    expect(card.href).toEqual(ROUTES.libraryArticle("ett-spelavtal"));
+    expect(card.textLocale).toBe("sv");
   });
 
   it("keeps a card showing the fallback in the page's locale, at the id address", () => {
     // Like a shop card: the link names no locale, so it stays on the Swedish
     // page, which shows the same English fallback the card does.
     const card = publishedArticleCard(english, published, "sv");
-    expect(card?.href).toEqual(ROUTES.libraryArticle(english.id));
-    expect(card?.textLocale).toBe("en");
-    expect(card?.title).toBe("A family gaming agreement");
+    expect(card.href).toEqual(ROUTES.libraryArticle(english.id));
+    expect(card.textLocale).toBe("en");
+    expect(card.title).toBe("A family gaming agreement");
   });
 });

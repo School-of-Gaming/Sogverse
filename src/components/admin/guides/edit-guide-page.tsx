@@ -15,7 +15,7 @@ import { Link } from "@/i18n/navigation";
 import { resolveLocale } from "@/lib/constants/locales";
 import { ROUTES } from "@/lib/constants/routes";
 import { formatDate } from "@/lib/date-format";
-import { resolveTranslation } from "@/lib/i18n/resolve-translation";
+import { resolveRequiredTranslation } from "@/lib/i18n/resolve-translation";
 import { useTimezone } from "@/providers";
 import {
   GUIDE_LABEL_MAX_LENGTH,
@@ -119,7 +119,7 @@ export function GuideUsageCard({ usages }: { usages: readonly GuideUsage[] }) {
           className="text-act underline-offset-4 hover:underline"
         >
           {t("usage.landingPage", {
-            title: resolveTranslation(usage.titles, uiLocale)?.title ?? "",
+            title: resolveRequiredTranslation(usage.titles, uiLocale).title,
           })}
         </Link>
         <p className="text-muted-foreground">{t(`usage.landingPageState.${state}`)}</p>

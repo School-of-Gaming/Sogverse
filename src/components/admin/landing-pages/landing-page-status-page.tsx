@@ -488,22 +488,16 @@ function PlacedTestimonials({ sections }: { sections: readonly LandingTestimonia
               </p>
               <ol className="space-y-2">
                 {section.testimonials.map(({ testimonialId, versions }) => {
-                  const version = resolveTranslation(versions, uiLocale);
+                  const version = resolveRequiredTranslation(versions, uiLocale);
                   return (
                     <li key={testimonialId}>
-                      {version === null ? (
-                        <span className="text-muted-foreground">
-                          {t("statusPage.testimonials.missing")}
-                        </span>
-                      ) : (
-                        <Link
-                          href={ROUTES.admin.testimonial(testimonialId)}
-                          className="block rounded-md hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-act"
-                        >
-                          <span className="line-clamp-2 font-serif italic">{version.quote}</span>
-                          <span className="text-xs text-muted-foreground">{version.from}</span>
-                        </Link>
-                      )}
+                      <Link
+                        href={ROUTES.admin.testimonial(testimonialId)}
+                        className="block rounded-md hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-act"
+                      >
+                        <span className="line-clamp-2 font-serif italic">{version.quote}</span>
+                        <span className="text-xs text-muted-foreground">{version.from}</span>
+                      </Link>
                     </li>
                   );
                 })}
