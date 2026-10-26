@@ -361,7 +361,9 @@ retry through the rollback the same way they do through the cutover.
 - A week on, no non-browser caller is left on `sogverse.sog.gg`.
 - The MX, SPF, DMARC and every verification TXT record match the values listed under
   Constraints.
-- `git grep sogverse.sog.gg` matches only `docs/records/`.
+- `git grep sogverse.sog.gg` matches only `docs/records/` and the dated 2026-09-10 search
+  baseline in `docs/architecture/site-quality.md`, which names the hosts as they were that
+  day (owner, 2026-10-26).
 - The Webflow data is on the team Drive, and the subscription is cancelled.
 
 ## Follow-ups
