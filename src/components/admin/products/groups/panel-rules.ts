@@ -21,9 +21,9 @@ import type {
  *
  * They live outside the panel component so each one can be exercised directly —
  * the interesting cases (a never-paid waitlister promoted onto a subscription-
- * billed club, a subscribed member dragged onto the waitlist or onto the remove
- * zone) are decisions, not rendering, and a decision that only exists inside a
- * drag handler can't be tested without simulating a pointer.
+ * billed club, a subscribed member dragged onto the waitlist, which rows a
+ * seat's menu offers) are decisions, not rendering, and a decision that only
+ * exists inside a drag handler can't be tested without simulating a pointer.
  */
 
 // ---------------------------------------------------------------------------
@@ -57,17 +57,15 @@ export function readChipDragData(value: unknown): ChipDragData | null {
 
 /**
  * Payload attached by the droppables: group columns and the unassigned card
- * carry `{ toGroupId }` (null = unassigned inbox); the header's removal zone
- * carries `{ remove: true }`; the waitlist card carries `{ waitlist: true }`.
+ * carry `{ toGroupId }` (null = unassigned inbox); the waitlist card carries
+ * `{ waitlist: true }`.
  */
 export type DropData =
   | { kind: "move"; toGroupId: string | null }
-  | { kind: "remove" }
   | { kind: "waitlist" };
 
 export function readDropData(value: unknown): DropData | null {
   if (typeof value !== "object" || value === null) return null;
-  if ("remove" in value && value.remove === true) return { kind: "remove" };
   if ("waitlist" in value && value.waitlist === true) {
     return { kind: "waitlist" };
   }
@@ -85,32 +83,18 @@ export function readDropData(value: unknown): DropData | null {
 // ---------------------------------------------------------------------------
 
 /**
- * Why a drop wrote nothing. All three are money problems the panel cannot fix
- * by dragging, so the drop is refused and a dialog explains the manual path.
+ * Why a drop wrote nothing. Both are money problems the panel cannot fix by
+ * dragging, so the drop is refused and a dialog explains the manual path.
  */
 export type BlockedDropReason =
   /** Seating a never-paid waitlister on a product whose seat needs a sub. */
   | "unpaidPromote"
   /** Demoting a member whose seat is behind a live Stripe subscription. */
-  | "liveSubscription"
-  /**
-   * Removing a **waitlisted** row whose seat is behind a live Stripe
-   * subscription — a webhook race, and the one subscribed shape the club
-   * switch cannot serve. An active subscribed seat resolves to the switch
-   * instead of to this refusal.
-   */
-  | "removeSubscribed";
+  | "liveSubscription";
 
 export type DropOutcome =
   /** Nothing to do: dropped back where it started, or already there. */
   | { kind: "none" }
-  | { kind: "remove" }
-  /**
-   * Not a removal at all: the seat the admin dropped is subscribed, and the
-   * zone they dropped it on said "Switch club" rather than "Remove gamer". The
-   * panel opens the switch dialog; nothing is written by the drop itself.
-   */
-  | { kind: "switch" }
   | { kind: "move"; toGroupId: string | null }
   | { kind: "promote"; toGroupId: string | null }
   | { kind: "demote" }
@@ -191,9 +175,9 @@ export function dragSubjectsFrom(
  * the mutation, so a blocked drop writes nothing at all — the panel shows the
  * dialog and the snapshot is left exactly as it was.
  *
- * Two of the three refusals key on the participation's own live subscription,
- * which is the same condition the database refuses on, so the dialog and the
- * RPC always agree. The third — promoting a never-paid waitlister — keys on the
+ * The demote refusal keys on the participation's own live subscription, which
+ * is the same condition the database refuses on, so the dialog and the RPC
+ * always agree. The promote refusal — a never-paid waitlister — keys on the
  * product being subscription-shaped, not on it merely costing money: a one-off
  * paid camp or event is handled out of band and the admin's drag is trusted
  * there. It also asks for the payment marker, because demotion preserves it, so
@@ -206,32 +190,6 @@ export function resolveDrop(
   subscriptionShaped: boolean,
 ): DropOutcome {
   switch (drop.kind) {
-    case "remove":
-      // Removal CASCADEs family_subscriptions, so a live subscription would go
-      // on billing a family with nothing left in the database to cancel it —
-      // and `admin_remove_participation` refuses exactly this, whatever the
-      // product type. So a subscribed seat never removes here; what it does
-      // instead splits on where it sits, because the two are exact opposites:
-      // removal is refused precisely when a subscription stands behind the
-      // seat, and the switch exists precisely then.
-      //
-      //  - An **active** subscribed seat is what the club switch was built
-      //    for, and the zone the admin dropped on said so — it reads "Switch
-      //    club" for exactly this chip. The drop opens the dialog; the drop
-      //    itself still writes nothing.
-      //  - A **waitlisted** subscribed row is an edge the dialog does not
-      //    serve (there is no active seat to move), so it keeps the refusal
-      //    and its explanation of the manual path.
-      if (subject.hasLiveSubscription) {
-        if (subject.isWaitlisted) {
-          return { kind: "blocked", reason: "removeSubscribed" };
-        }
-        return { kind: "switch" };
-      }
-      // Otherwise legal from anywhere, including the waitlist (it just cancels
-      // the queued family). Confirmed in its own dialog.
-      return { kind: "remove" };
-
     case "waitlist":
       if (subject.isWaitlisted) return { kind: "none" };
       if (subject.hasLiveSubscription) {
@@ -249,6 +207,72 @@ export function resolveDrop(
       if (subject.currentGroupId === drop.toGroupId) return { kind: "none" };
       return { kind: "move", toGroupId: drop.toGroupId };
   }
+}
+
+// ---------------------------------------------------------------------------
+// The seat menu
+// ---------------------------------------------------------------------------
+
+/**
+ * What a seat's menu offers. Three actions, and each one leaves the seat off
+ * this product — the menu is the only way a seat does:
+ *
+ *  - `switchClub` — the paid club switch, for an active seat a live
+ *    subscription stands behind.
+ *  - `move` — the no-subscription move, for an active seat no live
+ *    subscription stands behind, onto any product that is not billed monthly.
+ *  - `remove` — the removal confirm.
+ */
+export type SeatMenuAction = "switchClub" | "move" | "remove";
+
+/**
+ * Why a row is drawn disabled. Each is stated in the row itself, so an admin
+ * reads the reason where they reached for the action rather than in a refusal
+ * after it.
+ *
+ *  - `subscriptionLive` — removal would leave a live subscription billing for a
+ *    seat that no longer exists. The family cancels it in My SOG, and the
+ *    seat ends with the subscription.
+ */
+export type SeatMenuDisabledReason = "subscriptionLive";
+
+export interface SeatMenuItem {
+  action: SeatMenuAction;
+  /** Null when the row can be pressed. */
+  disabledReason: SeatMenuDisabledReason | null;
+}
+
+/**
+ * The rows of one seat's menu, in the order they are drawn.
+ *
+ * Read off the same subject a drop is resolved from, so the menu and the drag
+ * cannot disagree about a seat. A live subscription is what makes removal
+ * impossible and the paid switch possible: removal CASCADEs
+ * family_subscriptions, so a live subscription would go on billing a family
+ * with nothing left in the database to cancel it — and
+ * `admin_remove_participation` refuses exactly this, whatever the product type.
+ *
+ * A waitlisted row offers removal alone. It holds no seat to move, and the
+ * paid switch serves active seats only, so a waitlisted row with a live
+ * subscription (a webhook race) is shown its removal disabled and nothing else.
+ *
+ * The move is offered on every active seat with no subscription behind it,
+ * whatever the product charges: a paid camp's seat was paid for once, and only
+ * the seat moves — a difference in price is the admin's to settle in Stripe.
+ */
+export function seatMenuItems(subject: DragSubject): SeatMenuItem[] {
+  const removeItem: SeatMenuItem = {
+    action: "remove",
+    disabledReason: subject.hasLiveSubscription ? "subscriptionLive" : null,
+  };
+
+  if (subject.isWaitlisted) return [removeItem];
+
+  if (subject.hasLiveSubscription) {
+    return [{ action: "switchClub", disabledReason: null }, removeItem];
+  }
+
+  return [{ action: "move", disabledReason: null }, removeItem];
 }
 
 // ---------------------------------------------------------------------------
@@ -721,6 +745,68 @@ export function isSwitchTarget(
   }
   if (candidate.end_date === null) return true;
   return candidate.end_date >= formatInTimeZone(now, candidate.timezone, "yyyy-MM-dd");
+}
+
+/**
+ * Where a product stands in the no-subscription move's picker, for a seat no
+ * live subscription stands behind:
+ *
+ *  - `target` — a legal destination: not the product the seat is on, not yet
+ *    over, and not subscription-shaped. Every other type and billing mode
+ *    qualifies — a free or municipality club, any camp or event, paid or free —
+ *    because only the seat moves, and no money follows it either way.
+ *  - `needsSubscription` — a club billed monthly and not yet over. A seat there
+ *    exists only behind a subscription, which only checkout creates, so the row
+ *    is drawn disabled with that reason rather than hidden: an admin looking for
+ *    the club finds it and learns why it cannot be chosen.
+ *  - `hidden` — the seat's own product, or one that is over.
+ *
+ * "Not yet over" is read exactly as {@link isSwitchTarget} reads it — the end
+ * date against the product's own today.
+ */
+export type NoSubscriptionMoveTarget = "target" | "needsSubscription" | "hidden";
+
+export function noSubscriptionMoveTarget(
+  candidate: {
+    id: string;
+    product_type: ProductType;
+    billing_mode: BillingMode;
+    end_date: string | null;
+    timezone: string;
+  },
+  sourceProductId: string,
+  now: Date,
+): NoSubscriptionMoveTarget {
+  if (candidate.id === sourceProductId) return "hidden";
+  if (
+    candidate.end_date !== null &&
+    candidate.end_date < formatInTimeZone(now, candidate.timezone, "yyyy-MM-dd")
+  ) {
+    return "hidden";
+  }
+  return isSubscriptionShaped(candidate.product_type, candidate.billing_mode)
+    ? "needsSubscription"
+    : "target";
+}
+
+/**
+ * Why a product is closed to this seat's holder in the no-subscription move,
+ * or null when it is open to them — the audience rule the move's RPC refuses
+ * on, asked of the picker's rows so the admin meets it as a disabled row:
+ *
+ *  - `gamersOnly` — the holder is an adult on their own seat, and the product
+ *    is not open to parents.
+ *  - `parentsOnly` — the holder is a child, and the product is not open to
+ *    gamers.
+ */
+export type MoveAudienceBlock = "gamersOnly" | "parentsOnly";
+
+export function moveAudienceBlock(
+  candidate: { for_gamers: boolean; for_parents: boolean },
+  holderIsAdult: boolean,
+): MoveAudienceBlock | null {
+  if (holderIsAdult) return candidate.for_parents ? null : "gamersOnly";
+  return candidate.for_gamers ? null : "parentsOnly";
 }
 
 /** What the held-place derivation reads off one of the gamer's participations. */

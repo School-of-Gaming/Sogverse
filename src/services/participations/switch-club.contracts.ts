@@ -1,29 +1,34 @@
 import { z } from "zod";
 
 /**
- * Contracts for the admin club switch — the one action that moves a subscribed
- * participant's seat to another consumer club and swaps their Stripe
- * subscription onto that club's canonical price (docs/architecture/products.md,
- * "Billing"). Two handlers share one path,
+ * Contracts for the admin's seat move, in its two kinds (docs/architecture/
+ * products.md, "Billing"): the club switch, which moves a subscribed seat to
+ * another consumer club and swaps its Stripe subscription onto that club's
+ * canonical price, and the no-subscription move, which moves a seat nothing
+ * bills monthly onto any product that is not subscription-shaped, with no money
+ * moving. The route decides the kind from the seat. Two handlers share one path,
  * `/api/admin/products/[id]/participations/[participationId]/switch`:
  *
  * - `GET ?target=<productId>` is the check: what the dialog shows, and whether
  *   the commit is allowed. It mints nothing in Stripe.
- * - `POST` is the commit: the same checks re-run, then the Stripe plan change,
- *   then the RPC that moves the row.
+ * - `POST` is the commit: the same checks re-run, then — for a subscribed seat
+ *   — the Stripe plan change, then the RPC that moves the row.
  *
  * The dialog and the routes are built against this file, so a field added here
  * is a field both sides agree on.
  */
 
 /**
- * The hard refusals. Every one is a "nothing is written to either system"
- * answer; the soft gates (capacity, age range, region lock, consents, not
- * started) are picker warnings derived client-side and never appear here.
+ * The hard refusals, shared by both kinds of move. Every one is a "nothing is
+ * written to either system" answer; the soft gates (capacity, age range, region
+ * lock, consents, not started) are picker warnings derived client-side and
+ * never appear here.
  *
  * The first three come from Stripe and the authored price table; the rest are
- * the RPC's own refusals pre-flighted with plain reads, so the database step
- * after the money has moved can fail only on a genuine outage.
+ * the RPCs' own refusals pre-flighted with plain reads, so the database step
+ * can fail only on a race or a genuine outage. `participation_not_active`,
+ * `same_product` and `already_on_target` mean the same in both moves; the last
+ * three belong to the no-subscription move alone.
  */
 export const SWITCH_CLUB_REFUSALS = [
   /**
@@ -50,6 +55,15 @@ export const SWITCH_CLUB_REFUSALS = [
    * index covers (active, waitlisted or completed).
    */
   "already_on_target",
+  /**
+   * The no-subscription move only: the target is a club billed monthly, where
+   * a seat cannot exist without the subscription this move has no way to create.
+   */
+  "target_is_subscription_club",
+  /** The no-subscription move only: an adult's seat, and a target not open to parents. */
+  "target_not_open_to_parents",
+  /** The no-subscription move only: a child's seat, and a target not open to gamers. */
+  "target_not_open_to_gamers",
 ] as const;
 
 export const switchClubRefusal = z.enum(SWITCH_CLUB_REFUSALS);
@@ -77,8 +91,9 @@ export const switchClubCheckQuery = z.object({
 });
 
 /**
- * Response of the check handler (200 whether or not the switch is allowed —
- * a refusal is an answer, not an error).
+ * The check's answer for a subscribed seat — the paid club switch (200
+ * whether or not the switch is allowed — a refusal is an answer, not an
+ * error).
  *
  * `currentAmountCents` is the subscription item's actual unit amount read from
  * Stripe, not the source product's authored price: a subscriber keeps their
@@ -88,7 +103,8 @@ export const switchClubCheckQuery = z.object({
  * subscription's currency, null when there is none — in which case
  * `no_target_price_in_currency` is among the refusals.
  */
-export const switchClubCheckResponse = z.object({
+export const switchClubSubscriptionCheck = z.object({
+  kind: z.literal("subscription"),
   /** The subscription row's currency, lower-case ISO code. */
   currency: z.string(),
   currentAmountCents: z.number().int().nullable(),
@@ -128,6 +144,37 @@ export const switchClubCheckResponse = z.object({
   currencyMismatch: z.boolean().optional(),
 });
 
+export type SwitchClubSubscriptionCheck = z.infer<
+  typeof switchClubSubscriptionCheck
+>;
+
+/**
+ * The check's answer for an active seat no live subscription stands behind:
+ * the no-subscription move, onto any product that is not billed monthly. Only
+ * the seat moves and no money is charged or refunded by the move, so the
+ * answer is the refusals alone — empty means the move is allowed.
+ */
+export const switchClubNoSubscriptionCheck = z.object({
+  kind: z.literal("no_subscription"),
+  /** Empty means the commit is allowed. */
+  refusals: z.array(switchClubRefusal),
+});
+
+export type SwitchClubNoSubscriptionCheck = z.infer<
+  typeof switchClubNoSubscriptionCheck
+>;
+
+/**
+ * Response of the check handler, split by what stands behind the seat: a live
+ * subscription (`subscription`, the paid club switch) or none
+ * (`no_subscription`, the move). The sheet branches on `kind` for what its
+ * second stage says about money.
+ */
+export const switchClubCheckResponse = z.discriminatedUnion("kind", [
+  switchClubSubscriptionCheck,
+  switchClubNoSubscriptionCheck,
+]);
+
 export type SwitchClubCheckResponse = z.infer<typeof switchClubCheckResponse>;
 
 /**
@@ -135,7 +182,8 @@ export type SwitchClubCheckResponse = z.infer<typeof switchClubCheckResponse>;
  * reused for every press in that dialog: together with the participation and
  * target ids it derives the Stripe idempotency key, so a retry after a timeout
  * or a failed database step replays the same Stripe request rather than
- * prorating twice.
+ * prorating twice. The no-subscription move calls nothing idempotent, so there
+ * it only ties the audit line to the dialog that pressed.
  *
  * `groupId` is the admin's placement on the target: a group of the target
  * club, or null to leave the seat in the target's unassigned inbox (which is
@@ -159,16 +207,32 @@ export const switchClubCommitBody = z.object({
 
 export type SwitchClubCommitBody = z.infer<typeof switchClubCommitBody>;
 
-/** Response of a successful commit (200). */
-export const switchClubCommitResponse = z.object({
+/** The ids every successful commit answers with, whichever kind of move it was. */
+const committedMove = {
   participationId: z.string(),
   sourceProductId: z.string(),
   targetProductId: z.string(),
-  /** Where the shared placement rule put the seat; null = unassigned. */
+  /** Where the seat landed: the admin's group, the placement rule's, or null = unassigned. */
   groupId: z.string().nullable(),
-  stripeSubscriptionId: z.string(),
-  stripePriceId: z.string(),
-});
+};
+
+/**
+ * Response of a successful commit (200), split by `kind` exactly as the check
+ * is. The route decides the kind from the seat itself; only the paid switch has
+ * a subscription and a price to name.
+ */
+export const switchClubCommitResponse = z.discriminatedUnion("kind", [
+  z.object({
+    kind: z.literal("subscription"),
+    ...committedMove,
+    stripeSubscriptionId: z.string(),
+    stripePriceId: z.string(),
+  }),
+  z.object({
+    kind: z.literal("no_subscription"),
+    ...committedMove,
+  }),
+]);
 
 export type SwitchClubCommitResponse = z.infer<typeof switchClubCommitResponse>;
 

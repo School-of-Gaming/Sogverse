@@ -1242,8 +1242,7 @@
         "title": "Otilldelade",
         "subtitle": "Personer som ännu inte är i en grupp. Dra dem in i en för att placera dem.",
         "empty": "Alla har en grupp.",
-        "addParticipant": "Lägg till deltagare",
-        "removeParticipant": "Ta bort deltagare"
+        "addParticipant": "Lägg till deltagare"
       },
       "empty": {
         "title": "Inga grupper än",
@@ -1317,22 +1316,19 @@
           "title": "Prenumerationen är fortfarande aktiv",
           "description": "Om {name} flyttas till väntelistan blir prenumerationen kvar och familjen fortsätter att faktureras för en plats den inte längre har.",
           "nextStep": "Familjen öppnar faktureringskortet på Min SOG, som tar dem vidare till Stripes säkra faktureringsportal för att säga upp. Platsen frigörs så snart prenumerationen upphör."
-        },
-        "removeSubscribed": {
-          "title": "Prenumerationen är fortfarande aktiv",
-          "description": "Att ta bort {name} skulle lämna familjens prenumeration kvar och fortsätta fakturera för en plats som inte längre finns.",
-          "nextStep": "Familjen öppnar faktureringskortet på Min SOG, som tar dem vidare till Stripes säkra faktureringsportal för att säga upp. Platsen frigörs så snart prenumerationen upphör."
         }
       },
       "switchClub": {
-        "dropZone": "Byt klubb",
         "title": "Byt klubb",
         "description": "Flytta {name} till en annan klubb. Inget ändras för familjen i dag: samma kort dras samma datum, och därefter betalar familjen den nya klubbens pris.",
         "searchPlaceholder": "Sök klubbar på namn",
         "picker": {
           "empty": "Det finns ingen annan klubb att byta till. Målet måste vara en klubb som faktureras varje månad och som inte har avslutats.",
           "noMatch": "Ingen klubb matchar sökningen. Pröva ett annat namn.",
-          "alreadyHolds": "Har redan plats"
+          "alreadyHolds": "Har redan plats",
+          "needsSubscription": "Kräver prenumeration",
+          "gamersOnly": "Endast för spelare",
+          "parentsOnly": "Endast för föräldrar"
         },
         "facts": {
           "ageRange": "{ends, select, both {Åldrar {min}–{max}} from {Från {min} år} other {Upp till {max} år}}",
@@ -1364,18 +1360,51 @@
           "noLiveSubscription": "Ingen aktiv prenumeration står bakom den här platsen, så det här är fel verktyg: ta bort platsen och skriv in spelaren på den andra klubben i stället.",
           "targetNotPaidSubscriptionClub": "Den produkten är ingen klubb som faktureras varje månad, så en prenumeration kan inte följa med platsen dit.",
           "sameProduct": "Det är klubben spelaren redan går i.",
-          "alreadyOnTarget": "Spelaren har redan en plats i den klubben."
+          "alreadyOnTarget": "{name} har redan en plats i den produkten.",
+          "targetIsSubscriptionClub": "Den klubben faktureras varje månad, så en plats där kräver en prenumeration som den här flytten inte kan skapa.",
+          "targetNotOpenToParents": "Den produkten är inte öppen för föräldrar, så en förälders egen plats kan inte flyttas dit.",
+          "targetNotOpenToGamers": "Den produkten är inte öppen för spelare, så den här spelarens plats kan inte flyttas dit."
         },
         "commit": {
           "stripeUpdated": "Prenumerationen ligger redan på den nya klubbens pris, men platsen flyttades inte. Tryck på Byt klubb igen för att slutföra — ett nytt tryck debiterar inte familjen två gånger.",
           "stripeUpdatedStuck": "Prenumerationen ligger redan på den nya klubbens pris trots att platsen inte kunde flyttas, så familjen faktureras för en klubb där spelaren inte har någon plats. Red ut det i Stripe först.",
           "failed": "Bytet slutfördes inte. Tryck på Byt klubb igen — ett nytt tryck upprepar samma begäran, så familjen debiteras aldrig två gånger."
         },
-        "confirm": "Byt klubb"
+        "confirm": "Byt klubb",
+        "noSubscription": {
+          "title": "Flytta till en annan produkt",
+          "description": "Flytta {name} till en annan produkt.",
+          "searchPlaceholder": "Sök produkter på namn",
+          "picker": {
+            "empty": "Det finns ingen annan produkt att flytta till. Målet måste vara en produkt som inte faktureras månadsvis och som inte har avslutats.",
+            "noMatch": "Ingen produkt matchar sökningen. Prova ett annat namn."
+          },
+          "family": {
+            "label": "För familjen",
+            "money": "Flytten debiterar eller återbetalar ingenting.",
+            "priceDifference": "Om priserna skiljer sig åt, reglera mellanskillnaden i Stripe.",
+            "email": "Familjen får den nya produktens bekräftelsemejl, och kalenderposten flyttas dit.",
+            "consents": "Om den nya produkten kräver samtycken ges de för familjens räkning, så familjen behöver inte svara på dem."
+          },
+          "notStarted": "Startar {date}.",
+          "confirm": "Flytta",
+          "commitFailed": "Flytten slutfördes inte. Tryck på Flytta igen.",
+          "commitConflict": "Platsen ändrades medan den flyttades, så ingenting flyttades. Stäng det här och öppna platsens meny igen."
+        }
       },
       "requirementGaps": {
         "title": "Tilldela ändå?",
         "action": "Tilldela ändå"
+      },
+      "seatMenu": {
+        "label": "Åtgärder för {name}",
+        "goToUser": "Gå till användarsidan för {name}",
+        "switchClub": "Byt klubb…",
+        "move": "Flytta till en annan produkt…",
+        "remove": "Ta bort från den här produkten…",
+        "disabled": {
+          "subscriptionLive": "Familjen säger upp prenumerationen på Min SOG, och platsen upphör med den."
+        }
       }
     },
     "seatLimitModes": {

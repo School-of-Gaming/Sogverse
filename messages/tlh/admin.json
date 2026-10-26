@@ -1242,8 +1242,7 @@
         "title": "ngu’be’pu’",
         "subtitle": "ghomDaq pagh chaH. ghomvaD yIngeH ngu’meH.",
         "empty": "Hoch ghom ghaj.",
-        "addParticipant": "ghom yIchel",
-        "removeParticipant": "ghom yIteq"
+        "addParticipant": "ghom yIchel"
       },
       "empty": {
         "title": "ghommey pagh",
@@ -1317,22 +1316,19 @@
           "title": "taHtaH Huch nge’ghach",
           "description": "loSwI’pu’ tetlhDaq {name} DalanDI’, taHtaH Huch nge’ghach: pa’ Hutlh qorDu’, ’ach Huch nge’taH. quvHa’ghach ’oH!",
           "nextStep": "jIH SOG yaHDaj Huch ngoptlhIn poSmoH qorDu’; vaj Hubbogh Stripe Huch pa’Daq nge’ghach chIl. chIlDI’, tlhab pa’."
-        },
-        "removeSubscribed": {
-          "title": "taHtaH Huch nge’ghach",
-          "description": "{name} Dateqchugh, ngab pa’ ’ach taHtaH Huch nge’ghach: pa’ Hutlhbogh qorDu’vo’ Huch nge’taH. quvHa’ghach ’oH!",
-          "nextStep": "jIH SOG yaHDaj Huch ngoptlhIn poSmoH qorDu’; vaj Hubbogh Stripe Huch pa’Daq nge’ghach chIl. chIlDI’, tlhab pa’."
         }
       },
       "switchClub": {
-        "dropZone": "ghom’a’ yIchIj",
         "title": "ghom’a’ yIchIj",
         "description": "latlh ghom’a’Daq {name} vIH. DaHjaj qorDu’vaD pagh choH: rap nav, rap jaj je; ghIq ghom’a’ chu’ Huch DIl qorDu’.",
         "searchPlaceholder": "pongDaq ghom’a’ yISam",
         "picker": {
           "empty": "latlh ghom’a’ tu’lu’be’. jarmey Huch poQnIS ghom’a’, ’ej rInbe’nIS.",
           "noMatch": "ghom’a’ tu’lu’be’ QulmeHvam. latlh pong yInID.",
-          "alreadyHolds": "quS ghaj"
+          "alreadyHolds": "quS ghaj",
+          "needsSubscription": "jarmey Huch poQ",
+          "gamersOnly": "QujwI’pu’ neH",
+          "parentsOnly": "vavpu’ SoSpu’ je neH"
         },
         "facts": {
           "ageRange": "{ends, select, both {DIS {min}–{max}} from {DIS {min} pagh nIvbogh} other {DIS {max} pagh puSbogh}}",
@@ -1364,18 +1360,51 @@
           "noLiveSubscription": "pa’vam DungDaq taHbogh Huch nge’ghach tu’lu’be’, vaj jan lughbe’ ’oH: pa’ yIteq, ’ej latlh ghom’a’Daq SuvwI’ yIngu’.",
           "targetNotPaidSubscriptionClub": "jarmey Huch poQbogh ghom’a’ ’oHbe’ ngoptlhInvam’e’, vaj pa’ tlha’laHbe’ Huch nge’ghach.",
           "sameProduct": "ghom’a’vamDaq ghaHtaH SuvwI’’e’.",
-          "alreadyOnTarget": "ghom’a’vamDaq pa’ ghaj SuvwI’."
+          "alreadyOnTarget": "ngoptlhInvamDaq pa’ ghaj {name}.",
+          "targetIsSubscriptionClub": "jarmey Huch poQ ghom’a’vam. jarmey Huch chenmoHlaHbe’ vIHghachvam.",
+          "targetNotOpenToParents": "vavpu’ SoSpu’ je lajbe’ ngoptlhInvam. pa’vetlh yIvIHQo’!",
+          "targetNotOpenToGamers": "QujwI’pu’ lajbe’ ngoptlhInvam. pa’vetlh yIvIHQo’!"
         },
         "commit": {
           "stripeUpdated": "ghom’a’ chu’ HuchDaq ’oHtaH Huch nge’ghach’e’, ’ach vIHbe’ pa’. rInmeH ghom’a’ yIchIj yI’uy’qa’ — cha’logh qorDu’ nge’lu’be’.",
           "stripeUpdatedStuck": "ghom’a’ chu’ HuchDaq ’oHtaH Huch nge’ghach’e’, ’ach vIHlaHbe’ pa’: ghom’a’Daq pa’ ghajbe’bogh SuvwI’vaD DIl qorDu’. StripeDaq nom yIQIj.",
           "failed": "rInbe’ chIjghach. ghom’a’ yIchIj yI’uy’qa’ — rap tlhobHa’ghach, vaj not cha’logh DIl qorDu’."
         },
-        "confirm": "ghom’a’ yIchIj"
+        "confirm": "ghom’a’ yIchIj",
+        "noSubscription": {
+          "title": "latlh ngoptlhInDaq yIvIH",
+          "description": "latlh ngoptlhInDaq {name} yIvIH.",
+          "searchPlaceholder": "pongDaq ngoptlhIn yISam",
+          "picker": {
+            "empty": "latlh ngoptlhIn tu’lu’be’. jar Hoch DIlbe’lu’nIS ngoptlhIn, ’ej rInbe’nIS.",
+            "noMatch": "Sambogh ngoptlhIn tu’lu’be’. latlh pong yInId."
+          },
+          "family": {
+            "label": "qorDu’vaD",
+            "money": "vIHghachvam Huch tlhaplu’be’, Huch nobHa’lu’be’.",
+            "priceDifference": "cha’ DIlmey rap’be’chugh, StripeDaq yIrapmoH.",
+            "email": "ngoptlhIn chu’ QIn Hev qorDu’, ’ej ngoptlhIn chu’Daq vIH DIS jaj ghItlh.",
+            "consents": "chaq chaw’ poQ ngoptlhIn chu’; qorDu’ rIllu’, vaj qorDu’ tlhoblu’be’."
+          },
+          "notStarted": "{date} tagh.",
+          "confirm": "yIvIH",
+          "commitFailed": "rInbe’ vIHghach. yIvIH yI’uy’qa’.",
+          "commitConflict": "vIHtaHvIS pa’ choH, vaj pagh vIHlu’. yISoQmoH ’ej pa’ HIDjolev yIpoSmoHqa’."
+        }
       },
       "requirementGaps": {
         "title": "ghomvaD yIchu’ ’e’ DaHech’a’?",
         "action": "yIchu’ ’e’ yIruch"
+      },
+      "seatMenu": {
+        "label": "{name} ta’mey",
+        "goToUser": "{name} ghot De’ yIjaH!",
+        "switchClub": "ghom’a’ yIchIj…",
+        "move": "latlh ngoptlhInDaq yIvIH…",
+        "remove": "ngoptlhInvamvo’ yIteq…",
+        "disabled": {
+          "subscriptionLive": "jIH SOGDaq Huch nge’ghach chIl qorDu’; rInDI’, pa’ rIn je."
+        }
       }
     },
     "seatLimitModes": {

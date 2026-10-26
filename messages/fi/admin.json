@@ -1242,8 +1242,7 @@
         "title": "Nimeämättömät",
         "subtitle": "Osallistujat, jotka eivät ole vielä missään ryhmässä. Vedä heidät ryhmään sijoittaaksesi.",
         "empty": "Kaikilla on ryhmä.",
-        "addParticipant": "Lisää osallistuja",
-        "removeParticipant": "Poista osallistuja"
+        "addParticipant": "Lisää osallistuja"
       },
       "empty": {
         "title": "Ei vielä ryhmiä",
@@ -1317,22 +1316,19 @@
           "title": "Tilaus on yhä voimassa",
           "description": "Jos {name} siirtyy jonotuslistalle, tilaus jää voimaan ja perheeltä veloitetaan edelleen paikasta, jota sillä ei enää ole.",
           "nextStep": "Perhe avaa laskutuskortin Oma SOG -sivullaan ja siirtyy sitä kautta Stripen suojattuun laskutusportaaliin perumaan tilauksen. Paikka vapautuu heti, kun tilaus päättyy."
-        },
-        "removeSubscribed": {
-          "title": "Tilaus on yhä voimassa",
-          "description": "Jos {name} poistetaan, perheen tilaus jatkaa laskuttamista paikasta, jota ei enää ole.",
-          "nextStep": "Perhe avaa laskutuskortin Oma SOG -sivullaan ja siirtyy sitä kautta Stripen suojattuun laskutusportaaliin perumaan tilauksen. Paikka vapautuu heti, kun tilaus päättyy."
         }
       },
       "switchClub": {
-        "dropZone": "Vaihda kerhoa",
         "title": "Vaihda kerhoa",
         "description": "{name} siirtyy toiseen kerhoon. Perheelle ei muutu tänään mitään: samalta kortilta veloitetaan samana päivänä, ja siitä eteenpäin perhe maksaa uuden kerhon hinnan.",
         "searchPlaceholder": "Hae kerhoja nimellä",
         "picker": {
           "empty": "Muuta kerhoa ei ole tarjolla. Kohteen pitää olla kuukausittain laskutettava kerho, joka ei ole vielä päättynyt.",
           "noMatch": "Haku ei osu yhteenkään kerhoon. Kokeile toista nimeä.",
-          "alreadyHolds": "On jo paikka"
+          "alreadyHolds": "On jo paikka",
+          "needsSubscription": "Vaatii tilauksen",
+          "gamersOnly": "Vain pelaajille",
+          "parentsOnly": "Vain vanhemmille"
         },
         "facts": {
           "ageRange": "{ends, select, both {Ikä {min}–{max} vuotta} from {Ikä vähintään {min} vuotta} other {Ikä enintään {max} vuotta}}",
@@ -1364,18 +1360,51 @@
           "noLiveSubscription": "Tämän paikan takana ei ole voimassa olevaa tilausta, joten tämä ei ole oikea työkalu: poista paikka ja ilmoita pelaaja toiseen kerhoon.",
           "targetNotPaidSubscriptionClub": "Kyseinen tuote ei ole kuukausittain laskutettava kerho, joten tilaus ei voi seurata paikkaa sinne.",
           "sameProduct": "Pelaaja on jo tässä kerhossa.",
-          "alreadyOnTarget": "Pelaajalla on jo paikka kyseisessä kerhossa."
+          "alreadyOnTarget": "Käyttäjällä {name} on jo paikka kyseisessä tuotteessa.",
+          "targetIsSubscriptionClub": "Kerho laskutetaan kuukausittain, joten paikka siellä vaatii tilauksen, jota tämä siirto ei voi luoda.",
+          "targetNotOpenToParents": "Tuote ei ole avoin vanhemmille, joten vanhemman omaa paikkaa ei voi siirtää sinne.",
+          "targetNotOpenToGamers": "Tuote ei ole avoin pelaajille, joten tämän pelaajan paikkaa ei voi siirtää sinne."
         },
         "commit": {
           "stripeUpdated": "Tilaus on jo uuden kerhon hinnassa, mutta paikka ei siirtynyt. Paina Vaihda kerhoa uudelleen, niin siirto viedään loppuun. Uusi painallus ei veloita perhettä kahteen kertaan.",
           "stripeUpdatedStuck": "Tilaus on jo uuden kerhon hinnassa, vaikka paikka ei siirtynyt, joten perhettä laskutetaan kerhosta, jossa pelaajalla ei ole paikkaa. Selvitä tämä ensin Stripessä.",
           "failed": "Vaihto ei mennyt loppuun asti. Paina Vaihda kerhoa uudelleen — uusi painallus toistaa saman pyynnön, joten perhettä ei veloiteta kahteen kertaan."
         },
-        "confirm": "Vaihda kerhoa"
+        "confirm": "Vaihda kerhoa",
+        "noSubscription": {
+          "title": "Siirrä toiseen tuotteeseen",
+          "description": "{name} siirtyy toiseen tuotteeseen.",
+          "searchPlaceholder": "Hae tuotteita nimellä",
+          "picker": {
+            "empty": "Muuta tuotetta ei ole tarjolla. Kohde ei saa olla kuukausittain laskutettava, eikä se saa olla vielä päättynyt.",
+            "noMatch": "Yksikään tuote ei vastaa hakua. Kokeile toista nimeä."
+          },
+          "family": {
+            "label": "Perheelle",
+            "money": "Siirto ei veloita eikä hyvitä mitään.",
+            "priceDifference": "Jos hinnat eroavat, hoida erotus Stripessä.",
+            "email": "Perhe saa uuden tuotteen vahvistussähköpostin, ja kalenterimerkintä siirtyy siihen.",
+            "consents": "Jos uusi tuote vaatii suostumuksia, ne annetaan perheen puolesta, eikä perheeltä kysytä niitä."
+          },
+          "notStarted": "Alkaa {date}.",
+          "confirm": "Siirrä",
+          "commitFailed": "Siirto ei mennyt loppuun asti. Paina Siirrä uudelleen.",
+          "commitConflict": "Paikka muuttui siirron aikana, joten mitään ei siirretty. Sulje tämä ja avaa paikan valikko uudelleen."
+        }
       },
       "requirementGaps": {
         "title": "Lisätäänkö silti?",
         "action": "Lisää silti"
+      },
+      "seatMenu": {
+        "label": "Toiminnot: {name}",
+        "goToUser": "Siirry käyttäjän {name} sivulle",
+        "switchClub": "Vaihda kerhoa…",
+        "move": "Siirrä toiseen tuotteeseen…",
+        "remove": "Poista tästä tuotteesta…",
+        "disabled": {
+          "subscriptionLive": "Perhe peruu tilauksen Oma SOG -sivulla, ja paikka päättyy sen mukana."
+        }
       }
     },
     "seatLimitModes": {

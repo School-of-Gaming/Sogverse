@@ -7,7 +7,7 @@ A paid consumer club is cancelled through the billing card, which opens Stripe's
 portal; the subscription-deleted webhook then removes the seat. Every other active seat —
 a municipality club registration, a free club, a free camp or event, a seat an admin
 comped onto a paid product — has no parent-facing exit at all. The only thing that ends
-one is an admin dragging the participant onto the groups panel's remove zone, and the
+one is an admin removing the participant from their seat menu on the groups panel, and the
 admin removal RPC's own comment says so: a free club has no parent-facing cancel, so
 admin removal is its only exit.
 
