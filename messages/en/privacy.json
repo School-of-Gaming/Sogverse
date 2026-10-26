@@ -37,8 +37,10 @@
         "Messages your child sends in a session’s chat — so the Gedu and the group can read them during the session, and so we can look into a concern afterwards. A message your child removes is hidden from the group but kept until the account is closed.",
         "Feedback your child gives us about their sessions — any ratings and any note they choose to give when we ask how a session went — so we can see how our sessions are going and make them better.",
         "The technical information any website needs to run — sign-in sessions, request logs and, only if you choose it, anonymous usage statistics. See \"Technical information\" and \"Cookies, analytics and advertising\" below.",
-        "The campaign tag — source, medium and campaign — carried by the link your visit came from. We store it once, when the account is created, and only if you’ve allowed marketing cookies, so that we and our partners know which outreach actually reaches families. Saying no to marketing later doesn’t remove a tag that was already stored.",
-        "If you sign up for our newsletter on one of our pages: your email address, and your first and last name if you give them. With them goes the language of the page and which page it was, and the campaign tag of the link you arrived from if you’ve allowed marketing cookies. It all goes straight to Klaviyo, which sends our newsletter, and Sogverse keeps no copy. Signing up doesn’t need an account, and it doesn’t change the marketing choice on an account you have."
+        "The campaign tag — source, medium and campaign — carried by the link your visit came from. We store it once, when the account is created, and only if you’ve allowed marketing cookies, so that we and our partners know which outreach actually reaches families, and so we can tailor the emails we send you. Saying no to marketing later doesn’t remove a tag that was already stored.",
+        "Which of our pages you were on your way to when you created your account — a club, camp or event, your municipality’s club, or one of our landing pages — so we know what brought you to us.",
+        "Your answer to the marketing question when you created your account. We keep a record of the answer as you gave it; after that, you can stop our marketing emails at any time with the unsubscribe link in any of them.",
+        "If you sign up for our newsletter on one of our pages: your email address, and your first and last name if you give them. With them goes the language of the page and which page it was, and the campaign tag of the link you arrived from if you’ve allowed marketing cookies. It all goes straight to Klaviyo, which sends our newsletter, and Sogverse keeps no copy of the sign-up. Signing up doesn’t need an account."
       ]
     },
     "technical": {
@@ -59,7 +61,7 @@
       "paragraphs": [
         "Most of the people using Sogverse are children, so their safety and privacy is our highest priority.",
         "A child can never create their own account. Only a parent or guardian sets up a child’s account, chooses what to share, and gives permission on their behalf. That’s how we meet our responsibilities under data-protection law when it comes to children.",
-        "What we hold about a child is set out above under \"The information we collect\" and \"Technical information\", and we don’t collect anything about a child beyond what we need to run our clubs, camps, and events. We never show children advertising, and we never sell or share their data for marketing. When your child is signed in as a gamer, nothing about their browsing is sent to an advertising platform, even if marketing is switched on for the device. Live sessions are run by our trained Game Educators (we call them Gedus).",
+        "What we hold about a child is set out above under \"The information we collect\" and \"Technical information\", and we don’t collect anything about a child beyond what we need to run our clubs, camps, and events. We never show children advertising, and we never sell their data or share it with anyone for that company’s own marketing. Some details about your child do go to Klaviyo, our email marketing tool, so we can choose which of our emails suit your family — exactly which details is set out under \"The companies that help us run Sogverse\" below. Our marketing emails only ever go to a parent, never to a child. When your child is signed in as a gamer, nothing about their browsing is sent to an advertising platform, even if marketing is switched on for the device. Live sessions are run by our trained Game Educators (we call them Gedus).",
         "If you ever want to see, change, or delete your child’s information, just email {supportEmail} and we’ll take care of it."
       ]
     },
@@ -73,7 +75,8 @@
         "To place your child in the right club, camp, or event group and connect them with a Game Educator.",
         "To run the live voice and video sessions.",
         "To take payments and send receipts, reminders, and important updates about your clubs.",
-        "To send our newsletter to the people who signed up for it.",
+        "To send our marketing emails and our newsletter to the people who said yes to them, and to choose which of them suit your family — news of a Roblox club for the parents of children who play Roblox, say.",
+        "To understand who our customers are — which ages, games and places our clubs reach — so we can plan what we offer next.",
         "To answer your questions when you contact us for help.",
         "To keep Sogverse safe, fix problems, and make it better over time."
       ]
@@ -88,7 +91,8 @@
         "Because a parent has given permission on their child’s behalf (consent).",
         "To meet our legal duties, such as keeping accounting records for payments.",
         "For our legitimate interest in keeping the site secure and working well — always balanced against your privacy.",
-        "Your consent, for the newsletter — which you can withdraw at any time with the unsubscribe link in every newsletter.",
+        "For our legitimate interest in understanding our own customers and keeping our marketing relevant to them — the reason we keep a profile of every parent account in Klaviyo, whether or not you’ve said yes to marketing emails. Having a profile never means getting marketing emails you haven’t agreed to.",
+        "Your consent, for our marketing emails and the newsletter — which you can withdraw at any time with the unsubscribe link in every one of them.",
         "Your consent, for the analytics and marketing cookies and the campaign tag — which you can withdraw at any time from Privacy choices at the bottom of every page."
       ]
     },
@@ -101,7 +105,7 @@
         "Supabase — securely stores your account, family, and club information.",
         "Stripe — processes payments. Your card details go straight to Stripe; we never see them.",
         "Brevo — sends our emails, such as receipts and reminders.",
-        "Klaviyo — keeps our newsletter list and sends the newsletter to the people who signed up for it.",
+        "Klaviyo — sends our marketing emails and the newsletter, and holds a profile of every parent account, so we can understand our customers and choose which emails suit which family. The profile is kept up to date as you use Sogverse, whether or not you’ve said yes to marketing emails. It holds your name, email address, phone number, language, the languages you speak, the municipality and country you gave as your home, and your currency; when you created your account and confirmed your email address; the campaign tag on your account, if you allowed marketing cookies, and which of our pages you were on your way to when you created it; and your answer to the marketing question. It holds details about your children too: their first names, their birth month and year, their gender if you gave it, how many children you have, and whether a Minecraft or Roblox account is linked. And it holds what your family has bought, is enrolled in or is waiting for a place in, your subscription’s status and renewal date, your first and latest payments and how much you’ve spent in all — with a record of when you created your account, enrolled, joined a waiting list, were offered a place, paid, or cancelled a subscription. Deleting your account deletes its profile in Klaviyo too. Klaviyo also receives newsletter sign-ups from our pages (see \"The information we collect\").",
         "Daily.co — powers the live voice and video sessions; your child’s device connects to it directly during a session.",
         "Vercel — hosts the website, so every request passes through it (see \"Technical information\"), and provides anonymous usage statistics if you allow analytics.",
         "Meta (WhatsApp) — used to send some messages and reminders to families who prefer WhatsApp.",
@@ -141,7 +145,7 @@
       ],
       "bullets": [
         "Analytics — Vercel’s, and only if you choose it. It counts visits, measures how quickly pages load, and receives a few anonymous events about how the site is used: how someone reached their My SOG, when someone changes the language. It can’t see who you are, and we never hand it to advertisers.",
-        "Marketing — advertising cookies, only if you choose them. They let the advertising platforms named above — today, Meta and Google — see how you use our site, so they can show you our ads and we can tell which ads work. Google’s tags reach your browser through a tag manager, which lets us and the partner who runs our campaigns add or remove a platform without changing the site; whichever platforms it carries are named in the list above, and that list carries a date. If you create an account during a visit, the campaign tag on the link you arrived from is stored on it too. They never run while a gamer is signed in. Switching marketing off deletes these cookies, and the small amount of data these scripts keep in your browser alongside them, but not what the platforms already hold — you can ask them to delete it in your settings with them."
+        "Marketing — advertising cookies, only if you choose them. They let the advertising platforms named above — today, Meta and Google — see how you use our site, so they can show you our ads and we can tell which ads work. Google’s tags reach your browser through a tag manager, which lets us and the partner who runs our campaigns add or remove a platform without changing the site; whichever platforms it carries are named in the list above, and that list carries a date. If you create an account during a visit, the campaign tag on the link you arrived from is stored on it too, and goes to Klaviyo with the rest of your account’s profile so we can tailor the emails we send you. They never run while a gamer is signed in. Switching marketing off deletes these cookies, and the small amount of data these scripts keep in your browser alongside them, but not what the platforms already hold — you can ask them to delete it in your settings with them."
       ]
     },
     "voice": {
@@ -154,7 +158,8 @@
     "retention": {
       "heading": "How long we keep your information",
       "paragraphs": [
-        "We keep your information for as long as you have an account with us. If you close your account, we delete or anonymise your information — except where the law requires us to keep certain records longer, such as Finnish accounting law, which requires payment records to be kept for several years."
+        "We keep your information for as long as you have an account with us. If you close your account, we delete or anonymise your information — except where the law requires us to keep certain records longer, such as Finnish accounting law, which requires payment records to be kept for several years.",
+        "Closing your account also deletes its profile in Klaviyo, our email marketing tool. A newsletter sign-up made on one of our pages stays with Klaviyo until you ask us to delete it."
       ]
     },
     "storage": {

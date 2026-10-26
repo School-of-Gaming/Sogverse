@@ -37,8 +37,10 @@
         "Viestit, joita lapsesi lähettää tapaamisen chatissa – jotta pelikasvattaja ja muu ryhmä voivat lukea ne tapaamisen aikana ja jotta voimme selvittää mahdollisen huolen jälkikäteen. Lapsesi poistama viesti piilotetaan ryhmältä, mutta se säilytetään tilin sulkemiseen asti.",
         "Palaute, jonka lapsesi antaa meille tapaamisistaan – arviot ja mahdollisen viestin, jotka hän itse päättää antaa, kun kysymme, miten tapaaminen sujui – jotta näemme, miten tapaamisemme sujuvat, ja voimme tehdä niistä parempia.",
         "Tekniset tiedot, joita mikä tahansa verkkosivusto tarvitsee toimiakseen – kirjautumisistunnot, pyyntölokit ja, vain jos valitset sen, nimettömät käyttötilastot. Katso kohdat \"Tekniset tiedot\" ja \"Evästeet, analytiikka ja mainonta\" jäljempänä.",
-        "Kampanjatunnisteen – lähteen, välineen ja kampanjan – jonka käyntisi aloittanut linkki kantoi mukanaan. Tallennamme sen kerran, tilin luonnin yhteydessä ja vain jos olet sallinut markkinointievästeet, jotta me ja kumppanimme tiedämme, mikä viestintä tavoittaa perheitä. Markkinoinnista kieltäytyminen myöhemmin ei poista jo tallennettua tunnistetta.",
-        "Jos tilaat uutiskirjeemme jollakin sivuistamme: sähköpostiosoitteesi sekä etu- ja sukunimesi, jos annat ne. Mukana menevät myös sivun kieli ja tieto siitä, mikä sivu oli kyseessä, sekä sen linkin kampanjatunniste, jonka kautta saavuit, jos olet sallinut markkinointievästeet. Kaikki tämä menee suoraan Klaviyolle, joka lähettää uutiskirjeemme, eikä Sogverse säilytä siitä kopiota. Tilaaminen ei vaadi tiliä, eikä se muuta tililläsi olevaa markkinointivalintaa, jos sinulla on tili."
+        "Kampanjatunnisteen – lähteen, välineen ja kampanjan – jonka käyntisi aloittanut linkki kantoi mukanaan. Tallennamme sen kerran, tilin luonnin yhteydessä ja vain jos olet sallinut markkinointievästeet, jotta me ja kumppanimme tiedämme, mikä viestintä tavoittaa perheitä, ja jotta voimme räätälöidä sinulle lähettämämme sähköpostit. Markkinoinnista kieltäytyminen myöhemmin ei poista jo tallennettua tunnistetta.",
+        "Tiedon siitä, mille sivullemme olit menossa, kun loit tilisi – kerhon, leirin tai tapahtuman sivulle, kuntasi kerhon sivulle tai jollekin laskeutumissivuistamme –, jotta tiedämme, mikä toi sinut luoksemme.",
+        "Vastauksesi markkinointikysymykseen tilin luonnin yhteydessä. Säilytämme vastauksen sellaisena kuin annoit sen; sen jälkeen voit lopettaa markkinointisähköpostimme milloin tahansa minkä tahansa niistä peruutuslinkistä.",
+        "Jos tilaat uutiskirjeemme jollakin sivuistamme: sähköpostiosoitteesi sekä etu- ja sukunimesi, jos annat ne. Mukana menevät myös sivun kieli ja tieto siitä, mikä sivu oli kyseessä, sekä sen linkin kampanjatunniste, jonka kautta saavuit, jos olet sallinut markkinointievästeet. Kaikki tämä menee suoraan Klaviyolle, joka lähettää uutiskirjeemme, eikä Sogverse säilytä tilauksesta kopiota. Tilaaminen ei vaadi tiliä."
       ]
     },
     "technical": {
@@ -59,7 +61,7 @@
       "paragraphs": [
         "Suurin osa Sogversen käyttäjistä on lapsia, joten heidän turvallisuutensa ja yksityisyytensä on meille tärkeintä.",
         "Lapsi ei voi koskaan luoda omaa tiliään itse. Vain vanhempi tai huoltaja luo lapsen tilin, päättää mitä tietoja jaetaan ja antaa luvan lapsen puolesta. Näin täytämme lapsia koskevat velvollisuutemme tietosuojalainsäädännön mukaan.",
-        "Kerromme edellä kohdissa \"Mitä tietoja keräämme\" ja \"Tekniset tiedot\", mitä lapsesta säilytämme. Emme kerää lapsesta muuta kuin sen, mitä kerhojen, leirien ja tapahtumien järjestäminen vaatii. Emme koskaan näytä lapsille mainoksia emmekä koskaan myy tai jaa heidän tietojaan markkinointiin. Kun lapsesi on kirjautuneena pelaajana, mitään hänen selailustaan ei lähetetä mainosalustoille, vaikka markkinointi olisi laitteella päällä. Tapaamisia ohjaavat koulutetut pelikasvattajamme (kutsumme heitä Geduiksi).",
+        "Kerromme edellä kohdissa \"Mitä tietoja keräämme\" ja \"Tekniset tiedot\", mitä lapsesta säilytämme. Emme kerää lapsesta muuta kuin sen, mitä kerhojen, leirien ja tapahtumien järjestäminen vaatii. Emme koskaan näytä lapsille mainoksia, emmekä koskaan myy heidän tietojaan tai jaa niitä kenellekään tämän omaa markkinointia varten. Osa lapsesi tiedoista menee kuitenkin sähköpostimarkkinointityökalullemme Klaviyolle, jotta voimme valita, mitkä sähköpostimme sopivat perheellesi – tarkalleen mitkä tiedot, kerromme alla kohdassa \"Yritykset, jotka auttavat meitä pyörittämään Sogversea\". Markkinointisähköpostimme menevät aina vain vanhemmalle, eivät koskaan lapselle. Kun lapsesi on kirjautuneena pelaajana, mitään hänen selailustaan ei lähetetä mainosalustoille, vaikka markkinointi olisi laitteella päällä. Tapaamisia ohjaavat koulutetut pelikasvattajamme (kutsumme heitä Geduiksi).",
         "Jos haluat milloin tahansa nähdä, muuttaa tai poistaa lapsesi tiedot, lähetä viesti osoitteeseen {supportEmail}, niin hoidamme asian."
       ]
     },
@@ -73,7 +75,8 @@
         "Lapsesi sijoittamiseen oikeaan kerho-, leiri- tai tapahtumaryhmään ja pelikasvattajan kanssa yhdistämiseen.",
         "Suorien ääni- ja videotapaamisten järjestämiseen.",
         "Maksujen perimiseen sekä kuittien, muistutusten ja kerhojasi koskevien tärkeiden tiedotteiden lähettämiseen.",
-        "Uutiskirjeemme lähettämiseen niille, jotka ovat tilanneet sen.",
+        "Markkinointisähköpostiemme ja uutiskirjeemme lähettämiseen niille, jotka ovat suostuneet niihin, ja sen valitsemiseen, mitkä niistä sopivat perheellesi – esimerkiksi tieto Roblox-kerhosta niille vanhemmille, joiden lapset pelaavat Robloxia.",
+        "Sen ymmärtämiseen, keitä asiakkaamme ovat – minkä ikäisiä lapsia, mitä pelejä ja mitä paikkakuntia kerhomme tavoittavat –, jotta voimme suunnitella, mitä tarjoamme seuraavaksi.",
         "Kysymyksiisi vastaamiseen, kun otat meihin yhteyttä.",
         "Sogversen turvallisena pitämiseen, ongelmien korjaamiseen ja palvelun parantamiseen ajan myötä."
       ]
@@ -88,7 +91,8 @@
         "Koska vanhempi on antanut luvan lapsensa puolesta (suostumus).",
         "Täyttääksemme lakisääteiset velvollisuutemme, kuten maksujen kirjanpitotietojen säilyttämisen.",
         "Oikeutetun etumme perusteella, kun pidämme sivuston turvallisena ja toimivana – aina yksityisyytesi kanssa tasapainotettuna.",
-        "Suostumuksesi uutiskirjeeseen – voit peruuttaa sen milloin tahansa jokaisessa uutiskirjeessä olevasta tilauksen peruutuslinkistä.",
+        "Oikeutetun etumme perusteella, kun haluamme ymmärtää omia asiakkaitamme ja pitää markkinointimme heille osuvana – siksi pidämme Klaviyossa profiilia jokaisesta vanhemman tilistä riippumatta siitä, oletko suostunut markkinointisähköposteihin. Profiili ei koskaan tarkoita, että saisit markkinointisähköposteja, joihin et ole suostunut.",
+        "Suostumuksesi markkinointisähköposteihimme ja uutiskirjeeseen – voit peruuttaa sen milloin tahansa jokaisessa viestissä olevasta tilauksen peruutuslinkistä.",
         "Suostumuksesi analytiikka- ja markkinointievästeisiin sekä kampanjatunnisteeseen – voit peruuttaa sen milloin tahansa jokaisen sivun alalaidan Yksityisyysvalinnat-linkistä."
       ]
     },
@@ -101,7 +105,7 @@
         "Supabase – tallentaa turvallisesti tili-, perhe- ja kerhotietosi.",
         "Stripe – käsittelee maksut. Korttitietosi menevät suoraan Stripelle, emmekä me näe niitä.",
         "Brevo – lähettää sähköpostimme, kuten kuitit ja muistutukset.",
-        "Klaviyo – säilyttää uutiskirjeemme tilaajaluettelon ja lähettää uutiskirjeen niille, jotka ovat tilanneet sen.",
+        "Klaviyo – lähettää markkinointisähköpostimme ja uutiskirjeen sekä säilyttää profiilia jokaisesta vanhemman tilistä, jotta ymmärrämme asiakkaitamme ja voimme valita, mitkä sähköpostit sopivat millekin perheelle. Profiili pidetään ajan tasalla sitä mukaa kuin käytät Sogversea, riippumatta siitä, oletko suostunut markkinointisähköposteihin. Siinä ovat nimesi, sähköpostiosoitteesi, puhelinnumerosi, kielesi, puhumasi kielet, kodiksesi antamasi kunta ja maa sekä valuuttasi; milloin loit tilisi ja vahvistit sähköpostiosoitteesi; tilisi kampanjatunniste, jos sallit markkinointievästeet, ja se, mille sivullemme olit menossa tiliä luodessasi; sekä vastauksesi markkinointikysymykseen. Siinä on myös tietoja lapsistasi: heidän etunimensä, syntymäkuukautensa ja -vuotensa, sukupuolensa, jos kerroit sen, lastesi lukumäärä ja se, onko heille yhdistetty Minecraft- tai Roblox-tili. Lisäksi siinä on se, mitä perheesi on ostanut, mihin se on ilmoittautunut tai missä se on jonotuslistalla, tilauksesi tila ja uusiutumispäivä, ensimmäinen ja viimeisin maksusi sekä se, paljonko olet maksanut yhteensä – ja tieto siitä, milloin loit tilin, ilmoittauduit, liityit jonotuslistalle, sait tarjouksen paikasta, maksoit tai peruit tilauksen. Tilisi poistaminen poistaa myös sen profiilin Klaviyosta. Klaviyo vastaanottaa myös sivuillamme tehdyt uutiskirjetilaukset (ks. \"Mitä tietoja keräämme\").",
         "Daily.co – mahdollistaa suorat ääni- ja videotapaamiset; lapsesi laite yhdistää siihen suoraan tapaamisen aikana.",
         "Vercel – ylläpitää sivustoa, joten jokainen pyyntö kulkee sen kautta (katso kohta \"Tekniset tiedot\"), ja tarjoaa nimettömät käyttötilastot, jos sallit analytiikan.",
         "Meta (WhatsApp) – joidenkin viestien ja muistutusten lähettämiseen perheille, jotka käyttävät mieluummin WhatsAppia.",
@@ -141,7 +145,7 @@
       ],
       "bullets": [
         "Analytiikka – Vercelin analytiikka, ja vain jos valitset sen. Se laskee käynnit, mittaa sivujen latausnopeuden ja vastaanottaa muutamia nimettömiä tapahtumia siitä, miten sivustoa käytetään: miten Oma SOG avataan ja milloin kieltä vaihdetaan. Se ei näe, kuka olet, emmekä anna sitä koskaan mainostajille.",
-        "Markkinointi – mainosevästeet, vain jos valitset ne. Niiden avulla yllä mainitut mainosalustat – tällä hetkellä Meta ja Google – näkevät, miten käytät sivustoamme, jotta ne voivat näyttää sinulle mainoksiamme ja me näemme, mitkä mainokset toimivat. Googlen tunnisteet tulevat selaimeesi tunnistehallinnan kautta, jonka ansiosta me ja kampanjoitamme hoitava kumppani voimme lisätä tai poistaa alustan muuttamatta sivustoa; kulloinkin mukana olevat alustat on nimetty yllä olevassa luettelossa, ja luettelossa on päivämäärä. Jos luot tilin käynnin aikana, myös sen linkin kampanjatunniste, jonka kautta saavuit, tallennetaan tilille. Ne eivät ole koskaan käytössä, kun pelaaja on kirjautuneena. Markkinoinnin poistaminen käytöstä poistaa nämä evästeet ja sen pienen tietomäärän, jota nämä skriptit säilyttävät selaimessasi niiden rinnalla, mutta ei sitä, mitä alustoilla jo on – voit pyytää niitä poistamaan sen omista asetuksistasi niissä."
+        "Markkinointi – mainosevästeet, vain jos valitset ne. Niiden avulla yllä mainitut mainosalustat – tällä hetkellä Meta ja Google – näkevät, miten käytät sivustoamme, jotta ne voivat näyttää sinulle mainoksiamme ja me näemme, mitkä mainokset toimivat. Googlen tunnisteet tulevat selaimeesi tunnistehallinnan kautta, jonka ansiosta me ja kampanjoitamme hoitava kumppani voimme lisätä tai poistaa alustan muuttamatta sivustoa; kulloinkin mukana olevat alustat on nimetty yllä olevassa luettelossa, ja luettelossa on päivämäärä. Jos luot tilin käynnin aikana, myös sen linkin kampanjatunniste, jonka kautta saavuit, tallennetaan tilille, ja se menee Klaviyolle muun tilisi profiilin mukana, jotta voimme räätälöidä sinulle lähettämämme sähköpostit. Ne eivät ole koskaan käytössä, kun pelaaja on kirjautuneena. Markkinoinnin poistaminen käytöstä poistaa nämä evästeet ja sen pienen tietomäärän, jota nämä skriptit säilyttävät selaimessasi niiden rinnalla, mutta ei sitä, mitä alustoilla jo on – voit pyytää niitä poistamaan sen omista asetuksistasi niissä."
       ]
     },
     "voice": {
@@ -154,7 +158,8 @@
     "retention": {
       "heading": "Kuinka kauan säilytämme tietojasi",
       "paragraphs": [
-        "Säilytämme tietojasi niin kauan kuin sinulla on tili meillä. Jos suljet tilisi, poistamme tai anonymisoimme tietosi – paitsi silloin, kun laki edellyttää meitä säilyttämään tietyt tiedot pidempään, kuten Suomen kirjanpitolaki, joka velvoittaa säilyttämään maksutiedot useita vuosia."
+        "Säilytämme tietojasi niin kauan kuin sinulla on tili meillä. Jos suljet tilisi, poistamme tai anonymisoimme tietosi – paitsi silloin, kun laki edellyttää meitä säilyttämään tietyt tiedot pidempään, kuten Suomen kirjanpitolaki, joka velvoittaa säilyttämään maksutiedot useita vuosia.",
+        "Tilin sulkeminen poistaa myös sen profiilin sähköpostimarkkinointityökalustamme Klaviyosta. Sivuillamme tehty uutiskirjetilaus säilyy Klaviyossa, kunnes pyydät meitä poistamaan sen."
       ]
     },
     "storage": {
