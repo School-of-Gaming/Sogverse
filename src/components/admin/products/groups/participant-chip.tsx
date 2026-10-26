@@ -1,7 +1,15 @@
 "use client";
 
-import { memo } from "react";
-import { useDraggable } from "@dnd-kit/core";
+import {
+  memo,
+  useContext,
+  useEffect,
+  useMemo,
+  useRef,
+  useState,
+  type KeyboardEvent,
+} from "react";
+import { useDndMonitor, useDraggable } from "@dnd-kit/core";
 import { GripVertical, Mail, User } from "lucide-react";
 import { useTranslations } from "next-intl";
 import { Avatar } from "@/components/ui/avatar";
@@ -15,6 +23,7 @@ import { gamerBirthOf } from "@/lib/gamer-birth";
 import { useTimezone } from "@/providers";
 import type { GenderType } from "@/types";
 import type { ChipGameIdentity } from "./panel-rules";
+import { SeatMenuContext, SeatMenuPanel, seatMenuRows } from "./seat-menu";
 
 // `satisfies` keeps the record exhaustive over GenderType while the values
 // keep their literal types, so t(GENDER_KEY[gender]) typechecks unasserted.
@@ -184,11 +193,25 @@ interface ParticipantChipProps extends ContentProps {
   isPending?: boolean;
 }
 
-// The chip carries no controls of its own, deliberately: it is a drag handle end
-// to end, and every action the panel offers a seat — moving it, seating it,
-// removing it, switching its club — is a drop somewhere. A button sitting on a
-// handle competes with the gesture the handle exists for.
-
+/**
+ * One seat on the board: a drag handle end to end, and — pressed without
+ * dragging — the trigger of that seat's menu.
+ *
+ * **The chip carries no button of its own.** A control sitting on a handle
+ * competes with the gesture the handle exists for, so the menu is the chip's
+ * own press: a click (or Enter, Space or ArrowDown on the focused chip) opens
+ * it, and a drag never does. The two cannot be confused because dnd-kit
+ * decides between them: the panel's pointer sensor only activates a drag after
+ * five pixels of travel, and once it has, it swallows the click that ends the
+ * gesture, so the press that ends a drag never reaches the chip. The other
+ * direction holds too — the open panel is a sibling of the draggable element,
+ * not inside it, so pressing a row starts no drag, and a drag that does start
+ * from the chip closes the menu.
+ *
+ * Which rows the menu holds is the panel's decision (`seatMenuItems`), handed
+ * down through `SeatMenuContext`; a chip with no context, or one whose seat is
+ * mid-write, is a plain handle.
+ */
 export function ParticipantChip({
   participationId,
   participantId,
@@ -205,17 +228,131 @@ export function ParticipantChip({
   participantEmail,
   isPending,
 }: ParticipantChipProps) {
+  const t = useTranslations("admin.products.groupsPanel.seatMenu");
   const { attributes, listeners, setNodeRef, isDragging } = useDraggable({
     id: `participation-${participationId}`,
     data: { participationId, participantId, firstName },
     disabled: isPending,
   });
 
-  return (
+  const seatMenu = useContext(SeatMenuContext);
+  const items = isPending ? null : (seatMenu?.itemsFor(participationId) ?? null);
+  const hasMenu = items !== null && items.length > 0;
+
+  const [open, setOpen] = useState(false);
+  const menuOpen = open && hasMenu;
+  const wrapperRef = useRef<HTMLDivElement>(null);
+  const chipRef = useRef<HTMLDivElement | null>(null);
+  const panelRef = useRef<HTMLDivElement>(null);
+  // Which end to land focus on when the menu is opened from the keyboard — the
+  // panel is not in the DOM until that open renders, so the intent waits here
+  // for the effect below. A pointer open focuses nothing: a focused row wears
+  // a filled ground, and a menu opened by a click would show a row selected.
+  const focusOnOpenRef = useRef<"first" | "last" | null>(null);
+
+  // A drag starting from this chip closes its menu: the panel would otherwise
+  // hang under a chip that is being carried somewhere else.
+  const monitor = useMemo(() => ({ onDragStart: () => setOpen(false) }), []);
+  useDndMonitor(monitor);
+
+  // Listeners only while the panel is open, as the session card menu does:
+  // a board holds fifty chips, and at most one menu is ever open.
+  useEffect(() => {
+    if (!menuOpen) return;
+    function onPointerDown(event: MouseEvent) {
+      const target = event.target;
+      if (
+        wrapperRef.current !== null &&
+        target instanceof Node &&
+        wrapperRef.current.contains(target)
+      ) {
+        return;
+      }
+      setOpen(false);
+    }
+    function onKey(event: globalThis.KeyboardEvent) {
+      if (event.key !== "Escape") return;
+      setOpen(false);
+      chipRef.current?.focus();
+    }
+    document.addEventListener("mousedown", onPointerDown);
+    document.addEventListener("keydown", onKey);
+    return () => {
+      document.removeEventListener("mousedown", onPointerDown);
+      document.removeEventListener("keydown", onKey);
+    };
+  }, [menuOpen]);
+
+  useEffect(() => {
+    if (!menuOpen) return;
+    const want = focusOnOpenRef.current;
+    focusOnOpenRef.current = null;
+    if (want === null) return;
+    const rows = seatMenuRows(panelRef.current);
+    if (rows.length === 0) return;
+    (want === "first" ? rows[0] : rows[rows.length - 1]).focus();
+  }, [menuOpen]);
+
+  const setChipRef = (node: HTMLDivElement | null) => {
+    chipRef.current = node;
+    setNodeRef(node);
+  };
+
+  const handleChipKeyDown = (event: KeyboardEvent<HTMLDivElement>) => {
+    if (!hasMenu) return;
+    const { key } = event;
+    if (key === "Enter" || key === " " || key === "ArrowDown") {
+      event.preventDefault();
+      focusOnOpenRef.current = "first";
+      setOpen(true);
+    } else if (key === "ArrowUp") {
+      event.preventDefault();
+      focusOnOpenRef.current = "last";
+      setOpen(true);
+    }
+  };
+
+  const handlePanelKeyDown = (event: KeyboardEvent<HTMLDivElement>) => {
+    const { key } = event;
+    if (key === "Tab") {
+      // Tabbing out of a menu closes it, so a panel is never left painted over
+      // a board the keyboard has already left.
+      setOpen(false);
+      return;
+    }
+    if (
+      key !== "ArrowDown" &&
+      key !== "ArrowUp" &&
+      key !== "Home" &&
+      key !== "End"
+    ) {
+      return;
+    }
+    event.preventDefault();
+    const rows = seatMenuRows(panelRef.current);
+    if (rows.length === 0) return;
+    if (key === "Home") return rows[0].focus();
+    if (key === "End") return rows[rows.length - 1].focus();
+    const active = document.activeElement;
+    const current = active instanceof HTMLElement ? rows.indexOf(active) : -1;
+    const step = key === "ArrowDown" ? 1 : -1;
+    const next = (((current + step) % rows.length) + rows.length) % rows.length;
+    rows[next].focus();
+  };
+
+  const chip = (
     <div
-      ref={setNodeRef}
+      ref={setChipRef}
       {...listeners}
       {...attributes}
+      {...(hasMenu
+        ? {
+            "aria-haspopup": "menu" as const,
+            "aria-expanded": menuOpen,
+            onClick: () => setOpen((was) => !was),
+            onKeyDown: handleChipKeyDown,
+          }
+        : {})}
       aria-disabled={isPending || undefined}
       className={cn(
         "flex items-center gap-2 rounded-lg border border-border px-2.5 py-2 text-xs font-medium transition-colors",
@@ -243,6 +380,33 @@ export function ParticipantChip({
         gameAvatarUrl={gameAvatarUrl}
         participantEmail={participantEmail}
       />
+    </div>
+  );
+
+  // The wrapper is what the panel is positioned against, and it takes the
+  // chip's own place in whatever row holds it — a block around the chip, sized
+  // by it. It is there whether or not the seat has a menu right now, so a chip
+  // going busy mid-write keeps its element (and its focus) rather than being
+  // remounted one level up.
+  return (
+    <div ref={wrapperRef} className="relative">
+      {chip}
+      {menuOpen && seatMenu !== null && (
+        <SeatMenuPanel
+          ref={panelRef}
+          label={t("label", { name: firstName })}
+          items={items}
+          onKeyDown={handlePanelKeyDown}
+          onSelect={(action) => {
+            setOpen(false);
+            // Focus goes back to the chip before the row's flow opens, so the
+            // dialog or sheet it opens hands focus back here when it closes,
+            // rather than to a row that has already unmounted.
+            chipRef.current?.focus();
+            seatMenu.onSelect(participationId, firstName, action);
+          }}
+        />
+      )}
     </div>
   );
 }

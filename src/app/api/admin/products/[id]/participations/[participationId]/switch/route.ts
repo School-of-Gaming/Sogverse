@@ -68,6 +68,9 @@ export const GET = defineRoute({
     // part of the wire contract; the response schema would strip it anyway, and
     // dropping it here says so deliberately.
     return {
+      // The route answers for a subscribed seat; the no-charge arm is not
+      // served here yet (the UI-STUB in switch-club.queries.ts stands in).
+      kind: "subscription" as const,
       currency: check.currency,
       currentAmountCents: check.currentAmountCents,
       targetAmountCents: check.targetAmountCents,

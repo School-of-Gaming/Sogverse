@@ -252,6 +252,84 @@ export function resolveDrop(
 }
 
 // ---------------------------------------------------------------------------
+// The seat menu
+// ---------------------------------------------------------------------------
+
+/**
+ * What a seat's menu offers. Three actions, and each one leaves the seat off
+ * this product:
+ *
+ *  - `switchClub` — the paid club switch, for an active seat a live
+ *    subscription stands behind.
+ *  - `move` — the no-charge move, for an active seat with nothing billing
+ *    behind it, onto another product that charges nothing.
+ *  - `remove` — the removal confirm the header drop zone also opens.
+ */
+export type SeatMenuAction = "switchClub" | "move" | "remove";
+
+/**
+ * Why a row is drawn disabled. Each is stated in the row itself, so an admin
+ * reads the reason where they reached for the action rather than in a refusal
+ * after it.
+ *
+ *  - `subscriptionLive` — removal would leave a live subscription billing for a
+ *    seat that no longer exists; it has to be cancelled in Stripe first.
+ *  - `productCharges` — the seat is on a product that charges, and only a seat
+ *    nothing is paid for can be moved without money following it.
+ */
+export type SeatMenuDisabledReason = "subscriptionLive" | "productCharges";
+
+export interface SeatMenuItem {
+  action: SeatMenuAction;
+  /** Null when the row can be pressed. */
+  disabledReason: SeatMenuDisabledReason | null;
+}
+
+/**
+ * The rows of one seat's menu, in the order they are drawn.
+ *
+ * Read off the same subject a drop is resolved from, so the menu and the drag
+ * cannot disagree about a seat: a live subscription is what makes removal
+ * impossible and the paid switch possible, exactly as `resolveDrop` has it.
+ *
+ * A waitlisted row offers removal alone. It holds no seat to move, and the
+ * paid switch serves active seats only — the same edge `resolveDrop` refuses
+ * with `removeSubscribed`, which is also why a waitlisted row with a live
+ * subscription is shown its removal disabled.
+ *
+ * The move is offered on an active seat with no subscription behind it, and
+ * pressable only where the product it sits on charges nothing. On a paid camp
+ * or event the row stays, disabled with its reason, so an admin looking for a
+ * way to move that seat learns why there is none rather than finding a menu
+ * that simply lacks the line.
+ */
+export function seatMenuItems(
+  subject: DragSubject,
+  billingMode: BillingMode,
+): SeatMenuItem[] {
+  const removeItem: SeatMenuItem = {
+    action: "remove",
+    disabledReason: subject.hasLiveSubscription ? "subscriptionLive" : null,
+  };
+
+  if (subject.isWaitlisted) return [removeItem];
+
+  if (subject.hasLiveSubscription) {
+    return [{ action: "switchClub", disabledReason: null }, removeItem];
+  }
+
+  return [
+    {
+      action: "move",
+      disabledReason: isNoChargeBillingMode(billingMode)
+        ? null
+        : "productCharges",
+    },
+    removeItem,
+  ];
+}
+
+// ---------------------------------------------------------------------------
 // The subscription-shaped product
 // ---------------------------------------------------------------------------
 
@@ -719,6 +797,33 @@ export function isSwitchTarget(
   if (!isSubscriptionShaped(candidate.product_type, candidate.billing_mode)) {
     return false;
   }
+  if (candidate.end_date === null) return true;
+  return candidate.end_date >= formatInTimeZone(now, candidate.timezone, "yyyy-MM-dd");
+}
+
+/**
+ * Whether a product is a legal destination for the no-charge move: it charges
+ * nothing for its seat, it is not yet over, and it is not the product the seat
+ * is already on.
+ *
+ * **Every type qualifies**, unlike the paid switch: with no subscription to
+ * reprice, nothing ties the seat to a monthly club, so a seat on a free club
+ * may go to a municipality club, a free camp or a free event as readily as to
+ * another free club. "Not yet over" is read exactly as {@link isSwitchTarget}
+ * reads it — the end date against the product's own today.
+ */
+export function isNoChargeMoveTarget(
+  candidate: {
+    id: string;
+    billing_mode: BillingMode;
+    end_date: string | null;
+    timezone: string;
+  },
+  sourceProductId: string,
+  now: Date,
+): boolean {
+  if (candidate.id === sourceProductId) return false;
+  if (!isNoChargeBillingMode(candidate.billing_mode)) return false;
   if (candidate.end_date === null) return true;
   return candidate.end_date >= formatInTimeZone(now, candidate.timezone, "yyyy-MM-dd");
 }

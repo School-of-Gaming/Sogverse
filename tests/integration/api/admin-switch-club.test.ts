@@ -374,6 +374,7 @@ describe("GET …/participations/[participationId]/switch — the check", () => 
 
     expect(response.status).toBe(200);
     expect(body).toEqual({
+      kind: "subscription",
       currency: "eur",
       // The item's own amount, not the source club's authored price: a
       // subscriber keeps what they signed up at.

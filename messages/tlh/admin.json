@@ -1367,11 +1367,39 @@
           "stripeUpdatedStuck": "ghom’a’ chu’ HuchDaq ’oHtaH Huch nge’ghach’e’, ’ach vIHlaHbe’ pa’: ghom’a’Daq pa’ ghajbe’bogh SuvwI’vaD DIl qorDu’. StripeDaq nom yIQIj.",
           "failed": "rInbe’ chIjghach. ghom’a’ yIchIj yI’uy’qa’ — rap tlhobHa’ghach, vaj not cha’logh DIl qorDu’."
         },
-        "confirm": "ghom’a’ yIchIj"
+        "confirm": "ghom’a’ yIchIj",
+        "noCharge": {
+          "title": "latlh ngoptlhInDaq yIvIH",
+          "description": "latlh ngoptlhIn DIlbe’lu’bogh Daq {name} yIvIH.",
+          "searchPlaceholder": "pongDaq ngoptlhIn yISam",
+          "picker": {
+            "empty": "latlh ngoptlhIn tu’lu’be’. DIlbe’lu’nIS ngoptlhIn, ’ej rInbe’nIS.",
+            "noMatch": "Sambogh ngoptlhIn tu’lu’be’. latlh pong yInId."
+          },
+          "family": {
+            "label": "qorDu’vaD",
+            "money": "Huch choHbe’: quSvaD DIlmoHbe’ cha’ ngoptlhIn.",
+            "email": "ngoptlhIn chu’ QIn Hev qorDu’, ’ej ngoptlhIn chu’Daq vIH DIS jaj ghItlh.",
+            "consents": "chaq chaw’ poQ ngoptlhIn chu’; qorDu’ rIllu’, vaj qorDu’ tlhoblu’be’."
+          },
+          "notStarted": "{date} tagh.",
+          "confirm": "yIvIH",
+          "commitFailed": "rInbe’ vIHghach. yIvIH yI’uy’qa’."
+        }
       },
       "requirementGaps": {
         "title": "ghomvaD yIchu’ ’e’ DaHech’a’?",
         "action": "yIchu’ ’e’ yIruch"
+      },
+      "seatMenu": {
+        "label": "{name} ta’mey",
+        "switchClub": "ghom’a’ yIchIj…",
+        "move": "latlh ngoptlhInDaq yIvIH…",
+        "remove": "ngoptlhInvamvo’ yIteq…",
+        "disabled": {
+          "subscriptionLive": "wa’DIch StripeDaq jarmey Huch yIqIl.",
+          "productCharges": "ngoptlhInmey DIlbe’lu’bogh neH quSDaq vIHlaH."
+        }
       }
     },
     "seatLimitModes": {

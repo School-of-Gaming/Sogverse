@@ -1367,11 +1367,39 @@
           "stripeUpdatedStuck": "The subscription is already on the new club's price even though the seat could not move, so the family is billed for a club the gamer holds no place on. Sort this out in Stripe first.",
           "failed": "The switch did not complete. Press Switch club again — a repeated press replays the same request, so it never charges the family twice."
         },
-        "confirm": "Switch club"
+        "confirm": "Switch club",
+        "noCharge": {
+          "title": "Move to another product",
+          "description": "Move {name} to another product that does not charge for its seat.",
+          "searchPlaceholder": "Search products by name",
+          "picker": {
+            "empty": "There is no other product to move to. A target has to be a product that does not charge and has not finished.",
+            "noMatch": "No product matches this search. Try another name."
+          },
+          "family": {
+            "label": "For the family",
+            "money": "Nothing changes for money: neither product charges for the seat.",
+            "email": "They receive the new product’s confirmation email, and their calendar entry moves to it.",
+            "consents": "If the new product asks for consents, they are given on the family’s behalf, so the family is not asked for them."
+          },
+          "notStarted": "Starts {date}.",
+          "confirm": "Move",
+          "commitFailed": "The move did not complete. Press Move again."
+        }
       },
       "requirementGaps": {
         "title": "Assign anyway?",
         "action": "Assign anyway"
+      },
+      "seatMenu": {
+        "label": "Actions for {name}",
+        "switchClub": "Switch club…",
+        "move": "Move to another product…",
+        "remove": "Remove from this product…",
+        "disabled": {
+          "subscriptionLive": "The subscription has to be cancelled in Stripe first.",
+          "productCharges": "Only seats on products that do not charge can be moved."
+        }
       }
     },
     "seatLimitModes": {

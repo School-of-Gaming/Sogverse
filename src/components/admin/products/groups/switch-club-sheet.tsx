@@ -35,6 +35,7 @@ import {
   SwitchClubCommitError,
   useSwitchClub,
   useSwitchClubCheck,
+  type SwitchClubMode,
 } from "@/services/participations/switch-club.queries";
 import {
   useParticipationsForGamers,
@@ -42,8 +43,10 @@ import {
 import type { SwitchClubRefusal } from "@/services/participations/switch-club.contracts";
 import { filterProductsBySearch } from "../product-name-search";
 import { ProductStatusChip } from "../product-status-chip";
+import { PRODUCT_TYPE_PRESENTATION } from "@/components/admin/dashboard/product-type-presentation";
 import {
   heldProductIds,
+  isNoChargeMoveTarget,
   isSwitchTarget,
   orderSwitchTargets,
   switchTargetFacts,
@@ -101,6 +104,13 @@ interface SwitchClubSheetProps {
    * a frame early is a chip an admin can start dragging mid-switch.
    */
   onCommittingChange: (committing: boolean) => void;
+  /**
+   * Which of the sheet's two actions this is: `subscription`, the paid club
+   * switch, or `no_charge`, the move of a seat nothing bills behind onto
+   * another product of any type that charges nothing. The second has no money
+   * to show, and its catalogue spans every product type.
+   */
+  mode: SwitchClubMode;
 }
 
 /**
@@ -116,6 +126,12 @@ interface SwitchClubSheetProps {
  * sits, what changes for the family's money, and the club's own facts stated as
  * information under it.
  *
+ * **The same sheet is the no-charge move** (`mode="no_charge"`): an active
+ * seat nothing bills behind, on a product that charges nothing, moved onto
+ * another such product of any type. Its picker lists every type, naming the
+ * type where they mix, and its second stage states what the family
+ * experiences where the paid switch shows the money.
+ *
  * **Always mounted, opened by its `open` prop**, like the gedu and participant
  * pickers beside it — a sheet mounted already open plays neither its enter nor
  * its exit animation, and the seat it was about has to stay readable for as
@@ -130,9 +146,13 @@ export function SwitchClubSheet({
   gamerName,
   gamerAge,
   onCommittingChange,
+  mode,
 }: SwitchClubSheetProps) {
   const t = useTranslations("admin.products.groupsPanel.switchClub");
+  const tn = useTranslations("admin.products.groupsPanel.switchClub.noCharge");
+  const tt = useTranslations("admin.products.types");
   const c = useTranslations("common");
+  const noCharge = mode === "no_charge";
   const uiLocale = resolveLocale(useLocale());
   const timeZone = useTimezone();
   const now = useNow();
@@ -184,10 +204,41 @@ export function SwitchClubSheet({
   // Disabled until the first open, so `isLoading` is false while the sheet is
   // shut and true on the frame the catalogue is first asked for — which is
   // exactly when stage one wants its skeleton.
-  const { data: products, isLoading: productsLoading } = useProductsByType(
-    "consumer_club",
-    { enabled: hasOpened },
-  );
+  //
+  // The paid switch moves between consumer clubs only, so it reads that one
+  // type. The no-charge move may land on a product of any type, so it reads
+  // the other three as well — each its own cached read, the same one every
+  // other per-type list of the admin's shares, and each fired only once a
+  // move is actually opened.
+  const consumerClubs = useProductsByType("consumer_club", {
+    enabled: hasOpened,
+  });
+  const municipalityClubs = useProductsByType("municipality_club", {
+    enabled: hasOpened && noCharge,
+  });
+  const camps = useProductsByType("camp", { enabled: hasOpened && noCharge });
+  const events = useProductsByType("event", { enabled: hasOpened && noCharge });
+  const products = useMemo(() => {
+    if (!noCharge) return consumerClubs.data;
+    if (
+      consumerClubs.data === undefined ||
+      municipalityClubs.data === undefined ||
+      camps.data === undefined ||
+      events.data === undefined
+    ) {
+      return undefined;
+    }
+    return [
+      ...consumerClubs.data,
+      ...municipalityClubs.data,
+      ...camps.data,
+      ...events.data,
+    ];
+  }, [noCharge, consumerClubs.data, municipalityClubs.data, camps.data, events.data]);
+  const productsLoading =
+    consumerClubs.isLoading ||
+    (noCharge &&
+      (municipalityClubs.isLoading || camps.isLoading || events.isLoading));
   // Every place this gamer already holds, in every status — gated on the same
   // latch, because it is as pointless as the catalogue read on a sheet nobody
   // has opened. A small, indexed read of one child's rows, so the list waits
@@ -204,8 +255,11 @@ export function SwitchClubSheet({
     [heldPlaces.data],
   );
 
-  const check = useSwitchClubCheck(productId, participationId, targetId);
-  const commit = useSwitchClub(productId, participationId);
+  const check = useSwitchClubCheck(productId, participationId, targetId, mode);
+  const commit = useSwitchClub(productId, participationId, mode);
+  // The paid switch's answer, which is the only one with money in it.
+  const subscriptionCheck =
+    check.data?.kind === "subscription" ? check.data : undefined;
   // The target's own seating, read the moment a club is chosen — the same
   // admin-readable snapshot this panel is drawn from. It answers both of stage
   // two's questions: which groups the seat can be put in, and how full the club
@@ -216,8 +270,21 @@ export function SwitchClubSheet({
   const target = products?.find((p) => p.id === targetId) ?? null;
 
   const candidates = useMemo(
-    () => (products ?? []).filter((p) => isSwitchTarget(p, productId, now)),
-    [products, productId, now],
+    () =>
+      (products ?? []).filter((p) =>
+        noCharge
+          ? isNoChargeMoveTarget(p, productId, now)
+          : isSwitchTarget(p, productId, now),
+      ),
+    [products, productId, now, noCharge],
+  );
+
+  // Where the list mixes types — a free club beside a free camp — each row
+  // says which it is, because a camp and a club of the same name are told
+  // apart by that first. A list of one type says nothing about it.
+  const mixedTypes = useMemo(
+    () => new Set(candidates.map((p) => p.product_type)).size > 1,
+    [candidates],
   );
 
   // One line of facts per row, and the same line again above the group list in
@@ -235,11 +302,14 @@ export function SwitchClubSheet({
         now,
       });
       return joinFacts([
+        mixedTypes
+          ? tt(`${PRODUCT_TYPE_PRESENTATION[product.product_type].i18nKey}.label`)
+          : "",
         schedule.kind === "recurring" ? joinScheduleGroups(schedule.groups) : "",
         formatDateOnly(product.start_date, uiLocale),
       ]);
     };
-  }, [uiLocale, timeZone, now]);
+  }, [uiLocale, timeZone, now, mixedTypes, tt]);
 
   const rows = useMemo(
     () => orderSwitchTargets(filterProductsBySearch(candidates, search), source),
@@ -314,6 +384,10 @@ export function SwitchClubSheet({
     if (!committing) onOpenChange(false);
   };
 
+  const searchPlaceholder = noCharge
+    ? tn("searchPlaceholder")
+    : t("searchPlaceholder");
+
   const handleConfirm = () => {
     if (targetId === null) return;
     // Live before any render after the click, and cleared only where the admin
@@ -360,9 +434,11 @@ export function SwitchClubSheet({
     <Sheet open={open} onOpenChange={(next) => !next && close()}>
       <SheetContent>
         <SheetHeader onClose={close}>
-          <SheetTitle>{t("title")}</SheetTitle>
+          <SheetTitle>{noCharge ? tn("title") : t("title")}</SheetTitle>
           <SheetDescription>
-            {t("description", { name: gamerName })}
+            {noCharge
+              ? tn("description", { name: gamerName })
+              : t("description", { name: gamerName })}
           </SheetDescription>
         </SheetHeader>
 
@@ -378,8 +454,8 @@ export function SwitchClubSheet({
                 type="search"
                 value={search}
                 onChange={(event) => setSearch(event.target.value)}
-                placeholder={t("searchPlaceholder")}
-                aria-label={t("searchPlaceholder")}
+                placeholder={searchPlaceholder}
+                aria-label={searchPlaceholder}
                 className="pl-9"
               />
             </div>
@@ -406,7 +482,13 @@ export function SwitchClubSheet({
               held={held}
               loading={productsLoading}
               empty={
-                candidates.length === 0 ? t("picker.empty") : t("picker.noMatch")
+                noCharge
+                  ? candidates.length === 0
+                    ? tn("picker.empty")
+                    : tn("picker.noMatch")
+                  : candidates.length === 0
+                    ? t("picker.empty")
+                    : t("picker.noMatch")
               }
               locale={uiLocale}
               now={now}
@@ -472,12 +554,18 @@ export function SwitchClubSheet({
                   immediate and the box already stands at its final height —
                   waiting for the answer and reading it happen without a pixel
                   below moving. */}
+              {noCharge ? (
+                <NoChargeLines
+                  refusals={refusals}
+                  isError={check.isError}
+                />
+              ) : (
               <div className="h-36 overflow-y-auto rounded-lg border border-border p-3">
                 {check.isError ? (
                   <p className="text-sm text-muted-foreground">
                     {t("prices.error")}
                   </p>
-                ) : check.data === undefined ? (
+                ) : subscriptionCheck === undefined ? (
                   <div className="space-y-2">
                     <div className="h-4 w-24 animate-pulse rounded bg-lifted" />
                     <div className="h-7 w-56 animate-pulse rounded bg-lifted" />
@@ -485,20 +573,7 @@ export function SwitchClubSheet({
                     <div className="h-4 w-3/4 animate-pulse rounded bg-lifted" />
                   </div>
                 ) : refusals.length > 0 ? (
-                  <ul className="space-y-2">
-                    {refusals.map((refusal) => (
-                      <li
-                        key={refusal}
-                        className="flex items-start gap-2 text-sm text-foreground"
-                      >
-                        <AlertTriangle
-                          className="mt-0.5 h-4 w-4 shrink-0 text-destructive"
-                          aria-hidden
-                        />
-                        {t(`refusals.${REFUSAL_KEY[refusal]}`)}
-                      </li>
-                    ))}
-                  </ul>
+                  <RefusalList refusals={refusals} />
                 ) : (
                   <div className="space-y-2">
                     <div className="flex items-end gap-3">
@@ -508,8 +583,8 @@ export function SwitchClubSheet({
                         </p>
                         <p className="text-lg font-semibold tabular-nums">
                           {formatAmount(
-                            check.data.currentAmountCents,
-                            check.data.currency,
+                            subscriptionCheck.currentAmountCents,
+                            subscriptionCheck.currency,
                             uiLocale,
                           ) ?? t("prices.unavailable")}
                         </p>
@@ -524,19 +599,19 @@ export function SwitchClubSheet({
                         </p>
                         <p className="text-lg font-semibold tabular-nums">
                           {formatAmount(
-                            check.data.targetAmountCents,
-                            check.data.currency,
+                            subscriptionCheck.targetAmountCents,
+                            subscriptionCheck.currency,
                             uiLocale,
                           ) ?? t("prices.unavailable")}
                         </p>
                       </div>
                     </div>
                     <p className="text-sm text-muted-foreground">
-                      {check.data.settlement === "nothing_paid" &&
-                      check.data.nextChargeAt !== null
+                      {subscriptionCheck.settlement === "nothing_paid" &&
+                      subscriptionCheck.nextChargeAt !== null
                         ? t("prices.nothingPaid", {
                             date: formatDate(
-                              check.data.nextChargeAt,
+                              subscriptionCheck.nextChargeAt,
                               uiLocale,
                               { dateStyle: "medium", timeZone },
                             ),
@@ -546,13 +621,15 @@ export function SwitchClubSheet({
                   </div>
                 )}
               </div>
+              )}
 
               <TargetFactLines
                 facts={facts}
                 locale={uiLocale}
                 timeZone={timeZone}
                 name={gamerName}
-                subscriptionEndsAt={check.data?.subscriptionEndsAt ?? null}
+                noCharge={noCharge}
+                subscriptionEndsAt={subscriptionCheck?.subscriptionEndsAt ?? null}
               />
 
               {failure && (
@@ -586,6 +663,8 @@ export function SwitchClubSheet({
                       ) : (
                         t("commit.stripeUpdatedStuck")
                       )
+                    ) : noCharge ? (
+                      tn("commitFailed")
                     ) : (
                       t("commit.failed")
                     )}
@@ -612,7 +691,7 @@ export function SwitchClubSheet({
               confirm however far the money got. */}
           <Button onClick={handleConfirm} disabled={confirmDisabled}>
             {committing && <Loader2 className="mr-1 h-4 w-4 animate-spin" />}
-            {t("confirm")}
+            {noCharge ? tn("confirm") : t("confirm")}
           </Button>
         </div>
       </SheetContent>
@@ -720,6 +799,67 @@ function ClubList({
 }
 
 /**
+ * The no-charge move's second stage, in place of the money: what the family
+ * experiences, said plainly, because there is no price on either side to
+ * show. Each line is one an admin could repeat to the parent unchanged.
+ *
+ * A refusal from the check replaces the lines — a different panel, not a line
+ * joining them — because a move that cannot happen has nothing for the family
+ * to experience.
+ */
+function NoChargeLines({
+  refusals,
+  isError,
+}: {
+  refusals: readonly SwitchClubRefusal[];
+  isError: boolean;
+}) {
+  const t = useTranslations("admin.products.groupsPanel.switchClub");
+  const tn = useTranslations(
+    "admin.products.groupsPanel.switchClub.noCharge.family",
+  );
+
+  if (isError) {
+    return <p className="text-sm text-muted-foreground">{t("prices.error")}</p>;
+  }
+  if (refusals.length > 0) return <RefusalList refusals={refusals} />;
+
+  return (
+    <div>
+      <p className="mb-2 text-xs font-medium uppercase tracking-wide text-muted-foreground">
+        {tn("label")}
+      </p>
+      <ul className="space-y-1.5 text-sm text-foreground">
+        <li>{tn("money")}</li>
+        <li>{tn("email")}</li>
+        <li>{tn("consents")}</li>
+      </ul>
+    </div>
+  );
+}
+
+/** The check's hard refusals, one line each with the mark in the danger tone. */
+function RefusalList({ refusals }: { refusals: readonly SwitchClubRefusal[] }) {
+  const t = useTranslations("admin.products.groupsPanel.switchClub");
+  return (
+    <ul className="space-y-2">
+      {refusals.map((refusal) => (
+        <li
+          key={refusal}
+          className="flex items-start gap-2 text-sm text-foreground"
+        >
+          <AlertTriangle
+            className="mt-0.5 h-4 w-4 shrink-0 text-destructive"
+            aria-hidden
+          />
+          {t(`refusals.${REFUSAL_KEY[refusal]}`)}
+        </li>
+      ))}
+    </ul>
+  );
+}
+
+/**
  * The chosen club's own facts, under the money — plain muted lines, not an
  * alert and not warning-toned. None of them stops anything: the admin knows the
  * family, and the switch enforces none of these.
@@ -735,12 +875,15 @@ function TargetFactLines({
   locale,
   timeZone,
   name,
+  noCharge,
   subscriptionEndsAt,
 }: {
   facts: SwitchTargetFact[];
   locale: SupportedLocale;
   timeZone: string;
   name: string;
+  /** The no-charge move, whose not-started line says nothing about paying. */
+  noCharge: boolean;
   /**
    * When the family has already cancelled, the instant the subscription runs
    * out. Never a refusal — an admin may well be switching the club of a family
@@ -750,6 +893,7 @@ function TargetFactLines({
   subscriptionEndsAt: string | null;
 }) {
   const t = useTranslations("admin.products.groupsPanel.switchClub.facts");
+  const tn = useTranslations("admin.products.groupsPanel.switchClub.noCharge");
 
   if (facts.length === 0 && subscriptionEndsAt === null) return null;
 
@@ -757,7 +901,9 @@ function TargetFactLines({
     <div className="space-y-1">
       {facts.map((fact) => (
         <p key={fact.kind} className="min-h-5 text-sm text-muted-foreground">
-          {factLine(fact, t, locale, name)}
+          {fact.kind === "notStarted" && noCharge
+            ? tn("notStarted", { date: formatDateOnly(fact.startDate, locale) })
+            : factLine(fact, t, locale, name)}
         </p>
       ))}
       {/* The one line waiting on the check's round trip, and therefore the LAST

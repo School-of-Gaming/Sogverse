@@ -5,12 +5,14 @@ import {
   dragSubjectsFrom,
   heldProductIds,
   isSubscriptionShaped,
+  isNoChargeMoveTarget,
   isSwitchTarget,
   orderSwitchTargets,
   readDropData,
   readChipDragData,
   resolveDrop,
   robloxIdsFrom,
+  seatMenuItems,
   seatOfferAvailability,
   showUnassignedSection,
   switchTargetFacts,
@@ -1065,6 +1067,103 @@ describe("isSwitchTarget", () => {
     expect(isSwitchTarget(ending, "club-a", midnightish)).toBe(false);
     expect(
       isSwitchTarget(
+        { ...ending, timezone: "America/Los_Angeles" },
+        "club-a",
+        midnightish,
+      ),
+    ).toBe(true);
+  });
+});
+
+describe("seatMenuItems", () => {
+  const subscribed: DragSubject = { ...member, hasLiveSubscription: true };
+
+  it("offers a subscribed seat the paid switch, and its removal disabled", () => {
+    // Removal is refused for exactly this seat by the database, and the
+    // switch exists exactly for it — the same split resolveDrop makes.
+    expect(seatMenuItems(subscribed, "paid")).toEqual([
+      { action: "switchClub", disabledReason: null },
+      { action: "remove", disabledReason: "subscriptionLive" },
+    ]);
+  });
+
+  it("offers a seat on a product that charges nothing the move and the removal", () => {
+    for (const mode of ["free", "external_contract"] as const) {
+      expect(seatMenuItems(member, mode)).toEqual([
+        { action: "move", disabledReason: null },
+        { action: "remove", disabledReason: null },
+      ]);
+    }
+  });
+
+  it("shows the move disabled on a paid product, and keeps the removal", () => {
+    // A paid camp's seat holds no subscription, but money was paid for it, so
+    // a move is not this menu's to make. The row stays, saying why.
+    expect(seatMenuItems(member, "paid")).toEqual([
+      { action: "move", disabledReason: "productCharges" },
+      { action: "remove", disabledReason: null },
+    ]);
+  });
+
+  it("offers a waitlisted row its removal alone, whatever the product charges", () => {
+    expect(seatMenuItems(waitlisted, "free")).toEqual([
+      { action: "remove", disabledReason: null },
+    ]);
+    expect(seatMenuItems(waitlisted, "paid")).toEqual([
+      { action: "remove", disabledReason: null },
+    ]);
+  });
+
+  it("disables a subscribed waitlisted row's removal, and offers no switch", () => {
+    // The webhook-race edge resolveDrop refuses as removeSubscribed: there is
+    // no active seat for the switch to move.
+    expect(
+      seatMenuItems({ ...waitlisted, hasLiveSubscription: true }, "paid"),
+    ).toEqual([{ action: "remove", disabledReason: "subscriptionLive" }]);
+  });
+});
+
+describe("isNoChargeMoveTarget", () => {
+  const product = {
+    id: "camp-b",
+    billing_mode: "free",
+    end_date: null,
+    timezone: "Europe/Helsinki",
+  } as const;
+
+  it("admits a product that charges nothing and has not ended, of either no-charge mode", () => {
+    expect(isNoChargeMoveTarget(product, "club-a", NOW)).toBe(true);
+    expect(
+      isNoChargeMoveTarget(
+        { ...product, billing_mode: "external_contract" },
+        "club-a",
+        NOW,
+      ),
+    ).toBe(true);
+    expect(
+      isNoChargeMoveTarget({ ...product, end_date: "2026-06-15" }, "club-a", NOW),
+    ).toBe(true);
+  });
+
+  it("refuses a product that charges", () => {
+    expect(
+      isNoChargeMoveTarget({ ...product, billing_mode: "paid" }, "club-a", NOW),
+    ).toBe(false);
+  });
+
+  it("refuses the product the seat is already on", () => {
+    expect(isNoChargeMoveTarget(product, "camp-b", NOW)).toBe(false);
+  });
+
+  it("refuses a product whose last day has passed, read in its own zone", () => {
+    expect(
+      isNoChargeMoveTarget({ ...product, end_date: "2026-06-14" }, "club-a", NOW),
+    ).toBe(false);
+    const midnightish = new Date("2026-06-14T22:00:00Z");
+    const ending = { ...product, end_date: "2026-06-14" };
+    expect(isNoChargeMoveTarget(ending, "club-a", midnightish)).toBe(false);
+    expect(
+      isNoChargeMoveTarget(
         { ...ending, timezone: "America/Los_Angeles" },
         "club-a",
         midnightish,

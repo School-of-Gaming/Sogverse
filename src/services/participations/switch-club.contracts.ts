@@ -77,8 +77,9 @@ export const switchClubCheckQuery = z.object({
 });
 
 /**
- * Response of the check handler (200 whether or not the switch is allowed —
- * a refusal is an answer, not an error).
+ * The check's answer for a subscribed seat — the paid club switch (200
+ * whether or not the switch is allowed — a refusal is an answer, not an
+ * error).
  *
  * `currentAmountCents` is the subscription item's actual unit amount read from
  * Stripe, not the source product's authored price: a subscriber keeps their
@@ -88,7 +89,8 @@ export const switchClubCheckQuery = z.object({
  * subscription's currency, null when there is none — in which case
  * `no_target_price_in_currency` is among the refusals.
  */
-export const switchClubCheckResponse = z.object({
+export const switchClubSubscriptionCheck = z.object({
+  kind: z.literal("subscription"),
   /** The subscription row's currency, lower-case ISO code. */
   currency: z.string(),
   currentAmountCents: z.number().int().nullable(),
@@ -127,6 +129,35 @@ export const switchClubCheckResponse = z.object({
    */
   currencyMismatch: z.boolean().optional(),
 });
+
+export type SwitchClubSubscriptionCheck = z.infer<
+  typeof switchClubSubscriptionCheck
+>;
+
+/**
+ * The check's answer for an active seat nothing bills behind, on a product
+ * that charges nothing: the no-charge move, onto another product of any type
+ * that charges nothing either. There is no money to show, so the answer is the
+ * refusals alone — empty means the move is allowed.
+ */
+export const switchClubNoChargeCheck = z.object({
+  kind: z.literal("no_charge"),
+  /** Empty means the commit is allowed. */
+  refusals: z.array(switchClubRefusal),
+});
+
+export type SwitchClubNoChargeCheck = z.infer<typeof switchClubNoChargeCheck>;
+
+/**
+ * Response of the check handler, split by what stands behind the seat: a live
+ * subscription (`subscription`, the paid club switch) or nothing at all on a
+ * product that charges nothing (`no_charge`, the move). The sheet branches on
+ * `kind` for what its second stage says about money.
+ */
+export const switchClubCheckResponse = z.discriminatedUnion("kind", [
+  switchClubSubscriptionCheck,
+  switchClubNoChargeCheck,
+]);
 
 export type SwitchClubCheckResponse = z.infer<typeof switchClubCheckResponse>;
 

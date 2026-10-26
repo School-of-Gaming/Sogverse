@@ -1,5 +1,5 @@
 import { describe, it, expect, vi, beforeEach } from "vitest";
-import { act, render, screen } from "@testing-library/react";
+import { act, fireEvent, render, screen } from "@testing-library/react";
 import type { ComponentProps, ReactNode } from "react";
 import { GroupsPanel } from "@/components/admin/products/groups/groups-panel";
 import type { GeduPickerSheet } from "@/components/admin/products/gedu-picker-sheet";
@@ -73,6 +73,7 @@ vi.mock("@dnd-kit/core", () => ({
     isDragging: false,
   }),
   useDndContext: () => ({ active: null }),
+  useDndMonitor: () => {},
 }));
 
 // Keys echo, so assertions name the copy the panel reached for rather than the
@@ -126,11 +127,17 @@ vi.mock("@/components/admin/products/groups/switch-club-sheet", () => ({
   SwitchClubSheet: ({
     open,
     participationId,
+    mode,
   }: {
     open: boolean;
     participationId: string;
+    mode: string;
   }) => (
-    <div data-testid="switch-club-sheet" data-open={String(open)}>
+    <div
+      data-testid="switch-club-sheet"
+      data-open={String(open)}
+      data-mode={mode}
+    >
       {participationId}
     </div>
   ),
@@ -533,6 +540,104 @@ describe("GroupsPanel — the inbox says the placement rule by being absent", ()
     renderPanel("consumer_club", "paid");
 
     expect(screen.getByText(INBOX_TITLE)).toBeTruthy();
+  });
+});
+
+describe("GroupsPanel — the seat menu", () => {
+  // A seat in the inbox, the one card rendered for real, so a real chip is
+  // what gets pressed.
+  const INBOX_SEAT = "9d1e7b40-3c5a-4f2e-8a61-0b7c4d2e9f15";
+  const MENU = "admin.products.groupsPanel.seatMenu";
+
+  function seatInInbox(overrides: Partial<Participation> = {}) {
+    snapshotOverride = {
+      ...snapshot,
+      unassigned: [participation(INBOX_SEAT, overrides)],
+    };
+  }
+
+  function openMenu() {
+    const chip = screen.getByText("Aino").closest('[aria-haspopup="menu"]');
+    expect(chip).not.toBeNull();
+    fireEvent.click(chip!);
+  }
+
+  it("opens the no-charge move from a free product's seat, writing nothing", () => {
+    seatInInbox();
+    renderPanel("consumer_club", "free");
+    openMenu();
+
+    fireEvent.click(screen.getByRole("menuitem", { name: `${MENU}.move` }));
+
+    noMutationFired();
+    const sheet = screen.getByTestId("switch-club-sheet");
+    expect(sheet.dataset.open).toBe("true");
+    expect(sheet.dataset.mode).toBe("no_charge");
+    expect(sheet.textContent).toBe(INBOX_SEAT);
+    expect(screen.queryByRole("menu")).toBeNull();
+  });
+
+  it("stages the same removal confirm the drop zone does", () => {
+    seatInInbox();
+    renderPanel("consumer_club", "free");
+    openMenu();
+
+    fireEvent.click(screen.getByRole("menuitem", { name: `${MENU}.remove` }));
+
+    expect(mutations.removeGamer).not.toHaveBeenCalled();
+    expect(
+      screen.getByText("admin.products.groupsPanel.removeParticipant.confirmCta"),
+    ).toBeTruthy();
+  });
+
+  it("shows the move disabled with its reason on a paid camp, and presses to nothing", () => {
+    // The billing prop reaching the menu rule: the same seat on a free
+    // product moves.
+    seatInInbox();
+    renderPanel("camp", "paid");
+    openMenu();
+
+    const move = screen.getByRole("menuitem", {
+      name: `${MENU}.move ${MENU}.disabled.productCharges`,
+    });
+    expect(move.getAttribute("aria-disabled")).toBe("true");
+    fireEvent.click(move);
+    expect(screen.getByTestId("switch-club-sheet").dataset.open).toBe("false");
+  });
+
+  it("offers a subscribed seat the paid switch, in subscription mode", () => {
+    seatInInbox({ has_live_subscription: true, has_payment_marker: true });
+    renderPanel("consumer_club", "paid");
+    openMenu();
+
+    expect(
+      screen
+        .getByRole("menuitem", {
+          name: `${MENU}.remove ${MENU}.disabled.subscriptionLive`,
+        })
+        .getAttribute("aria-disabled"),
+    ).toBe("true");
+    fireEvent.click(
+      screen.getByRole("menuitem", { name: `${MENU}.switchClub` }),
+    );
+    const sheet = screen.getByTestId("switch-club-sheet");
+    expect(sheet.dataset.open).toBe("true");
+    expect(sheet.dataset.mode).toBe("subscription");
+  });
+
+  it("opens from the keyboard, and Escape closes it", () => {
+    seatInInbox();
+    renderPanel("consumer_club", "free");
+    const chip = screen.getByText("Aino").closest('[aria-haspopup="menu"]')!;
+
+    fireEvent.keyDown(chip, { key: "Enter" });
+    expect(screen.getByRole("menu")).toBeTruthy();
+    expect(document.activeElement).toBe(
+      screen.getByRole("menuitem", { name: `${MENU}.move` }),
+    );
+
+    fireEvent.keyDown(document, { key: "Escape" });
+    expect(screen.queryByRole("menu")).toBeNull();
   });
 });
 

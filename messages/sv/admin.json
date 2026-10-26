@@ -1367,11 +1367,39 @@
           "stripeUpdatedStuck": "Prenumerationen ligger redan på den nya klubbens pris trots att platsen inte kunde flyttas, så familjen faktureras för en klubb där spelaren inte har någon plats. Red ut det i Stripe först.",
           "failed": "Bytet slutfördes inte. Tryck på Byt klubb igen — ett nytt tryck upprepar samma begäran, så familjen debiteras aldrig två gånger."
         },
-        "confirm": "Byt klubb"
+        "confirm": "Byt klubb",
+        "noCharge": {
+          "title": "Flytta till en annan produkt",
+          "description": "Flytta {name} till en annan produkt som inte tar betalt för platsen.",
+          "searchPlaceholder": "Sök produkter på namn",
+          "picker": {
+            "empty": "Det finns ingen annan produkt att flytta till. Målet måste vara en kostnadsfri produkt som inte har avslutats.",
+            "noMatch": "Ingen produkt matchar sökningen. Prova ett annat namn."
+          },
+          "family": {
+            "label": "För familjen",
+            "money": "Inget ändras ekonomiskt: ingen av produkterna tar betalt för platsen.",
+            "email": "Familjen får den nya produktens bekräftelsemejl, och kalenderposten flyttas dit.",
+            "consents": "Om den nya produkten kräver samtycken ges de för familjens räkning, så familjen behöver inte svara på dem."
+          },
+          "notStarted": "Startar {date}.",
+          "confirm": "Flytta",
+          "commitFailed": "Flytten slutfördes inte. Tryck på Flytta igen."
+        }
       },
       "requirementGaps": {
         "title": "Tilldela ändå?",
         "action": "Tilldela ändå"
+      },
+      "seatMenu": {
+        "label": "Åtgärder för {name}",
+        "switchClub": "Byt klubb…",
+        "move": "Flytta till en annan produkt…",
+        "remove": "Ta bort från den här produkten…",
+        "disabled": {
+          "subscriptionLive": "Prenumerationen måste först sägas upp i Stripe.",
+          "productCharges": "Bara platser på produkter som är kostnadsfria kan flyttas."
+        }
       }
     },
     "seatLimitModes": {

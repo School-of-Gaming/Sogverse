@@ -184,8 +184,8 @@ export function GroupsPanel({
   // its chip — so the sheet's age line and the chip are one fact. It outlives
   // the close on purpose (see above), which is what keeps the gamer's name in
   // the description from blanking mid-animation. Only active seats are
-  // searched: a waitlisted row never carries a subscription and never offers
-  // the control.
+  // searched: neither the switch nor the move is ever offered on a waitlisted
+  // row.
   const switching = useMemo(() => {
     if (!snapshot || switchingId === null) return null;
     const active = [
@@ -205,6 +205,13 @@ export function GroupsPanel({
       participantId: row.participant_id,
       name: row.participant_first_name,
       age: birth === null ? null : computeAge(birth, timeZone),
+      // Which of the sheet's two actions this seat gets: a live subscription
+      // behind it is the paid club switch, and nothing behind it is the
+      // no-charge move — which the seat menu only offers on a product that
+      // charges nothing.
+      mode: row.has_live_subscription
+        ? ("subscription" as const)
+        : ("no_charge" as const),
     };
   }, [snapshot, switchingId, timeZone]);
 
@@ -418,7 +425,8 @@ export function GroupsPanel({
 
           {/* The club switch. An overlay like the two pickers above it, and
               here for the same reason: it reads reference data of its own
-              (every consumer club on the platform) and talks to Stripe, neither
+              (the platform's catalogue of switch and move targets) and talks
+              to Stripe, neither
               of which the presentational panel knows anything about. Mounted
               from the start and driven by `open`, exactly as they are — a sheet
               mounted already open plays no enter animation and, unmounted on
@@ -436,6 +444,7 @@ export function GroupsPanel({
             participantId={switching?.participantId ?? ""}
             gamerName={switching?.name ?? ""}
             gamerAge={switching?.age ?? null}
+            mode={switching?.mode ?? "subscription"}
             onCommittingChange={setSwitchCommitting}
           />
         </>

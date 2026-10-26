@@ -1367,11 +1367,39 @@
           "stripeUpdatedStuck": "Tilaus on jo uuden kerhon hinnassa, vaikka paikka ei siirtynyt, joten perhettä laskutetaan kerhosta, jossa pelaajalla ei ole paikkaa. Selvitä tämä ensin Stripessä.",
           "failed": "Vaihto ei mennyt loppuun asti. Paina Vaihda kerhoa uudelleen — uusi painallus toistaa saman pyynnön, joten perhettä ei veloiteta kahteen kertaan."
         },
-        "confirm": "Vaihda kerhoa"
+        "confirm": "Vaihda kerhoa",
+        "noCharge": {
+          "title": "Siirrä toiseen tuotteeseen",
+          "description": "{name} siirtyy toiseen tuotteeseen, josta ei veloiteta.",
+          "searchPlaceholder": "Hae tuotteita nimellä",
+          "picker": {
+            "empty": "Muuta tuotetta ei ole tarjolla. Kohteen pitää olla maksuton tuote, joka ei ole vielä päättynyt.",
+            "noMatch": "Yksikään tuote ei vastaa hakua. Kokeile toista nimeä."
+          },
+          "family": {
+            "label": "Perheelle",
+            "money": "Rahan osalta mikään ei muutu: kumpikaan tuote ei veloita paikasta.",
+            "email": "Perhe saa uuden tuotteen vahvistussähköpostin, ja kalenterimerkintä siirtyy siihen.",
+            "consents": "Jos uusi tuote vaatii suostumuksia, ne annetaan perheen puolesta, eikä perheeltä kysytä niitä."
+          },
+          "notStarted": "Alkaa {date}.",
+          "confirm": "Siirrä",
+          "commitFailed": "Siirto ei mennyt loppuun asti. Paina Siirrä uudelleen."
+        }
       },
       "requirementGaps": {
         "title": "Lisätäänkö silti?",
         "action": "Lisää silti"
+      },
+      "seatMenu": {
+        "label": "Toiminnot: {name}",
+        "switchClub": "Vaihda kerhoa…",
+        "move": "Siirrä toiseen tuotteeseen…",
+        "remove": "Poista tästä tuotteesta…",
+        "disabled": {
+          "subscriptionLive": "Tilaus on ensin peruttava Stripessä.",
+          "productCharges": "Vain maksuttomien tuotteiden paikkoja voi siirtää."
+        }
       }
     },
     "seatLimitModes": {

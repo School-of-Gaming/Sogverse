@@ -29,7 +29,7 @@ import type {
 import { adminMoveParticipationRpcResult } from "@/services/participations/participations.contracts";
 import { sendProductConfirmationEmail } from "@/services/participations/product-confirmation-email.server";
 import type {
-  SwitchClubCheckResponse,
+  SwitchClubSubscriptionCheck,
   SwitchClubRefusal,
   SwitchClubSettlement,
 } from "@/services/participations/switch-club.contracts";
@@ -161,7 +161,8 @@ function settlementOf(
   return invoice.amount_paid > 0 ? "prorate" : null;
 }
 
-export interface SwitchClubCheck extends SwitchClubCheckResponse {
+export interface SwitchClubCheck
+  extends Omit<SwitchClubSubscriptionCheck, "kind"> {
   /** Non-null exactly when `refusals` is empty. */
   commitFacts: SwitchClubCommitFacts | null;
   /**

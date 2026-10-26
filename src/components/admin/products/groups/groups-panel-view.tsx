@@ -31,11 +31,13 @@ import {
   readDropData,
   readChipDragData,
   resolveDrop,
+  seatMenuItems,
   seatOfferAvailability,
   showUnassignedSection,
   type BlockedDropReason,
   type DragSubject,
 } from "./panel-rules";
+import { SeatMenuContext, type SeatMenuContextValue } from "./seat-menu";
 import { UnassignedCard } from "./unassigned-card";
 import { WaitlistCard } from "./waitlist-card";
 import type { RobloxRenderMap } from "@/services/roblox/roblox.contracts";
@@ -102,15 +104,17 @@ export interface GroupsPanelActions {
    */
   onSendSeatOffer?: (participationId: string) => Promise<void>;
   /**
-   * Ask the shell to open its club-switch dialog for this seat. Optional like
-   * the seat offer beside it, and for the same reason: a shell with no dialog
-   * behind it should draw the chips without a control that does nothing.
+   * Ask the shell to open its switch sheet for this seat. Optional like the
+   * seat offer beside it, and for the same reason: a shell with no sheet behind
+   * it should draw the chips without a control that does nothing — its seat
+   * menus then carry no switch or move row.
    *
-   * There is no control on a chip: the chip is a drag handle, and the switch is
-   * reached by dragging an active, subscribed seat onto the header zone, which
-   * relabels itself for exactly those chips. So this fires from one place, the
-   * drop rule, and the label the admin read and the outcome they got are two
-   * readings of the same subject.
+   * One request for both of the sheet's actions — the paid club switch and the
+   * no-charge move — because which one a seat gets is a fact of the seat (a
+   * live subscription stands behind it or not), and the shell reads that fact
+   * off the same snapshot. It fires from the seat menu's Switch club and Move
+   * rows, and from the header zone when an active subscribed seat is dropped
+   * on it.
    */
   onRequestSwitchClub?: (participationId: string) => void;
 }
@@ -393,6 +397,35 @@ export function GroupsPanelView({
     );
   }, [snapshot]);
 
+  // Every chip's menu, decided off the same subjects a drop is resolved from,
+  // so the menu and the drag cannot disagree about a seat. A row whose action
+  // this shell has no flow behind is left out rather than drawn inert.
+  const onRequestSwitchClub = actions.onRequestSwitchClub;
+  const seatMenu = useMemo<SeatMenuContextValue>(
+    () => ({
+      itemsFor: (participationId) => {
+        const subject = dragSubjects.get(participationId);
+        if (!subject) return null;
+        return seatMenuItems(subject, billingMode).filter(
+          (item) => item.action === "remove" || onRequestSwitchClub !== undefined,
+        );
+      },
+      onSelect: (participationId, firstName, action) => {
+        switch (action) {
+          case "switchClub":
+          case "move":
+            onRequestSwitchClub?.(participationId);
+            return;
+          case "remove":
+            // The same confirm the header zone stages for a drop.
+            setRemoving({ id: participationId, name: firstName });
+            return;
+        }
+      },
+    }),
+    [dragSubjects, billingMode, onRequestSwitchClub],
+  );
+
   const sensors = useSensors(
     useSensor(PointerSensor, { activationConstraint: { distance: 5 } }),
   );
@@ -545,6 +578,7 @@ export function GroupsPanelView({
           (HeaderParticipantAction). The shell's picker sheets are deliberately
           kept OUTSIDE it — see the `overlays` slot below. */}
       <DndContext sensors={sensors} onDragEnd={handleDragEnd}>
+      <SeatMenuContext.Provider value={seatMenu}>
         {/* One arrangement at every width: the title on a row of its own, and
             under it a row holding the seat summary on the left and the actions
             right-packed at the end. The summary grows into the free width up to
@@ -723,12 +757,16 @@ export function GroupsPanelView({
         </div>
 
         <DragOverlay>
-          <DragOverlayContent
-            snapshot={snapshot}
-            gamePlatform={gamePlatform}
-            robloxRenders={robloxRenders}
-          />
+          {/* The lifted copy of a chip is never a menu trigger. */}
+          <SeatMenuContext.Provider value={null}>
+            <DragOverlayContent
+              snapshot={snapshot}
+              gamePlatform={gamePlatform}
+              robloxRenders={robloxRenders}
+            />
+          </SeatMenuContext.Provider>
         </DragOverlay>
+      </SeatMenuContext.Provider>
       </DndContext>
 
       {/* The shell's pickers, as siblings of the DndContext rather than children
