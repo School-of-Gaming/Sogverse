@@ -12,6 +12,10 @@ import { createEmailVerificationToken } from "@/lib/email-verification";
 import { reportMetaConversion } from "@/lib/meta-conversions.server";
 import { signUpProductFor } from "@/lib/meta-sign-up-product.server";
 import { registrationCompletedResponse } from "@/lib/registration-intent-cookie";
+import {
+  resolveSignUpIntent,
+  signUpIntentColumns,
+} from "@/lib/sign-up-intent.server";
 import { getOrigin } from "@/lib/url";
 import {
   REGISTRATION_ALREADY_COMPLETE,
@@ -91,9 +95,21 @@ export const POST = defineRoute({
       profile.email,
     );
 
+    // Which of our pages the parent set out to reach, read off the finish
+    // page's `redirect` exactly as the register route reads its own — decided
+    // by the row, never throws. A Google round trip carries no signup
+    // metadata, so here it is written as columns rather than by the new-user
+    // trigger.
+    const signUpIntent = await resolveSignUpIntent(redirect);
+
     // Everything the register form would have written, in one statement. The
-    // attribution columns and the verification stamp have no authenticated
-    // UPDATE grant, which is why this is the service-role client.
+    // attribution columns, the signup intent, the registration's marketing
+    // answer and the verification stamp have no authenticated UPDATE grant,
+    // which is why this is the service-role client.
+    //
+    // The marketing answer is the write-once record of what this form was told
+    // about School of Gaming's own mailing list — the current answer lives in
+    // Klaviyo — written even when it is a no, an absent field read as one.
     const { error: profileError } = await admin
       .from("profiles")
       .update({
@@ -102,6 +118,8 @@ export const POST = defineRoute({
         ...(homeLocationId ? { home_location_id: homeLocationId } : {}),
         ...(requestedLocale ? { locale: requestedLocale } : {}),
         ...utmProfileColumns(request, utm),
+        ...signUpIntentColumns(signUpIntent),
+        registration_marketing_consent: marketingConsent ?? false,
         ...(emailVerifiedByGoogle ? { email_verified_at: now } : {}),
       })
       .eq("id", userId);
@@ -135,30 +153,13 @@ export const POST = defineRoute({
       );
     }
 
-    // The marketing answer, written even when it is a no, and never fatal —
-    // the register route's reasoning, unchanged: losing an opt-in
-    // under-markets, which is the safe direction to fail in.
-    try {
-      const { error: consentError } = await admin.rpc(
-        "record_registration_marketing_consent",
-        { p_customer_id: userId, p_granted: marketingConsent ?? false },
-      );
-      if (consentError) throw consentError;
-    } catch (error) {
-      console.error(
-        "[auth/complete-registration] marketing consent write failed",
-        error,
-      );
-    }
-
     // The stamp, last: from here the proxy lets the account through.
     //
     // **Conditional, because the guard above is a read.** Two submissions of
     // the finish page (a double click, two tabs) can both pass it while the
     // column is still NULL. Everything before this point is safe to run twice:
-    // the profile write sets the same person's own answers again, the terms
-    // record is ON CONFLICT DO NOTHING, and the marketing write only records a
-    // change of state. The stamp is where the two part: only one statement
+    // the profile write sets the same person's own answers again, and the
+    // terms record is ON CONFLICT DO NOTHING. The stamp is where the two part: only one statement
     // finds the column NULL, and the other request gets the guard's 409 — so
     // the welcome mail and the conversion below go out exactly once.
     const { data: stamped, error: stampError } = await admin

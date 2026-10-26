@@ -643,7 +643,7 @@ const ROUTE_REGISTRY: Record<string, RouteEntry> = {
 
   "src/app/api/auth/complete-registration/route.ts": {
     adminClient:
-      "finishes a registration begun with Google, on the caller's own profile and only while it still owes one: the profile columns authenticated has no UPDATE grant on — the five utm_* columns (their one consent-gated write, since a provider-created row has no signup metadata), email_verified_at (when Google verified the same address) and registration_completed_at (the stamp, written last); the auth user read (getUserById) for the Google identity's verification; and the two consent writes the register route makes for the same reason it makes them — record_account_consents and record_registration_marketing_consent are granted to service_role alone, because they take the customer as a parameter and claim the 'registration' provenance",
+      "finishes a registration begun with Google, on the caller's own profile and only while it still owes one: the profile columns authenticated has no UPDATE grant on — the five utm_* columns (their one consent-gated write, since a provider-created row has no signup metadata), email_verified_at (when Google verified the same address), the write-once signup intent and registration marketing answer, and registration_completed_at (the stamp, written last); the auth user read (getUserById) for the Google identity's verification; and the account-consent write the register route makes for the same reason it makes it — record_account_consents is granted to service_role alone, because it takes the customer as a parameter",
     handlers: {
       POST: {
         posture: {
@@ -684,7 +684,7 @@ const ROUTE_REGISTRY: Record<string, RouteEntry> = {
 
   "src/app/api/auth/register/route.ts": {
     adminClient:
-      "Auth Admin API (self-registration creates the auth user before any session exists), plus the optional home-location write onto the profile that same request creates, plus the registration marketing-consent write — record_registration_marketing_consent is granted to service_role alone, because it takes the customer as a parameter (no session exists yet) and hardcodes the 'registration' source that set_marketing_consent refuses, so that provenance can only be claimed from here, plus the account-consent write — record_account_consents is granted to service_role alone for the same reason, and records what the account was opened under (the terms; the guardian declaration belongs to create_gamer, where it is a statement about one named child) against the version that was current",
+      "Auth Admin API (self-registration creates the auth user before any session exists), plus the write onto the profile that same request creates — the optional home location and locale, and the write-once registration marketing answer, which authenticated has no UPDATE grant on — plus the account-consent write — record_account_consents is granted to service_role alone for the same reason, and records what the account was opened under (the terms; the guardian declaration belongs to create_gamer, where it is a statement about one named child) against the version that was current",
     handlers: {
       POST: {
         posture: {

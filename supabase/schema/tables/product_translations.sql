@@ -41,6 +41,20 @@ CREATE INDEX idx_product_translations_locale ON public.product_translations USIN
 
 
 --
+-- Name: product_translations product_translations_klaviyo_renamed; Type: TRIGGER; Schema: public; Owner: -
+--
+
+CREATE TRIGGER product_translations_klaviyo_renamed AFTER UPDATE OF name ON public.product_translations FOR EACH ROW WHEN ((old.name IS DISTINCT FROM new.name)) EXECUTE FUNCTION public.klaviyo_product_changed();
+
+
+--
+-- Name: product_translations product_translations_klaviyo_written; Type: TRIGGER; Schema: public; Owner: -
+--
+
+CREATE TRIGGER product_translations_klaviyo_written AFTER INSERT OR DELETE ON public.product_translations FOR EACH ROW EXECUTE FUNCTION public.klaviyo_product_changed();
+
+
+--
 -- Name: product_translations product_translations_updated_at; Type: TRIGGER; Schema: public; Owner: -
 --
 

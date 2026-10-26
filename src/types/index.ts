@@ -612,6 +612,13 @@ export type SubstitutionNotificationDmInsert = Database["public"]["Tables"]["sub
 // still drawn open.
 export type SubstitutionNotificationState = Database["public"]["Enums"]["substitution_notification_state"];
 
+// The Klaviyo sync's two outboxes, both service role only and worked through
+// their claim and finish RPCs: parents whose Klaviyo profile has something not
+// yet told, and things that happened to a parent not yet sent as events.
+export type KlaviyoProfileOutboxRow = Database["public"]["Tables"]["klaviyo_profile_outbox"]["Row"];
+export type KlaviyoEventOutboxRow = Database["public"]["Tables"]["klaviyo_event_outbox"]["Row"];
+export type KlaviyoEventKind = Database["public"]["Enums"]["klaviyo_event_kind"];
+
 // ---------------------------------------------------------------------------
 // products — session records (the gedu session feed)
 // ---------------------------------------------------------------------------

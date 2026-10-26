@@ -11,17 +11,16 @@ import {
 import { useTimezone } from "@/providers";
 import { formatDate } from "@/lib/date-format";
 import { UTM_FIELDS, UTM_QUERY_PARAMS, type UtmAttribution } from "@/lib/utm";
-import type { MarketingConsentType } from "@/types";
+import type { MarketingConsent, MarketingConsentType } from "@/types";
 
 /**
- * The order the two consents are read in, written out rather than derived.
- * Postgres orders an enum by declaration order and a select returns rows in no
- * order at all, so neither says anything about how a person should read them.
- * Our own mailing list first, the partner's second — the same order the parent
- * sees on their own settings page.
+ * The consents shown, in order, written out rather than derived: Postgres
+ * orders an enum by declaration order and a select returns rows in no order at
+ * all, so neither says anything about how a person should read them. The same
+ * list the parent sees on their own settings page — the partner's alone, since
+ * School of Gaming's own mailing list is answered in Klaviyo.
  */
 const CONSENT_ORDER = [
-  "school_of_gaming",
   "lynx_educate",
 ] as const satisfies readonly MarketingConsentType[];
 
@@ -102,7 +101,6 @@ export function UserMarketingCard({
   const { data: consents } = useMarketingConsentsForCustomer(customerId ?? "");
 
   const labels: Record<MarketingConsentType, string> = {
-    school_of_gaming: t("schoolOfGaming"),
     lynx_educate: t("lynxEducate"),
   };
 
@@ -155,17 +153,15 @@ export function UserMarketingCard({
             <Heading level={3} step="label">
               {t("preferences")}
             </Heading>
-            {/* Two abreast once the card is wide enough: an admin surface is
-                desktop-default, and two one-line rows stacked down the middle
-                of a wide page is the layout that rule exists to prevent. Keyed
-                to the card's own width rather than the viewport's, because the
-                user page puts this card in a narrow reference column on a wide
-                screen, where two rows abreast would truncate their labels. */}
-            <div className="mt-2 grid gap-3 @lg:grid-cols-2">
+            <div className="mt-2 grid gap-3">
               {CONSENT_ORDER.map((consentType) => {
-                const row = consents?.find(
-                  (candidate) => candidate.consent_type === consentType,
-                );
+                // Keyed rather than compared with `===`: the enum has one
+                // member today, so a comparison between two of its values is
+                // always true and the linter refuses it; a lookup keyed at the
+                // enum asks the question honestly when a second joins.
+                const row = new Map<MarketingConsentType, MarketingConsent>(
+                  (consents ?? []).map((candidate) => [candidate.consent_type, candidate]),
+                ).get(consentType);
                 return (
                   <div
                     key={consentType}

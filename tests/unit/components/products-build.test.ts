@@ -1944,23 +1944,6 @@ describe("marketing consent types", () => {
       buildUpdateInput(state, consumerConfig).marketing_consent_types,
     ).toEqual(["lynx_educate"]);
   });
-
-  it("drops a stored type the form cannot offer", () => {
-    // `school_of_gaming` is asked at registration and belongs to no product, so
-    // no screen can show or clear it. This is the deliberate opposite of the
-    // requirement set, where a slug the deploy cannot name is KEPT ticked:
-    // there a drop would take a legal condition off a product, and here there
-    // is no condition — the question simply goes unasked, and the parent can
-    // still answer it in their own settings.
-    const state = existingFormState(
-      mockDetailRow({
-        product_marketing_consents: [{ consent_type: "school_of_gaming" }],
-      }),
-      consumerConfig,
-      "en",
-    );
-    expect(state.marketingConsentTypes).toEqual(new Set());
-  });
 });
 
 describe("the voice room on the wire", () => {

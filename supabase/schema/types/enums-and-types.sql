@@ -148,6 +148,27 @@ COMMENT ON TYPE public.invoice_billing_cadence IS 'How often an invoice customer
 
 
 --
+-- Name: klaviyo_event_kind; Type: TYPE; Schema: public; Owner: -
+--
+
+CREATE TYPE public.klaviyo_event_kind AS ENUM (
+    'account_created',
+    'enrolled',
+    'waitlisted',
+    'seat_offered',
+    'payment',
+    'subscription_cancelled'
+);
+
+
+--
+-- Name: TYPE klaviyo_event_kind; Type: COMMENT; Schema: public; Owner: -
+--
+
+COMMENT ON TYPE public.klaviyo_event_kind IS 'What happened to a parent, as a Klaviyo event: account_created (they accepted the terms for the first time, which only a parent''s registration does), enrolled (a participation became active), waitlisted (a participation joined a waitlist), seat_offered (a waitlisted participation was offered a seat), payment (a payment was recorded, other than a refunded duplicate) and subscription_cancelled (a family subscription moved to canceling or cancelled). The sync sends each with the unique id `<kind>:<source id>`, so a retry, or the same transition happening twice, is never counted twice.';
+
+
+--
 -- Name: library_article_category; Type: TYPE; Schema: public; Owner: -
 --
 
@@ -185,7 +206,6 @@ CREATE TYPE public.location_type AS ENUM (
 --
 
 CREATE TYPE public.marketing_consent_type AS ENUM (
-    'school_of_gaming',
     'lynx_educate'
 );
 
@@ -194,7 +214,7 @@ CREATE TYPE public.marketing_consent_type AS ENUM (
 -- Name: TYPE marketing_consent_type; Type: COMMENT; Schema: public; Owner: -
 --
 
-COMMENT ON TYPE public.marketing_consent_type IS 'The marketing permissions a parent can hold. school_of_gaming is our own mailing list, asked for at parent registration. lynx_educate is our partner''s, asked for only on products an admin has attached it to — see product_marketing_consents. An enum rather than a whitelist table because a marketing consent, unlike a consent DOCUMENT, has no text to version and no republication for a stored row to outlive: it is a standing permission to mail, and the party it names is the whole of it.';
+COMMENT ON TYPE public.marketing_consent_type IS 'The marketing permissions a parent can hold in Sogverse. One value, lynx_educate: our partner''s list, asked for only on products an admin has attached it to — see product_marketing_consents. School of Gaming''s own mailing list is not here: its consent lives in Klaviyo, and Sogverse keeps only what the parent answered at registration (profiles.registration_marketing_consent). An enum rather than a whitelist table because a marketing consent, unlike a consent DOCUMENT, has no text to version and no republication for a stored row to outlive: it is a standing permission to mail, and the party it names is the whole of it.';
 
 
 --

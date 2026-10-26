@@ -408,6 +408,8 @@ import { TEST_IDS } from "./constants";
  *                  kept live, 922 a draft never published, and 923 a guide id
  *                  that must NEVER exist. Its guides are minted by the RPC and
  *                  found by a label prefix only that file uses
+ *   930-931        klaviyo-sync.test.ts (930 a club the seeded parent's gamer
+ *                  holds a seat in, 931 one that ended long ago)
  *
  * One file reserves no PRODUCT id and is listed anyway, so nobody goes looking
  * for its range: **create-product.test.ts**. It is the only file that calls

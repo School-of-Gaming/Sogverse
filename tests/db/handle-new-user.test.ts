@@ -708,3 +708,101 @@ describe("handle_new_user() registration_completed_at", () => {
     expect(data!.registration_completed_at).not.toBeNull();
   });
 });
+
+/**
+ * The signup intent: which of our pages the parent set out to reach, as the
+ * register route decided it from the row. The trigger checks only the shape —
+ * a kind it knows and a uuid — and keeps the pair whole or not at all, so a
+ * malformed value costs the signup nothing. Like the utm_* columns it has no
+ * UPDATE grant for a browser role.
+ */
+describe("handle_new_user() signup intent", () => {
+  let admin: SupabaseClient<Database>;
+  const createdUserIds: string[] = [];
+  const PAGE_ID = "3d2c1b0a-9f8e-4d7c-8b6a-5f4e3d2c1b0a";
+
+  beforeAll(() => {
+    admin = createAdminTestClient();
+  });
+
+  afterEach(async () => {
+    for (const userId of createdUserIds.reverse()) {
+      await admin.auth.admin.deleteUser(userId);
+    }
+    createdUserIds.length = 0;
+  });
+
+  async function intentOf(label: string, metadata: Record<string, string>) {
+    const { data, error } = await admin.auth.admin.createUser({
+      email: `intent-${label}-${Date.now()}@test.local`,
+      password: "testpassword123",
+      email_confirm: true,
+      user_metadata: { first_name: "Intent", last_name: "Test", ...metadata },
+    });
+    expect(error).toBeNull();
+    createdUserIds.push(data.user!.id);
+    const { data: profile, error: readError } = await admin
+      .from("profiles")
+      .select("signup_intent_kind, signup_intent_id")
+      .eq("id", data.user!.id)
+      .single();
+    expect(readError).toBeNull();
+    return profile!;
+  }
+
+  it("stores a well-formed intent as its kind and id", async () => {
+    expect(
+      await intentOf("landing", {
+        signup_intent_kind: "landing_page",
+        signup_intent_id: PAGE_ID,
+      }),
+    ).toEqual({ signup_intent_kind: "landing_page", signup_intent_id: PAGE_ID });
+  });
+
+  it("stores nothing for a kind it does not know", async () => {
+    expect(
+      await intentOf("unknown-kind", {
+        signup_intent_kind: "newsletter",
+        signup_intent_id: PAGE_ID,
+      }),
+    ).toEqual({ signup_intent_kind: null, signup_intent_id: null });
+  });
+
+  it("stores nothing for an id that is not a uuid, rather than half the pair", async () => {
+    expect(
+      await intentOf("bad-id", {
+        signup_intent_kind: "product",
+        signup_intent_id: "/en/shop/whatever",
+      }),
+    ).toEqual({ signup_intent_kind: null, signup_intent_id: null });
+  });
+
+  it("stores nothing when the metadata carries none", async () => {
+    expect(await intentOf("none", {})).toEqual({
+      signup_intent_kind: null,
+      signup_intent_id: null,
+    });
+  });
+
+  it("refuses half a pair even from the service role", async () => {
+    const { error } = await admin
+      .from("profiles")
+      .update({ signup_intent_kind: "product" })
+      .eq("id", TEST_IDS.CUSTOMER);
+    // 23514 = check_violation: both, or neither.
+    expect(error?.code).toBe("23514");
+  });
+
+  it("cannot be written by the parent it describes", async () => {
+    const customer = await createAuthenticatedClient(
+      TEST_CREDENTIALS.CUSTOMER.email,
+      TEST_CREDENTIALS.CUSTOMER.password,
+    );
+    const { error } = await customer
+      .from("profiles")
+      .update({ signup_intent_kind: "landing_page", signup_intent_id: PAGE_ID })
+      .eq("id", TEST_IDS.CUSTOMER);
+    // 42501 = insufficient_privilege: no column grant.
+    expect(error?.code).toBe("42501");
+  });
+});

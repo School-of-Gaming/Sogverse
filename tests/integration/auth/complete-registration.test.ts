@@ -28,7 +28,6 @@ const mockProfileUpdate = vi.fn();
 /** The registration stamp: a conditional update that returns the rows it changed. */
 const mockStamp = vi.fn();
 const mockAccountConsentRpc = vi.fn();
-const mockMarketingConsentRpc = vi.fn();
 
 vi.mock("@/lib/supabase/admin", () => ({
   createAdminClient: () => ({
@@ -62,9 +61,6 @@ vi.mock("@/lib/supabase/admin", () => ({
     rpc: (fn: string, args: Record<string, unknown>) => {
       writes.push(fn);
       if (fn === "record_account_consents") return mockAccountConsentRpc(args);
-      if (fn === "record_registration_marketing_consent") {
-        return mockMarketingConsentRpc(args);
-      }
       throw new Error(`Unexpected rpc in admin mock: ${fn}`);
     },
   }),
@@ -87,6 +83,17 @@ const mockSignUpProductFor = vi.fn();
 vi.mock("@/lib/meta-sign-up-product.server", () => ({
   signUpProductFor: (...args: unknown[]) => mockSignUpProductFor(...args),
 }));
+
+// The signup intent is resolved by its own module, unit-tested beside it; here
+// only what the route hands it and writes from its answer.
+const mockResolveSignUpIntent = vi.fn();
+vi.mock("@/lib/sign-up-intent.server", async (importOriginal) => {
+  const actual = await importOriginal<typeof import("@/lib/sign-up-intent.server")>();
+  return {
+    ...actual,
+    resolveSignUpIntent: (...args: unknown[]) => mockResolveSignUpIntent(...args),
+  };
+});
 
 /** The advertised product a sign-up started from, as the resolver answers it. */
 const SIGN_UP_PRODUCT = {
@@ -226,7 +233,7 @@ describe("POST /api/auth/complete-registration", () => {
     mockProfileUpdate.mockResolvedValue({ error: null });
     mockStamp.mockResolvedValue({ data: [{ id: USER_ID }], error: null });
     mockAccountConsentRpc.mockResolvedValue({ data: 1, error: null });
-    mockMarketingConsentRpc.mockResolvedValue({ error: null });
+    mockResolveSignUpIntent.mockResolvedValue(null);
     mockSendTransactionalEmail.mockResolvedValue({ messageId: "msg-1" });
   });
 
@@ -325,6 +332,7 @@ describe("POST /api/auth/complete-registration", () => {
       utm_campaign: "lynx-summer-a",
       utm_content: "hero",
       utm_term: "roblox club",
+      registration_marketing_consent: true,
     });
     expect(row).not.toHaveProperty("registration_completed_at");
 
@@ -339,29 +347,46 @@ describe("POST /api/auth/complete-registration", () => {
 
     // The consents are recorded before the stamp, and the stamp is the last
     // write the route makes.
-    expect(writes).toEqual([
-      "profile",
-      "record_account_consents",
-      "record_registration_marketing_consent",
-      "stamp",
-    ]);
+    expect(writes).toEqual(["profile", "record_account_consents", "stamp"]);
     expect(mockAccountConsentRpc).toHaveBeenCalledWith({
       p_customer_id: USER_ID,
       p_document_slugs: [...REGISTRATION_CONSENT_DOCUMENTS],
-    });
-    expect(mockMarketingConsentRpc).toHaveBeenCalledWith({
-      p_customer_id: USER_ID,
-      p_granted: true,
     });
   });
 
   it("records a marketing refusal when the box was left unticked", async () => {
     await POST(request({ ...validBody, marketingConsent: false }));
 
-    expect(mockMarketingConsentRpc).toHaveBeenCalledWith({
-      p_customer_id: USER_ID,
-      p_granted: false,
+    expect(profileRow()).toMatchObject({ registration_marketing_consent: false });
+  });
+
+  // -- The signup intent --
+  //
+  // A Google round trip carries no signup metadata, so the finish route writes
+  // the intent as columns, from the finish page's own redirect — and, being
+  // first-party, without asking the marketing cookie.
+
+  it("writes the intent the resolver names, whatever the consent cookie says", async () => {
+    mockResolveSignUpIntent.mockResolvedValue({
+      kind: "municipality_club",
+      id: SIGN_UP_PRODUCT.content_ids[0],
     });
+    const redirect = `/fi/koulut/helsinki/${SIGN_UP_PRODUCT.content_ids[0]}`;
+
+    await POST(request({ ...validBody, redirect }, { marketing: false }));
+
+    expect(mockResolveSignUpIntent).toHaveBeenCalledWith(redirect);
+    expect(profileRow()).toMatchObject({
+      signup_intent_kind: "municipality_club",
+      signup_intent_id: SIGN_UP_PRODUCT.content_ids[0],
+    });
+  });
+
+  it("writes neither intent column when the resolver names nothing", async () => {
+    await POST(request(validBody));
+
+    expect(profileRow()).not.toHaveProperty("signup_intent_kind");
+    expect(profileRow()).not.toHaveProperty("signup_intent_id");
   });
 
   it("omits every attribution column without a marketing grant in the cookie", async () => {
@@ -443,17 +468,6 @@ describe("POST /api/auth/complete-registration", () => {
 
     expect(response.status).toBe(500);
     expect(writes).toEqual(["profile"]);
-  });
-
-  it("still completes when the marketing write fails", async () => {
-    mockMarketingConsentRpc.mockResolvedValue({
-      error: { code: "XX000", message: "boom" },
-    });
-
-    const response = await POST(request(validBody));
-
-    expect(response.status).toBe(200);
-    expect(stampCall()).toBeDefined();
   });
 
   it("still completes when the welcome mail fails", async () => {

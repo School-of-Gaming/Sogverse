@@ -6,16 +6,14 @@ import { LYNX_EDUCATE_URL } from "@/lib/constants/marketing-consents";
 import type { MarketingConsentType } from "@/types";
 
 /**
- * The order the two consents are rendered in, written out rather than read off
- * the enum or off the stored rows.
+ * The consents a parent answers here, in the order they are rendered, written
+ * out rather than read off the enum or off the stored rows. Exported because
+ * the card that saves them walks the same list.
  *
- * Postgres orders an enum by *declaration* order and a select returns whatever
- * order it likes, so neither is a promise about what a parent should read first.
- * This is: our own mailing list, then the partner's. Exported because the card
- * that saves them walks the same list.
+ * Only the partner's: School of Gaming's own mailing list is answered in
+ * Klaviyo, and Sogverse keeps only what the parent said at registration.
  */
 export const MARKETING_CONSENT_ORDER = [
-  "school_of_gaming",
   "lynx_educate",
 ] as const satisfies readonly MarketingConsentType[];
 
@@ -83,30 +81,24 @@ export function MarketingPreferencesFields({
               disabled={disabled}
             />
             <span>
-              {consentType === "school_of_gaming" ? (
-                t("schoolOfGaming")
-              ) : (
-                /* An anchor off the app's own chrome, which the
-                   no-off-site-links rule permits: that rule governs
-                   staff-authored copy written to one family, and this is a
-                   consent sentence naming the partner it is about. A parent
-                   being asked to share their address with Lynx Educate has to
-                   be able to go and look at who that is. */
-                <>
-                  {t.rich("lynxEducate", {
-                    link: (chunks) => (
-                      <a
-                        href={LYNX_EDUCATE_URL}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        className="underline hover:text-foreground"
-                      >
-                        {chunks}
-                      </a>
-                    ),
-                  })}
-                </>
-              )}
+              {/* An anchor off the app's own chrome, which the
+                  no-off-site-links rule permits: that rule governs
+                  staff-authored copy written to one family, and this is a
+                  consent sentence naming the partner it is about. A parent
+                  being asked to share their address with Lynx Educate has to
+                  be able to go and look at who that is. */}
+              {t.rich("lynxEducate", {
+                link: (chunks) => (
+                  <a
+                    href={LYNX_EDUCATE_URL}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="underline hover:text-foreground"
+                  >
+                    {chunks}
+                  </a>
+                ),
+              })}
             </span>
           </label>
         ))}

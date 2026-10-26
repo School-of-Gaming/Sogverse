@@ -401,11 +401,17 @@ export function SettingsSectionContent({
     ? NO_MARKETING_CONSENTS
     : marketingConsentRows;
 
-  /** What the baseline says is granted. A consent with no row at all is a no. */
+  /**
+   * What the baseline says is granted. A consent with no row at all is a no.
+   * Keyed rather than compared with `===`: the enum has one member today, so a
+   * comparison between two of its values is always true and the linter refuses
+   * it; a lookup keyed at the enum asks the question honestly when a second
+   * joins.
+   */
   const savedMarketingGranted = (consentType: MarketingConsentType) =>
-    marketingConsents?.some(
-      (row) => row.consent_type === consentType && row.granted,
-    ) ?? false;
+    new Map<MarketingConsentType, boolean>(
+      (marketingConsents ?? []).map((row) => [row.consent_type, row.granted]),
+    ).get(consentType) ?? false;
 
   /**
    * Edits made on top of the saved answers, keyed by consent.

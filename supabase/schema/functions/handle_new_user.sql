@@ -5,7 +5,7 @@
 CREATE FUNCTION public.handle_new_user() RETURNS trigger
     LANGUAGE plpgsql SECURITY DEFINER
     SET search_path TO 'public'
-    AS $$
+    AS $_$
 DECLARE
   profile_first_name   TEXT;
   profile_last_name    TEXT;
@@ -19,6 +19,10 @@ DECLARE
   utm_campaign_value   TEXT;
   utm_content_value    TEXT;
   utm_term_value       TEXT;
+  intent_kind_raw      TEXT;
+  intent_id_raw        TEXT;
+  intent_kind_value    TEXT;
+  intent_id_value      UUID;
   registration_value   TIMESTAMPTZ;
 BEGIN
   profile_first_name := COALESCE(
@@ -89,6 +93,19 @@ BEGIN
     ELSE NULL
   END;
 
+  -- The signup intent, the same way: a kind we do not know, or an id that is
+  -- not a uuid, degrades the pair to NULL rather than failing the signup, and
+  -- the pair is kept whole or not at all. Only the shape is checked here — the
+  -- register route decided the meaning from the row before it sent it.
+  intent_kind_raw := NEW.raw_user_meta_data->>'signup_intent_kind';
+  intent_id_raw   := NEW.raw_user_meta_data->>'signup_intent_id';
+
+  IF intent_kind_raw IN ('product', 'municipality_club', 'landing_page')
+     AND intent_id_raw ~* '^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$' THEN
+    intent_kind_value := intent_kind_raw;
+    intent_id_value   := intent_id_raw::uuid;
+  END IF;
+
   -- A password account arrives whole: every route that creates one supplies
   -- the name, the terms acceptance and the consents in the same request, so it
   -- is registered the moment it exists. Any other provider (Google) arrives
@@ -103,12 +120,14 @@ BEGIN
   INSERT INTO public.profiles (
     id, email, role, first_name, last_name,
     utm_source, utm_medium, utm_campaign, utm_content, utm_term,
+    signup_intent_kind, signup_intent_id,
     registration_completed_at
   )
   VALUES (
     NEW.id, NEW.email, 'customer', profile_first_name, profile_last_name,
     utm_source_value, utm_medium_value, utm_campaign_value,
     utm_content_value, utm_term_value,
+    intent_kind_value, intent_id_value,
     registration_value
   );
 
@@ -116,7 +135,7 @@ BEGIN
 
   RETURN NEW;
 END;
-$$;
+$_$;
 
 
 --

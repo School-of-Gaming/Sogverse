@@ -1645,6 +1645,78 @@ export type Database = {
         }
         Relationships: []
       }
+      klaviyo_event_outbox: {
+        Row: {
+          attempts: number
+          customer_id: string
+          enqueued_at: string
+          facts: Json
+          id: string
+          kind: Database["public"]["Enums"]["klaviyo_event_kind"]
+          last_error: string | null
+          leased_until: string | null
+          next_attempt_at: string
+          occurred_at: string
+          product_id: string | null
+          source_id: string
+        }
+        Insert: {
+          attempts?: number
+          customer_id: string
+          enqueued_at?: string
+          facts?: Json
+          id?: string
+          kind: Database["public"]["Enums"]["klaviyo_event_kind"]
+          last_error?: string | null
+          leased_until?: string | null
+          next_attempt_at?: string
+          occurred_at: string
+          product_id?: string | null
+          source_id: string
+        }
+        Update: {
+          attempts?: number
+          customer_id?: string
+          enqueued_at?: string
+          facts?: Json
+          id?: string
+          kind?: Database["public"]["Enums"]["klaviyo_event_kind"]
+          last_error?: string | null
+          leased_until?: string | null
+          next_attempt_at?: string
+          occurred_at?: string
+          product_id?: string | null
+          source_id?: string
+        }
+        Relationships: []
+      }
+      klaviyo_profile_outbox: {
+        Row: {
+          attempts: number
+          customer_id: string
+          last_error: string | null
+          leased_until: string | null
+          next_attempt_at: string
+          seq: number
+        }
+        Insert: {
+          attempts?: number
+          customer_id: string
+          last_error?: string | null
+          leased_until?: string | null
+          next_attempt_at?: string
+          seq?: number
+        }
+        Update: {
+          attempts?: number
+          customer_id?: string
+          last_error?: string | null
+          leased_until?: string | null
+          next_attempt_at?: string
+          seq?: number
+        }
+        Relationships: []
+      }
       landing_page_publication_translations: {
         Row: {
           locale: string
@@ -2929,7 +3001,10 @@ export type Database = {
           locale: string | null
           phone: string | null
           registration_completed_at: string | null
+          registration_marketing_consent: boolean | null
           role: Database["public"]["Enums"]["user_role"]
+          signup_intent_id: string | null
+          signup_intent_kind: string | null
           spoken_languages: Database["public"]["Enums"]["spoken_language"][]
           updated_at: string
           utm_campaign: string | null
@@ -2950,7 +3025,10 @@ export type Database = {
           locale?: string | null
           phone?: string | null
           registration_completed_at?: string | null
+          registration_marketing_consent?: boolean | null
           role?: Database["public"]["Enums"]["user_role"]
+          signup_intent_id?: string | null
+          signup_intent_kind?: string | null
           spoken_languages?: Database["public"]["Enums"]["spoken_language"][]
           updated_at?: string
           utm_campaign?: string | null
@@ -2971,7 +3049,10 @@ export type Database = {
           locale?: string | null
           phone?: string | null
           registration_completed_at?: string | null
+          registration_marketing_consent?: boolean | null
           role?: Database["public"]["Enums"]["user_role"]
+          signup_intent_id?: string | null
+          signup_intent_kind?: string | null
           spoken_languages?: Database["public"]["Enums"]["spoken_language"][]
           updated_at?: string
           utm_campaign?: string | null
@@ -4167,7 +4248,10 @@ export type Database = {
             | Database["public"]["Enums"]["gedu_qualification"][]
             | null
           registration_completed_at: string | null
+          registration_marketing_consent: boolean | null
           role: Database["public"]["Enums"]["user_role"] | null
+          signup_intent_id: string | null
+          signup_intent_kind: string | null
           spoken_languages:
             | Database["public"]["Enums"]["spoken_language"][]
             | null
@@ -4195,7 +4279,10 @@ export type Database = {
           phone?: string | null
           qualifications?: never
           registration_completed_at?: string | null
+          registration_marketing_consent?: boolean | null
           role?: Database["public"]["Enums"]["user_role"] | null
+          signup_intent_id?: string | null
+          signup_intent_kind?: string | null
           spoken_languages?:
             | Database["public"]["Enums"]["spoken_language"][]
             | null
@@ -4223,7 +4310,10 @@ export type Database = {
           phone?: string | null
           qualifications?: never
           registration_completed_at?: string | null
+          registration_marketing_consent?: boolean | null
           role?: Database["public"]["Enums"]["user_role"] | null
+          signup_intent_id?: string | null
+          signup_intent_kind?: string | null
           spoken_languages?:
             | Database["public"]["Enums"]["spoken_language"][]
             | null
@@ -4442,6 +4532,21 @@ export type Database = {
         Args: { p_group_id: string; p_session_date: string }
         Returns: Json
       }
+      claim_klaviyo_event_jobs: {
+        Args: { p_customer_ids?: string[]; p_limit: number }
+        Returns: {
+          customer_id: string
+          event_id: string
+          kind: Database["public"]["Enums"]["klaviyo_event_kind"]
+        }[]
+      }
+      claim_klaviyo_profile_jobs: {
+        Args: { p_customer_ids?: string[]; p_limit: number }
+        Returns: {
+          customer_id: string
+          seq: number
+        }[]
+      }
       claim_substitution_notification_jobs: {
         Args: { p_limit: number; p_request_ids?: string[] }
         Returns: {
@@ -4610,6 +4715,29 @@ export type Database = {
         Args: { p_product_id: string }
         Returns: Database["public"]["Enums"]["effective_product_status"]
       }
+      enqueue_klaviyo_event: {
+        Args: {
+          p_customer_id: string
+          p_facts?: Json
+          p_kind: Database["public"]["Enums"]["klaviyo_event_kind"]
+          p_occurred_at: string
+          p_product_id: string
+          p_source_id: string
+        }
+        Returns: undefined
+      }
+      enqueue_klaviyo_parents_of_gamer: {
+        Args: { p_gamer_id: string }
+        Returns: undefined
+      }
+      enqueue_klaviyo_parents_of_product: {
+        Args: { p_product_id: string }
+        Returns: undefined
+      }
+      enqueue_klaviyo_profiles: {
+        Args: { p_customer_ids: string[] }
+        Returns: undefined
+      }
       enqueue_passed_substitution_notifications: {
         Args: never
         Returns: number
@@ -4648,6 +4776,14 @@ export type Database = {
           p_session_date: string
         }
         Returns: Json
+      }
+      finish_klaviyo_event_job: {
+        Args: { p_error?: string; p_event_id: string }
+        Returns: undefined
+      }
+      finish_klaviyo_profile_job: {
+        Args: { p_customer_id: string; p_error?: string; p_seq: number }
+        Returns: boolean
       }
       finish_substitution_notification_job: {
         Args: { p_error?: string; p_request_id: string; p_seq: number }
@@ -4795,6 +4931,24 @@ export type Database = {
           storage_path: string
         }[]
       }
+      get_klaviyo_events: {
+        Args: { p_event_ids: string[] }
+        Returns: {
+          customer_id: string
+          event_id: string
+          kind: Database["public"]["Enums"]["klaviyo_event_kind"]
+          occurred_at: string
+          properties: Json
+          unique_id: string
+        }[]
+      }
+      get_klaviyo_parent_snapshots: {
+        Args: { p_customer_ids: string[] }
+        Returns: {
+          customer_id: string
+          snapshot: Json
+        }[]
+      }
       get_live_substitution_requests_for_discord_user: {
         Args: { p_discord_user_id: string }
         Returns: Json
@@ -4832,7 +4986,10 @@ export type Database = {
           locale: string | null
           phone: string | null
           registration_completed_at: string | null
+          registration_marketing_consent: boolean | null
           role: Database["public"]["Enums"]["user_role"]
+          signup_intent_id: string | null
+          signup_intent_kind: string | null
           spoken_languages: Database["public"]["Enums"]["spoken_language"][]
           updated_at: string
           utm_campaign: string | null
@@ -4868,7 +5025,10 @@ export type Database = {
           locale: string | null
           phone: string | null
           registration_completed_at: string | null
+          registration_marketing_consent: boolean | null
           role: Database["public"]["Enums"]["user_role"]
+          signup_intent_id: string | null
+          signup_intent_kind: string | null
           spoken_languages: Database["public"]["Enums"]["spoken_language"][]
           updated_at: string
           utm_campaign: string | null
@@ -5063,10 +5223,18 @@ export type Database = {
         }
         Returns: Json
       }
+      kick_klaviyo_sync: { Args: never; Returns: undefined }
+      kick_klaviyo_sync_if_due: { Args: never; Returns: undefined }
+      kick_klaviyo_sync_once: { Args: never; Returns: undefined }
       kick_substitution_notification_sync: { Args: never; Returns: undefined }
       kick_substitution_notification_sync_if_due: {
         Args: never
         Returns: undefined
+      }
+      klaviyo_payment_product: { Args: { p_metadata: Json }; Returns: string }
+      klaviyo_product_document: {
+        Args: { p_product_id: string }
+        Returns: Json
       }
       landing_button_is_valid: { Args: { p_button: Json }; Returns: boolean }
       landing_sections_problem: { Args: { p_sections: Json }; Returns: string }
@@ -5221,10 +5389,6 @@ export type Database = {
           p_status: string
         }
         Returns: Json
-      }
-      record_registration_marketing_consent: {
-        Args: { p_customer_id: string; p_granted: boolean }
-        Returns: undefined
       }
       record_required_consents: {
         Args: {
@@ -5734,6 +5898,13 @@ export type Database = {
       gedu_qualification: "neuroinclusive" | "consumer_products"
       gender_type: "boy" | "girl" | "non_binary"
       invoice_billing_cadence: "monthly" | "quarterly" | "half_yearly"
+      klaviyo_event_kind:
+        | "account_created"
+        | "enrolled"
+        | "waitlisted"
+        | "seat_offered"
+        | "payment"
+        | "subscription_cancelled"
       library_article_category:
         | "online_safety"
         | "screen_time"
@@ -5741,7 +5912,7 @@ export type Database = {
         | "games_explained"
         | "for_schools"
       location_type: "country" | "region" | "municipality" | "district" | "site"
-      marketing_consent_type: "school_of_gaming" | "lynx_educate"
+      marketing_consent_type: "lynx_educate"
       notification_channel: "email"
       notification_kind: "session_report_copy"
       participation_status: "reserving" | "active" | "waitlisted" | "completed"
@@ -5922,6 +6093,14 @@ export const Constants = {
       gedu_qualification: ["neuroinclusive", "consumer_products"],
       gender_type: ["boy", "girl", "non_binary"],
       invoice_billing_cadence: ["monthly", "quarterly", "half_yearly"],
+      klaviyo_event_kind: [
+        "account_created",
+        "enrolled",
+        "waitlisted",
+        "seat_offered",
+        "payment",
+        "subscription_cancelled",
+      ],
       library_article_category: [
         "online_safety",
         "screen_time",
@@ -5930,7 +6109,7 @@ export const Constants = {
         "for_schools",
       ],
       location_type: ["country", "region", "municipality", "district", "site"],
-      marketing_consent_type: ["school_of_gaming", "lynx_educate"],
+      marketing_consent_type: ["lynx_educate"],
       notification_channel: ["email"],
       notification_kind: ["session_report_copy"],
       participation_status: ["reserving", "active", "waitlisted", "completed"],

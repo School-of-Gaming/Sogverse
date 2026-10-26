@@ -130,6 +130,20 @@ CREATE UNIQUE INDEX uq_participations_checkout_session ON public.participations 
 
 
 --
+-- Name: participations participations_klaviyo_changed; Type: TRIGGER; Schema: public; Owner: -
+--
+
+CREATE TRIGGER participations_klaviyo_changed AFTER UPDATE OF status, product_id, seat_offer_sent_at ON public.participations FOR EACH ROW WHEN ((((old.status IS DISTINCT FROM new.status) OR (old.product_id IS DISTINCT FROM new.product_id)) OR (old.seat_offer_sent_at IS DISTINCT FROM new.seat_offer_sent_at))) EXECUTE FUNCTION public.klaviyo_participation_changed();
+
+
+--
+-- Name: participations participations_klaviyo_written; Type: TRIGGER; Schema: public; Owner: -
+--
+
+CREATE TRIGGER participations_klaviyo_written AFTER INSERT OR DELETE ON public.participations FOR EACH ROW EXECUTE FUNCTION public.klaviyo_participation_changed();
+
+
+--
 -- Name: participations participations_updated_at; Type: TRIGGER; Schema: public; Owner: -
 --
 
