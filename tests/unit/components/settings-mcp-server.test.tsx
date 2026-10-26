@@ -1,4 +1,5 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
+import { SITE_ORIGIN } from "../../mocks/site-origin";
 // First among the imports, and load-bearing: the `vi.mock` factories below run
 // during this file's import phase, and each reads its module body out of here.
 import {
@@ -55,7 +56,7 @@ vi.mock("@/components/gedu/contract/gedu-contract-settings-card", () => ({
   GeduContractSettingsCard: () => <div data-testid="gedu-contract-card" />,
 }));
 
-const MCP_URL = "https://sogverse-staging.sog.gg/api/mcp";
+const MCP_URL = `${SITE_ORIGIN}/api/mcp`;
 
 function renderSettings(mcpServerUrl?: string) {
   return render(

@@ -1,4 +1,4 @@
-import { demoArtUrl, type EmailRenderContext } from "../render-context";
+import { renderUrl, type EmailRenderContext } from "../render-context";
 import type { SessionReportSpotlight } from "../session-report";
 
 /**
@@ -51,7 +51,7 @@ export function sessionReportSpotlightFixtures(
     title,
     body,
     image: {
-      url: demoArtUrl(art.path, context),
+      url: renderUrl(art.path, context),
       width: art.width,
       height: art.height,
     },

@@ -1,5 +1,6 @@
 import { createHash, createHmac } from "node:crypto";
 import { afterAll, beforeEach, describe, expect, it, vi } from "vitest";
+import { SITE_ORIGIN } from "../../mocks/site-origin";
 
 /**
  * The Slack app's one endpoint — the link slash command and the Accept button.
@@ -17,7 +18,7 @@ const SIGNING_SECRET = "slack-signing-secret-for-tests";
 vi.stubEnv("SLACK_SIGNING_SECRET", SIGNING_SECRET);
 // The origin the link URL is built on. The test requests carry no Host, so it
 // is the configured site URL that is used.
-vi.stubEnv("NEXT_PUBLIC_SITE_URL", "https://sog.gg");
+vi.stubEnv("NEXT_PUBLIC_SITE_URL", SITE_ORIGIN);
 afterAll(() => vi.unstubAllEnvs());
 
 const deferred: Promise<unknown>[] = [];
@@ -215,9 +216,9 @@ describe("POST /api/slack/interactions — the link command", () => {
     const { sent } = await run(slackRequest(slashCommandBody()));
 
     const url = buttonUrl(sent[0].body);
-    const match = /^https:\/\/sog\.gg\/link-slack\?token=([A-Za-z0-9_-]{43})$/.exec(url);
-    expect(match).not.toBeNull();
-    const token = match?.[1] ?? "";
+    const match = /^(.+)\/link-slack\?token=([A-Za-z0-9_-]{43})$/.exec(url);
+    expect(match?.[1]).toBe(SITE_ORIGIN);
+    const token = match?.[2] ?? "";
     expect(mockFrom).toHaveBeenCalledWith("slack_link_tokens");
     expect(mockInsert).toHaveBeenCalledWith({
       token_hash: createHash("sha256").update(token).digest("hex"),
@@ -294,8 +295,8 @@ describe("POST /api/slack/interactions — Accept", () => {
     expect(sent).toHaveLength(1);
     expect(sent[0].body).toMatchObject({ response_type: "ephemeral", replace_original: false });
     expect(sent[0].body.text).toContain("Nothing was accepted");
-    expect(buttonUrl(sent[0].body)).toMatch(
-      /^https:\/\/sog\.gg\/link-slack\?token=[A-Za-z0-9_-]{43}$/,
+    expect(/^(.+)\/link-slack\?token=[A-Za-z0-9_-]{43}$/.exec(buttonUrl(sent[0].body))?.[1]).toBe(
+      SITE_ORIGIN,
     );
     expect(mockInsert).toHaveBeenCalledWith(
       expect.objectContaining({ slack_user_id: "U0123ABC", slack_team_id: "T0123" }),

@@ -1,4 +1,5 @@
 import { describe, it, expect, beforeAll } from "vitest";
+import { SITE_ORIGIN } from "../../mocks/site-origin";
 import {
   composeProductConfirmationInvitation,
   invitationPlanWindow,
@@ -30,7 +31,7 @@ const NOW = new Date("2027-01-04T08:00:00Z");
 const PARTICIPATION_ID = "3f9c2b7e-5d14-4a8e-9c61-0b2f7e8d4a15";
 /** The mail's own button, and the entry's `URL`: one link, because a seat's own
  *  page needs a group most seats do not have when this mail is composed. */
-const DASHBOARD_URL = "https://sog.gg/parent";
+const DASHBOARD_URL = `${SITE_ORIGIN}/parent`;
 
 let t: EmailTranslator;
 

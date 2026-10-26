@@ -1,4 +1,5 @@
 import { describe, expect, it } from "vitest";
+import { SITE_HOST } from "../../mocks/site-origin";
 import {
   LANDING_ICONS,
   LANDING_SECTION_TYPES,
@@ -157,7 +158,7 @@ const STRUCTURES: Record<LandingSectionType, unknown[]> = {
     { id: ID, type: "cta" },
     { id: ID, type: "cta", button: { kind: "email", to: "a@b.c" } },
     { id: ID, type: "cta", button: { kind: "email", to: "a b@sog.gg" } },
-    { id: ID, type: "cta", button: { kind: "external", url: "mailto:a@sog.gg" } },
+    { id: ID, type: "cta", button: { kind: "external", url: `mailto:a@${SITE_HOST}` } },
     { id: ID, type: "cta", button: internal, background: "card" },
     { id: ID, type: "cta", button: internal, background: "default" },
     { id: ID, type: "cta", button: internal, background: "" },

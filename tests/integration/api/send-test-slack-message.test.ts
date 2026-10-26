@@ -1,4 +1,5 @@
 import { afterAll, beforeEach, describe, expect, it, vi } from "vitest";
+import { SITE_ORIGIN } from "../../mocks/site-origin";
 import { NextResponse } from "next/server";
 
 /**
@@ -14,7 +15,7 @@ import { NextResponse } from "next/server";
 
 vi.stubEnv("SLACK_BOT_TOKEN", "xoxb-test-token");
 // The origin the preview's link replies are built on.
-vi.stubEnv("NEXT_PUBLIC_SITE_URL", "https://sog.gg");
+vi.stubEnv("NEXT_PUBLIC_SITE_URL", SITE_ORIGIN);
 afterAll(() => {
   vi.unstubAllEnvs();
 });

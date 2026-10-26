@@ -4,6 +4,7 @@
 // back what the helpers wrote through it.
 
 import { afterEach, beforeEach, describe, expect, it } from "vitest";
+import { SITE_HOST } from "../../mocks/site-origin";
 import { deleteCookie, setCookie } from "@/lib/cookies";
 
 /**
@@ -14,7 +15,7 @@ import { deleteCookie, setCookie } from "@/lib/cookies";
  * These are tested by capturing the strings handed to `document.cookie` rather
  * than by reading the jar back, and that is the only way the interesting case
  * *can* be tested: a jsdom document on `localhost` will refuse a
- * `domain=.sog.gg` write, so a jar-based assertion would prove nothing about
+ * write naming our registrable domain, so a jar-based assertion would prove nothing about
  * the write we actually care about.
  *
  * The case that matters is the delete walk. Meta's `_fbp` and `_fbc` are set on
@@ -71,7 +72,7 @@ describe("setCookie", () => {
   it("adds Secure when the document is served over https", () => {
     Object.defineProperty(window, "location", {
       configurable: true,
-      value: { protocol: "https:", hostname: "app.sog.gg" },
+      value: { protocol: "https:", hostname: `app.${SITE_HOST}` },
     });
 
     setCookie("locale", "fi");
@@ -94,16 +95,16 @@ describe("setCookie", () => {
 
 describe("deleteCookie", () => {
   it("expires with no domain, then at every domain up to the registrable one", () => {
-    stubHostname("app.sog.gg");
+    stubHostname(`app.${SITE_HOST}`);
 
     deleteCookie("_fbp");
 
     expect(writes).toHaveLength(3);
     expect(writes[0]).not.toContain("domain=");
-    expect(writes[1]).toContain("domain=.app.sog.gg");
+    expect(writes[1]).toContain(`domain=.app.${SITE_HOST}`);
     // The one that actually clears Meta's cookie: the pixel sets it on the
     // registrable domain, not on the subdomain our pages are served from.
-    expect(writes[2]).toContain("domain=.sog.gg");
+    expect(writes[2]).toContain(`domain=.${SITE_HOST}`);
     for (const write of writes) {
       expect(write).toContain("_fbp=;");
       expect(write).toContain("path=/");

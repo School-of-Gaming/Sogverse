@@ -1,4 +1,5 @@
 import { describe, it, expect, beforeAll } from "vitest";
+import { SITE_ORIGIN } from "../../mocks/site-origin";
 import { buildGamerWelcomeEmail } from "@/lib/email-templates/gamer-welcome";
 import {
   getEmailTranslator,
@@ -11,7 +12,7 @@ beforeAll(async () => {
   t = await getEmailTranslator("en");
 });
 
-const VERIFICATION_URL = "https://sog.gg/verify-email?token=abc123";
+const VERIFICATION_URL = `${SITE_ORIGIN}/verify-email?token=abc123`;
 
 /**
  * The first mail a child ever receives from us. What is pinned here is the one

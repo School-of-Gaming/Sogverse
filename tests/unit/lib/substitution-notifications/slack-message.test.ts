@@ -1,4 +1,5 @@
 import { describe, expect, it } from "vitest";
+import { SITE_ORIGIN } from "../../../mocks/site-origin";
 import {
   SLACK_ACCEPT_ACTION_ID,
   buildSlackLinkFirstReply,
@@ -332,7 +333,7 @@ describe("buildSubstitutionSlackMessage", () => {
 });
 
 describe("the ephemeral replies", () => {
-  const url = "https://sog.gg/link-slack?token=abc";
+  const url = `${SITE_ORIGIN}/link-slack?token=abc`;
 
   it("the link replies carry the URL on a button, to the presser alone, replacing nothing", () => {
     for (const reply of [buildSlackLinkReply(url), buildSlackLinkFirstReply(url)]) {
@@ -361,7 +362,7 @@ describe("the ephemeral replies", () => {
 describe("buildSubstitutionSlackPreviewSet", () => {
   const set = buildSubstitutionSlackPreviewSet({
     now: new Date("2026-10-08T12:00:00.000Z"),
-    origin: "https://sog.gg",
+    origin: SITE_ORIGIN,
   });
 
   it("draws every state in the order an admin meets them, then the three replies, labelled", () => {
@@ -405,7 +406,7 @@ describe("buildSubstitutionSlackPreviewSet", () => {
     const actionIds = JSON.stringify(set).match(/"action_id":"[^"]+"/g) ?? [];
     expect(actionIds.length).toBeGreaterThan(0);
     for (const id of actionIds) expect(id).toMatch(/"action_id":"subpreview/);
-    expect(JSON.stringify(set)).toContain("https://sog.gg/link-slack?token=preview");
+    expect(JSON.stringify(set)).toContain(`${SITE_ORIGIN}/link-slack?token=preview`);
     expect(JSON.stringify(set)).not.toContain(SLACK_ACCEPT_ACTION_ID);
   });
 });

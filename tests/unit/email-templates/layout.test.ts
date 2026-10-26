@@ -2,6 +2,7 @@ import { readFileSync } from "node:fs";
 import { dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
 import { describe, it, expect, afterEach, vi } from "vitest";
+import { SITE_HOST, SITE_ORIGIN } from "../../mocks/site-origin";
 import { wrapInLayout, BRAND_MARK } from "@/lib/email-templates/layout";
 import {
   GROUND_TONES,
@@ -33,8 +34,7 @@ import {
  * attributes a client honours before it has fetched anything.
  */
 
-const PROD_ORIGIN = "https://sog.gg";
-const STAGING_ORIGIN = "https://sogverse-staging.sog.gg";
+const STAGING_ORIGIN = `https://staging.${SITE_HOST}`;
 
 function render(): string {
   return wrapInLayout({ title: "Title", content: "<p>Body</p>" });
@@ -51,7 +51,7 @@ afterEach(() => {
 
 describe("the brand mark supplements the header", () => {
   it("puts the mark above a lockup it leaves entirely intact", () => {
-    vi.stubEnv("NEXT_PUBLIC_SITE_URL", PROD_ORIGIN);
+    vi.stubEnv("NEXT_PUBLIC_SITE_URL", SITE_ORIGIN);
     const html = render();
     const tag = markTag(html);
     expect(tag).not.toBeNull();
@@ -69,7 +69,7 @@ describe("the brand mark supplements the header", () => {
   it("changes nothing else about the mail it is added to", () => {
     vi.stubEnv("NEXT_PUBLIC_SITE_URL", "");
     const withoutOrigin = render();
-    vi.stubEnv("NEXT_PUBLIC_SITE_URL", PROD_ORIGIN);
+    vi.stubEnv("NEXT_PUBLIC_SITE_URL", SITE_ORIGIN);
     const withMark = render();
     expect(markTag(withMark)).not.toBeNull();
     // Lift the mark's row back out and the two documents are the same one.
@@ -87,7 +87,7 @@ describe("the brand mark supplements the header", () => {
    * the reader is being sent.
    */
   it("does not wrap the mark in a link", () => {
-    vi.stubEnv("NEXT_PUBLIC_SITE_URL", PROD_ORIGIN);
+    vi.stubEnv("NEXT_PUBLIC_SITE_URL", SITE_ORIGIN);
     expect(render()).not.toMatch(/<a\b[^>]*>\s*<img/);
   });
 });
@@ -329,7 +329,7 @@ describe("the card is the wide viewport's addition, not the phone's loss", () =>
    * the content and the footer — and nothing that mattered went with the block.
    */
   it("is a whole phone layout with the <style> block stripped out", () => {
-    vi.stubEnv("NEXT_PUBLIC_SITE_URL", PROD_ORIGIN);
+    vi.stubEnv("NEXT_PUBLIC_SITE_URL", SITE_ORIGIN);
     const stripped = render().replace(/<style>[\s\S]*?<\/style>/, "");
 
     expect(stripped).not.toContain("@media");
@@ -358,7 +358,7 @@ describe("the card is the wide viewport's addition, not the phone's loss", () =>
 
 describe("the blocked-image render is the one being designed for", () => {
   it("holds the box open with attributes, not only with CSS", () => {
-    vi.stubEnv("NEXT_PUBLIC_SITE_URL", PROD_ORIGIN);
+    vi.stubEnv("NEXT_PUBLIC_SITE_URL", SITE_ORIGIN);
     const tag = markTag(render())!;
     // Attributes, for the clients that never apply the style; the style, for the
     // ones that scale it. A client honouring either one reserves the same box,
@@ -376,7 +376,7 @@ describe("the blocked-image render is the one being designed for", () => {
    * screen reader hears the name once, from the lockup.
    */
   it("carries an empty alt, so the blocked render is the pre-mark header", () => {
-    vi.stubEnv("NEXT_PUBLIC_SITE_URL", PROD_ORIGIN);
+    vi.stubEnv("NEXT_PUBLIC_SITE_URL", SITE_ORIGIN);
     expect(markTag(render())).toContain('alt=""');
   });
 
@@ -385,7 +385,7 @@ describe("the blocked-image render is the one being designed for", () => {
    * clients draw around an image that failed to load.
    */
   it("strips the broken-image chrome", () => {
-    vi.stubEnv("NEXT_PUBLIC_SITE_URL", PROD_ORIGIN);
+    vi.stubEnv("NEXT_PUBLIC_SITE_URL", SITE_ORIGIN);
     const tag = markTag(render())!;
     expect(tag).toContain("border:0");
     expect(tag).toContain("text-decoration:none");
@@ -397,8 +397,8 @@ describe("the blocked-image render is the one being designed for", () => {
 
 describe("the mark's origin", () => {
   it("is the canonical per-environment site URL", () => {
-    vi.stubEnv("NEXT_PUBLIC_SITE_URL", PROD_ORIGIN);
-    expect(markTag(render())).toContain(`src="${PROD_ORIGIN}${BRAND_MARK.path}"`);
+    vi.stubEnv("NEXT_PUBLIC_SITE_URL", SITE_ORIGIN);
+    expect(markTag(render())).toContain(`src="${SITE_ORIGIN}${BRAND_MARK.path}"`);
 
     vi.stubEnv("NEXT_PUBLIC_SITE_URL", `${STAGING_ORIGIN}/`);
     // Trailing slash and all: staging mail points at staging, and the join is

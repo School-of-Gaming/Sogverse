@@ -1,4 +1,5 @@
 import { describe, it, expect, beforeAll } from "vitest";
+import { SITE_ORIGIN } from "../../mocks/site-origin";
 import { buildWelcomeParentEmail, buildWelcomeGeduEmail } from "@/lib/email-templates/welcome";
 import { BRAND, DARK_THEME } from "@/lib/constants/colors";
 import { getEmailTranslator, type EmailTranslator } from "@/lib/email-templates/translator";
@@ -9,10 +10,10 @@ beforeAll(async () => {
   t = await getEmailTranslator("en");
 });
 
-const VERIFICATION_URL = "https://sog.gg/verify-email?token=abc123";
-const DASHBOARD_URL = "https://sog.gg/parent";
-const SHOP_URL = "https://sog.gg/shop";
-const SETTINGS_URL = "https://sog.gg/settings";
+const VERIFICATION_URL = `${SITE_ORIGIN}/verify-email?token=abc123`;
+const DASHBOARD_URL = `${SITE_ORIGIN}/parent`;
+const SHOP_URL = `${SITE_ORIGIN}/shop`;
+const SETTINGS_URL = `${SITE_ORIGIN}/settings`;
 
 /**
  * The mail's html with every URL-bearing attribute value emptied, lowercased —
@@ -193,7 +194,7 @@ describe("buildWelcomeGeduEmail", () => {
   const params = {
     firstName: "Alice",
     verificationUrl: VERIFICATION_URL,
-    dashboardUrl: "https://sog.gg/gedu",
+    dashboardUrl: `${SITE_ORIGIN}/gedu`,
     settingsUrl: SETTINGS_URL,
   };
 
@@ -246,7 +247,7 @@ describe("buildWelcomeGeduEmail", () => {
   it("puts the verification, My SOG and settings URLs in hrefs", () => {
     const html = buildWelcomeGeduEmail(t, "en", params);
     expect(html).toContain(`href="${VERIFICATION_URL}"`);
-    expect(html).toContain('href="https://sog.gg/gedu"');
+    expect(html).toContain(`href="${SITE_ORIGIN}/gedu"`);
     expect(html).toContain(`<a href="${SETTINGS_URL}"`);
     expect(html).toContain(">settings</a>");
   });

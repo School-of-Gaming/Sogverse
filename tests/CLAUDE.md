@@ -6,6 +6,12 @@ duplicating across files) and `helpers/`. Two Vitest configs drive them:
 `vitest.config.mts` (runs `unit/` + `integration/`, as two projects — see below) and
 `vitest.config.db.mts` (node, runs `db/`).
 
+**A fixture naming our own site uses the neutral origin in `mocks/site-origin.ts`, never
+the production host**, and a test stubbing `NEXT_PUBLIC_SITE_URL` stubs it to that. The
+real host is one env var's value and does change; a fixture restating it turns every
+rename into a sweep through the suite. Only a test pinning a value the app really ships
+names the real one.
+
 ## Classification
 
 | Category | What goes here | Convention |

@@ -1,4 +1,5 @@
 import { describe, it, expect, beforeAll } from "vitest";
+import { SITE_ORIGIN } from "../../mocks/site-origin";
 import { buildVerifyEmailEmail } from "@/lib/email-templates/verify-email";
 import { getEmailTranslator, type EmailTranslator } from "@/lib/email-templates/translator";
 
@@ -8,7 +9,7 @@ beforeAll(async () => {
   t = await getEmailTranslator("en");
 });
 
-const VERIFICATION_URL = "https://sog.gg/verify-email?token=abc123";
+const VERIFICATION_URL = `${SITE_ORIGIN}/verify-email?token=abc123`;
 
 describe("buildVerifyEmailEmail", () => {
   const params = { firstName: "Marja", verificationUrl: VERIFICATION_URL };

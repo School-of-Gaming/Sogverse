@@ -1,10 +1,18 @@
 import { describe, it, expect, vi, beforeEach } from "vitest";
+import { SITE_ORIGIN } from "../../mocks/site-origin";
 import { POST } from "@/app/api/admin/send-test-email/route";
 import { NextResponse } from "next/server";
 // The calendar invitation refuses a run with nothing left ahead of it, so its
 // fixture dates come from the template's own form placeholders — the next
 // Monday and four weeks after it — rather than from literals that would rot.
 import { calendarInvitationStartDate } from "@/lib/email-templates/calendar-invitation";
+
+// The registry builds its form placeholders on the site URL when it loads, so
+// the stub has to land before the import does.
+await vi.hoisted(async () => {
+  const { SITE_ORIGIN: origin } = await import("../../mocks/site-origin");
+  vi.stubEnv("NEXT_PUBLIC_SITE_URL", origin);
+});
 
 // --- Mocks ---
 
@@ -214,7 +222,7 @@ describe("POST /api/admin/send-test-email", () => {
     await POST(createRequest({
       toEmail: "test@example.com",
       template: "passwordReset",
-      params: { resetLink: "https://sog.gg/reset-password?token_hash=abc" },
+      params: { resetLink: `${SITE_ORIGIN}/reset-password?token_hash=abc` },
     }));
 
     expect(mockSendTransactionalEmail).toHaveBeenCalledWith(
@@ -272,7 +280,7 @@ describe("POST /api/admin/send-test-email", () => {
       mode: "subscription",
       priceAmount: "€40.00",
       firstChargeDate: "none",
-      dashboardUrl: "https://sog.gg/parent",
+      dashboardUrl: `${SITE_ORIGIN}/parent`,
       gamerCopy: false,
       // The page facts the mail mirrors, which the schema requires whole too.
       ageRange: "8-12",
@@ -367,7 +375,7 @@ describe("POST /api/admin/send-test-email", () => {
         sample: "en",
         viewerTimezone: "Europe/Helsinki",
         reportMarkdown: "",
-        productUrl: "https://sog.gg/parent/clubs/3f9c2b7e-5d14-4a8e-9c61-0b2f7e8d4a15",
+        productUrl: `${SITE_ORIGIN}/parent/clubs/3f9c2b7e-5d14-4a8e-9c61-0b2f7e8d4a15`,
       },
     }));
     const data = await response.json();
@@ -405,7 +413,7 @@ describe("POST /api/admin/send-test-email", () => {
         sample: "en",
         viewerTimezone: "Europe/Helsinki",
         reportMarkdown: "",
-        productUrl: "https://sog.gg/parent/clubs/3f9c2b7e-5d14-4a8e-9c61-0b2f7e8d4a15",
+        productUrl: `${SITE_ORIGIN}/parent/clubs/3f9c2b7e-5d14-4a8e-9c61-0b2f7e8d4a15`,
       },
     }));
 
@@ -436,7 +444,7 @@ describe("POST /api/admin/send-test-email", () => {
         sample: "en",
         viewerTimezone: "Europe/Helsinki",
         reportMarkdown: "# Typed title\n\nWith a [link](https://evil.example).",
-        productUrl: "https://sog.gg/parent/clubs/3f9c2b7e-5d14-4a8e-9c61-0b2f7e8d4a15",
+        productUrl: `${SITE_ORIGIN}/parent/clubs/3f9c2b7e-5d14-4a8e-9c61-0b2f7e8d4a15`,
       },
     }));
 

@@ -2,6 +2,7 @@ import { readFileSync } from "node:fs";
 import { createRequire } from "node:module";
 import { join } from "node:path";
 import { describe, expect, expectTypeOf, it } from "vitest";
+import { SITE_HOST } from "../../mocks/site-origin";
 import type { ReactElement } from "react";
 import { render } from "@testing-library/react";
 import { NextIntlClientProvider } from "next-intl";
@@ -515,7 +516,7 @@ describe("the mail and the page", () => {
     "##### H5",
     "",
     "Para with **bold**, *em*, `code`, [a link](https://a.example/x), [a relative one](/shop),",
-    "[a mail](mailto:hi@sog.gg), [a script](javascript:alert(1)), [a ref][r], <https://auto.example/y>",
+    `[a mail](mailto:hi@${SITE_HOST}), [a script](javascript:alert(1)), [a ref][r], <https://auto.example/y>`,
     "and ![an image](https://a.example/i.png)  ",
     "hard break <b>raw inline</b>",
     "",

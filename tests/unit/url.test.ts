@@ -1,7 +1,9 @@
 import { describe, it, expect, beforeEach, afterEach } from "vitest";
+import { SITE_HOST, SITE_ORIGIN } from "../mocks/site-origin";
 import { getOrigin } from "@/lib/url";
 
 const ORIGINAL_ENV = { ...process.env };
+const STAGING_ORIGIN = `https://staging.${SITE_HOST}`;
 
 function makeRequest(host: string | null): Request {
   const headers: Record<string, string> = {};
@@ -21,14 +23,14 @@ describe("getOrigin", () => {
   });
 
   it("trusts the Host when it matches the canonical NEXT_PUBLIC_SITE_URL", () => {
-    process.env.NEXT_PUBLIC_SITE_URL = "https://sog.gg";
-    expect(getOrigin(makeRequest("sog.gg"))).toBe(
-      "https://sog.gg",
+    process.env.NEXT_PUBLIC_SITE_URL = SITE_ORIGIN;
+    expect(getOrigin(makeRequest(SITE_HOST))).toBe(
+      SITE_ORIGIN,
     );
   });
 
   it("trusts the Host when it matches VERCEL_URL (per-PR preview)", () => {
-    process.env.NEXT_PUBLIC_SITE_URL = "https://sogverse-staging.sog.gg";
+    process.env.NEXT_PUBLIC_SITE_URL = STAGING_ORIGIN;
     process.env.VERCEL_URL = "sogverse-git-feat-xyz.vercel.app";
 
     expect(getOrigin(makeRequest("sogverse-git-feat-xyz.vercel.app"))).toBe(
@@ -37,7 +39,7 @@ describe("getOrigin", () => {
   });
 
   it("trusts the Host when it matches VERCEL_BRANCH_URL", () => {
-    process.env.NEXT_PUBLIC_SITE_URL = "https://sog.gg";
+    process.env.NEXT_PUBLIC_SITE_URL = SITE_ORIGIN;
     process.env.VERCEL_BRANCH_URL = "sogverse-git-main.vercel.app";
 
     expect(getOrigin(makeRequest("sogverse-git-main.vercel.app"))).toBe(
@@ -46,9 +48,9 @@ describe("getOrigin", () => {
   });
 
   it("trusts the staging custom domain via NEXT_PUBLIC_SITE_URL on preview env", () => {
-    process.env.NEXT_PUBLIC_SITE_URL = "https://sogverse-staging.sog.gg";
-    expect(getOrigin(makeRequest("sogverse-staging.sog.gg"))).toBe(
-      "https://sogverse-staging.sog.gg",
+    process.env.NEXT_PUBLIC_SITE_URL = STAGING_ORIGIN;
+    expect(getOrigin(makeRequest(new URL(STAGING_ORIGIN).host))).toBe(
+      STAGING_ORIGIN,
     );
   });
 
@@ -71,22 +73,22 @@ describe("getOrigin", () => {
   });
 
   it("falls back to NEXT_PUBLIC_SITE_URL when an attacker spoofs the Host header", () => {
-    process.env.NEXT_PUBLIC_SITE_URL = "https://sog.gg";
-    expect(getOrigin(makeRequest("evil.com"))).toBe("https://sog.gg");
+    process.env.NEXT_PUBLIC_SITE_URL = SITE_ORIGIN;
+    expect(getOrigin(makeRequest("evil.com"))).toBe(SITE_ORIGIN);
   });
 
   it("falls back to NEXT_PUBLIC_SITE_URL when the Host is missing", () => {
-    process.env.NEXT_PUBLIC_SITE_URL = "https://sog.gg";
-    expect(getOrigin(makeRequest(null))).toBe("https://sog.gg");
+    process.env.NEXT_PUBLIC_SITE_URL = SITE_ORIGIN;
+    expect(getOrigin(makeRequest(null))).toBe(SITE_ORIGIN);
   });
 
   it("does NOT redirect to a Vercel host that isn't ours", () => {
     // VERCEL_URL is unset; an attacker can't spoof their way in just because
     // they crafted a `.vercel.app` Host.
-    process.env.NEXT_PUBLIC_SITE_URL = "https://sog.gg";
+    process.env.NEXT_PUBLIC_SITE_URL = SITE_ORIGIN;
     expect(
       getOrigin(makeRequest("attacker-app.vercel.app")),
-    ).toBe("https://sog.gg");
+    ).toBe(SITE_ORIGIN);
   });
 
   it("throws when neither a trusted Host nor NEXT_PUBLIC_SITE_URL is configured", () => {
@@ -103,16 +105,16 @@ describe("getOrigin", () => {
    * argument fell through to some other branch.
    */
   it("reads a bare Headers exactly as it reads a Request's", () => {
-    process.env.NEXT_PUBLIC_SITE_URL = "https://sog.gg";
-    expect(getOrigin(new Headers({ host: "sog.gg" }))).toBe(
-      "https://sog.gg",
+    process.env.NEXT_PUBLIC_SITE_URL = SITE_ORIGIN;
+    expect(getOrigin(new Headers({ host: SITE_HOST }))).toBe(
+      SITE_ORIGIN,
     );
   });
 
   it("refuses an untrusted Host on bare Headers too", () => {
-    process.env.NEXT_PUBLIC_SITE_URL = "https://sog.gg";
+    process.env.NEXT_PUBLIC_SITE_URL = SITE_ORIGIN;
     expect(getOrigin(new Headers({ host: "evil.com" }))).toBe(
-      "https://sog.gg",
+      SITE_ORIGIN,
     );
   });
 
@@ -124,12 +126,12 @@ describe("getOrigin", () => {
    * this. The discriminator now asks whether the value can `get`.
    */
   it("reads a Headers adapter that carries its own `headers` field", () => {
-    process.env.NEXT_PUBLIC_SITE_URL = "https://sog.gg";
+    process.env.NEXT_PUBLIC_SITE_URL = SITE_ORIGIN;
     class AdapterLike extends Headers {
-      readonly headers = { host: "sog.gg" };
+      readonly headers = { host: SITE_HOST };
     }
-    expect(getOrigin(new AdapterLike({ host: "sog.gg" }))).toBe(
-      "https://sog.gg",
+    expect(getOrigin(new AdapterLike({ host: SITE_HOST }))).toBe(
+      SITE_ORIGIN,
     );
   });
 });

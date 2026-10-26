@@ -1,4 +1,5 @@
 import { describe, expect, it, vi } from "vitest";
+import { SITE_ORIGIN } from "../../mocks/site-origin";
 import type { LandingSection } from "@/lib/landing-pages/sections";
 import type { SlugResolver } from "@/lib/links/own-site";
 import {
@@ -17,7 +18,7 @@ import {
   everyText,
 } from "../../helpers/landing-required-text-cases";
 
-const SITE = "https://sog.gg";
+const SITE = SITE_ORIGIN;
 const ARTICLE = "3f1c2a9e-8b7d-4c6e-9a5f-1e2d3c4b5a69";
 const PAGE = "7a2b3c4d-5e6f-4a1b-8c2d-3e4f5a6b7c8d";
 
@@ -96,7 +97,7 @@ describe("canonicaliseLandingLinks", () => {
     const result = await canonicaliseLandingLinks(
       write(everySection(), textsWith(
         "See [the shop](/fi/kauppa) and [Espoo](/en/discover/espoo).",
-        "Read [the guide](https://sog.gg/fi/kirjasto/opas#start).",
+        `Read [the guide](${SITE_ORIGIN}/fi/kirjasto/opas#start).`,
       )),
       { resolver, siteUrl: SITE },
     );

@@ -1,4 +1,5 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
+import { SITE_ORIGIN } from "../../../mocks/site-origin";
 import type {
   SnapshotDm,
   SnapshotNotification,
@@ -252,7 +253,7 @@ async function drain() {
 let messageCounter = 0;
 
 beforeEach(() => {
-  vi.stubEnv("NEXT_PUBLIC_SITE_URL", "https://sog.gg");
+  vi.stubEnv("NEXT_PUBLIC_SITE_URL", SITE_ORIGIN);
   // The drain logs each failed job; the cases that fail one assert on the outbox.
   vi.spyOn(console, "error").mockImplementation(() => undefined);
   db.base = null;

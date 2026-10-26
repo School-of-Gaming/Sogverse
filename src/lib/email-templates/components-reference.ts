@@ -144,11 +144,14 @@ function swatch(token: string, hex: string, on: string): string {
 
 /**
  * The reference's demo photographs: the session report's own fixture art,
- * handed in by the registry so the builder composes no URL.
+ * handed in by the registry so the builder composes no URL. Its example links
+ * resolve against the same render origin, through `link`, so a preview or a
+ * send names the environment's own pages.
  */
 export function buildComponentsReferenceEmail(
   locale: string,
   photos: readonly SessionReportPhoto[],
+  link: (path: string) => string,
 ): string {
   /*
    * PALETTE
@@ -238,12 +241,12 @@ export function buildComponentsReferenceEmail(
     ${section("Buttons")}
     ${entry(
       "primary",
-      ctaButton({ href: "https://sog.gg/verify", label: "Verify your email address" }),
+      ctaButton({ href: link("/verify"), label: "Verify your email address" }),
     )}
     ${entry(
       "secondary",
       ctaButton({
-        href: "https://sog.gg/shop",
+        href: link("/shop"),
         label: "Browse the shop",
         variant: "secondary",
       }),
@@ -251,7 +254,7 @@ export function buildComponentsReferenceEmail(
     ${entry(
       "outline",
       ctaButton({
-        href: "https://sog.gg/parent",
+        href: link("/parent"),
         label: "Go to My SOG",
         variant: "outline",
       }),
@@ -259,20 +262,20 @@ export function buildComponentsReferenceEmail(
     ${entry(
       "ctaButtonRow — outline + outline",
       ctaButtonRow(
-        { href: "https://sog.gg/shop", label: "Browse the shop", variant: "outline" },
-        { href: "https://sog.gg/parent", label: "Go to My SOG", variant: "outline" },
+        { href: link("/shop"), label: "Browse the shop", variant: "outline" },
+        { href: link("/parent"), label: "Go to My SOG", variant: "outline" },
       ),
     )}
     ${entry(
       "ctaButtonRow — outline + secondary",
       ctaButtonRow(
         {
-          href: "https://sog.gg/seat-offer?answer=decline",
+          href: link("/seat-offer?answer=decline"),
           label: "No, thank you",
           variant: "outline",
         },
         {
-          href: "https://sog.gg/seat-offer?answer=accept",
+          href: link("/seat-offer?answer=accept"),
           label: "Accept the seat",
           variant: "secondary",
         },
@@ -345,7 +348,7 @@ export function buildComponentsReferenceEmail(
     ${entry(
       "inlineLink",
       paragraph(
-        `You can do this later in ${inlineLink("https://sog.gg/settings", "your settings")}.`,
+        `You can do this later in ${inlineLink(link("/settings"), "your settings")}.`,
       ),
     )}
     ${entry(
@@ -359,7 +362,7 @@ export function buildComponentsReferenceEmail(
     ${entry(
       "numberedList + inlineLink",
       numberedList([
-        `${inlineBold("Make an account")}<br />It takes a minute.<br />${inlineLink("https://sog.gg/settings", "Open your settings")}`,
+        `${inlineBold("Make an account")}<br />It takes a minute.<br />${inlineLink(link("/settings"), "Open your settings")}`,
         `${inlineBold("Check the device")}${bulletList(["A mouse.", "Headphones."])}`,
       ]),
     )}
@@ -469,10 +472,10 @@ export function buildComponentsReferenceEmail(
       "renderMarkdownForEmail — with links",
       renderMarkdownForEmail(
         [
-          "Our winter camp opens for signups on Monday. Read [the camp page](https://sog.gg/shop) for the dates.",
+          `Our winter camp opens for signups on Monday. Read [the camp page](${link("/shop")}) for the dates.`,
           "",
           "- Bring **headphones**",
-          "- Ask us anything at [support](https://sog.gg/help)",
+          `- Ask us anything at [support](${link("/help")})`,
         ].join("\n"),
         "spotlight",
       ),

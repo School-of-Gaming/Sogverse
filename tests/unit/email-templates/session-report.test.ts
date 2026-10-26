@@ -1,4 +1,5 @@
 import { describe, it, expect, beforeAll } from "vitest";
+import { SITE_ORIGIN } from "../../mocks/site-origin";
 import {
   buildSessionReportEmail,
   sessionReportSubject,
@@ -22,7 +23,7 @@ beforeAll(async () => {
   t = await getEmailTranslator("en");
 });
 
-const PRODUCT_URL = "https://sog.gg/parent/clubs/3f9c2b7e-5d14-4a8e-9c61-0b2f7e8d4a15";
+const PRODUCT_URL = `${SITE_ORIGIN}/parent/clubs/3f9c2b7e-5d14-4a8e-9c61-0b2f7e8d4a15`;
 
 const base = {
   gamerName: "Aino",
@@ -629,7 +630,7 @@ describe("the spotlights at the foot of the mail", () => {
   const SPOTLIGHTS: SessionReportSpotlight[] = [
     {
       title: "Autumn camps <open>",
-      body: "Book a place [in the shop](https://sog.gg/shop).",
+      body: `Book a place [in the shop](${SITE_ORIGIN}/shop).`,
       image: { url: `${BUCKET}/a.jpg`, width: 1200, height: 600 },
     },
     {
@@ -696,7 +697,7 @@ describe("the spotlights at the foot of the mail", () => {
 
   it("keeps a link in the body, and no heading", () => {
     const html = withSpotlights(SPOTLIGHTS);
-    expect(html).toMatch(/<a href="https:\/\/sog\.gg\/shop"[^>]*>in the shop<\/a>/);
+    expect(/<a href="([^"]*)"[^>]*>in the shop<\/a>/.exec(html)?.[1]).toBe(`${SITE_ORIGIN}/shop`);
     expect(html).not.toMatch(/<h[1-6][^>]*>Not a heading/);
     expect(html).toContain("Not a heading");
   });

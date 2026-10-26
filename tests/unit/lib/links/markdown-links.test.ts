@@ -1,8 +1,9 @@
 import { describe, expect, it, vi } from "vitest";
+import { SITE_HOST, SITE_ORIGIN } from "../../../mocks/site-origin";
 import { canonicalizeMarkdownLinks } from "@/lib/links/markdown-links";
 import type { SlugResolver } from "@/lib/links/own-site";
 
-const SITE = "https://sog.gg";
+const SITE = SITE_ORIGIN;
 const ID = "3f1c2a9e-8b7d-4c6e-9a5f-1e2d3c4b5a69";
 const resolver: SlugResolver = async (_template, locale, slug) =>
   locale === "fi" && slug === "opas" ? ID : null;
@@ -33,8 +34,8 @@ describe("canonicalizeMarkdownLinks", () => {
 
   it("leaves external, mailto, same-page and unusable links byte for byte", async () => {
     const source = [
-      "[ext](https://example.com/fi/kauppa) [www](https://www.sog.gg/fi/kauppa)",
-      "[mail](mailto:hi@sog.gg) [top](#top) [bad](javascript:alert(1))",
+      `[ext](https://example.com/fi/kauppa) [www](https://www.${SITE_HOST}/fi/kauppa)`,
+      `[mail](mailto:hi@${SITE_HOST}) [top](#top) [bad](javascript:alert(1))`,
       "<https://example.com/x> ![img](/fi/kauppa)",
     ].join("\n");
     await expect(canonical(source)).resolves.toEqual({ markdown: source, deadLinks: [], rewrites: [] });

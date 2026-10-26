@@ -5,6 +5,7 @@ import { useTranslations } from "next-intl";
 import { ROUTES } from "@/lib/constants/routes";
 import { useCopyToClipboard } from "@/hooks/use-copy-to-clipboard";
 import { cn } from "@/lib/cn";
+import { getSiteUrl } from "@/lib/url";
 
 interface RoomLinkChipProps {
   /** Uppercase 4-character room code. */
@@ -29,7 +30,7 @@ interface RoomLinkChipProps {
  * out (create card, lobby, in-call title row, "you left" screen) so they all
  * look and behave identically.
  *
- * Renders the host-relative URL (e.g. "sog.gg/voice/ABCD") for visual
+ * Renders the host-relative URL (e.g. "<host>/voice/ABCD") for visual
  * cleanliness, or just the code in the compact variant; both copy the full URL
  * with protocol so it pastes as a clickable link.
  */
@@ -42,7 +43,7 @@ export function RoomLinkChip({
   const { copied, copy } = useCopyToClipboard();
 
   const host =
-    typeof window !== "undefined" ? window.location.host : "sog.gg";
+    typeof window !== "undefined" ? window.location.host : new URL(getSiteUrl()).host;
   const displayUrl = `${host}${ROUTES.voice.forCodePath(code)}`;
 
   const handleCopy = () => {

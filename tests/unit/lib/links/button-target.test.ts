@@ -1,11 +1,12 @@
 import { describe, expect, it } from "vitest";
+import { SITE_HOST, SITE_ORIGIN } from "../../../mocks/site-origin";
 import {
   buttonTargetHref,
   canonicalizeButtonTarget,
 } from "@/lib/links/button-target";
 import type { SlugResolver } from "@/lib/links/own-site";
 
-const SITE = "https://sog.gg";
+const SITE = SITE_ORIGIN;
 const ID = "3f1c2a9e-8b7d-4c6e-9a5f-1e2d3c4b5a69";
 const resolver: SlugResolver = async (_template, locale, slug) =>
   locale === "fi" && slug === "opas" ? ID : null;
@@ -34,13 +35,13 @@ describe("canonicalizeButtonTarget", () => {
 
   it("keeps a stored email target as it is: it names no page", async () => {
     await expect(
-      canonicalizeButtonTarget({ kind: "email", to: "hello@sog.gg" }, resolver, SITE),
-    ).resolves.toEqual({ ok: true, target: { kind: "email", to: "hello@sog.gg" } });
+      canonicalizeButtonTarget({ kind: "email", to: `hello@${SITE_HOST}` }, resolver, SITE),
+    ).resolves.toEqual({ ok: true, target: { kind: "email", to: `hello@${SITE_HOST}` } });
   });
 
   it.each([
     ["another site", "https://example.com/x"],
-    ["the www host, which only redirects to ours", "https://www.sog.gg/fi/kauppa"],
+    ["a www variant of our host", `https://www.${SITE_HOST}/fi/kauppa`],
   ])("keeps %s external, as written", async (_name, url) => {
     await expect(canonicalizeButtonTarget(`  ${url} `, resolver, SITE)).resolves.toEqual({
       ok: true,
@@ -53,7 +54,7 @@ describe("canonicalizeButtonTarget", () => {
     ["a slug nobody holds", "/fi/kirjasto/tuntematon", "dead"],
     ["a scheme-less domain, read as a path", "www.example.com", "dead"],
     ["a same-page fragment", "#faq", "same-page"],
-    ["a mailto: address", "mailto:hi@sog.gg", "not-web"],
+    ["a mailto: address", `mailto:hi@${SITE_HOST}`, "not-web"],
     ["an empty value", "", "unusable"],
     ["a script", "javascript:alert(1)", "unusable"],
   ])("refuses %s", async (_name, input, reason) => {
@@ -78,11 +79,11 @@ describe("buttonTargetHref", () => {
   });
 
   it("opens an email target as a message, with the page's subject line when written", () => {
-    const email = { kind: "email", to: "hello@sog.gg" } as const;
-    expect(buttonTargetHref(email, "fi")).toBe("mailto:hello@sog.gg");
-    expect(buttonTargetHref(email, "fi", { subject: "  " })).toBe("mailto:hello@sog.gg");
+    const email = { kind: "email", to: `hello@${SITE_HOST}` } as const;
+    expect(buttonTargetHref(email, "fi")).toBe(`mailto:hello@${SITE_HOST}`);
+    expect(buttonTargetHref(email, "fi", { subject: "  " })).toBe(`mailto:hello@${SITE_HOST}`);
     expect(buttonTargetHref(email, "fi", { subject: "Kerho & kysymys?" })).toBe(
-      "mailto:hello@sog.gg?subject=Kerho%20%26%20kysymys%3F",
+      `mailto:hello@${SITE_HOST}?subject=Kerho%20%26%20kysymys%3F`,
     );
   });
 });

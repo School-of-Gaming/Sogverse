@@ -1,4 +1,5 @@
 import { describe, it, expect } from "vitest";
+import { SITE_ORIGIN } from "../../../mocks/site-origin";
 import {
   buildInvitation,
   occurrenceDatesThrough,
@@ -509,7 +510,7 @@ describe("an overridden occurrence", () => {
       summary: "Weekly club",
       description: "What we do.",
       location: "Helsinki",
-      url: "https://sog.gg/parent",
+      url: `${SITE_ORIGIN}/parent`,
       alarms: [{ minutesBefore: 15, action: "display", anchor: "start" }],
     });
     const master = eventBody(ics, 0);
@@ -530,7 +531,7 @@ describe("an overridden occurrence", () => {
     expect(shared(exception)).toContain("TRIGGER:-PT15M");
     expect(lineStartingWith(exception, "ATTENDEE")).toContain("RSVP=TRUE");
     expect(lineStartingWith(exception, "ORGANIZER")).toContain("sogverse@sog.gg");
-    expect(lineStartingWith(exception, "URL:")).toBe("URL:https://sog.gg/parent");
+    expect(lineStartingWith(exception, "URL:")).toBe(`URL:${SITE_ORIGIN}/parent`);
   });
 
   it("writes one component per line, in the order they were given", () => {
@@ -653,8 +654,8 @@ describe("the content properties", () => {
 
   it("writes a URL unescaped, query string and all", () => {
     expect(
-      lineStartingWith(eventBody(build({ url: "https://sog.gg/parent?a=1&b=2" }).ics), "URL:"),
-    ).toBe("URL:https://sog.gg/parent?a=1&b=2");
+      lineStartingWith(eventBody(build({ url: `${SITE_ORIGIN}/parent?a=1&b=2` }).ics), "URL:"),
+    ).toBe(`URL:${SITE_ORIGIN}/parent?a=1&b=2`);
     expect(hasLine(eventBody(build().ics), "URL")).toBe(false);
   });
 

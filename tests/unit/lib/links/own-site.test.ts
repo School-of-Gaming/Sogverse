@@ -1,4 +1,5 @@
 import { describe, expect, it, vi } from "vitest";
+import { SITE_HOST, SITE_ORIGIN } from "../../../mocks/site-origin";
 import {
   canonicalizeHref,
   localizeOwnSiteHref,
@@ -8,7 +9,7 @@ import {
   type SlugResolver,
 } from "@/lib/links/own-site";
 
-const SITE = "https://sog.gg";
+const SITE = SITE_ORIGIN;
 const ID = "3f1c2a9e-8b7d-4c6e-9a5f-1e2d3c4b5a69";
 
 describe("canonicalizeHref", () => {
@@ -23,8 +24,8 @@ describe("canonicalizeHref", () => {
     ["a bare locale with a slash", "/fi/", "/"],
     ["a Klingon address (English slugs)", "/tlh/shop/9", "/shop/9"],
     ["an uppercase locale prefix", "/FI/kauppa/1", "/shop/1"],
-    ["an uppercase host", "HTTPS://SOG.GG/fi/kauppa", "/shop"],
-    ["plain http on our host", "http://sog.gg/fi/meista", "/about"],
+    ["an uppercase host", `HTTPS://${SITE_HOST.toUpperCase()}/fi/kauppa`, "/shop"],
+    ["plain http on our host", `http://${SITE_HOST}/fi/meista`, "/about"],
     ["a trailing slash", "/fi/kauppa/", "/shop"],
     ["dot segments", "/fi/kirjasto/../kauppa", "/shop"],
     ["another locale's slug under a locale", "/fi/shop/1", "/shop/1"],
@@ -54,11 +55,11 @@ describe("canonicalizeHref", () => {
 
   it.each([
     ["another site", "https://example.com/fi/kauppa"],
-    ["the www host, which only redirects to ours", "https://www.sog.gg/fi/kauppa"],
-    ["our host on another port", "https://sog.gg:8443/shop"],
-    ["a subdomain of ours", "https://evil.sog.gg/shop"],
+    ["a www variant of our host", `https://www.${SITE_HOST}/fi/kauppa`],
+    ["our host on another port", `${SITE_ORIGIN}:8443/shop`],
+    ["a subdomain of ours", `https://evil.${SITE_HOST}/shop`],
     ["a protocol-relative address", "//example.com/x"],
-    ["a mailto: address", "mailto:hi@sog.gg"],
+    ["a mailto: address", `mailto:hi@${SITE_HOST}`],
   ])("leaves %s untouched", (_name, href) => {
     expect(canonicalizeHref(href, SITE)).toEqual({ kind: "external", href });
   });
@@ -171,8 +172,8 @@ describe("localizeOwnSiteHref", () => {
 
   it.each([
     ["another site", "https://example.com/shop"],
-    ["the www host, which only redirects to ours", "https://www.sog.gg/shop"],
-    ["a mailto: address", "mailto:hi@sog.gg"],
+    ["a www variant of our host", `https://www.${SITE_HOST}/shop`],
+    ["a mailto: address", `mailto:hi@${SITE_HOST}`],
     ["a fragment", "#faq"],
     ["a path no route matches", "/llms.txt"],
   ])("leaves %s as written", (_name, href) => {
@@ -195,7 +196,7 @@ describe("mailOwnSiteHref", () => {
 
   it.each([
     ["another site", "https://example.com/x"],
-    ["a mailto: address", "mailto:hi@sog.gg"],
+    ["a mailto: address", `mailto:hi@${SITE_HOST}`],
     ["a fragment", "#faq"],
   ])("leaves %s as written", (_name, href) => {
     expect(mailOwnSiteHref(href, SITE)).toBe(href);

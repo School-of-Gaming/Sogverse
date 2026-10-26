@@ -1,4 +1,5 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
+import { SITE_HOST, SITE_ORIGIN } from "../../mocks/site-origin";
 import { render, screen } from "@testing-library/react";
 import { NextIntlClientProvider } from "next-intl";
 import enRichText from "@/../messages/en/richText.json";
@@ -14,7 +15,7 @@ const messages = { richText: enRichText };
  * eye and to a screen reader. One rule, in the shared renderer, for every use
  * case that keeps links — and a use case that keeps none still keeps none.
  */
-const SITE = "https://sog.gg";
+const SITE = SITE_ORIGIN;
 
 beforeEach(() => {
   vi.stubEnv("NEXT_PUBLIC_SITE_URL", SITE);
@@ -57,8 +58,8 @@ describe("a link in authored markdown", () => {
 
   it.each([
     ["another site", "https://example.com/guide"],
-    ["a subdomain of ours", "https://evil.sog.gg/x"],
-    ["our host on another port", "https://sog.gg:8443/x"],
+    ["a subdomain of ours", `https://evil.${SITE_HOST}/x`],
+    ["our host on another port", `${SITE_ORIGIN}:8443/x`],
     ["a protocol-relative address", "//example.com/x"],
     ["plain http to another site", "http://example.com"],
   ])("opens %s in a new tab, and says so", (_name, href) => {
@@ -82,8 +83,8 @@ describe("a link in authored markdown", () => {
   });
 
   it("hands a mailto: link to the mail app, with no new tab to mark", () => {
-    const a = anchor(renderLink("mailto:hi@sog.gg"));
-    expect(a.getAttribute("href")).toBe("mailto:hi@sog.gg");
+    const a = anchor(renderLink(`mailto:hi@${SITE_HOST}`));
+    expect(a.getAttribute("href")).toBe(`mailto:hi@${SITE_HOST}`);
     expect(a.getAttribute("target")).toBeNull();
     expect(a.querySelector("svg")).toBeNull();
   });
@@ -98,7 +99,7 @@ describe("a link in authored markdown", () => {
     expect(container.textContent).toContain("Read the page.");
   });
 
-  it.each(["/shop", `${SITE}/library`, "https://example.com", "mailto:hi@sog.gg"])(
+  it.each(["/shop", `${SITE}/library`, "https://example.com", `mailto:hi@${SITE_HOST}`])(
     "keeps no link at all in the feed, whatever it points at (%s)",
     (href) => {
       const container = renderLink(href, "feed");
@@ -119,7 +120,7 @@ describe("a link in authored markdown", () => {
 
   it.each([
     ["another site", "https://example.com/fi/kauppa"],
-    ["a mailto: address", "mailto:hi@sog.gg"],
+    ["a mailto: address", `mailto:hi@${SITE_HOST}`],
     ["a same-page fragment", "#faq"],
     ["a path no route matches", "/llms.txt"],
     ["a slug address, kept in its own language", "/sv/bibliotek/guide"],
@@ -142,14 +143,14 @@ describe("authoredLinkKind", () => {
   });
 
   it("compares hosts, not spellings", () => {
-    expect(authoredLinkKind("HTTPS://SOG.GG/x", SITE)).toBe("own-site");
-    expect(authoredLinkKind("http://sog.gg/x", SITE)).toBe("own-site");
+    expect(authoredLinkKind(`HTTPS://${SITE_HOST.toUpperCase()}/x`, SITE)).toBe("own-site");
+    expect(authoredLinkKind(`http://${SITE_HOST}/x`, SITE)).toBe("own-site");
   });
 
   it.each([
-    ["our host as the userinfo of another", "https://sog.gg@evil.com/x"],
+    ["our host as the userinfo of another", `${SITE_ORIGIN}@evil.com/x`],
     ["a backslash the browser reads as a slash", "/\\evil.com"],
-    ["our host as a label of another", "https://sog.gg.evil.com"],
+    ["our host as a label of another", `${SITE_ORIGIN}.evil.com`],
   ])("is not fooled by %s", (_name, href) => {
     expect(authoredLinkKind(href, SITE)).toBe("other-site");
   });
@@ -159,7 +160,7 @@ describe("authoredLinkKind", () => {
   });
 
   it("sends the non-web schemes to their apps", () => {
-    expect(authoredLinkKind("mailto:hi@sog.gg", SITE)).toBe("other-scheme");
-    expect(authoredLinkKind("xmpp:hi@sog.gg", SITE)).toBe("other-scheme");
+    expect(authoredLinkKind(`mailto:hi@${SITE_HOST}`, SITE)).toBe("other-scheme");
+    expect(authoredLinkKind(`xmpp:hi@${SITE_HOST}`, SITE)).toBe("other-scheme");
   });
 });

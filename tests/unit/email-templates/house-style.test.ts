@@ -9,6 +9,7 @@
 // would put Vite's ambient declarations in front of every source file to serve
 // one test.
 import { describe, it, expect, beforeAll, afterAll, vi } from "vitest";
+import { SITE_ORIGIN } from "../../mocks/site-origin";
 import { templateRegistry } from "@/lib/email-templates/registry";
 import {
   getEmailTranslator,
@@ -32,6 +33,13 @@ import {
 import { MAIL_TYPE, MAIL_WEIGHT } from "@/lib/email-templates/type-scale";
 import { HOLD_GROUND, TEXT_PINS, framedInnerRadius } from "@/lib/email-templates/utils";
 import { holdViolations } from "../../helpers/email-holds";
+
+// The registry builds its form placeholders on the site URL when it loads, so
+// the stub has to land before the import does.
+await vi.hoisted(async () => {
+  const { SITE_ORIGIN: origin } = await import("../../mocks/site-origin");
+  vi.stubEnv("NEXT_PUBLIC_SITE_URL", origin);
+});
 
 /**
  * The house style, enforced mechanically over the rendered output of every mail
@@ -156,7 +164,7 @@ const CALENDAR_INVITATION_FIXTURE = {
 /** Fixture params for the registry-backed renders. */
 const PARAMS: Record<string, Record<string, string | boolean | null>> = {
   componentsReference: {},
-  passwordReset: { resetLink: "https://sog.gg/reset-password?code=abc123" },
+  passwordReset: { resetLink: `${SITE_ORIGIN}/reset-password?code=abc123` },
   helpRequest: {
     userName: "Marja Virtanen",
     userRole: "customer",
@@ -167,16 +175,16 @@ const PARAMS: Record<string, Record<string, string | boolean | null>> = {
   },
   welcomeParent: {
     firstName: "Marja",
-    verificationUrl: "https://sog.gg/verify-email?token=abc123",
-    dashboardUrl: "https://sog.gg/parent",
-    shopUrl: "https://sog.gg/shop",
-    settingsUrl: "https://sog.gg/settings",
+    verificationUrl: `${SITE_ORIGIN}/verify-email?token=abc123`,
+    dashboardUrl: `${SITE_ORIGIN}/parent`,
+    shopUrl: `${SITE_ORIGIN}/shop`,
+    settingsUrl: `${SITE_ORIGIN}/settings`,
   },
   welcomeGedu: {
     firstName: "Alice",
-    verificationUrl: "https://sog.gg/verify-email?token=abc123",
-    dashboardUrl: "https://sog.gg/gedu",
-    settingsUrl: "https://sog.gg/settings",
+    verificationUrl: `${SITE_ORIGIN}/verify-email?token=abc123`,
+    dashboardUrl: `${SITE_ORIGIN}/gedu`,
+    settingsUrl: `${SITE_ORIGIN}/settings`,
   },
   // A schedule, deliberately: the session-times section and the sentence about
   // the attached calendar are markup no other render in this sweep reaches, and
@@ -197,7 +205,7 @@ const PARAMS: Record<string, Record<string, string | boolean | null>> = {
     mode: "upfront",
     priceAmount: "€40.00",
     firstChargeDate: "none",
-    dashboardUrl: "https://sog.gg/parent",
+    dashboardUrl: `${SITE_ORIGIN}/parent`,
     gamerCopy: false,
     ageRange: "8-12",
     audience: "gamers",
@@ -218,26 +226,26 @@ const PARAMS: Record<string, Record<string, string | boolean | null>> = {
   },
   verifyEmail: {
     firstName: "Marja",
-    verificationUrl: "https://sog.gg/verify-email?token=abc123",
+    verificationUrl: `${SITE_ORIGIN}/verify-email?token=abc123`,
   },
   gamerWelcome: {
     gamerFirstName: "Aino",
-    verificationUrl: "https://sog.gg/verify-email?token=abc123",
+    verificationUrl: `${SITE_ORIGIN}/verify-email?token=abc123`,
   },
   seatOffer: {
     participantName: "Aino",
     isSelfSeat: false,
     productName: "Minecraft 101",
     deadline: "Sunday, 31 August at 14:20 GMT+3",
-    acceptUrl: "https://sog.gg/seat-offer?token=abc123&answer=accept",
-    declineUrl: "https://sog.gg/seat-offer?token=abc123&answer=decline",
-    dashboardUrl: "https://sog.gg/parent",
+    acceptUrl: `${SITE_ORIGIN}/seat-offer?token=abc123&answer=accept`,
+    declineUrl: `${SITE_ORIGIN}/seat-offer?token=abc123&answer=decline`,
+    dashboardUrl: `${SITE_ORIGIN}/parent`,
   },
   seatOfferGamer: {
     gamerName: "Aino",
     productName: "Minecraft 101",
     deadline: "Sunday, 31 August at 14:20 GMT+3",
-    dashboardUrl: "https://sog.gg/gamer",
+    dashboardUrl: `${SITE_ORIGIN}/gamer`,
   },
   seatOfferStaff: {
     reason: "declined",
@@ -248,7 +256,7 @@ const PARAMS: Record<string, Record<string, string | boolean | null>> = {
     productSchedule: "Tue 16:00, Thu 16:00 (Europe/Helsinki)",
     offeredAt: "Tue, 26 Aug, 14:20 GMT+3",
     adminProductUrl:
-      "https://sog.gg/admin/municipality-clubs/3f9c2b7e-5d14-4a8e-9c61-0b2f7e8d4a15",
+      `${SITE_ORIGIN}/admin/municipality-clubs/3f9c2b7e-5d14-4a8e-9c61-0b2f7e8d4a15`,
   },
   sessionReport: {
     gamerName: "Aino",
@@ -267,7 +275,7 @@ const PARAMS: Record<string, Record<string, string | boolean | null>> = {
     sample: "en",
     viewerTimezone: "Europe/Helsinki",
     reportMarkdown: "",
-    productUrl: "https://sog.gg/parent/clubs/3f9c2b7e-5d14-4a8e-9c61-0b2f7e8d4a15",
+    productUrl: `${SITE_ORIGIN}/parent/clubs/3f9c2b7e-5d14-4a8e-9c61-0b2f7e8d4a15`,
   },
   calendarInvitation: CALENDAR_INVITATION_FIXTURE,
 };
@@ -296,7 +304,7 @@ beforeAll(async () => {
   // as everything else. The mark's own behaviour is `layout.test.ts`'s subject;
   // this line only decides which of the header's two shapes gets swept, and it
   // picks the one with more in it.
-  vi.stubEnv("NEXT_PUBLIC_SITE_URL", "https://sog.gg");
+  vi.stubEnv("NEXT_PUBLIC_SITE_URL", SITE_ORIGIN);
 });
 
 afterAll(() => {
@@ -322,7 +330,7 @@ function fromRegistry(
         { ...PARAMS[key], ...overrides },
         t,
         "en",
-        { origin: "https://sog.gg" },
+        { origin: SITE_ORIGIN },
         tPrep,
       ).html,
     ],
@@ -360,7 +368,7 @@ const MAILS: Record<string, () => [string, string][]> = {
     ...fromRegistry("productConfirmation", "productConfirmation (child's copy)", {
       gamerCopy: true,
       priceAmount: null,
-      dashboardUrl: "https://sog.gg/gamer",
+      dashboardUrl: `${SITE_ORIGIN}/gamer`,
     }),
     // The guide in its full form, on the one topic whose steps carry
     // per-platform notes and a checklist — two blocks no other render in this
@@ -378,7 +386,7 @@ const MAILS: Record<string, () => [string, string][]> = {
     ...fromRegistry("sessionReport"),
     ...fromRegistry("sessionReport", "sessionReport (child's copy)", {
       copy: "gamer",
-      productUrl: "https://sog.gg/gamer/clubs/3f9c2b7e-5d14-4a8e-9c61-0b2f7e8d4a15",
+      productUrl: `${SITE_ORIGIN}/gamer/clubs/3f9c2b7e-5d14-4a8e-9c61-0b2f7e8d4a15`,
     }),
     ...fromRegistry("sessionReport", "sessionReport (staff copy)", { copy: "staff" }),
   ],
@@ -416,7 +424,7 @@ const MAILS: Record<string, () => [string, string][]> = {
   // that staying out of the testing UI does not also mean staying unchecked —
   // which is exactly what it used to mean.
   "pin-reset": () => [
-    ["pinReset", buildPinResetEmail(t, "https://sog.gg/reset-pin?token=abc123", "en")],
+    ["pinReset", buildPinResetEmail(t, `${SITE_ORIGIN}/reset-pin?token=abc123`, "en")],
   ],
 };
 
@@ -557,12 +565,12 @@ describe("house style, over every mail we can send", () => {
       ["outside any hold", `<table><tr><td style="border-top:1px solid ${DARK_THEME.border};">&nbsp;</td></tr></table>`],
       ["a hold inside a hold", hold(hold(`<p style="${ink}">Twice</p>`))],
       ["a fill inside a hold", hold(`<div style="background-color:${DARK_THEME.card};${ink}">Filled</div>`)],
-      ["a picture inside a hold", hold(`<img src="https://sog.gg/a.jpg" alt="" />`)],
+      ["a picture inside a hold", hold(`<img src="${SITE_ORIGIN}/a.jpg" alt="" />`)],
       ["pinned text inside a hold", hold(`<a class="${TEXT_PINS.act.className}" style="color:${BRAND.act};">Link</a>`)],
       ["leaves alone, inside a hold", hold(`<span style="color:${STATUS.info};">Blue</span>`)],
       ["a fill inside a hold", hold(`<div style="background:${DARK_THEME.card};${ink}">Shorthand</div>`)],
       ["leaves alone, inside a hold", `<div style="color:${STATUS.info};">${hold("Inherited")}</div>`],
-      ["leaves alone, inside a hold", `<a href="https://sog.gg/" style="color:${BRAND.act};">${hold("Unpinned link")}</a>`],
+      ["leaves alone, inside a hold", `<a href="${SITE_ORIGIN}/" style="color:${BRAND.act};">${hold("Unpinned link")}</a>`],
     ];
     for (const [expected, html] of cases) {
       expect(holdViolations(`<body>${html}</body>`).join("\n"), html).toContain(expected);

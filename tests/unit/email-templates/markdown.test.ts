@@ -3,6 +3,7 @@
 // jsdom because the hold checks read the rendered fragment with the DOM's own
 // parser, to say which element each glyph and link sits inside.
 import { describe, it, expect, vi } from "vitest";
+import { SITE_ORIGIN } from "../../mocks/site-origin";
 import { renderMarkdownForEmail } from "@/lib/email-templates/markdown";
 import { mailWeight } from "@/lib/email-templates/type-scale";
 import { HOLD_CLASS, TEXT_PINS } from "@/lib/email-templates/utils";
@@ -267,8 +268,8 @@ describe("renderMarkdownForEmail", () => {
   });
 
   it("writes a kept link's address escaped, and its label defused", () => {
-    const html = renderMarkdownForEmail('[the shop](https://sog.gg/a?b=1&c="2")', "marketing");
-    expect(html).toContain('href="https://sog.gg/a?b=1&amp;c=&quot;2&quot;"');
+    const html = renderMarkdownForEmail(`[the shop](${SITE_ORIGIN}/a?b=1&c="2")`, "marketing");
+    expect(html).toContain(`href="${SITE_ORIGIN}/a?b=1&amp;c=&quot;2&quot;"`);
     expect(html).toContain('rel="noreferrer"');
     expect(html).not.toContain("target=");
   });
@@ -279,14 +280,14 @@ describe("renderMarkdownForEmail", () => {
    * path: the site then sends the reader on in their own stored language.
    */
   it("writes a link to one of our pages absolute and without a language", () => {
-    vi.stubEnv("NEXT_PUBLIC_SITE_URL", "https://sog.gg");
+    vi.stubEnv("NEXT_PUBLIC_SITE_URL", SITE_ORIGIN);
     try {
       const html = renderMarkdownForEmail(
         "[shop](/shop/1) [pinned](/fi/kauppa/1?x=1) [away](https://example.com/fi/kauppa)",
         "landing",
       );
-      expect(html).toContain('href="https://sog.gg/shop/1"');
-      expect(html).toContain('href="https://sog.gg/shop/1?x=1"');
+      expect(html).toContain(`href="${SITE_ORIGIN}/shop/1"`);
+      expect(html).toContain(`href="${SITE_ORIGIN}/shop/1?x=1"`);
       expect(html).toContain('href="https://example.com/fi/kauppa"');
     } finally {
       vi.unstubAllEnvs();

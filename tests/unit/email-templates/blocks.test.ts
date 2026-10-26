@@ -1,4 +1,5 @@
 import { describe, it, expect } from "vitest";
+import { SITE_ORIGIN } from "../../mocks/site-origin";
 import {
   bulletList,
   calloutPanel,
@@ -38,7 +39,7 @@ describe("holding plain neutrals for Gmail iOS", () => {
    * would invert it to blue. The sentence is held run by run instead.
    */
   it("holds a sentence around its link, never the link itself", () => {
-    const link = inlineLink("https://sog.gg/settings", "your settings");
+    const link = inlineLink(`${SITE_ORIGIN}/settings`, "your settings");
     const html = paragraph(`Change it later in ${link}.`);
     expect(html.startsWith("<p")).toBe(true);
     expect(html).toContain(`<span class="${HOLD_CLASS.screen}"><span class="${HOLD_CLASS.difference}">Change it later in </span></span>${link}`);
@@ -46,7 +47,7 @@ describe("holding plain neutrals for Gmail iOS", () => {
   });
 
   it("pins every inline link, underline included", () => {
-    const link = inlineLink("https://sog.gg/settings", "your settings");
+    const link = inlineLink(`${SITE_ORIGIN}/settings`, "your settings");
     expect(link).toContain(`class="${TEXT_PINS.act.className}"`);
     expect(link).toContain(`text-decoration-color:${BRAND.act};`);
   });
@@ -68,7 +69,7 @@ describe("holding plain neutrals for Gmail iOS", () => {
   });
 
   it("refuses to hold a run that opens an element it does not close", () => {
-    const link = inlineLink("https://sog.gg/settings", "your settings");
+    const link = inlineLink(`${SITE_ORIGIN}/settings`, "your settings");
     expect(() => holdRuns(`<b>Change it in ${link}</b>`)).toThrow(/unbalanced/);
   });
 
@@ -78,7 +79,7 @@ describe("holding plain neutrals for Gmail iOS", () => {
    * writes its markers out, each held in a cell of its own.
    */
   it("draws a link-bearing list's numbers held in their own cells, the link outside every hold", () => {
-    const link = inlineLink("https://sog.gg/settings", "Open your settings");
+    const link = inlineLink(`${SITE_ORIGIN}/settings`, "Open your settings");
     const html = numberedList([`Make an account. ${link}`, "Then sign in."]);
     expect(html.startsWith("<table")).toBe(true);
     expect(html).not.toContain("<ol");
@@ -94,7 +95,7 @@ describe("holding plain neutrals for Gmail iOS", () => {
   });
 
   it("writes a bullet for a link-bearing bulleted list", () => {
-    const link = inlineLink("https://sog.gg/settings", "settings");
+    const link = inlineLink(`${SITE_ORIGIN}/settings`, "settings");
     const html = bulletList([`See ${link}.`, "Plain."]);
     expect(html.split(`${HOLD_OPEN}&bull;</div></div>`)).toHaveLength(3);
   });
@@ -106,7 +107,7 @@ describe("holding plain neutrals for Gmail iOS", () => {
   });
 
   it("spaces a marker-column list's rows by the item gap and sets it at the block margin", () => {
-    const link = inlineLink("https://sog.gg/settings", "settings");
+    const link = inlineLink(`${SITE_ORIGIN}/settings`, "settings");
     const html = numberedList([`One ${link}`, "Two", "Three"]);
     expect(html).toContain(`style="margin:0 0 ${MAIL_SPACE.block}px;"`);
     const gaps = [...html.matchAll(/<td valign="top" style="padding:0 0 (\d+)px;/g)].map((m) =>
@@ -122,28 +123,28 @@ describe("buttons", () => {
    * button draws none: it is held whole, border and label.
    */
   it("draws the outlined button with no fill, held whole", () => {
-    const html = ctaButton({ href: "https://sog.gg/parent", label: "Go to My SOG", variant: "outline" });
+    const html = ctaButton({ href: `${SITE_ORIGIN}/parent`, label: "Go to My SOG", variant: "outline" });
     expect(html).not.toContain("background-color");
     expect(html).not.toContain("ground-match");
     expect(html).toContain(HOLD_OPEN);
   });
 
   it("holds the violet button's white label and leaves its fill outside", () => {
-    const html = ctaButton({ href: "https://sog.gg/shop", label: "Browse", variant: "secondary" });
+    const html = ctaButton({ href: `${SITE_ORIGIN}/shop`, label: "Browse", variant: "secondary" });
     expect(html).not.toContain(HOLD_OPEN);
     expect(html).toMatch(/<a [^>]*><span class="bs" style="display:inline-block;"><span class="bd" style="display:inline-block;">Browse<\/span><\/span><\/a>/);
   });
 
   it("pins the primary label and holds nothing on it", () => {
-    const html = ctaButton({ href: "https://sog.gg/verify", label: "Verify" });
+    const html = ctaButton({ href: `${SITE_ORIGIN}/verify`, label: "Verify" });
     expect(html).toContain(`class="${TEXT_PINS.dark.className}"`);
     expect(html).not.toContain(`class="${HOLD_CLASS.screen}"`);
   });
 
   it("keeps a violet half's fill out of the hold around its outlined neighbour", () => {
     const html = ctaButtonRow(
-      { href: "https://sog.gg/a", label: "No", variant: "outline" },
-      { href: "https://sog.gg/b", label: "Yes", variant: "secondary" },
+      { href: `${SITE_ORIGIN}/a`, label: "No", variant: "outline" },
+      { href: `${SITE_ORIGIN}/b`, label: "Yes", variant: "secondary" },
     );
     const held = html.slice(html.indexOf(HOLD_OPEN), html.indexOf("</td>", html.indexOf(HOLD_OPEN)));
     expect(held).not.toContain(BRAND.world);

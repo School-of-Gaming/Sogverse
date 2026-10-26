@@ -65,11 +65,19 @@ export function getOrigin(source: Request | Headers): string {
     return `${protocol}://${host}`;
   }
 
-  // Untrusted Host — fall back to the canonical configured URL. If
-  // NEXT_PUBLIC_SITE_URL itself is missing we can't safely produce an origin;
-  // refuse rather than guess.
-  if (!process.env.NEXT_PUBLIC_SITE_URL) {
-    throw new Error("NEXT_PUBLIC_SITE_URL is not configured");
-  }
-  return process.env.NEXT_PUBLIC_SITE_URL;
+  // Untrusted Host — fall back to the canonical configured URL.
+  return getSiteUrl();
+}
+
+/**
+ * This environment's canonical public origin, `NEXT_PUBLIC_SITE_URL`. It is
+ * inlined into browser bundles, so a client module may call it too.
+ *
+ * Throws when it is not configured: there is no origin to guess, and a
+ * fallback would put a wrong address in front of somebody.
+ */
+export function getSiteUrl(): string {
+  const siteUrl = process.env.NEXT_PUBLIC_SITE_URL;
+  if (!siteUrl) throw new Error("NEXT_PUBLIC_SITE_URL is not configured");
+  return siteUrl;
 }

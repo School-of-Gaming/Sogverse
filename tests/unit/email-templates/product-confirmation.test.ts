@@ -1,4 +1,5 @@
 import { describe, it, expect, beforeAll } from "vitest";
+import { SITE_ORIGIN } from "../../mocks/site-origin";
 import {
   buildProductConfirmationEmail,
   productConfirmationAttachments,
@@ -35,7 +36,7 @@ beforeAll(async () => {
   ]);
 });
 
-const DASHBOARD_URL = "https://sog.gg/parent";
+const DASHBOARD_URL = `${SITE_ORIGIN}/parent`;
 const PARTICIPATION_ID = "3f9c2b7e-5d14-4a8e-9c61-0b2f7e8d4a15";
 
 /** Monday 4 January 2027, 10:00 in Helsinki. */
@@ -821,7 +822,7 @@ describe("buildProductConfirmationEmail", () => {
    * be billed monthly has been sent their parent's mail under another name.
    */
   describe("the child's own copy", () => {
-    const GAMER_DASHBOARD_URL = "https://sog.gg/gamer";
+    const GAMER_DASHBOARD_URL = `${SITE_ORIGIN}/gamer`;
     /** What the sender hands the child's render: their root, and no price. */
     const child: Partial<ProductConfirmationEmailOptions> = {
       gamerCopy: true,
@@ -1165,7 +1166,7 @@ describe("the “Before the first session” guide", () => {
     const html = render({
       gamerCopy: true,
       priceAmount: null,
-      dashboardUrl: "https://sog.gg/gamer",
+      dashboardUrl: `${SITE_ORIGIN}/gamer`,
     });
     expect(html).toContain(HEADING);
     expect(html).toContain(ACCOUNT_STEP);
