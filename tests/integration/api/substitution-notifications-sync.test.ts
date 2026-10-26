@@ -1,8 +1,8 @@
 import { afterAll, beforeEach, describe, expect, it, vi } from "vitest";
 
 /**
- * The notification sync route: the database's `pg_net` call and the `pg_cron`
- * retry drain the outbox through it. No session — the shared secret as a
+ * The notification sync route: the database's `pg_net` call drains the outbox
+ * through it. No session — the shared secret as a
  * bearer token is the gate, and an environment without one admits nobody.
  * Pinned here: the gate, that the drain runs after the answer rather than
  * before it, and that a drain failure never reaches the caller.

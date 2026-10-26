@@ -72,6 +72,8 @@ vi.mock("@/services/session-substitution/session-substitution.queries", () => ({
   useDeclineSessionSubstitution: () => ({
     mutateAsync: () => deferred.promise ?? Promise.resolve(),
   }),
+  // The observation on mount talks to the server and draws nothing.
+  useSubstitutionNotificationObservationOnMount: () => undefined,
 }));
 
 const copy = messages.gedu.substitution;

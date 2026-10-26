@@ -14,6 +14,7 @@ import {
 import {
   useDeclineSessionSubstitution,
   useOfferSessionSubstitution,
+  useSubstitutionNotificationObservationOnMount,
 } from "@/services/session-substitution/session-substitution.queries";
 import {
   type OpenSubstitutionRequest,
@@ -72,6 +73,9 @@ export function GeduSubstitutionPoolSection({
   const offerSubstitution = useOfferSessionSubstitution();
   const declineSubstitution = useDeclineSessionSubstitution();
   const queryClient = useQueryClient();
+  // The pool is a surface that would care about a passed request, so opening
+  // it is one of the two observations that keep the messages on the clock.
+  useSubstitutionNotificationObservationOnMount();
 
   const rows = useMemo(
     () =>

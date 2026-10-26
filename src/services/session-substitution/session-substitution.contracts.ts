@@ -429,3 +429,16 @@ export const sessionStaffGedu = z.object({
 });
 
 export type SessionStaffGedu = z.infer<typeof sessionStaffGedu>;
+
+/**
+ * Response of POST /api/substitution-notifications/observe: how many passed
+ * requests it filed for their messages to close. Only the count crosses the
+ * wire — the caller fires it on mount and reads nothing back.
+ */
+export const substitutionNotificationObservation = z.object({
+  closedOut: z.number().int().nonnegative(),
+});
+
+export type SubstitutionNotificationObservation = z.infer<
+  typeof substitutionNotificationObservation
+>;

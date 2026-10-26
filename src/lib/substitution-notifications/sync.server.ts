@@ -59,8 +59,10 @@ import { deriveNotificationState, type NotificationState } from "./state";
  * sends nothing; one cleared back to open is announced then. Once announced,
  * every change updates the messages, whatever state the request is in.
  *
- * Order within one request: the announced row, the DMs, the Slack message
- * last, so the Slack message's tags say who was reached. A DM Discord refuses
+ * Order within one request: the announced row, the DMs, the Slack message,
+ * so the Slack message's tags say who was reached, and last the state they
+ * were all drawn in, which the close-out reads to find a passed request still
+ * drawn open. A DM Discord refuses
  * for good is recorded and never retried; any other DM failure lets the rest
  * of the sync finish and then fails the job, which the outbox retries with
  * backoff. Discord and Slack are each skipped where this environment has no
@@ -161,7 +163,11 @@ export async function syncRequest(
     if (state.kind !== "open") return;
     const inserted = await supabase
       .from("substitution_notifications")
-      .insert({ request_id: requestId, announced_at: new Date().toISOString() })
+      .insert({
+        request_id: requestId,
+        announced_at: new Date().toISOString(),
+        drawn_state: state.kind,
+      })
       .select()
       .single();
     if (inserted.error) throw inserted.error;
@@ -181,6 +187,17 @@ export async function syncRequest(
   }
 
   if (deferred !== null) throw deferred;
+
+  // Recorded only once every message is up to date: the close-out files a
+  // request still drawn open after its date, so a sync that failed part-way
+  // must leave the old state for the retry to finish.
+  if (notification.drawn_state !== state.kind) {
+    const drawn = await supabase
+      .from("substitution_notifications")
+      .update({ drawn_state: state.kind })
+      .eq("request_id", requestId);
+    if (drawn.error) throw drawn.error;
+  }
 }
 
 // ---------------------------------------------------------------- the DMs

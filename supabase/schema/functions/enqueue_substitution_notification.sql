@@ -40,7 +40,7 @@ $$;
 -- Name: FUNCTION enqueue_substitution_notification(p_request_id uuid); Type: COMMENT; Schema: public; Owner: -
 --
 
-COMMENT ON FUNCTION public.enqueue_substitution_notification(p_request_id uuid) IS 'Files a substitution request in the notification outbox: a new row, or seq bumped, the row due now and its attempts reset. Then, once per transaction (the transaction-local setting sogverse.sub_sync_kicked), kick_substitution_notification_sync. A request that no longer exists — the case of an offer deleted by its request''s own delete — is skipped. Called by the triggers on session_substitution_requests, session_substitution_offers and session_cancellations, and by the daily close-out. Granted to nobody.';
+COMMENT ON FUNCTION public.enqueue_substitution_notification(p_request_id uuid) IS 'Files a substitution request in the notification outbox: a new row, or seq bumped, the row due now and its attempts reset. Then, once per transaction (the transaction-local setting sogverse.sub_sync_kicked), kick_substitution_notification_sync. A request that no longer exists — the case of an offer deleted by its request''s own delete — is skipped. Called by the triggers on session_substitution_requests, session_substitution_offers and session_cancellations, and by the close-out. Granted to nobody.';
 
 
 SET default_tablespace = '';

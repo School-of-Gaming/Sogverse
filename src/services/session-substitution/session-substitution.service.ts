@@ -4,19 +4,22 @@ import {
   anonymousSubstitutionRequestDocument,
   liveSubstitutionRequests,
   substitutionRequestDocument,
+  substitutionNotificationObservation,
   openSubstitutionRequests,
   type AdminSubstitutionRequest,
   type AnonymousSubstitutionRequestDocument,
   type LiveSubstitutionRequest,
   type SubstitutionRequestDocument,
   type OpenSubstitutionRequest,
+  type SubstitutionNotificationObservation,
 } from "./session-substitution.contracts";
+import { parseJsonResponse, readErrorMessage } from "@/lib/api/json-response";
 
 /**
  * Reads and writes for session substitutions.
  *
- * **Every method is an `.rpc()` call, and there is no API route anywhere in
- * this feature.** Both substitution tables grant `authenticated` nothing, so the
+ * **Every read and write is an `.rpc()` call, with no API route between.**
+ * Both substitution tables grant `authenticated` nothing, so the
  * `SECURITY DEFINER` functions are the only way in and the authorization lives
  * in one place — guard-first in each function body — rather than being
  * re-derived per call site. That is the transport the gedu session writes
@@ -233,5 +236,27 @@ export class SessionSubstitutionService {
     );
     if (error) throw error;
     return substitutionRequestDocument.parse(data);
+  }
+
+  /**
+   * Tell the server somebody is looking at substitutions, so the Slack message
+   * and the Discord DMs catch up with the clock: a passed request's buttons
+   * close, and an outbox row nothing kicked is kicked.
+   *
+   * **The one method here that calls a route**, because both halves are the
+   * service role's alone. It is an observation rather than a write anybody
+   * asked for, and the common answer is `{ closedOut: 0 }`, so callers fire it
+   * on mount without waiting on it.
+   */
+  async observeNotifications(): Promise<SubstitutionNotificationObservation> {
+    const response = await fetch("/api/substitution-notifications/observe", {
+      method: "POST",
+    });
+    if (!response.ok) {
+      throw new Error(
+        await readErrorMessage(response, "Failed to observe substitution notifications"),
+      );
+    }
+    return parseJsonResponse(response, substitutionNotificationObservation);
   }
 }

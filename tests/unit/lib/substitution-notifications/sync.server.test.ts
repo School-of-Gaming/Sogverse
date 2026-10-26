@@ -132,6 +132,7 @@ class Query {
       db.notification = snapshotNotification({
         request_id: payload.request_id ?? SNAPSHOT_IDS.request,
         announced_at: payload.announced_at ?? "2026-10-08T08:00:00.000Z",
+        drawn_state: payload.drawn_state ?? "open",
       });
       return [db.notification];
     }
@@ -394,6 +395,31 @@ describe("drainSubstitutionNotifications", () => {
     await drain();
     expect(discord.sendDiscordChannelMessage).toHaveBeenCalledTimes(2);
     expect(db.dms.get(SNAPSHOT_IDS.aino)?.message_id).toBe("msg-1");
+  });
+
+  it("records the state the messages were drawn in, once they are all up to date", async () => {
+    setRequest();
+    await drain();
+    expect(db.notification?.drawn_state).toBe("open");
+
+    // The date goes by with nobody seated: the close-out's redraw records past.
+    setRequest({ product_today: "2026-10-15" });
+    await drain();
+    expect(db.notification?.drawn_state).toBe("past");
+    expect(JSON.stringify(discord.editDiscordMessage.mock.calls.at(-1)?.[2])).not.toContain("subreq:");
+  });
+
+  it("a sync that fails part-way leaves the old drawn state for the retry", async () => {
+    setRequest();
+    await drain();
+
+    setRequest({ product_today: "2026-10-15" });
+    discord.editDiscordMessage.mockRejectedValueOnce(new DiscordApiError(500, null, "Internal"));
+    expect(await drain()).toMatchObject({ failed: 1 });
+    expect(db.notification?.drawn_state).toBe("open");
+
+    await drain();
+    expect(db.notification?.drawn_state).toBe("past");
   });
 
   it("a change while the sync runs makes the same drain run it again", async () => {

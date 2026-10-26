@@ -23,7 +23,7 @@ $$;
 -- Name: FUNCTION kick_substitution_notification_sync_if_due(); Type: COMMENT; Schema: public; Owner: -
 --
 
-COMMENT ON FUNCTION public.kick_substitution_notification_sync_if_due() IS 'The retry: kicks the sync when some outbox row is due and not leased — a kick that was lost, a sync that died holding its lease, or a failed sync whose backoff has run out. Run every minute by the pg_cron job substitution-notifications-retry. Granted to nobody.';
+COMMENT ON FUNCTION public.kick_substitution_notification_sync_if_due() IS 'Kicks the sync when some outbox row is due and not leased — a kick that was lost, a sync that died holding its lease, or a failed sync whose backoff has run out. Called by the app''s observation route whenever an admin opens the Substitutions page or a gedu opens their pool, so a stuck row waits for somebody to look. Granted to the service role.';
 
 
 --
@@ -31,5 +31,6 @@ COMMENT ON FUNCTION public.kick_substitution_notification_sync_if_due() IS 'The 
 --
 
 REVOKE ALL ON FUNCTION public.kick_substitution_notification_sync_if_due() FROM PUBLIC;
+GRANT ALL ON FUNCTION public.kick_substitution_notification_sync_if_due() TO service_role;
 
 

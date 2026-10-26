@@ -12,7 +12,8 @@ CREATE TABLE public.substitution_notifications (
     requester_dm_claimed_at timestamp with time zone,
     requester_dm_message_id text,
     requester_dm_sent_at timestamp with time zone,
-    requester_dm_error text
+    requester_dm_error text,
+    drawn_state public.substitution_notification_state NOT NULL
 );
 
 
@@ -20,7 +21,7 @@ CREATE TABLE public.substitution_notifications (
 -- Name: TABLE substitution_notifications; Type: COMMENT; Schema: public; Owner: -
 --
 
-COMMENT ON TABLE public.substitution_notifications IS 'A substitution request that has been ANNOUNCED — the row''s existence is the fact — and the Slack message that announces it. Written by the sync, as the service role, the first time it finds the request open; a request filed already substituted and never open is never announced and gets no row. Once a row exists every later change to the request updates the messages, whatever state the request is in. Service role only; RLS on with no policy.';
+COMMENT ON TABLE public.substitution_notifications IS 'A substitution request that has been ANNOUNCED — the row''s existence is the fact — the state its messages were last drawn in, and the Slack message that announces it. Written by the sync, as the service role, the first time it finds the request open; a request filed already substituted and never open is never announced and gets no row. Once a row exists every later change to the request updates the messages, whatever state the request is in. Service role only; RLS on with no policy.';
 
 
 --
@@ -77,6 +78,13 @@ COMMENT ON COLUMN public.substitution_notifications.requester_dm_sent_at IS 'Whe
 --
 
 COMMENT ON COLUMN public.substitution_notifications.requester_dm_error IS 'Why Discord refused the "your request has been filled" DM for good (the user takes no DMs, or is unknown). The claim stays, so it is never retried.';
+
+
+--
+-- Name: COLUMN substitution_notifications.drawn_state; Type: COMMENT; Schema: public; Owner: -
+--
+
+COMMENT ON COLUMN public.substitution_notifications.drawn_state IS 'The state the request''s messages were last drawn in, written by the sync once it has brought them up to date: open at the announcement, and whatever the request stands at after every later sync. Time alone moves only an open request, to past, and nothing writes when a date passes, so the close-out files the requests drawn open whose date has gone by.';
 
 
 --
