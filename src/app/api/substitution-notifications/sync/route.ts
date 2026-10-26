@@ -9,8 +9,8 @@ export const maxDuration = 60;
  * POST /api/substitution-notifications/sync — drain the substitution
  * notification outbox.
  *
- * Called by the database (`pg_net` when a write enqueues a request, the
- * `pg_cron` retry when a row comes due) and by the local drain script, each
+ * Called by the database (`pg_net` when a write enqueues a request, or when
+ * the observation route finds a row due) and by the local drain script, each
  * with the environment's shared secret as a bearer token. It takes no input:
  * what to sync is whatever the outbox holds. The answer is 202 at once and the
  * drain runs after it, because `pg_net` waits three seconds at most and a

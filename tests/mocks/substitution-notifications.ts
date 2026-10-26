@@ -78,6 +78,7 @@ export function snapshotNotification(
     slack_channel_id: null,
     slack_message_ts: null,
     slack_rendered_hash: null,
+    drawn_state: "open",
     requester_dm_claimed_at: null,
     requester_dm_message_id: null,
     requester_dm_sent_at: null,

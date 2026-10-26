@@ -607,6 +607,10 @@ export type SubstitutionNotification = Database["public"]["Tables"]["substitutio
 export type SubstitutionNotificationInsert = Database["public"]["Tables"]["substitution_notifications"]["Insert"];
 export type SubstitutionNotificationDm = Database["public"]["Tables"]["substitution_notification_dms"]["Row"];
 export type SubstitutionNotificationDmInsert = Database["public"]["Tables"]["substitution_notification_dms"]["Insert"];
+// The state a request's messages were last drawn in — open, filled, withdrawn,
+// cancelled or past — which the close-out reads to find the passed requests
+// still drawn open.
+export type SubstitutionNotificationState = Database["public"]["Enums"]["substitution_notification_state"];
 
 // ---------------------------------------------------------------------------
 // products — session records (the gedu session feed)

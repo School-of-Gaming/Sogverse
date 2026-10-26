@@ -3656,6 +3656,7 @@ export type Database = {
       substitution_notifications: {
         Row: {
           announced_at: string
+          drawn_state: Database["public"]["Enums"]["substitution_notification_state"]
           request_id: string
           requester_dm_claimed_at: string | null
           requester_dm_error: string | null
@@ -3668,6 +3669,7 @@ export type Database = {
         }
         Insert: {
           announced_at: string
+          drawn_state: Database["public"]["Enums"]["substitution_notification_state"]
           request_id: string
           requester_dm_claimed_at?: string | null
           requester_dm_error?: string | null
@@ -3680,6 +3682,7 @@ export type Database = {
         }
         Update: {
           announced_at?: string
+          drawn_state?: Database["public"]["Enums"]["substitution_notification_state"]
           request_id?: string
           requester_dm_claimed_at?: string | null
           requester_dm_error?: string | null
@@ -5764,6 +5767,12 @@ export type Database = {
         | "digital_safety"
       product_type: "consumer_club" | "municipality_club" | "camp" | "event"
       spoken_language: "fi" | "sv" | "en" | "fr"
+      substitution_notification_state:
+        | "open"
+        | "filled"
+        | "withdrawn"
+        | "cancelled"
+        | "past"
       substitution_offer_response: "offer" | "decline"
       substitution_reason: "sick" | "other"
       substitution_request_status: "open" | "substituted" | "withdrawn"
@@ -5949,6 +5958,13 @@ export const Constants = {
       ],
       product_type: ["consumer_club", "municipality_club", "camp", "event"],
       spoken_language: ["fi", "sv", "en", "fr"],
+      substitution_notification_state: [
+        "open",
+        "filled",
+        "withdrawn",
+        "cancelled",
+        "past",
+      ],
       substitution_offer_response: ["offer", "decline"],
       substitution_reason: ["sick", "other"],
       substitution_request_status: ["open", "substituted", "withdrawn"],

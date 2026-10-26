@@ -116,6 +116,8 @@ const snapshotNotification = z.object({
   slack_channel_id: z.string().nullable(),
   slack_message_ts: z.string().nullable(),
   slack_rendered_hash: z.string().nullable(),
+  /** The state the messages were last drawn in, as the sync recorded it. */
+  drawn_state: z.enum(Constants.public.Enums.substitution_notification_state),
   /** The "your request has been filled" DM to the requester, as for the accepted DM. */
   requester_dm_claimed_at: z.string().nullable(),
   requester_dm_message_id: z.string().nullable(),

@@ -331,6 +331,26 @@ COMMENT ON TYPE public.spoken_language IS 'A human language a club is delivered 
 
 
 --
+-- Name: substitution_notification_state; Type: TYPE; Schema: public; Owner: -
+--
+
+CREATE TYPE public.substitution_notification_state AS ENUM (
+    'open',
+    'filled',
+    'withdrawn',
+    'cancelled',
+    'past'
+);
+
+
+--
+-- Name: TYPE substitution_notification_state; Type: COMMENT; Schema: public; Owner: -
+--
+
+COMMENT ON TYPE public.substitution_notification_state IS 'Where a substitution request stands, as its notifications tell it: open (taking offers), filled, withdrawn, cancelled (its session is) or past (still open, its product-local date gone by). The app derives it from the notification snapshot; the database only stores the one last drawn.';
+
+
+--
 -- Name: substitution_offer_response; Type: TYPE; Schema: public; Owner: -
 --
 

@@ -15,8 +15,9 @@ import { deleteTestProducts } from "./product-helpers";
 
 /**
  * Substitution requests announce their changes: the triggers that file a request
- * in the notification outbox, the lease the sync route works it under, the daily
- * close-out, and the snapshot the sync renders from.
+ * in the notification outbox, the lease the sync route works it under, the
+ * close-out and the due kick an observation runs, and the snapshot the sync
+ * renders from.
  *
  * The kick itself cannot be seen from here: it reads its URL and secret from
  * Vault, which is empty on every local stack and in CI, so it returns before
@@ -507,30 +508,93 @@ describe("substitution notifications", () => {
     });
   });
 
-  describe("the daily close-out", () => {
-    it("files announced requests still open on yesterday's date, and nothing else", async () => {
-      const passed = await file(ids.requester, utcDate(-1));
-      const unannounced = await file(ids.noLanguage, utcDate(-1));
-      const today = await file(ids.requester, utcDate(0));
-      const older = await file(ids.requester, utcDate(-2));
-      const withdrawn = await file(ids.unqualified, utcDate(-1), "withdrawn");
-      const all = [passed, unannounced, today, older, withdrawn];
-      const { error: announceError } = await admin.from("substitution_notifications").insert(
-        [passed, today, older, withdrawn].map((requestId) => ({
-          request_id: requestId,
-          announced_at: new Date().toISOString(),
-        })),
-      );
-      expect(announceError).toBeNull();
-      await clearOutbox(all);
+  describe("the close-out", () => {
+    type DrawnState = Database["public"]["Enums"]["substitution_notification_state"];
 
-      const { data: count, error } = await admin.rpc("enqueue_passed_substitution_notifications");
+    async function announce(requestId: string, drawnState: DrawnState) {
+      const { error } = await admin.from("substitution_notifications").insert({
+        request_id: requestId,
+        announced_at: new Date().toISOString(),
+        drawn_state: drawnState,
+      });
       expect(error).toBeNull();
-      expect(count).toBeGreaterThanOrEqual(1);
-      expect((await outbox(passed))?.seq).toBe(1);
-      for (const requestId of [unannounced, today, older, withdrawn]) {
+    }
+
+    async function closeOut() {
+      const { data, error } = await admin.rpc("enqueue_passed_substitution_notifications");
+      expect(error).toBeNull();
+      return data;
+    }
+
+    it("files every request still drawn open whose date has passed, however long ago", async () => {
+      const yesterday = await file(ids.requester, utcDate(-1));
+      const lastWeek = await file(ids.requester, utcDate(-7));
+      const drawnPast = await file(ids.requester, utcDate(-2));
+      const drawnWithdrawn = await file(ids.unqualified, utcDate(-1), "withdrawn");
+      const today = await file(ids.requester, utcDate(0));
+      const unannounced = await file(ids.noLanguage, utcDate(-1));
+      await announce(yesterday, "open");
+      await announce(lastWeek, "open");
+      await announce(drawnPast, "past");
+      await announce(drawnWithdrawn, "withdrawn");
+      await announce(today, "open");
+      await clearOutbox([yesterday, lastWeek, drawnPast, drawnWithdrawn, today, unannounced]);
+
+      expect(await closeOut()).toBeGreaterThanOrEqual(2);
+      expect((await outbox(yesterday))?.seq).toBe(1);
+      expect((await outbox(lastWeek))?.seq).toBe(1);
+      for (const requestId of [drawnPast, drawnWithdrawn, today, unannounced]) {
         expect(await outbox(requestId)).toBeNull();
       }
+    });
+
+    it("files a passed request once: never while it waits, never after it is drawn past", async () => {
+      const passed = await file(ids.requester, utcDate(-1));
+      await announce(passed, "open");
+      await clearOutbox([passed]);
+
+      await closeOut();
+      expect((await outbox(passed))?.seq).toBe(1);
+
+      // Waiting in the outbox: a second look files it again for nothing.
+      await closeOut();
+      expect((await outbox(passed))?.seq).toBe(1);
+
+      // The sync redraws it and records past; the next look leaves it alone.
+      const { error } = await admin
+        .from("substitution_notifications")
+        .update({ drawn_state: "past" })
+        .eq("request_id", passed);
+      expect(error).toBeNull();
+      await clearOutbox([passed]);
+      await closeOut();
+      expect(await outbox(passed)).toBeNull();
+    });
+
+    it("leaves a failing row's backoff alone", async () => {
+      const parked = await file(ids.requester, utcDate(-1));
+      await announce(parked, "open");
+      const { error } = await admin
+        .from("substitution_notification_outbox")
+        .update({ attempts: 12, next_attempt_at: "infinity", last_error: "gave up" })
+        .eq("request_id", parked);
+      expect(error).toBeNull();
+
+      await closeOut();
+      expect(await outbox(parked)).toMatchObject({
+        seq: 1,
+        attempts: 12,
+        next_attempt_at: "infinity",
+        last_error: "gave up",
+      });
+    });
+  });
+
+  describe("the kick when a row is due", () => {
+    it("runs for the service role, and queues nothing where Vault is empty", async () => {
+      await file(ids.requester, utcDate(3));
+      const { error } = await admin.rpc("kick_substitution_notification_sync_if_due");
+      expect(error).toBeNull();
     });
   });
 
@@ -636,6 +700,7 @@ describe("substitution notifications", () => {
         announced_at: new Date().toISOString(),
         slack_channel_id: "C1",
         slack_message_ts: "123.456",
+        drawn_state: "open",
       });
       const shot = await snapshot(requestId);
       expect(shot.notification).toMatchObject({
@@ -643,6 +708,7 @@ describe("substitution notifications", () => {
         slack_channel_id: "C1",
         slack_message_ts: "123.456",
         slack_rendered_hash: null,
+        drawn_state: "open",
         requester_dm_claimed_at: null,
         requester_dm_message_id: null,
         requester_dm_sent_at: null,
@@ -768,10 +834,12 @@ describe("substitution notifications", () => {
         expect(finishCall.error?.code).toBe(FORBIDDEN);
         const closeOutCall = await client.rpc("enqueue_passed_substitution_notifications");
         expect(closeOutCall.error?.code).toBe(FORBIDDEN);
+        const kickIfDue = await client.rpc("kick_substitution_notification_sync_if_due");
+        expect(kickIfDue.error?.code).toBe(FORBIDDEN);
       }
     });
 
-    it("the enqueue and the kicks are closed to the service role too", async () => {
+    it("the enqueue and the unconditional kick are closed to the service role too", async () => {
       for (const client of [anon, geduAuth, admin]) {
         const enqueue = await client.rpc("enqueue_substitution_notification", {
           p_request_id: NO_SUCH_REQUEST,
@@ -779,8 +847,6 @@ describe("substitution notifications", () => {
         expect(enqueue.error?.code).toBe(FORBIDDEN);
         const kick = await client.rpc("kick_substitution_notification_sync");
         expect(kick.error?.code).toBe(FORBIDDEN);
-        const kickIfDue = await client.rpc("kick_substitution_notification_sync_if_due");
-        expect(kickIfDue.error?.code).toBe(FORBIDDEN);
       }
     });
   });

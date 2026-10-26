@@ -6,6 +6,7 @@ import {
   useQueryClient,
   type QueryClient,
 } from "@tanstack/react-query";
+import { useEffect, useRef } from "react";
 import { getClient } from "@/lib/supabase/client";
 import { adminSessionKeys } from "@/services/admin-sessions/admin-sessions.keys";
 import { assignmentKeys } from "@/services/assignments/assignments.keys";
@@ -229,4 +230,34 @@ export function useWithdrawSessionSubstitutionRequestAsAdmin() {
       service.withdrawRequestAsAdmin(vars.requestId),
     onSuccess: () => invalidateSubstitutionWrite(queryClient),
   });
+}
+
+/**
+ * Observe the substitution notifications once per mount: the server files the
+ * requests whose date has passed, so their buttons close, and kicks the sync
+ * when an outbox row is due with nothing to kick it. **This is the whole of
+ * the notifications' clock** — nothing runs on a schedule, so a passed request
+ * waits for an admin to open the Substitutions page or a gedu to open their
+ * pool.
+ *
+ * Fire-and-forget, and a failure is swallowed: it is housekeeping on the far
+ * side of Discord and Slack, nothing on the page reads from it, and the next
+ * page to open observes again. Nothing is invalidated either, because the
+ * observation changes only the messages, never a document this app reads.
+ */
+export function useSubstitutionNotificationObservationOnMount(): void {
+  // StrictMode runs a mount effect twice in development. A second observation
+  // is harmless — a filed request is skipped while it waits in the outbox —
+  // but it is a wasted round trip.
+  const observed = useRef(false);
+
+  useEffect(() => {
+    if (observed.current) return;
+    observed.current = true;
+    new SessionSubstitutionService(getClient())
+      .observeNotifications()
+      .catch(() => {
+        // Deliberately silent — see the note above.
+      });
+  }, []);
 }
