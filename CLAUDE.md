@@ -301,7 +301,7 @@ deleting a branch something does produce is a bug.
 
 ### Derive state when it is read; a recurring job needs an airtight case
 
-**Rule: before anything that runs on a clock — `pg_cron`, Vercel Cron, a scheduled
+**Rule: instead of anything that runs on a clock — `pg_cron`, Vercel Cron, a scheduled
 workflow — derive the state when it is read, or notice it when somebody looks.** A state a
 job keeps in step with time is a second copy of the truth that can only lag behind it or be
 wrong; a job fails with nobody there to see it; and it can neither be tested without faking
