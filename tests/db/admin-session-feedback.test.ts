@@ -12,13 +12,13 @@ import { deleteTestProducts } from "./product-helpers";
 
 /**
  * `get_admin_session_feedback` — the admin feedback page's read: every gamer's
- * answer in a range of session days, and every recorded online session as the
- * response rate's denominator.
+ * answer in a range of session days, and every recorded online or hybrid
+ * session as the response rate's denominator. An in-person session is not in it.
  *
  * The non-admin refusal is the authorization spine's; this file proves what an
  * admin gets back, parsed through the contract schema the page parses with.
  *
- * Layout: one remote club in Europe/Helsinki (UTC+2 in early March), one group.
+ * Layout: one online club in Europe/Helsinki (UTC+2 in early March), one group.
  * The seeded GEDU is its primary and a minted ASSISTANT its assistant; a minted
  * SUB holds no seat and substitutes for GEDU on DAY_2 only.
  *
@@ -355,10 +355,36 @@ describe("get_admin_session_feedback", () => {
     expect(sessions.some((s) => s.sessionDate === DAY_4)).toBe(false);
   });
 
+  it("counts a hybrid session in the denominator, and its present gamers' answers toward the rate", async () => {
+    // The same club, held hybrid: its gamers attend a site, but the session is
+    // counted as an online one is.
+    const toHybrid = await admin
+      .from("products")
+      .update({ delivery_mode: "hybrid", location_id: TEST_IDS.LOCATION_SITE })
+      .eq("id", PRODUCT);
+    expect(toHybrid.error).toBeNull();
+    try {
+      const { responses, sessions } = await read(DAY_1, DAY_1);
+      expect(sessions.map((s) => [s.sessionDate, s.deliveryMode, s.eligibleCount])).toEqual([
+        [DAY_1, "hybrid", 2],
+      ]);
+      expect(responses.map((r) => [r.respondent.id, r.deliveryMode, r.countsTowardRate])).toEqual([
+        [TEST_IDS.GAMER, "hybrid", true],
+      ]);
+    } finally {
+      const back = await admin
+        .from("products")
+        .update({ delivery_mode: "online", location_id: null })
+        .eq("id", PRODUCT);
+      expect(back.error).toBeNull();
+    }
+  });
+
   it("counts no response toward the rate for a session the denominator leaves out", async () => {
-    // The same club, held in person: its sessions are not online sessions, so
-    // GAMER's answer on DAY_1, though the register marks them present, may not
-    // count toward a rate whose denominator holds no such session.
+    // The same club, held in person: its sessions are neither online nor
+    // hybrid, so GAMER's answer on DAY_1, though the register marks them
+    // present, may not count toward a rate whose denominator holds no such
+    // session.
     const toSite = await admin
       .from("products")
       .update({ delivery_mode: "in_person", location_id: TEST_IDS.LOCATION_SITE })
