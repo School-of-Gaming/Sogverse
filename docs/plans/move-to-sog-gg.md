@@ -250,21 +250,21 @@ Every write outside the repo is confirmed with the owner before it is made.
    *Verify:* a `GET` lists both entries.
 
    Done 2026-10-26: prod's allow-list is `https://sogverse.sog.gg/**,https://sog.gg/**`,
-   and its site URL is unchanged. **Staging still needs the same:** add
-   `https://staging.sog.gg/**` to the staging project's allow-list (ref in
-   `supabase/config.toml`), keeping `https://sogverse-staging.sog.gg/**`.
+   and its site URL is unchanged. Staging's (the project ref is in `supabase/config.toml`)
+   is `https://sogverse-staging.sog.gg/**,https://staging.sog.gg/**`, also done
+   2026-10-26.
 7. **Add the domains in Vercel.**
    - Add `sog.gg` to the `sogverse` project as a production domain, and `www.sog.gg` as a
      domain that redirects (308) to `sog.gg`. Both stay unverified until DNS moves.
      *Done 2026-10-26* through `vercel api /v10/projects/sogverse/domains`. Pass the body
      with `-f`/`-F`; the CLI has no `-d`.
    - Add `staging.sog.gg` to the project with git branch `dev`, the way
-     `sogverse-staging.sog.gg` is set up today. *Not done yet.*
+     `sogverse-staging.sog.gg` is set up today. *Done 2026-10-26.*
    - Vercel asked for (2026-10-26):
-     - two TXT records on `_vercel.sog.gg`, which prove ownership:
-       `vc-domain-verify=sog.gg,15aa4e3f612a0a0e9641` and
-       `vc-domain-verify=www.sog.gg,3eaea6edb8b650f1ddb6` (re-read them for
-       `staging.sog.gg` once it is added);
+     - three TXT records on `_vercel.sog.gg`, which prove ownership:
+       `vc-domain-verify=sog.gg,15aa4e3f612a0a0e9641`,
+       `vc-domain-verify=www.sog.gg,3eaea6edb8b650f1ddb6` and
+       `vc-domain-verify=staging.sog.gg,cb5672db6f4dc6d97232`;
      - apex `A` records `216.150.1.1` and `216.150.16.1`;
      - a `www` CNAME to `88d8df46e7ff3b6f.vercel-dns-017.com.`
      Re-read with `vercel api "/v6/domains/<domain>/config?projectIdOrName=sogverse"
