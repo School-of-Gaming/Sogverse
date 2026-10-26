@@ -36,7 +36,7 @@ import { DEFAULT_LOCALE, type SupportedLocale } from "@/lib/constants/locales";
 import { cn } from "@/lib/cn";
 import {
   templateRegistry,
-  untouchedTextValue,
+  textFieldValue,
   type TemplateDefinition,
   type TemplateField,
 } from "@/lib/email-templates/registry";
@@ -107,7 +107,7 @@ function fieldValue(
     case "textarea":
       return typed ?? "";
     default:
-      return typed || untouchedTextValue(field.placeholder, origin);
+      return textFieldValue(field.placeholder, typed, origin);
   }
 }
 

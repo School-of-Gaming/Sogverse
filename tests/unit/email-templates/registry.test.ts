@@ -2,7 +2,7 @@ import { describe, it, expect, beforeAll, vi } from "vitest";
 import { SITE_HOST, SITE_ORIGIN } from "../../mocks/site-origin";
 import {
   templateRegistry,
-  untouchedTextValue,
+  textFieldValue,
   type TemplateDefinition,
 } from "@/lib/email-templates/registry";
 import { BRAND, DARK_THEME, STATUS } from "@/lib/constants/colors";
@@ -86,7 +86,7 @@ function untouchedParams(
           ? field.options[0].value
           : field.type === "textarea"
             ? ""
-            : untouchedTextValue(field.placeholder, SITE_ORIGIN),
+            : textFieldValue(field.placeholder, undefined, SITE_ORIGIN),
       ]),
     ),
     ...typed,
@@ -1600,9 +1600,19 @@ describe("templateRegistry form placeholders", () => {
   });
 
   it("posts a path placeholder resolved against the origin, and anything else as written", () => {
-    expect(untouchedTextValue("/verify-email?token=abc123", "http://localhost:3005")).toBe(
+    expect(textFieldValue("/verify-email?token=abc123", undefined, "http://localhost:3005")).toBe(
       "http://localhost:3005/verify-email?token=abc123",
     );
-    expect(untouchedTextValue("Aino", SITE_ORIGIN)).toBe("Aino");
+    expect(textFieldValue("Aino", undefined, SITE_ORIGIN)).toBe("Aino");
+  });
+
+  it("resolves a typed path on a path field, and posts a typed URL or text as typed", () => {
+    expect(textFieldValue("/parent", "/parent?x=1", "http://localhost:3005")).toBe(
+      "http://localhost:3005/parent?x=1",
+    );
+    expect(textFieldValue("/parent", "https://example.com/x", SITE_ORIGIN)).toBe(
+      "https://example.com/x",
+    );
+    expect(textFieldValue("Aino", "/not-a-link", SITE_ORIGIN)).toBe("/not-a-link");
   });
 });

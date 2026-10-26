@@ -123,22 +123,31 @@ interface TextField {
    * as its path (`/parent`), never as an absolute URL: the form posts it
    * resolved against the origin the render is built for, so a preview and a
    * send link to the site actually serving them — see
-   * {@link untouchedTextValue}.
+   * {@link textFieldValue}.
    */
   placeholder: string;
   type?: undefined;
 }
 
 /**
- * The value an untouched text input posts: its placeholder, with a site path
- * resolved against `origin` — the render context's origin, the one the demo
- * art resolves against too, so one preview never links to two sites.
+ * The value a text input posts: what was typed, else its placeholder. On a
+ * field whose placeholder is a site path, a path is resolved against `origin`
+ * — the render context's origin, the one the demo art resolves against too, so
+ * one preview never links to two sites — whether it was typed or left as the
+ * placeholder, so typing the shape the box shows works.
  *
  * A leading `/` is what marks a path, and it is unambiguous here: no other
  * text placeholder in the registry starts with one.
  */
-export function untouchedTextValue(placeholder: string, origin: string): string {
-  return placeholder.startsWith("/") ? new URL(placeholder, origin).href : placeholder;
+export function textFieldValue(
+  placeholder: string,
+  typed: string | undefined,
+  origin: string,
+): string {
+  const value = typed || placeholder;
+  return placeholder.startsWith("/") && value.startsWith("/")
+    ? new URL(value, origin).href
+    : value;
 }
 
 interface SelectField {
