@@ -25,6 +25,8 @@
 --   club's location through an inner join: every municipality club has one
 --   (chk_products_in_person_has_location, chk_products_online_muni_has_location)
 --   and the foreign key is ON DELETE RESTRICT.
+-- * chk_products_date_range drops its start_date IS NULL arm (NOT NULL). A
+--   CHECK cannot be altered in place, so it is dropped and added again.
 --
 -- Three comments are corrected with them: admin_move_participation's on why it
 -- re-checks the target group, the participations table comment (the group
@@ -63,6 +65,11 @@ ALTER TABLE public.participations
 COMMENT ON COLUMN public.participations.group_joined_at IS 'When this seat entered its CURRENT group, and NULL exactly when the seat holds no group — chk_participations_group_joined_at_iff_group holds the two together. Rows older than the column carry a value derived from their own signed_up_at, so "unknown" and "derived from signup" are not distinguishable on an old row. That cost is accepted because signup is a provable lower bound on the true join — a seat cannot enter a group of a product it does not hold — so a derived value can only ever understate how new a member is: the newcomer badge then shows less often, and the session register expects the member on more sessions, never fewer. A move between two groups of one product RESETS the stamp: the member is new to THAT group, which is the whole claim the newcomer badge makes, and it is also the floor the session register measures its expectations from. Stamped only by trg_participations_stamp_group_joined_at, which is the column''s only ongoing writer — no RPC and no policy-driven UPDATE sets it, because group_id has at least five writers (including the ON DELETE SET NULL cascade from product_groups) and a trigger is the only point that sees all of them.';
 
 COMMENT ON TABLE public.participations IS 'One row per seat on a product: who holds it, who pays for it, which group they sit in and what state the seat is in. Some of its columns are settled by triggers rather than by any caller, and are therefore invisible at the call site: updated_at is touched on every write, a group_id naming a group of another product is rejected by trg_validate_participations_group, and group_joined_at is stamped by trg_participations_stamp_group_joined_at whenever group_id is set, changed or cleared — group_id has at least five writers, including the ON DELETE SET NULL cascade from product_groups, which is why the stamp lives in a trigger and not in an RPC. Do not set group_joined_at by hand: chk_participations_group_joined_at_iff_group refuses a stamp out of step with group_id.';
+
+ALTER TABLE public.products
+  DROP CONSTRAINT chk_products_date_range,
+  ADD CONSTRAINT chk_products_date_range
+    CHECK (end_date IS NULL OR end_date >= start_date);
 
 -- ---------------------------------------------------------------------------
 -- 2. The functions
@@ -1425,6 +1432,18 @@ BEGIN
        AND convalidated
   ) THEN
     RAISE EXCEPTION 'participations must carry a validated chk_participations_group_joined_at_iff_group';
+  END IF;
+
+  IF NOT EXISTS (
+    SELECT 1
+      FROM pg_constraint
+     WHERE conrelid = 'public.products'::regclass
+       AND conname = 'chk_products_date_range'
+       AND contype = 'c'
+       AND convalidated
+       AND pg_get_constraintdef(oid) NOT LIKE '%start_date IS NULL%'
+  ) THEN
+    RAISE EXCEPTION 'products must carry a validated chk_products_date_range without a start_date IS NULL arm';
   END IF;
 
   FOR v_guard IN
