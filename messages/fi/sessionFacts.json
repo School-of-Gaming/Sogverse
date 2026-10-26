@@ -1,5 +1,4 @@
 {
   "remote": "Etänä",
-  "hybrid": "Etänä, pelaajat paikassa {site}",
-  "siteUnknown": "Paikka varmistuu myöhemmin"
+  "hybrid": "Etänä, pelaajat paikassa {site}"
 }

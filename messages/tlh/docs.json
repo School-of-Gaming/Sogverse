@@ -129,7 +129,7 @@
           "id": "De'wI' pong mI'.",
           "name": "Hoch Hol De'wI' pong, Hol ngoq lo'. reH wa' tu'lu' puS; nuq 'oH De'wI' 'e' wIv.",
           "type": "nuq Segh De'wI'. Hoch Hogh qaS ghom'a' — Qav Hutlh; ragh je wanI' jaj wIvlu'bogh qaS.",
-          "delivery": "chay' qaS: <code>online</code> Sogverse ghogh pa'Daq, <code>in_person</code> DaqDaq, <code>hybrid</code> je — DaqDaq puqpu' ghoS, Sogverse ghogh pa'Daq ghoqwI' muv. mIw'a' qaSmoHmeH Lynx pongmey — Daq pagh polbe'lu'; <code>type</code> je <code>delivery</code> cha'vam 'oH ngoDmey pongmey ghoSbogh'e'.",
+          "delivery": "chay' qaS: <code>online</code> Hop muv — Sogverse ghogh pa', latlh ghom, ghItlhbogh muvmeH ra'mey ghap, <code>in_person</code> DaqDaq, <code>hybrid</code> je — DaqDaq puqpu' ghoS, Sogverse ghogh pa'Daq ghoqwI' muv. mIw'a' qaSmoHmeH Lynx pongmey — Daq pagh polbe'lu'; <code>type</code> je <code>delivery</code> cha'vam 'oH ngoDmey pongmey ghoSbogh'e'.",
           "audience": "De'wI'Daq Daq ghajlaHbogh: <code>gamers</code> <code>true</code> puqpu' ghajlaHDI', <code>parents</code> <code>true</code> vavpu' ghajlaHDI'. reH wa' <code>true</code> 'oH; cha' <code>true</code>DI' qorDu' Hoch jaH — vavpu' puqpu' je.",
           "location": "De'wI' Daq ngaSbogh veng je cha' ghItlh Sep ngoq; <code>city</code> 'oH veng pong'e'. DIvI' Daq nuvDaq hybrid je rap chut: <code>null</code> Daq Hutlhchugh De'wI' qoj vengDaq ngaSbe'chugh DaqDaj.",
           "status": "<code>pending</code> tagh jaj qaSpa', <code>running</code> tagh jajvo', <code>completed</code> Qav jaj juSpu'DI'. laDDI' toghlu': De'wI' jajmey, De'wI' poH Daqvo' — pagh pollu', vaj not qan De'.",

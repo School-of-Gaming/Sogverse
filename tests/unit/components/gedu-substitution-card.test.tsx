@@ -229,20 +229,6 @@ describe("GeduSubstitutionCard", () => {
     expect(count(opened)).toBe(1);
   });
 
-  it("says the place is still to be confirmed rather than reading as online", () => {
-    const html = cardHtml({
-      ...fixtureLockedSubstitution(),
-      session: {
-        ...fixtureLockedSubstitution().session,
-        deliveryMode: "in_person",
-        siteName: null,
-      },
-      hasVoiceRoom: false,
-    });
-    expect(html).toContain(messages.sessionFacts.siteUnknown);
-    expect(html).not.toContain(messages.sessionFacts.remote);
-  });
-
   it("renders the group-bearing workspace link it is handed", () => {
     // The roll-up is what puts the group on the href (pinned in its own suite);
     // what this card owes is rendering that href rather than dropping its

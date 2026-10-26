@@ -59,9 +59,9 @@ export interface SessionFacts {
    */
   deliveryMode: DeliveryMode;
   /**
-   * The site the gamers attend, on an in-person or hybrid product. `null` on an
-   * online one, and `null` on a product with no site recorded — which is "place
-   * to be confirmed", not "online": `deliveryMode` is what says online.
+   * The site the gamers attend, on an in-person or hybrid product; `null` on an
+   * online one. A product that is not online always holds a site, which
+   * {@link sessionWhere} enforces.
    */
   siteName: string | null;
 }
@@ -155,26 +155,51 @@ export function buildSessionFacts({
 
 /**
  * Where the gedu teaches the session from, as every substitution surface words
- * it: at the site in person (`null` while no site is recorded — "place to be
- * confirmed", never "online"), online otherwise, and on a hybrid session online
+ * it: at the site in person, online otherwise, and on a hybrid session online
  * with the site the gamers are at named beside it.
  */
 export type SessionWhere =
-  | { kind: "site"; siteName: string | null }
+  | { kind: "site"; siteName: string }
   | { kind: "online" }
   | { kind: "hybrid"; siteName: string };
 
 export function sessionWhere(
   facts: Pick<SessionFacts, "deliveryMode" | "siteName">,
 ): SessionWhere {
-  if (geduAttendsSite(facts.deliveryMode)) {
-    return { kind: "site", siteName: facts.siteName };
+  if (!gamersAttendSite(facts.deliveryMode)) return { kind: "online" };
+  // A product that is not online always holds a site: the schema requires its
+  // location, and the site-name reads join on that restricting foreign key.
+  if (facts.siteName === null) {
+    throw new Error(
+      `A ${facts.deliveryMode} session reached the substitution facts without its site`,
+    );
   }
-  // The facts never carry a site on an online product, and a hybrid product
-  // always holds one, so a missing site here is an online session.
-  return facts.siteName === null
-    ? { kind: "online" }
+  return geduAttendsSite(facts.deliveryMode)
+    ? { kind: "site", siteName: facts.siteName }
     : { kind: "hybrid", siteName: facts.siteName };
+}
+
+/** The words a surface states a {@link SessionWhere} in. */
+export interface SessionWhereWording {
+  /** An online session. */
+  remote: string;
+  /** A hybrid session: online, with the site the gamers are at. */
+  hybrid: (siteName: string) => string;
+}
+
+/** A {@link SessionWhere} as one line: the site's name, or the surface's words. */
+export function sessionWhereLabel(
+  where: SessionWhere,
+  wording: SessionWhereWording,
+): string {
+  switch (where.kind) {
+    case "site":
+      return where.siteName;
+    case "online":
+      return wording.remote;
+    case "hybrid":
+      return wording.hybrid(where.siteName);
+  }
 }
 
 /**

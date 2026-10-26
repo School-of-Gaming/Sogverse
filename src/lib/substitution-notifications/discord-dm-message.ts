@@ -21,6 +21,7 @@ import {
   buildSessionFacts,
   sessionFactsProduct,
   sessionWhere,
+  sessionWhereLabel,
   sessionWindowOf,
   type SessionFacts,
 } from "@/lib/substitution-session-facts";
@@ -198,13 +199,10 @@ function sessionLines(
   { withTerms = true }: { withTerms?: boolean } = {},
 ): DiscordComponent {
   const { facts } = session;
-  const at = sessionWhere(facts);
-  const where =
-    at.kind === "site"
-      ? (at.siteName ?? copy.facts("siteUnknown"))
-      : at.kind === "online"
-        ? copy.facts("remote")
-        : copy.facts("hybrid", { site: at.siteName });
+  const where = sessionWhereLabel(sessionWhere(facts), {
+    remote: copy.facts("remote"),
+    hybrid: (site) => copy.facts("hybrid", { site }),
+  });
   const role = session.role === "primary" ? copy.pool("poolRolePrimary") : copy.pool("poolRoleAssistant");
   const terms =
     session.feeCents === null

@@ -14,8 +14,8 @@ import type {
  * The one derivation every substitution surface describes a session through.
  *
  * 1. **Online or where has three answers, not two.** Remote; in person at a
- *    named site; and in person with no site recorded, which must stay in person
- *    — `siteName: null` alone never means online.
+ *    named site; and hybrid, taught online with the gamers' site named. A
+ *    session that attends a site but carries none is refused, never online.
  * 2. **A remote product never carries a building**, whatever the row says.
  * 3. **An orphaned date keeps its date and has no instants** — the read
  *    carries none for a date the plan no longer has — so every surface still
@@ -104,13 +104,15 @@ describe("buildSessionFacts", () => {
     expect(sessionWhere(result)).toEqual({ kind: "online" });
   });
 
-  it("keeps an in-person session with no site in person", () => {
-    const result = facts({ delivery_mode: "in_person", site_name: null });
-
-    expect(result.deliveryMode).toBe("in_person");
-    expect(result.siteName).toBeNull();
-    // "Place to be confirmed", never "online".
-    expect(sessionWhere(result)).toEqual({ kind: "site", siteName: null });
+  it("refuses a session that attends a site but carries none", () => {
+    // The schema requires a site on every product that is not online, so a
+    // missing one is a broken invariant, never "online".
+    expect(() =>
+      sessionWhere(facts({ delivery_mode: "in_person", site_name: null })),
+    ).toThrow();
+    expect(() =>
+      sessionWhere(facts({ delivery_mode: "hybrid", site_name: null })),
+    ).toThrow();
   });
 
   it("states a hybrid session as taught online, naming the gamers' site", () => {

@@ -134,7 +134,7 @@ COMMENT ON COLUMN public.products.invoice_customer_id IS 'The Fennoa customer th
 -- Name: COLUMN products.voice_room_mode; Type: COMMENT; Schema: public; Owner: -
 --
 
-COMMENT ON COLUMN public.products.voice_room_mode IS 'How this product''s sessions are joined — see the voice_room_mode type. Anything but sogverse is refused on a product that is not online, in person or hybrid, by chk_products_sogverse_room_unless_online. The admin chooses it on the product form, beside the delivery mode. Mode none goes with join instructions on the translations, a rule across two tables that create_product and update_product enforce rather than a CHECK.';
+COMMENT ON COLUMN public.products.voice_room_mode IS 'How this product''s sessions are joined — see the voice_room_mode type. Anything but sogverse is refused on a product that is not online (an in-person or hybrid one), by chk_products_sogverse_room_unless_online. The admin chooses it on the product form, beside the delivery mode. Mode none goes with join instructions on the translations, a rule across two tables that create_product and update_product enforce rather than a CHECK.';
 
 
 --

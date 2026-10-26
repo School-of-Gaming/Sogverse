@@ -6,6 +6,7 @@ import {
   buildSessionFacts,
   sessionFactsProduct,
   sessionWhere,
+  sessionWhereLabel,
   sessionWindowOf,
 } from "@/lib/substitution-session-facts";
 import { formatCurrencyFromCents } from "@/lib/money";
@@ -224,13 +225,10 @@ export function buildSubstitutionSlackMessage({
   });
   const when = substitutionDmWhen(facts, LOCALE);
   const productName = facts.productName || "Session";
-  const at = sessionWhere(facts);
-  const where =
-    at.kind === "site"
-      ? (at.siteName ?? "Place to be confirmed")
-      : at.kind === "online"
-        ? "Remote"
-        : `Remote, gamers at ${at.siteName}`;
+  const where = sessionWhereLabel(sessionWhere(facts), {
+    remote: "Remote",
+    hybrid: (site) => `Remote, gamers at ${site}`,
+  });
 
   const factRows: [string, string][] = [
     ["Detail", "Value"],

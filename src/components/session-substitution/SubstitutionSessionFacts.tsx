@@ -9,6 +9,7 @@ import { StatusLine } from "@/components/ui/alert";
 import {
   sessionClockFace,
   sessionWhere,
+  sessionWhereLabel,
   type SessionFacts,
 } from "@/lib/substitution-session-facts";
 import { useTopicLabel } from "@/lib/products/use-topic-label";
@@ -223,10 +224,6 @@ function SessionHowSoonLine({
  * on a card. It answers where the gedu teaches from: at the site in person,
  * online otherwise, and on a hybrid session online with the gamers' site named
  * beside it, since the gamers are there.
- *
- * **"Place to be confirmed" is not "online".** An in-person product with no
- * site recorded still needs somebody in a room; saying nothing would read as
- * remote, so it says the place is not known yet.
  */
 function SessionWhere({
   facts,
@@ -242,22 +239,16 @@ function SessionWhere({
   return (
     <span className="flex min-w-0 items-center gap-1.5">
       {where.kind === "site" ? (
-        <>
-          <MapPin className={icon} aria-hidden />
-          <span className="min-w-0 truncate">
-            {where.siteName ?? t("siteUnknown")}
-          </span>
-        </>
+        <MapPin className={icon} aria-hidden />
       ) : (
-        <>
-          <Radio className={icon} aria-hidden />
-          <span className="min-w-0 truncate">
-            {where.kind === "online"
-              ? t("remote")
-              : t("hybrid", { site: where.siteName })}
-          </span>
-        </>
+        <Radio className={icon} aria-hidden />
       )}
+      <span className="min-w-0 truncate">
+        {sessionWhereLabel(where, {
+          remote: t("remote"),
+          hybrid: (site) => t("hybrid", { site }),
+        })}
+      </span>
     </span>
   );
 }

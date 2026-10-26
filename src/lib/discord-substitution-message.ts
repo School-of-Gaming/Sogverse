@@ -9,7 +9,7 @@ import {
   type SupportedLocale,
 } from "@/lib/constants/locales";
 import { type GeduUpcomingSession } from "@/lib/gedu-upcoming-sessions";
-import { sessionWhere } from "@/lib/substitution-session-facts";
+import { sessionWhere, sessionWhereLabel } from "@/lib/substitution-session-facts";
 import { formatDate, formatDateOnly, formatTimeRange } from "@/lib/date-format";
 import type { Messages } from "@/i18n/messages";
 import { loadNamespace } from "@/i18n/namespace-loader";
@@ -354,11 +354,10 @@ function sessionWhat(session: GeduUpcomingSession): string {
  * web picker's row says.
  */
 function sessionWhereLine(copy: DiscordSubCopy, session: GeduUpcomingSession): string {
-  const at = sessionWhere(session);
-  if (at.kind === "site") return at.siteName ?? copy.facts("siteUnknown");
-  return at.kind === "online"
-    ? copy.facts("remote")
-    : copy.facts("hybrid", { site: at.siteName });
+  return sessionWhereLabel(sessionWhere(session), {
+    remote: copy.facts("remote"),
+    hybrid: (site) => copy.facts("hybrid", { site }),
+  });
 }
 
 /** The session a step is about, as three short lines. */
