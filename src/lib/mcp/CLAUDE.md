@@ -94,6 +94,16 @@ value a tool reports about what the public site serves — a landing page's rend
 or share card — is computed by the page's own code, run over the copy in question, and
 never by rules restated in the tool.
 
+**Rule: a tool reports raw facts, and anything derived as the app's own function returns
+it — never a value the tool works out itself, and never a reshaping of the function's
+answer.** Raw facts go out under plain field names, grouped where that reads better; what
+is derived is the function's answer, explained in the description, because a second shape
+around it is a second format to keep in step. A tool earns a shape of its own only where
+the AI app cannot see what the page relies on: copy the page fills in from its
+translations (said in the description instead), the viewer's timezone (passed as an
+argument), or paging (a cursor). Logic the app does not have yet belongs in the area it
+serves, never in the tool.
+
 **Rule: authored markdown written through a tool is checked against the field's use case
 and refused outside it** (`src/lib/authored-markdown-subset.ts`), naming each construct and
 its line, and nothing is saved. The renderer would silently unwrap what the editor's toolbar
