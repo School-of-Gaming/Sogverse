@@ -16,9 +16,13 @@ import { MCP_TEST_ORIGIN as ORIGIN, callTool, resultText } from "../../helpers/m
 
 const mockGetClaims = vi.fn();
 const mockMaybeSingle = vi.fn();
+// The holiday breaks are read through their real service, so the RPC it calls
+// is the one read mocked at the client.
+const mockRpc = vi.fn();
 const bearerClient = {
   auth: { getClaims: mockGetClaims },
   from: () => ({ select: () => ({ eq: () => ({ maybeSingle: mockMaybeSingle }) }) }),
+  rpc: mockRpc,
 };
 vi.mock("@/lib/supabase/bearer", () => ({ createBearerClient: () => bearerClient }));
 
@@ -123,6 +127,8 @@ beforeEach(() => {
   products.listVisibleListingAmong.mockReset();
   participations.getParticipationCounts.mockReset();
   participations.getParticipationCounts.mockImplementation(countsFor());
+  mockRpc.mockReset();
+  mockRpc.mockResolvedValue({ data: [], error: null });
 });
 
 afterEach(() => {
@@ -190,6 +196,7 @@ describe("list_products", () => {
           topic: "roblox_studio",
           deliveryMode: "online",
           location: null,
+          holidayBreaks: [],
           spokenLanguage: "en",
           forGamers: true,
           forParents: false,
@@ -225,8 +232,8 @@ describe("list_products", () => {
           type: "municipality_club",
           // Where its card on its town's schools page leads.
           pageLink: `${ORIGIN}/en/schools/espoo/${MUNI}`,
-          // An online municipality club names the area it serves, no site.
-          location: { site: null, area: "Espoo" },
+          // An online municipality club names the area it serves.
+          location: { kind: "muni", name: "Espoo" },
           listing: "listed",
         }),
         expect.objectContaining({ productId: HIDDEN, publiclyListed: false, listing: "hidden" }),
@@ -315,8 +322,90 @@ describe("list_products", () => {
     const result = await tool();
 
     expect(result.structuredContent?.products).toEqual([
-      expect.objectContaining({ location: { site: "Youth Centre", area: null } }),
-      expect.objectContaining({ location: { site: "Sello Library", area: "Espoo" } }),
+      expect.objectContaining({ location: { kind: "site", site: "Youth Centre", parent: null } }),
+      expect.objectContaining({ location: { kind: "site", site: "Sello Library", parent: "Espoo" } }),
+    ]);
+  });
+
+  it("passes on a running club's holiday breaks as the service returns them, read over the page's span", async () => {
+    products.getAdminListPage.mockResolvedValue({
+      total: 1,
+      rows: [adminRow(CLUB, { end_date: "2026-12-20" })],
+    });
+    products.listVisibleListingAmong.mockResolvedValue([]);
+    mockRpc.mockResolvedValue({
+      data: [
+        {
+          id: "b1000000-0000-4000-8000-000000000001",
+          start_date: "2026-12-14",
+          end_date: "2026-12-18",
+          names: [
+            { locale: "en", name: "Christmas break" },
+            { locale: "fi", name: "Joululoma" },
+          ],
+          withdrawn_sessions: [
+            {
+              session_date: "2026-12-16",
+              starts_at: "2026-12-16T15:00:00+00:00",
+              ends_at: "2026-12-16T16:00:00+00:00",
+            },
+          ],
+        },
+      ],
+      error: null,
+    });
+
+    const result = await tool();
+
+    // From today in the club's zone to the end of its term.
+    expect(mockRpc).toHaveBeenCalledWith("holiday_breaks_document", {
+      p_product_id: CLUB,
+      p_from: "2026-10-27",
+      p_to: "2026-12-20",
+    });
+    expect(result.structuredContent?.products).toEqual([
+      expect.objectContaining({
+        productId: CLUB,
+        holidayBreaks: [
+          {
+            id: "b1000000-0000-4000-8000-000000000001",
+            startDate: "2026-12-14",
+            endDate: "2026-12-18",
+            names: [
+              { locale: "en", name: "Christmas break" },
+              { locale: "fi", name: "Joululoma" },
+            ],
+            withdrawnSessions: [
+              {
+                date: "2026-12-16",
+                // The service's instants, as the wire carries them.
+                startsAt: "2026-12-16T15:00:00.000Z",
+                endsAt: "2026-12-16T16:00:00.000Z",
+                cancelled: false,
+              },
+            ],
+          },
+        ],
+      }),
+    ]);
+  });
+
+  it("reads no holiday breaks for a camp or an event", async () => {
+    products.getAdminListPage.mockResolvedValue({
+      total: 2,
+      rows: [
+        adminRow(CAMP, { product_type: "camp", start_date: "2026-11-02", end_date: "2026-11-06" }),
+        adminRow(HIDDEN, { product_type: "event", start_date: "2026-11-07", end_date: "2026-11-07" }),
+      ],
+    });
+    products.listVisibleListingAmong.mockResolvedValue([]);
+
+    const result = await tool();
+
+    expect(mockRpc).not.toHaveBeenCalled();
+    expect(result.structuredContent?.products).toEqual([
+      expect.objectContaining({ productId: CAMP, holidayBreaks: [] }),
+      expect.objectContaining({ productId: HIDDEN, holidayBreaks: [] }),
     ]);
   });
 
