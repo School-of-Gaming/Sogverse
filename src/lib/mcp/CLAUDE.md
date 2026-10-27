@@ -90,16 +90,15 @@ value a tool reports about what the public site serves — a landing page's rend
 or share card — is computed by the page's own code, run over the copy in question, and
 never by rules restated in the tool.
 
-**Rule: a tool reports raw facts as stored, and anything derived as the app's own function
-returns it — reshaped into no format of the tool's own.** A derived value the tool works
-out itself is a second copy of a rule that drifts from the page's, and a friendlier shape
-around the function's answer is a second format to keep in step with it; the description
-is where the AI app learns what the answer's fields mean. A tool earns a shape of its own
-only where the AI app cannot see what the page relies on: copy the page fills in from
-its translations, a viewer zone the page converts into (passed as an argument, not
-reshaped), or an answer the page spreads across several reads — a cursor, or one verdict
-summarising a list the page shows. A function the app does not have yet is new logic in
-the area it belongs to, never in the tool.
+**Rule: a tool reports raw facts, and anything derived as the app's own function returns
+it — never a value the tool works out itself, and never a reshaping of the function's
+answer.** Raw facts go out under plain field names, grouped where that reads better; what
+is derived is the function's answer, explained in the description, because a second shape
+around it is a second format to keep in step. A tool earns a shape of its own only where
+the AI app cannot see what the page relies on: copy the page fills in from its
+translations (said in the description instead), the viewer's timezone (passed as an
+argument), or paging (a cursor). Logic the app does not have yet belongs in the area it
+serves, never in the tool.
 
 **Rule: authored markdown written through a tool is checked against the field's use case
 and refused outside it** (`src/lib/authored-markdown-subset.ts`), naming each construct and
