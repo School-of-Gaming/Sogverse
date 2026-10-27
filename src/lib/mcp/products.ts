@@ -6,13 +6,12 @@ import { LANDING_PRODUCT_TYPES } from "@/lib/landing-pages/sections";
 import { readMcpCaller } from "@/lib/mcp/auth";
 import { READ_ONLY, answer, refusal } from "@/lib/mcp/library-call";
 import { formatProductLocation } from "@/lib/products/format-product-location";
-import { clockFace, formatWeekday } from "@/lib/products/format-product-schedule";
+import { formatProductSchedule } from "@/lib/products/format-product-schedule";
 import { productPageHref } from "@/lib/products/product-page-href";
-import { nextOccurrenceInstant } from "@/lib/schedule-occurrence";
 import { createBearerClient } from "@/lib/supabase/bearer";
 import { nextKeysetCursor, type KeysetCursor } from "@/lib/supabase/keyset";
 import { getOrigin } from "@/lib/url";
-import { seatsAreFull } from "@/components/public/products/derive-registration-state";
+import { deriveRegistrationState } from "@/components/public/products/derive-registration-state";
 import { listingAbsenceReasons } from "@/services/landing-pages/landing-pages.product-picks";
 import {
   ParticipationsService,
@@ -30,12 +29,15 @@ import { Constants } from "@/types";
  * about them in posts and ads, and to pick them for a landing page's products
  * section. Read-only, and on the admin's own token-bound client like every
  * tool, through the admin product list's own read: every product of every
- * type, filtered and keyset-paged exactly as `/admin/products` pages it. Each
- * fact is read by the code the app's own pages read it by: whether a products
- * section shows a product is the listing's answer for that page of products —
- * the read the section draws by, over the same types — the seat counts are the
- * shop's read and its full rule, the location is named as the product page
- * names it, and the schedule's clock faces are the schedule formatter's.
+ * type, filtered and keyset-paged exactly as `/admin/products` pages it.
+ *
+ * It hands over raw facts as stored, and every derived one is the answer of a
+ * function the app's own pages call, called unchanged — never arithmetic of
+ * the tool's own: the schedule is the shop's formatter read in the product's
+ * own zone, the sign-up state is the shop's registration state over the shop's
+ * seat counts, the location is named as the product page names it, and whether
+ * a products section shows a product is the listing's answer for that page of
+ * products — the read the section draws by, over the same types.
  */
 
 /** Whether a product shows in a landing page's products section now. */
@@ -103,30 +105,10 @@ const input = z.object({
 });
 
 /**
- * One weekly slot as the product's own wall clock reads it. The slot is pinned
- * to its next occurrence so the clock face comes from a real instant, and the
- * end is that instant plus the duration, re-read in the same zone — the
- * schedule formatter's arithmetic, in the product's zone instead of a viewer's.
- */
-function slotFacts(
-  slot: AdminProductListRow["schedule_slots"][number],
-  timezone: string,
-  now: Date,
-) {
-  const start = nextOccurrenceInstant(slot.weekday, slot.start_time, timezone, now);
-  return {
-    weekday: slot.weekday,
-    weekdayName: formatWeekday(slot.weekday, "en"),
-    startTime: clockFace(start, timezone),
-    endTime: clockFace(new Date(start.getTime() + slot.duration_minutes * 60_000), timezone),
-    durationMinutes: slot.duration_minutes,
-  };
-}
-
-/**
  * Where the product is held, named in English as its admin details page names
  * it: a site with the place it sits in, or the area an online municipality
- * club serves. `null` for an online product with no place behind it.
+ * club serves. A site filed under no place has no area. `null` for an online
+ * product with no place behind it.
  */
 function locationFacts(product: AdminProductListRow) {
   const location = formatProductLocation(product, "en");
@@ -134,17 +116,6 @@ function locationFacts(product: AdminProductListRow) {
   return location.kind === "site"
     ? { site: location.site, area: location.parent }
     : { site: null, area: location.name };
-}
-
-/** The seats, by the shop's own read and its rule for "full". */
-function seatFacts(product: AdminProductListRow, counts: ParticipationCounts) {
-  return {
-    capacity: product.seat_count,
-    taken: counts.activeCount,
-    waitlisted: counts.waitlistCount,
-    full: seatsAreFull(product, counts.activeCount),
-    waitlistEnabled: product.waitlist_enabled,
-  };
 }
 
 function sectionListing(
@@ -161,7 +132,7 @@ export function registerProductTools(server: McpServer): void {
     "list_products",
     {
       title: "List products",
-      description: `School of Gaming's products, every type — clubs, municipality clubs, camps and events, listed or not — newest first, ${ADMIN_PRODUCT_LIST_PAGE_SIZE} to a page, as the admin product list in Sogverse shows them, narrowed by type, a name search, spoken language and weekday. Product names are not unique — two products may share a name and a date, such as back-to-back trial slots — so tell them apart by id and schedule. Each one's id; names: its name and short description (shortDescription) in every language it is written in; its type and topic; how it is delivered (deliveryMode: online in a voice room, in_person at a site, or hybrid — children at a site and the gedu in the Sogverse voice room); location: where it is held, in English — site is the venue and area the place it sits in, or for an online municipality club site is null and area is the town or region it serves; location is null for an online product with no place behind it; spokenLanguage: the language it is delivered in; its audience (forGamers: children take seats, forParents: adults take seats themselves; at least one is true) and the children's age range (minAge and maxAge, both set exactly when forGamers is true, both null otherwise); its start and end dates (calendar dates in its own timezone; a club may have no end); timezone, the IANA zone every date and time of the product is in; schedule: its weekly slots, ordered by weekday, at most one a weekday — weekday 0 for Monday to 6 for Sunday, as the weekday filter counts, with weekdayName in English, startTime and endTime as 24-hour HH:MM on the wall clock in the product's own timezone, and durationMinutes; endTime is startTime plus durationMinutes, so an endTime at or before startTime means the slot runs past midnight into the next day; a club's slots repeat every week of its term, a camp's run on each of those weekdays between its dates, an event's one slot is on its date; schedule is empty while no time is set; registrationOpensAt: the instant sign-ups open, ISO 8601; its price (billing mode and the amount in each currency, in cents); seats: capacity (null when there is no seat limit), taken (seats held now), waitlisted (people on the waiting list), full (true when capacity is set and taken has reached it, the rule by which the product's page shows it as full while sign-ups are open — offering the waiting list when waitlistEnabled is true, and no sign-up otherwise; never true without a capacity) and waitlistEnabled; its public page (pageLink; a municipality club's is under its town's schools page); publiclyListed: whether the admin lists the product on the public site — the shop, a town's schools page and landing page products sections; false means unlisted, kept off every public page, yet anyone with pageLink can still open it and sign up, so it is not a sign the product is unavailable; and listing. ${LISTING} The first page says how many products match (total); when more follow, nextCursor is set: pass it back as cursor for the next page, with the same filters. Use the ids as a landing page products section's productIds. ${PICKING}`,
+      description: `School of Gaming's products, every type — clubs, municipality clubs, camps and events, listed or not — newest first, ${ADMIN_PRODUCT_LIST_PAGE_SIZE} to a page, as the admin product list in Sogverse shows them, narrowed by type, a name search, spoken language and weekday. Product names are not unique — two products may share a name and a date, such as back-to-back trial slots — so tell them apart by id and schedule. Raw facts, as stored: productId; names: its name and short description (shortDescription, empty where none is written) in every language it is written in; its type and topic; deliveryMode: online in a voice room, in_person at a site, or hybrid — children at a site and the gedu in the Sogverse voice room; spokenLanguage: the language it is delivered in; its audience (forGamers: children take seats, forParents: adults take seats themselves; at least one is true) and the children's age range (minAge and maxAge, both set exactly when forGamers is true, both null otherwise); startDate and endDate: calendar dates (a club may have no end); timezone: the IANA zone its dates and slots are in; slots: its weekly slots — weekday 0 for Monday to 6 for Sunday, as the weekday filter counts, startTime the wall-clock start in that zone as stored (HH:MM:SS), and durationMinutes; a club's slots repeat every week of its term, a camp's run on each of those weekdays between its dates, an event's one slot is on its date; slots is empty while no time is set; registrationOpensAt: the instant sign-ups open, ISO 8601 with its own offset; publiclyListed: whether the admin lists the product on the public site — the shop, a town's schools page and landing page products sections; false means unlisted, kept off every public page, yet anyone with pageLink can still open it and sign up, so it is not a sign the product is unavailable; billingMode and prices (the amount in each currency, in cents); seats: capacity (null when there is no seat limit), taken (seats held now), waitlisted (people on the waiting list) and waitlistEnabled. Derived, by the code the public pages run: schedule: exactly what the product's shop page shows a parent in the product's own timezone — kind "recurring" for a club (groups), "ranged" for a camp (its startDate and endDate as written dates, and groups), "single" for an event (its date, weekday and time with start and end, time null while no slot is set) or "tbd" while nothing is set; each group is the weekdays (0 for Monday) sharing one startTime and endTime, with weekdaysLabel naming them in English; times are 24-hour HH:MM, an endTime at or before its startTime runs past midnight, and tzAbbrev is the zone's short name; registration: exactly the sign-up state the shop's card and page show — kind "open" (seatCount, seatsLeft, both null without a seat limit, and waitlistEnabled), "closed_pre" (sign-ups open at opensAt, with the same seat fields), "full_waitlist" (every seat taken, the waiting list open), "full_closed" (every seat taken, no waiting list), "running_late" (no more sign-ups: phase "underway" for a camp already started, "over" for an event already held) or "ended" (its term is over); a municipality club's sign-up goes through its town, not the shop, so for one its registration states only its seats and term; location: where it is held, in English, as the product page names it — site is the venue and area the place it sits in, null when the venue is not filed under a place; for an online municipality club site is null and area is the town or region it serves; location is null for an online product with no place behind it; pageLink: its public page (a municipality club's is under its town's schools page); and listing. ${LISTING} The first page says how many products match (total); when more follow, nextCursor is set: pass it back as cursor for the next page, with the same filters. Use the ids as a landing page products section's productIds. ${PICKING}`,
       inputSchema: input,
       annotations: READ_ONLY,
     },
@@ -211,43 +182,64 @@ export function registerProductTools(server: McpServer): void {
 
         return answer({
           ...(page.total === null ? {} : { total: page.total }),
-          products: page.rows.map((product) => ({
-            productId: product.id,
-            names: inLocaleOrder(product.product_translations).map(
-              ({ locale, name, short_description }) => ({
-                locale,
-                name,
-                shortDescription: short_description,
+          products: page.rows.map((product) => {
+            const seats = countsFor(product.id);
+            return {
+              productId: product.id,
+              names: inLocaleOrder(product.product_translations).map(
+                ({ locale, name, short_description }) => ({
+                  locale,
+                  name,
+                  shortDescription: short_description,
+                }),
+              ),
+              type: product.product_type,
+              topic: product.topic,
+              deliveryMode: product.delivery_mode,
+              location: locationFacts(product),
+              spokenLanguage: product.spoken_language_code,
+              forGamers: product.for_gamers,
+              forParents: product.for_parents,
+              minAge: product.min_age,
+              maxAge: product.max_age,
+              startDate: product.start_date,
+              endDate: product.end_date,
+              timezone: product.timezone,
+              slots: product.schedule_slots.map((slot) => ({
+                weekday: slot.weekday,
+                startTime: slot.start_time,
+                durationMinutes: slot.duration_minutes,
+              })),
+              // What a parent in the product's own zone reads on the shop.
+              schedule: formatProductSchedule({
+                product,
+                locale: "en",
+                timeZone: product.timezone,
+                now,
               }),
-            ),
-            type: product.product_type,
-            topic: product.topic,
-            deliveryMode: product.delivery_mode,
-            location: locationFacts(product),
-            spokenLanguage: product.spoken_language_code,
-            forGamers: product.for_gamers,
-            forParents: product.for_parents,
-            minAge: product.min_age,
-            maxAge: product.max_age,
-            startDate: product.start_date,
-            endDate: product.end_date,
-            timezone: product.timezone,
-            // One slot per weekday at most (a unique key), so the weekday
-            // alone orders them.
-            schedule: [...product.schedule_slots]
-              .sort((a, b) => a.weekday - b.weekday)
-              .map((slot) => slotFacts(slot, product.timezone, now)),
-            registrationOpensAt: product.registration_opens_at,
-            billingMode: product.billing_mode,
-            prices: product.product_prices.map((price) => ({
-              currency: price.currency,
-              amountCents: price.price_cents,
-            })),
-            seats: seatFacts(product, countsFor(product.id)),
-            pageLink: `${origin}${getPathname({ href: productPageHref(product, "en"), locale: "en" })}`,
-            publiclyListed: product.is_visible,
-            listing: sectionListing(product, listedIds, now),
-          })),
+              registrationOpensAt: product.registration_opens_at,
+              billingMode: product.billing_mode,
+              prices: product.product_prices.map((price) => ({
+                currency: price.currency,
+                amountCents: price.price_cents,
+              })),
+              seats: {
+                capacity: product.seat_count,
+                taken: seats.activeCount,
+                waitlisted: seats.waitlistCount,
+                waitlistEnabled: product.waitlist_enabled,
+              },
+              // The sign-up state the shop's card and page show.
+              registration: deriveRegistrationState({
+                product,
+                now,
+                participationsCount: seats.activeCount,
+              }),
+              pageLink: `${origin}${getPathname({ href: productPageHref(product, "en"), locale: "en" })}`,
+              publiclyListed: product.is_visible,
+              listing: sectionListing(product, listedIds, now),
+            };
+          }),
           nextCursor: next === undefined ? null : encodeCursor(next),
         });
       } catch (error) {

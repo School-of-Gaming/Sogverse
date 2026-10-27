@@ -8,8 +8,10 @@ import { MCP_TEST_ORIGIN as ORIGIN, callTool, resultText } from "../../helpers/m
  * keyset cursor, on the admin's token — hands each product over with what an
  * AI app needs to write about it and pick it for a landing page, says whether
  * a products section shows it by asking the listing over every product type,
- * the read the section draws by, and says whether its seats are full by the
- * shop's own counts read and rule.
+ * the read the section draws by, and passes on the raw seat counts and what the
+ * shop's own schedule formatter and registration state make of the product.
+ * Those two functions' own rules are their own tests'; here they are only
+ * shown to reach the answer unchanged.
  */
 
 const mockGetClaims = vi.fn();
@@ -49,6 +51,9 @@ vi.unmock("@/i18n/navigation");
 vi.unmock("next/navigation");
 
 const { POST } = await import("@/app/api/mcp/route");
+
+// The instant every call is read at: after the club starts, before the events.
+const NOW = new Date("2026-10-27T12:00:00Z");
 
 const SUPABASE_URL = "https://project.supabase.co";
 const CLIENT_ID = "5b0a3f0e-1c55-4c43-8d2e-6a7f3f0f2a90";
@@ -97,6 +102,8 @@ const ESPOO = {
 const tool = (args: Record<string, unknown> = {}) => callTool(POST, "list_products", args);
 
 beforeEach(() => {
+  vi.useFakeTimers({ toFake: ["Date"] });
+  vi.setSystemTime(NOW);
   vi.stubEnv("NEXT_PUBLIC_SUPABASE_URL", SUPABASE_URL);
   vi.stubEnv("NEXT_PUBLIC_SITE_URL", ORIGIN);
   mockGetClaims.mockResolvedValue({
@@ -120,6 +127,7 @@ beforeEach(() => {
 
 afterEach(() => {
   vi.unstubAllEnvs();
+  vi.useRealTimers();
 });
 
 describe("list_products", () => {
@@ -190,11 +198,13 @@ describe("list_products", () => {
           startDate: "2026-09-01",
           endDate: null,
           timezone: "Europe/Helsinki",
-          schedule: [],
+          slots: [],
+          schedule: { kind: "tbd" },
           registrationOpensAt: "2026-08-01T09:00:00+00:00",
           billingMode: "free",
           prices: [],
-          seats: { capacity: null, taken: 0, waitlisted: 0, full: false, waitlistEnabled: true },
+          seats: { capacity: null, taken: 0, waitlisted: 0, waitlistEnabled: true },
+          registration: { kind: "open", seatCount: null, seatsLeft: null, waitlistEnabled: true },
           pageLink: `${ORIGIN}/en/shop/${CLUB}`,
           publiclyListed: true,
           listing: "listed",
@@ -225,7 +235,7 @@ describe("list_products", () => {
     });
   });
 
-  it("tells two same-named products on one date apart by their schedules, on the product's own wall clock", async () => {
+  it("tells two same-named products on one date apart by their raw slots and the shop's schedule, in the product's own zone", async () => {
     const early = "c3000000-0000-4000-8000-000000000011";
     const late = "c3000000-0000-4000-8000-000000000012";
     const trial = (id: string, startTime: string) =>
@@ -246,56 +256,47 @@ describe("list_products", () => {
     const result = await tool();
 
     const names = [{ locale: "en", name: "Trial session", shortDescription: "Try it." }];
+    const shown = (start: string, end: string) => ({
+      kind: "single",
+      tzAbbrev: "GMT",
+      tzAdjusted: false,
+      date: "7 Nov 2026",
+      weekday: "Saturday",
+      time: { start, end },
+    });
     expect(result.structuredContent?.products).toEqual([
       expect.objectContaining({
         productId: early,
         names,
         startDate: "2026-11-07",
-        schedule: [
-          { weekday: 5, weekdayName: "Saturday", startTime: "10:00", endTime: "11:00", durationMinutes: 60 },
-        ],
+        slots: [{ weekday: 5, startTime: "10:00:00", durationMinutes: 60 }],
+        schedule: shown("10:00", "11:00"),
       }),
       expect.objectContaining({
         productId: late,
         names,
         startDate: "2026-11-07",
-        schedule: [
-          { weekday: 5, weekdayName: "Saturday", startTime: "11:15", endTime: "12:15", durationMinutes: 60 },
-        ],
+        slots: [{ weekday: 5, startTime: "11:15:00", durationMinutes: 60 }],
+        schedule: shown("11:15", "12:15"),
       }),
     ]);
   });
 
-  it("orders a club's slots by weekday, and keeps the duration of one that runs past midnight", async () => {
+  it("names an in-person product's site with the place it sits in, and no place where it is filed under none", async () => {
+    const unfiled = "c3000000-0000-4000-8000-000000000031";
     products.getAdminListPage.mockResolvedValue({
-      total: 1,
+      total: 2,
       rows: [
-        adminRow(CLUB, {
-          schedule_slots: [
-            { weekday: 4, start_time: "23:30:00", duration_minutes: 90 },
-            { weekday: 0, start_time: "16:00:00", duration_minutes: 75 },
-          ],
+        adminRow(unfiled, {
+          delivery_mode: "in_person",
+          locations: {
+            id: "d1000000-0000-4000-8000-000000000003",
+            name: "Youth Centre",
+            name_i18n: null,
+            type: "site",
+            parent: null,
+          },
         }),
-      ],
-    });
-    products.listVisibleListingAmong.mockResolvedValue([{ id: CLUB }]);
-
-    const result = await tool();
-
-    expect(result.structuredContent?.products).toEqual([
-      expect.objectContaining({
-        schedule: [
-          { weekday: 0, weekdayName: "Monday", startTime: "16:00", endTime: "17:15", durationMinutes: 75 },
-          { weekday: 4, weekdayName: "Friday", startTime: "23:30", endTime: "01:00", durationMinutes: 90 },
-        ],
-      }),
-    ]);
-  });
-
-  it("names an in-person product's site with the place it sits in", async () => {
-    products.getAdminListPage.mockResolvedValue({
-      total: 1,
-      rows: [
         adminRow(CAMP, {
           product_type: "camp",
           delivery_mode: "in_person",
@@ -314,32 +315,35 @@ describe("list_products", () => {
     const result = await tool();
 
     expect(result.structuredContent?.products).toEqual([
+      expect.objectContaining({ location: { site: "Youth Centre", area: null } }),
       expect.objectContaining({ location: { site: "Sello Library", area: "Espoo" } }),
     ]);
   });
 
-  it("says the seats are full by the shop's rule: a cap reached, never without a cap", async () => {
+  it("passes on the raw seat counts, and the shop's sign-up state over them", async () => {
     const open = "c3000000-0000-4000-8000-000000000021";
     const full = "c3000000-0000-4000-8000-000000000022";
-    const over = "c3000000-0000-4000-8000-000000000023";
-    const uncapped = "c3000000-0000-4000-8000-000000000024";
+    const started = "c3000000-0000-4000-8000-000000000023";
     products.getAdminListPage.mockResolvedValue({
-      total: 4,
+      total: 3,
       rows: [
         adminRow(open, { seat_count: 10 }),
         adminRow(full, { seat_count: 10, waitlist_enabled: false }),
-        adminRow(over, { seat_count: 10 }),
-        adminRow(uncapped),
+        // A camp already underway takes no more sign-ups.
+        adminRow(started, {
+          product_type: "camp",
+          seat_count: 10,
+          start_date: "2026-10-26",
+          end_date: "2026-10-30",
+        }),
       ],
     });
     products.listVisibleListingAmong.mockResolvedValue([]);
     participations.getParticipationCounts.mockImplementation(
       countsFor({
         [open]: { active: 9 },
-        [full]: { active: 10 },
-        // A soft cap can be exceeded; it is still full.
-        [over]: { active: 11, waitlist: 3 },
-        [uncapped]: { active: 400 },
+        [full]: { active: 10, waitlist: 3 },
+        [started]: { active: 4 },
       }),
     );
 
@@ -348,19 +352,18 @@ describe("list_products", () => {
     expect(result.structuredContent?.products).toEqual([
       expect.objectContaining({
         productId: open,
-        seats: { capacity: 10, taken: 9, waitlisted: 0, full: false, waitlistEnabled: true },
+        seats: { capacity: 10, taken: 9, waitlisted: 0, waitlistEnabled: true },
+        registration: { kind: "open", seatCount: 10, seatsLeft: 1, waitlistEnabled: true },
       }),
       expect.objectContaining({
         productId: full,
-        seats: { capacity: 10, taken: 10, waitlisted: 0, full: true, waitlistEnabled: false },
+        seats: { capacity: 10, taken: 10, waitlisted: 3, waitlistEnabled: false },
+        registration: { kind: "full_closed", seatCount: 10 },
       }),
       expect.objectContaining({
-        productId: over,
-        seats: { capacity: 10, taken: 11, waitlisted: 3, full: true, waitlistEnabled: true },
-      }),
-      expect.objectContaining({
-        productId: uncapped,
-        seats: { capacity: null, taken: 400, waitlisted: 0, full: false, waitlistEnabled: true },
+        productId: started,
+        seats: { capacity: 10, taken: 4, waitlisted: 0, waitlistEnabled: true },
+        registration: { kind: "running_late", phase: "underway" },
       }),
     ]);
   });
