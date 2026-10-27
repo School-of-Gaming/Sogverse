@@ -12,7 +12,6 @@ import enParent from "@/../messages/en/parent.json";
 import enTopicPrep from "@/../messages/en/topicPrep.json";
 import { NO_TOPIC_PREP_READY } from "@/components/topic-prep/topic-prep-cookie";
 import { ParentDashboardPageBody } from "@/components/parent/parent-dashboard-page-body";
-import { buildParentDashboardFixture } from "@/components/parent/mock-dashboard-fixtures";
 import { MAX_GAMERS_PER_PARENT } from "@/lib/constants/account-limits";
 import {
   AuthProvider,
@@ -37,8 +36,8 @@ const messages = {
 /**
  * **The add-a-child affordance stops being offered at the cap.**
  *
- * The limit is a UI-only one: the API and the database will happily link an
- * eighth child, so nothing downstream refuses the request — the page not
+ * The limit is a UI-only one: the API and the database will happily link one
+ * child past it, so nothing downstream refuses the request — the page not
  * offering it *is* the enforcement. The tile strip this dashboard absorbed used
  * to hold that rule, and when it went, the rule had to come with it or a capped
  * parent would meet an error message where a button used to be.
@@ -89,14 +88,38 @@ function dashboardHtml(
   );
 }
 
-/** Real children out of the preview fixtures, so no shape is invented here. */
+/**
+ * Real UUIDs, hardcoded: every child section carries an identicon, and a
+ * readable stand-in renders a degenerate one. One per child the cap allows.
+ */
+const CHILD_IDS = [
+  "ca69035f-a39e-42b8-a027-51d09d1dd32a",
+  "764cd1e8-ff5a-426a-bf66-367afef257ee",
+  "62a33838-0250-4657-8993-19a1f5e12409",
+  "4cf16d40-6953-4cec-98a2-cd3a75a9b321",
+  "4619cca1-7bb5-4d43-9238-20593bb83b71",
+  "592e34cd-6f81-4a5d-b65c-e72efcf82329",
+  "d7420745-c167-48aa-b890-805dc15e385d",
+  "ff43cd32-f2f5-4edc-899c-6f6c0ff9d427",
+  "0ca1fc30-d389-455b-baf9-21aaeceb99ae",
+  "b7f2ffb9-fe92-4053-a6a7-5f5e15c63ddd",
+  "7c92fd75-d085-41a7-bdfd-e2d3de394954",
+  "d4ba61e3-d08d-4146-b7c0-9a45d0bbc0ee",
+  "49182dd3-9f7f-46ae-8fc7-35be6c5ad50a",
+  "b51cd896-2749-4811-82b1-3f4abdcc88b6",
+  "3249a60d-032c-4a78-a447-a33a0239c83b",
+] as const;
+
+/**
+ * A family exactly at the cap. What each child is signed up for has no bearing
+ * on the add affordance, so every one of them is signed up for nothing.
+ */
 function fixtureGamers(): ParentDashboardParticipant[] {
-  const { gamers } = buildParentDashboardFixture(
-    NOW,
-    "seven-gamers",
-    "en",
-    "Europe/Helsinki",
-  );
+  const gamers = CHILD_IDS.slice(0, MAX_GAMERS_PER_PARENT).map((id, i) => ({
+    id,
+    firstName: `Child ${i + 1}`,
+    enrollments: [],
+  }));
   expect(gamers).toHaveLength(MAX_GAMERS_PER_PARENT);
   return gamers;
 }
