@@ -69,6 +69,22 @@ vi.mock("@/services/marketing-consents/marketing-consents.queries", () => ({
   useSetMarketingConsent: () => ({ mutateAsync: setConsentAsync }),
 }));
 
+// School of Gaming's own list, read from Klaviyo. Not the shared factory: this
+// file asserts on what a Save sends there.
+const emailMarketing: { data: { subscribed: boolean } | undefined } = {
+  data: { subscribed: false },
+};
+const setEmailMarketingAsync = vi.fn();
+vi.mock("@/services/email-marketing/email-marketing.queries", () => ({
+  useMyEmailMarketing: () => ({
+    data: emailMarketing.data,
+    isError: false,
+    isFetching: emailMarketing.data === undefined,
+    refetch: vi.fn(),
+  }),
+  useSetMyEmailMarketing: () => ({ mutateAsync: setEmailMarketingAsync }),
+}));
+
 // Not the shared factory: this file asserts on the profile write itself, and
 // the factory hands out a fresh spy per render.
 vi.mock("@/services/users/users.queries", () => ({
@@ -141,23 +157,26 @@ function reseed(view: ReturnType<typeof renderIntl>) {
 }
 
 /**
- * The marketing group's one box, the partner's.
+ * The marketing group's boxes, ours and then the partner's.
  *
  * Read off the DOM rather than by test id, and deliberately *not* by taking
  * every checkbox on the page: the spoken-language group above renders its own,
- * so the marketing box is found inside the group its legend names — and the
- * group holding exactly one is part of the claim.
+ * so the marketing boxes are found inside the group its legend names — and the
+ * group holding exactly these two is part of the claim.
  */
-function lynxBox() {
+function marketingBoxes() {
   const legend = screen.getByText(messages.settings.marketing.title);
   const group = legend.closest("fieldset");
   if (!group) throw new Error("the marketing group rendered no fieldset");
   const boxes = Array.from(
     group.querySelectorAll<HTMLInputElement>('input[type="checkbox"]'),
   );
-  expect(boxes).toHaveLength(1);
-  return boxes[0];
+  expect(boxes).toHaveLength(2);
+  return boxes;
 }
+
+const schoolOfGamingBox = () => marketingBoxes()[0];
+const lynxBox = () => marketingBoxes()[1];
 
 const saveButton = () => screen.getByRole("button", { name: /save changes/i });
 
@@ -176,18 +195,47 @@ beforeEach(() => {
   auth.profile = createMockProfile();
   updateProfileAsync.mockResolvedValue(undefined);
   setConsentAsync.mockResolvedValue(undefined);
+  emailMarketing.data = { subscribed: false };
+  setEmailMarketingAsync.mockResolvedValue({ subscribed: true });
 });
 
 // --- The marketing group inside the Profile card --------------------------
 
 describe("the marketing preferences group", () => {
-  it("asks only the partner's question — School of Gaming's list is answered in Klaviyo", () => {
+  it("asks our own question from Klaviyo's answer, then the partner's from Sogverse's", () => {
     mine.data = [consentRow("lynx_educate", true)];
+    emailMarketing.data = { subscribed: true };
     renderSettings();
 
+    expect(schoolOfGamingBox().labels?.[0]?.textContent).toBe(
+      messages.settings.marketing.schoolOfGaming,
+    );
+    expect(schoolOfGamingBox().checked).toBe(true);
     const box = lynxBox();
     expect(box.closest("label")?.textContent).toContain("Lynx Educate");
     expect(box.checked).toBe(true);
+  });
+
+  it("sends a moved School of Gaming box to Klaviyo on Save, after the profile", async () => {
+    renderSettings();
+
+    fireEvent.click(schoolOfGamingBox());
+    expect(setEmailMarketingAsync).not.toHaveBeenCalled();
+    fireEvent.click(saveButton());
+
+    await waitFor(() => expect(setEmailMarketingAsync).toHaveBeenCalledWith(true));
+    expect(updateProfileAsync).toHaveBeenCalled();
+    expect(setConsentAsync).not.toHaveBeenCalled();
+  });
+
+  it("sends nothing to Klaviyo when the School of Gaming box was not touched", async () => {
+    emailMarketing.data = { subscribed: true };
+    renderSettings();
+
+    fireEvent.click(saveButton());
+
+    await waitFor(() => expect(screen.queryByText(PROFILE_SAVED)).not.toBeNull());
+    expect(setEmailMarketingAsync).not.toHaveBeenCalled();
   });
 
   it("renders a consent with no row at all as unticked", () => {

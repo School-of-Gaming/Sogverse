@@ -27,8 +27,9 @@ import { createTestProduct, deleteTestProducts } from "./product-helpers";
  *     "no" IS a change, because an absent row means never answered.
  *   * Only the two surfaces that call the writer may be named as a source: it
  *     is the one field on an event that nothing else can corroborate.
- *   * School of Gaming's own list is not here: its consent lives in Klaviyo,
- *     and what the registration form was told is a write-once profile column.
+ *   * School of Gaming's own list is not written here: its consent lives in
+ *     Klaviyo, the writers refuse it, and what the registration form was told
+ *     is a write-once profile column. The rows written before it moved stay.
  *   * The consent is ACCOUNT-level and belongs to the purchasing customer, so
  *     a gamer and a gedu are refused by the role guard rather than by an empty
  *     result, and one family can never read another's answers.
@@ -51,6 +52,8 @@ const PRODUCT_FINISHED = "00000000-0000-0000-0000-000000000691";
 const ALL_TEST_PRODUCTS = [PRODUCT_PUBLISHED, PRODUCT_FINISHED];
 
 const LYNX = "lynx_educate" as const;
+/** School of Gaming's own list: answered in Klaviyo, its old rows kept unread. */
+const SOG = "school_of_gaming" as const;
 
 /** The canonical forbidden SQLSTATE every guard primitive raises. */
 const FORBIDDEN = "42501";
@@ -299,6 +302,30 @@ describe("marketing consents", () => {
       const res = await set(customer, LYNX, true, "a-surface-that-does-not-exist");
       expect(res.error?.code).toBe(CHECK_VIOLATION);
       expect(await eventsFor(TEST_IDS.CUSTOMER)).toEqual([]);
+    });
+
+    it("refuses School of Gaming's own list, which Klaviyo answers, writing nothing", async () => {
+      const res = await set(customer, SOG, true, "settings");
+      expect(res.error?.code).toBe(CHECK_VIOLATION);
+      expect(res.error?.message).toContain("Klaviyo");
+      expect(await stateFor(TEST_IDS.CUSTOMER)).toEqual([]);
+      expect(await eventsFor(TEST_IDS.CUSTOMER)).toEqual([]);
+    });
+
+    it("keeps the school_of_gaming rows written before the move, registration-sourced ones included", async () => {
+      // As the registration route wrote them then: the CHECK still admits them.
+      const state = await admin
+        .from("marketing_consents")
+        .insert({ customer_id: TEST_IDS.CUSTOMER_2, consent_type: SOG, granted: true });
+      expect(state.error).toBeNull();
+      const event = await admin.from("marketing_consent_events").insert({
+        customer_id: TEST_IDS.CUSTOMER_2,
+        consent_type: SOG,
+        granted: true,
+        source: "registration",
+      });
+      expect(event.error).toBeNull();
+      expect(await stateFor(TEST_IDS.CUSTOMER_2)).toEqual([{ consent_type: SOG, granted: true }]);
     });
 
     it("refuses a gedu", async () => {
@@ -564,6 +591,23 @@ describe("marketing consents", () => {
 
       expect(res.code).toBe(CHECK_VIOLATION);
       expect(res.message).toContain("NULL");
+      expect(await asksFor(PRODUCT_PUBLISHED)).toEqual([LYNX]);
+    });
+
+    it("refuses School of Gaming's own list on a product, leaving the set as it was", async () => {
+      expect(
+        (
+          await adminAuth.rpc("admin_set_product_marketing_consents", {
+            p_product_id: PRODUCT_PUBLISHED,
+            p_consent_types: [LYNX],
+          })
+        ).error,
+      ).toBeNull();
+      const res = await adminAuth.rpc("admin_set_product_marketing_consents", {
+        p_product_id: PRODUCT_PUBLISHED,
+        p_consent_types: [SOG],
+      });
+      expect(res.error?.code).toBe(CHECK_VIOLATION);
       expect(await asksFor(PRODUCT_PUBLISHED)).toEqual([LYNX]);
     });
 

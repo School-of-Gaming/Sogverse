@@ -1463,7 +1463,6 @@
   "users": {
     "title": "Användare",
     "manageAccounts": "Hantera användarkonton och roller",
-    "klaviyoParked": "{count, plural, one {# uppdatering om en förälder kunde inte skickas till Klaviyo} other {# uppdateringar om föräldrar kunde inte skickas till Klaviyo}}",
     "searchPlaceholder": "Sök på namn, e-post, telefon eller spelanvändarnamn…",
     "searchAriaLabel": "Sök användare",
     "roleFilterLabel": "Roll",

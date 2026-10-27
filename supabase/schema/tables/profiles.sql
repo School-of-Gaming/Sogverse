@@ -180,13 +180,6 @@ CREATE INDEX idx_profiles_role ON public.profiles USING btree (role);
 
 
 --
--- Name: profiles profiles_klaviyo_gamer_changed; Type: TRIGGER; Schema: public; Owner: -
---
-
-CREATE TRIGGER profiles_klaviyo_gamer_changed AFTER UPDATE OF first_name ON public.profiles FOR EACH ROW WHEN (((new.role = 'gamer'::public.user_role) AND (old.first_name IS DISTINCT FROM new.first_name))) EXECUTE FUNCTION public.klaviyo_gamer_profile_changed();
-
-
---
 -- Name: profiles profiles_klaviyo_parent_changed; Type: TRIGGER; Schema: public; Owner: -
 --
 

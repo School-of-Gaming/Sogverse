@@ -1,4 +1,5 @@
 import { describe, it, expect, beforeAll, afterAll } from "vitest";
+import { z } from "zod";
 import type { SupabaseClient } from "@supabase/supabase-js";
 import type { Database } from "@/types/database.types";
 import {
@@ -28,12 +29,13 @@ import { createTestProduct, deleteTestProducts } from "./product-helpers";
  * the outbox rows it is about before it acts, and claims only the parents it
  * names.
  *
- * Products 930-931 (see the product-helpers allocation registry): CLUB, a club
- * starting tomorrow, and ENDED, one that ended long ago.
+ * Products 930-932 (see the product-helpers allocation registry): CLUB, a club
+ * starting tomorrow, ENDED, one that ended long ago, and FREE, a free club.
  */
 
 const CLUB = "00000000-0000-0000-0000-000000000930";
 const ENDED = "00000000-0000-0000-0000-000000000931";
+const FREE = "00000000-0000-0000-0000-000000000932";
 
 const FORBIDDEN = "42501";
 
@@ -110,8 +112,9 @@ describe("the Klaviyo sync", () => {
       TEST_CREDENTIALS.CUSTOMER.email,
       TEST_CREDENTIALS.CUSTOMER.password,
     );
-    await deleteTestProducts(admin, [CLUB, ENDED]);
+    await deleteTestProducts(admin, [CLUB, ENDED, FREE]);
     await createTestProduct(admin, { id: CLUB, seatCount: null, topic: "roblox_studio" });
+    await createTestProduct(admin, { id: FREE, seatCount: null, billingMode: "free" });
     await createTestProduct(admin, {
       id: ENDED,
       seatCount: null,
@@ -127,7 +130,7 @@ describe("the Klaviyo sync", () => {
   });
 
   afterAll(async () => {
-    await deleteTestProducts(admin, [CLUB, ENDED]);
+    await deleteTestProducts(admin, [CLUB, ENDED, FREE]);
     if (paymentIds.length > 0) await admin.from("payments").delete().in("id", paymentIds);
     await admin.from("gamer_profiles").update({ gender: "boy" }).eq("user_id", TEST_IDS.GAMER);
     await admin.from("minecraft_accounts").delete().eq("user_id", TEST_IDS.GAMER);
@@ -156,32 +159,11 @@ describe("the Klaviyo sync", () => {
         customer.rpc("finish_klaviyo_event_job", { p_event_id: TEST_IDS.CUSTOMER }),
         customer.rpc("get_klaviyo_parent_snapshots", { p_customer_ids: [TEST_IDS.CUSTOMER] }),
         customer.rpc("get_klaviyo_events", { p_event_ids: [] }),
-        customer.rpc("kick_klaviyo_sync_if_due"),
         anon.rpc("get_klaviyo_parent_snapshots", { p_customer_ids: [TEST_IDS.CUSTOMER] }),
       ];
       for (const { error } of await Promise.all(calls)) {
         expect(error?.code).toBe(FORBIDDEN);
       }
-    });
-
-    it("answers the observation route's parked counts, by the columns it selects", async () => {
-      // The same reads the route makes: each outbox's own key column.
-      const profiles = await admin
-        .from("klaviyo_profile_outbox")
-        .select("customer_id", { count: "exact", head: true })
-        .eq("next_attempt_at", "infinity");
-      const events = await admin
-        .from("klaviyo_event_outbox")
-        .select("id", { count: "exact", head: true })
-        .eq("next_attempt_at", "infinity");
-      expect(profiles.error).toBeNull();
-      expect(events.error).toBeNull();
-      expect(typeof events.count).toBe("number");
-    });
-
-    it("lets the service role kick when a row is due, which with Vault empty sends nothing", async () => {
-      const { error } = await admin.rpc("kick_klaviyo_sync_if_due");
-      expect(error).toBeNull();
     });
   });
 
@@ -220,15 +202,16 @@ describe("the Klaviyo sync", () => {
       expect(await profileRow(TEST_IDS.GEDU)).toBeNull();
     });
 
-    it("files each parent of a gamer whose name, gender or linked games change", async () => {
+    it("files each parent of a gamer whose gender or linked games change, and not for a name", async () => {
       await clearProfiles([TEST_IDS.CUSTOMER]);
+      // Klaviyo holds no gamer's name, so a rename tells it nothing.
       const { data: gamer } = await admin.from("profiles").select("first_name").eq("id", TEST_IDS.GAMER).single();
       await admin.from("profiles").update({ first_name: "Renamed" }).eq("id", TEST_IDS.GAMER);
-      expect((await profileRow(TEST_IDS.CUSTOMER))?.seq).toBe(1);
+      expect(await profileRow(TEST_IDS.CUSTOMER)).toBeNull();
       await admin.from("profiles").update({ first_name: gamer?.first_name ?? "" }).eq("id", TEST_IDS.GAMER);
 
       await admin.from("gamer_profiles").update({ gender: "girl" }).eq("user_id", TEST_IDS.GAMER);
-      expect((await profileRow(TEST_IDS.CUSTOMER))?.seq).toBe(3);
+      expect((await profileRow(TEST_IDS.CUSTOMER))?.seq).toBe(1);
       await admin.from("gamer_profiles").update({ gender: "boy" }).eq("user_id", TEST_IDS.GAMER);
 
       await admin.from("roblox_accounts").delete().eq("user_id", TEST_IDS.GAMER);
@@ -242,7 +225,7 @@ describe("the Klaviyo sync", () => {
       expect((await profileRow(TEST_IDS.CUSTOMER))?.seq).toBe(2);
     });
 
-    it("files every parent with a seat in a product whose name or dates change", async () => {
+    it("files every parent with a seat in a product whose name, topic or billing change", async () => {
       const participationId = await seat(CLUB, "active");
       await clearProfiles([TEST_IDS.CUSTOMER]);
 
@@ -250,9 +233,12 @@ describe("the Klaviyo sync", () => {
       expect((await profileRow(TEST_IDS.CUSTOMER))?.seq).toBe(1);
       await admin.from("products").update({ topic: "minecraft_java" }).eq("id", CLUB);
       expect((await profileRow(TEST_IDS.CUSTOMER))?.seq).toBe(2);
+      await admin.from("products").update({ billing_mode: "free" }).eq("id", CLUB);
+      expect((await profileRow(TEST_IDS.CUSTOMER))?.seq).toBe(3);
+      await admin.from("products").update({ billing_mode: "paid" }).eq("id", CLUB);
 
       await admin.from("participations").delete().eq("id", participationId);
-      expect((await profileRow(TEST_IDS.CUSTOMER))?.seq).toBe(3);
+      expect((await profileRow(TEST_IDS.CUSTOMER))?.seq).toBe(5);
     });
   });
 
@@ -445,60 +431,66 @@ describe("the Klaviyo sync", () => {
       await clearProfiles([userId]);
     });
 
-    it("files a seat taken, a waitlist joined and a seat offered, once each", async () => {
+    it("files a purchase, a waitlist joined and a seat offered, once each", async () => {
       await clearEvents([TEST_IDS.CUSTOMER]);
+      // Whatever paid seats the seed gives this parent decide whether this is their first.
+      const { data: held, error } = await admin
+        .from("participations")
+        .select("id, products!inner(billing_mode)")
+        .eq("customer_id", TEST_IDS.CUSTOMER)
+        .in("status", ["active", "completed"])
+        .eq("products.billing_mode", "paid");
+      expect(error).toBeNull();
       const active = await seat(CLUB, "active");
-      expect(await eventRow("enrolled", active)).toMatchObject({ product_id: CLUB, facts: { status: "active" } });
+      expect(await eventRow("purchase", active)).toMatchObject({
+        product_id: CLUB,
+        facts: { first_purchase: (held ?? []).length === 0 },
+      });
 
       const waiting = await seat(ENDED, "waitlisted");
-      expect(await eventRow("waitlisted", waiting)).toMatchObject({ product_id: ENDED });
-      expect(await eventRow("enrolled", waiting)).toBeNull();
+      expect(await eventRow("waitlisted", waiting)).toMatchObject({ product_id: ENDED, facts: {} });
+      expect(await eventRow("purchase", waiting)).toBeNull();
 
       const offeredAt = new Date().toISOString();
       await admin.from("participations").update({ seat_offer_sent_at: offeredAt }).eq("id", waiting);
       const offered = await eventRow("seat_offered", waiting);
       expect(new Date(offered?.occurred_at ?? "").getTime()).toBe(new Date(offeredAt).getTime());
 
-      // Off the waitlist into the seat: that is an enrolment too.
+      // Off the waitlist into the seat: that is a purchase too, and not the first.
       await admin.from("participations").update({ status: "active", seat_offer_sent_at: null }).eq("id", waiting);
-      expect(await eventRow("enrolled", waiting)).not.toBeNull();
+      expect(await eventRow("purchase", waiting)).toMatchObject({ facts: { first_purchase: false } });
 
       await admin.from("participations").delete().in("id", [active, waiting]);
     });
 
-    it("files a payment with its facts and product, and never a refunded duplicate", async () => {
+    it("files no purchase for a seat on a free product", async () => {
+      await clearEvents([TEST_IDS.CUSTOMER]);
+      const free = await seat(FREE, "active");
+      expect(await eventRow("purchase", free)).toBeNull();
+      await admin.from("participations").delete().eq("id", free);
+    });
+
+    it("files the parent for a payment, and no event", async () => {
+      await clearProfiles([TEST_IDS.CUSTOMER]);
       await clearEvents([TEST_IDS.CUSTOMER]);
       const { data, error } = await admin
         .from("payments")
-        .insert([
-          {
-            customer_id: TEST_IDS.CUSTOMER,
-            amount_cents: 4900,
-            currency: "eur",
-            purpose: "single_payment",
-            stripe_event_id: `evt_klaviyo_${Date.now()}_a`,
-            metadata: { productId: CLUB },
-          },
-          {
-            customer_id: TEST_IDS.CUSTOMER,
-            amount_cents: 4900,
-            currency: "eur",
-            purpose: "reservation_duplicate",
-            stripe_event_id: `evt_klaviyo_${Date.now()}_b`,
-            metadata: { productId: CLUB },
-          },
-        ])
-        .select("id, purpose");
+        .insert({
+          customer_id: TEST_IDS.CUSTOMER,
+          amount_cents: 4900,
+          currency: "eur",
+          purpose: "single_payment",
+          stripe_event_id: `evt_klaviyo_${Date.now()}_a`,
+          metadata: { productId: CLUB },
+        })
+        .select("id")
+        .single();
       expect(error).toBeNull();
-      for (const row of data ?? []) paymentIds.push(row.id);
-      const paid = data?.find((row) => row.purpose === "single_payment")?.id ?? "";
-      const duplicate = data?.find((row) => row.purpose === "reservation_duplicate")?.id ?? "";
+      paymentIds.push(data?.id ?? "");
 
-      expect(await eventRow("payment", paid)).toMatchObject({
-        product_id: CLUB,
-        facts: { amount_cents: 4900, currency: "eur", purpose: "single_payment" },
-      });
-      expect(await eventRow("payment", duplicate)).toBeNull();
+      expect((await profileRow(TEST_IDS.CUSTOMER))?.seq).toBe(1);
+      const events = await admin.from("klaviyo_event_outbox").select("id").eq("customer_id", TEST_IDS.CUSTOMER);
+      expect(events.data).toEqual([]);
     });
 
     it("files a subscription's cancellation once, at the first cancelled state", async () => {
@@ -522,7 +514,10 @@ describe("the Klaviyo sync", () => {
 
       await admin.from("family_subscriptions").update({ status: "canceling" }).eq("id", subscriptionId);
       const first = await eventRow("subscription_cancelled", subscriptionId);
-      expect(first).toMatchObject({ product_id: CLUB, facts: { status: "canceling" } });
+      expect(first).toMatchObject({
+        product_id: CLUB,
+        facts: { status: "canceling", current_period_end: null },
+      });
 
       // The end of the same cancellation is not a second one.
       await admin.from("family_subscriptions").update({ status: "cancelled" }).eq("id", subscriptionId);
@@ -591,14 +586,14 @@ describe("the Klaviyo sync", () => {
       expect(claimed.error).toBeNull();
       expect(claimed.data).toHaveLength(1);
       const eventId = claimed.data?.[0]?.event_id ?? "";
-      expect(claimed.data?.[0]).toMatchObject({ kind: "enrolled", customer_id: TEST_IDS.CUSTOMER });
+      expect(claimed.data?.[0]).toMatchObject({ kind: "purchase", customer_id: TEST_IDS.CUSTOMER });
 
       const failed = await admin.rpc("finish_klaviyo_event_job", { p_event_id: eventId, p_error: "boom" });
       expect(failed.error).toBeNull();
-      expect(await eventRow("enrolled", participationId)).toMatchObject({ attempts: 1, last_error: "boom" });
+      expect(await eventRow("purchase", participationId)).toMatchObject({ attempts: 1, last_error: "boom" });
 
       await admin.rpc("finish_klaviyo_event_job", { p_event_id: eventId });
-      expect(await eventRow("enrolled", participationId)).toBeNull();
+      expect(await eventRow("purchase", participationId)).toBeNull();
       await admin.from("participations").delete().eq("id", participationId);
     });
   });
@@ -627,18 +622,23 @@ describe("the Klaviyo sync", () => {
 
       const snapshot = rows[0].snapshot;
       expect(snapshot.profile.id).toBe(TEST_IDS.CUSTOMER);
-      const gamer = snapshot.gamers.find((g) => g.id === TEST_IDS.GAMER);
-      expect(gamer).toMatchObject({
-        ...SEED.GAMER_BIRTH,
+      // A gamer is their birth year, gender and linked games: no name, no birth month.
+      const raw = z
+        .object({ gamers: z.array(z.record(z.string(), z.unknown())) })
+        .parse(data?.[0]?.snapshot);
+      for (const gamer of raw.gamers) {
+        expect(Object.keys(gamer).sort()).toEqual(["birth_year", "gender", "minecraft", "roblox"]);
+      }
+      expect(snapshot.gamers).toContainEqual({
+        birth_year: SEED.GAMER_BIRTH.birth_year,
         gender: "boy",
         minecraft: true,
         roblox: false,
       });
 
       const byId = new Map(snapshot.participations.map((p) => [p.id, p]));
-      // State is read now, from the product's dates in its own zone.
-      expect(byId.get(active)?.state).toBe("active");
-      expect(byId.get(past)?.state).toBe("past");
+      expect(byId.get(active)?.product).toMatchObject({ billing_mode: "paid", product_type: "consumer_club" });
+      expect(byId.get(past)?.product).toMatchObject({ product_type: "camp", end_date: "2020-01-05" });
       expect(byId.get(active)?.product.names).toEqual(
         expect.arrayContaining([expect.objectContaining({ locale: "fi", name: "Klaviyo-kerho" })]),
       );
@@ -650,18 +650,19 @@ describe("the Klaviyo sync", () => {
     it("reads a claimed event through the contract, with its unique id and product", async () => {
       await clearEvents([TEST_IDS.CUSTOMER]);
       const participationId = await seat(CLUB, "active");
-      const event = await eventRow("enrolled", participationId);
+      const event = await eventRow("purchase", participationId);
 
       const { data, error } = await admin.rpc("get_klaviyo_events", { p_event_ids: [event?.id ?? ""] });
       expect(error).toBeNull();
       const rows = (data ?? []).map((row) => klaviyoEventRow.parse(row));
       expect(rows).toHaveLength(1);
       expect(rows[0]).toMatchObject({
-        kind: "enrolled",
-        unique_id: `enrolled:${participationId}`,
+        kind: "purchase",
+        unique_id: `purchase:${participationId}`,
         customer_id: TEST_IDS.CUSTOMER,
-        properties: { source_id: participationId, status: "active", participant_id: TEST_IDS.GAMER },
+        properties: { source_id: participationId },
       });
+      expect(rows[0].properties).toHaveProperty("first_purchase");
       expect(rows[0].properties.product?.id).toBe(CLUB);
 
       await admin.from("participations").delete().eq("id", participationId);

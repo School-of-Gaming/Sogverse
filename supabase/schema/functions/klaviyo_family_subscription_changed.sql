@@ -30,8 +30,7 @@ BEGIN
       NEW.updated_at,
       jsonb_build_object(
         'status',             NEW.status,
-        'current_period_end', NEW.current_period_end,
-        'currency',           NEW.currency
+        'current_period_end', NEW.current_period_end
       )
     );
   END IF;

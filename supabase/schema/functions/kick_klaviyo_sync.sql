@@ -48,7 +48,7 @@ $$;
 -- Name: FUNCTION kick_klaviyo_sync(); Type: COMMENT; Schema: public; Owner: -
 --
 
-COMMENT ON FUNCTION public.kick_klaviyo_sync() IS 'Asks the app to drain the Klaviyo outboxes: queues a pg_net POST to the URL in the Vault secret klaviyo_sync_url, bearing the Vault secret klaviyo_sync_secret. pg_net sends it after the transaction commits and never if it rolls back. A no-op when either secret is missing — every local stack and CI — and it never raises: any failure is a WARNING, because a Klaviyo problem must never fail the write that caused it; the row stays due, and kick_klaviyo_sync_if_due kicks again. Granted to nobody.';
+COMMENT ON FUNCTION public.kick_klaviyo_sync() IS 'Asks the app to drain the Klaviyo outboxes: queues a pg_net POST to the URL in the Vault secret klaviyo_sync_url, bearing the Vault secret klaviyo_sync_secret. pg_net sends it after the transaction commits and never if it rolls back. A no-op when either secret is missing — every local stack and CI — and it never raises: any failure is a WARNING, because a Klaviyo problem must never fail the write that caused it; the row stays due, and the next write''s kick drains it with everything else due. Granted to nobody.';
 
 
 --

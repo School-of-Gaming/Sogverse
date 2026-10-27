@@ -42,71 +42,45 @@ CREATE FUNCTION public.get_klaviyo_parent_snapshots(p_customer_ids uuid[]) RETUR
            'gamers', COALESCE((
              SELECT jsonb_agg(
                       jsonb_build_object(
-                        'id',          g.id,
-                        'first_name',  g.first_name,
                         'birth_year',  gp.birth_year,
-                        'birth_month', gp.birth_month,
                         'gender',      gp.gender,
                         'minecraft',   EXISTS (
                                          SELECT 1
                                            FROM public.minecraft_accounts m
-                                          WHERE m.user_id = g.id
+                                          WHERE m.user_id = gp.user_id
                                             AND m.minecraft_username IS NOT NULL
                                        ),
                         'roblox',      EXISTS (
                                          SELECT 1
                                            FROM public.roblox_accounts r
-                                          WHERE r.user_id = g.id
+                                          WHERE r.user_id = gp.user_id
                                             AND r.roblox_username IS NOT NULL
                                        )
                       )
-                      ORDER BY g.created_at, g.id
+                      ORDER BY gp.birth_year, gp.user_id
                     )
                FROM public.parent_gamer pg
-               JOIN public.profiles g       ON g.id = pg.gamer_id
-               JOIN public.gamer_profiles gp ON gp.user_id = g.id
+               JOIN public.gamer_profiles gp ON gp.user_id = pg.gamer_id
               WHERE pg.parent_id = p.id
            ), '[]'::jsonb),
            'participations', COALESCE((
              SELECT jsonb_agg(
                       jsonb_build_object(
-                        'id',                 part.id,
-                        'participant_id',     part.participant_id,
-                        'status',             part.status,
-                        -- Read now, from the product's dates in its own zone:
-                        -- nothing writes when a product ends, so a stored
-                        -- state would lag the calendar.
-                        'state',              CASE
-                                                WHEN part.status = 'waitlisted'::public.participation_status
-                                                  THEN 'waitlisted'
-                                                WHEN part.status = 'completed'::public.participation_status
-                                                  THEN 'past'
-                                                WHEN pr.end_date IS NOT NULL
-                                                 AND pr.end_date < (now() AT TIME ZONE pr.timezone)::date
-                                                  THEN 'past'
-                                                ELSE 'active'
-                                              END,
-                        'signed_up_at',       part.signed_up_at,
-                        'waitlisted_at',      part.waitlisted_at,
-                        'seat_offer_sent_at', part.seat_offer_sent_at,
-                        'product',            public.klaviyo_product_document(part.product_id)
+                        'id',      part.id,
+                        'status',  part.status,
+                        'product', public.klaviyo_product_document(part.product_id)
                       )
                       ORDER BY part.signed_up_at, part.id
                     )
                FROM public.participations part
-               JOIN public.products pr ON pr.id = part.product_id
               WHERE part.customer_id = p.id
                 AND part.status <> 'reserving'::public.participation_status
            ), '[]'::jsonb),
            'subscriptions', COALESCE((
              SELECT jsonb_agg(
                       jsonb_build_object(
-                        'id',                 fs.id,
-                        'status',             fs.status,
-                        'current_period_end', fs.current_period_end,
-                        'currency',           fs.currency,
                         'participation_id',   fs.participation_id,
-                        'created_at',         fs.created_at
+                        'current_period_end', fs.current_period_end
                       )
                       ORDER BY fs.created_at, fs.id
                     )
@@ -115,7 +89,6 @@ CREATE FUNCTION public.get_klaviyo_parent_snapshots(p_customer_ids uuid[]) RETUR
            ), '[]'::jsonb),
            'payments', (
              SELECT jsonb_build_object(
-                      'count',         count(*),
                       'first_at',      min(pay.created_at),
                       'last_at',       max(pay.created_at),
                       'lifetime_cents', COALESCE((
@@ -145,7 +118,7 @@ $$;
 -- Name: FUNCTION get_klaviyo_parent_snapshots(p_customer_ids uuid[]); Type: COMMENT; Schema: public; Owner: -
 --
 
-COMMENT ON FUNCTION public.get_klaviyo_parent_snapshots(p_customer_ids uuid[]) IS 'The single definition of what Klaviyo is told about a parent: one row per named id that is a registered parent (role customer, registration_completed_at set), and none for any other — a parent deleted, a Google sign-up that never finished registering, an account promoted to gedu, or one that was never a parent — which tells the sync to delete that Klaviyo profile, or never create it. `profile`: id, email, names, phone, locale, spoken_languages, currency, created_at, email_verified_at and home_location ({id, name, country_code}, null when unset; the canonical name only). `attribution`: the five utm_* values, signup_intent_kind and signup_intent_id, and registration_marketing_consent — all write-once. `gamers`: every linked gamer as {id, first_name, birth_year, birth_month, gender, minecraft, roblox}, the last two whether a username is linked. `participations`: every seat the parent holds or waits for (the retired reserving status left out) as {id, participant_id, status, state, signed_up_at, waitlisted_at, seat_offer_sent_at, product}, where state is waitlisted, active or past — past for a completed seat, or an active one whose product ended before today in its own zone — read at call time, and product is klaviyo_product_document. `subscriptions`: every family subscription as {id, status, current_period_end, currency, participation_id, created_at}. `payments`: {count, first_at, last_at, lifetime_cents}, lifetime_cents an object of summed amount_cents per currency, refunded duplicates (reservation_duplicate) left out of all four. Every gamer fact and the parent''s phone are in it, so it is for the service role alone.';
+COMMENT ON FUNCTION public.get_klaviyo_parent_snapshots(p_customer_ids uuid[]) IS 'The single definition of what Klaviyo is told about a parent: one row per named id that is a registered parent (role customer, registration_completed_at set), and none for any other — a parent deleted, a Google sign-up that never finished registering, an account promoted to gedu, or one that was never a parent — which tells the sync to delete that Klaviyo profile, or never create it. `profile`: id, email, names, phone, locale, spoken_languages, currency, created_at, email_verified_at and home_location ({id, name, country_code}, null when unset; the canonical name only). `attribution`: the five utm_* values, signup_intent_kind and signup_intent_id, and registration_marketing_consent — all write-once. `gamers`: every linked gamer as {birth_year, gender, minecraft, roblox}, the last two whether a username is linked — no name and no birth month. `participations`: every seat the parent holds or waits for (the retired reserving status left out) as {id, status, product}, product being klaviyo_product_document. `subscriptions`: every family subscription as {participation_id, current_period_end}. `payments`: {first_at, last_at, lifetime_cents}, lifetime_cents an object of summed amount_cents per currency, refunded duplicates (reservation_duplicate) left out of all three. Gamer facts and the parent''s phone are in it, so it is for the service role alone.';
 
 
 --

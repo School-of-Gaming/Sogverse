@@ -100,7 +100,7 @@ export function UserMarketingCard({
   // nobody — and the block it feeds is not rendered in that case either.
   const { data: consents } = useMarketingConsentsForCustomer(customerId ?? "");
 
-  const labels: Record<MarketingConsentType, string> = {
+  const labels: Record<(typeof CONSENT_ORDER)[number], string> = {
     lynx_educate: t("lynxEducate"),
   };
 

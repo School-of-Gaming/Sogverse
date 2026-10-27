@@ -1463,7 +1463,6 @@
   "users": {
     "title": "Käyttäjät",
     "manageAccounts": "Hallitse käyttäjätilejä ja rooleja",
-    "klaviyoParked": "{count, plural, one {# vanhemman tietojen päivitys jäi lähettämättä Klaviyoon} other {# vanhempien tietojen päivitystä jäi lähettämättä Klaviyoon}}",
     "searchPlaceholder": "Hae nimellä, sähköpostilla, puhelinnumerolla tai pelin käyttäjänimellä…",
     "searchAriaLabel": "Hae käyttäjiä",
     "roleFilterLabel": "Rooli",

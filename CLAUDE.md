@@ -135,7 +135,7 @@ System architecture lives in **colocated `CLAUDE.md` files** next to the code th
 | Guides — the PDFs landing pages hand out to signed-in readers, their private bucket and who may download | `src/services/guides/` |
 | Admin analytics — the Web Analytics figures and their consent scope, the hourly cache, how a path is matched | `src/services/admin-analytics/` |
 | WhatsApp | `src/services/whatsapp/` |
-| Klaviyo parent sync — the outboxes' drain, the public property and metric contract, the one consent send, deletion and the operator setup | `src/lib/klaviyo-sync/` |
+| Klaviyo parent sync — the outboxes' drain, the public property, metric and list contract, the one consent send, deletion and the operator setup | `src/lib/klaviyo-sync/` |
 | Session feeds — shared gedu/family machinery | `src/components/session-feed/` |
 | Group workspace — shared gedu/admin group page body | `src/components/group-workspace/` |
 | Municipality invoicing — the CFO's monthly invoice page and its Finvoice export | `src/components/admin/municipality-invoicing/` |

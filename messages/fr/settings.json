@@ -40,6 +40,10 @@
   },
   "marketing": {
     "title": "Préférences marketing",
+    "schoolOfGaming": "Les e-mails de School of Gaming sur nos clubs, nos camps et nos actualités",
+    "schoolOfGamingNote": "Le lien de désabonnement présent dans chacun de nos e-mails fonctionne aussi.",
+    "schoolOfGamingLoadFailed": "Impossible de charger ce réglage.",
+    "retry": "Réessayer",
     "lynxEducate": "Partager mon adresse e-mail avec <link>Lynx Educate</link> afin qu’ils puissent m’envoyer des actualités sur les événements à venir et des ressources sur le jeu vidéo. Je peux me désabonner à tout moment."
   },
   "notifications": {

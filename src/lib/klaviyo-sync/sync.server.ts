@@ -1,5 +1,6 @@
 import "server-only";
 import {
+  addKlaviyoProfileToList,
   createKlaviyoEvent,
   findKlaviyoProfileIdByExternalId,
   isKlaviyoConfigured,
@@ -11,9 +12,11 @@ import { createAdminClient } from "@/lib/supabase/admin";
 import {
   ACCOUNT_REGISTRATION_CUSTOM_SOURCE,
   klaviyoEventFor,
+  klaviyoListsFor,
   klaviyoProfileFor,
   subscribesOnSend,
 } from "./contract";
+import { listIdsFor, marketingConsentListId } from "./lists.server";
 import {
   klaviyoEventRow,
   klaviyoParentSnapshotRow,
@@ -29,16 +32,17 @@ import {
  * **The outbox lease is the concurrency.** A claim leases its rows; a parent
  * changed while their profile syncs has their row's seq bumped, so the finish
  * hands it back due and a later claim in the same drain syncs them again.
- * Every Klaviyo call is idempotent — a profile upsert, an event Klaviyo keeps
- * once per unique id, a subscription — so a retry repeats harmlessly.
+ * Every Klaviyo call is idempotent — a profile upsert, a list membership, an
+ * event Klaviyo keeps once per unique id, a subscription — so a retry repeats
+ * harmlessly.
  *
  * **One row's failure is that row's.** It is recorded on the row through the
  * finish, as a label carrying no address or name, and the outbox retries it
  * with backoff; the rest of the batch goes on. Only a failure of the database
  * calls themselves stops the drain.
  *
- * Every read is the service role's: a snapshot carries every gamer's name,
- * birth date and gender and the parent's phone.
+ * Every read is the service role's: a snapshot carries every gamer's birth
+ * year and gender and the parent's phone.
  */
 
 type AdminClient = ReturnType<typeof createAdminClient>;
@@ -181,7 +185,11 @@ async function drainProfileBatch(
   return true;
 }
 
-/** Bring one parent's Klaviyo profile up to date, or delete it. */
+/**
+ * Bring one parent's Klaviyo profile up to date and add it to its lists, or
+ * delete it. Lists are only ever added to: Klaviyo's add is a no-op for a
+ * member, so repeating it every sync costs nothing, and a list is history.
+ */
 async function syncProfile(
   customerId: string,
   snapshot: KlaviyoParentSnapshot | "unreadable" | undefined,
@@ -193,12 +201,17 @@ async function syncProfile(
     if (klaviyoId !== null) await requestKlaviyoProfileDeletion(klaviyoId);
     return "deleted";
   }
+  // Read before any write, so a list nobody configured fails the row first.
+  const listIds = listIdsFor(klaviyoListsFor(snapshot));
   // Updating by Klaviyo's id is what carries a changed address across: an
   // import matched on the address would create a second profile instead.
-  await upsertKlaviyoProfile({
+  const written = await upsertKlaviyoProfile({
     ...(klaviyoId === null ? {} : { id: klaviyoId }),
     ...klaviyoProfileFor(snapshot),
   });
+  const profileId = written ?? klaviyoId;
+  if (profileId === null) throw new Error("Klaviyo answered the profile import with no id");
+  for (const listId of listIds) await addKlaviyoProfileToList(listId, profileId);
   return "synced";
 }
 
@@ -256,9 +269,9 @@ async function drainEventBatch(
 
 /**
  * Send one event, and — for an account created with the registration form's
- * box ticked — the one subscription Sogverse ever sends. After the event, so a
- * failed subscription retries both, and the event's unique id keeps Klaviyo
- * from recording it twice.
+ * box ticked — the one subscription Sogverse ever sends, into the marketing
+ * consent list. After the event, so a failed subscription retries both, and
+ * the event's unique id keeps Klaviyo from recording it twice.
  */
 async function sendEvent(
   row: unknown,
@@ -272,7 +285,11 @@ async function sendEvent(
   const { email, id } = snapshot.profile;
   await createKlaviyoEvent({ email, externalId: id }, klaviyoEventFor(event, snapshot));
   if (subscribesOnSend(event, snapshot)) {
-    await subscribeKlaviyoProfile({ email, customSource: ACCOUNT_REGISTRATION_CUSTOM_SOURCE });
+    await subscribeKlaviyoProfile({
+      email,
+      listId: marketingConsentListId(),
+      customSource: ACCOUNT_REGISTRATION_CUSTOM_SOURCE,
+    });
   }
 }
 

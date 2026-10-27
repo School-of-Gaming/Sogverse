@@ -1,5 +1,5 @@
--- What a parent answered at registration is kept on their profile, and School
--- of Gaming's own mailing list leaves the marketing consents.
+-- What a parent answered at registration is kept on their profile, and
+-- Sogverse stops writing School of Gaming's own mailing-list consent.
 --
 -- WHAT THIS CHANGES
 --
@@ -14,15 +14,13 @@
 --    handle_new_user from the signup metadata, or by the registration-
 --    completion route for an account Google created.
 -- 3. Each parent's registration answer is copied out of the consent history
---    into the new column, and then `school_of_gaming` leaves
---    `marketing_consent_type`: its rows are deleted from marketing_consents,
---    marketing_consent_events and product_marketing_consents, and the type is
---    rebuilt with `lynx_educate` alone, since Postgres cannot drop an enum
---    value. Our own list's consent now lives in Klaviyo, which the parent sync
---    feeds; Sogverse keeps only the registration answer.
--- 4. `record_registration_marketing_consent` is dropped: nothing records a
---    registration-sourced consent any more, so the `registration` source leaves
---    marketing_consent_events' CHECK as well.
+--    into the new column.
+-- 4. Our own list's consent now lives in Klaviyo, which the parent sync feeds,
+--    so nothing in Sogverse writes a `school_of_gaming` consent any more:
+--    `record_registration_marketing_consent` is dropped, and
+--    `set_marketing_consent` and `admin_set_product_marketing_consents` refuse
+--    it. The rows already written stay, unread and unchanged, with the enum
+--    value and the `registration` source; a later change removes them.
 
 -- ---------------------------------------------------------------------------
 -- 1. The registration answers on the profile
@@ -238,7 +236,7 @@ END;
 $$;
 
 -- ---------------------------------------------------------------------------
--- 3. The registration answers leave the consent history for the profile
+-- 3. The registration answers are copied onto the profile
 -- ---------------------------------------------------------------------------
 
 -- The first registration-sourced answer is what the sign-up form was told; a
@@ -254,54 +252,22 @@ UPDATE public.profiles p
   ) AS first_answer
  WHERE p.id = first_answer.customer_id;
 
-DELETE FROM public.marketing_consents WHERE consent_type = 'school_of_gaming';
-DELETE FROM public.marketing_consent_events WHERE consent_type = 'school_of_gaming';
-DELETE FROM public.product_marketing_consents WHERE consent_type = 'school_of_gaming';
-
 -- ---------------------------------------------------------------------------
--- 4. marketing_consent_type is rebuilt without school_of_gaming
+-- 4. Nothing writes a school_of_gaming consent any more
 -- ---------------------------------------------------------------------------
 
--- The two writers take the type as a parameter, so they hold it and go first;
--- the registration writer has no caller left and does not come back.
+-- The registration routes write the profile column instead.
 DROP FUNCTION public.record_registration_marketing_consent(uuid, boolean);
-DROP FUNCTION public.set_marketing_consent(public.marketing_consent_type, boolean, text);
-DROP FUNCTION public.admin_set_product_marketing_consents(uuid, public.marketing_consent_type[]);
 
-ALTER TYPE public.marketing_consent_type RENAME TO marketing_consent_type_retired;
+COMMENT ON TYPE public.marketing_consent_type IS 'The marketing permissions a parent can hold in Sogverse. lynx_educate is our partner''s list, asked for only on products an admin has attached it to — see product_marketing_consents. school_of_gaming is our own mailing list, which is now answered in Klaviyo: nothing writes it, and the rows written before it moved are kept unread until a later change removes them. Sogverse keeps only what the parent answered at registration (profiles.registration_marketing_consent). An enum rather than a whitelist table because a marketing consent, unlike a consent DOCUMENT, has no text to version and no republication for a stored row to outlive: it is a standing permission to mail, and the party it names is the whole of it.';
 
-CREATE TYPE public.marketing_consent_type AS ENUM (
-  'lynx_educate'
-);
+COMMENT ON TABLE public.marketing_consents IS 'The CURRENT answer to "may we mail this parent about this thing" — one row per (customer, consent type), and the row every send reads. Deliberately not derived from marketing_consent_events: a send must not fold a history to learn whether it may run, and the present tense must not depend on a log a retention policy could one day trim. An ABSENT row means never asked or never answered, which is not the same as `granted = false` (a parent who said no) — both are "do not mail", and only one of them is a decision the parent made. Account-level on purpose: the subject of a marketing consent is a mailbox, and a mailbox belongs to one adult rather than to one seat, which is the exact inverse of consent_acceptances and its per-enrolment key. REVOCABLE by construction — that is what makes this a separate system from the non-revocable enrolment conditions, which mandate the split. Written by set_marketing_consent, for lynx_educate alone, and by nothing else: no Data API role holds a write grant. Its school_of_gaming rows predate the move of that list to Klaviyo and are kept unread.';
 
-COMMENT ON TYPE public.marketing_consent_type IS 'The marketing permissions a parent can hold in Sogverse. One value, lynx_educate: our partner''s list, asked for only on products an admin has attached it to — see product_marketing_consents. School of Gaming''s own mailing list is not here: its consent lives in Klaviyo, and Sogverse keeps only what the parent answered at registration (profiles.registration_marketing_consent). An enum rather than a whitelist table because a marketing consent, unlike a consent DOCUMENT, has no text to version and no republication for a stored row to outlive: it is a standing permission to mail, and the party it names is the whole of it.';
+COMMENT ON TABLE public.marketing_consent_events IS 'APPEND-ONLY history: one row per CHANGE to a marketing consent, and the evidence behind whatever marketing_consents currently says. Nothing updates or deletes a row here — no Data API role holds any write grant at all, and the only writer is set_marketing_consent — because an event is a statement that something happened at an instant, and editing one would destroy the only thing the table is for. A repeat submission that changes nothing appends nothing: a log of "changes" that recorded non-changes would answer "how often did this parent change their mind" with a number made of page loads. Rows carry NO unique constraint — granting, revoking and granting again is the ordinary life of a revocable consent, and those three rows are history rather than duplicates. Its school_of_gaming rows, the registration-sourced ones among them, predate the move of that list to Klaviyo and are kept unread.';
 
-ALTER TABLE public.marketing_consents
-  ALTER COLUMN consent_type TYPE public.marketing_consent_type
-  USING consent_type::text::public.marketing_consent_type;
-ALTER TABLE public.marketing_consent_events
-  ALTER COLUMN consent_type TYPE public.marketing_consent_type
-  USING consent_type::text::public.marketing_consent_type;
-ALTER TABLE public.product_marketing_consents
-  ALTER COLUMN consent_type TYPE public.marketing_consent_type
-  USING consent_type::text::public.marketing_consent_type;
+COMMENT ON COLUMN public.marketing_consent_events.source IS 'Which surface the answer came from: `settings` (the toggle on their own account page) or `enrolment` (the ask inside a product signup panel), the two set_marketing_consent accepts. `registration` (the checkbox on the parent sign-up form) is kept for the school_of_gaming rows written before that list moved to Klaviyo; nothing writes it now. This is the one field on an event that no other field can corroborate. A CHECK rather than an enum because the set is a list of our own surfaces, which move with the product rather than with the data model.';
 
-DROP TYPE public.marketing_consent_type_retired;
-
--- Only the settings toggle and the product signup panel answer a marketing
--- consent now.
-ALTER TABLE public.marketing_consent_events
-  DROP CONSTRAINT chk_marketing_consent_events_source,
-  ADD CONSTRAINT chk_marketing_consent_events_source
-    CHECK (source = ANY (ARRAY['settings'::text, 'enrolment'::text]));
-
-COMMENT ON COLUMN public.marketing_consent_events.source IS 'Which surface the answer came from: `settings` (the toggle on their own account page) or `enrolment` (the ask inside a product signup panel). This is the one field on an event that no other field can corroborate, which is why set_marketing_consent accepts only these two. A CHECK rather than an enum because the set is a list of our own surfaces, which move with the product rather than with the data model.';
-
-COMMENT ON TABLE public.marketing_consents IS 'The CURRENT answer to "may we share this parent''s address with this partner" — one row per (customer, consent type), and the row every send reads. Deliberately not derived from marketing_consent_events: a send must not fold a history to learn whether it may run, and the present tense must not depend on a log a retention policy could one day trim. An ABSENT row means never asked or never answered, which is not the same as `granted = false` (a parent who said no) — both are "do not mail", and only one of them is a decision the parent made. Account-level on purpose: the subject of a marketing consent is a mailbox, and a mailbox belongs to one adult rather than to one seat, which is the exact inverse of consent_acceptances and its per-enrolment key. REVOCABLE by construction — that is what makes this a separate system from the non-revocable enrolment conditions, which mandate the split. Written by set_marketing_consent and by nothing else: no Data API role holds a write grant.';
-
-COMMENT ON TABLE public.marketing_consent_events IS 'APPEND-ONLY history: one row per CHANGE to a marketing consent, and the evidence behind whatever marketing_consents currently says. Nothing updates or deletes a row here — no Data API role holds any write grant at all, and the only writer is set_marketing_consent — because an event is a statement that something happened at an instant, and editing one would destroy the only thing the table is for. A repeat submission that changes nothing appends nothing: a log of "changes" that recorded non-changes would answer "how often did this parent change their mind" with a number made of page loads. Rows carry NO unique constraint — granting, revoking and granting again is the ordinary life of a revocable consent, and those three rows are history rather than duplicates.';
-
-CREATE FUNCTION public.set_marketing_consent(p_consent_type public.marketing_consent_type, p_granted boolean, p_source text) RETURNS void
+CREATE OR REPLACE FUNCTION public.set_marketing_consent(p_consent_type public.marketing_consent_type, p_granted boolean, p_source text) RETURNS void
     LANGUAGE plpgsql SECURITY DEFINER
     SET search_path TO ''
     AS $$
@@ -313,6 +279,13 @@ BEGIN
 
   IF p_consent_type IS NULL OR p_granted IS NULL THEN
     RAISE EXCEPTION 'a marketing consent needs both a type and an answer'
+      USING ERRCODE = 'check_violation';
+  END IF;
+
+  -- School of Gaming's own list is answered in Klaviyo; the rows written here
+  -- before it moved stay, and nothing adds to them.
+  IF p_consent_type <> 'lynx_educate'::public.marketing_consent_type THEN
+    RAISE EXCEPTION 'marketing consent % is answered in Klaviyo, not here', p_consent_type
       USING ERRCODE = 'check_violation';
   END IF;
 
@@ -365,13 +338,13 @@ BEGIN
 END;
 $$;
 
-COMMENT ON FUNCTION public.set_marketing_consent(p_consent_type public.marketing_consent_type, p_granted boolean, p_source text) IS 'The one writer of a marketing consent: the settings toggle and the product signup panel both call it, so the two paths cannot drift. Guard-first on assert_role(''customer'') — gamers and gedus hold no marketing consents, and an admin toggles their own on their own parent account rather than through here, because the answer belongs to whoever owns the mailbox. The customer is auth.uid() and is never a parameter, so there is nothing for a caller to aim at another family. p_source must be `settings` or `enrolment`, the two surfaces that call it. IDEMPOTENT AND HONEST ABOUT IT — submitting the state already on file succeeds and appends NO event, because a change log that recorded non-changes would answer "how often did this parent change their mind" with a number made of page loads. A first explicit "no" IS a change: an absent row means never answered, which is not the same state as a recorded refusal.';
+COMMENT ON FUNCTION public.set_marketing_consent(p_consent_type public.marketing_consent_type, p_granted boolean, p_source text) IS 'The one writer of a marketing consent: the settings toggle and the product signup panel both call it, so the two paths cannot drift. Guard-first on assert_role(''customer'') — gamers and gedus hold no marketing consents, and an admin toggles their own on their own parent account rather than through here, because the answer belongs to whoever owns the mailbox. The customer is auth.uid() and is never a parameter, so there is nothing for a caller to aim at another family. p_source must be `settings` or `enrolment`, the two surfaces that call it. Only lynx_educate is accepted: School of Gaming''s own list is answered in Klaviyo, and the school_of_gaming rows written before it moved are kept unread. IDEMPOTENT AND HONEST ABOUT IT — submitting the state already on file succeeds and appends NO event, because a change log that recorded non-changes would answer "how often did this parent change their mind" with a number made of page loads. A first explicit "no" IS a change: an absent row means never answered, which is not the same state as a recorded refusal.';
 
 REVOKE ALL ON FUNCTION public.set_marketing_consent(p_consent_type public.marketing_consent_type, p_granted boolean, p_source text) FROM PUBLIC;
 GRANT EXECUTE ON FUNCTION public.set_marketing_consent(p_consent_type public.marketing_consent_type, p_granted boolean, p_source text) TO authenticated;
 GRANT EXECUTE ON FUNCTION public.set_marketing_consent(p_consent_type public.marketing_consent_type, p_granted boolean, p_source text) TO service_role;
 
-CREATE FUNCTION public.admin_set_product_marketing_consents(p_product_id uuid, p_consent_types public.marketing_consent_type[]) RETURNS void
+CREATE OR REPLACE FUNCTION public.admin_set_product_marketing_consents(p_product_id uuid, p_consent_types public.marketing_consent_type[]) RETURNS void
     LANGUAGE plpgsql SECURITY DEFINER
     SET search_path TO ''
     AS $$
@@ -389,6 +362,17 @@ BEGIN
   ) THEN
     RAISE EXCEPTION
       'the marketing-consent list contains a NULL entry, which is not a consent'
+      USING ERRCODE = 'check_violation';
+  END IF;
+
+  -- School of Gaming's own list is answered in Klaviyo, never asked for here.
+  IF EXISTS (
+    SELECT 1
+      FROM unnest(p_consent_types) AS c
+     WHERE c <> 'lynx_educate'::public.marketing_consent_type
+  ) THEN
+    RAISE EXCEPTION
+      'a product signup panel asks only for lynx_educate; our own list is answered in Klaviyo'
       USING ERRCODE = 'check_violation';
   END IF;
 
@@ -423,31 +407,8 @@ BEGIN
 END;
 $$;
 
-COMMENT ON FUNCTION public.admin_set_product_marketing_consents(p_product_id uuid, p_consent_types public.marketing_consent_type[]) IS 'Replace the set of marketing consents a product''s signup panel asks about, admin-only and guard-first on assert_admin. The only writer of product_marketing_consents: that table carries no write grant for any Data API role, and an inline INSERT from the admin product form would need one, because the form reaches this as the admin''s own session role. NULL and an empty array both mean "asks nothing", which is how a set is cleared. A NULL ELEMENT is refused before the replacing DELETE runs, for the reason one system over refuses one: `NOT (col = ANY (array))` is three-valued, so a NULL inside the array would match nothing and turn the wipe-and-replace into a merge. An unknown product is refused explicitly rather than by a foreign key, because a call that CLEARS the set performs no insert for an FK to fire on and would otherwise report success for a product that does not exist.';
+COMMENT ON FUNCTION public.admin_set_product_marketing_consents(p_product_id uuid, p_consent_types public.marketing_consent_type[]) IS 'Replace the set of marketing consents a product''s signup panel asks about, admin-only and guard-first on assert_admin. The only writer of product_marketing_consents: that table carries no write grant for any Data API role, and an inline INSERT from the admin product form would need one, because the form reaches this as the admin''s own session role. NULL and an empty array both mean "asks nothing", which is how a set is cleared. A NULL ELEMENT is refused before the replacing DELETE runs, for the reason one system over refuses one: `NOT (col = ANY (array))` is three-valued, so a NULL inside the array would match nothing and turn the wipe-and-replace into a merge. Only lynx_educate may be asked for: School of Gaming''s own list is answered in Klaviyo. An unknown product is refused explicitly rather than by a foreign key, because a call that CLEARS the set performs no insert for an FK to fire on and would otherwise report success for a product that does not exist.';
 
 REVOKE ALL ON FUNCTION public.admin_set_product_marketing_consents(p_product_id uuid, p_consent_types public.marketing_consent_type[]) FROM PUBLIC;
 GRANT EXECUTE ON FUNCTION public.admin_set_product_marketing_consents(p_product_id uuid, p_consent_types public.marketing_consent_type[]) TO authenticated;
 GRANT EXECUTE ON FUNCTION public.admin_set_product_marketing_consents(p_product_id uuid, p_consent_types public.marketing_consent_type[]) TO service_role;
-
--- ---------------------------------------------------------------------------
--- 5. The end state, asserted
--- ---------------------------------------------------------------------------
-
-DO $$
-BEGIN
-  IF EXISTS (
-    SELECT 1
-      FROM pg_enum e
-      JOIN pg_type t ON t.oid = e.enumtypid
-      JOIN pg_namespace n ON n.oid = t.typnamespace
-     WHERE n.nspname = 'public'
-       AND t.typname = 'marketing_consent_type'
-       AND e.enumlabel <> 'lynx_educate'
-  ) THEN
-    RAISE EXCEPTION 'marketing_consent_type should hold lynx_educate alone';
-  END IF;
-  IF to_regtype('public.marketing_consent_type_retired') IS NOT NULL THEN
-    RAISE EXCEPTION 'the retired marketing_consent_type is still there';
-  END IF;
-END;
-$$;

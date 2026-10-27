@@ -1,3 +1,4 @@
+import { formatInTimeZone } from "date-fns-tz";
 import { isValidPhoneNumber } from "react-phone-number-input";
 import { SUPPORTED_CURRENCIES } from "@/lib/constants/currency";
 import { DEFAULT_LOCALE, isSupportedLocale, type SupportedLocale } from "@/lib/constants/locales";
@@ -13,8 +14,9 @@ import type {
 
 /**
  * **The Klaviyo contract: every name Sogverse writes into Klaviyo, and what it
- * holds.** The one place a snapshot becomes a profile and an event row becomes
- * an event, and the one place the newsletter form's property names live.
+ * holds.** The one place a snapshot becomes a profile, its lists and an event
+ * row becomes an event, and the one place the newsletter form's property names
+ * live.
  *
  * **These names are public.** Marketing builds segments, flows and templates
  * on them inside Klaviyo, where nothing here can see the dependency, so a
@@ -23,12 +25,12 @@ import type {
  * test pins every name and its value type, so a change here fails it until
  * the test is changed with it on purpose.
  *
- * Every custom profile property is `Sogverse ` and a Title Case name, so it
- * sorts together in Klaviyo's property list and never collides with a property
- * another tool writes; an event's own properties need no prefix, since its
- * metric already carries it. Dates are ISO 8601 strings, which Klaviyo reads
- * as dates for segmenting, and never a countdown, which would be stale the day
- * after it was sent. An absent value is `null`, which clears what Klaviyo held.
+ * Every custom profile property is `sog_` and a snake_case name, every metric
+ * `SV ` and a Title Case name, and an event's own properties are snake_case
+ * with no prefix, since the metric carries it. Dates are ISO 8601 strings,
+ * which Klaviyo reads as dates for segmenting, and never a countdown, which
+ * would be stale the day after it was sent. An absent value is `null`, which
+ * clears what Klaviyo held.
  */
 
 export type KlaviyoProperties = Record<string, KlaviyoPropertyValue>;
@@ -36,106 +38,103 @@ export type KlaviyoProperties = Record<string, KlaviyoPropertyValue>;
 // ---------------------------------------------------------------- names
 
 export const PROFILE_PROPERTIES = {
-  /** Always true: this profile is a Sogverse parent account's. */
-  account: "Sogverse Account",
   /** `production` or `staging` — one Klaviyo account holds both. */
-  environment: "Sogverse Environment",
-  accountCreated: "Sogverse Account Created",
-  emailVerified: "Sogverse Email Verified",
-  spokenLanguages: "Sogverse Spoken Languages",
-  currency: "Sogverse Currency",
-  homeLocation: "Sogverse Home Location",
-  homeLocationId: "Sogverse Home Location Id",
-  country: "Sogverse Country",
-  signupUtm: {
-    source: "Sogverse Signup UTM Source",
-    medium: "Sogverse Signup UTM Medium",
-    campaign: "Sogverse Signup UTM Campaign",
-    content: "Sogverse Signup UTM Content",
-    term: "Sogverse Signup UTM Term",
+  environment: "sog_env",
+  accountCreatedAt: "sog_account_created_at",
+  emailVerifiedAt: "sog_email_verified_at",
+  /** The app locale the parent reads Sogverse in (`fi`, `en`, `sv`, `fr`). */
+  locale: "sog_locale",
+  spokenLanguages: "sog_spoken_languages",
+  country: "sog_country",
+  homeLocation: "sog_home_location",
+  homeLocationId: "sog_home_location_id",
+  currency: "sog_currency",
+  firstUtm: {
+    source: "sog_first_utm_source",
+    medium: "sog_first_utm_medium",
+    campaign: "sog_first_utm_campaign",
+    content: "sog_first_utm_content",
+    term: "sog_first_utm_term",
   } satisfies Record<UtmField, string>,
   /** What the parent set out for: `product`, `municipality_club` or `landing_page`. */
-  signupIntent: "Sogverse Signup Intent",
-  signupIntentId: "Sogverse Signup Intent Id",
+  signupIntent: "sog_signup_intent",
+  signupIntentId: "sog_signup_intent_id",
   /**
    * The registration form's mailing-list answer, as a fact. Never consent:
    * consent is Klaviyo's own subscription status, sent once at account
    * creation for a yes.
    */
-  registrationMarketingAnswer: "Sogverse Registration Marketing Answer",
-  gamerCount: "Sogverse Gamer Count",
-  /** Every gamer, as objects for templates. */
-  gamers: "Sogverse Gamers",
-  gamerBirthYears: "Sogverse Gamer Birth Years",
-  gamerGenders: "Sogverse Gamer Genders",
+  registrationMarketingAnswer: "sog_registration_marketing_answer",
+  gamerCount: "sog_gamer_count",
+  /** Every gamer, as `{birth_year, gender}`. */
+  gamers: "sog_gamers",
   /** `minecraft`, `roblox`: the game accounts any gamer has linked. */
-  linkedGameAccounts: "Sogverse Linked Game Accounts",
-  /** Every product topic the family has held or waited for a seat on. */
-  games: "Sogverse Games",
-  activeProducts: "Sogverse Active Products",
-  activeProductTypes: "Sogverse Active Product Types",
-  pastProducts: "Sogverse Past Products",
-  waitlistedProducts: "Sogverse Waitlisted Products",
-  subscriptionStatus: "Sogverse Subscription Status",
-  /** The next renewal of a live subscription; null when none renews. */
-  subscriptionRenews: "Sogverse Subscription Renews",
-  paymentCount: "Sogverse Payment Count",
-  firstPayment: "Sogverse First Payment",
-  lastPayment: "Sogverse Last Payment",
+  linkedGameAccounts: "sog_linked_game_accounts",
+  firstPaymentAt: "sog_first_payment_at",
+  /** Renewals included. */
+  lastPaymentAt: "sog_last_payment_at",
+  /** The product types of the seats held on paid products. */
+  purchasedProductTypes: "sog_purchased_product_types",
+  /** The topics of the seats held on paid products. */
+  purchasedTopics: "sog_purchased_topics",
+  /** The latest date any paid seat runs to, `YYYY-MM-DD`; null when none does. */
+  activeUntil: "sog_active_until",
+  waitlistedProducts: "sog_waitlisted_products",
 } as const;
 
-/** `Sogverse Lifetime Spend EUR`, one per supported currency, in major units. */
-export function lifetimeSpendProperty(currency: string): string {
-  return `Sogverse Lifetime Spend ${currency.toUpperCase()}`;
+/** `sog_total_paid_eur`, one per supported currency, in major units. */
+export function totalPaidProperty(currency: string): string {
+  return `sog_total_paid_${currency.toLowerCase()}`;
 }
 
-/** The keys of each object in `Sogverse Gamers`. */
+/** The keys of each object in `sog_gamers`. */
 export const GAMER_KEYS = {
-  firstName: "First Name",
-  birthYear: "Birth Year",
-  birthMonth: "Birth Month",
-  gender: "Gender",
-  minecraft: "Minecraft",
-  roblox: "Roblox",
+  birthYear: "birth_year",
+  gender: "gender",
 } as const;
 
 export const EVENT_METRICS = {
-  account_created: "Sogverse Account Created",
-  enrolled: "Sogverse Enrolled",
-  waitlisted: "Sogverse Waitlisted",
-  seat_offered: "Sogverse Seat Offered",
-  payment: "Sogverse Payment",
-  subscription_cancelled: "Sogverse Subscription Cancelled",
+  account_created: "SV Account Created",
+  purchase: "SV Purchase",
+  waitlisted: "SV Waitlisted",
+  seat_offered: "SV Seat Offered",
+  subscription_cancelled: "SV Subscription Cancelled",
 } as const satisfies Record<KlaviyoEventRow["kind"], string>;
 
 export const EVENT_PROPERTIES = {
-  product: "Product",
-  productId: "Product Id",
-  productType: "Product Type",
-  topic: "Topic",
-  startDate: "Start Date",
-  endDate: "End Date",
-  status: "Status",
-  /** The gamer the seat is for; null when the seat is the parent's own. */
-  gamerFirstName: "Gamer First Name",
-  amount: "Amount",
-  currency: "Currency",
-  purpose: "Purpose",
-  ends: "Ends",
+  productId: "product_id",
+  /** The product's name in the parent's locale. */
+  productName: "product_name",
+  productType: "product_type",
+  topic: "topic",
+  /** On a purchase: whether the parent held no other seat on a paid product then. */
+  firstPurchase: "first_purchase",
+  /** On a cancellation: `canceling` (asked for) or `cancelled` (ended). */
+  status: "status",
+  /** On a cancellation: when the paid period ends. */
+  endsAt: "ends_at",
 } as const;
 
-/** The newsletter form's properties: kept apart from the account's `Signup` ones. */
+/** The newsletter form's properties: kept apart from the account's `first_utm` ones. */
 export const NEWSLETTER_PROPERTIES = {
   /** The landing page's id: never changes, so a segment on it outlives a new slug. */
-  page: "Sogverse Newsletter Page",
+  page: "sog_newsletter_page",
   utm: {
-    source: "Sogverse Newsletter UTM Source",
-    medium: "Sogverse Newsletter UTM Medium",
-    campaign: "Sogverse Newsletter UTM Campaign",
-    content: "Sogverse Newsletter UTM Content",
-    term: "Sogverse Newsletter UTM Term",
+    source: "sog_newsletter_utm_source",
+    medium: "sog_newsletter_utm_medium",
+    campaign: "sog_newsletter_utm_campaign",
+    content: "sog_newsletter_utm_content",
+    term: "sog_newsletter_utm_term",
   } satisfies Record<UtmField, string>,
 } as const;
+
+/**
+ * The lists a parent belongs to in production, each a Klaviyo list whose id is
+ * deployment configuration (`lists.server.ts`): `SV Account`, `SV Club`,
+ * `SV Camp` and `SV Municipal club`. Membership is history — added, never
+ * removed.
+ */
+export type KlaviyoList = "account" | "club" | "camp" | "municipalClub";
 
 /** The source Klaviyo records on the consent a registration's tick gives. */
 export const ACCOUNT_REGISTRATION_CUSTOM_SOURCE = "Sogverse account registration";
@@ -181,44 +180,49 @@ function distinctSorted<T extends string | number>(values: Iterable<T>): T[] {
   return [...new Set(values)].sort();
 }
 
-/** Live first, then the ones that still say something about the family's billing. */
-const SUBSCRIPTION_STATUS_ORDER = [
-  "active",
-  "past_due",
-  "canceling",
-  "incomplete",
-  "cancelled",
-] as const;
+/** The seats held, as opposed to waited for. */
+function heldSeats(snapshot: KlaviyoParentSnapshot) {
+  return snapshot.participations.filter((p) => p.status !== "waitlisted");
+}
+
+/** The seats held on paid products: a free seat and a municipality's contracted one are no purchase. */
+function paidSeats(snapshot: KlaviyoParentSnapshot) {
+  return heldSeats(snapshot).filter((p) => p.product.billing_mode === "paid");
+}
+
+/**
+ * The latest date any paid seat runs to: a club's, its subscription's paid
+ * period end, as a date in the club's own zone; a camp's or an event's, its
+ * last day (its first, when it has no end date).
+ */
+function activeUntil(snapshot: KlaviyoParentSnapshot): string | null {
+  const ends = paidSeats(snapshot).flatMap((seat) => {
+    const { product } = seat;
+    if (product.product_type === "camp" || product.product_type === "event") {
+      return [product.end_date ?? product.start_date];
+    }
+    return snapshot.subscriptions.flatMap((s) =>
+      s.participation_id === seat.id && s.current_period_end !== null
+        ? [formatInTimeZone(new Date(s.current_period_end), product.timezone, "yyyy-MM-dd")]
+        : [],
+    );
+  });
+  return ends.sort().at(-1) ?? null;
+}
 
 export function klaviyoProfileFor(snapshot: KlaviyoParentSnapshot): ParentProfile {
-  const { profile, attribution, gamers, participations, subscriptions, payments } = snapshot;
+  const { profile, attribution, gamers, participations, payments } = snapshot;
   const locale = nameLocale(snapshot);
+  const paid = paidSeats(snapshot);
 
-  const namesIn = (state: "active" | "past" | "waitlisted") =>
-    distinctSorted(
-      participations
-        .filter((p) => p.state === state)
-        .map((p) => productName(p.product, locale))
-        .filter((name): name is string => name !== null),
-    );
-
-  const statuses = new Set(subscriptions.map((s) => s.status));
-  const renewals = subscriptions
-    .flatMap((s) =>
-      (s.status === "active" || s.status === "past_due") && s.current_period_end !== null
-        ? [s.current_period_end]
-        : [],
-    )
-    .sort();
-
-  const signupUtm: KlaviyoProperties = {};
+  const firstUtm: KlaviyoProperties = {};
   for (const field of UTM_FIELDS) {
-    signupUtm[PROFILE_PROPERTIES.signupUtm[field]] = attribution[`utm_${field}`];
+    firstUtm[PROFILE_PROPERTIES.firstUtm[field]] = attribution[`utm_${field}`];
   }
 
-  const lifetimeSpend: KlaviyoProperties = {};
+  const totalPaid: KlaviyoProperties = {};
   for (const currency of SUPPORTED_CURRENCIES) {
-    lifetimeSpend[lifetimeSpendProperty(currency)] = (payments.lifetime_cents[currency] ?? 0) / 100;
+    totalPaid[totalPaidProperty(currency)] = (payments.lifetime_cents[currency] ?? 0) / 100;
   }
 
   const country = profile.home_location?.country_code ?? null;
@@ -232,56 +236,65 @@ export function klaviyoProfileFor(snapshot: KlaviyoParentSnapshot): ParentProfil
     ...(profile.locale === null ? {} : { locale: profile.locale }),
     country,
     properties: {
-      [PROFILE_PROPERTIES.account]: true,
       [PROFILE_PROPERTIES.environment]: klaviyoEnvironment(),
-      [PROFILE_PROPERTIES.accountCreated]: profile.created_at,
-      [PROFILE_PROPERTIES.emailVerified]: profile.email_verified_at,
+      [PROFILE_PROPERTIES.accountCreatedAt]: profile.created_at,
+      [PROFILE_PROPERTIES.emailVerifiedAt]: profile.email_verified_at,
+      [PROFILE_PROPERTIES.locale]: profile.locale,
       [PROFILE_PROPERTIES.spokenLanguages]: [...profile.spoken_languages].sort(),
-      [PROFILE_PROPERTIES.currency]: profile.currency,
+      [PROFILE_PROPERTIES.country]: country,
       // The location's canonical name, never the parent's locale's version of
       // it: a segment on "Espoo" must match every parent in Espoo, whichever
       // language they read the site in.
       [PROFILE_PROPERTIES.homeLocation]: profile.home_location?.name ?? null,
       [PROFILE_PROPERTIES.homeLocationId]: profile.home_location?.id ?? null,
-      [PROFILE_PROPERTIES.country]: country,
-      ...signupUtm,
+      [PROFILE_PROPERTIES.currency]: profile.currency,
+      ...firstUtm,
       [PROFILE_PROPERTIES.signupIntent]: attribution.signup_intent_kind,
       [PROFILE_PROPERTIES.signupIntentId]: attribution.signup_intent_id,
       [PROFILE_PROPERTIES.registrationMarketingAnswer]:
         attribution.registration_marketing_consent,
       [PROFILE_PROPERTIES.gamerCount]: gamers.length,
       [PROFILE_PROPERTIES.gamers]: gamers.map((gamer) => ({
-        [GAMER_KEYS.firstName]: gamer.first_name,
         [GAMER_KEYS.birthYear]: gamer.birth_year,
-        [GAMER_KEYS.birthMonth]: gamer.birth_month,
         [GAMER_KEYS.gender]: gamer.gender,
-        [GAMER_KEYS.minecraft]: gamer.minecraft,
-        [GAMER_KEYS.roblox]: gamer.roblox,
       })),
-      [PROFILE_PROPERTIES.gamerBirthYears]: distinctSorted(gamers.map((g) => g.birth_year)),
-      [PROFILE_PROPERTIES.gamerGenders]: distinctSorted(
-        gamers.flatMap((g) => (g.gender === null ? [] : [g.gender])),
-      ),
       [PROFILE_PROPERTIES.linkedGameAccounts]: [
         ...(gamers.some((g) => g.minecraft) ? ["minecraft"] : []),
         ...(gamers.some((g) => g.roblox) ? ["roblox"] : []),
       ],
-      [PROFILE_PROPERTIES.games]: distinctSorted(participations.map((p) => p.product.topic)),
-      [PROFILE_PROPERTIES.activeProducts]: namesIn("active"),
-      [PROFILE_PROPERTIES.activeProductTypes]: distinctSorted(
-        participations.filter((p) => p.state === "active").map((p) => p.product.product_type),
+      [PROFILE_PROPERTIES.firstPaymentAt]: payments.first_at,
+      [PROFILE_PROPERTIES.lastPaymentAt]: payments.last_at,
+      ...totalPaid,
+      [PROFILE_PROPERTIES.purchasedProductTypes]: distinctSorted(
+        paid.map((p) => p.product.product_type),
       ),
-      [PROFILE_PROPERTIES.pastProducts]: namesIn("past"),
-      [PROFILE_PROPERTIES.waitlistedProducts]: namesIn("waitlisted"),
-      [PROFILE_PROPERTIES.subscriptionStatus]:
-        SUBSCRIPTION_STATUS_ORDER.find((status) => statuses.has(status)) ?? null,
-      [PROFILE_PROPERTIES.subscriptionRenews]: renewals.at(0) ?? null,
-      [PROFILE_PROPERTIES.paymentCount]: payments.count,
-      [PROFILE_PROPERTIES.firstPayment]: payments.first_at,
-      [PROFILE_PROPERTIES.lastPayment]: payments.last_at,
-      ...lifetimeSpend,
+      [PROFILE_PROPERTIES.purchasedTopics]: distinctSorted(paid.map((p) => p.product.topic)),
+      [PROFILE_PROPERTIES.activeUntil]: activeUntil(snapshot),
+      [PROFILE_PROPERTIES.waitlistedProducts]: distinctSorted(
+        participations
+          .filter((p) => p.status === "waitlisted")
+          .map((p) => productName(p.product, locale))
+          .filter((name): name is string => name !== null),
+      ),
     },
   };
+}
+
+/**
+ * The production lists this parent belongs to: `SV Account` always, `SV Club`
+ * for a paid consumer club seat, `SV Camp` for a paid camp seat, and
+ * `SV Municipal club` for any municipality club seat. The sync only ever adds,
+ * so a seat that has since ended keeps its list.
+ */
+export function klaviyoListsFor(snapshot: KlaviyoParentSnapshot): KlaviyoList[] {
+  const paidTypes = new Set(paidSeats(snapshot).map((p) => p.product.product_type));
+  const heldTypes = new Set(heldSeats(snapshot).map((p) => p.product.product_type));
+  return [
+    "account",
+    ...(paidTypes.has("consumer_club") ? (["club"] as const) : []),
+    ...(paidTypes.has("camp") ? (["camp"] as const) : []),
+    ...(heldTypes.has("municipality_club") ? (["municipalClub"] as const) : []),
+  ];
 }
 
 // ---------------------------------------------------------------- events
@@ -291,18 +304,16 @@ function productProperties(
   locale: SupportedLocale,
 ): KlaviyoProperties {
   return {
-    [EVENT_PROPERTIES.product]: product === null ? null : productName(product, locale),
     [EVENT_PROPERTIES.productId]: product?.id ?? null,
+    [EVENT_PROPERTIES.productName]: product === null ? null : productName(product, locale),
     [EVENT_PROPERTIES.productType]: product?.product_type ?? null,
     [EVENT_PROPERTIES.topic]: product?.topic ?? null,
-    [EVENT_PROPERTIES.startDate]: product?.start_date ?? null,
-    [EVENT_PROPERTIES.endDate]: product?.end_date ?? null,
   };
 }
 
 /**
- * The Klaviyo event an event row makes, worded for the parent it happened to
- * — product names in their locale, the gamer by first name.
+ * The Klaviyo event an event row makes, worded for the parent it happened to:
+ * product names in their locale.
  */
 export function klaviyoEventFor(
   row: KlaviyoEventRow,
@@ -318,41 +329,24 @@ export function klaviyoEventFor(
   switch (row.kind) {
     case "account_created":
       return { ...base, properties: {} };
-    case "enrolled":
     case "waitlisted":
-    case "seat_offered": {
-      const gamer = snapshot.gamers.find((g) => g.id === row.properties.participant_id);
+    case "seat_offered":
+      return { ...base, properties: productProperties(row.properties.product, locale) };
+    case "purchase":
       return {
         ...base,
         properties: {
           ...productProperties(row.properties.product, locale),
-          [EVENT_PROPERTIES.status]: row.properties.status,
-          [EVENT_PROPERTIES.gamerFirstName]: gamer?.first_name ?? null,
+          [EVENT_PROPERTIES.firstPurchase]: row.properties.first_purchase,
         },
       };
-    }
-    case "payment": {
-      const amount = row.properties.amount_cents / 100;
-      const currency = row.properties.currency.toUpperCase();
-      return {
-        ...base,
-        properties: {
-          ...productProperties(row.properties.product, locale),
-          [EVENT_PROPERTIES.amount]: amount,
-          [EVENT_PROPERTIES.currency]: currency,
-          [EVENT_PROPERTIES.purpose]: row.properties.purpose,
-        },
-        value: { amount, currency },
-      };
-    }
     case "subscription_cancelled":
       return {
         ...base,
         properties: {
           ...productProperties(row.properties.product, locale),
           [EVENT_PROPERTIES.status]: row.properties.status,
-          [EVENT_PROPERTIES.ends]: row.properties.current_period_end,
-          [EVENT_PROPERTIES.currency]: row.properties.currency.toUpperCase(),
+          [EVENT_PROPERTIES.endsAt]: row.properties.current_period_end,
         },
       };
   }

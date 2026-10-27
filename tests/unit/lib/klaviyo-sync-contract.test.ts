@@ -2,6 +2,7 @@ import { afterEach, describe, expect, it, vi } from "vitest";
 import {
   EVENT_METRICS,
   klaviyoEventFor,
+  klaviyoListsFor,
   klaviyoProfileFor,
   newsletterProperties,
   subscribesOnSend,
@@ -23,7 +24,6 @@ import type {
  */
 
 const PARENT = "6f2b8a7c-0d3e-4f51-9a6b-2c4d8e1f3a57";
-const GAMER = "b1d4e7a2-5c38-4f69-8e0a-7d2c5b9f1e43";
 
 const CLUB: KlaviyoProduct = {
   id: "0c8e5d1a-7b42-4e93-a6f0-3d9b2c7e8f14",
@@ -33,6 +33,7 @@ const CLUB: KlaviyoProduct = {
   ],
   topic: "minecraft_java",
   product_type: "consumer_club",
+  billing_mode: "paid",
   start_date: "2026-09-01",
   end_date: "2027-05-31",
   timezone: "Europe/Helsinki",
@@ -46,6 +47,25 @@ const CAMP: KlaviyoProduct = {
   product_type: "camp",
   start_date: "2026-06-01",
   end_date: "2026-06-05",
+};
+
+const EVENT: KlaviyoProduct = {
+  ...CAMP,
+  id: "2f6a9d3e-8c14-4b70-a5e1-6d0b3c8f7a29",
+  names: [{ locale: "en", name: "Fortnite Event" }],
+  topic: "fortnite",
+  product_type: "event",
+  start_date: "2026-12-12",
+  end_date: null,
+};
+
+const MUNICIPAL: KlaviyoProduct = {
+  ...CLUB,
+  id: "7d1e4b8a-3c62-4f95-9a0d-5e8b2c6f1a33",
+  names: [{ locale: "en", name: "Vantaa Club" }],
+  topic: "digital_safety",
+  product_type: "municipality_club",
+  billing_mode: "external_contract",
 };
 
 const FULL: KlaviyoParentSnapshot = {
@@ -76,65 +96,41 @@ const FULL: KlaviyoParentSnapshot = {
     signup_intent_id: CLUB.id,
     registration_marketing_consent: true,
   },
-  gamers: [
-    {
-      id: GAMER,
-      first_name: "Eetu",
-      birth_year: 2016,
-      birth_month: 4,
-      gender: "boy",
-      minecraft: true,
-      roblox: false,
-    },
-  ],
+  gamers: [{ birth_year: 2016, gender: "boy", minecraft: true, roblox: false }],
   participations: [
-    {
-      id: "p1",
-      participant_id: GAMER,
-      status: "active",
-      state: "active",
-      signed_up_at: "2026-08-02T10:00:00+00:00",
-      waitlisted_at: null,
-      seat_offer_sent_at: null,
-      product: CLUB,
-    },
-    {
-      id: "p2",
-      participant_id: GAMER,
-      status: "completed",
-      state: "past",
-      signed_up_at: "2026-05-02T10:00:00+00:00",
-      waitlisted_at: null,
-      seat_offer_sent_at: null,
-      product: CAMP,
-    },
-    {
-      id: "p3",
-      participant_id: GAMER,
-      status: "waitlisted",
-      state: "waitlisted",
-      signed_up_at: "2026-09-02T10:00:00+00:00",
-      waitlisted_at: "2026-09-02T10:00:00+00:00",
-      seat_offer_sent_at: null,
-      product: { ...CAMP, id: "2f6a9d3e-8c14-4b70-a5e1-6d0b3c8f7a29", names: [{ locale: "en", name: "Fortnite Event" }], topic: "fortnite", product_type: "event" },
-    },
+    { id: "p1", status: "active", product: CLUB },
+    { id: "p2", status: "completed", product: CAMP },
+    { id: "p3", status: "waitlisted", product: EVENT },
+    { id: "p4", status: "active", product: MUNICIPAL },
   ],
   subscriptions: [
-    {
-      id: "s1",
-      status: "active",
-      current_period_end: "2026-11-02T10:00:00+00:00",
-      currency: "eur",
-      participation_id: "p1",
-      created_at: "2026-08-02T10:00:00+00:00",
-    },
+    // 23:30 UTC is already the next day in Helsinki.
+    { participation_id: "p1", current_period_end: "2026-11-02T23:30:00+00:00" },
   ],
   payments: {
-    count: 3,
     first_at: "2026-05-02T10:00:00+00:00",
     last_at: "2026-10-02T10:00:00+00:00",
     lifetime_cents: { eur: 15_900 },
   },
+};
+
+const EMPTY: KlaviyoParentSnapshot = {
+  ...FULL,
+  profile: { ...FULL.profile, phone: null, locale: null, home_location: null },
+  attribution: {
+    utm_source: null,
+    utm_medium: null,
+    utm_campaign: null,
+    utm_content: null,
+    utm_term: null,
+    signup_intent_kind: null,
+    signup_intent_id: null,
+    registration_marketing_consent: null,
+  },
+  gamers: [],
+  participations: [],
+  subscriptions: [],
+  payments: { first_at: null, last_at: null, lifetime_cents: {} },
 };
 
 /** Each property's value type, so the snapshot pins names and shapes, not values. */
@@ -162,39 +158,33 @@ describe("the profile", () => {
   it("names every property and its value type", () => {
     expect(shapes(klaviyoProfileFor(FULL).properties)).toMatchInlineSnapshot(`
       {
-        "Sogverse Account": "boolean",
-        "Sogverse Account Created": "string",
-        "Sogverse Active Product Types": "array<string>",
-        "Sogverse Active Products": "array<string>",
-        "Sogverse Country": "string",
-        "Sogverse Currency": "string",
-        "Sogverse Email Verified": "string",
-        "Sogverse Environment": "string",
-        "Sogverse First Payment": "string",
-        "Sogverse Gamer Birth Years": "array<number>",
-        "Sogverse Gamer Count": "number",
-        "Sogverse Gamer Genders": "array<string>",
-        "Sogverse Gamers": "array<{"First Name":"string","Birth Year":"number","Birth Month":"number","Gender":"string","Minecraft":"boolean","Roblox":"boolean"}>",
-        "Sogverse Games": "array<string>",
-        "Sogverse Home Location": "string",
-        "Sogverse Home Location Id": "string",
-        "Sogverse Last Payment": "string",
-        "Sogverse Lifetime Spend EUR": "number",
-        "Sogverse Linked Game Accounts": "array<string>",
-        "Sogverse Past Products": "array<string>",
-        "Sogverse Payment Count": "number",
-        "Sogverse Registration Marketing Answer": "boolean",
-        "Sogverse Signup Intent": "string",
-        "Sogverse Signup Intent Id": "string",
-        "Sogverse Signup UTM Campaign": "string",
-        "Sogverse Signup UTM Content": "string",
-        "Sogverse Signup UTM Medium": "string",
-        "Sogverse Signup UTM Source": "string",
-        "Sogverse Signup UTM Term": "string",
-        "Sogverse Spoken Languages": "array<string>",
-        "Sogverse Subscription Renews": "string",
-        "Sogverse Subscription Status": "string",
-        "Sogverse Waitlisted Products": "array<string>",
+        "sog_account_created_at": "string",
+        "sog_active_until": "string",
+        "sog_country": "string",
+        "sog_currency": "string",
+        "sog_email_verified_at": "string",
+        "sog_env": "string",
+        "sog_first_payment_at": "string",
+        "sog_first_utm_campaign": "string",
+        "sog_first_utm_content": "string",
+        "sog_first_utm_medium": "string",
+        "sog_first_utm_source": "string",
+        "sog_first_utm_term": "string",
+        "sog_gamer_count": "number",
+        "sog_gamers": "array<{"birth_year":"number","gender":"string"}>",
+        "sog_home_location": "string",
+        "sog_home_location_id": "string",
+        "sog_last_payment_at": "string",
+        "sog_linked_game_accounts": "array<string>",
+        "sog_locale": "string",
+        "sog_purchased_product_types": "array<string>",
+        "sog_purchased_topics": "array<string>",
+        "sog_registration_marketing_answer": "boolean",
+        "sog_signup_intent": "string",
+        "sog_signup_intent_id": "string",
+        "sog_spoken_languages": "array<string>",
+        "sog_total_paid_eur": "number",
+        "sog_waitlisted_products": "array<string>",
       }
     `);
   });
@@ -213,61 +203,71 @@ describe("the profile", () => {
     });
   });
 
-  it("says what it holds in the parent's locale, as dates and lists", () => {
+  it("counts only paid seats as purchases, and runs to the latest paid seat's end", () => {
     vi.stubEnv("VERCEL_ENV", "production");
     const { properties } = klaviyoProfileFor(FULL);
     expect(properties).toMatchObject({
-      "Sogverse Account": true,
-      "Sogverse Environment": "production",
-      "Sogverse Active Products": ["Minecraft-kerho Espoo"],
-      "Sogverse Past Products": ["Roblox Summer Camp"],
-      "Sogverse Games": ["fortnite", "minecraft_java", "roblox_studio"],
-      "Sogverse Waitlisted Products": ["Fortnite Event"],
-      "Sogverse Subscription Status": "active",
-      "Sogverse Subscription Renews": "2026-11-02T10:00:00+00:00",
-      "Sogverse Lifetime Spend EUR": 159,
-      "Sogverse Registration Marketing Answer": true,
+      sog_env: "production",
+      sog_locale: "fi",
+      sog_gamers: [{ birth_year: 2016, gender: "boy" }],
+      // The municipality's contracted seat and the waitlisted event are no purchase.
+      sog_purchased_product_types: ["camp", "consumer_club"],
+      sog_purchased_topics: ["minecraft_java", "roblox_studio"],
+      // The club's paid period, as a Helsinki date; the camp ended in June.
+      sog_active_until: "2026-11-03",
+      sog_waitlisted_products: ["Fortnite Event"],
+      sog_total_paid_eur: 159,
+      sog_registration_marketing_answer: true,
     });
+  });
+
+  it("runs an event without an end date to its first day", () => {
+    const { properties } = klaviyoProfileFor({
+      ...FULL,
+      participations: [{ id: "p3", status: "active", product: EVENT }],
+    });
+    expect(properties.sog_active_until).toBe("2026-12-12");
   });
 
   it("is staging everywhere off production", () => {
     vi.stubEnv("VERCEL_ENV", "preview");
-    expect(klaviyoProfileFor(FULL).properties["Sogverse Environment"]).toBe("staging");
+    expect(klaviyoProfileFor(FULL).properties.sog_env).toBe("staging");
   });
 
   it("sends the same names with nothing to say, clearing what Klaviyo held", () => {
-    const empty: KlaviyoParentSnapshot = {
-      ...FULL,
-      profile: { ...FULL.profile, phone: null, locale: null, home_location: null },
-      attribution: {
-        utm_source: null,
-        utm_medium: null,
-        utm_campaign: null,
-        utm_content: null,
-        utm_term: null,
-        signup_intent_kind: null,
-        signup_intent_id: null,
-        registration_marketing_consent: null,
-      },
-      gamers: [],
-      participations: [],
-      subscriptions: [],
-      payments: { count: 0, first_at: null, last_at: null, lifetime_cents: {} },
-    };
-    const profile = klaviyoProfileFor(empty);
+    const profile = klaviyoProfileFor(EMPTY);
     expect(Object.keys(profile.properties)).toEqual(
       Object.keys(klaviyoProfileFor(FULL).properties),
     );
     expect(profile.phoneNumber).toBeNull();
     expect(profile.country).toBeNull();
     expect(profile).not.toHaveProperty("locale");
-    expect(profile.properties["Sogverse Subscription Status"]).toBeNull();
-    expect(profile.properties["Sogverse Lifetime Spend EUR"]).toBe(0);
+    expect(profile.properties.sog_active_until).toBeNull();
+    expect(profile.properties.sog_total_paid_eur).toBe(0);
   });
 
   it("clears a stored number Klaviyo would refuse", () => {
     const profile = klaviyoProfileFor({ ...FULL, profile: { ...FULL.profile, phone: "0401234" } });
     expect(profile.phoneNumber).toBeNull();
+  });
+});
+
+describe("the lists", () => {
+  it("puts every parent on the account list, and a seat's kind on its own", () => {
+    expect(klaviyoListsFor(FULL)).toEqual(["account", "club", "camp", "municipalClub"]);
+    expect(klaviyoListsFor(EMPTY)).toEqual(["account"]);
+  });
+
+  it("counts neither a free seat nor a waitlisted one", () => {
+    expect(
+      klaviyoListsFor({
+        ...FULL,
+        participations: [
+          { id: "p1", status: "active", product: { ...CLUB, billing_mode: "free" } },
+          { id: "p2", status: "waitlisted", product: CAMP },
+        ],
+      }),
+    ).toEqual(["account"]);
   });
 });
 
@@ -286,33 +286,21 @@ describe("the events", () => {
     },
     {
       ...base,
-      kind: "enrolled",
-      unique_id: "enrolled:p1",
-      properties: { source_id: "p1", product: CLUB, status: "active", participant_id: GAMER },
+      kind: "purchase",
+      unique_id: "purchase:p1",
+      properties: { source_id: "p1", product: CLUB, first_purchase: true },
     },
     {
       ...base,
       kind: "waitlisted",
-      unique_id: "waitlisted:p1",
-      properties: { source_id: "p1", product: CLUB, status: "waitlisted", participant_id: GAMER },
+      unique_id: "waitlisted:p3",
+      properties: { source_id: "p3", product: EVENT },
     },
     {
       ...base,
       kind: "seat_offered",
-      unique_id: "seat_offered:p1",
-      properties: { source_id: "p1", product: CLUB, status: "waitlisted", participant_id: PARENT },
-    },
-    {
-      ...base,
-      kind: "payment",
-      unique_id: "payment:pay1",
-      properties: {
-        source_id: "pay1",
-        product: CLUB,
-        amount_cents: 5_300,
-        currency: "eur",
-        purpose: "subscription_invoice",
-      },
+      unique_id: "seat_offered:p3",
+      properties: { source_id: "p3", product: EVENT },
     },
     {
       ...base,
@@ -323,7 +311,6 @@ describe("the events", () => {
         product: CLUB,
         status: "canceling",
         current_period_end: "2026-11-02T10:00:00+00:00",
-        currency: "eur",
       },
     },
   ];
@@ -331,12 +318,11 @@ describe("the events", () => {
   it("names every metric", () => {
     expect(EVENT_METRICS).toMatchInlineSnapshot(`
       {
-        "account_created": "Sogverse Account Created",
-        "enrolled": "Sogverse Enrolled",
-        "payment": "Sogverse Payment",
-        "seat_offered": "Sogverse Seat Offered",
-        "subscription_cancelled": "Sogverse Subscription Cancelled",
-        "waitlisted": "Sogverse Waitlisted",
+        "account_created": "SV Account Created",
+        "purchase": "SV Purchase",
+        "seat_offered": "SV Seat Offered",
+        "subscription_cancelled": "SV Subscription Cancelled",
+        "waitlisted": "SV Waitlisted",
       }
     `);
   });
@@ -346,88 +332,61 @@ describe("the events", () => {
       Object.fromEntries(
         rows.map((row) => {
           const event = klaviyoEventFor(row, FULL);
-          return [event.metric, { ...shapes(event.properties), value: shapeOf(event.value ?? null) }];
+          return [event.metric, shapes(event.properties)];
         }),
       ),
     ).toMatchInlineSnapshot(`
       {
-        "Sogverse Account Created": {
-          "value": "null",
+        "SV Account Created": {},
+        "SV Purchase": {
+          "first_purchase": "boolean",
+          "product_id": "string",
+          "product_name": "string",
+          "product_type": "string",
+          "topic": "string",
         },
-        "Sogverse Enrolled": {
-          "End Date": "string",
-          "Gamer First Name": "string",
-          "Product": "string",
-          "Product Id": "string",
-          "Product Type": "string",
-          "Start Date": "string",
-          "Status": "string",
-          "Topic": "string",
-          "value": "null",
+        "SV Seat Offered": {
+          "product_id": "string",
+          "product_name": "string",
+          "product_type": "string",
+          "topic": "string",
         },
-        "Sogverse Payment": {
-          "Amount": "number",
-          "Currency": "string",
-          "End Date": "string",
-          "Product": "string",
-          "Product Id": "string",
-          "Product Type": "string",
-          "Purpose": "string",
-          "Start Date": "string",
-          "Topic": "string",
-          "value": "object",
+        "SV Subscription Cancelled": {
+          "ends_at": "string",
+          "product_id": "string",
+          "product_name": "string",
+          "product_type": "string",
+          "status": "string",
+          "topic": "string",
         },
-        "Sogverse Seat Offered": {
-          "End Date": "string",
-          "Gamer First Name": "null",
-          "Product": "string",
-          "Product Id": "string",
-          "Product Type": "string",
-          "Start Date": "string",
-          "Status": "string",
-          "Topic": "string",
-          "value": "null",
-        },
-        "Sogverse Subscription Cancelled": {
-          "Currency": "string",
-          "End Date": "string",
-          "Ends": "string",
-          "Product": "string",
-          "Product Id": "string",
-          "Product Type": "string",
-          "Start Date": "string",
-          "Status": "string",
-          "Topic": "string",
-          "value": "null",
-        },
-        "Sogverse Waitlisted": {
-          "End Date": "string",
-          "Gamer First Name": "string",
-          "Product": "string",
-          "Product Id": "string",
-          "Product Type": "string",
-          "Start Date": "string",
-          "Status": "string",
-          "Topic": "string",
-          "value": "null",
+        "SV Waitlisted": {
+          "product_id": "string",
+          "product_name": "string",
+          "product_type": "string",
+          "topic": "string",
         },
       }
     `);
   });
 
-  it("keeps the row's unique id and time, names the gamer and values a payment", () => {
-    const [, enrolled, , offered, payment] = rows.map((row) => klaviyoEventFor(row, FULL));
-    expect(enrolled).toMatchObject({
-      uniqueId: "enrolled:p1",
+  it("keeps the row's unique id and time, and names the product in the parent's locale", () => {
+    const [, purchase] = rows.map((row) => klaviyoEventFor(row, FULL));
+    expect(purchase).toEqual({
+      metric: "SV Purchase",
+      uniqueId: "purchase:p1",
       time: "2026-10-01T09:00:00+00:00",
-      properties: { Product: "Minecraft-kerho Espoo", "Gamer First Name": "Eetu" },
+      properties: {
+        product_id: CLUB.id,
+        product_name: "Minecraft-kerho Espoo",
+        product_type: "consumer_club",
+        topic: "minecraft_java",
+        first_purchase: true,
+      },
     });
-    expect(offered.properties["Gamer First Name"]).toBeNull();
-    expect(payment.value).toEqual({ amount: 53, currency: "EUR" });
   });
 
   it("subscribes only an account created with the box ticked", () => {
-    const [created, enrolled] = rows;
+    const [created, purchase] = rows;
     const answered = (answer: boolean | null): KlaviyoParentSnapshot => ({
       ...FULL,
       attribution: { ...FULL.attribution, registration_marketing_consent: answer },
@@ -435,7 +394,7 @@ describe("the events", () => {
     expect(subscribesOnSend(created, answered(true))).toBe(true);
     expect(subscribesOnSend(created, answered(false))).toBe(false);
     expect(subscribesOnSend(created, answered(null))).toBe(false);
-    expect(subscribesOnSend(enrolled, answered(true))).toBe(false);
+    expect(subscribesOnSend(purchase, answered(true))).toBe(false);
   });
 });
 
@@ -445,9 +404,9 @@ describe("the newsletter", () => {
       newsletterProperties("page-id", { utm_source: "meta", utm_term: "roblox" }),
     ).toMatchInlineSnapshot(`
       {
-        "Sogverse Newsletter Page": "page-id",
-        "Sogverse Newsletter UTM Source": "meta",
-        "Sogverse Newsletter UTM Term": "roblox",
+        "sog_newsletter_page": "page-id",
+        "sog_newsletter_utm_source": "meta",
+        "sog_newsletter_utm_term": "roblox",
       }
     `);
   });

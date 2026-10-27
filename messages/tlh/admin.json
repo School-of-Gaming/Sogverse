@@ -1463,7 +1463,6 @@
   "users": {
     "title": "lo’wI’pu’",
     "manageAccounts": "lo’wI’ accountmey je Qu’mey tI’ang",
-    "klaviyoParked": "{count, plural, one {# QIn vavnI’ Klaviyo-Daq ngeHlaHbe’. Qagh!} other {# QInmey vavnI’ Klaviyo-Daq ngeHlaHbe’. Qagh!}}",
     "searchPlaceholder": "pong, QIn, ghogh mI’, qoj Quj pong yInej…",
     "searchAriaLabel": "lo’wI’pu’ yInej",
     "roleFilterLabel": "Qu’",

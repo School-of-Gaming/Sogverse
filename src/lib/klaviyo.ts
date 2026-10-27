@@ -1,16 +1,14 @@
 import "server-only";
 
 /*
- * **Klaviyo's API, the one client.** Two callers: a landing page's email
- * sign-up, which writes a profile and a list subscription, and the parent sync
- * (`src/lib/klaviyo-sync/`), which keeps every parent's profile and events up
- * to date and deletes the profile of a parent who is gone. The sync's only
- * read is finding a profile's Klaviyo id by its external id, which it needs to
- * update or delete the profile it wrote; the consent handover script
- * (`scripts/klaviyo-consent-handover/`) also reads a profile's email marketing
- * standing, so it never subscribes anyone Klaviyo has unsubscribed, and
- * unsubscribes a parent whose handed-over consent was revoked since. Every
- * write is idempotent, so a caller that failed part-way can simply be retried.
+ * **Klaviyo's API, the one client.** A landing page's email sign-up writes a
+ * profile and a list subscription; the parent sync (`src/lib/klaviyo-sync/`)
+ * keeps every parent's profile, list memberships and events up to date and
+ * deletes the profile of a parent who is gone; a parent's own settings read and
+ * change their email marketing standing. The sync's only read is finding a
+ * profile's Klaviyo id by its external id, which it needs to update or delete
+ * the profile it wrote. Every write is idempotent, so a caller that failed
+ * part-way can simply be retried.
  *
  * The private key's scopes, all of them needed: Profiles read and write,
  * Lists write, Subscriptions write, Events write, Data Privacy write.
@@ -269,6 +267,17 @@ export async function requestKlaviyoProfileDeletion(profileId: string): Promise<
   });
 }
 
+/**
+ * Add a profile to a list, by both their Klaviyo ids (204). Membership only:
+ * it subscribes nobody, and adding a profile already on the list is a no-op,
+ * so it is safe to repeat on every sync.
+ */
+export async function addKlaviyoProfileToList(listId: string, profileId: string): Promise<void> {
+  await klaviyoCall("POST", `/lists/${encodeURIComponent(listId)}/relationships/profiles`, {
+    data: [{ type: "profile", id: profileId }],
+  });
+}
+
 export interface KlaviyoEvent {
   /** The metric's name, which Klaviyo creates on first use. */
   metric: string;
@@ -277,8 +286,6 @@ export interface KlaviyoEvent {
   /** When it happened, ISO 8601. */
   time: string;
   properties: Readonly<Record<string, KlaviyoPropertyValue>>;
-  /** The event's monetary value in major units, with its ISO currency code. */
-  value?: { amount: number; currency: string };
 }
 
 /**
@@ -296,9 +303,6 @@ export async function createKlaviyoEvent(
         properties: event.properties,
         time: event.time,
         unique_id: event.uniqueId,
-        ...(event.value === undefined
-          ? {}
-          : { value: event.value.amount, value_currency: event.value.currency }),
         metric: { data: { type: "metric", attributes: { name: event.metric } } },
         profile: {
           data: {
@@ -317,12 +321,6 @@ interface KlaviyoMarketingSubscription {
   listId?: string;
   /** Recorded on the consent record: where the person gave it. */
   customSource: string;
-  /**
-   * When the person consented, ISO 8601 and in the past — given only for a
-   * consent collected before it reached Klaviyo. It makes the call a
-   * historical import, which subscribes at once with no confirmation mail.
-   */
-  consentedAt?: string;
 }
 
 /**
@@ -331,19 +329,16 @@ interface KlaviyoMarketingSubscription {
  * is subscribed at once with no confirmation mail, and an address that had
  * unsubscribed is subscribed again: the call lifts its suppression. With no
  * list, the Klaviyo account's default opt-in setting decides whether a
- * confirmation mail goes — unless `consentedAt` is given, which subscribes at
- * once.
+ * confirmation mail goes.
  */
 export async function subscribeKlaviyoProfile(
   subscription: KlaviyoMarketingSubscription,
 ): Promise<void> {
-  const { consentedAt } = subscription;
   await klaviyoCall("POST", "/profile-subscription-bulk-create-jobs", {
     data: {
       type: "profile-subscription-bulk-create-job",
       attributes: {
         custom_source: subscription.customSource,
-        ...(consentedAt === undefined ? {} : { historical_import: true }),
         profiles: {
           data: [
             {
@@ -351,12 +346,7 @@ export async function subscribeKlaviyoProfile(
               attributes: {
                 email: subscription.email,
                 subscriptions: {
-                  email: {
-                    marketing: {
-                      consent: "SUBSCRIBED",
-                      ...(consentedAt === undefined ? {} : { consented_at: consentedAt }),
-                    },
-                  },
+                  email: { marketing: { consent: "SUBSCRIBED" } },
                 },
               },
             },

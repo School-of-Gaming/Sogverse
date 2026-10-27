@@ -47,7 +47,7 @@ ALTER TABLE ONLY public.gamer_profiles
 -- Name: gamer_profiles gamer_profiles_klaviyo; Type: TRIGGER; Schema: public; Owner: -
 --
 
-CREATE TRIGGER gamer_profiles_klaviyo AFTER UPDATE OF gender, birth_year, birth_month ON public.gamer_profiles FOR EACH ROW WHEN ((((old.gender IS DISTINCT FROM new.gender) OR (old.birth_year IS DISTINCT FROM new.birth_year)) OR (old.birth_month IS DISTINCT FROM new.birth_month))) EXECUTE FUNCTION public.klaviyo_gamer_fact_changed();
+CREATE TRIGGER gamer_profiles_klaviyo AFTER UPDATE OF gender, birth_year ON public.gamer_profiles FOR EACH ROW WHEN (((old.gender IS DISTINCT FROM new.gender) OR (old.birth_year IS DISTINCT FROM new.birth_year))) EXECUTE FUNCTION public.klaviyo_gamer_fact_changed();
 
 
 --

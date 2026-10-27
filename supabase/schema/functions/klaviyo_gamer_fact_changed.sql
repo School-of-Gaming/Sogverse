@@ -21,7 +21,7 @@ $$;
 -- Name: FUNCTION klaviyo_gamer_fact_changed(); Type: COMMENT; Schema: public; Owner: -
 --
 
-COMMENT ON FUNCTION public.klaviyo_gamer_fact_changed() IS 'Trigger on gamer_profiles (gender and birth date), minecraft_accounts and roblox_accounts (a game linked or unlinked): files each of the gamer''s parents in the Klaviyo profile outbox. Granted to nobody.';
+COMMENT ON FUNCTION public.klaviyo_gamer_fact_changed() IS 'Trigger on gamer_profiles (gender and birth year), minecraft_accounts and roblox_accounts (a game linked or unlinked): files each of the gamer''s parents in the Klaviyo profile outbox. Granted to nobody.';
 
 
 --

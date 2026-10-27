@@ -15,19 +15,21 @@
 --    sync can delete their Klaviyo profile.
 -- 2. An EVENT OUTBOX, `klaviyo_event_outbox`: one row per thing that happened
 --    to a parent that Klaviyo should hear about as an event — the account
---    opened, a seat taken, a waitlist joined, a seat offered, a payment, a
---    subscription cancelled — keyed by (kind, source row), with the facts of
---    the moment recorded beside it. `get_klaviyo_events` adds the product.
+--    opened, a seat bought on a paid product, a waitlist joined, a seat
+--    offered, a subscription cancelled — keyed by (kind, source row), with the
+--    facts of the moment recorded beside it. `get_klaviyo_events` adds the
+--    product. Payments are no event: renewals reach Klaviyo through Stripe's
+--    own integration, and the profile carries the totals.
 -- 3. A KICK: the first enqueue in a transaction, into either outbox, asks
 --    pg_net to POST the app's Klaviyo sync route, whose URL and bearer secret
 --    live in Vault (`klaviyo_sync_url`, `klaviyo_sync_secret`). pg_net sends
 --    only after commit, and nothing is sent where Vault holds no URL — a local
 --    stack, CI — so there a write fills the outboxes and nothing more.
 -- 4. A LEASE the sync route works each outbox under, with the backoff and the
---    parking of the substitution notification outbox, and
---    `kick_klaviyo_sync_if_due` for an observation point to call. Nothing runs
---    on a clock. An event waits, unclaimed, while its parent still owes their
---    registration.
+--    parking of the substitution notification outbox. Nothing runs on a clock:
+--    a failed row waits for the next kick, which any write anywhere sends and
+--    which drains every row that is due. An event waits, unclaimed, while its
+--    parent still owes their registration.
 -- 5. Every existing registered parent is filed once, so the first sync after
 --    deploy brings Klaviyo up to date. No historical event is filed.
 
@@ -66,14 +68,13 @@ GRANT ALL ON TABLE public.klaviyo_profile_outbox TO service_role;
 
 CREATE TYPE public.klaviyo_event_kind AS ENUM (
   'account_created',
-  'enrolled',
+  'purchase',
   'waitlisted',
   'seat_offered',
-  'payment',
   'subscription_cancelled'
 );
 
-COMMENT ON TYPE public.klaviyo_event_kind IS 'What happened to a parent, as a Klaviyo event: account_created (they accepted the terms for the first time, which only a parent''s registration does), enrolled (a participation became active), waitlisted (a participation joined a waitlist), seat_offered (a waitlisted participation was offered a seat), payment (a payment was recorded, other than a refunded duplicate) and subscription_cancelled (a family subscription moved to canceling or cancelled). The sync sends each with the unique id `<kind>:<source id>`, so a retry, or the same transition happening twice, is never counted twice.';
+COMMENT ON TYPE public.klaviyo_event_kind IS 'What happened to a parent, as a Klaviyo event: account_created (they accepted the terms for the first time, which only a parent''s registration does), purchase (a participation on a paid product became active), waitlisted (a participation joined a waitlist), seat_offered (a waitlisted participation was offered a seat) and subscription_cancelled (a family subscription moved to canceling or cancelled). The sync sends each with the unique id `<kind>:<source id>`, so a retry, or the same transition happening twice, is never counted twice.';
 
 CREATE TABLE public.klaviyo_event_outbox (
     id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
@@ -100,11 +101,11 @@ CREATE INDEX klaviyo_event_outbox_customer_id_idx
 
 COMMENT ON TABLE public.klaviyo_event_outbox IS 'Things that happened to a parent that Klaviyo has not yet been told as events: one row per (kind, source row), filed by enqueue_klaviyo_event from the triggers that see them happen, and deleted by finish_klaviyo_event_job once sent. An event is a fact about a moment, so its row records that moment''s facts when it is filed and never changes; filing the same (kind, source) again while it waits does nothing, and Klaviyo''s unique id `<kind>:<source id>` absorbs one filed again after it was sent. No foreign keys: the source row may be gone by the time the event is sent (a cancelled seat), and the event still happened. A parent''s waiting events are deleted with the parent, because an event about somebody Klaviyo is about to forget is pointless. Leased, backed off and parked exactly as klaviyo_profile_outbox is. Service role only; RLS on with no policy.';
 COMMENT ON COLUMN public.klaviyo_event_outbox.id IS 'The outbox row''s own id, which claim_klaviyo_event_jobs hands out and get_klaviyo_events and finish_klaviyo_event_job take.';
-COMMENT ON COLUMN public.klaviyo_event_outbox.source_id IS 'The row the event is about: the parent''s profile id for account_created, a participation for enrolled, waitlisted and seat_offered, a payment for payment, a family subscription for subscription_cancelled.';
+COMMENT ON COLUMN public.klaviyo_event_outbox.source_id IS 'The row the event is about: the parent''s profile id for account_created, a participation for purchase, waitlisted and seat_offered, a family subscription for subscription_cancelled.';
 COMMENT ON COLUMN public.klaviyo_event_outbox.customer_id IS 'The parent the event happened to. Not a foreign key; the parent''s delete deletes the row.';
 COMMENT ON COLUMN public.klaviyo_event_outbox.product_id IS 'The product the event concerns, when one does — read when it was filed. Not a foreign key: a product deleted since leaves the event without one.';
-COMMENT ON COLUMN public.klaviyo_event_outbox.occurred_at IS 'When it happened, taken from the source row: the profile''s creation, the participation''s signup, waitlisting or seat offer, the payment''s record, the subscription''s update.';
-COMMENT ON COLUMN public.klaviyo_event_outbox.facts IS 'The facts of the moment, as the source row stood when the event was filed: the participation''s status; the payment''s amount_cents, currency and purpose; the subscription''s status and current_period_end. Empty for account_created.';
+COMMENT ON COLUMN public.klaviyo_event_outbox.occurred_at IS 'When it happened, taken from the source row: the profile''s creation, the participation''s activation, waitlisting or seat offer, the subscription''s update.';
+COMMENT ON COLUMN public.klaviyo_event_outbox.facts IS 'The facts of the moment, as they stood when the event was filed: for a purchase, first_purchase — whether the parent held no other seat on a paid product then; the subscription''s status and current_period_end. Empty for account_created, waitlisted and seat_offered.';
 
 ALTER TABLE public.klaviyo_event_outbox ENABLE ROW LEVEL SECURITY;
 
@@ -156,7 +157,7 @@ BEGIN
 END;
 $$;
 
-COMMENT ON FUNCTION public.kick_klaviyo_sync() IS 'Asks the app to drain the Klaviyo outboxes: queues a pg_net POST to the URL in the Vault secret klaviyo_sync_url, bearing the Vault secret klaviyo_sync_secret. pg_net sends it after the transaction commits and never if it rolls back. A no-op when either secret is missing — every local stack and CI — and it never raises: any failure is a WARNING, because a Klaviyo problem must never fail the write that caused it; the row stays due, and kick_klaviyo_sync_if_due kicks again. Granted to nobody.';
+COMMENT ON FUNCTION public.kick_klaviyo_sync() IS 'Asks the app to drain the Klaviyo outboxes: queues a pg_net POST to the URL in the Vault secret klaviyo_sync_url, bearing the Vault secret klaviyo_sync_secret. pg_net sends it after the transaction commits and never if it rolls back. A no-op when either secret is missing — every local stack and CI — and it never raises: any failure is a WARNING, because a Klaviyo problem must never fail the write that caused it; the row stays due, and the next write''s kick drains it with everything else due. Granted to nobody.';
 
 REVOKE ALL ON FUNCTION public.kick_klaviyo_sync() FROM PUBLIC;
 
@@ -362,30 +363,6 @@ CREATE TRIGGER profiles_klaviyo_parent_changed
   )
   EXECUTE FUNCTION public.klaviyo_parent_profile_changed();
 
--- profiles: a gamer's first name is on each of their parents' profiles.
-CREATE FUNCTION public.klaviyo_gamer_profile_changed() RETURNS trigger
-    LANGUAGE plpgsql SECURITY DEFINER
-    SET search_path TO ''
-    AS $$
-BEGIN
-  PERFORM public.enqueue_klaviyo_parents_of_gamer(NEW.id);
-  RETURN NULL;
-END;
-$$;
-
-COMMENT ON FUNCTION public.klaviyo_gamer_profile_changed() IS 'Trigger on profiles, after a gamer''s first name changes: files each of the gamer''s parents in the Klaviyo profile outbox. Granted to nobody.';
-
-REVOKE ALL ON FUNCTION public.klaviyo_gamer_profile_changed() FROM PUBLIC;
-
-CREATE TRIGGER profiles_klaviyo_gamer_changed
-  AFTER UPDATE OF first_name ON public.profiles
-  FOR EACH ROW
-  WHEN (
-    NEW.role = 'gamer'::public.user_role
-    AND OLD.first_name IS DISTINCT FROM NEW.first_name
-  )
-  EXECUTE FUNCTION public.klaviyo_gamer_profile_changed();
-
 -- profiles: a parent deleted. Filed whatever the snapshot will say — it will
 -- say nothing, which is what tells the sync to delete the Klaviyo profile —
 -- and their waiting events go with them.
@@ -497,17 +474,14 @@ BEGIN
 END;
 $$;
 
-COMMENT ON FUNCTION public.klaviyo_gamer_fact_changed() IS 'Trigger on gamer_profiles (gender and birth date), minecraft_accounts and roblox_accounts (a game linked or unlinked): files each of the gamer''s parents in the Klaviyo profile outbox. Granted to nobody.';
+COMMENT ON FUNCTION public.klaviyo_gamer_fact_changed() IS 'Trigger on gamer_profiles (gender and birth year), minecraft_accounts and roblox_accounts (a game linked or unlinked): files each of the gamer''s parents in the Klaviyo profile outbox. Granted to nobody.';
 
 REVOKE ALL ON FUNCTION public.klaviyo_gamer_fact_changed() FROM PUBLIC;
 
 CREATE TRIGGER gamer_profiles_klaviyo
-  AFTER UPDATE OF gender, birth_year, birth_month ON public.gamer_profiles
+  AFTER UPDATE OF gender, birth_year ON public.gamer_profiles
   FOR EACH ROW
-  WHEN (
-    (OLD.gender, OLD.birth_year, OLD.birth_month)
-      IS DISTINCT FROM (NEW.gender, NEW.birth_year, NEW.birth_month)
-  )
+  WHEN ((OLD.gender, OLD.birth_year) IS DISTINCT FROM (NEW.gender, NEW.birth_year))
   EXECUTE FUNCTION public.klaviyo_gamer_fact_changed();
 
 CREATE TRIGGER minecraft_accounts_klaviyo_written
@@ -550,14 +524,34 @@ BEGIN
   END IF;
 
   -- Each event is a status the participation ARRIVES at, so a write that
-  -- leaves the status where it was is not one.
+  -- leaves the status where it was is not one. Only a seat on a paid product
+  -- is a purchase: a free seat and a municipality's contracted one are not.
   IF NEW.status = 'active'::public.participation_status
-     AND v_old_status IS DISTINCT FROM NEW.status THEN
+     AND v_old_status IS DISTINCT FROM NEW.status
+     AND EXISTS (
+           SELECT 1
+             FROM public.products pr
+            WHERE pr.id = NEW.product_id
+              AND pr.billing_mode = 'paid'::public.billing_mode
+         ) THEN
     PERFORM public.enqueue_klaviyo_event(
-      'enrolled'::public.klaviyo_event_kind,
+      'purchase'::public.klaviyo_event_kind,
       NEW.id, NEW.customer_id, NEW.product_id,
       CASE WHEN TG_OP = 'INSERT' THEN NEW.signed_up_at ELSE now() END,
-      jsonb_build_object('status', NEW.status, 'participant_id', NEW.participant_id)
+      jsonb_build_object(
+        -- Of the seats the parent holds now: a cancelled seat is deleted, so a
+        -- family that left and came back buys a first seat again.
+        'first_purchase', NOT EXISTS (
+          SELECT 1
+            FROM public.participations other
+            JOIN public.products pr ON pr.id = other.product_id
+           WHERE other.customer_id = NEW.customer_id
+             AND other.id <> NEW.id
+             AND other.status IN ('active'::public.participation_status,
+                                  'completed'::public.participation_status)
+             AND pr.billing_mode = 'paid'::public.billing_mode
+        )
+      )
     );
   END IF;
 
@@ -566,8 +560,7 @@ BEGIN
     PERFORM public.enqueue_klaviyo_event(
       'waitlisted'::public.klaviyo_event_kind,
       NEW.id, NEW.customer_id, NEW.product_id,
-      COALESCE(NEW.waitlisted_at, now()),
-      jsonb_build_object('status', NEW.status, 'participant_id', NEW.participant_id)
+      COALESCE(NEW.waitlisted_at, now())
     );
   END IF;
 
@@ -576,8 +569,7 @@ BEGIN
     PERFORM public.enqueue_klaviyo_event(
       'seat_offered'::public.klaviyo_event_kind,
       NEW.id, NEW.customer_id, NEW.product_id,
-      NEW.seat_offer_sent_at,
-      jsonb_build_object('status', NEW.status, 'participant_id', NEW.participant_id)
+      NEW.seat_offer_sent_at
     );
   END IF;
 
@@ -585,7 +577,7 @@ BEGIN
 END;
 $$;
 
-COMMENT ON FUNCTION public.klaviyo_participation_changed() IS 'Trigger on participations, after an insert, a delete, or an update of status, product_id or seat_offer_sent_at that changes it: files the participation''s parent in the Klaviyo profile outbox, and files the events it shows — enrolled when it arrives at active (by insert or from the waitlist), waitlisted when it arrives at waitlisted, seat_offered when a seat offer is first stamped on it. Granted to nobody.';
+COMMENT ON FUNCTION public.klaviyo_participation_changed() IS 'Trigger on participations, after an insert, a delete, or an update of status, product_id or seat_offer_sent_at that changes it: files the participation''s parent in the Klaviyo profile outbox, and files the events it shows — purchase when it arrives at active (by insert or from the waitlist) on a product whose billing_mode is paid, with first_purchase saying whether the parent then held no other active or completed seat on a paid product; waitlisted when it arrives at waitlisted; seat_offered when a seat offer is first stamped on it. Granted to nobody.';
 
 REVOKE ALL ON FUNCTION public.klaviyo_participation_changed() FROM PUBLIC;
 
@@ -631,8 +623,7 @@ BEGIN
       NEW.updated_at,
       jsonb_build_object(
         'status',             NEW.status,
-        'current_period_end', NEW.current_period_end,
-        'currency',           NEW.currency
+        'current_period_end', NEW.current_period_end
       )
     );
   END IF;
@@ -657,76 +648,21 @@ CREATE TRIGGER family_subscriptions_klaviyo_changed
   )
   EXECUTE FUNCTION public.klaviyo_family_subscription_changed();
 
--- payments: the spend on the profile, and the payment event.
+-- payments: the totals on the profile. A payment is no event: renewals reach
+-- Klaviyo through Stripe's own integration.
 CREATE FUNCTION public.klaviyo_payment_recorded() RETURNS trigger
     LANGUAGE plpgsql SECURITY DEFINER
     SET search_path TO ''
     AS $$
-DECLARE
-  v_product_id uuid;
 BEGIN
   PERFORM public.enqueue_klaviyo_profiles(ARRAY[NEW.customer_id]);
-
-  -- A duplicate payment is refunded by hand, so it was never spend.
-  IF NEW.purpose = 'reservation_duplicate'::public.payment_purpose THEN
-    RETURN NULL;
-  END IF;
-
-  v_product_id := public.klaviyo_payment_product(NEW.metadata);
-
-  PERFORM public.enqueue_klaviyo_event(
-    'payment'::public.klaviyo_event_kind,
-    NEW.id, NEW.customer_id, v_product_id,
-    NEW.created_at,
-    jsonb_build_object(
-      'amount_cents', NEW.amount_cents,
-      'currency',     NEW.currency,
-      'purpose',      NEW.purpose
-    )
-  );
-
   RETURN NULL;
 END;
 $$;
 
-COMMENT ON FUNCTION public.klaviyo_payment_recorded() IS 'Trigger on payments, after every insert: files the parent in the Klaviyo profile outbox and, unless it is a refunded duplicate (reservation_duplicate), files the payment event with its amount, currency, purpose and product. Granted to nobody.';
+COMMENT ON FUNCTION public.klaviyo_payment_recorded() IS 'Trigger on payments, after every insert: files the parent in the Klaviyo profile outbox, whose snapshot carries their first and last payment and their totals. Granted to nobody.';
 
 REVOKE ALL ON FUNCTION public.klaviyo_payment_recorded() FROM PUBLIC;
-
-CREATE FUNCTION public.klaviyo_payment_product(p_metadata jsonb) RETURNS uuid
-    LANGUAGE plpgsql STABLE SECURITY DEFINER
-    SET search_path TO ''
-    AS $$
-DECLARE
-  v_product text;
-  v_subscription text;
-  v_product_id uuid;
-BEGIN
-  -- A first payment names its product in the metadata the webhook writes; a
-  -- renewal names its subscription, whose seat names the product. Anything
-  -- else names none.
-  v_product := p_metadata->>'productId';
-  IF v_product ~* '^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$' THEN
-    RETURN v_product::uuid;
-  END IF;
-
-  v_subscription := p_metadata->>'stripeSubscriptionId';
-  IF v_subscription IS NOT NULL THEN
-    SELECT part.product_id INTO v_product_id
-      FROM public.family_subscriptions fs
-      JOIN public.participations part ON part.id = fs.participation_id
-     WHERE fs.stripe_subscription_id = v_subscription
-     ORDER BY fs.created_at DESC
-     LIMIT 1;
-  END IF;
-
-  RETURN v_product_id;
-END;
-$$;
-
-COMMENT ON FUNCTION public.klaviyo_payment_product(p_metadata jsonb) IS 'The product a payment paid for, read from what the Stripe webhook records on it: the productId of a first payment, or the seat behind the stripeSubscriptionId of a renewal. NULL when it names neither. Granted to nobody.';
-
-REVOKE ALL ON FUNCTION public.klaviyo_payment_product(p_metadata jsonb) FROM PUBLIC;
 
 CREATE TRIGGER payments_klaviyo
   AFTER INSERT ON public.payments
@@ -750,16 +686,17 @@ BEGIN
 END;
 $$;
 
-COMMENT ON FUNCTION public.klaviyo_product_changed() IS 'Trigger on products (topic, type, dates, zone) and product_translations (a name written, changed or removed): files every parent holding a participation in the product in the Klaviyo profile outbox. Granted to nobody.';
+COMMENT ON FUNCTION public.klaviyo_product_changed() IS 'Trigger on products (topic, type, billing mode, dates, zone) and product_translations (a name written, changed or removed): files every parent holding a participation in the product in the Klaviyo profile outbox. Granted to nobody.';
 
 REVOKE ALL ON FUNCTION public.klaviyo_product_changed() FROM PUBLIC;
 
 CREATE TRIGGER products_klaviyo
-  AFTER UPDATE OF topic, product_type, start_date, end_date, timezone ON public.products
+  AFTER UPDATE OF topic, product_type, billing_mode, start_date, end_date, timezone ON public.products
   FOR EACH ROW
   WHEN (
-    (OLD.topic, OLD.product_type, OLD.start_date, OLD.end_date, OLD.timezone)
-      IS DISTINCT FROM (NEW.topic, NEW.product_type, NEW.start_date, NEW.end_date, NEW.timezone)
+    (OLD.topic, OLD.product_type, OLD.billing_mode, OLD.start_date, OLD.end_date, OLD.timezone)
+      IS DISTINCT FROM
+    (NEW.topic, NEW.product_type, NEW.billing_mode, NEW.start_date, NEW.end_date, NEW.timezone)
   )
   EXECUTE FUNCTION public.klaviyo_product_changed();
 
@@ -795,7 +732,7 @@ CREATE TRIGGER locations_klaviyo
   EXECUTE FUNCTION public.klaviyo_location_changed();
 
 -- ---------------------------------------------------------------------------
--- 4. The kick when a row is due, and the leases
+-- 4. The leases
 -- ---------------------------------------------------------------------------
 
 CREATE FUNCTION public.klaviyo_parent_owes_registration(p_customer_id uuid) RETURNS boolean
@@ -814,34 +751,6 @@ $$;
 COMMENT ON FUNCTION public.klaviyo_parent_owes_registration(p_customer_id uuid) IS 'Whether this id is a customer row still owing its registration. Such a parent''s events wait unclaimed: the finish page records a Google parent''s terms — filing account_created — a moment before it stamps the registration, and a sync claiming the event in between would find no snapshot and drop it, and with it the one subscription Sogverse ever sends. A row that is gone or not a customer answers false, so its events are claimed and dropped. Granted to nobody.';
 
 REVOKE ALL ON FUNCTION public.klaviyo_parent_owes_registration(p_customer_id uuid) FROM PUBLIC;
-
-CREATE FUNCTION public.kick_klaviyo_sync_if_due() RETURNS void
-    LANGUAGE plpgsql SECURITY DEFINER
-    SET search_path TO ''
-    AS $$
-BEGIN
-  IF EXISTS (
-       SELECT 1
-         FROM public.klaviyo_profile_outbox o
-        WHERE o.next_attempt_at <= now()
-          AND (o.leased_until IS NULL OR o.leased_until <= now())
-     )
-     OR EXISTS (
-       SELECT 1
-         FROM public.klaviyo_event_outbox e
-        WHERE e.next_attempt_at <= now()
-          AND (e.leased_until IS NULL OR e.leased_until <= now())
-          AND NOT public.klaviyo_parent_owes_registration(e.customer_id)
-     ) THEN
-    PERFORM public.kick_klaviyo_sync();
-  END IF;
-END;
-$$;
-
-COMMENT ON FUNCTION public.kick_klaviyo_sync_if_due() IS 'Kicks the Klaviyo sync when a row in either outbox is due and not leased (an event only once its parent is registered, as claim_klaviyo_event_jobs claims them) — a kick that was lost, a sync that died holding its lease, a failed sync whose backoff has run out, or the outboxes filled before the Vault secrets existed. Nothing runs it on a clock: it is for an observation point in the app to call. Granted to the service role.';
-
-REVOKE ALL ON FUNCTION public.kick_klaviyo_sync_if_due() FROM PUBLIC;
-GRANT EXECUTE ON FUNCTION public.kick_klaviyo_sync_if_due() TO service_role;
 
 CREATE FUNCTION public.claim_klaviyo_profile_jobs(p_limit integer, p_customer_ids uuid[] DEFAULT NULL) RETURNS TABLE(customer_id uuid, seq bigint)
     LANGUAGE sql SECURITY DEFINER
@@ -949,8 +858,8 @@ BEGIN
     RETURN;
   END IF;
 
-  -- The profile outbox's backoff; a parked event stays until somebody looks,
-  -- since nothing files an event again.
+  -- The profile outbox's backoff; a parked event stays parked, since nothing
+  -- files an event again.
   UPDATE public.klaviyo_event_outbox e
      SET leased_until    = NULL,
          last_error      = left(p_error, 2000),
@@ -987,6 +896,7 @@ CREATE FUNCTION public.klaviyo_product_document(p_product_id uuid) RETURNS jsonb
                            ), '[]'::jsonb),
            'topic',        p.topic,
            'product_type', p.product_type,
+           'billing_mode', p.billing_mode,
            'start_date',   p.start_date,
            'end_date',     p.end_date,
            'timezone',     p.timezone
@@ -995,7 +905,7 @@ CREATE FUNCTION public.klaviyo_product_document(p_product_id uuid) RETURNS jsonb
    WHERE p.id = p_product_id;
 $$;
 
-COMMENT ON FUNCTION public.klaviyo_product_document(p_product_id uuid) IS 'One product as Klaviyo is told about it: id, every name with its locale (the app picks the reader''s through resolveTranslation, never SQL), topic, product_type, start_date, end_date and timezone. NULL for a product that does not exist. Granted to nobody.';
+COMMENT ON FUNCTION public.klaviyo_product_document(p_product_id uuid) IS 'One product as Klaviyo is told about it: id, every name with its locale (the app picks the reader''s through resolveTranslation, never SQL), topic, product_type, billing_mode, start_date, end_date and timezone. NULL for a product that does not exist. Granted to nobody.';
 
 REVOKE ALL ON FUNCTION public.klaviyo_product_document(p_product_id uuid) FROM PUBLIC;
 
@@ -1039,71 +949,45 @@ CREATE FUNCTION public.get_klaviyo_parent_snapshots(p_customer_ids uuid[]) RETUR
            'gamers', COALESCE((
              SELECT jsonb_agg(
                       jsonb_build_object(
-                        'id',          g.id,
-                        'first_name',  g.first_name,
                         'birth_year',  gp.birth_year,
-                        'birth_month', gp.birth_month,
                         'gender',      gp.gender,
                         'minecraft',   EXISTS (
                                          SELECT 1
                                            FROM public.minecraft_accounts m
-                                          WHERE m.user_id = g.id
+                                          WHERE m.user_id = gp.user_id
                                             AND m.minecraft_username IS NOT NULL
                                        ),
                         'roblox',      EXISTS (
                                          SELECT 1
                                            FROM public.roblox_accounts r
-                                          WHERE r.user_id = g.id
+                                          WHERE r.user_id = gp.user_id
                                             AND r.roblox_username IS NOT NULL
                                        )
                       )
-                      ORDER BY g.created_at, g.id
+                      ORDER BY gp.birth_year, gp.user_id
                     )
                FROM public.parent_gamer pg
-               JOIN public.profiles g       ON g.id = pg.gamer_id
-               JOIN public.gamer_profiles gp ON gp.user_id = g.id
+               JOIN public.gamer_profiles gp ON gp.user_id = pg.gamer_id
               WHERE pg.parent_id = p.id
            ), '[]'::jsonb),
            'participations', COALESCE((
              SELECT jsonb_agg(
                       jsonb_build_object(
-                        'id',                 part.id,
-                        'participant_id',     part.participant_id,
-                        'status',             part.status,
-                        -- Read now, from the product's dates in its own zone:
-                        -- nothing writes when a product ends, so a stored
-                        -- state would lag the calendar.
-                        'state',              CASE
-                                                WHEN part.status = 'waitlisted'::public.participation_status
-                                                  THEN 'waitlisted'
-                                                WHEN part.status = 'completed'::public.participation_status
-                                                  THEN 'past'
-                                                WHEN pr.end_date IS NOT NULL
-                                                 AND pr.end_date < (now() AT TIME ZONE pr.timezone)::date
-                                                  THEN 'past'
-                                                ELSE 'active'
-                                              END,
-                        'signed_up_at',       part.signed_up_at,
-                        'waitlisted_at',      part.waitlisted_at,
-                        'seat_offer_sent_at', part.seat_offer_sent_at,
-                        'product',            public.klaviyo_product_document(part.product_id)
+                        'id',      part.id,
+                        'status',  part.status,
+                        'product', public.klaviyo_product_document(part.product_id)
                       )
                       ORDER BY part.signed_up_at, part.id
                     )
                FROM public.participations part
-               JOIN public.products pr ON pr.id = part.product_id
               WHERE part.customer_id = p.id
                 AND part.status <> 'reserving'::public.participation_status
            ), '[]'::jsonb),
            'subscriptions', COALESCE((
              SELECT jsonb_agg(
                       jsonb_build_object(
-                        'id',                 fs.id,
-                        'status',             fs.status,
-                        'current_period_end', fs.current_period_end,
-                        'currency',           fs.currency,
                         'participation_id',   fs.participation_id,
-                        'created_at',         fs.created_at
+                        'current_period_end', fs.current_period_end
                       )
                       ORDER BY fs.created_at, fs.id
                     )
@@ -1112,7 +996,6 @@ CREATE FUNCTION public.get_klaviyo_parent_snapshots(p_customer_ids uuid[]) RETUR
            ), '[]'::jsonb),
            'payments', (
              SELECT jsonb_build_object(
-                      'count',         count(*),
                       'first_at',      min(pay.created_at),
                       'last_at',       max(pay.created_at),
                       'lifetime_cents', COALESCE((
@@ -1137,7 +1020,7 @@ CREATE FUNCTION public.get_klaviyo_parent_snapshots(p_customer_ids uuid[]) RETUR
      AND p.registration_completed_at IS NOT NULL;
 $$;
 
-COMMENT ON FUNCTION public.get_klaviyo_parent_snapshots(p_customer_ids uuid[]) IS 'The single definition of what Klaviyo is told about a parent: one row per named id that is a registered parent (role customer, registration_completed_at set), and none for any other — a parent deleted, a Google sign-up that never finished registering, an account promoted to gedu, or one that was never a parent — which tells the sync to delete that Klaviyo profile, or never create it. `profile`: id, email, names, phone, locale, spoken_languages, currency, created_at, email_verified_at and home_location ({id, name, country_code}, null when unset; the canonical name only). `attribution`: the five utm_* values, signup_intent_kind and signup_intent_id, and registration_marketing_consent — all write-once. `gamers`: every linked gamer as {id, first_name, birth_year, birth_month, gender, minecraft, roblox}, the last two whether a username is linked. `participations`: every seat the parent holds or waits for (the retired reserving status left out) as {id, participant_id, status, state, signed_up_at, waitlisted_at, seat_offer_sent_at, product}, where state is waitlisted, active or past — past for a completed seat, or an active one whose product ended before today in its own zone — read at call time, and product is klaviyo_product_document. `subscriptions`: every family subscription as {id, status, current_period_end, currency, participation_id, created_at}. `payments`: {count, first_at, last_at, lifetime_cents}, lifetime_cents an object of summed amount_cents per currency, refunded duplicates (reservation_duplicate) left out of all four. Every gamer fact and the parent''s phone are in it, so it is for the service role alone.';
+COMMENT ON FUNCTION public.get_klaviyo_parent_snapshots(p_customer_ids uuid[]) IS 'The single definition of what Klaviyo is told about a parent: one row per named id that is a registered parent (role customer, registration_completed_at set), and none for any other — a parent deleted, a Google sign-up that never finished registering, an account promoted to gedu, or one that was never a parent — which tells the sync to delete that Klaviyo profile, or never create it. `profile`: id, email, names, phone, locale, spoken_languages, currency, created_at, email_verified_at and home_location ({id, name, country_code}, null when unset; the canonical name only). `attribution`: the five utm_* values, signup_intent_kind and signup_intent_id, and registration_marketing_consent — all write-once. `gamers`: every linked gamer as {birth_year, gender, minecraft, roblox}, the last two whether a username is linked — no name and no birth month. `participations`: every seat the parent holds or waits for (the retired reserving status left out) as {id, status, product}, product being klaviyo_product_document. `subscriptions`: every family subscription as {participation_id, current_period_end}. `payments`: {first_at, last_at, lifetime_cents}, lifetime_cents an object of summed amount_cents per currency, refunded duplicates (reservation_duplicate) left out of all three. Gamer facts and the parent''s phone are in it, so it is for the service role alone.';
 
 REVOKE ALL ON FUNCTION public.get_klaviyo_parent_snapshots(p_customer_ids uuid[]) FROM PUBLIC;
 GRANT EXECUTE ON FUNCTION public.get_klaviyo_parent_snapshots(p_customer_ids uuid[]) TO service_role;
@@ -1164,7 +1047,7 @@ CREATE FUNCTION public.get_klaviyo_events(p_event_ids uuid[]) RETURNS TABLE(even
      AND p.role = 'customer'::public.user_role;
 $$;
 
-COMMENT ON FUNCTION public.get_klaviyo_events(p_event_ids uuid[]) IS 'The named Klaviyo events, ready to send: event_id, kind, unique_id (`<kind>:<source id>`, which Klaviyo deduplicates on), the parent, occurred_at (the source row''s own moment) and properties — the facts recorded when the event was filed (status and participant_id for a participation''s events; amount_cents, currency and purpose for a payment; status, current_period_end and currency for a cancellation) plus source_id and product (klaviyo_product_document, null when the event names none or the product is gone). An event whose parent is no longer a parent is left out, and the sync finishes it unsent. Service role only.';
+COMMENT ON FUNCTION public.get_klaviyo_events(p_event_ids uuid[]) IS 'The named Klaviyo events, ready to send: event_id, kind, unique_id (`<kind>:<source id>`, which Klaviyo deduplicates on), the parent, occurred_at (the source row''s own moment) and properties — the facts recorded when the event was filed (first_purchase for a purchase; status and current_period_end for a cancellation) plus source_id and product (klaviyo_product_document, null when the event names none or the product is gone). An event whose parent is no longer a parent is left out, and the sync finishes it unsent. Service role only.';
 
 REVOKE ALL ON FUNCTION public.get_klaviyo_events(p_event_ids uuid[]) FROM PUBLIC;
 GRANT EXECUTE ON FUNCTION public.get_klaviyo_events(p_event_ids uuid[]) TO service_role;

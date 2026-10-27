@@ -183,6 +183,7 @@ const TESTS = {
   adminLocations: "tests/integration/api/admin-locations.test.ts",
   adminSiteNotes: "tests/integration/api/admin-site-notes.test.ts",
   billingPortal: "tests/integration/api/billing-portal.test.ts",
+  parentEmailMarketing: "tests/integration/api/parent-email-marketing.test.ts",
   callback: "tests/integration/auth/callback.test.ts",
   chatImageRead: "tests/integration/api/chat-image-read.test.ts",
   chatImageUpload: "tests/integration/api/chat-image-upload.test.ts",
@@ -209,7 +210,6 @@ const TESTS = {
     "tests/integration/api/gedu-session-image-remove.test.ts",
   guideDownload: "tests/integration/api/guide-download.test.ts",
   helpRequests: "tests/integration/api/help-requests.test.ts",
-  klaviyoSyncObserve: "tests/integration/api/klaviyo-sync-observe.test.ts",
   klaviyoSyncSync: "tests/integration/api/klaviyo-sync-sync.test.ts",
   landingSubscribe: "tests/integration/api/landing-pages-subscribe.test.ts",
   locationsSearch: "tests/integration/api/locations-search.test.ts",
@@ -849,6 +849,21 @@ const ROUTE_REGISTRY: Record<string, RouteEntry> = {
     },
   },
 
+  "src/app/api/parent/email-marketing/route.ts": {
+    handlers: {
+      GET: {
+        posture: { kind: "role-gated", roles: ["customer"] },
+        body: { kind: "none" },
+        test: TESTS.parentEmailMarketing,
+      },
+      PUT: {
+        posture: { kind: "role-gated", roles: ["customer"] },
+        body: { kind: "json", schema: "emailMarketingStanding" },
+        test: TESTS.parentEmailMarketing,
+      },
+    },
+  },
+
   // --- Chat ----------------------------------------------------------------
 
   "src/app/api/chat/images/route.ts": {
@@ -1206,18 +1221,6 @@ const ROUTE_REGISTRY: Record<string, RouteEntry> = {
   },
 
   // --- Klaviyo sync --------------------------------------------------------
-
-  "src/app/api/klaviyo-sync/observe/route.ts": {
-    adminClient:
-      "the due kick and the parked counts read the two Klaviyo outboxes, which grant the service role alone, and the kick function is granted to nobody else. The caller chooses nothing: it takes no input, answers only two counts, and the kick goes through the Vault-gated pg_net call a write makes",
-    handlers: {
-      POST: {
-        posture: { kind: "role-gated", roles: ["admin"] },
-        body: { kind: "none" },
-        test: TESTS.klaviyoSyncObserve,
-      },
-    },
-  },
 
   "src/app/api/klaviyo-sync/sync/route.ts": {
     handlers: {
@@ -1802,7 +1805,7 @@ const NON_ROUTE_ADMIN_CLIENT_SITES: Record<string, string> = {
   "src/lib/discord-substitution.server.ts":
     "the Discord bot's /sub command acts for a gedu it knows only by the Discord user id on a signature-verified interaction, with no Sogverse session to act through. Every call is to a function granted to the service role alone that first resolves that id to the gedu account linked to it and refuses when there is none; past that, the reads and the filing are the very bodies the web reaches through auth.uid(), so the service role widens nothing but who the gedu is taken to be. The same holds for a substitution DM's Offer and Decline buttons. The one read that is not the web's is the notification snapshot a pressed DM is redrawn from, which carries the absence reason: the redraw reads only the pool's session facts and the presser's own answer from it",
   "src/lib/klaviyo-sync/sync.server.ts":
-    "the Klaviyo sync runs with no caller at all — the outbox drain behind the sync route — and claims and finishes outbox rows and reads parent snapshots and events, all granted to the service role alone. It sends Klaviyo only what the contract maps from a snapshot, and deletes the profile of a parent the snapshot read no longer returns",
+    "the Klaviyo sync runs with no caller at all — the outbox drain behind the sync route — and claims and finishes outbox rows and reads parent snapshots and events, all granted to the service role alone. It sends Klaviyo only what the contract maps from a snapshot, adds the profile to the lists the contract names, and deletes the profile of a parent the snapshot read no longer returns",
   "src/lib/substitution-notifications/sync.server.ts":
     "the notification sync runs with no caller at all — the outbox drain behind the sync route, or a button press after its own write — and reads a snapshot that carries the absence reason and writes the message tables, all granted to the service role alone. It sends only what the snapshot's own disclosure rules allow: the DMs carry the pool's session facts and nothing about the absent gedu, and the reason goes only to the staff Slack channel",
   "src/services/family/family.server.ts":

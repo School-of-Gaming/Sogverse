@@ -38,7 +38,7 @@ COMMENT ON COLUMN public.klaviyo_event_outbox.id IS 'The outbox row''s own id, w
 -- Name: COLUMN klaviyo_event_outbox.source_id; Type: COMMENT; Schema: public; Owner: -
 --
 
-COMMENT ON COLUMN public.klaviyo_event_outbox.source_id IS 'The row the event is about: the parent''s profile id for account_created, a participation for enrolled, waitlisted and seat_offered, a payment for payment, a family subscription for subscription_cancelled.';
+COMMENT ON COLUMN public.klaviyo_event_outbox.source_id IS 'The row the event is about: the parent''s profile id for account_created, a participation for purchase, waitlisted and seat_offered, a family subscription for subscription_cancelled.';
 
 
 --
@@ -59,14 +59,14 @@ COMMENT ON COLUMN public.klaviyo_event_outbox.product_id IS 'The product the eve
 -- Name: COLUMN klaviyo_event_outbox.occurred_at; Type: COMMENT; Schema: public; Owner: -
 --
 
-COMMENT ON COLUMN public.klaviyo_event_outbox.occurred_at IS 'When it happened, taken from the source row: the profile''s creation, the participation''s signup, waitlisting or seat offer, the payment''s record, the subscription''s update.';
+COMMENT ON COLUMN public.klaviyo_event_outbox.occurred_at IS 'When it happened, taken from the source row: the profile''s creation, the participation''s activation, waitlisting or seat offer, the subscription''s update.';
 
 
 --
 -- Name: COLUMN klaviyo_event_outbox.facts; Type: COMMENT; Schema: public; Owner: -
 --
 
-COMMENT ON COLUMN public.klaviyo_event_outbox.facts IS 'The facts of the moment, as the source row stood when the event was filed: the participation''s status; the payment''s amount_cents, currency and purpose; the subscription''s status and current_period_end. Empty for account_created.';
+COMMENT ON COLUMN public.klaviyo_event_outbox.facts IS 'The facts of the moment, as they stood when the event was filed: for a purchase, first_purchase — whether the parent held no other seat on a paid product then; the subscription''s status and current_period_end. Empty for account_created, waitlisted and seat_offered.';
 
 
 --

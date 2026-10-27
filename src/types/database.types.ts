@@ -5232,7 +5232,6 @@ export type Database = {
         Returns: Json
       }
       kick_klaviyo_sync: { Args: never; Returns: undefined }
-      kick_klaviyo_sync_if_due: { Args: never; Returns: undefined }
       kick_klaviyo_sync_once: { Args: never; Returns: undefined }
       kick_substitution_notification_sync: { Args: never; Returns: undefined }
       kick_substitution_notification_sync_if_due: {
@@ -5243,7 +5242,6 @@ export type Database = {
         Args: { p_customer_id: string }
         Returns: boolean
       }
-      klaviyo_payment_product: { Args: { p_metadata: Json }; Returns: string }
       klaviyo_product_document: {
         Args: { p_product_id: string }
         Returns: Json
@@ -5912,10 +5910,9 @@ export type Database = {
       invoice_billing_cadence: "monthly" | "quarterly" | "half_yearly"
       klaviyo_event_kind:
         | "account_created"
-        | "enrolled"
+        | "purchase"
         | "waitlisted"
         | "seat_offered"
-        | "payment"
         | "subscription_cancelled"
       library_article_category:
         | "online_safety"
@@ -5924,7 +5921,7 @@ export type Database = {
         | "games_explained"
         | "for_schools"
       location_type: "country" | "region" | "municipality" | "district" | "site"
-      marketing_consent_type: "lynx_educate"
+      marketing_consent_type: "school_of_gaming" | "lynx_educate"
       notification_channel: "email"
       notification_kind: "session_report_copy"
       participation_status: "reserving" | "active" | "waitlisted" | "completed"
@@ -6107,10 +6104,9 @@ export const Constants = {
       invoice_billing_cadence: ["monthly", "quarterly", "half_yearly"],
       klaviyo_event_kind: [
         "account_created",
-        "enrolled",
+        "purchase",
         "waitlisted",
         "seat_offered",
-        "payment",
         "subscription_cancelled",
       ],
       library_article_category: [
@@ -6121,7 +6117,7 @@ export const Constants = {
         "for_schools",
       ],
       location_type: ["country", "region", "municipality", "district", "site"],
-      marketing_consent_type: ["lynx_educate"],
+      marketing_consent_type: ["school_of_gaming", "lynx_educate"],
       notification_channel: ["email"],
       notification_kind: ["session_report_copy"],
       participation_status: ["reserving", "active", "waitlisted", "completed"],

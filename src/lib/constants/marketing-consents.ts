@@ -42,10 +42,12 @@ export interface MarketingConsentAsk {
  * **The marketing consents a product may be made to ask for, in the order a
  * form offers them.**
  *
- * Written out rather than derived from the enum, because a consent goes here
- * only once this deploy knows how to ask it — the sentence and the link below —
- * and only a consent whose ask genuinely belongs to a particular product (a
- * partner's, on the products that partnership covers).
+ * `school_of_gaming` is deliberately absent, and its absence is the whole point
+ * of this list being written out rather than derived from the enum. Our own
+ * mailing list is answered in Klaviyo, and the enum keeps the value only for
+ * the rows written before it moved, which nothing reads. Only a consent
+ * whose ask genuinely belongs to a particular product (a partner's, on the
+ * products that partnership covers) goes here.
  *
  * A tuple rather than the map's key order, because the order is a decision: it
  * is the order an admin reads the picker in and the order a parent meets the
@@ -66,21 +68,16 @@ export const MARKETING_CONSENT_ASKS: Readonly<
 };
 
 /**
- * The attachable tuple as a set typed at the *enum*, which is what lets the
- * membership test below be written without a cast. `marketing_consent_type`
- * has exactly one member, so a comparison between two of its values is one the
- * compiler can already answer, and the linter rightly refuses an always-true
- * condition; widening at the declaration keeps the question honest on the day a
- * second partner joins the enum.
+ * Whether this deploy knows how to offer and ask for a stored consent type.
+ *
+ * `some` rather than a widening cast on the tuple: the comparison is between
+ * two members of one enum, so it needs no help, and a cast here is the kind
+ * that quietly survives the tuple changing shape.
  */
-const ATTACHABLE_MARKETING_CONSENT_TYPE_SET: ReadonlySet<MarketingConsentType> =
-  new Set(ATTACHABLE_MARKETING_CONSENT_TYPES);
-
-/** Whether this deploy knows how to offer and ask for a stored consent type. */
 export function isAttachableMarketingConsent(
   type: MarketingConsentType,
 ): type is AttachableMarketingConsentType {
-  return ATTACHABLE_MARKETING_CONSENT_TYPE_SET.has(type);
+  return ATTACHABLE_MARKETING_CONSENT_TYPES.some((known) => known === type);
 }
 
 /**

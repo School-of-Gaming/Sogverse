@@ -114,7 +114,7 @@ function profileSent(): Record<string, unknown> {
 
 beforeEach(() => {
   vi.stubEnv("KLAVIYO_PRIVATE_API_KEY", KEY);
-  vi.stubEnv("KLAVIYO_NEWSLETTER_LIST_ID", LIST);
+  vi.stubEnv("KLAVIYO_MARKETING_CONSENT_LIST_ID", LIST);
   mockGetPublishedPage.mockReset().mockResolvedValue(livePage());
   mockFetch.mockReset();
   klaviyoAnswers(201, 202);
@@ -155,9 +155,9 @@ describe("POST /api/landing-pages/subscribe", () => {
           last_name: "Virtanen",
           locale: "fi",
           properties: {
-            "Sogverse Newsletter Page": PAGE,
-            "Sogverse Newsletter UTM Source": "newsletter",
-            "Sogverse Newsletter UTM Campaign": "autumn",
+            sog_newsletter_page: PAGE,
+            sog_newsletter_utm_source: "newsletter",
+            sog_newsletter_utm_campaign: "autumn",
           },
         },
       },
@@ -209,7 +209,7 @@ describe("POST /api/landing-pages/subscribe", () => {
   ])("sends no UTM values with %s", async (_, headers) => {
     await POST(request(VALID, headers));
     expect(profileSent().properties).toEqual({
-      "Sogverse Newsletter Page": PAGE,
+      sog_newsletter_page: PAGE,
     });
   });
 
@@ -221,8 +221,8 @@ describe("POST /api/landing-pages/subscribe", () => {
       ),
     );
     const properties = profileSent().properties;
-    expect(properties).toMatchObject({ "Sogverse Newsletter UTM Medium": "email" });
-    expect(properties).not.toHaveProperty(["Sogverse Newsletter UTM Source"]);
+    expect(properties).toMatchObject({ sog_newsletter_utm_medium: "email" });
+    expect(properties).not.toHaveProperty("sog_newsletter_utm_source");
   });
 
   it("answers a known address exactly as a new one", async () => {
@@ -267,12 +267,12 @@ describe("POST /api/landing-pages/subscribe", () => {
 
     it("refuses every sign-up while the key or the list is not configured, saying which", async () => {
       vi.stubEnv("KLAVIYO_PRIVATE_API_KEY", "");
-      vi.stubEnv("KLAVIYO_NEWSLETTER_LIST_ID", " ");
+      vi.stubEnv("KLAVIYO_MARKETING_CONSENT_LIST_ID", " ");
       const response = await POST(request(VALID));
       expect(response.status).toBe(503);
       expect(mockFetch).not.toHaveBeenCalled();
       expect(String(vi.mocked(console.error).mock.calls[0])).toContain(
-        "KLAVIYO_PRIVATE_API_KEY, KLAVIYO_NEWSLETTER_LIST_ID",
+        "KLAVIYO_PRIVATE_API_KEY, KLAVIYO_MARKETING_CONSENT_LIST_ID",
       );
     });
 

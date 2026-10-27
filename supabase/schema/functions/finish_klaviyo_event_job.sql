@@ -12,8 +12,8 @@ BEGIN
     RETURN;
   END IF;
 
-  -- The profile outbox's backoff; a parked event stays until somebody looks,
-  -- since nothing files an event again.
+  -- The profile outbox's backoff; a parked event stays parked, since nothing
+  -- files an event again.
   UPDATE public.klaviyo_event_outbox e
      SET leased_until    = NULL,
          last_error      = left(p_error, 2000),

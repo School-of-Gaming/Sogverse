@@ -4,16 +4,19 @@ import type { KlaviyoParentSnapshot } from "@/lib/klaviyo-sync/snapshot.contract
 /**
  * The Klaviyo drain against a scripted outbox and a mocked Klaviyo client.
  * Pinned: an unconfigured environment claims nothing; a parent with a snapshot
- * is upserted onto the profile Klaviyo already holds for their id, and one
+ * is upserted onto the profile Klaviyo already holds for their id and added
+ * to its lists — production's history lists, or staging's one list — and one
  * without is deleted; one row's failure is finished with a label and the rest
  * go on; an event whose parent is gone is finished unsent; and the one
- * subscription goes only with a ticked account creation.
+ * subscription goes only with a ticked account creation, into the marketing
+ * consent list.
  */
 
 const klaviyo = {
   isKlaviyoConfigured: vi.fn(() => true),
   findKlaviyoProfileIdByExternalId: vi.fn<(id: string) => Promise<string | null>>(),
-  upsertKlaviyoProfile: vi.fn(async () => "kl-id"),
+  upsertKlaviyoProfile: vi.fn<() => Promise<string | null>>(async () => "kl-id"),
+  addKlaviyoProfileToList: vi.fn(async () => undefined),
   requestKlaviyoProfileDeletion: vi.fn(async () => undefined),
   createKlaviyoEvent: vi.fn(async () => undefined),
   subscribeKlaviyoProfile: vi.fn(async () => undefined),
@@ -68,7 +71,7 @@ function snapshot(id: string, consent: boolean | null = null): KlaviyoParentSnap
     gamers: [],
     participations: [],
     subscriptions: [],
-    payments: { count: 0, first_at: null, last_at: null, lifetime_cents: {} },
+    payments: { first_at: null, last_at: null, lifetime_cents: {} },
   };
 }
 
@@ -115,8 +118,13 @@ beforeEach(() => {
   klaviyo.findKlaviyoProfileIdByExternalId.mockResolvedValue(null);
   vi.spyOn(console, "error").mockImplementation(() => undefined);
   vi.spyOn(console, "warn").mockImplementation(() => undefined);
+  vi.stubEnv("VERCEL_ENV", "preview");
+  vi.stubEnv("KLAVIYO_MARKETING_CONSENT_LIST_ID", "list-consent");
 });
-afterEach(() => vi.restoreAllMocks());
+afterEach(() => {
+  vi.restoreAllMocks();
+  vi.unstubAllEnvs();
+});
 
 describe("drainKlaviyoSync", () => {
   it("claims nothing where Klaviyo is not configured", async () => {
@@ -151,6 +159,59 @@ describe("drainKlaviyoSync", () => {
     expect(finishes("finish_klaviyo_profile_job")).toEqual([
       { p_customer_id: KEPT, p_seq: 3 },
       { p_customer_id: GONE, p_seq: 1 },
+    ]);
+  });
+
+  it("adds a staging parent to the one staging list and no other", async () => {
+    outbox({ profiles: [{ customer_id: KEPT, seq: 1 }], snapshots: [snapshot(KEPT)] });
+
+    await drainKlaviyoSync();
+
+    expect(klaviyo.addKlaviyoProfileToList.mock.calls).toEqual([["list-consent", "kl-id"]]);
+  });
+
+  it("adds a production parent to the history lists their seats earn", async () => {
+    vi.stubEnv("VERCEL_ENV", "production");
+    vi.stubEnv("KLAVIYO_ACCOUNT_LIST_ID", "list-account");
+    vi.stubEnv("KLAVIYO_CLUB_LIST_ID", "list-club");
+    const club = {
+      id: "p1",
+      status: "active" as const,
+      product: {
+        id: "0c8e5d1a-7b42-4e93-a6f0-3d9b2c7e8f14",
+        names: [],
+        topic: "minecraft_java" as const,
+        product_type: "consumer_club" as const,
+        billing_mode: "paid" as const,
+        start_date: "2026-09-01",
+        end_date: null,
+        timezone: "Europe/Helsinki",
+      },
+    };
+    outbox({
+      profiles: [{ customer_id: KEPT, seq: 1 }],
+      snapshots: [{ ...snapshot(KEPT), participations: [club] }],
+    });
+    klaviyo.findKlaviyoProfileIdByExternalId.mockResolvedValue("kl-kept");
+
+    await drainKlaviyoSync();
+
+    expect(klaviyo.addKlaviyoProfileToList.mock.calls).toEqual([
+      ["list-account", "kl-id"],
+      ["list-club", "kl-id"],
+    ]);
+  });
+
+  it("fails the row, writing nothing, when a list it needs is not configured", async () => {
+    vi.stubEnv("VERCEL_ENV", "production");
+    outbox({ profiles: [{ customer_id: KEPT, seq: 1 }], snapshots: [snapshot(KEPT)] });
+
+    const result = await drainKlaviyoSync();
+
+    expect(result.failed).toBe(1);
+    expect(klaviyo.upsertKlaviyoProfile).not.toHaveBeenCalled();
+    expect(finishes("finish_klaviyo_profile_job")).toEqual([
+      { p_customer_id: KEPT, p_seq: 1, p_error: "Error: KLAVIYO_ACCOUNT_LIST_ID is not set" },
     ]);
   });
 
@@ -212,11 +273,12 @@ describe("drainKlaviyoSync", () => {
     expect(result).toMatchObject({ eventsSent: 2, eventsDropped: 1, failed: 0 });
     expect(klaviyo.createKlaviyoEvent).toHaveBeenCalledWith(
       { email: `${ticked}@example.com`, externalId: ticked },
-      expect.objectContaining({ metric: "Sogverse Account Created", uniqueId: `account_created:${ticked}` }),
+      expect.objectContaining({ metric: "SV Account Created", uniqueId: `account_created:${ticked}` }),
     );
     expect(klaviyo.subscribeKlaviyoProfile).toHaveBeenCalledTimes(1);
     expect(klaviyo.subscribeKlaviyoProfile).toHaveBeenCalledWith({
       email: `${ticked}@example.com`,
+      listId: "list-consent",
       customSource: "Sogverse account registration",
     });
     expect(finishes("finish_klaviyo_event_job")).toEqual([

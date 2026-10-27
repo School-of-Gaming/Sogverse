@@ -9,8 +9,8 @@ import { Constants } from "@/types";
  * Both return `jsonb` the type generator sees only as `Json`, so these schemas
  * are the structure. They are written from the function bodies and the DB tests
  * parse real output through them, so the two cannot drift apart quietly. Both
- * reads are the service role's alone: a snapshot carries every gamer's name,
- * birth date and gender and the parent's phone.
+ * reads are the service role's alone: a snapshot carries every gamer's birth
+ * year and gender and the parent's phone.
  */
 
 const enums = Constants.public.Enums;
@@ -21,6 +21,8 @@ export const klaviyoProduct = z.object({
   names: z.array(z.object({ locale: z.string(), name: z.string() })),
   topic: z.enum(enums.product_topic),
   product_type: z.enum(enums.product_type),
+  /** Only a seat on a `paid` product is a purchase. */
+  billing_mode: z.enum(enums.billing_mode),
   /** Calendar dates, `YYYY-MM-DD`. */
   start_date: z.string(),
   end_date: z.string().nullable(),
@@ -36,11 +38,9 @@ const homeLocation = z.object({
   country_code: z.string().nullable(),
 });
 
+/** A gamer as Klaviyo hears of them: no name and no birth month. */
 const gamer = z.object({
-  id: z.string(),
-  first_name: z.string(),
   birth_year: z.number(),
-  birth_month: z.number(),
   gender: z.enum(enums.gender_type).nullable(),
   /** Whether a Minecraft username is linked. */
   minecraft: z.boolean(),
@@ -50,26 +50,14 @@ const gamer = z.object({
 
 const participation = z.object({
   id: z.string(),
-  participant_id: z.string(),
   status: z.enum(enums.participation_status),
-  /**
-   * Derived when read: `past` for a completed seat or one whose product ended
-   * before today in the product's own zone, `waitlisted`, else `active`.
-   */
-  state: z.enum(["active", "past", "waitlisted"]),
-  signed_up_at: z.string(),
-  waitlisted_at: z.string().nullable(),
-  seat_offer_sent_at: z.string().nullable(),
   product: klaviyoProduct,
 });
 
+/** A family subscription: the seat it renews, and how far it is paid. */
 const subscription = z.object({
-  id: z.string(),
-  status: z.enum(["active", "past_due", "cancelled", "incomplete", "canceling"]),
-  current_period_end: z.string().nullable(),
-  currency: z.string(),
   participation_id: z.string(),
-  created_at: z.string(),
+  current_period_end: z.string().nullable(),
 });
 
 export const klaviyoParentSnapshot = z.object({
@@ -101,9 +89,8 @@ export const klaviyoParentSnapshot = z.object({
   gamers: z.array(gamer),
   participations: z.array(participation),
   subscriptions: z.array(subscription),
-  /** Refunded duplicate payments are left out of all four. */
+  /** Refunded duplicate payments are left out of all three. */
   payments: z.object({
-    count: z.number(),
     first_at: z.string().nullable(),
     last_at: z.string().nullable(),
     /** Summed `amount_cents` per currency code (`eur`, `gbp`, `usd`). */
@@ -118,12 +105,6 @@ export const klaviyoParentSnapshotRow = z.object({
   customer_id: z.string(),
   snapshot: klaviyoParentSnapshot,
 });
-
-/** The facts every participation event records. */
-const participationFacts = {
-  status: z.enum(enums.participation_status),
-  participant_id: z.string(),
-};
 
 const eventBase = {
   event_id: z.string(),
@@ -146,22 +127,16 @@ const eventProperties = {
 export const klaviyoEventRow = z.discriminatedUnion("kind", [
   z.object({
     ...eventBase,
-    kind: z.literal("account_created"),
+    kind: z.enum(["account_created", "waitlisted", "seat_offered"]),
     properties: z.object(eventProperties),
   }),
   z.object({
     ...eventBase,
-    kind: z.enum(["enrolled", "waitlisted", "seat_offered"]),
-    properties: z.object({ ...eventProperties, ...participationFacts }),
-  }),
-  z.object({
-    ...eventBase,
-    kind: z.literal("payment"),
+    kind: z.literal("purchase"),
     properties: z.object({
       ...eventProperties,
-      amount_cents: z.number(),
-      currency: z.string(),
-      purpose: z.enum(enums.payment_purpose),
+      /** Whether the parent held no other seat on a paid product when this one was bought. */
+      first_purchase: z.boolean(),
     }),
   }),
   z.object({
@@ -171,7 +146,6 @@ export const klaviyoEventRow = z.discriminatedUnion("kind", [
       ...eventProperties,
       status: z.enum(["canceling", "cancelled"]),
       current_period_end: z.string().nullable(),
-      currency: z.string(),
     }),
   }),
 ]);

@@ -31,6 +31,7 @@ import { HomeLocationField } from "@/components/locations/home-location-field";
 import {
   MarketingPreferencesFields,
   MARKETING_CONSENT_ORDER,
+  type SchoolOfGamingEmailState,
 } from "@/components/settings/marketing-preferences-fields";
 import { GamerPhotoConsentNotice } from "@/components/settings/gamer-photo-consent-notice";
 import { McpServerCard } from "@/components/settings/mcp-server-card";
@@ -59,6 +60,10 @@ import {
   useMyMarketingConsents,
   useSetMarketingConsent,
 } from "@/services/marketing-consents/marketing-consents.queries";
+import {
+  useMyEmailMarketing,
+  useSetMyEmailMarketing,
+} from "@/services/email-marketing/email-marketing.queries";
 import { hasRealEmail, gamerUsernameFromEmail } from "@/lib/gamer-sign-in";
 import {
   isGamerProfile,
@@ -428,6 +433,23 @@ export function SettingsSectionContent({
   const marketingGranted = (consentType: MarketingConsentType) =>
     marketingEdits[consentType] ?? savedMarketingGranted(consentType);
 
+  // School of Gaming's own email marketing lives in Klaviyo and is read and
+  // written there live; Sogverse stores none of it. Parents only, like the
+  // consents above. Edited like every other field here and committed by the
+  // Save button — `null` is "not touched", so a save writes it only when the
+  // parent actually moved the box.
+  const emailMarketing = useMyEmailMarketing({ enabled: isParent });
+  const setEmailMarketing = useSetMyEmailMarketing();
+  const [emailMarketingEdit, setEmailMarketingEdit] = useState<boolean | null>(null);
+  const savedEmailMarketing = emailMarketing.data?.subscribed;
+  // A retry after a failure flies with the error still set: it is loading again.
+  const schoolOfGamingEmail: SchoolOfGamingEmailState =
+    savedEmailMarketing !== undefined
+      ? { subscribed: emailMarketingEdit ?? savedEmailMarketing }
+      : emailMarketing.isError && !emailMarketing.isFetching
+        ? "failed"
+        : "loading";
+
   const handleSaveProfile = async () => {
     if (!user) return;
 
@@ -510,6 +532,18 @@ export function SettingsSectionContent({
             source: "settings",
           });
         }
+      }
+
+      // Klaviyo last, and only when the box was moved off what Klaviyo
+      // answered — an unanswered read leaves the box unclickable, so there is
+      // no edit to send. A refusal throws into the catch like the consents.
+      if (
+        isParent &&
+        savedEmailMarketing !== undefined &&
+        emailMarketingEdit !== null &&
+        emailMarketingEdit !== savedEmailMarketing
+      ) {
+        await setEmailMarketing.mutateAsync(emailMarketingEdit);
       }
 
       setSuccessMessage(t('profileUpdated'));
@@ -630,6 +664,9 @@ export function SettingsSectionContent({
               that say who they are. Parents only — see the block above. */}
           {isParent && (
             <MarketingPreferencesFields
+              schoolOfGaming={schoolOfGamingEmail}
+              onSchoolOfGamingChange={setEmailMarketingEdit}
+              onSchoolOfGamingRetry={() => void emailMarketing.refetch()}
               granted={marketingGranted}
               onChange={(consentType, next) =>
                 setMarketingEdits((current) => ({

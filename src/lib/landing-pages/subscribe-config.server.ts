@@ -1,4 +1,5 @@
 import "server-only";
+import { MARKETING_CONSENT_LIST_VAR } from "@/lib/klaviyo-sync/lists.server";
 
 /**
  * Where a landing page's email sign-up sends a reader in Klaviyo. The same for
@@ -6,7 +7,8 @@ import "server-only";
  *
  * - `KLAVIYO_PRIVATE_API_KEY` — the private key, read by the Klaviyo client
  *   itself, which names the scopes it needs.
- * - `KLAVIYO_NEWSLETTER_LIST_ID` — the single opt-in list a reader joins.
+ * - `KLAVIYO_MARKETING_CONSENT_LIST_ID` — the single opt-in list a reader
+ *   joins, the one a registration's tick joins too (`src/lib/klaviyo-sync/`).
  */
 
 export interface SubscribeConfig {
@@ -14,7 +16,7 @@ export interface SubscribeConfig {
 }
 
 const KEY_VAR = "KLAVIYO_PRIVATE_API_KEY";
-const LIST_VAR = "KLAVIYO_NEWSLETTER_LIST_ID";
+const LIST_VAR = MARKETING_CONSENT_LIST_VAR;
 
 /**
  * The sign-up configuration, or the names of the variables that are unset.

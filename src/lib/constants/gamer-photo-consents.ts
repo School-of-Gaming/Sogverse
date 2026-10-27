@@ -77,12 +77,14 @@ export const GAMER_PHOTO_CONSENT_ASKS: Readonly<
  * The attachable tuple as a set typed at the *enum*, which is what lets the
  * membership test below be written without a cast.
  *
- * `gamer_photo_consent_type` currently has exactly one member, so a comparison
- * between two of its values is one the compiler can already answer, and the
- * linter rightly refuses an always-true condition. Widening at the declaration
- * rather than casting at the call site keeps the question honest — and it goes
- * on being honest on the day a second partner joins the enum, rather than
- * turning back into a comparison somebody has to notice.
+ * The marketing twin asks the same question with `.some((known) => known === type)`
+ * and cannot here, for a reason that is about this enum rather than about the
+ * code: `gamer_photo_consent_type` currently has exactly one member, so a
+ * comparison between two of its values is one the compiler can already answer,
+ * and the linter rightly refuses an always-true condition. Widening at the
+ * declaration rather than casting at the call site keeps the question honest —
+ * and it goes on being honest on the day a second partner joins the enum,
+ * rather than turning back into a comparison somebody has to notice.
  */
 const ATTACHABLE_GAMER_PHOTO_CONSENT_TYPE_SET: ReadonlySet<GamerPhotoConsentType> =
   new Set(ATTACHABLE_GAMER_PHOTO_CONSENT_TYPES);
