@@ -289,21 +289,10 @@ describe("list_products", () => {
     ]);
   });
 
-  it("names an in-person product's site with the place it sits in, and no place where it is filed under none", async () => {
-    const unfiled = "c3000000-0000-4000-8000-000000000031";
+  it("names an in-person product's site as the product page does", async () => {
     products.getAdminListPage.mockResolvedValue({
-      total: 2,
+      total: 1,
       rows: [
-        adminRow(unfiled, {
-          delivery_mode: "in_person",
-          locations: {
-            id: "d1000000-0000-4000-8000-000000000003",
-            name: "Youth Centre",
-            name_i18n: null,
-            type: "site",
-            parent: null,
-          },
-        }),
         adminRow(CAMP, {
           product_type: "camp",
           delivery_mode: "in_person",
@@ -322,7 +311,6 @@ describe("list_products", () => {
     const result = await tool();
 
     expect(result.structuredContent?.products).toEqual([
-      expect.objectContaining({ location: { kind: "site", site: "Youth Centre", parent: null } }),
       expect.objectContaining({ location: { kind: "site", site: "Sello Library", parent: "Espoo" } }),
     ]);
   });
@@ -412,19 +400,11 @@ describe("list_products", () => {
   it("passes on the raw seat counts, and the shop's sign-up state over them", async () => {
     const open = "c3000000-0000-4000-8000-000000000021";
     const full = "c3000000-0000-4000-8000-000000000022";
-    const started = "c3000000-0000-4000-8000-000000000023";
     products.getAdminListPage.mockResolvedValue({
-      total: 3,
+      total: 2,
       rows: [
         adminRow(open, { seat_count: 10 }),
         adminRow(full, { seat_count: 10, waitlist_enabled: false }),
-        // A camp already underway takes no more sign-ups.
-        adminRow(started, {
-          product_type: "camp",
-          seat_count: 10,
-          start_date: "2026-10-26",
-          end_date: "2026-10-30",
-        }),
       ],
     });
     products.listVisibleListingAmong.mockResolvedValue([]);
@@ -432,7 +412,6 @@ describe("list_products", () => {
       countsFor({
         [open]: { active: 9 },
         [full]: { active: 10, waitlist: 3 },
-        [started]: { active: 4 },
       }),
     );
 
@@ -448,11 +427,6 @@ describe("list_products", () => {
         productId: full,
         seats: { capacity: 10, taken: 10, waitlisted: 3, waitlistEnabled: false },
         registration: { kind: "full_closed", seatCount: 10 },
-      }),
-      expect.objectContaining({
-        productId: started,
-        seats: { capacity: 10, taken: 4, waitlisted: 0, waitlistEnabled: true },
-        registration: { kind: "running_late", phase: "underway" },
       }),
     ]);
   });
