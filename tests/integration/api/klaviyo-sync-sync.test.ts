@@ -40,7 +40,7 @@ beforeEach(() => {
   vi.clearAllMocks();
   deferred.length = 0;
   vi.stubEnv("KLAVIYO_SYNC_SECRET", SECRET);
-  mockDrain.mockResolvedValue({ failed: 0, outOfTime: false });
+  mockDrain.mockResolvedValue({ failed: 0 });
 });
 afterAll(() => vi.unstubAllEnvs());
 

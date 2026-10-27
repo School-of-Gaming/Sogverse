@@ -124,8 +124,13 @@ therefore never undone by the sync.
   error codes, never an address or a name — and the batch goes on.
 - **No key, no claim.** Where `KLAVIYO_PRIVATE_API_KEY` is unset the drain claims nothing,
   so every row stays due and goes out once the environment is configured.
-- The sync route answers 202 at once and drains after the response, for up to 45 seconds
-  of a 60-second function; whatever is left is the next kick's.
+- **A drain runs until both outboxes are empty, with no time limit of its own.** The sync
+  route answers 202 at once and drains after the response; the platform's default limit
+  on the function is the only one, and the route sets none. A drain stopped mid-batch
+  loses nothing: its leased rows are taken by a later drain once the lease runs out, and
+  every call repeats harmlessly. A backlog larger than one drain gets through — the first
+  sync after deploy, which files every parent — is finished by the next kicks, or by
+  calling the route by hand with the environment's secret.
 
 ## Nothing runs on a clock
 

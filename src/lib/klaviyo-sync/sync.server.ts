@@ -47,12 +47,9 @@ import {
 
 type AdminClient = ReturnType<typeof createAdminClient>;
 
-/** How long one drain keeps claiming, inside a 60-second function. */
-const DRAIN_BUDGET_MS = 45_000;
-
 /**
  * Rows per claim: one snapshot read serves the batch, and a batch is small
- * enough that one cut short by the budget strands few leases.
+ * enough that a drain the platform stops mid-batch strands few leases.
  */
 const BATCH_SIZE = 5;
 
@@ -67,8 +64,6 @@ export interface KlaviyoDrainResult {
   eventsDropped: number;
   /** Rows whose sync failed; they retry with backoff. */
   failed: number;
-  /** Whether the drain stopped on its time budget rather than empty outboxes. */
-  outOfTime: boolean;
   /** Whether the environment has no Klaviyo key, so nothing was claimed. */
   notConfigured: boolean;
 }
@@ -85,20 +80,20 @@ function isKeptOutOfKlaviyo(snapshot: KlaviyoParentSnapshot): boolean {
 }
 
 /**
- * Sync every due row, profiles then events, until both outboxes are empty or
- * the budget is spent. With no Klaviyo key nothing is claimed, so every row
- * stays due and goes out once the environment is configured.
+ * Sync every due row, profiles then events, until both outboxes are empty.
+ * There is no budget of its own: the platform's limit on the function is the
+ * only one, and a drain it stops mid-batch loses nothing — its leased rows
+ * are taken by a later drain once the lease runs out, and every call repeats
+ * harmlessly. With no Klaviyo key nothing is claimed, so every row stays due
+ * and goes out once the environment is configured.
  */
-export async function drainKlaviyoSync({
-  budgetMs = DRAIN_BUDGET_MS,
-}: { budgetMs?: number } = {}): Promise<KlaviyoDrainResult> {
+export async function drainKlaviyoSync(): Promise<KlaviyoDrainResult> {
   const result: KlaviyoDrainResult = {
     profilesSynced: 0,
     profilesDeleted: 0,
     eventsSent: 0,
     eventsDropped: 0,
     failed: 0,
-    outOfTime: false,
     notConfigured: false,
   };
   if (!isKlaviyoConfigured()) {
@@ -108,20 +103,8 @@ export async function drainKlaviyoSync({
   }
 
   const supabase = createAdminClient();
-  const deadline = Date.now() + budgetMs;
-
-  while (await drainProfileBatch(supabase, deadline, result)) {
-    if (Date.now() >= deadline) {
-      result.outOfTime = true;
-      return result;
-    }
-  }
-  while (await drainEventBatch(supabase, deadline, result)) {
-    if (Date.now() >= deadline) {
-      result.outOfTime = true;
-      return result;
-    }
-  }
+  while (await drainProfileBatch(supabase, result));
+  while (await drainEventBatch(supabase, result));
   return result;
 }
 
@@ -145,7 +128,6 @@ async function readSnapshots(
 /** One claim of profile jobs, synced and finished. False when nothing was due. */
 async function drainProfileBatch(
   supabase: AdminClient,
-  deadline: number,
   result: KlaviyoDrainResult,
 ): Promise<boolean> {
   const claim = await supabase.rpc("claim_klaviyo_profile_jobs", { p_limit: BATCH_SIZE });
@@ -158,10 +140,6 @@ async function drainProfileBatch(
   );
 
   for (const job of claim.data) {
-    // Left leased rather than finished: the lease runs out and the next drain
-    // takes it, where finishing it unsynced would lose the change.
-    if (Date.now() >= deadline) break;
-
     let failure: string | null = null;
     try {
       const outcome = await syncProfile(job.customer_id, snapshots.get(job.customer_id));
@@ -218,7 +196,6 @@ async function syncProfile(
 /** One claim of event jobs, sent and finished. False when nothing was due. */
 async function drainEventBatch(
   supabase: AdminClient,
-  deadline: number,
   result: KlaviyoDrainResult,
 ): Promise<boolean> {
   const claim = await supabase.rpc("claim_klaviyo_event_jobs", { p_limit: BATCH_SIZE });
@@ -235,8 +212,6 @@ async function drainEventBatch(
   ]);
 
   for (const job of claim.data) {
-    if (Date.now() >= deadline) break;
-
     let failure: string | null = null;
     try {
       const event = events.get(job.event_id);
