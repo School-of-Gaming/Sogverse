@@ -57,9 +57,8 @@ export function publishedArticleCard(
   article: PublishedLibraryArticleSummary,
   published: readonly PublishedLibraryArticleSummary[],
   locale: SupportedLocale,
-): LibraryArticleCardProps | null {
+): LibraryArticleCardProps {
   const shown = localizeArticleSummary(article, locale);
-  if (shown === null) return null;
   return {
     id: article.id,
     href: ROUTES.libraryArticle(articleAddress(published, article, locale)),
@@ -77,10 +76,7 @@ export function publishedArticleCards(
   published: readonly PublishedLibraryArticleSummary[],
   locale: SupportedLocale,
 ): LibraryArticleCardProps[] {
-  return published.flatMap((article) => {
-    const card = publishedArticleCard(article, published, locale);
-    return card === null ? [] : [card];
-  });
+  return published.map((article) => publishedArticleCard(article, published, locale));
 }
 
 /**

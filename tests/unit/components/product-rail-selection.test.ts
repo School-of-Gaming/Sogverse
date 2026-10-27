@@ -19,7 +19,7 @@ const id = (n: number) => `00000000-0000-4000-8000-${String(n).padStart(12, "0")
 
 const LISTING = [
   browseRow(id(1)),
-  browseRow(id(2), { is_remote: false }),
+  browseRow(id(2), { delivery_mode: "in_person" }),
   browseRow(id(3), { topic: "minecraft_java" }),
   browseRow(id(4), { billing_mode: "paid" }),
   browseRow(id(5)),

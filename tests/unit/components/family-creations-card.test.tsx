@@ -391,7 +391,7 @@ function renderPage(
               ],
             }}
             plannedSessions={[]}
-            isRemote={false}
+            deliveryMode="in_person"
             voiceRoom={{ mode: "sogverse" }}
             participant={AINO}
             groupName="Builders A"

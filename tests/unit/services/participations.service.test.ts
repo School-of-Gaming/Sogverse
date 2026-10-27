@@ -137,7 +137,7 @@ describe("ParticipationsService.getMyUpcomingSessions", () => {
         timezone: "UTC",
         start_date: null,
         end_date: null,
-        is_remote: true,
+        delivery_mode: "online",
         product_translations: [],
         schedule_slots: [],
         location: null,
@@ -153,7 +153,7 @@ describe("ParticipationsService.getMyUpcomingSessions", () => {
       ...row,
       product: {
         ...row.product,
-        is_remote: false,
+        delivery_mode: "in_person",
         location: { name: "Kirjasto Oodi", name_i18n: { fi: "Oodi" } },
       },
     };
@@ -320,15 +320,29 @@ describe("ParticipationsService.getMyUpcomingSessions", () => {
     });
   });
 
-  it("drops the site on a remote product even when a location row comes back", async () => {
-    // The gate is `is_remote`, not "did the join find a row" — a remote
+  it("keeps the site on a hybrid product, whose gamers attend it", async () => {
+    const hybrid = inPersonRawRow("p1", "Alex");
+    hybrid.product.delivery_mode = "hybrid";
+
+    mockBackend([hybrid], { rows: [] });
+
+    const result = await service.getMyUpcomingSessions("customer");
+
+    expect(result[0].product.site).toEqual({
+      name: "Kirjasto Oodi",
+      name_i18n: { fi: "Oodi" },
+    });
+  });
+
+  it("drops the site on an online product even when a location row comes back", async () => {
+    // The gate is the delivery mode, not "did the join find a row" — an online
     // municipality club carries a `location_id` for the municipality that
     // commissioned it, which is an administrative fact and not a building
     // anybody travels to. Answering "where is this happening" with it, on a
     // card whose sessions are in a voice room, would be worse than saying
     // nothing.
     const remoteWithLocation = inPersonRawRow("p1", "Alex");
-    remoteWithLocation.product.is_remote = true;
+    remoteWithLocation.product.delivery_mode = "online";
 
     mockBackend([remoteWithLocation], { rows: [] });
 
@@ -382,7 +396,7 @@ describe("ParticipationsService.getMyWaitlistEntries", () => {
         timezone: "Europe/Helsinki",
         start_date: "2026-01-12",
         end_date: null,
-        is_remote: true,
+        delivery_mode: "online",
         product_translations: [{ locale: "en", name: `Club ${id}` }],
         schedule_slots: [
           { weekday: 1, start_time: "17:00:00", duration_minutes: 90 },
@@ -431,7 +445,7 @@ describe("ParticipationsService.getMyWaitlistEntries", () => {
       timezone: "Europe/Helsinki",
       startDate: "2026-01-12",
       endDate: null,
-      isRemote: true,
+      deliveryMode: "online",
     };
     const slots = [{ weekday: 1, startTime: "17:00:00", durationMinutes: 90 }];
 
@@ -492,18 +506,6 @@ describe("ParticipationsService.getMyWaitlistEntries", () => {
     mockBackend([rawRow("p1", "Alex")], { errorMessage: "boom" });
 
     await expect(service.getMyWaitlistEntries("customer")).rejects.toThrow();
-  });
-
-  it("falls back to a truncated gamer id when the first name is blank", async () => {
-    mockBackend([{ ...rawRow("p1", ""), participant_id: "abcdefghijkl" }], {
-      rows: [{ participation_id: "p1", waitlist_position: 2 }],
-    });
-
-    const result = await service.getMyWaitlistEntries("customer");
-
-    // Same fallback the sessions adapter uses, so one gamer reads identically
-    // on a waitlist card and a session card.
-    expect(result[0].participant.firstName).toBe("abcdefgh");
   });
 
   it("returns [] without touching the database when there is no session", async () => {

@@ -2,7 +2,7 @@ import type { Metadata } from "next";
 import { getPathname } from "@/i18n/navigation";
 import { ROUTES } from "@/lib/constants/routes";
 import { resolveLocale, type SupportedLocale } from "@/lib/constants/locales";
-import { resolveTranslation } from "@/lib/i18n/resolve-translation";
+import { resolveRequiredTranslation } from "@/lib/i18n/resolve-translation";
 import {
   translatedCanonicalPath,
   translatedPageLocales,
@@ -84,8 +84,8 @@ export async function teamMemberMetadata({
   name: string;
 }): Promise<Metadata> {
   const locale = resolveLocale(requestLocale);
-  const written = resolveTranslation(person.translations, locale);
-  const description = written?.shortDescription;
+  const written = resolveRequiredTranslation(person.translations, locale);
+  const description = written.shortDescription;
   const alternates = translatedPageMetadataAlternates(
     person.translations,
     locale,
@@ -101,7 +101,7 @@ export async function teamMemberMetadata({
     openGraph: {
       type: "profile",
       siteName: "School of Gaming",
-      locale: written?.locale ?? locale,
+      locale: written.locale,
       url: canonical,
       title: name,
       description,
@@ -157,13 +157,13 @@ export function teamMemberJsonLd({
   locale,
 }: TeamMemberJsonLdInput) {
   const url = `${siteUrl}${canonicalPath}`;
-  const written = resolveTranslation(person.translations, locale);
+  const written = resolveRequiredTranslation(person.translations, locale);
 
   return {
     "@context": "https://schema.org",
     "@type": "ProfilePage",
     url,
-    inLanguage: written?.locale ?? locale,
+    inLanguage: written.locale,
     mainEntity: {
       "@type": "Person",
       name:
@@ -172,7 +172,7 @@ export function teamMemberJsonLd({
           : person.firstName,
       ...(person.nickname !== null && { alternateName: person.nickname }),
       jobTitle,
-      ...(written !== null && { description: written.shortDescription }),
+      description: written.shortDescription,
       ...(person.photo !== null && { image: `${siteUrl}${person.photo.src}` }),
       ...(person.spokenLanguages.length > 0 && {
         knowsLanguage: [...person.spokenLanguages],

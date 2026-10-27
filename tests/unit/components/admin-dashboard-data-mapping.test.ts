@@ -1166,26 +1166,6 @@ describe("the certification queue", () => {
     expect(queue[1].registeredAgo).toBe("2 months ago");
   });
 
-  it("leaves an unnamed account's name null rather than inventing a stand-in", () => {
-    const queue = buildCertificationQueue(
-      [
-        {
-          id: "e979b9eb-39a2-4b71-9aa1-3d991969dadc",
-          first_name: "",
-          last_name: "   ",
-          created_at: "2026-08-15T09:20:00+03:00",
-          contract_accepted_at: null,
-          criminal_record_check_at: null,
-        },
-      ],
-      "en",
-      NOW,
-      HELSINKI,
-    );
-
-    expect(queue[0].name).toBeNull();
-  });
-
   it("dates an acceptance in the viewer's zone, and says nothing where there is none", () => {
     // 00:40 on the 16th in Helsinki is still 17:40 on the 15th in Los Angeles.
     // An acceptance is an instant, so it converts — a queue that rendered the

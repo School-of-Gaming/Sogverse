@@ -5,6 +5,7 @@
   "firstNamePlaceholder": "wa’DIch pong yIchel",
   "lastNamePlaceholder": "qorDu’ pong yIchel",
   "invalidPhone": "HablI’ HSDu’ nIvbe’ yIchel.",
+  "firstNameRequired": "pong wa’DIch {min} mu’tlhegh puS ghobe’.",
   "lastNameRequired": "qorDu’ pong {min} mu’tlhegh puS ghobe’.",
   "profileUpdated": "SoH De’ pollu’. Qapla’!",
   "failedToUpdateProfile": "SoH De’ pollaHbe’lu’.",

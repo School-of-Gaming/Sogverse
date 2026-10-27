@@ -36,7 +36,6 @@
       "title": "Certification des Gedus",
       "justNow": "{count} certifiés à l’instant",
       "empty": "Aucun Gedu n’est en attente de certification.",
-      "unnamed": "Gedu sans nom",
       "registered": "inscrit {when}",
       "certify": "Certifier",
       "certifying": "Certification…",
@@ -504,8 +503,7 @@
           "pair": "deux côte à côte",
           "row": "trois en ligne",
           "showcase": "une grande citation, deux côte à côte, puis trois en ligne"
-        },
-        "missing": "Un témoignage qui n’est plus conservé"
+        }
       }
     },
     "status": {
@@ -666,6 +664,7 @@
       "ageRange": "{min}–{max} ans",
       "seats": "{count} places",
       "online": "En ligne",
+      "hybrid": "Hybride",
       "unlisted": "hors catalogue",
       "untitled": "(sans titre)",
       "missingGeduFee": "Rémunération Gedu manquante",
@@ -728,7 +727,7 @@
         "visibility": "Visibilité",
         "gamerPhotoConsents": "Questions photo",
         "marketingConsents": "Questions marketing",
-        "format": "Format",
+        "deliveryMode": "Modalité",
         "ageRange": "Tranche d’âge",
         "publicLink": "Lien public",
         "createdBy": "Créé par",
@@ -819,6 +818,7 @@
       "spokenLanguage": "Langue parlée",
       "online": "En ligne",
       "inPerson": "En présentiel",
+      "hybrid": "Hybride",
       "municipality": "Commune concernée",
       "site": "Site",
       "startDate": "Date de début",
@@ -913,6 +913,11 @@
       "none": "Pas de salle vocale",
       "noneDescription": "Les familles voient à la place les instructions de connexion que vous rédigez pour chaque langue."
     },
+    "deliveryModes": {
+      "online": "En ligne",
+      "in_person": "En présentiel",
+      "hybrid": "Hybride"
+    },
     "endDateModes": {
       "ongoing": "Aucune date de fin",
       "ongoingDescription": "Le club se poursuit indéfiniment jusqu’à ce que vous décidiez d’y mettre fin.",
@@ -958,6 +963,7 @@
       "externalVoiceUrlHint": "Public : n’importe qui peut lire ce lien, y compris les visiteurs non connectés.",
       "municipalityHint": "Les clubs municipaux sont toujours rattachés à une commune finlandaise précise — celle qui les finance. Les parents de cette commune le verront en parcourant le catalogue.",
       "siteHint": "Où les sessions se déroulent physiquement.",
+      "hybridHint": "Les gamers viennent sur le site. Le Gedu, et tout gamer qui ne peut pas s’y rendre, rejoint la salle vocale Sogverse.",
       "eventSingleDay": "Les événements ont lieu à une seule date.",
       "timezoneEntry": "Les horaires des séances ci-dessous sont saisis dans ce fuseau horaire. Les parents les voient automatiquement convertis dans le leur.",
       "timezoneChangeMoves": "Les horaires des séances ci-dessous sont saisis dans ce fuseau horaire. En changer déplace chaque séance à venir au même horaire dans le nouveau fuseau, tandis que les séances dont un compte rendu ou une présence est déjà enregistré conservent les horaires auxquels elles se sont tenues.",
@@ -1212,8 +1218,6 @@
       "searchHint": "Saisissez au moins 2 caractères pour lancer la recherche.",
       "noParents": "Aucun parent pour l’instant.",
       "noSearchResults": "Aucun parent ni joueur ne correspond à votre recherche.",
-      "unnamedParent": "Parent sans nom",
-      "unnamedGamer": "Joueur sans nom",
       "add": "Ajouter",
       "adding": "Ajout…",
       "added": "Ajouté",
@@ -1238,8 +1242,7 @@
         "title": "Sans groupe",
         "subtitle": "Personnes qui ne sont pas encore dans un groupe. Faites-les glisser dans un groupe pour les placer.",
         "empty": "Tout le monde a un groupe.",
-        "addParticipant": "Ajouter un participant",
-        "removeParticipant": "Retirer le participant"
+        "addParticipant": "Ajouter un participant"
       },
       "empty": {
         "title": "Pas encore de groupe",
@@ -1313,22 +1316,19 @@
           "title": "L’abonnement est toujours actif",
           "description": "Déplacer {name} vers la liste d’attente laisserait un abonnement actif qui continuerait à facturer la famille pour une place qu’elle n’a plus.",
           "nextStep": "La famille ouvre la carte de facturation sur Mon SOG, qui la conduit au portail de facturation sécurisé de Stripe pour résilier. La place se libère dès la fin de l’abonnement."
-        },
-        "removeSubscribed": {
-          "title": "L’abonnement est toujours actif",
-          "description": "Retirer {name} laisserait l’abonnement de la famille facturer une place qui n’existe plus.",
-          "nextStep": "La famille ouvre la carte de facturation sur Mon SOG, qui la conduit au portail de facturation sécurisé de Stripe pour résilier. La place se libère dès la fin de l’abonnement."
         }
       },
       "switchClub": {
-        "dropZone": "Changer de club",
         "title": "Changer de club",
         "description": "Déplacez {name} vers un autre club. Rien ne change pour la famille aujourd’hui : la même carte est débitée à la même date, puis la famille paie le prix du nouveau club.",
         "searchPlaceholder": "Rechercher un club par son nom",
         "picker": {
           "empty": "Il n’y a aucun autre club vers lequel basculer. La destination doit être un club facturé chaque mois et qui n’est pas terminé.",
           "noMatch": "Aucun club ne correspond à cette recherche. Essayez un autre nom.",
-          "alreadyHolds": "A déjà une place"
+          "alreadyHolds": "A déjà une place",
+          "needsSubscription": "Abonnement requis",
+          "gamersOnly": "Joueurs uniquement",
+          "parentsOnly": "Parents uniquement"
         },
         "facts": {
           "ageRange": "{ends, select, both {Âges {min}–{max}} from {À partir de {min} ans} other {Jusqu’à {max} ans}}",
@@ -1360,18 +1360,51 @@
           "noLiveSubscription": "Aucun abonnement actif ne se trouve derrière cette place : ce n’est pas le bon outil. Retirez la place et inscrivez le joueur sur l’autre club.",
           "targetNotPaidSubscriptionClub": "Ce produit n’est pas un club facturé chaque mois, un abonnement ne peut donc pas suivre la place jusque-là.",
           "sameProduct": "C’est le club où le joueur se trouve déjà.",
-          "alreadyOnTarget": "Ce joueur a déjà une place dans ce club."
+          "alreadyOnTarget": "{name} a déjà une place dans ce produit.",
+          "targetIsSubscriptionClub": "Ce club est facturé chaque mois : une place y exige un abonnement, que ce déplacement ne peut pas créer.",
+          "targetNotOpenToParents": "Ce produit n’est pas ouvert aux parents, la place d’un parent ne peut donc pas y être déplacée.",
+          "targetNotOpenToGamers": "Ce produit n’est pas ouvert aux joueurs, la place de ce joueur ne peut donc pas y être déplacée."
         },
         "commit": {
           "stripeUpdated": "L’abonnement est déjà au prix du nouveau club, mais la place n’a pas bougé. Appuyez de nouveau sur Changer de club pour terminer — appuyer une seconde fois ne facture pas la famille deux fois.",
           "stripeUpdatedStuck": "L’abonnement est déjà au prix du nouveau club alors que la place n’a pas pu être déplacée : la famille est donc facturée pour un club où le joueur n’a aucune place. Réglez cela dans Stripe d’abord.",
           "failed": "Le changement n’est pas allé jusqu’au bout. Appuyez de nouveau sur Changer de club — un nouvel appui rejoue la même requête, la famille n’est donc jamais facturée deux fois."
         },
-        "confirm": "Changer de club"
+        "confirm": "Changer de club",
+        "noSubscription": {
+          "title": "Déplacer vers un autre produit",
+          "description": "Déplacez {name} vers un autre produit.",
+          "searchPlaceholder": "Rechercher un produit par son nom",
+          "picker": {
+            "empty": "Il n’y a aucun autre produit vers lequel déplacer. La destination doit être un produit qui n’est pas facturé chaque mois et qui n’est pas terminé.",
+            "noMatch": "Aucun produit ne correspond à cette recherche. Essayez un autre nom."
+          },
+          "family": {
+            "label": "Pour la famille",
+            "money": "Ce déplacement ne prélève ni ne rembourse aucun montant.",
+            "priceDifference": "Si les deux prix diffèrent, réglez la différence dans Stripe.",
+            "email": "La famille reçoit l’e-mail de confirmation du nouveau produit, et son entrée de calendrier y est déplacée.",
+            "consents": "Si le nouveau produit demande des consentements, ils sont donnés au nom de la famille, qui n’a donc pas à y répondre."
+          },
+          "notStarted": "Commence le {date}.",
+          "confirm": "Déplacer",
+          "commitFailed": "Le déplacement n’est pas allé jusqu’au bout. Appuyez de nouveau sur Déplacer.",
+          "commitConflict": "La place a changé pendant le déplacement, rien n’a donc été déplacé. Fermez ceci et rouvrez le menu de la place."
+        }
       },
       "requirementGaps": {
         "title": "Affecter quand même ?",
         "action": "Affecter quand même"
+      },
+      "seatMenu": {
+        "label": "Actions pour {name}",
+        "goToUser": "Aller à la page utilisateur de {name}",
+        "switchClub": "Changer de club…",
+        "move": "Déplacer vers un autre produit…",
+        "remove": "Retirer de ce produit…",
+        "disabled": {
+          "subscriptionLive": "La famille résilie l’abonnement depuis Mon SOG, et la place prend fin avec lui."
+        }
       }
     },
     "seatLimitModes": {
@@ -1475,14 +1508,11 @@
     "unknown": "Inconnu",
     "linkedGamers": "Joueurs associés",
     "linkedParents": "Parents associés",
-    "unnamedGamer": "Joueur sans nom",
-    "unnamedUser": "Utilisateur sans nom",
     "noConnectedGamers": "Aucun joueur associé",
     "assignedProducts": "Produits affectés",
     "noAssignedProducts": "Aucun produit affecté",
     "unassignedGroup": "Aucun groupe attribué",
     "needsGroup": "Doit être affecté à un groupe",
-    "untitledProduct": "Produit sans titre",
     "gamerDetails": {
       "title": "Informations personnelles",
       "edit": "Modifier les informations personnelles",
@@ -1563,7 +1593,6 @@
     "slackNotLinked": "Non associé"
   },
   "locations": {
-    "editName": "Modifier {name}",
     "addChildUnder": "Ajouter {type} sous {parent}",
     "location": "Lieu",
     "nameRequired": "Le nom est obligatoire",
@@ -1668,7 +1697,6 @@
     "justNow": "{count, plural, one {# remplacement validé à l’instant} other {# remplacements validés à l’instant}}",
     "offersLabel": "Gedus proposant de remplacer",
     "away": "Absence :",
-    "unnamed": "Gedu sans nom",
     "reason": {
       "sick": "Maladie",
       "other": "Autre"

@@ -33,7 +33,7 @@
     "rocket_league": "Vi tar med maskinerna till tillfället, med Rocket League redan installerat. Varje deltagare behöver ändå ett eget Epic Games-konto. Gå igenom steget nedan före tillfället.",
     "roblox_studio": "Vi tar med datorerna till tillfället, med Roblox Studio redan installerat. Varje deltagare behöver ändå ett eget Roblox-konto. Gå igenom steget nedan före tillfället."
   },
-  "remoteOnlyIntro": "Tillfällena hålls online, i ett röstrum. Gå igenom steget nedan före det första tillfället.",
+  "remoteOnlyIntro": "Tillfällena använder ett röstrum. Gå igenom steget nedan före det första tillfället.",
   "steps": {
     "minecraftJavaAccount": {
       "title": "Skaffa ett Microsoft-konto med Minecraft på",

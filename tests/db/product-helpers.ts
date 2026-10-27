@@ -162,6 +162,12 @@ import { TEST_IDS } from "./constants";
  *                  a group id that must NEVER exist, backing the case that an
  *                  unknown group is refused exactly as a foreign one is —
  *                  declared here for the same reason 6ee and 6ff are)
+ *   6e0-6e7        admin-move-unsubscribed-participation.test.ts (five
+ *                  products: 6e0 the free source open to gamers and parents,
+ *                  6e1 a free target with one group and required consents, 6e2
+ *                  a paid camp with one group, 6e3 the refused subscription
+ *                  club, 6e4 a parents-only camp. 6e5 and 6e6 are the groups
+ *                  on 6e1 and 6e2, 6e7 a group of the source)
  *   6ee            marketing-consents.test.ts's must-NOT-exist product id,
  *                  backing the case that the ask-set writer refuses an unknown
  *                  product even on a call that clears. Declared here for the
@@ -516,7 +522,7 @@ export async function createTestProduct(
     timezone,
     waitlist_enabled: options.waitlistEnabled ?? true,
     is_visible: options.isVisible ?? true,
-    is_remote: true,
+    delivery_mode: "online",
     for_gamers: forGamers,
     for_parents: options.forParents ?? false,
     min_age: forGamers ? 8 : null,

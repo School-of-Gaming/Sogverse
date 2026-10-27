@@ -44,7 +44,10 @@ import { EditProductPage } from "@/components/admin/products/edit-product-page";
 import { NewProductPage } from "@/components/admin/products/new-product-page";
 
 const PRODUCT_ID = "5f0c2a1e-8b3d-4e7f-9a6c-1d2e3f4a5b6c";
-const PRODUCT = { id: PRODUCT_ID, product_translations: [] };
+const PRODUCT = {
+  id: PRODUCT_ID,
+  product_translations: [{ locale: "en", name: "Minecraft Club" }],
+};
 
 /** The list read's states, as React Query reports them. */
 const LIST_PENDING = { isPending: true, isError: false, data: undefined };

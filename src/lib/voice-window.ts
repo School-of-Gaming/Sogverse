@@ -55,8 +55,8 @@ export function isVoiceWindowOpen(start: Date, end: Date, now: Date): boolean {
  * completed products too.
  *
  * Answers "is the *window* open" from the plan alone, independent of
- * `is_remote`. In-person products have no voice room, so callers gate the
- * Join affordance on `is_remote` themselves rather than relying on this.
+ * the delivery mode. In-person products have no voice room, so callers gate the
+ * Join affordance on `hasVoiceRoom` of the mode themselves rather than relying on this.
  *
  * A session marked `cancelled` is one group's cancelled date, and a surface
  * that knows them marks them: a cancelled session opens no room — the voice

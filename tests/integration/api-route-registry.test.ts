@@ -388,10 +388,11 @@ const ROUTE_REGISTRY: Record<string, RouteEntry> = {
     },
   },
 
-  // The admin club switch: the seat and its Stripe subscription move together.
-  // Both handlers read on the CALLER's client — every table involved carries an
-  // admin-full-access policy, and admin_move_participation re-checks the role
-  // internally, so a service-role call would have no auth.uid() to read.
+  // The admin seat move: a subscribed seat and its Stripe subscription move
+  // together (the club switch); a seat nothing bills monthly moves alone. Both
+  // handlers read on the CALLER's client — every table involved carries an
+  // admin-full-access policy, and both move RPCs re-check the role internally,
+  // so a service-role call would have no auth.uid() to read.
   "src/app/api/admin/products/[id]/participations/[participationId]/switch/route.ts":
     {
       adminClient:

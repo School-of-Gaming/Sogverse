@@ -128,9 +128,9 @@ describe("every card is the same height whatever its footer holds", () => {
   });
 
   /**
-   * The three footers, each proved to be the only one on its card: a run that
-   * is over names the day it ended, a remote product offers the room, an
-   * in-person one names the building.
+   * The footers: a run that is over names the day it ended, an online product
+   * offers the room, an in-person one names the building, and a hybrid one does
+   * both.
    */
   it("names the end date on a finished run, in place of a Join", () => {
     const html = cardHtml(endedCard);
@@ -142,6 +142,17 @@ describe("every card is the same height whatever its footer holds", () => {
     const html = cardHtml(onsiteCard);
     expect(html).toContain(onsiteCard.assignment.siteName!);
     expect(html).not.toContain(messages.voiceButton.joinVoice);
+  });
+
+  it("names the site beside the Join on a hybrid product, which has both", () => {
+    const siteName = "Sogverse-studio, Kamppi";
+    const hybridCard = {
+      ...lockedRemoteCard,
+      assignment: { ...lockedRemoteCard.assignment, siteName },
+    };
+    const html = cardHtml(hybridCard);
+    expect(html).toContain(siteName);
+    expect(html).toContain(messages.voiceButton.locked.split(" {")[0]);
   });
 });
 

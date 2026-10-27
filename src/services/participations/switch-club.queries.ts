@@ -29,6 +29,14 @@ import {
 const switchPath = (productId: string, participationId: string) =>
   `/api/admin/products/${productId}/participations/${participationId}/switch`;
 
+/**
+ * Which of the two actions the sheet is: the paid club switch for a seat a
+ * live subscription stands behind, or the no-subscription move for a seat no
+ * live subscription stands behind, whatever its product charges. The same
+ * values as the check response's `kind`.
+ */
+export type SwitchClubMode = SwitchClubCheckResponse["kind"];
+
 export const switchClubKeys = {
   all: ["switch-club"] as const,
   check: (participationId: string, targetProductId: string) =>
@@ -95,7 +103,9 @@ async function readCommitError(response: Response): Promise<never> {
 
 /**
  * What the dialog shows for one candidate target, and whether the commit is
- * allowed: the two amounts, and the hard refusals.
+ * allowed: the two amounts and the hard refusals for the paid switch, the
+ * refusals alone for the no-subscription move. The route answers whichever
+ * kind the seat is, and the answer's `kind` says which.
  *
  * Disabled until a target is picked, and keyed on the pair — choosing another
  * club is a different question with a different answer, so the previous one is
@@ -153,14 +163,19 @@ interface CommitVars {
 }
 
 /**
- * Move the seat and swap the subscription.
+ * Move the seat — swapping the subscription with it where one stands behind
+ * the seat. The route decides which from the seat itself, so the hook takes no
+ * mode.
  *
  * On success both products' snapshots have changed — the seat left one and
  * landed unassigned on the other — so the invalidation is the groups **root**
  * rather than either product's key, and it rides the panel's shared helper so
  * the admin dashboard's ops queue is refreshed with it.
  */
-export function useSwitchClub(productId: string, participationId: string) {
+export function useSwitchClub(
+  productId: string,
+  participationId: string,
+) {
   const queryClient = useQueryClient();
 
   return useMutation({

@@ -42,7 +42,7 @@ function product(overrides: Partial<ProductJsonLdSubject> = {}): ProductJsonLdSu
     ],
     schedule_slots: [{ weekday: 2, start_time: "17:00:00", duration_minutes: 60 }],
     locations: null,
-    is_remote: true,
+    delivery_mode: "online",
     for_gamers: true,
     min_age: 8,
     max_age: 12,
@@ -172,7 +172,7 @@ describe("productJsonLd", () => {
   });
 
   it("names an onsite club's place as the page does", () => {
-    const course = build(product({ is_remote: false, locations: SITE_ROW }));
+    const course = build(product({ delivery_mode: "in_person", locations: SITE_ROW }));
 
     expect(course).toMatchObject({
       hasCourseInstance: {
@@ -186,11 +186,42 @@ describe("productJsonLd", () => {
     });
   });
 
+  it("states a hybrid club as a blended course at its place", () => {
+    const course = build(product({ delivery_mode: "hybrid", locations: SITE_ROW }));
+
+    expect(course).toMatchObject({
+      hasCourseInstance: {
+        courseMode: "Blended",
+        location: { "@type": "Place", name: "Tapiolan koulu" },
+      },
+    });
+  });
+
+  it("states a hybrid camp as a mixed-attendance Event at its place and its page", () => {
+    const camp = build(
+      product({
+        product_type: "camp",
+        delivery_mode: "hybrid",
+        locations: SITE_ROW,
+        start_date: "2027-06-07",
+        end_date: "2027-06-11",
+      }),
+    );
+
+    expect(camp).toMatchObject({
+      eventAttendanceMode: "https://schema.org/MixedEventAttendanceMode",
+      location: [
+        { "@type": "Place", name: "Tapiolan koulu" },
+        { "@type": "VirtualLocation", url: `${SITE}${PATH}` },
+      ],
+    });
+  });
+
   it("states a camp as a dated Event at its place, organised by School of Gaming", () => {
     const camp = build(
       product({
         product_type: "camp",
-        is_remote: false,
+        delivery_mode: "in_person",
         locations: SITE_ROW,
         start_date: "2027-06-07",
         end_date: "2027-06-11",

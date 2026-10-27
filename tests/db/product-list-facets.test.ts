@@ -120,7 +120,7 @@ describe("product_list_facets", () => {
         id: CAMP,
         product_type: "camp",
         spoken_language_code: "sv",
-        is_remote: false,
+        delivery_mode: "in_person" as const,
         location_id: TEST_IDS.LOCATION_SITE,
       },
       {
@@ -128,7 +128,7 @@ describe("product_list_facets", () => {
         id: MUNI_CLUB,
         product_type: "municipality_club",
         spoken_language_code: "fi",
-        is_remote: true,
+        delivery_mode: "online" as const,
         location_id: TEST_IDS.LOCATION_MUNICIPALITY,
       },
     ]);

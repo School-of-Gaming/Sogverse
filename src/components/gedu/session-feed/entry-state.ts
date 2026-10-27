@@ -452,23 +452,10 @@ export function isExpectedOnEntry(
 }
 
 /**
- * Before every session there has ever been — what an **absent** join stamp
- * resolves to.
- *
- * Every seat holding a group carries a stamp: the trigger stamps each write
- * path and the historical rows were backfilled by the migration that introduced
- * the expectation rule. So this is a state the roster documents should not be
- * able to produce — which is exactly why it needs a decided answer rather than
- * an accident of a comparison against `undefined`. Absent means **expected
- * everywhere**, the behaviour that predates this rule and the only harmless
- * direction: a missing stamp can then cost a mark nobody needed, and can never
- * produce a false "complete" on a register nobody took.
- */
-const EXPECTED_ON_EVERY_SESSION = new Date(0);
-
-/**
  * Resolve one roster row's join stamp into the instant the register measures
- * from — the single place the wire's nullable column becomes a `Date`.
+ * from — the single place the wire's column becomes a `Date`. A roster row is a
+ * seat in the group, and the schema holds such a seat to a stamp, so there is
+ * no absent case to resolve.
  *
  * Every surface that builds a {@link SessionFeedGamer} calls this rather than
  * writing its own conversion. A surface that resolved it differently would
@@ -476,10 +463,8 @@ const EXPECTED_ON_EVERY_SESSION = new Date(0);
  * up only on whichever seats hit the differing branch — the hardest kind to
  * notice.
  */
-export function resolveInGroupSince(groupJoinedAt: string | null): Date {
-  return groupJoinedAt === null
-    ? EXPECTED_ON_EVERY_SESSION
-    : new Date(groupJoinedAt);
+export function resolveInGroupSince(groupJoinedAt: string): Date {
+  return new Date(groupJoinedAt);
 }
 
 export interface AttendanceTally {

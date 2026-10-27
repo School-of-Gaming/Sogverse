@@ -11,6 +11,7 @@ import {
   type ComparableLandingCopy,
   type PublishedLandingPageSummary,
 } from "@/services/landing-pages/landing-pages.contracts";
+import { landingTestimonialsSections } from "@/services/landing-pages/landing-pages.testimonials";
 import {
   CASE_IDS as I,
   everySection,
@@ -202,14 +203,42 @@ describe("reading in a language", () => {
   };
 
   it("falls back from the reader's locale to English to the first written", () => {
-    expect(localizeLandingPageSummary(page, "sv")?.slug).toBe("klubbar");
-    expect(localizeLandingPageSummary(page, "fr")?.slug).toBe("kerhot");
+    expect(localizeLandingPageSummary(page, "sv").slug).toBe("klubbar");
+    expect(localizeLandingPageSummary(page, "fr").slug).toBe("kerhot");
     expect(
       localizeLandingPageSummary(
         { ...page, versions: [...page.versions, { locale: "en", title: "Clubs", summary: "S", slug: "clubs" }] },
         "fr",
-      )?.slug,
+      ).slug,
     ).toBe("clubs");
+  });
+
+  it("throws on a published copy with no version, which publishing never leaves", () => {
+    expect(() => localizeLandingPageSummary({ ...page, versions: [] }, "en")).toThrow();
+  });
+});
+
+describe("a structure's testimonials sections", () => {
+  const QUOTE = "8b0e2c1a-7d3f-4e5a-9c6b-1f2e3d4c5b6a";
+  const sections = [
+    {
+      id: I.hero,
+      type: "testimonials" as const,
+      background: "default" as const,
+      arrangement: "feature" as const,
+      testimonialIds: [QUOTE],
+    },
+  ];
+
+  it("carries each placed testimonial's words", () => {
+    const versions = [{ locale: "en" as const, from: "Mum, Finland", quote: "Great." }];
+    expect(
+      landingTestimonialsSections(sections, { [QUOTE]: { id: QUOTE, versions } })[0].testimonials,
+    ).toEqual([{ testimonialId: QUOTE, versions }]);
+  });
+
+  it("throws on a placed testimonial the store did not answer, which nothing can produce", () => {
+    expect(() => landingTestimonialsSections(sections, {})).toThrow(QUOTE);
   });
 });
 

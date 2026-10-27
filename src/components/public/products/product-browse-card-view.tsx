@@ -153,12 +153,21 @@ export function ProductBrowseCardView({
               </li>
             ))}
             <li className="flex items-center gap-1 line-clamp-1">
-              {locationLine.kind === "in_person" ? (
+              {locationLine.kind === "in_person" ||
+              locationLine.kind === "hybrid" ? (
                 <MapPin className="h-3 w-3 shrink-0" aria-hidden />
               ) : (
                 <Globe className="h-3 w-3 shrink-0" aria-hidden />
               )}
               <span className="truncate">{locationLine.label}</span>
+              {/* The site truncates and the "Online" after it does not: it is
+                  the shorter half, and the one that says the card is hybrid. */}
+              {locationLine.kind === "hybrid" && (
+                <>
+                  <Globe className="ml-1 h-3 w-3 shrink-0" aria-hidden />
+                  <span className="shrink-0">{locationLine.onlineLabel}</span>
+                </>
+              )}
             </li>
           </ul>
         </div>

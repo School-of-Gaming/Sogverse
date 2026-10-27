@@ -104,6 +104,51 @@ describe("handle_new_user() role assignment", () => {
     expect(profile.role).toBe("customer");
   });
 
+  it("stores the names trimmed", async () => {
+    const user = await createTestUser({
+      email: "padded-names@test.local",
+      user_metadata: { first_name: "  Padded ", last_name: " Name  " },
+    });
+
+    const profile = await getProfile(user.id);
+    expect(profile.first_name).toBe("Padded");
+    expect(profile.last_name).toBe("Name");
+  });
+
+  it("trims whitespace of every kind, not only spaces", async () => {
+    const user = await createTestUser({
+      email: "tab-padded-names@test.local",
+      user_metadata: {
+        first_name: "\tTabbed\n",
+        last_name: `${String.fromCharCode(0x00a0)}Name${String.fromCharCode(0x200b)}`,
+      },
+    });
+
+    const profile = await getProfile(user.id);
+    expect(profile.first_name).toBe("Tabbed");
+    expect(profile.last_name).toBe("Name");
+  });
+
+  it("names an account whose first name is only whitespace as a new user", async () => {
+    const user = await createTestUser({
+      email: "tab-only-name@test.local",
+      user_metadata: { first_name: "\t\n", last_name: "Present" },
+    });
+
+    expect((await getProfile(user.id)).first_name).toBe("New User");
+  });
+
+  it("names an account whose first name is only spaces as a new user", async () => {
+    const user = await createTestUser({
+      email: "blank-name@test.local",
+      user_metadata: { first_name: "   ", last_name: "   " },
+    });
+
+    const profile = await getProfile(user.id);
+    expect(profile.first_name).toBe("New User");
+    expect(profile.last_name).toBe("");
+  });
+
   it("creates customer_profiles extension row for every signup", async () => {
     const user = await createTestUser({
       email: "extension@test.local",

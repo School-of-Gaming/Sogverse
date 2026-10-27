@@ -233,10 +233,10 @@ export const familyFeedCancellation = z
   .strict();
 
 /**
- * The site, on in-person products. `null` on anything remote.
+ * The site, on in-person and hybrid products. `null` on an online one.
  *
- * A remote municipality club carries a `location_id` too (a municipality, by
- * CHECK), so the RPC gates this on `is_remote = false` rather than on the
+ * An online municipality club carries a `location_id` too (a municipality, by
+ * CHECK), so the RPC gates this on the delivery mode rather than on the
  * location being present — otherwise a club with no building would render an
  * address panel.
  *
@@ -275,7 +275,7 @@ export const familyProductFeed = z
         /** Bare calendar dates — UTC-pinned, never re-anchored to a viewer zone. */
         start_date: z.string().nullable(),
         end_date: z.string().nullable(),
-        is_remote: z.boolean(),
+        delivery_mode: z.enum(Constants.public.Enums.delivery_mode),
         /** How the sessions are joined — `src/lib/products/voice-room.ts`. */
         ...voiceRoomWireFields,
         /** The product's names live here; `products` has no name column. */

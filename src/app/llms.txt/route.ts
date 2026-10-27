@@ -173,8 +173,8 @@ function libraryLines(
   baseUrl: string,
 ): string[] {
   return published.flatMap((article) => {
+    if (libraryArticleLocales(article).length === 0) return [];
     const shown = localizeArticleSummary(article, "en");
-    if (shown === null || libraryArticleLocales(article).length === 0) return [];
     const path = libraryArticleCanonicalPath(published, article, "en");
     return [`- [${shown.title}](${baseUrl}${path}): ${shown.summary}`];
   });
@@ -191,8 +191,8 @@ function landingPageLines(
   baseUrl: string,
 ): string[] {
   return live.flatMap((page) => {
+    if (landingPageLocales(page).length === 0) return [];
     const shown = localizeLandingPageSummary(page, "en");
-    if (shown === null || landingPageLocales(page).length === 0) return [];
     const path = landingPageCanonicalPath(page, "en");
     return [`- [${shown.title}](${baseUrl}${path}): ${shown.summary}`];
   });

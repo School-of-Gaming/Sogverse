@@ -1567,7 +1567,7 @@ function EnrollmentCardDemo() {
       buildEnrollmentFixture(clock, spec);
     const remoteClub = {
       productType: "consumer_club",
-      isRemote: true,
+      deliveryMode: "online",
       startedDaysAgo: 42,
       endsInDays: null,
     } as const;
@@ -1643,7 +1643,7 @@ function EnrollmentCardDemo() {
         participationId: "demo-enrollment-in-person",
         productName: "Cosmic Builders Camp",
         productType: "camp",
-        isRemote: false,
+        deliveryMode: "in_person",
         slots: [futureSlot(now, 2, "10:00", 300, FIXTURE_TIMEZONE)],
         startedDaysAgo: 1,
         endsInDays: 4,
@@ -1653,7 +1653,7 @@ function EnrollmentCardDemo() {
         participationId: "demo-enrollment-finished",
         productName: "Summer Speedrun Camp",
         productType: "camp",
-        isRemote: true,
+        deliveryMode: "online",
         slots: [futureSlot(now, 2, "10:00", 300, FIXTURE_TIMEZONE)],
         startedDaysAgo: 70,
         endsInDays: -35,

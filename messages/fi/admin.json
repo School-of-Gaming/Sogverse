@@ -36,7 +36,6 @@
       "title": "Gedujen hyväksyntä",
       "justNow": "Hyväksytty juuri nyt: {count}",
       "empty": "Yksikään Gedu ei odota hyväksyntää.",
-      "unnamed": "Nimetön Gedu",
       "registered": "rekisteröitynyt {when}",
       "certify": "Hyväksy",
       "certifying": "Hyväksytään…",
@@ -504,8 +503,7 @@
           "pair": "kaksi rinnakkain",
           "row": "kolme rivissä",
           "showcase": "yksi suuri lainaus, kaksi rinnakkain ja sitten kolme rivissä"
-        },
-        "missing": "Asiakaskokemus, jota ei enää ole tallessa"
+        }
       }
     },
     "status": {
@@ -666,6 +664,7 @@
       "ageRange": "{min}–{max} v",
       "seats": "{count} paikkaa",
       "online": "Etänä",
+      "hybrid": "Hybridi",
       "unlisted": "ei listattu",
       "untitled": "(nimetön)",
       "missingGeduFee": "Gedun palkkio puuttuu",
@@ -728,7 +727,7 @@
         "visibility": "Näkyvyys",
         "gamerPhotoConsents": "Valokuvakysymykset",
         "marketingConsents": "Markkinointikysymykset",
-        "format": "Muoto",
+        "deliveryMode": "Toteutustapa",
         "ageRange": "Ikähaarukka",
         "publicLink": "Julkinen linkki",
         "createdBy": "Luonut",
@@ -819,6 +818,7 @@
       "spokenLanguage": "Puhuttu kieli",
       "online": "Verkossa",
       "inPerson": "Paikan päällä",
+      "hybrid": "Hybridi",
       "municipality": "Mille kunnalle tämä on",
       "site": "Toimipiste",
       "startDate": "Alkupäivä",
@@ -913,6 +913,11 @@
       "none": "Ei äänihuonetta",
       "noneDescription": "Perheille näytetään sen sijaan liittymisohjeet, jotka kirjoitat kullekin kielelle."
     },
+    "deliveryModes": {
+      "online": "Verkossa",
+      "in_person": "Paikan päällä",
+      "hybrid": "Hybridi"
+    },
     "endDateModes": {
       "ongoing": "Ei loppupäivää",
       "ongoingDescription": "Kerho jatkuu toistaiseksi, kunnes päätät lopettaa sen.",
@@ -958,6 +963,7 @@
       "externalVoiceUrlHint": "Julkinen: kuka tahansa voi lukea linkin, myös kirjautumattomat vierailijat.",
       "municipalityHint": "Kuntakerhot on aina sidottu tiettyyn Suomen kuntaan — siihen, joka sen maksaa. Sen kunnan vanhemmat näkevät kerhon selatessaan.",
       "siteHint": "Missä kerrat fyysisesti tapahtuvat.",
+      "hybridHint": "Pelaajat tulevat paikan päälle. Gedu ja pelaajat, jotka eivät pääse paikalle, liittyvät Sogversen äänihuoneeseen.",
       "eventSingleDay": "Tapahtumat ovat yhden päivän mittaisia.",
       "timezoneEntry": "Alla olevat kertojen ajat syötetään tällä aikavyöhykkeellä. Vanhemmat näkevät ne automaattisesti omalla aikavyöhykkeellään.",
       "timezoneChangeMoves": "Alla olevat kertojen ajat syötetään tällä aikavyöhykkeellä. Vaihto siirtää jokaisen tulevan kerran samaan kellonaikaan uudella aikavyöhykkeellä, mutta kerrat, joille on jo kirjattu raportti tai läsnäolot, säilyttävät ajat, joina ne pidettiin.",
@@ -1212,8 +1218,6 @@
       "searchHint": "Hae kirjoittamalla vähintään 2 merkkiä.",
       "noParents": "Ei vielä yhtään vanhempaa.",
       "noSearchResults": "Yksikään vanhempi tai pelaaja ei vastaa hakuasi.",
-      "unnamedParent": "Nimetön vanhempi",
-      "unnamedGamer": "Nimetön pelaaja",
       "add": "Lisää",
       "adding": "Lisätään…",
       "added": "Lisätty",
@@ -1238,8 +1242,7 @@
         "title": "Nimeämättömät",
         "subtitle": "Osallistujat, jotka eivät ole vielä missään ryhmässä. Vedä heidät ryhmään sijoittaaksesi.",
         "empty": "Kaikilla on ryhmä.",
-        "addParticipant": "Lisää osallistuja",
-        "removeParticipant": "Poista osallistuja"
+        "addParticipant": "Lisää osallistuja"
       },
       "empty": {
         "title": "Ei vielä ryhmiä",
@@ -1313,22 +1316,19 @@
           "title": "Tilaus on yhä voimassa",
           "description": "Jos {name} siirtyy jonotuslistalle, tilaus jää voimaan ja perheeltä veloitetaan edelleen paikasta, jota sillä ei enää ole.",
           "nextStep": "Perhe avaa laskutuskortin Oma SOG -sivullaan ja siirtyy sitä kautta Stripen suojattuun laskutusportaaliin perumaan tilauksen. Paikka vapautuu heti, kun tilaus päättyy."
-        },
-        "removeSubscribed": {
-          "title": "Tilaus on yhä voimassa",
-          "description": "Jos {name} poistetaan, perheen tilaus jatkaa laskuttamista paikasta, jota ei enää ole.",
-          "nextStep": "Perhe avaa laskutuskortin Oma SOG -sivullaan ja siirtyy sitä kautta Stripen suojattuun laskutusportaaliin perumaan tilauksen. Paikka vapautuu heti, kun tilaus päättyy."
         }
       },
       "switchClub": {
-        "dropZone": "Vaihda kerhoa",
         "title": "Vaihda kerhoa",
         "description": "{name} siirtyy toiseen kerhoon. Perheelle ei muutu tänään mitään: samalta kortilta veloitetaan samana päivänä, ja siitä eteenpäin perhe maksaa uuden kerhon hinnan.",
         "searchPlaceholder": "Hae kerhoja nimellä",
         "picker": {
           "empty": "Muuta kerhoa ei ole tarjolla. Kohteen pitää olla kuukausittain laskutettava kerho, joka ei ole vielä päättynyt.",
           "noMatch": "Haku ei osu yhteenkään kerhoon. Kokeile toista nimeä.",
-          "alreadyHolds": "On jo paikka"
+          "alreadyHolds": "On jo paikka",
+          "needsSubscription": "Vaatii tilauksen",
+          "gamersOnly": "Vain pelaajille",
+          "parentsOnly": "Vain vanhemmille"
         },
         "facts": {
           "ageRange": "{ends, select, both {Ikä {min}–{max} vuotta} from {Ikä vähintään {min} vuotta} other {Ikä enintään {max} vuotta}}",
@@ -1360,18 +1360,51 @@
           "noLiveSubscription": "Tämän paikan takana ei ole voimassa olevaa tilausta, joten tämä ei ole oikea työkalu: poista paikka ja ilmoita pelaaja toiseen kerhoon.",
           "targetNotPaidSubscriptionClub": "Kyseinen tuote ei ole kuukausittain laskutettava kerho, joten tilaus ei voi seurata paikkaa sinne.",
           "sameProduct": "Pelaaja on jo tässä kerhossa.",
-          "alreadyOnTarget": "Pelaajalla on jo paikka kyseisessä kerhossa."
+          "alreadyOnTarget": "Käyttäjällä {name} on jo paikka kyseisessä tuotteessa.",
+          "targetIsSubscriptionClub": "Kerho laskutetaan kuukausittain, joten paikka siellä vaatii tilauksen, jota tämä siirto ei voi luoda.",
+          "targetNotOpenToParents": "Tuote ei ole avoin vanhemmille, joten vanhemman omaa paikkaa ei voi siirtää sinne.",
+          "targetNotOpenToGamers": "Tuote ei ole avoin pelaajille, joten tämän pelaajan paikkaa ei voi siirtää sinne."
         },
         "commit": {
           "stripeUpdated": "Tilaus on jo uuden kerhon hinnassa, mutta paikka ei siirtynyt. Paina Vaihda kerhoa uudelleen, niin siirto viedään loppuun. Uusi painallus ei veloita perhettä kahteen kertaan.",
           "stripeUpdatedStuck": "Tilaus on jo uuden kerhon hinnassa, vaikka paikka ei siirtynyt, joten perhettä laskutetaan kerhosta, jossa pelaajalla ei ole paikkaa. Selvitä tämä ensin Stripessä.",
           "failed": "Vaihto ei mennyt loppuun asti. Paina Vaihda kerhoa uudelleen — uusi painallus toistaa saman pyynnön, joten perhettä ei veloiteta kahteen kertaan."
         },
-        "confirm": "Vaihda kerhoa"
+        "confirm": "Vaihda kerhoa",
+        "noSubscription": {
+          "title": "Siirrä toiseen tuotteeseen",
+          "description": "{name} siirtyy toiseen tuotteeseen.",
+          "searchPlaceholder": "Hae tuotteita nimellä",
+          "picker": {
+            "empty": "Muuta tuotetta ei ole tarjolla. Kohde ei saa olla kuukausittain laskutettava, eikä se saa olla vielä päättynyt.",
+            "noMatch": "Yksikään tuote ei vastaa hakua. Kokeile toista nimeä."
+          },
+          "family": {
+            "label": "Perheelle",
+            "money": "Siirto ei veloita eikä hyvitä mitään.",
+            "priceDifference": "Jos hinnat eroavat, hoida erotus Stripessä.",
+            "email": "Perhe saa uuden tuotteen vahvistussähköpostin, ja kalenterimerkintä siirtyy siihen.",
+            "consents": "Jos uusi tuote vaatii suostumuksia, ne annetaan perheen puolesta, eikä perheeltä kysytä niitä."
+          },
+          "notStarted": "Alkaa {date}.",
+          "confirm": "Siirrä",
+          "commitFailed": "Siirto ei mennyt loppuun asti. Paina Siirrä uudelleen.",
+          "commitConflict": "Paikka muuttui siirron aikana, joten mitään ei siirretty. Sulje tämä ja avaa paikan valikko uudelleen."
+        }
       },
       "requirementGaps": {
         "title": "Lisätäänkö silti?",
         "action": "Lisää silti"
+      },
+      "seatMenu": {
+        "label": "Toiminnot: {name}",
+        "goToUser": "Siirry käyttäjän {name} sivulle",
+        "switchClub": "Vaihda kerhoa…",
+        "move": "Siirrä toiseen tuotteeseen…",
+        "remove": "Poista tästä tuotteesta…",
+        "disabled": {
+          "subscriptionLive": "Perhe peruu tilauksen Oma SOG -sivulla, ja paikka päättyy sen mukana."
+        }
       }
     },
     "seatLimitModes": {
@@ -1475,14 +1508,11 @@
     "unknown": "Tuntematon",
     "linkedGamers": "Liitetyt pelaajat",
     "linkedParents": "Liitetyt vanhemmat",
-    "unnamedGamer": "Nimetön pelaaja",
-    "unnamedUser": "Nimetön käyttäjä",
     "noConnectedGamers": "Ei liitettyjä pelaajia",
     "assignedProducts": "Liitetyt tuotteet",
     "noAssignedProducts": "Ei liitettyjä tuotteita",
     "unassignedGroup": "Ei ryhmää määritetty",
     "needsGroup": "Tarvitsee ryhmän",
-    "untitledProduct": "Nimetön tuote",
     "gamerDetails": {
       "title": "Henkilötiedot",
       "edit": "Muokkaa henkilötietoja",
@@ -1563,7 +1593,6 @@
     "slackNotLinked": "Ei yhdistetty"
   },
   "locations": {
-    "editName": "Muokkaa: {name}",
     "addChildUnder": "Lisää {type} kohteen {parent} alle",
     "location": "Sijainti",
     "nameRequired": "Nimi on pakollinen",
@@ -1668,7 +1697,6 @@
     "justNow": "{count, plural, one {# tuuraaja hyväksytty juuri nyt} other {# tuuraajaa hyväksytty juuri nyt}}",
     "offersLabel": "Tuuraamista tarjoavat Gedut",
     "away": "Poissa:",
-    "unnamed": "Nimetön Gedu",
     "reason": {
       "sick": "Sairaus",
       "other": "Muu"

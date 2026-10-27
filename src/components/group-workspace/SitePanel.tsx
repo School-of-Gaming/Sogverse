@@ -95,7 +95,7 @@ interface SitePanelProps {
  * same way on every surface, and written behind one pencil and one Save on
  * whichever of them may write.
  *
- * A remote club has no building; an in-person one has a building with a door
+ * An online club has no building; an in-person one has a building with a door
  * code, a room that is booked until half past, and a caretaker who locks up at
  * six. None of that is true of the *group* — it is true of the site, and it is
  * true of every other product running there — so it is stored on the site and

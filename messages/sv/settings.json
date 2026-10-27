@@ -5,6 +5,7 @@
   "firstNamePlaceholder": "Ange ditt förnamn",
   "lastNamePlaceholder": "Ange ditt efternamn",
   "invalidPhone": "Ange ett giltigt telefonnummer.",
+  "firstNameRequired": "Förnamnet måste vara minst {min} tecken.",
   "lastNameRequired": "Efternamnet måste vara minst {min} tecken.",
   "profileUpdated": "Personuppgifterna har sparats.",
   "failedToUpdateProfile": "Det gick inte att spara personuppgifterna.",

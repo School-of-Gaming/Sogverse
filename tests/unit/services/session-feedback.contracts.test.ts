@@ -76,12 +76,10 @@ describe("reading a stored answers object back", () => {
     expect(storedSessionFeedbackAnswers.parse({})).toEqual({});
   });
 
-  it("reads anything that is not an object as no answers at all", () => {
-    // The column's own constraint forbids these; a read that met one would be
-    // a form a child could never open, which is the worse of the two failures.
-    expect(storedSessionFeedbackAnswers.parse(null)).toEqual({});
-    expect(storedSessionFeedbackAnswers.parse([1, 2])).toEqual({});
-    expect(storedSessionFeedbackAnswers.parse("learned")).toEqual({});
+  it("refuses anything that is not an object, which the column's CHECK forbids", () => {
+    expect(() => storedSessionFeedbackAnswers.parse(null)).toThrow();
+    expect(() => storedSessionFeedbackAnswers.parse([1, 2])).toThrow();
+    expect(() => storedSessionFeedbackAnswers.parse("learned")).toThrow();
   });
 
   it("projects a row onto exactly what the form seeds from", () => {

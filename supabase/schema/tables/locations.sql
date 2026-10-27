@@ -127,6 +127,20 @@ CREATE TRIGGER locations_updated_at BEFORE UPDATE ON public.locations FOR EACH R
 
 
 --
+-- Name: locations trg_locations_refuse_loop; Type: TRIGGER; Schema: public; Owner: -
+--
+
+CREATE TRIGGER trg_locations_refuse_loop BEFORE INSERT OR UPDATE OF parent_id ON public.locations FOR EACH ROW EXECUTE FUNCTION public.refuse_location_loop();
+
+
+--
+-- Name: TRIGGER trg_locations_refuse_loop ON locations; Type: COMMENT; Schema: public; Owner: -
+--
+
+COMMENT ON TRIGGER trg_locations_refuse_loop ON public.locations IS 'Keeps the location tree free of loops: a place may not be put under itself or under anything below it. locations_no_self_parent is the one-step case of the same rule; this is every other length. The readers rely on it: location_lineage climbs with no loop check because this leaves no loop to meet.';
+
+
+--
 -- Name: locations trg_set_location_depth; Type: TRIGGER; Schema: public; Owner: -
 --
 

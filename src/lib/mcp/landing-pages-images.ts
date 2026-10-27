@@ -32,6 +32,7 @@ import {
   NOT_FOUND,
   asLandingAdmin,
   pageId,
+  savedPage,
   unpublishedChanges,
 } from "@/lib/mcp/landing-pages-call";
 import { CatalogueImagesService } from "@/services/catalogue-images/catalogue-images.service";
@@ -324,8 +325,7 @@ export function registerLandingImageTools(server: McpServer): void {
           input.pageId,
           sections.map((section) => (section === target ? result.section : section)),
         );
-        const after = await service.getAdminPage(input.pageId);
-        if (after === null) return refusal(NOT_FOUND);
+        const after = await savedPage(service, input.pageId);
         const prefix = `sections.${input.sectionId}.`;
         return answer({
           pageId: input.pageId,

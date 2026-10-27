@@ -1,4 +1,5 @@
 import { describe, expect, it } from "vitest";
+import type { DeliveryMode } from "@/types";
 import type { GeduAssignmentRow } from "@/lib/gedu-assignment-rollup";
 import {
   buildGeduUpcomingSessions,
@@ -41,7 +42,7 @@ function row(overrides: {
   substitutionDate?: string | null;
   startDate?: string | null;
   endDate?: string | null;
-  isRemote?: boolean;
+  deliveryMode?: DeliveryMode;
   cancelledDates?: string[];
 }): GeduAssignmentRow {
   const startDate = overrides.startDate ?? "2026-01-05";
@@ -68,7 +69,7 @@ function row(overrides: {
       timezone: TIME_ZONE,
       startDate,
       endDate,
-      isRemote: overrides.isRemote ?? true,
+      deliveryMode: overrides.deliveryMode ?? "online",
       voiceRoom: { mode: "sogverse" },
       siteName: null,
       topic: "minecraft_java",
@@ -372,7 +373,7 @@ function session(key: string, startsAt: string): GeduUpcomingSession {
     productName: `Product ${key}`,
     productType: "consumer_club",
     groupName: "A",
-    isRemote: true,
+    deliveryMode: "online",
     siteName: null,
   };
 }

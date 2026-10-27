@@ -120,7 +120,7 @@ vi.mock("@/services/member-flair/member-flair.queries", () => ({
             product_type: "consumer_club",
             members: {
               [MEMBER]: {
-                group_joined_at: null,
+                group_joined_at: "2020-01-01T00:00:00.000Z",
                 note: NOTE,
                 note_updated_by_first_name: "Sanna",
                 creations: [],
@@ -137,7 +137,7 @@ vi.mock("@/services/member-flair/member-flair.queries", () => ({
         ? {
             product_type: "consumer_club",
             members: {
-              [MEMBER]: { group_joined_at: null, has_note: true, creations: [] },
+              [MEMBER]: { group_joined_at: "2020-01-01T00:00:00.000Z", has_note: true, creations: [] },
             },
           }
         : undefined,

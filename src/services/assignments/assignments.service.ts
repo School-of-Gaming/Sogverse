@@ -6,6 +6,7 @@ import {
 } from "@/lib/products/voice-room";
 import type {
   AppSupabaseClient,
+  DeliveryMode,
   GeduAssignedProduct,
   GeduAssignmentRole,
   ProductTopic,
@@ -41,18 +42,22 @@ export interface MyAssignedProductSessionRow {
     startDate: string | null;
     /** Inclusive end date (YYYY-MM-DD), null for ongoing clubs. */
     endDate: string | null;
-    /** False for in-person products — the join button is a no-op in that case. */
-    isRemote: boolean;
+    /**
+     * How the product is delivered; the join button is there exactly when it
+     * `hasVoiceRoom`.
+     */
+    deliveryMode: DeliveryMode;
     /**
      * How the product's sessions are joined — the Sogverse room, a meeting
-     * elsewhere, or instructions per locale. Always `sogverse` in person.
+     * elsewhere, or instructions per locale. Always `sogverse` in person or
+     * hybrid.
      */
     voiceRoom: ProductVoiceRoom;
     /**
-     * The venue on an in-person product, or `null` — always on a remote one
-     * (the read tests the remote flag, never the presence of a location, since a
-     * remote municipality club carries one and has no building), and on an
-     * in-person product with no site recorded.
+     * The venue on an in-person or hybrid product, or `null` — always on an
+     * online one (the read tests the delivery mode, never the presence of a
+     * location, since an online municipality club carries one and has no
+     * building), and on a product at a site with none recorded.
      */
     siteName: string | null;
     topic: ProductTopic;
@@ -311,7 +316,7 @@ function toMyAssignedProductSessionRow(
       timezone: row.product.timezone,
       startDate: row.product.start_date,
       endDate: row.product.end_date,
-      isRemote: row.product.is_remote,
+      deliveryMode: row.product.delivery_mode,
       voiceRoom: productVoiceRoom(row.product, row.product.translations),
       siteName: row.product.site_name,
       topic: row.product.topic,

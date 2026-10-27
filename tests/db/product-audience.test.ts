@@ -221,7 +221,7 @@ describe("product audience", () => {
         product_type: "consumer_club" as const,
         billing_mode: "free" as const,
         topic: "minecraft_java" as const,
-        is_remote: true,
+        delivery_mode: "online" as const,
         is_visible: false,
         timezone: "UTC",
         // Required by the column. Nothing in these probes turns on it.

@@ -22,7 +22,7 @@ import {
 import { createSiteDetailsSave } from "@/components/group-workspace/site-details-save";
 import { ROUTES } from "@/lib/constants/routes";
 import { resolveLocale } from "@/lib/constants/locales";
-import { resolveTranslation } from "@/lib/i18n/resolve-translation";
+import { resolveRequiredTranslation } from "@/lib/i18n/resolve-translation";
 import { localizedLocationName } from "@/lib/locations/localized-name";
 import {
   useLocationsByIds,
@@ -349,13 +349,10 @@ function ConnectedProductRow({
   const locale = useLocale();
 
   const config = PRODUCT_TYPE_CONFIG[product.product_type];
-  // Every product is guaranteed at least one translation, so the fallback is
-  // for a name that is present and blank rather than for a missing row.
-  const name =
-    resolveTranslation(
-      product.product_translations,
-      resolveLocale(locale),
-    )?.name.trim() || p("list.untitled");
+  const name = resolveRequiredTranslation(
+    product.product_translations,
+    resolveLocale(locale),
+  ).name.trim();
 
   return (
     <Link

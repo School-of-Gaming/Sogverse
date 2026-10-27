@@ -10,7 +10,9 @@ import {
   sameLocaleDrafts,
   type LocaleTabState,
 } from "@/lib/i18n/locale-tabs";
+import { gamersAttendSite } from "@/lib/products/delivery-mode";
 import type {
+  DeliveryMode,
   ProductTag,
   ProductTopic,
   SpokenLanguageCode,
@@ -120,12 +122,22 @@ export const EMPTY_TRANSLATION: TranslationDraft = {
   voiceJoinInstructions: "",
 };
 
+/**
+ * Whether the voice-room choice is offered at all. Only an online product may
+ * be joined through a meeting elsewhere or by written instructions; an
+ * in-person product has no room and a hybrid one always has the Sogverse room,
+ * so both are saved as `sogverse` whatever the hidden choice holds.
+ */
+export function offersVoiceRoomChoice(deliveryMode: DeliveryMode): boolean {
+  return deliveryMode === "online";
+}
+
 /** Whether the join instructions are asked for at all: an online product with no voice room. */
 export function asksJoinInstructions(state: {
-  isRemote: boolean;
+  deliveryMode: DeliveryMode;
   voiceRoomMode: VoiceRoomMode;
 }): boolean {
-  return state.isRemote && state.voiceRoomMode === "none";
+  return offersVoiceRoomChoice(state.deliveryMode) && state.voiceRoomMode === "none";
 }
 
 /**
@@ -135,7 +147,7 @@ export function asksJoinInstructions(state: {
  * as a written, incomplete language.
  */
 export function draftsForMode(
-  state: Pick<FormState, "translations" | "isRemote" | "voiceRoomMode">,
+  state: Pick<FormState, "translations" | "deliveryMode" | "voiceRoomMode">,
 ): FormState["translations"]["drafts"] {
   const { drafts } = state.translations;
   if (asksJoinInstructions(state)) return drafts;
@@ -220,15 +232,16 @@ export interface FormState {
   spokenLanguageCode: SpokenLanguageCode | "";
 
   // Where
-  isRemote: boolean;
+  deliveryMode: DeliveryMode;
   locationId: string | null;
   // How an online product's sessions are joined: the Sogverse voice room, a
   // link to a meeting held elsewhere, or no room and join instructions, which
-  // are written per locale on the translation drafts. Offered only while
-  // `isRemote` is on; an in-person product is saved as `sogverse` whatever this
-  // holds, and the link and the instructions are sent only with the mode they
-  // belong to. Both stay as typed while hidden, so flipping to in person or to
-  // another mode and back loses nothing for as long as the form stays open.
+  // are written per locale on the translation drafts. Offered only while the
+  // product is online (`offersVoiceRoomChoice`); an in-person or hybrid product
+  // is saved as `sogverse` whatever this holds, and the link and the
+  // instructions are sent only with the mode they belong to. Both stay as typed
+  // while hidden, so flipping to another delivery mode or another room mode and
+  // back loses nothing for as long as the form stays open.
   voiceRoomMode: VoiceRoomMode;
   externalVoiceUrl: string;
 
@@ -404,7 +417,7 @@ export function initialState(
     // hide a new product from every family outside one country.
     regionLockCountry: null,
     spokenLanguageCode: "",
-    isRemote: true,
+    deliveryMode: "online",
     locationId: null,
     // A Sogverse room until somebody says otherwise: the other two are a
     // stopgap for audiences larger than a room holds.
@@ -540,15 +553,13 @@ export function withPaidMode(state: FormState, paidMode: PaidMode): FormState {
 
 export function locationPickerMode(
   config: ProductTypeConfig,
-  isRemote: boolean,
+  deliveryMode: DeliveryMode,
 ): "site" | "municipality" | null {
+  // A product gamers attend — in person or hybrid — always picks a site.
   // Online products only need a location picker for municipality clubs
-  // (they anchor to the funding municipality). In-person products always
-  // pick a site.
-  if (isRemote) {
-    return config.requiresMunicipalityWhenOnline ? "municipality" : null;
-  }
-  return "site";
+  // (they anchor to the funding municipality).
+  if (gamersAttendSite(deliveryMode)) return "site";
+  return config.requiresMunicipalityWhenOnline ? "municipality" : null;
 }
 
 /**

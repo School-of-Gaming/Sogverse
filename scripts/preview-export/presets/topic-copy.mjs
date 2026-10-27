@@ -30,8 +30,9 @@
  *
  * **The registry is imported from TypeScript, not restated here.**
  * `src/lib/products/topics.ts` has only type-level imports, so Node's own type
- * stripping loads it with no build step and no dependency. Which topics have a
- * card is then the app's answer rather than a list here that goes stale.
+ * stripping loads it with no build step and no dependency (a unit test holds the
+ * file to that). Which topics have a card is then the app's answer rather than
+ * a list here that goes stale.
  */
 import {
   PRODUCT_TOPICS,

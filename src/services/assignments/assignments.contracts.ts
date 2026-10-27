@@ -99,7 +99,7 @@ export const geduAssignedProduct = z.object({
     timezone: z.string(),
     start_date: z.string().nullable(),
     end_date: z.string().nullable(),
-    is_remote: z.boolean(),
+    delivery_mode: z.enum(Constants.public.Enums.delivery_mode),
     /** How the sessions are joined — `src/lib/products/voice-room.ts`. */
     ...voiceRoomWireFields,
     /**
@@ -165,8 +165,8 @@ export const geduAssignedProduct = z.object({
              * one product resets it. It is emitted unconditionally because a
              * timestamp is a *fact* and the clubs-only newcomer rule is a
              * *presentation* rule the client applies through
-             * `showsNewcomerBadge`; null here means the seat predates the column
-             * (there was deliberately no backfill), never "not a club".
+             * `showsNewcomerBadge`. Never null: a roster row is a seat in this
+             * group, and the schema holds a seat in a group to its stamp.
              *
              * `note` is the (group, member) staff note, null when no row exists
              * — the absence of a row is what "no note" means everywhere.
@@ -177,7 +177,7 @@ export const geduAssignedProduct = z.object({
              * Kept in parity with the gedu feed's roster entry, which is the
              * copy every rendered roster actually comes from.
              */
-            group_joined_at: z.string().nullable(),
+            group_joined_at: z.string(),
             note: z.string().nullable(),
             note_updated_by_first_name: z.string().nullable(),
             /**

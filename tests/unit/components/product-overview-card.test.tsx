@@ -73,7 +73,7 @@ const CLUB: CardProduct = {
   end_date: "2027-05-31",
   timezone: "Europe/Helsinki",
   schedule_slots: [{ weekday: 0, start_time: "16:00:00", duration_minutes: 60 }],
-  is_remote: false,
+  delivery_mode: "in_person",
   locations: {
     id: "loc-tapiolan-koulu",
     name: "Tapiolan koulu",
@@ -155,7 +155,7 @@ describe("a product with no site to name", () => {
    * being a site and becomes the one word that answers it.
    */
   it("labels the cell Format and answers Online", () => {
-    const { container } = renderCard({ is_remote: true, locations: null });
+    const { container } = renderCard({ delivery_mode: "online", locations: null });
     const text = container.textContent;
 
     expect(text).toContain("Format");

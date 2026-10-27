@@ -17,7 +17,7 @@ export function sessionFacts(overrides: Partial<SessionFacts> = {}): SessionFact
     productType: "consumer_club",
     topic: "minecraft_java",
     spokenLanguageCode: "fi",
-    isRemote: false,
+    deliveryMode: "in_person",
     siteName: "Sellon kirjasto, Espoo",
     ...overrides,
   };

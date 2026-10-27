@@ -36,7 +36,7 @@ BEGIN
     'timezone',                 p.timezone,
     'start_date',               p.start_date,
     'end_date',                 p.end_date,
-    'is_remote',                p.is_remote,
+    'delivery_mode',            p.delivery_mode,
     'voice_room_mode',          p.voice_room_mode,
     'external_voice_url',       p.external_voice_url,
     'requires_gamer_creations', p.requires_gamer_creations,
@@ -64,7 +64,7 @@ BEGIN
   FROM public.products p
   WHERE p.id = p_product_id;
 
-  v_today := (now() AT TIME ZONE COALESCE(v_timezone, 'UTC'))::date;
+  v_today := (now() AT TIME ZONE v_timezone)::date;
 
   -- Every group of the product, ordered as get_gedu_assigned_product orders
   -- them. A sibling group is shown by name only, so the trainee can see it

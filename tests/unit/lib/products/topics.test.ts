@@ -1,3 +1,5 @@
+import { readFileSync } from "node:fs";
+import { join } from "node:path";
 import { describe, it, expect } from "vitest";
 import enProductDetail from "@/../messages/en/productDetail.json";
 import enTopicPrep from "@/../messages/en/topicPrep.json";
@@ -7,11 +9,11 @@ import {
   PRODUCT_TOPIC_VALUES,
   TOPIC_FILTER_CHIPS,
   platformForTopic,
-  resolveTopicPrep,
   topicHasInfoCard,
   topicHasPrep,
   type TopicMeta,
 } from "@/lib/products/topics";
+import { resolveTopicPrep } from "@/lib/products/topic-prep";
 import { SUPPORTED_GAME_PLATFORMS } from "@/lib/constants/game-platforms";
 
 const messages = { productDetail: enProductDetail, topicPrep: enTopicPrep };
@@ -383,7 +385,7 @@ describe("product topics", () => {
       for (const topic of PRODUCT_TOPIC_VALUES) {
         if (!topicHasPrep(topic)) continue;
 
-        const inPerson = resolveTopicPrep(topic, false);
+        const inPerson = resolveTopicPrep(topic, "in_person");
         if (inPerson === null) continue;
         expect(
           inPerson.steps.every((s) => s.scope === "always"),
@@ -395,7 +397,7 @@ describe("product topics", () => {
         ).not.toContain(REMOTE_SESSION_KEY);
 
         const declared: TopicMeta = PRODUCT_TOPICS[topic];
-        const remote = resolveTopicPrep(topic, true);
+        const remote = resolveTopicPrep(topic, "online");
         expect(remote).not.toBeNull();
         expect(remote?.steps.map((s) => s.key)).toEqual([
           ...(declared.prep?.steps.map((s) => s.key) ?? []),
@@ -409,15 +411,19 @@ describe("product topics", () => {
       // assertion is over every topic at once: remote guides all end on it,
       // in-person guides never mention it, and it is declared once — which is
       // what the global-uniqueness check above is worth here.
-      for (const topic of PRODUCT_TOPIC_VALUES) {
-        const remote = resolveTopicPrep(topic, true);
-        expect(remote, `${topic} renders no guide on a remote product`).not
-          .toBeNull();
-        expect(remote?.steps.at(-1)?.key, topic).toBe(REMOTE_SESSION_KEY);
-        expect(
-          remote?.steps.filter((s) => s.key === REMOTE_SESSION_KEY),
-          `${topic} appends the shared step more than once`,
-        ).toHaveLength(1);
+      // A hybrid product has the room too, so it ends on the step whatever
+      // the install-and-test half of its guide holds.
+      for (const mode of ["online", "hybrid"] as const) {
+        for (const topic of PRODUCT_TOPIC_VALUES) {
+          const remote = resolveTopicPrep(topic, mode);
+          expect(remote, `${topic} renders no guide on a ${mode} product`).not
+            .toBeNull();
+          expect(remote?.steps.at(-1)?.key, topic).toBe(REMOTE_SESSION_KEY);
+          expect(
+            remote?.steps.filter((s) => s.key === REMOTE_SESSION_KEY),
+            `${topic} appends the shared step more than once`,
+          ).toHaveLength(1);
+        }
       }
     });
 
@@ -427,9 +433,9 @@ describe("product topics", () => {
       // to get ready for, and it is the whole guide — under the generic intro,
       // because there is no topic sentence to open with.
       for (const topic of PRODUCT_TOPIC_VALUES.filter((t) => !topicHasPrep(t))) {
-        expect(resolveTopicPrep(topic, false), topic).toBeNull();
+        expect(resolveTopicPrep(topic, "in_person"), topic).toBeNull();
 
-        const remote = resolveTopicPrep(topic, true);
+        const remote = resolveTopicPrep(topic, "online");
         expect(remote?.form, topic).toBe("remoteOnly");
         expect(remote?.steps.map((s) => s.key), topic).toEqual([
           REMOTE_SESSION_KEY,
@@ -440,8 +446,8 @@ describe("product topics", () => {
     });
 
     it("renders nothing in person for a topic with no guide, and none for any Minecraft topic", () => {
-      expect(resolveTopicPrep("programming", false)).toBeNull();
-      expect(resolveTopicPrep("esports", false)).toBeNull();
+      expect(resolveTopicPrep("programming", "in_person")).toBeNull();
+      expect(resolveTopicPrep("esports", "in_person")).toBeNull();
 
       // The case the null answer was written for, and all three Minecraft
       // topics are in it: we supply the machines AND the logins — School of
@@ -451,31 +457,31 @@ describe("product topics", () => {
       // furniture. It is an in-person answer alone: remotely the room is
       // always there to get ready for, and remotely the accounts are the
       // family's own.
-      expect(resolveTopicPrep("minecraft_education", false)).toBeNull();
-      expect(resolveTopicPrep("minecraft_java", false)).toBeNull();
-      expect(resolveTopicPrep("minecraft_bedrock", false)).toBeNull();
+      expect(resolveTopicPrep("minecraft_education", "in_person")).toBeNull();
+      expect(resolveTopicPrep("minecraft_java", "in_person")).toBeNull();
+      expect(resolveTopicPrep("minecraft_bedrock", "in_person")).toBeNull();
 
       expect(
-        resolveTopicPrep("minecraft_education", true)?.steps.map((s) => s.key),
+        resolveTopicPrep("minecraft_education", "online")?.steps.map((s) => s.key),
       ).toEqual(["minecraftEducationInstall", REMOTE_SESSION_KEY]);
       expect(
-        resolveTopicPrep("minecraft_java", true)?.steps.map((s) => s.key),
+        resolveTopicPrep("minecraft_java", "online")?.steps.map((s) => s.key),
       ).toEqual([
         "minecraftJavaAccount",
         "minecraftJavaInstall",
         "minecraftJavaLaunch",
         REMOTE_SESSION_KEY,
       ]);
-      expect(resolveTopicPrep("minecraft_java", true)?.form).toBe("full");
+      expect(resolveTopicPrep("minecraft_java", "online")?.form).toBe("full");
       expect(
-        resolveTopicPrep("minecraft_bedrock", true)?.steps.map((s) => s.key),
+        resolveTopicPrep("minecraft_bedrock", "online")?.steps.map((s) => s.key),
       ).toEqual([
         "minecraftBedrockAccount",
         "minecraftBedrockInstall",
         "minecraftBedrockOnline",
         REMOTE_SESSION_KEY,
       ]);
-      expect(resolveTopicPrep("minecraft_bedrock", true)?.form).toBe("full");
+      expect(resolveTopicPrep("minecraft_bedrock", "online")?.form).toBe("full");
     });
 
     it("keeps every Pokémon GO step in person", () => {
@@ -485,7 +491,7 @@ describe("product topics", () => {
       // topic whose accounts-only form never renders.
       const meta: TopicMeta = PRODUCT_TOPICS.pokemon_go;
       const declared = meta.prep?.steps;
-      const inPerson = resolveTopicPrep("pokemon_go", false);
+      const inPerson = resolveTopicPrep("pokemon_go", "in_person");
 
       expect(inPerson?.form).toBe("full");
       expect(inPerson?.steps.map((s) => s.key)).toEqual(
@@ -494,9 +500,9 @@ describe("product topics", () => {
     });
 
     it("takes the accounts-only intro exactly when steps were dropped", () => {
-      expect(resolveTopicPrep("roblox_studio", true)?.form).toBe("full");
+      expect(resolveTopicPrep("roblox_studio", "online")?.form).toBe("full");
 
-      const inPerson = resolveTopicPrep("roblox_studio", false);
+      const inPerson = resolveTopicPrep("roblox_studio", "in_person");
       expect(inPerson?.form).toBe("accountsOnly");
       expect(inPerson?.steps.map((s) => s.key)).toEqual([
         "robloxStudioAccount",
@@ -514,5 +520,19 @@ describe("product topics", () => {
     // Chip keys feed React lists and the URL membership check.
     const keys = TOPIC_FILTER_CHIPS.map((c) => c.key);
     expect(new Set(keys).size).toBe(keys.length);
+  });
+});
+
+// The screenshot preset (scripts/preview-export/presets/topic-copy.mjs) loads topics.ts with plain Node, which cannot resolve a value import.
+describe("topics.ts loads under plain Node", () => {
+  it("has only type-only imports", () => {
+    const source = readFileSync(
+      join(process.cwd(), "src/lib/products/topics.ts"),
+      "utf8",
+    );
+    const imports = source.match(/^import[^;]*;/gm) ?? [];
+    for (const statement of imports) {
+      expect(statement.startsWith("import type "), statement).toBe(true);
+    }
   });
 });

@@ -20,6 +20,8 @@ import { PRODUCT_TOPICS } from "@/lib/products/topics";
 import {
   buildSessionFacts,
   sessionFactsProduct,
+  sessionWhere,
+  sessionWhereLabel,
   sessionWindowOf,
   type SessionFacts,
 } from "@/lib/substitution-session-facts";
@@ -197,7 +199,10 @@ function sessionLines(
   { withTerms = true }: { withTerms?: boolean } = {},
 ): DiscordComponent {
   const { facts } = session;
-  const where = facts.isRemote ? copy.facts("remote") : (facts.siteName ?? copy.facts("siteUnknown"));
+  const where = sessionWhereLabel(sessionWhere(facts), {
+    remote: copy.facts("remote"),
+    hybrid: (site) => copy.facts("hybrid", { site }),
+  });
   const role = session.role === "primary" ? copy.pool("poolRolePrimary") : copy.pool("poolRoleAssistant");
   const terms =
     session.feeCents === null
@@ -374,7 +379,7 @@ export function buildSubstitutionPreviewSession(
         topic: "minecraft_java",
         spokenLanguageCode: "fi",
         timezone: DEFAULT_TIMEZONE,
-        isRemote: false,
+        deliveryMode: "in_person",
         siteName: "Sample School",
         translations: [{ locale: "en", name: "Minecraft Club" }],
       },

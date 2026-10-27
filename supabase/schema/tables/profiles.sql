@@ -25,8 +25,8 @@ CREATE TABLE public.profiles (
     registration_marketing_consent boolean,
     signup_intent_kind text,
     signup_intent_id uuid,
-    CONSTRAINT profiles_first_name_len CHECK (((char_length(first_name) >= 2) AND (char_length(first_name) <= 32))),
-    CONSTRAINT profiles_last_name_len CHECK ((char_length(last_name) <= 32)),
+    CONSTRAINT profiles_first_name_shape CHECK ((((char_length(first_name) >= 2) AND (char_length(first_name) <= 32)) AND (first_name !~ '^[[:space:]\u00A0\u200B\uFEFF]|[[:space:]\u00A0\u200B\uFEFF]$'::text) AND (first_name ~ '[^[:space:]\u00A0\u200B\uFEFF]'::text))),
+    CONSTRAINT profiles_last_name_shape CHECK (((char_length(last_name) <= 32) AND (last_name !~ '^[[:space:]\u00A0\u200B\uFEFF]|[[:space:]\u00A0\u200B\uFEFF]$'::text))),
     CONSTRAINT profiles_phone_e164 CHECK ((phone ~ '^\d{7,15}$'::text)),
     CONSTRAINT profiles_signup_intent_kind_known CHECK (((signup_intent_kind IS NULL) OR (signup_intent_kind = ANY (ARRAY['product'::text, 'municipality_club'::text, 'landing_page'::text])))),
     CONSTRAINT profiles_signup_intent_whole CHECK (((signup_intent_kind IS NULL) = (signup_intent_id IS NULL))),
@@ -134,6 +134,20 @@ COMMENT ON COLUMN public.profiles.signup_intent_kind IS 'What this parent was tr
 --
 
 COMMENT ON COLUMN public.profiles.signup_intent_id IS 'The id of the row signup_intent_kind names: a products id for `product` and `municipality_club`, a landing_pages id for `landing_page`. No foreign key on purpose: the row may be deleted later and the fact of where the parent set out from stays true. Same write rules as signup_intent_kind.';
+
+
+--
+-- Name: CONSTRAINT profiles_first_name_shape ON profiles; Type: COMMENT; Schema: public; Owner: -
+--
+
+COMMENT ON CONSTRAINT profiles_first_name_shape ON public.profiles IS 'A first name is 2 to 32 characters long, neither begins nor ends with whitespace — any character of the [[:space:]] class, or U+00A0, U+200B or U+FEFF — and holds at least one character that is none of those. Held here rather than only in the forms because a person may update their own first_name straight through the Data API. Every reader may therefore use it as it is: it is never empty, never blank and never padded.';
+
+
+--
+-- Name: CONSTRAINT profiles_last_name_shape ON profiles; Type: COMMENT; Schema: public; Owner: -
+--
+
+COMMENT ON CONSTRAINT profiles_last_name_shape ON public.profiles IS 'A last name is at most 32 characters long and neither begins nor ends with whitespace — any character of the [[:space:]] class, or U+00A0, U+200B or U+FEFF. It may be empty: a gamer inherits the parent''s, and older parent accounts predate the requirement the registration forms now make.';
 
 
 --

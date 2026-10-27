@@ -202,7 +202,7 @@ describe("gedu session feed", () => {
     // in-person product AT THIS BUILDING".
     await admin
       .from("products")
-      .update({ is_remote: false, location_id: TEST_IDS.LOCATION_SITE })
+      .update({ delivery_mode: "in_person", location_id: TEST_IDS.LOCATION_SITE })
       .eq("id", PRODUCT_SITE);
 
     await admin.from("product_groups").insert([

@@ -1,6 +1,6 @@
 import type { SupportedLocale } from "@/lib/constants/locales";
 import { inLocaleOrder } from "@/lib/i18n/locale-order";
-import { resolveTranslation } from "@/lib/i18n/resolve-translation";
+import { resolveRequiredTranslation } from "@/lib/i18n/resolve-translation";
 import { translatedCanonicalPath } from "@/lib/metadata/translated-page";
 import { productPagePath } from "@/lib/products/product-metadata";
 import type { ProductBrowseRow } from "@/types";
@@ -30,29 +30,25 @@ import type { ProductBrowseRow } from "@/types";
  *
  * Names resolve exactly the way a browse card's title does — through the
  * shared translation resolver, so a product with no translation in this locale
- * falls back the same way the visible card does. A row whose name resolves to
- * nothing is skipped rather than emitted under an empty one: a `ListItem` with
- * no `name` is an invalid `ListItem`. And nothing at all rather than an empty
- * list, which would assert that nothing is on offer.
+ * falls back the same way the visible card does. No products is nothing at
+ * all rather than an empty list, which would assert that nothing is on offer.
  */
 export function productItemList(
   products: readonly ProductBrowseRow[],
   locale: SupportedLocale,
   siteUrl: string,
 ) {
-  const items = products
-    .map((product) => {
-      const written = inLocaleOrder(product.product_translations);
-      return {
-        name: resolveTranslation(written, locale)?.name ?? "",
-        url: `${siteUrl}${translatedCanonicalPath(
-          written,
-          locale,
-          productPagePath(product.id),
-        )}`,
-      };
-    })
-    .filter(({ name }) => name.length > 0);
+  const items = products.map((product) => {
+    const written = inLocaleOrder(product.product_translations);
+    return {
+      name: resolveRequiredTranslation(written, locale).name,
+      url: `${siteUrl}${translatedCanonicalPath(
+        written,
+        locale,
+        productPagePath(product.id),
+      )}`,
+    };
+  });
 
   if (items.length === 0) return null;
 

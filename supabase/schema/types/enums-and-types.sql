@@ -47,6 +47,24 @@ COMMENT ON TYPE public.chat_channel_type IS 'What a chat channel IS, and therefo
 
 
 --
+-- Name: delivery_mode; Type: TYPE; Schema: public; Owner: -
+--
+
+CREATE TYPE public.delivery_mode AS ENUM (
+    'online',
+    'in_person',
+    'hybrid'
+);
+
+
+--
+-- Name: TYPE delivery_mode; Type: COMMENT; Schema: public; Owner: -
+--
+
+COMMENT ON TYPE public.delivery_mode IS 'How a product is delivered. online: everybody joins through a voice room and there is no site — an online municipality club still carries a location, the municipality it serves, but no building. in_person: gamers and the gedu meet at a site, and there is no voice room. hybrid: gamers attend a site in person, and the gedu, with perhaps a few gamers, joins through the Sogverse voice room; everybody on the product, gamer, parent and gedu alike, is shown both the room and the site. A reader asks one of three questions of it: is there a voice room (online or hybrid), do gamers attend a site (in_person or hybrid, the two that require a site location), or does the gedu attend a site (in_person alone, which is why gedu_covers_product_site asks no coverage of a hybrid product).';
+
+
+--
 -- Name: effective_product_status; Type: TYPE; Schema: public; Owner: -
 --
 
@@ -435,6 +453,6 @@ CREATE TYPE public.voice_room_mode AS ENUM (
 -- Name: TYPE voice_room_mode; Type: COMMENT; Schema: public; Owner: -
 --
 
-COMMENT ON TYPE public.voice_room_mode IS 'How an online product''s sessions are joined. sogverse: the Sogverse voice room, opened during each session''s window — the default, and the only value an in-person product may hold. external: a meeting held on another service, at products.external_voice_url. none: no room of any kind; a family is shown the product''s join instructions instead, written per locale in product_translations.voice_join_instructions. external and none are a STOPGAP for audiences larger than a Sogverse room holds (50 people), to be removed once Sogverse rooms can hold more — see docs/investigations/voice-room-scale.md.';
+COMMENT ON TYPE public.voice_room_mode IS 'How an online product''s sessions are joined. sogverse: the Sogverse voice room, opened during each session''s window — the default, and the only value an in-person or a hybrid product may hold. external: a meeting held on another service, at products.external_voice_url. none: no room of any kind; a family is shown the product''s join instructions instead, written per locale in product_translations.voice_join_instructions. external and none are a STOPGAP for audiences larger than a Sogverse room holds (50 people), to be removed once Sogverse rooms can hold more — see docs/investigations/voice-room-scale.md.';
 
 

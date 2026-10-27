@@ -7,7 +7,7 @@ import { TeamPortrait } from "@/components/team/team-portrait";
 import { Link } from "@/i18n/navigation";
 import { resolveLocale } from "@/lib/constants/locales";
 import type { AppHref } from "@/lib/constants/routes";
-import { resolveTranslation } from "@/lib/i18n/resolve-translation";
+import { resolveRequiredTranslation } from "@/lib/i18n/resolve-translation";
 import type { TeamProfile } from "@/services/team-profiles/team-profiles.types";
 import { Heading } from "@sog/ui";
 
@@ -47,7 +47,7 @@ export function TeamMemberCard({
 }) {
   const t = useTranslations("team.profile");
   const locale = resolveLocale(useLocale());
-  const written = resolveTranslation(profile.translations, locale);
+  const written = resolveRequiredTranslation(profile.translations, locale);
 
   const subline = teamMemberSubline(profile, t);
 
@@ -83,14 +83,12 @@ export function TeamMemberCard({
       <p className="mt-0.5 text-xs text-muted-foreground md:text-body-s">
         {subline}
       </p>
-      {written !== null && (
-        <p
-          lang={written.locale}
-          className="mt-1.5 line-clamp-3 text-xs text-muted-foreground md:text-body-s"
-        >
-          {written.shortDescription}
-        </p>
-      )}
+      <p
+        lang={written.locale}
+        className="mt-1.5 line-clamp-3 text-xs text-muted-foreground md:text-body-s"
+      >
+        {written.shortDescription}
+      </p>
     </div>
   );
 }

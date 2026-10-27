@@ -63,7 +63,7 @@ const row = () => {
 describe("the Roblox page's upcoming events, through the shared pipeline", () => {
   const LISTING = [
     browseRow(id(1), { name: "Roblox club A" }),
-    browseRow(id(2), { name: "In-person club", is_remote: false }),
+    browseRow(id(2), { name: "In-person club", delivery_mode: "in_person" }),
     browseRow(id(3), { name: "Minecraft club", topic: "minecraft_java" }),
     browseRow(id(5), { name: "Paid club", billing_mode: "paid" }),
     browseRow(id(4), { name: "Roblox club B" }),

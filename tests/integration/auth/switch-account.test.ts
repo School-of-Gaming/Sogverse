@@ -428,7 +428,10 @@ describe("POST /api/auth/switch-account", () => {
 
       expect(response.status).toBe(200);
       expect(data.success).toBe(true);
+      // Only this browser's session ends: the parent stays signed in on their
+      // own phone, and any AI-app grant they hold keeps working.
       expect(mockSignOut).toHaveBeenCalledOnce();
+      expect(mockSignOut).toHaveBeenCalledWith({ scope: "local" });
       expect(mockAdminGenerateLink).toHaveBeenCalledWith({
         type: "magiclink",
         email: "alphaone@gamer.sogverse.internal",
@@ -635,6 +638,8 @@ describe("POST /api/auth/switch-account", () => {
 
       expect(response.status).toBe(200);
       expect(mockSignOut).toHaveBeenCalledOnce();
+      // Local, so the gamer's own sign-ins on other devices survive the switch.
+      expect(mockSignOut).toHaveBeenCalledWith({ scope: "local" });
       // The PIN was just checked one step earlier, so the parent lands unlocked
       // rather than being asked for the same four digits twice in one gesture.
       // The token is bound to the NEW session's id, read out of the access

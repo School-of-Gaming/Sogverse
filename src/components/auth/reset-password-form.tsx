@@ -151,13 +151,18 @@ export function ResetPasswordForm() {
     // machine we know nothing about once the credential has moved. Ending it
     // costs the user one sign-in they were being sent to do anyway.
     //
+    // `local` scope is enough, and global would add nothing: the password
+    // change itself has already ended every other session the account held,
+    // and every AI-app grant to the MCP server, so the reset link's own
+    // session is the only one left to end.
+    //
     // It is *not* what keeps the switch gate honest — a recovery session
     // carries no marker from the switch route, so it is an `own` session and
     // cannot switch at all, like any other (`src/lib/session-provenance.ts`).
     // This sign-out predates that model; it stays because the reason above
     // stands on its own.
     try {
-      await supabase.auth.signOut();
+      await supabase.auth.signOut({ scope: "local" });
     } catch (signOutError) {
       // The password has already moved; the session is the lesser half, and a
       // throw here would strand the form with `committing` still set and no way

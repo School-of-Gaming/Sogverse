@@ -25,7 +25,10 @@ import {
   resolveLocale,
   type SupportedLocale,
 } from "@/lib/constants/locales";
-import { resolveTranslation } from "@/lib/i18n/resolve-translation";
+import {
+  resolveRequiredTranslation,
+  resolveTranslation,
+} from "@/lib/i18n/resolve-translation";
 import {
   describeMissingWords,
   type MissingWordsDescription,
@@ -95,7 +98,7 @@ export function LandingPageStatusPage({
 }) {
   const t = useTranslations("admin.landingPages");
   const uiLocale = resolveLocale(useLocale());
-  const version = resolveTranslation(page.draft.versions, uiLocale);
+  const version = resolveRequiredTranslation(page.draft.versions, uiLocale);
   const { publication } = page;
   const liveLocales = new Set(publication?.versions.map((v) => v.locale) ?? []);
   const writtenLocales = new Set(page.draft.versions.map((v) => v.locale));
@@ -108,7 +111,7 @@ export function LandingPageStatusPage({
     <div className="space-y-6">
       <div className="space-y-1">
         <div className="flex flex-wrap items-center gap-x-3 gap-y-1">
-          <Heading level={2} step="card-title">{version?.title ?? ""}</Heading>
+          <Heading level={2} step="card-title">{version.title}</Heading>
           <LandingPageStatusChip
             status={landingPageStatus({
               isPublished: page.publication !== null,
@@ -485,22 +488,16 @@ function PlacedTestimonials({ sections }: { sections: readonly LandingTestimonia
               </p>
               <ol className="space-y-2">
                 {section.testimonials.map(({ testimonialId, versions }) => {
-                  const version = resolveTranslation(versions, uiLocale);
+                  const version = resolveRequiredTranslation(versions, uiLocale);
                   return (
                     <li key={testimonialId}>
-                      {version === null ? (
-                        <span className="text-muted-foreground">
-                          {t("statusPage.testimonials.missing")}
-                        </span>
-                      ) : (
-                        <Link
-                          href={ROUTES.admin.testimonial(testimonialId)}
-                          className="block rounded-md hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-act"
-                        >
-                          <span className="line-clamp-2 font-serif italic">{version.quote}</span>
-                          <span className="text-xs text-muted-foreground">{version.from}</span>
-                        </Link>
-                      )}
+                      <Link
+                        href={ROUTES.admin.testimonial(testimonialId)}
+                        className="block rounded-md hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-act"
+                      >
+                        <span className="line-clamp-2 font-serif italic">{version.quote}</span>
+                        <span className="text-xs text-muted-foreground">{version.from}</span>
+                      </Link>
                     </li>
                   );
                 })}

@@ -11,7 +11,7 @@ CREATE TABLE public.products (
     spoken_language_code public.spoken_language NOT NULL,
     image_path text,
     location_id uuid,
-    is_remote boolean NOT NULL,
+    delivery_mode public.delivery_mode NOT NULL,
     start_date date NOT NULL,
     end_date date,
     timezone text NOT NULL,
@@ -41,7 +41,7 @@ CASE
     WHEN for_gamers THEN ((min_age IS NOT NULL) AND (max_age IS NOT NULL))
     ELSE ((min_age IS NULL) AND (max_age IS NULL))
 END),
-    CONSTRAINT chk_products_date_range CHECK (((start_date IS NULL) OR (end_date IS NULL) OR (end_date >= start_date))),
+    CONSTRAINT chk_products_date_range CHECK (((end_date IS NULL) OR (end_date >= start_date))),
     CONSTRAINT chk_products_event_single_date CHECK (((product_type <> 'event'::public.product_type) OR (NOT (end_date IS DISTINCT FROM start_date)))),
     CONSTRAINT chk_products_external_contract_muni CHECK (((billing_mode <> 'external_contract'::public.billing_mode) OR (product_type = 'municipality_club'::public.product_type))),
     CONSTRAINT chk_products_external_voice_url_iff_external CHECK (
@@ -50,14 +50,14 @@ CASE
     ELSE (external_voice_url IS NULL)
 END),
     CONSTRAINT chk_products_has_an_audience CHECK ((for_gamers OR for_parents)),
-    CONSTRAINT chk_products_in_person_has_location CHECK (((is_remote = true) OR (location_id IS NOT NULL))),
-    CONSTRAINT chk_products_in_person_voice_room_is_sogverse CHECK ((is_remote OR (voice_room_mode = 'sogverse'::public.voice_room_mode))),
+    CONSTRAINT chk_products_in_person_has_location CHECK (((delivery_mode = 'online'::public.delivery_mode) OR (location_id IS NOT NULL))),
     CONSTRAINT chk_products_invoice_customer_only_for_muni CHECK (((invoice_customer_id IS NULL) OR (product_type = 'municipality_club'::public.product_type))),
     CONSTRAINT chk_products_municipality_fee_only_for_muni CHECK (((municipality_fee_cents IS NULL) OR (product_type = 'municipality_club'::public.product_type))),
     CONSTRAINT chk_products_non_consumer_has_end_date CHECK (((product_type = 'consumer_club'::public.product_type) OR (end_date IS NOT NULL))),
-    CONSTRAINT chk_products_online_muni_has_location CHECK (((NOT ((is_remote = true) AND (product_type = 'municipality_club'::public.product_type))) OR (location_id IS NOT NULL))),
-    CONSTRAINT chk_products_online_non_muni_no_location CHECK (((NOT ((is_remote = true) AND (product_type <> 'municipality_club'::public.product_type))) OR (location_id IS NULL))),
+    CONSTRAINT chk_products_online_muni_has_location CHECK (((NOT ((delivery_mode = 'online'::public.delivery_mode) AND (product_type = 'municipality_club'::public.product_type))) OR (location_id IS NOT NULL))),
+    CONSTRAINT chk_products_online_non_muni_no_location CHECK (((NOT ((delivery_mode = 'online'::public.delivery_mode) AND (product_type <> 'municipality_club'::public.product_type))) OR (location_id IS NULL))),
     CONSTRAINT chk_products_region_lock_country_shape CHECK (((region_lock_country IS NULL) OR (region_lock_country ~ '^[A-Z]{2}$'::text))),
+    CONSTRAINT chk_products_sogverse_room_unless_online CHECK (((delivery_mode = 'online'::public.delivery_mode) OR (voice_room_mode = 'sogverse'::public.voice_room_mode))),
     CONSTRAINT products_assistant_gedu_fee_cents_check CHECK (((assistant_gedu_fee_cents IS NULL) OR (assistant_gedu_fee_cents >= 0))),
     CONSTRAINT products_max_age_check CHECK (((max_age IS NULL) OR (max_age >= 0))),
     CONSTRAINT products_min_age_check CHECK (((min_age IS NULL) OR (min_age >= 0))),
@@ -72,6 +72,13 @@ END),
 --
 
 COMMENT ON COLUMN public.products.image_path IS 'The object key every reader paints. DERIVED, with no exceptions: trg_products_apply_image_path writes the linked entry''s path on every products write and NULLs the column whenever image_id is NULL, so an app-supplied value is always inert and this column has exactly one writer. It deliberately carries NO foreign key into catalogue_images(path): a second relationship between these two tables makes every PostgREST embed of catalogue_images ambiguous (PGRST201) unless every caller hints it, and the trigger already guarantees what such a key would check.';
+
+
+--
+-- Name: COLUMN products.delivery_mode; Type: COMMENT; Schema: public; Owner: -
+--
+
+COMMENT ON COLUMN public.products.delivery_mode IS 'Online, in person or hybrid — see the delivery_mode type. NOT NULL with no default, because an admin chooses it on every product. Any product that is not online needs a location (chk_products_in_person_has_location), and validate_products_location requires it to be a site; an online product carries a location only when it is a municipality club (chk_products_online_muni_has_location, chk_products_online_non_muni_no_location). Only an online product may leave the Sogverse voice room (chk_products_sogverse_room_unless_online).';
 
 
 --
@@ -127,7 +134,7 @@ COMMENT ON COLUMN public.products.invoice_customer_id IS 'The Fennoa customer th
 -- Name: COLUMN products.voice_room_mode; Type: COMMENT; Schema: public; Owner: -
 --
 
-COMMENT ON COLUMN public.products.voice_room_mode IS 'How this product''s sessions are joined — see the voice_room_mode type. Anything but sogverse is refused on an in-person product by chk_products_in_person_voice_room_is_sogverse. The admin chooses it on the product form, beside online versus in person. Mode none goes with join instructions on the translations, a rule across two tables that create_product and update_product enforce rather than a CHECK.';
+COMMENT ON COLUMN public.products.voice_room_mode IS 'How this product''s sessions are joined — see the voice_room_mode type. Anything but sogverse is refused on a product that is not online (an in-person or hybrid one), by chk_products_sogverse_room_unless_online. The admin chooses it on the product form, beside the delivery mode. Mode none goes with join instructions on the translations, a rule across two tables that create_product and update_product enforce rather than a CHECK.';
 
 
 --
@@ -135,6 +142,20 @@ COMMENT ON COLUMN public.products.voice_room_mode IS 'How this product''s sessio
 --
 
 COMMENT ON COLUMN public.products.external_voice_url IS 'PUBLIC TO EVERYONE, LOGGED-OUT VISITORS INCLUDED. products carries a table-level SELECT grant for anon and its read policy admits every product, so anybody can read this link through the Data API without an account, a seat or a session window. That is a KNOWN AND ACCEPTED RISK, decided by the owner: the meeting is marketed publicly anyway. Do not put a link here that must stay private. The meeting a family is sent to when voice_room_mode is external, and NULL otherwise (chk_products_external_voice_url_iff_external, which also requires an http or https address so a javascript: or mistyped value cannot be stored). Admin-supplied and otherwise unrestricted: any meeting service will do. A STOPGAP for audiences larger than a Sogverse room holds; remove the column, with the external mode, once Sogverse rooms can hold more than 50 people — see docs/investigations/voice-room-scale.md.';
+
+
+--
+-- Name: CONSTRAINT chk_products_in_person_has_location ON products; Type: COMMENT; Schema: public; Owner: -
+--
+
+COMMENT ON CONSTRAINT chk_products_in_person_has_location ON public.products IS 'A product that is not online — in person or hybrid — has a location, because its gamers attend a site. validate_products_location requires that location to be a site.';
+
+
+--
+-- Name: CONSTRAINT chk_products_sogverse_room_unless_online ON products; Type: COMMENT; Schema: public; Owner: -
+--
+
+COMMENT ON CONSTRAINT chk_products_sogverse_room_unless_online ON public.products IS 'Only an online product may hold a voice_room_mode other than sogverse. An in-person product has no room to join, and a hybrid product''s room is the Sogverse room its gedu joins.';
 
 
 --
@@ -226,7 +247,7 @@ CREATE TRIGGER trg_products_seed_seat_counts AFTER INSERT ON public.products FOR
 -- Name: products trg_validate_products_location; Type: TRIGGER; Schema: public; Owner: -
 --
 
-CREATE TRIGGER trg_validate_products_location BEFORE INSERT OR UPDATE OF location_id, is_remote, product_type ON public.products FOR EACH ROW EXECUTE FUNCTION public.validate_products_location();
+CREATE TRIGGER trg_validate_products_location BEFORE INSERT OR UPDATE OF location_id, delivery_mode, product_type ON public.products FOR EACH ROW EXECUTE FUNCTION public.validate_products_location();
 
 
 --
