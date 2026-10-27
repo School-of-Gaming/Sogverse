@@ -288,6 +288,32 @@ describe("drainKlaviyoSync", () => {
     ]);
   });
 
+  it("fails a ticked account creation, sending nothing, when the consent list is not configured", async () => {
+    vi.stubEnv("KLAVIYO_MARKETING_CONSENT_LIST_ID", "");
+    outbox({
+      events: [{ event_id: "e1", kind: "account_created", customer_id: KEPT }],
+      eventRows: [
+        {
+          event_id: "e1",
+          kind: "account_created",
+          unique_id: `account_created:${KEPT}`,
+          customer_id: KEPT,
+          occurred_at: "2026-10-01T09:00:00+00:00",
+          properties: { source_id: KEPT, product: null },
+        },
+      ],
+      snapshots: [snapshot(KEPT, true)],
+    });
+
+    const result = await drainKlaviyoSync();
+
+    expect(result.failed).toBe(1);
+    expect(klaviyo.createKlaviyoEvent).not.toHaveBeenCalled();
+    expect(finishes("finish_klaviyo_event_job")).toEqual([
+      { p_event_id: "e1", p_error: "Error: KLAVIYO_MARKETING_CONSENT_LIST_ID is not set" },
+    ]);
+  });
+
   it("stops the drain when the database itself fails", async () => {
     rpcHandler = () => ({ data: null, error: { message: "down" } });
     await expect(drainKlaviyoSync()).rejects.toEqual({ message: "down" });

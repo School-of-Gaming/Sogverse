@@ -20,6 +20,19 @@ const SETTINGS_CUSTOM_SOURCE = "Sogverse account settings";
  * caller can reach no one else's standing.
  */
 
+/**
+ * The caller's own Klaviyo profile, the one both handlers read and write. The
+ * sync writes every parent's profile under their Sogverse id; the address
+ * finds one Klaviyo already held before it did, or one the sync has not
+ * reached yet. Null when Klaviyo holds neither.
+ */
+async function findOwnMarketing(profile: { id: string; email: string }) {
+  return (
+    (await findKlaviyoEmailMarketing({ externalId: profile.id })) ??
+    (await findKlaviyoEmailMarketing({ email: profile.email }))
+  );
+}
+
 export const GET = defineRoute({
   posture: "role-gated",
   roles: ["customer"],
@@ -27,12 +40,7 @@ export const GET = defineRoute({
   response: emailMarketingStanding,
 
   handler: async ({ profile }) => {
-    // The sync writes every parent's profile under their Sogverse id; the
-    // address finds one Klaviyo already held before it did, or one the sync
-    // has not reached yet. Neither found: never subscribed.
-    const marketing =
-      (await findKlaviyoEmailMarketing({ externalId: profile.id })) ??
-      (await findKlaviyoEmailMarketing({ email: profile.email }));
+    const marketing = await findOwnMarketing(profile);
     return {
       subscribed: marketing !== null && marketing.consent === "SUBSCRIBED" && !marketing.suppressed,
     };
@@ -47,8 +55,12 @@ export const PUT = defineRoute({
   response: emailMarketingStanding,
 
   handler: async ({ profile, body }) => {
+    // Klaviyo subscribes by address, so the write names the address of the
+    // profile the box was read from — the id-matched profile can still hold
+    // an older one. No profile yet: the session's address creates it.
+    const email = (await findOwnMarketing(profile))?.email ?? profile.email;
     if (!body.subscribed) {
-      await unsubscribeKlaviyoProfile(profile.email);
+      await unsubscribeKlaviyoProfile(email);
       return { subscribed: false };
     }
     // The marketing-consent list every subscription joins, registration's
@@ -56,7 +68,7 @@ export const PUT = defineRoute({
     // subscribed again: ticking the box is them asking for it. An unset list
     // id throws, so the save fails rather than subscribing to no list.
     await subscribeKlaviyoProfile({
-      email: profile.email,
+      email,
       listId: marketingConsentListId(),
       customSource: SETTINGS_CUSTOM_SOURCE,
     });

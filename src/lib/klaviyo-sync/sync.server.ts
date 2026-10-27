@@ -282,12 +282,14 @@ async function sendEvent(
   if (!parsed.success) throw new Error("The event row did not parse");
   const event = parsed.data;
 
+  // Read before any write, so a list nobody configured fails the row first.
+  const subscribeListId = subscribesOnSend(event, snapshot) ? marketingConsentListId() : null;
   const { email, id } = snapshot.profile;
   await createKlaviyoEvent({ email, externalId: id }, klaviyoEventFor(event, snapshot));
-  if (subscribesOnSend(event, snapshot)) {
+  if (subscribeListId !== null) {
     await subscribeKlaviyoProfile({
       email,
-      listId: marketingConsentListId(),
+      listId: subscribeListId,
       customSource: ACCOUNT_REGISTRATION_CUSTOM_SOURCE,
     });
   }

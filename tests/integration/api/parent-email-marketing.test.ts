@@ -6,7 +6,8 @@ import { NextResponse } from "next/server";
  * Klaviyo live from Settings. Pinned: the parent-only gate, that the profile
  * and address are the session's and never the body's, how Klaviyo's standing
  * becomes the box (subscribed and not suppressed, by external id first and
- * then by address), and that a subscribe joins the configured list under the
+ * then by address), that a save writes to the address of the profile the box
+ * was read from, and that a subscribe joins the configured list under the
  * settings source while an unsubscribe is global.
  */
 
@@ -28,6 +29,8 @@ import { GET, PUT } from "@/app/api/parent/email-marketing/route";
 
 const PARENT_ID = "6b3f0f8e-2a4d-4c1e-9b7a-5d2e8f13c0a1";
 const PARENT_EMAIL = "parent@example.com";
+/** An address the id-matched profile still holds from before a change. */
+const OLDER_EMAIL = "parent-old@example.com";
 const URL = "http://localhost:3000/api/parent/email-marketing";
 
 function standing(overrides: Record<string, unknown> = {}) {
@@ -61,6 +64,7 @@ beforeEach(() => {
   vi.clearAllMocks();
   vi.stubEnv("KLAVIYO_PRIVATE_API_KEY", "pk_test_settings");
   vi.stubEnv("KLAVIYO_MARKETING_CONSENT_LIST_ID", "Y6nRLr");
+  mockFind.mockResolvedValue(null);
   mockSubscribe.mockResolvedValue(undefined);
   mockUnsubscribe.mockResolvedValue(undefined);
 });
@@ -160,6 +164,27 @@ describe("PUT /api/parent/email-marketing", () => {
     expect(await response.json()).toEqual({ subscribed: false });
     expect(mockUnsubscribe).toHaveBeenCalledWith(PARENT_EMAIL);
     expect(mockSubscribe).not.toHaveBeenCalled();
+  });
+
+  it("subscribes the address of the profile the box was read from, not the session's", async () => {
+    signedInAsParent();
+    mockFind.mockResolvedValueOnce(standing({ email: OLDER_EMAIL }));
+
+    const response = await PUT(put({ subscribed: true }));
+
+    expect(response.status).toBe(200);
+    expect(mockFind).toHaveBeenCalledWith({ externalId: PARENT_ID });
+    expect(mockSubscribe).toHaveBeenCalledWith(expect.objectContaining({ email: OLDER_EMAIL }));
+  });
+
+  it("unsubscribes the address of the profile the box was read from, not the session's", async () => {
+    signedInAsParent();
+    mockFind.mockResolvedValueOnce(standing({ email: OLDER_EMAIL }));
+
+    const response = await PUT(put({ subscribed: false }));
+
+    expect(response.status).toBe(200);
+    expect(mockUnsubscribe).toHaveBeenCalledWith(OLDER_EMAIL);
   });
 
   it("refuses a body that is not a standing", async () => {
