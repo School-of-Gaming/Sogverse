@@ -3,11 +3,13 @@ import { MCP_TEST_ORIGIN as ORIGIN, callTool, resultText } from "../../helpers/m
 
 /**
  * **The product tool, through the real endpoint.** The real gate, SDK and tool
- * module, with the products service mocked: what is under test is that the
- * tool pages the admin product list — its filters and its keyset cursor, on
- * the admin's token — hands each product over with what an AI app needs to
- * pick it for a landing page, and says whether a products section shows it by
- * asking the listing over every product type, the read the section draws by.
+ * module, with the products and participations services mocked: what is under
+ * test is that the tool pages the admin product list — its filters and its
+ * keyset cursor, on the admin's token — hands each product over with what an
+ * AI app needs to write about it and pick it for a landing page, says whether
+ * a products section shows it by asking the listing over every product type,
+ * the read the section draws by, and says whether its seats are full by the
+ * shop's own counts read and rule.
  */
 
 const mockGetClaims = vi.fn();
@@ -23,6 +25,24 @@ vi.mock("@/services/products/products.service", () => ({
   ADMIN_PRODUCT_LIST_PAGE_SIZE: 25,
   ProductsService: vi.fn(() => products),
 }));
+
+const participations = { getParticipationCounts: vi.fn() };
+vi.mock("@/services/participations/participations.service", () => ({
+  ParticipationsService: vi.fn(() => participations),
+}));
+
+/** The counts read's answer: every id asked about, none taken unless given. */
+function countsFor(taken: Partial<Record<string, { active: number; waitlist?: number }>> = {}) {
+  return (ids: string[]) =>
+    Promise.resolve(
+      ids.map((productId) => ({
+        productId,
+        activeCount: taken[productId]?.active ?? 0,
+        waitlistCount: taken[productId]?.waitlist ?? 0,
+        myGamerStates: {},
+      })),
+    );
+}
 
 // The page link names its locale's own address.
 vi.unmock("@/i18n/navigation");
@@ -46,6 +66,14 @@ function adminRow(id: string, overrides: Record<string, unknown> = {}) {
     topic: "roblox_studio",
     delivery_mode: "online",
     is_visible: true,
+    spoken_language_code: "en",
+    for_gamers: true,
+    for_parents: false,
+    min_age: 8,
+    max_age: 12,
+    seat_count: null,
+    waitlist_enabled: true,
+    registration_opens_at: "2026-08-01T09:00:00+00:00",
     start_date: "2026-09-01",
     end_date: null,
     timezone: "Europe/Helsinki",
@@ -86,6 +114,8 @@ beforeEach(() => {
   mockMaybeSingle.mockResolvedValue({ data: { role: "admin" }, error: null });
   products.getAdminListPage.mockReset();
   products.listVisibleListingAmong.mockReset();
+  participations.getParticipationCounts.mockReset();
+  participations.getParticipationCounts.mockImplementation(countsFor());
 });
 
 afterEach(() => {
@@ -135,6 +165,9 @@ describe("list_products", () => {
     const [types, ids] = products.listVisibleListingAmong.mock.calls[0];
     expect([...types].sort()).toEqual(["camp", "consumer_club", "event", "municipality_club"]);
     expect(ids).toEqual([CLUB, CAMP, MUNI, HIDDEN]);
+    // The seat counts are read once, for the whole page.
+    expect(participations.getParticipationCounts).toHaveBeenCalledTimes(1);
+    expect(participations.getParticipationCounts).toHaveBeenCalledWith([CLUB, CAMP, MUNI, HIDDEN]);
     expect(result.isError).toBeUndefined();
     expect(result.structuredContent).toEqual({
       total: 4,
@@ -142,18 +175,28 @@ describe("list_products", () => {
         {
           productId: CLUB,
           names: [
-            { locale: "en", name: "Roblox club" },
-            { locale: "fi", name: "Roblox-kerho" },
+            { locale: "en", name: "Roblox club", shortDescription: "Weekly." },
+            { locale: "fi", name: "Roblox-kerho", shortDescription: "" },
           ],
           type: "consumer_club",
           topic: "roblox_studio",
           deliveryMode: "online",
+          location: null,
+          spokenLanguage: "en",
+          forGamers: true,
+          forParents: false,
+          minAge: 8,
+          maxAge: 12,
           startDate: "2026-09-01",
           endDate: null,
           timezone: "Europe/Helsinki",
+          schedule: [],
+          registrationOpensAt: "2026-08-01T09:00:00+00:00",
           billingMode: "free",
           prices: [],
+          seats: { capacity: null, taken: 0, waitlisted: 0, full: false, waitlistEnabled: true },
           pageLink: `${ORIGIN}/en/shop/${CLUB}`,
+          publiclyListed: true,
           listing: "listed",
         },
         expect.objectContaining({
@@ -172,12 +215,154 @@ describe("list_products", () => {
           type: "municipality_club",
           // Where its card on its town's schools page leads.
           pageLink: `${ORIGIN}/en/schools/espoo/${MUNI}`,
+          // An online municipality club names the area it serves, no site.
+          location: { site: null, area: "Espoo" },
           listing: "listed",
         }),
-        expect.objectContaining({ productId: HIDDEN, listing: "hidden" }),
+        expect.objectContaining({ productId: HIDDEN, publiclyListed: false, listing: "hidden" }),
       ],
       nextCursor: null,
     });
+  });
+
+  it("tells two same-named products on one date apart by their schedules, on the product's own wall clock", async () => {
+    const early = "c3000000-0000-4000-8000-000000000011";
+    const late = "c3000000-0000-4000-8000-000000000012";
+    const trial = (id: string, startTime: string) =>
+      adminRow(id, {
+        product_type: "event",
+        start_date: "2026-11-07",
+        end_date: "2026-11-07",
+        timezone: "Europe/London",
+        product_translations: [{ locale: "en", name: "Trial session", short_description: "Try it." }],
+        schedule_slots: [{ weekday: 5, start_time: startTime, duration_minutes: 60 }],
+      });
+    products.getAdminListPage.mockResolvedValue({
+      total: 2,
+      rows: [trial(early, "10:00:00"), trial(late, "11:15:00")],
+    });
+    products.listVisibleListingAmong.mockResolvedValue([]);
+
+    const result = await tool();
+
+    const names = [{ locale: "en", name: "Trial session", shortDescription: "Try it." }];
+    expect(result.structuredContent?.products).toEqual([
+      expect.objectContaining({
+        productId: early,
+        names,
+        startDate: "2026-11-07",
+        schedule: [
+          { weekday: 5, weekdayName: "Saturday", startTime: "10:00", endTime: "11:00", durationMinutes: 60 },
+        ],
+      }),
+      expect.objectContaining({
+        productId: late,
+        names,
+        startDate: "2026-11-07",
+        schedule: [
+          { weekday: 5, weekdayName: "Saturday", startTime: "11:15", endTime: "12:15", durationMinutes: 60 },
+        ],
+      }),
+    ]);
+  });
+
+  it("orders a club's slots by weekday, and keeps the duration of one that runs past midnight", async () => {
+    products.getAdminListPage.mockResolvedValue({
+      total: 1,
+      rows: [
+        adminRow(CLUB, {
+          schedule_slots: [
+            { weekday: 4, start_time: "23:30:00", duration_minutes: 90 },
+            { weekday: 0, start_time: "16:00:00", duration_minutes: 75 },
+          ],
+        }),
+      ],
+    });
+    products.listVisibleListingAmong.mockResolvedValue([{ id: CLUB }]);
+
+    const result = await tool();
+
+    expect(result.structuredContent?.products).toEqual([
+      expect.objectContaining({
+        schedule: [
+          { weekday: 0, weekdayName: "Monday", startTime: "16:00", endTime: "17:15", durationMinutes: 75 },
+          { weekday: 4, weekdayName: "Friday", startTime: "23:30", endTime: "01:00", durationMinutes: 90 },
+        ],
+      }),
+    ]);
+  });
+
+  it("names an in-person product's site with the place it sits in", async () => {
+    products.getAdminListPage.mockResolvedValue({
+      total: 1,
+      rows: [
+        adminRow(CAMP, {
+          product_type: "camp",
+          delivery_mode: "in_person",
+          locations: {
+            id: "d1000000-0000-4000-8000-000000000002",
+            name: "Sello Library",
+            name_i18n: null,
+            type: "site",
+            parent: ESPOO,
+          },
+        }),
+      ],
+    });
+    products.listVisibleListingAmong.mockResolvedValue([]);
+
+    const result = await tool();
+
+    expect(result.structuredContent?.products).toEqual([
+      expect.objectContaining({ location: { site: "Sello Library", area: "Espoo" } }),
+    ]);
+  });
+
+  it("says the seats are full by the shop's rule: a cap reached, never without a cap", async () => {
+    const open = "c3000000-0000-4000-8000-000000000021";
+    const full = "c3000000-0000-4000-8000-000000000022";
+    const over = "c3000000-0000-4000-8000-000000000023";
+    const uncapped = "c3000000-0000-4000-8000-000000000024";
+    products.getAdminListPage.mockResolvedValue({
+      total: 4,
+      rows: [
+        adminRow(open, { seat_count: 10 }),
+        adminRow(full, { seat_count: 10, waitlist_enabled: false }),
+        adminRow(over, { seat_count: 10 }),
+        adminRow(uncapped),
+      ],
+    });
+    products.listVisibleListingAmong.mockResolvedValue([]);
+    participations.getParticipationCounts.mockImplementation(
+      countsFor({
+        [open]: { active: 9 },
+        [full]: { active: 10 },
+        // A soft cap can be exceeded; it is still full.
+        [over]: { active: 11, waitlist: 3 },
+        [uncapped]: { active: 400 },
+      }),
+    );
+
+    const result = await tool();
+
+    expect(result.structuredContent?.products).toEqual([
+      expect.objectContaining({
+        productId: open,
+        seats: { capacity: 10, taken: 9, waitlisted: 0, full: false, waitlistEnabled: true },
+      }),
+      expect.objectContaining({
+        productId: full,
+        seats: { capacity: 10, taken: 10, waitlisted: 0, full: true, waitlistEnabled: false },
+      }),
+      expect.objectContaining({
+        productId: over,
+        seats: { capacity: 10, taken: 11, waitlisted: 3, full: true, waitlistEnabled: true },
+      }),
+      expect.objectContaining({
+        productId: uncapped,
+        seats: { capacity: null, taken: 400, waitlisted: 0, full: false, waitlistEnabled: true },
+      }),
+    ]);
   });
 
   it("passes the filters through, and pages on with the cursor it handed out", async () => {

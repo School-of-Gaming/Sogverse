@@ -202,6 +202,19 @@ function seatAvailability(
   };
 }
 
+/**
+ * Whether every seat is taken: a capped product whose live active-participation
+ * count has reached the cap. The one rule the shop's full states are decided
+ * by, exported for the admin MCP product list, which reports it beside the
+ * counts so an AI app says "sold out" exactly when the shop does.
+ */
+export function seatsAreFull<P extends { seat_count: number | null }>(
+  product: P,
+  participationsCount: number,
+): product is P & { seat_count: number } {
+  return product.seat_count !== null && participationsCount >= product.seat_count;
+}
+
 export function deriveRegistrationState({
   product,
   now,
@@ -239,7 +252,7 @@ export function deriveRegistrationState({
     // full event shows full_waitlist / full_closed rather than "open".
   }
 
-  if (product.seat_count !== null && participationsCount >= product.seat_count) {
+  if (seatsAreFull(product, participationsCount)) {
     return product.waitlist_enabled
       ? { kind: "full_waitlist", seatCount: product.seat_count }
       : { kind: "full_closed", seatCount: product.seat_count };
