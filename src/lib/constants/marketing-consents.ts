@@ -44,10 +44,8 @@ export interface MarketingConsentAsk {
  *
  * `school_of_gaming` is deliberately absent, and its absence is the whole point
  * of this list being written out rather than derived from the enum. Our own
- * mailing list is asked for once, at parent registration, on the account that
- * holds it — attaching it to a *product* would put the same account-level
- * question in front of a parent a second time with nothing new to say, which is
- * the dark pattern the account-level key exists to prevent. Only a consent
+ * mailing list is answered in Klaviyo, and the enum keeps the value only for
+ * the rows written before it moved, which nothing reads. Only a consent
  * whose ask genuinely belongs to a particular product (a partner's, on the
  * products that partnership covers) goes here.
  *

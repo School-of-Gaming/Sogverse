@@ -311,11 +311,19 @@ made from the production deployment alone and never fails the publish
 **The email sign-up section (`subscribe`) is a one-way send to Klaviyo, and Sogverse
 stores nothing about the person.** The form takes an address, an optional first and last
 name and the consent box, and posts to `/api/landing-pages/subscribe`, which writes the
-profile to Klaviyo and subscribes it to the newsletter list; nothing is ever read back.
-The list is single opt-in, so the reader is on it as soon as the route answers. A sign-up
-is not an account and never touches an account's marketing consent. The profile carries
+profile to Klaviyo and subscribes it to the marketing-consent list (`SV Marketing consent`
+in production, `SV Staging` elsewhere), the one a registration's tick joins too; nothing is
+ever read back.
+The list is single opt-in, so the reader is on it as soon as the route answers. Klaviyo
+holds an account's marketing consent on the account's own profile, so a sign-up under an
+account's address subscribes that same profile, exactly as ticking the box in Settings
+would. The profile carries
 the address, the names given, the page's locale, the landing page's id, and the visit's
-UTM values only under marketing consent — nothing else. The section has no shared field
+UTM values only under marketing consent — nothing else. The two custom ones are named in
+the Klaviyo contract (`src/lib/klaviyo-sync/`): `sog_newsletter_page` and
+`sog_newsletter_utm_source` … `_term`, never the account sync's `sog_first_utm_…` names,
+because a subscriber who later opens an account is one Klaviyo profile carrying
+both. The section has no shared field
 but its background and its sticky side; its form copy, consent sentence included, is fixed
 copy in `landingSubscribe`, and the page writes only the ask. The route refuses a body
 without the ticked consent and a page whose published copy no longer holds the section,

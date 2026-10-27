@@ -183,6 +183,7 @@ const TESTS = {
   adminLocations: "tests/integration/api/admin-locations.test.ts",
   adminSiteNotes: "tests/integration/api/admin-site-notes.test.ts",
   billingPortal: "tests/integration/api/billing-portal.test.ts",
+  parentEmailMarketing: "tests/integration/api/parent-email-marketing.test.ts",
   callback: "tests/integration/auth/callback.test.ts",
   chatImageRead: "tests/integration/api/chat-image-read.test.ts",
   chatImageUpload: "tests/integration/api/chat-image-upload.test.ts",
@@ -209,6 +210,7 @@ const TESTS = {
     "tests/integration/api/gedu-session-image-remove.test.ts",
   guideDownload: "tests/integration/api/guide-download.test.ts",
   helpRequests: "tests/integration/api/help-requests.test.ts",
+  klaviyoSyncSync: "tests/integration/api/klaviyo-sync-sync.test.ts",
   landingSubscribe: "tests/integration/api/landing-pages-subscribe.test.ts",
   locationsSearch: "tests/integration/api/locations-search.test.ts",
   minecraftAccount: "tests/integration/api/minecraft-account.test.ts",
@@ -644,7 +646,7 @@ const ROUTE_REGISTRY: Record<string, RouteEntry> = {
 
   "src/app/api/auth/complete-registration/route.ts": {
     adminClient:
-      "finishes a registration begun with Google, on the caller's own profile and only while it still owes one: the profile columns authenticated has no UPDATE grant on — the five utm_* columns (their one consent-gated write, since a provider-created row has no signup metadata), email_verified_at (when Google verified the same address) and registration_completed_at (the stamp, written last); the auth user read (getUserById) for the Google identity's verification; and the two consent writes the register route makes for the same reason it makes them — record_account_consents and record_registration_marketing_consent are granted to service_role alone, because they take the customer as a parameter and claim the 'registration' provenance",
+      "finishes a registration begun with Google, on the caller's own profile and only while it still owes one: the profile columns authenticated has no UPDATE grant on — the five utm_* columns (their one consent-gated write, since a provider-created row has no signup metadata), email_verified_at (when Google verified the same address), the write-once signup intent and registration marketing answer, and registration_completed_at (the stamp, written last); the auth user read (getUserById) for the Google identity's verification; and the account-consent write the register route makes for the same reason it makes it — record_account_consents is granted to service_role alone, because it takes the customer as a parameter",
     handlers: {
       POST: {
         posture: {
@@ -685,7 +687,7 @@ const ROUTE_REGISTRY: Record<string, RouteEntry> = {
 
   "src/app/api/auth/register/route.ts": {
     adminClient:
-      "Auth Admin API (self-registration creates the auth user before any session exists), plus the optional home-location write onto the profile that same request creates, plus the registration marketing-consent write — record_registration_marketing_consent is granted to service_role alone, because it takes the customer as a parameter (no session exists yet) and hardcodes the 'registration' source that set_marketing_consent refuses, so that provenance can only be claimed from here, plus the account-consent write — record_account_consents is granted to service_role alone for the same reason, and records what the account was opened under (the terms; the guardian declaration belongs to create_gamer, where it is a statement about one named child) against the version that was current",
+      "Auth Admin API (self-registration creates the auth user before any session exists), plus the write onto the profile that same request creates — the optional home location and locale, and the write-once registration marketing answer, which authenticated has no UPDATE grant on — plus the account-consent write — record_account_consents is granted to service_role alone for the same reason, and records what the account was opened under (the terms; the guardian declaration belongs to create_gamer, where it is a statement about one named child) against the version that was current",
     handlers: {
       POST: {
         posture: {
@@ -844,6 +846,21 @@ const ROUTE_REGISTRY: Record<string, RouteEntry> = {
         posture: { kind: "role-gated", roles: ["customer"] },
         body: { kind: "json", schema: "billingPortalBody" },
         test: TESTS.billingPortal,
+      },
+    },
+  },
+
+  "src/app/api/parent/email-marketing/route.ts": {
+    handlers: {
+      GET: {
+        posture: { kind: "role-gated", roles: ["customer"] },
+        body: { kind: "none" },
+        test: TESTS.parentEmailMarketing,
+      },
+      PUT: {
+        posture: { kind: "role-gated", roles: ["customer"] },
+        body: { kind: "json", schema: "emailMarketingStanding" },
+        test: TESTS.parentEmailMarketing,
       },
     },
   },
@@ -1200,6 +1217,23 @@ const ROUTE_REGISTRY: Record<string, RouteEntry> = {
         posture: { kind: "role-gated", roles: ["admin", "customer", "gamer", "gedu"] },
         body: { kind: "none" },
         test: TESTS.guideDownload,
+      },
+    },
+  },
+
+  // --- Klaviyo sync --------------------------------------------------------
+
+  "src/app/api/klaviyo-sync/sync/route.ts": {
+    handlers: {
+      POST: {
+        posture: {
+          kind: "api-key",
+          primitive: "verifyKlaviyoSyncRequest",
+          reason:
+            "pg_net calls it from the database; there is no session. The environment's KLAVIYO_SYNC_SECRET as a bearer token, compared in constant time, is the authorization, and an unset secret refuses everything. It only drains the Klaviyo outboxes and takes no input, so a caller can choose nothing about what is sent",
+        },
+        body: { kind: "none" },
+        test: TESTS.klaviyoSyncSync,
       },
     },
   },
@@ -1771,6 +1805,8 @@ const NON_ROUTE_ADMIN_CLIENT_SITES: Record<string, string> = {
     "reads the Slack username and expiry of a Slack link token for the confirm page, which names the account before an admin links it; the token table is granted to the service role alone. The page calls it only past its admin gate, and it only reads: the token is spent by consume_slack_link_token on the admin's own session, behind the button's POST",
   "src/lib/discord-substitution.server.ts":
     "the Discord bot's /sub command acts for a gedu it knows only by the Discord user id on a signature-verified interaction, with no Sogverse session to act through. Every call is to a function granted to the service role alone that first resolves that id to the gedu account linked to it and refuses when there is none; past that, the reads and the filing are the very bodies the web reaches through auth.uid(), so the service role widens nothing but who the gedu is taken to be. The same holds for a substitution DM's Offer and Decline buttons. The one read that is not the web's is the notification snapshot a pressed DM is redrawn from, which carries the absence reason: the redraw reads only the pool's session facts and the presser's own answer from it",
+  "src/lib/klaviyo-sync/sync.server.ts":
+    "the Klaviyo sync runs with no caller at all — the outbox drain behind the sync route — and claims and finishes outbox rows and reads parent snapshots and events, all granted to the service role alone. It sends Klaviyo only what the contract maps from a snapshot, adds the profile to the lists the contract names, and deletes the profile of a parent the snapshot read no longer returns",
   "src/lib/substitution-notifications/sync.server.ts":
     "the notification sync runs with no caller at all — the outbox drain behind the sync route, or a button press after its own write — and reads a snapshot that carries the absence reason and writes the message tables, all granted to the service role alone. It sends only what the snapshot's own disclosure rules allow: the DMs carry the pool's session facts and nothing about the absent gedu, and the reason goes only to the staff Slack channel",
   "src/services/family/family.server.ts":

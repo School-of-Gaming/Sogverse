@@ -82,9 +82,8 @@ import type { FormState } from "../product-form-state";
  *
  * **`school_of_gaming` is deliberately not among the marketing rows**, which is
  * why they come from `ATTACHABLE_MARKETING_CONSENT_TYPES` rather than from the
- * enum. Our own mailing list is asked for at registration, on the account that
- * holds the answer; attaching it to a product would ask an account-level
- * question a second time with nothing new to say.
+ * enum. Our own mailing list is answered in Klaviyo, and the database refuses
+ * it on a product.
  *
  * **The rows do not wait on the network.** Registry rows arrive by migration and
  * `CONSENT_DOCUMENTS` ships in the same deploy, so the slug, the name and the

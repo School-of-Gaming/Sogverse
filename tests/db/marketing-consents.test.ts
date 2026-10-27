@@ -4,7 +4,6 @@ import type { Database } from "@/types/database.types";
 import {
   accessTokenFor,
   callRpcRaw,
-  callServiceRoleRpcResult,
   createAdminTestClient,
   createAnonTestClient,
   createAuthenticatedClient,
@@ -26,9 +25,11 @@ import { createTestProduct, deleteTestProducts } from "./product-helpers";
  *     state already on file appends nothing, because a log that counted page
  *     loads could not answer the one question it exists for. A first explicit
  *     "no" IS a change, because an absent row means never answered.
- *   * `registration` is a source no signed-in caller may claim. It is written
- *     only by the register route through the service-role client, and it is the
- *     one field on an event that nothing else can corroborate.
+ *   * Only the two surfaces that call the writer may be named as a source: it
+ *     is the one field on an event that nothing else can corroborate.
+ *   * School of Gaming's own list is not written here: its consent lives in
+ *     Klaviyo, the writers refuse it, and what the registration form was told
+ *     is a write-once profile column. The rows written before it moved stay.
  *   * The consent is ACCOUNT-level and belongs to the purchasing customer, so
  *     a gamer and a gedu are refused by the role guard rather than by an empty
  *     result, and one family can never read another's answers.
@@ -50,8 +51,9 @@ const PRODUCT_FINISHED = "00000000-0000-0000-0000-000000000691";
 
 const ALL_TEST_PRODUCTS = [PRODUCT_PUBLISHED, PRODUCT_FINISHED];
 
-const SOG = "school_of_gaming" as const;
 const LYNX = "lynx_educate" as const;
+/** School of Gaming's own list: answered in Klaviyo, its old rows kept unread. */
+const SOG = "school_of_gaming" as const;
 
 /** The canonical forbidden SQLSTATE every guard primitive raises. */
 const FORBIDDEN = "42501";
@@ -151,12 +153,9 @@ describe("marketing consents", () => {
 
   /**
    * The seeded customer's current state, sorted by consent type — in JS, and
-   * deliberately not with `.order("consent_type")`.
-   *
-   * PostgreSQL sorts an enum column by its DECLARATION order, so ordering in
-   * the database would put `school_of_gaming` before `lynx_educate` and make
-   * every assertion below silently depend on the line order inside the
-   * migration's CREATE TYPE. Sorting the strings here is stable against that.
+   * deliberately not with `.order("consent_type")`: PostgreSQL sorts an enum
+   * column by its DECLARATION order, which would make an assertion depend on
+   * the line order inside a migration's CREATE TYPE once a second type exists.
    */
   async function stateFor(customerId: string) {
     const { data, error } = await admin
@@ -197,14 +196,14 @@ describe("marketing consents", () => {
 
   describe("set_marketing_consent", () => {
     it("records a grant, and the parent reads their own state back", async () => {
-      const res = await set(customer, SOG, true, "settings");
+      const res = await set(customer, LYNX, true, "settings");
       expect(res.error).toBeNull();
 
       expect(await stateFor(TEST_IDS.CUSTOMER)).toEqual([
-        { consent_type: SOG, granted: true },
+        { consent_type: LYNX, granted: true },
       ]);
       expect(await eventsFor(TEST_IDS.CUSTOMER)).toEqual([
-        { consent_type: SOG, granted: true, source: "settings" },
+        { consent_type: LYNX, granted: true, source: "settings" },
       ]);
 
       // Through the caller's own RLS view, not the service-role client: the
@@ -214,31 +213,31 @@ describe("marketing consents", () => {
         .select("consent_type, granted")
         .eq("customer_id", TEST_IDS.CUSTOMER);
       expect(own.error).toBeNull();
-      expect(own.data).toEqual([{ consent_type: SOG, granted: true }]);
+      expect(own.data).toEqual([{ consent_type: LYNX, granted: true }]);
     });
 
     it("revokes what it granted — the whole difference from an enrolment condition", async () => {
-      expect((await set(customer, SOG, true, "settings")).error).toBeNull();
-      expect((await set(customer, SOG, false, "settings")).error).toBeNull();
+      expect((await set(customer, LYNX, true, "settings")).error).toBeNull();
+      expect((await set(customer, LYNX, false, "settings")).error).toBeNull();
 
       // ONE state row, holding the latest answer: the state table is a current
       // answer and never an accumulating log.
       expect(await stateFor(TEST_IDS.CUSTOMER)).toEqual([
-        { consent_type: SOG, granted: false },
+        { consent_type: LYNX, granted: false },
       ]);
       expect(await eventsFor(TEST_IDS.CUSTOMER)).toEqual([
-        { consent_type: SOG, granted: true, source: "settings" },
-        { consent_type: SOG, granted: false, source: "settings" },
+        { consent_type: LYNX, granted: true, source: "settings" },
+        { consent_type: LYNX, granted: false, source: "settings" },
       ]);
     });
 
     it("grants again after a revoke, because a revocable consent has no terminal state", async () => {
-      expect((await set(customer, SOG, true, "settings")).error).toBeNull();
-      expect((await set(customer, SOG, false, "settings")).error).toBeNull();
-      expect((await set(customer, SOG, true, "settings")).error).toBeNull();
+      expect((await set(customer, LYNX, true, "settings")).error).toBeNull();
+      expect((await set(customer, LYNX, false, "settings")).error).toBeNull();
+      expect((await set(customer, LYNX, true, "settings")).error).toBeNull();
 
       expect(await stateFor(TEST_IDS.CUSTOMER)).toEqual([
-        { consent_type: SOG, granted: true },
+        { consent_type: LYNX, granted: true },
       ]);
       // Three rows and no unique constraint anywhere: granting, revoking and
       // granting again is the ordinary life of one of these, and the three rows
@@ -246,43 +245,29 @@ describe("marketing consents", () => {
       expect(await eventsFor(TEST_IDS.CUSTOMER)).toHaveLength(3);
     });
 
-    it("keeps the two consent types apart, each with its own state and source", async () => {
-      expect((await set(customer, SOG, true, "settings")).error).toBeNull();
-      expect((await set(customer, LYNX, false, "enrolment")).error).toBeNull();
-
-      expect(await stateFor(TEST_IDS.CUSTOMER)).toEqual([
-        { consent_type: LYNX, granted: false },
-        { consent_type: SOG, granted: true },
-      ]);
-      expect(await eventsFor(TEST_IDS.CUSTOMER)).toEqual([
-        { consent_type: SOG, granted: true, source: "settings" },
-        { consent_type: LYNX, granted: false, source: "enrolment" },
-      ]);
-    });
-
     it("appends NO event when the submitted state already matches", async () => {
-      expect((await set(customer, SOG, true, "settings")).error).toBeNull();
+      expect((await set(customer, LYNX, true, "settings")).error).toBeNull();
 
       // The stale-tab resubmit, and the settings form that was saved without
       // anything being touched. Both succeed — this is idempotent, not refused —
       // and both leave the history alone, because an event log of "changes"
       // that recorded non-changes would answer "how often did this parent
       // change their mind" with a number made of page loads.
-      const replay = await set(customer, SOG, true, "settings");
+      const replay = await set(customer, LYNX, true, "settings");
       expect(replay.error).toBeNull();
 
       expect(await eventsFor(TEST_IDS.CUSTOMER)).toHaveLength(1);
     });
 
     it("does NOT let a repeat submission relabel the source of the answer on file", async () => {
-      expect((await set(customer, SOG, true, "settings")).error).toBeNull();
+      expect((await set(customer, LYNX, true, "settings")).error).toBeNull();
       // Same state, different surface. Skipping the event is what keeps the
       // provenance of the ORIGINAL answer intact — an appended row here would
       // make the newest event claim the consent came from a signup panel.
-      expect((await set(customer, SOG, true, "enrolment")).error).toBeNull();
+      expect((await set(customer, LYNX, true, "enrolment")).error).toBeNull();
 
       expect(await eventsFor(TEST_IDS.CUSTOMER)).toEqual([
-        { consent_type: SOG, granted: true, source: "settings" },
+        { consent_type: LYNX, granted: true, source: "settings" },
       ]);
     });
 
@@ -302,7 +287,7 @@ describe("marketing consents", () => {
     });
 
     it("refuses the registration source, writing nothing at all", async () => {
-      const res = await set(customer, SOG, true, "registration");
+      const res = await set(customer, LYNX, true, "registration");
 
       expect(res.error?.code).toBe(CHECK_VIOLATION);
       expect(res.error?.message).toContain("registration");
@@ -314,22 +299,46 @@ describe("marketing consents", () => {
     });
 
     it("refuses a source it has never heard of", async () => {
-      const res = await set(customer, SOG, true, "a-surface-that-does-not-exist");
+      const res = await set(customer, LYNX, true, "a-surface-that-does-not-exist");
       expect(res.error?.code).toBe(CHECK_VIOLATION);
       expect(await eventsFor(TEST_IDS.CUSTOMER)).toEqual([]);
+    });
+
+    it("refuses School of Gaming's own list, which Klaviyo answers, writing nothing", async () => {
+      const res = await set(customer, SOG, true, "settings");
+      expect(res.error?.code).toBe(CHECK_VIOLATION);
+      expect(res.error?.message).toContain("Klaviyo");
+      expect(await stateFor(TEST_IDS.CUSTOMER)).toEqual([]);
+      expect(await eventsFor(TEST_IDS.CUSTOMER)).toEqual([]);
+    });
+
+    it("keeps the school_of_gaming rows written before the move, registration-sourced ones included", async () => {
+      // As the registration route wrote them then: the CHECK still admits them.
+      const state = await admin
+        .from("marketing_consents")
+        .insert({ customer_id: TEST_IDS.CUSTOMER_2, consent_type: SOG, granted: true });
+      expect(state.error).toBeNull();
+      const event = await admin.from("marketing_consent_events").insert({
+        customer_id: TEST_IDS.CUSTOMER_2,
+        consent_type: SOG,
+        granted: true,
+        source: "registration",
+      });
+      expect(event.error).toBeNull();
+      expect(await stateFor(TEST_IDS.CUSTOMER_2)).toEqual([{ consent_type: SOG, granted: true }]);
     });
 
     it("refuses a gedu", async () => {
       // The role guard, not an empty result: a gedu's relationship with us is a
       // contract rather than a mailing list, so there is no consent for
       // them to hold and the refusal says so.
-      const res = await set(gedu, SOG, true, "settings");
+      const res = await set(gedu, LYNX, true, "settings");
       expect(res.error?.code).toBe(FORBIDDEN);
       expect(await stateFor(TEST_IDS.GEDU)).toEqual([]);
     });
 
     it("refuses a gamer", async () => {
-      const res = await set(gamer, SOG, true, "settings");
+      const res = await set(gamer, LYNX, true, "settings");
       expect(res.error?.code).toBe(FORBIDDEN);
       expect(await stateFor(TEST_IDS.GAMER)).toEqual([]);
     });
@@ -339,7 +348,7 @@ describe("marketing consents", () => {
       // account and toggles them there like anybody else. An admin editing
       // somebody else's marketing consent is not a thing this platform does —
       // the answer belongs to whoever owns the mailbox.
-      const res = await set(adminAuth, SOG, true, "settings");
+      const res = await set(adminAuth, LYNX, true, "settings");
       expect(res.error?.code).toBe(FORBIDDEN);
       expect(await stateFor(TEST_IDS.ADMIN)).toEqual([]);
     });
@@ -351,21 +360,21 @@ describe("marketing consents", () => {
 
   describe("read scoping", () => {
     it("lets a customer read their own rows and never another family's", async () => {
-      expect((await set(customer, SOG, true, "settings")).error).toBeNull();
+      expect((await set(customer, LYNX, true, "settings")).error).toBeNull();
 
       // A second family's answer, written with the service-role client so it
       // exists without the customer under test ever touching it.
       const seeded = await admin.from("marketing_consents").insert({
         customer_id: TEST_IDS.CUSTOMER_2,
-        consent_type: SOG,
+        consent_type: LYNX,
         granted: true,
       });
       expect(seeded.error).toBeNull();
       const seededEvent = await admin.from("marketing_consent_events").insert({
         customer_id: TEST_IDS.CUSTOMER_2,
-        consent_type: SOG,
+        consent_type: LYNX,
         granted: true,
-        source: "registration",
+        source: "settings",
       });
       expect(seededEvent.error).toBeNull();
 
@@ -399,7 +408,7 @@ describe("marketing consents", () => {
     });
 
     it("lets an admin read anyone's state and history", async () => {
-      expect((await set(customer, SOG, true, "settings")).error).toBeNull();
+      expect((await set(customer, LYNX, true, "settings")).error).toBeNull();
 
       const state = await adminAuth
         .from("marketing_consents")
@@ -419,7 +428,7 @@ describe("marketing consents", () => {
     });
 
     it("tells anon nothing about either table", async () => {
-      expect((await set(customer, SOG, true, "settings")).error).toBeNull();
+      expect((await set(customer, LYNX, true, "settings")).error).toBeNull();
 
       // No grant at all for `anon`, so this is refused by the grant layer
       // rather than filtered to nothing by a policy — the stronger of the two.
@@ -438,16 +447,16 @@ describe("marketing consents", () => {
       // than by a policy that could be edited.
       const state = await customer.from("marketing_consents").insert({
         customer_id: TEST_IDS.CUSTOMER,
-        consent_type: SOG,
+        consent_type: LYNX,
         granted: true,
       });
       expect(state.error).not.toBeNull();
 
       const event = await customer.from("marketing_consent_events").insert({
         customer_id: TEST_IDS.CUSTOMER,
-        consent_type: SOG,
+        consent_type: LYNX,
         granted: true,
-        source: "registration",
+        source: "settings",
       });
       expect(event.error).not.toBeNull();
 
@@ -459,7 +468,7 @@ describe("marketing consents", () => {
     });
 
     it("gives an authenticated caller no UPDATE or DELETE path to their own answer either", async () => {
-      expect((await set(customer, SOG, true, "settings")).error).toBeNull();
+      expect((await set(customer, LYNX, true, "settings")).error).toBeNull();
 
       // The append-only claim, tested from the one caller who could plausibly
       // be granted it: a parent revokes by calling the RPC, never by editing or
@@ -477,7 +486,7 @@ describe("marketing consents", () => {
       expect(wipe.error).not.toBeNull();
 
       expect(await stateFor(TEST_IDS.CUSTOMER)).toEqual([
-        { consent_type: SOG, granted: true },
+        { consent_type: LYNX, granted: true },
       ]);
       expect(await eventsFor(TEST_IDS.CUSTOMER)).toHaveLength(1);
     });
@@ -529,23 +538,15 @@ describe("marketing consents", () => {
       expect(await asksFor(PRODUCT_PUBLISHED)).toEqual([LYNX]);
     });
 
-    it("replaces the set rather than merging into it", async () => {
-      expect(
-        (
-          await adminAuth.rpc("admin_set_product_marketing_consents", {
-            p_product_id: PRODUCT_PUBLISHED,
-            p_consent_types: [LYNX, SOG],
-          })
-        ).error,
-      ).toBeNull();
-      expect(await asksFor(PRODUCT_PUBLISHED)).toEqual([LYNX, SOG]);
-
-      const replaced = await adminAuth.rpc(
-        "admin_set_product_marketing_consents",
-        { p_product_id: PRODUCT_PUBLISHED, p_consent_types: [SOG] },
-      );
-      expect(replaced.error).toBeNull();
-      expect(await asksFor(PRODUCT_PUBLISHED)).toEqual([SOG]);
+    it("replaces the set rather than adding to it, so a repeat leaves one row", async () => {
+      for (let i = 0; i < 2; i++) {
+        const res = await adminAuth.rpc("admin_set_product_marketing_consents", {
+          p_product_id: PRODUCT_PUBLISHED,
+          p_consent_types: [LYNX],
+        });
+        expect(res.error).toBeNull();
+      }
+      expect(await asksFor(PRODUCT_PUBLISHED)).toEqual([LYNX]);
     });
 
     it("clears the set when handed nothing", async () => {
@@ -571,7 +572,7 @@ describe("marketing consents", () => {
         (
           await adminAuth.rpc("admin_set_product_marketing_consents", {
             p_product_id: PRODUCT_PUBLISHED,
-            p_consent_types: [LYNX, SOG],
+            p_consent_types: [LYNX],
           })
         ).error,
       ).toBeNull();
@@ -585,12 +586,29 @@ describe("marketing consents", () => {
       const res = await callRpcRaw(
         adminToken,
         "admin_set_product_marketing_consents",
-        { p_product_id: PRODUCT_PUBLISHED, p_consent_types: [SOG, null] },
+        { p_product_id: PRODUCT_PUBLISHED, p_consent_types: [null] },
       );
 
       expect(res.code).toBe(CHECK_VIOLATION);
       expect(res.message).toContain("NULL");
-      expect(await asksFor(PRODUCT_PUBLISHED)).toEqual([LYNX, SOG]);
+      expect(await asksFor(PRODUCT_PUBLISHED)).toEqual([LYNX]);
+    });
+
+    it("refuses School of Gaming's own list on a product, leaving the set as it was", async () => {
+      expect(
+        (
+          await adminAuth.rpc("admin_set_product_marketing_consents", {
+            p_product_id: PRODUCT_PUBLISHED,
+            p_consent_types: [LYNX],
+          })
+        ).error,
+      ).toBeNull();
+      const res = await adminAuth.rpc("admin_set_product_marketing_consents", {
+        p_product_id: PRODUCT_PUBLISHED,
+        p_consent_types: [SOG],
+      });
+      expect(res.error?.code).toBe(CHECK_VIOLATION);
+      expect(await asksFor(PRODUCT_PUBLISHED)).toEqual([LYNX]);
     });
 
     it("refuses a product that does not exist, even on a call that clears", async () => {
@@ -685,133 +703,60 @@ describe("marketing consents", () => {
   });
 
   // -------------------------------------------------------------------------
-  // The registration writer
+  // The registration answer
   // -------------------------------------------------------------------------
 
   /**
-   * The register route's writer, and the one function in this system that names
-   * its subject in an argument.
-   *
-   * It exists because writing the state row and its event row as two PostgREST
-   * calls is two transactions — a failed second one would
-   * leave `marketing_consents` asserting an answer `marketing_consent_events`
-   * could not corroborate, on the one consent whose whole value is provable
-   * provenance. The pair is one function call, and the cases below pin
-   * the three properties that buys: both rows or neither, a retry that records
-   * nothing twice, and — the load-bearing one — that a parameter naming the
-   * subject is unreachable by anything but `service_role`.
+   * What the sign-up form was told about School of Gaming's own mailing list,
+   * kept as a write-once profile column: the registration routes write it with
+   * the service-role client, and no browser role can, because a parent able to
+   * rewrite it could rewrite the record of what they first said.
    */
-  describe("record_registration_marketing_consent", () => {
-    function record(
-      client: SupabaseClient<Database>,
-      granted: boolean,
-      // Widened to `string`: the default narrows to the seeded customer's
-      // literal type, and three cases here deliberately aim it elsewhere.
-      customerId: string = TEST_IDS.CUSTOMER,
-    ) {
-      return client.rpc("record_registration_marketing_consent", {
-        p_customer_id: customerId,
-        p_granted: granted,
-      });
+  describe("profiles.registration_marketing_consent", () => {
+    afterEach(async () => {
+      await admin
+        .from("profiles")
+        .update({ registration_marketing_consent: null })
+        .in("id", [TEST_IDS.CUSTOMER, TEST_IDS.CUSTOMER_2]);
+    });
+
+    async function answerOf(customerId: string) {
+      const { data, error } = await admin
+        .from("profiles")
+        .select("registration_marketing_consent")
+        .eq("id", customerId)
+        .single();
+      if (error) throw new Error(`reading the answer failed: ${error.message}`);
+      return data.registration_marketing_consent;
     }
 
-    it("writes the state and its event together, sourced to the registration", async () => {
-      const res = await record(admin, true);
+    it("is written by the service role, as the registration routes write it", async () => {
+      const res = await admin
+        .from("profiles")
+        .update({ registration_marketing_consent: true })
+        .eq("id", TEST_IDS.CUSTOMER);
       expect(res.error).toBeNull();
-
-      expect(await stateFor(TEST_IDS.CUSTOMER)).toEqual([
-        { consent_type: SOG, granted: true },
-      ]);
-      // The source is not a parameter — the function hardcodes it — which is
-      // what makes this provenance unforgeable rather than merely unclaimed.
-      expect(await eventsFor(TEST_IDS.CUSTOMER)).toEqual([
-        { consent_type: SOG, granted: true, source: "registration" },
-      ]);
+      expect(await answerOf(TEST_IDS.CUSTOMER)).toBe(true);
     });
 
-    it("records a decline, because the form asked and an absent row would not say so", async () => {
-      const res = await record(admin, false);
-      expect(res.error).toBeNull();
+    // 42501 = insufficient_privilege: no column grant fails the statement
+    // outright rather than scoping it.
+    it("cannot be set or cleared by the parent it describes", async () => {
+      await admin
+        .from("profiles")
+        .update({ registration_marketing_consent: false })
+        .eq("id", TEST_IDS.CUSTOMER);
 
-      expect(await stateFor(TEST_IDS.CUSTOMER)).toEqual([
-        { consent_type: SOG, granted: false },
-      ]);
-      // A first explicit "no" is a move away from "never asked", so it earns
-      // its event exactly as a grant does.
-      expect(await eventsFor(TEST_IDS.CUSTOMER)).toEqual([
-        { consent_type: SOG, granted: false, source: "registration" },
-      ]);
+      const res = await customer
+        .from("profiles")
+        .update({ registration_marketing_consent: true })
+        .eq("id", TEST_IDS.CUSTOMER);
+      expect(res.error?.code).toBe(FORBIDDEN);
+      expect(await answerOf(TEST_IDS.CUSTOMER)).toBe(false);
     });
 
-    it("appends nothing on a retry of the same answer", async () => {
-      expect((await record(admin, true)).error).toBeNull();
-      expect((await record(admin, true)).error).toBeNull();
-
-      // The route's two blind writes could not promise this: a retried request
-      // would have appended a second event for a state that never moved, and
-      // the log would answer "how often did this parent change their mind" with
-      // a number made of retries.
-      expect(await eventsFor(TEST_IDS.CUSTOMER)).toEqual([
-        { consent_type: SOG, granted: true, source: "registration" },
-      ]);
-    });
-
-    it("touches only our own list, never the partner's", async () => {
-      expect((await record(admin, true)).error).toBeNull();
-
-      // The consent type is hardcoded, so this function cannot stamp a Lynx
-      // opt-in as having been given on a sign-up form that never asked for one.
-      const state = await stateFor(TEST_IDS.CUSTOMER);
-      expect(state.map((row) => row.consent_type)).toEqual([SOG]);
-    });
-
-    it("refuses a profile that is not a customer", async () => {
-      // The invariant assert_role gives the self-service writer, read off the
-      // named profile because there is no session here to ask about. A gedu's
-      // relationship with us is a contract, not a mailing list.
-      const res = await record(admin, true, TEST_IDS.GEDU);
-      expect(res.error).not.toBeNull();
-      expect(await stateFor(TEST_IDS.GEDU)).toEqual([]);
-
-      const child = await record(admin, true, TEST_IDS.GAMER);
-      expect(child.error).not.toBeNull();
-      expect(await stateFor(TEST_IDS.GAMER)).toEqual([]);
-    });
-
-    it("refuses a missing answer", async () => {
-      // Raw, because the generated signature cannot express the NULL that is
-      // the input under test, and casting around it would be the suppression
-      // the code-style rule warns about. `callServiceRoleRpcResult` is the
-      // member of that family for a service-role-only function whose REFUSAL is
-      // what is being asserted.
-      const res = await callServiceRoleRpcResult(
-        "record_registration_marketing_consent",
-        { p_customer_id: TEST_IDS.CUSTOMER, p_granted: null },
-      );
-      expect(res.code).toBe(CHECK_VIOLATION);
-      expect(await stateFor(TEST_IDS.CUSTOMER)).toEqual([]);
-    });
-
-    // **The one that matters.** Every other function in this system takes its
-    // subject from auth.uid(); this one takes it as an argument, because no
-    // session exists when the register route calls it. That makes the grant the
-    // whole of its access control: a reachable role could otherwise write a
-    // registration-sourced consent for any customer id it liked.
-    it("is unreachable by every role a browser can hold", async () => {
-      for (const [role, client] of [
-        ["customer", customer],
-        ["gedu", gedu],
-        ["gamer", gamer],
-        ["admin", adminAuth],
-        ["anon", anon],
-      ] as const) {
-        const res = await record(client, true, TEST_IDS.CUSTOMER_2);
-        expect(res.error, `${role} could call it`).not.toBeNull();
-        expect(res.error?.code, `${role} was not refused execute`).toBe(
-          FORBIDDEN,
-        );
-      }
-      expect(await stateFor(TEST_IDS.CUSTOMER_2)).toEqual([]);
+    it("leaves a parent who was never asked at NULL", async () => {
+      expect(await answerOf(TEST_IDS.CUSTOMER_2)).toBeNull();
     });
   });
 });

@@ -44,6 +44,9 @@ const userListProfileColumns = {
   utm_term: z.string().nullable(),
   locale: z.string().nullable(),
   registration_completed_at: z.string().nullable(),
+  registration_marketing_consent: z.boolean().nullable(),
+  signup_intent_kind: z.string().nullable(),
+  signup_intent_id: z.string().nullable(),
   spoken_languages: z.array(z.enum(Constants.public.Enums.spoken_language)),
   created_at: z.string(),
   updated_at: z.string(),
@@ -129,7 +132,7 @@ export type UserListEntry = z.infer<typeof userListEntry>;
  * exactly the schema's keys, in order.
  */
 export const USER_LIST_ENTRY_COLUMNS =
-  "id,email,email_verified_at,first_name,last_name,role,phone,currency,home_location_id,utm_source,utm_medium,utm_campaign,utm_content,utm_term,locale,registration_completed_at,spoken_languages,created_at,updated_at,certified,criminal_record_check_passed,linked_gamers,qualifications" as const;
+  "id,email,email_verified_at,first_name,last_name,role,phone,currency,home_location_id,utm_source,utm_medium,utm_campaign,utm_content,utm_term,locale,registration_completed_at,registration_marketing_consent,signup_intent_kind,signup_intent_id,spoken_languages,created_at,updated_at,certified,criminal_record_check_passed,linked_gamers,qualifications" as const;
 
 /**
  * How much has to be typed before the box is searching rather than listing.

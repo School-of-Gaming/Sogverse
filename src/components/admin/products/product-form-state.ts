@@ -336,8 +336,7 @@ export interface FormState {
   // required document is a per-seat, non-revocable condition. Empty on almost
   // every product and the default.
   // Narrowed to the types a form can actually offer rather than to the whole
-  // enum: `school_of_gaming` is asked at registration and belongs to no
-  // product, so a state that could hold it would be a state no screen can show.
+  // enum, so a state can only hold what a screen can show.
   marketingConsentTypes: Set<AttachableMarketingConsentType>;
 
   // Optional gamer photo asks

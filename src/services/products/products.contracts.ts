@@ -209,11 +209,9 @@ const productDataBase = z.object({
   // Unlike the slugs, this one is narrowed here rather than left to a foreign
   // key: the values are a Postgres ENUM, so an unknown one is a type error
   // rather than a missing row, and the enum is exactly what codegen gives us to
-  // check against. Note that the schema admits `school_of_gaming` while the
-  // admin form deliberately never offers it (see
-  // `ATTACHABLE_MARKETING_CONSENT_TYPES`): what a product may *store* is a
-  // database question, and what a form *offers* is a product decision — the
-  // wire is not the place to re-litigate the second.
+  // check against. What a product may *store* is a database question, and
+  // what a form *offers* (`ATTACHABLE_MARKETING_CONSENT_TYPES`) is a product
+  // decision — the wire is not the place to re-litigate the second.
   marketing_consent_types: z.array(
     z.enum(Constants.public.Enums.marketing_consent_type),
   ),

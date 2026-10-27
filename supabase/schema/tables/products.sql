@@ -216,6 +216,13 @@ CREATE INDEX idx_products_visible ON public.products USING btree (is_visible) WH
 
 
 --
+-- Name: products products_klaviyo; Type: TRIGGER; Schema: public; Owner: -
+--
+
+CREATE TRIGGER products_klaviyo AFTER UPDATE OF topic, product_type, billing_mode, start_date, end_date, timezone ON public.products FOR EACH ROW WHEN (((((((old.topic IS DISTINCT FROM new.topic) OR (old.product_type IS DISTINCT FROM new.product_type)) OR (old.billing_mode IS DISTINCT FROM new.billing_mode)) OR (old.start_date IS DISTINCT FROM new.start_date)) OR (old.end_date IS DISTINCT FROM new.end_date)) OR (old.timezone IS DISTINCT FROM new.timezone))) EXECUTE FUNCTION public.klaviyo_product_changed();
+
+
+--
 -- Name: products products_updated_at; Type: TRIGGER; Schema: public; Owner: -
 --
 

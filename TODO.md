@@ -2,6 +2,8 @@
 
 ## Cleanup
 
+- [ ] **School of Gaming's old marketing consent is still in the database, unused.** Klaviyo is the source of truth for it, and nothing in Sogverse reads or writes the `school_of_gaming` rows of the marketing consent tables any more. Carry the granted answers into Klaviyo with a one-off script (subscribed with their original consent time, skipping anyone Klaviyo shows as unsubscribed or suppressed), then remove the rows and the enum value in a change of their own.
+
 - [ ] **Lower the gamers-per-parent cap back down from 15.** `MAX_GAMERS_PER_PARENT` (`src/lib/constants/account-limits.ts`) was raised from 7 to 15 as a special request for a Lynx Educate partner; we plan to lower it again. It is a UI-only cap — only the three add-gamer affordances read it — so lowering it hides the add button and never removes a family's existing children. While the cap is 15, two phone layouts are reachable that are broken at that size (screenshotted at 360px, 2026-10-27): the account menu's height cap ignores the bottom tab bar, so from about 9 household members Settings and Sign out sit behind it; and on a 640px-tall phone the profile picker's title is clipped by the header once the tiles reach four rows.
 
 - [ ] **Three family- and gamer-facing surfaces still show a route's English refusal, because the route sends no code to map.** An API route's `{ error }` body is a developer diagnostic, so a component that renders it ships English to every locale; the generic-message sites have been converted, and what is left needs the server to say *which* refusal it is, because a generic sentence would lose something the reader has to act on. The shape to copy is `ApiError`'s `code`, narrowed client-side with a closed code tuple and an `isXCode` guard and resolved with `t()` (the session-photo upload errors are the clean example).
@@ -416,11 +418,6 @@ is a perfectly good outcome.
 
 - [ ] **Below the `lg` breakpoint, the admin pages now draw their sidebar and the phone tab bar at once.** The admin area was never built for a phone, which was accepted; but before the tab bar arrived it was merely cramped, and now the two navigations compete for the same small screen, so a narrow admin page looks broken rather than unsupported. Nothing is owed until admin on a phone becomes a goal. **When it does, decide the admin's phone navigation as a whole** — the sidebar's sections folded into the tab bar or the account menu, or the sidebar as a sheet the tab bar opens — rather than hiding one of the two, and give it the same single `lg` switch the rest of the app uses (`src/components/layout/CLAUDE.md`).
 
-## Most parents have never been asked about SOG email marketing
-
-- [ ] **About 1,240 of 1,590 parent accounts hold no School of Gaming marketing answer, so we can mail none of them.** Counted on prod 2026-10-08: 143 said yes and 213 said no, about 40% yes among those who answered. The rest were created before the parent-registration question went live around 1 September 2026, most of them in the bulk arrival of existing families in late August. An absent answer already means "do not mail", so nothing is wrong today, but the list we may mail is a fraction of the families we have. **The fix:** ask once in the app. On the next visit to the dashboard, a parent with no School of Gaming answer sees a single yes-or-no question. It saves through the same path as the Settings toggle, so the answer lands in the consent history the same way, and it never appears again once answered. It reaches only parents who sign in (about 220 of the unanswered signed in during the 30 days before the count), which is fine, because the rest simply stay unmailed. **Don't ask by email:** an email requesting marketing consent can itself count as marketing under GDPR. If Finland's existing-customer exception is to be relied on instead, that is a legal call, not an engineering one.
-- [ ] **New parent accounts still arrive without an answer.** Seven parent accounts created since 28 September 2026 hold none, so some way of creating a parent (an admin creating the account, the partner API, or adopting an outside Stripe subscription are the likely candidates) skips the question. Find the path and ask there, or accept that it is answered by the in-app question above.
-
 ## Landing page analytics cannot say what a page led to
 
 Marketing asked for views, button clicks and signups by source page (13 Oct 2026). The admin
@@ -428,9 +425,12 @@ Analytics page answers views; the other two have nothing to read from.
 
 - [ ] **Button clicks are not tracked anywhere.** Landing page buttons carry no tracking, and
   the Meta Pixel reports product-page signup clicks only to Meta.
-- [ ] **An account registration cannot be tied to the landing page it came from.** Only the
-  arrival link's campaign labels are stored, and only for parents who accepted marketing
-  cookies. A landing page's email sign-up is tied already: it sends the page's id to Klaviyo.
+- [ ] **A registration that did not start from a landing page cannot be tied to one the
+  parent read.** A sign-up from a landing page's guide section is tied, by the signup intent
+  stored on the account, and so is its email sign-up, which sends the page's id to Klaviyo.
+  A parent who reads a landing page and then registers some other way — from the header,
+  a product page, a later visit — carries only the arrival link's campaign labels, and only
+  if they accepted marketing cookies.
 
 ## Chargebee is still open, and still connected to our Stripe account
 
