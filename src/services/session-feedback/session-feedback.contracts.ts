@@ -45,14 +45,12 @@ function isRating(value: unknown): value is SessionFeedbackRating {
  *
  * Everything it cannot use is dropped rather than refused: this read exists to
  * prefill a form, and a single unrecognised key must never be the reason a child
- * meets an empty one. A value that is not an object at all — which the column's
- * own constraint already forbids — reads as no answers for the same reason.
+ * meets an empty one. The value itself is always an object:
+ * `chk_session_feedback_answers_shape` refuses anything else.
  */
 export const storedSessionFeedbackAnswers = z
-  .unknown()
+  .record(z.string(), z.unknown())
   .transform((raw): Partial<Record<SessionFeedbackItemKey, SessionFeedbackRating>> => {
-    if (typeof raw !== "object" || raw === null || Array.isArray(raw)) return {};
-
     const answers: Partial<Record<SessionFeedbackItemKey, SessionFeedbackRating>> =
       {};
     for (const [key, value] of Object.entries(raw)) {

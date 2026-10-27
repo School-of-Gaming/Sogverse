@@ -202,7 +202,7 @@ describe("a parent's card for their child's seat, mid-session", () => {
       productName: "Minecraft Club",
       productType: "consumer_club",
       topic: "minecraft_java",
-      isRemote: true,
+      deliveryMode: "online",
       voiceRoom,
       prepWindowEnd: new Date(NOW.getTime() - 86_400_000),
       nextSessionStart: new Date(NOW.getTime() - 600_000),

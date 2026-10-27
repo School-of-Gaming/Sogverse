@@ -265,6 +265,8 @@ const TESTS = {
   signout: "tests/integration/auth/signout.test.ts",
   slackInteractions: "tests/integration/api/slack-interactions.test.ts",
   slackLink: "tests/integration/api/slack-link.test.ts",
+  substitutionNotificationsObserve:
+    "tests/integration/api/substitution-notifications-observe.test.ts",
   substitutionNotificationsSync:
     "tests/integration/api/substitution-notifications-sync.test.ts",
   stripeWebhook: "tests/integration/api/stripe-webhook-products.test.ts",
@@ -384,10 +386,11 @@ const ROUTE_REGISTRY: Record<string, RouteEntry> = {
     },
   },
 
-  // The admin club switch: the seat and its Stripe subscription move together.
-  // Both handlers read on the CALLER's client — every table involved carries an
-  // admin-full-access policy, and admin_move_participation re-checks the role
-  // internally, so a service-role call would have no auth.uid() to read.
+  // The admin seat move: a subscribed seat and its Stripe subscription move
+  // together (the club switch); a seat nothing bills monthly moves alone. Both
+  // handlers read on the CALLER's client — every table involved carries an
+  // admin-full-access policy, and both move RPCs re-check the role internally,
+  // so a service-role call would have no auth.uid() to read.
   "src/app/api/admin/products/[id]/participations/[participationId]/switch/route.ts":
     {
       adminClient:
@@ -1526,6 +1529,18 @@ const ROUTE_REGISTRY: Record<string, RouteEntry> = {
 
   // --- Substitution notifications ------------------------------------------
 
+  "src/app/api/substitution-notifications/observe/route.ts": {
+    adminClient:
+      "the close-out and the due kick read and file rows of the notification outbox and message tables, which grant the service role alone, and both functions are granted to nobody else. The caller chooses nothing: it takes no input, files only requests whose date has passed, and every kick goes through the Vault-gated pg_net call a write makes",
+    handlers: {
+      POST: {
+        posture: { kind: "role-gated", roles: ["admin", "gedu"] },
+        body: { kind: "none" },
+        test: TESTS.substitutionNotificationsObserve,
+      },
+    },
+  },
+
   "src/app/api/substitution-notifications/sync/route.ts": {
     handlers: {
       POST: {
@@ -1533,7 +1548,7 @@ const ROUTE_REGISTRY: Record<string, RouteEntry> = {
           kind: "api-key",
           primitive: "verifySubstitutionSyncRequest",
           reason:
-            "pg_net and pg_cron call it from the database, and the local drain script by hand; there is no session. The environment's SUBSTITUTION_SYNC_SECRET as a bearer token, compared in constant time, is the authorization, and an unset secret refuses everything. It only drains the substitution notification outbox and takes no input, so a caller can choose nothing about what is sent",
+            "pg_net calls it from the database, and the local drain script by hand; there is no session. The environment's SUBSTITUTION_SYNC_SECRET as a bearer token, compared in constant time, is the authorization, and an unset secret refuses everything. It only drains the substitution notification outbox and takes no input, so a caller can choose nothing about what is sent",
         },
         body: { kind: "none" },
         test: TESTS.substitutionNotificationsSync,

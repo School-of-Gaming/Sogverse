@@ -203,7 +203,7 @@ function GeduRow({
         href={ROUTES.admin.user(gedu.id)}
         className="flex min-w-0 flex-1 flex-wrap items-center gap-2 rounded-md transition-opacity hover:opacity-80"
       >
-        <PersonChip id={gedu.id} name={gedu.name ?? t("unnamed")} />
+        <PersonChip id={gedu.id} name={gedu.name} />
         <span className="truncate text-xs text-muted-foreground">
           <Clock className="mr-1 inline h-3 w-3 align-[-1px]" aria-hidden />
           {t("registered", { when: gedu.registeredAgo })}

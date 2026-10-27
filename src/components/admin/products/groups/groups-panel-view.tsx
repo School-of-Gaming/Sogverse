@@ -7,18 +7,16 @@ import {
   DragOverlay,
   PointerSensor,
   useDndContext,
-  useDroppable,
   useSensor,
   useSensors,
   type DragEndEvent,
 } from "@dnd-kit/core";
-import { ArrowRightLeft, Plus, Trash2, UserPlus, Users } from "lucide-react";
+import { Plus, UserPlus, Users } from "lucide-react";
 import { useTranslations } from "next-intl";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import { ConfirmDialog } from "@/components/ui/confirm-dialog";
-import { cn } from "@/lib/cn";
 import { SeatAvailabilityBar } from "@/components/public/products/seat-availability-bar";
 import { BlockedMoveDialog } from "./blocked-move-dialog";
 import { ParticipantChip } from "./participant-chip";
@@ -31,11 +29,12 @@ import {
   readDropData,
   readChipDragData,
   resolveDrop,
+  seatMenuItems,
   seatOfferAvailability,
   showUnassignedSection,
   type BlockedDropReason,
-  type DragSubject,
 } from "./panel-rules";
+import { SeatMenuContext, type SeatMenuContextValue } from "./seat-menu";
 import { UnassignedCard } from "./unassigned-card";
 import { WaitlistCard } from "./waitlist-card";
 import type { RobloxRenderMap } from "@/services/roblox/roblox.contracts";
@@ -102,15 +101,16 @@ export interface GroupsPanelActions {
    */
   onSendSeatOffer?: (participationId: string) => Promise<void>;
   /**
-   * Ask the shell to open its club-switch dialog for this seat. Optional like
-   * the seat offer beside it, and for the same reason: a shell with no dialog
-   * behind it should draw the chips without a control that does nothing.
+   * Ask the shell to open its switch sheet for this seat. Optional like the
+   * seat offer beside it, and for the same reason: a shell with no sheet behind
+   * it should draw the chips without a control that does nothing — its seat
+   * menus then carry no switch or move row.
    *
-   * There is no control on a chip: the chip is a drag handle, and the switch is
-   * reached by dragging an active, subscribed seat onto the header zone, which
-   * relabels itself for exactly those chips. So this fires from one place, the
-   * drop rule, and the label the admin read and the outcome they got are two
-   * readings of the same subject.
+   * One request for both of the sheet's actions — the paid club switch and the
+   * no-subscription move — because which one a seat gets is a fact of the seat (a
+   * live subscription stands behind it or not), and the shell reads that fact
+   * off the same snapshot. It fires from the seat menu's Switch club and Move
+   * rows.
    */
   onRequestSwitchClub?: (participationId: string) => void;
 }
@@ -227,101 +227,6 @@ function DragOverlayContent({
 }
 
 /**
- * The enrolment action in the panel header. At rest it's the "Add participant"
- * button; the moment a chip is being dragged it becomes the drop zone that chip
- * can be dropped on. The swap is user-initiated (by the drag itself), so it
- * doesn't violate the no-in-place-reflow rule. It lives inside the DndContext
- * and subscribes to dnd state, so only this node re-renders on pointer move —
- * not the whole panel.
- *
- * **The zone reads the chip it is offered.** One droppable, one payload; what
- * varies is the label, because remove and switch are the same gesture pointed
- * at opposite seats — a seat with a live subscription can never be removed and
- * is exactly the seat the club switch exists for. So the zone says "Switch
- * club" for an active subscribed chip and "Remove gamer" for every other one,
- * and `resolveDrop` reaches the same conclusion from the same subject.
- *
- * The subjects arrive as a lookup rather than as the map itself, so this node
- * stays subscribed to dnd state alone — the panel already holds the map, and
- * handing it over by reference would not change what re-renders here.
- */
-function HeaderParticipantAction({
-  canAdd,
-  onAdd,
-  subjectFor,
-}: {
-  /**
-   * Whether the at-rest Add button is offered at all: an admin cannot comp a
-   * seat that only a Stripe subscription can create. The **drop zone** is not
-   * gated on it — a paid club's chips are dragged like any other, and the
-   * subscribed ones are precisely the seats the switch serves.
-   */
-  canAdd: boolean;
-  onAdd: () => void;
-  subjectFor: (participationId: string) => DragSubject | undefined;
-}) {
-  const t = useTranslations("admin.products.groupsPanel");
-  const { active } = useDndContext();
-  const dragData = readChipDragData(active?.data.current);
-
-  const { setNodeRef, isOver } = useDroppable({
-    id: "remove-gamer-zone",
-    data: { remove: true },
-  });
-
-  if (dragData) {
-    const subject = subjectFor(dragData.participationId);
-    const switching =
-      subject !== undefined &&
-      subject.hasLiveSubscription &&
-      !subject.isWaitlisted;
-
-    return (
-      <div
-        ref={setNodeRef}
-        className={cn(
-          "flex items-center gap-1.5 rounded-md border border-dashed border-border px-3 py-1.5 text-sm font-medium transition-colors",
-          switching ? "text-act" : "text-destructive",
-          isOver && "bg-lifted",
-        )}
-      >
-        {switching ? (
-          <ArrowRightLeft className="h-4 w-4" />
-        ) : (
-          <Trash2 className="h-4 w-4" />
-        )}
-        {/* Both labels share one grid cell, so the zone is as wide as the
-            longer of the two in whichever locale is loaded and the header does
-            not move when the label swaps under the pointer mid-drag. The
-            hidden one is `invisible` rather than unmounted — visibility:hidden
-            keeps the box and takes the text out of the accessibility tree. */}
-        <span className="grid">
-          <span
-            className={cn("col-start-1 row-start-1", !switching && "invisible")}
-          >
-            {t("switchClub.dropZone")}
-          </span>
-          <span
-            className={cn("col-start-1 row-start-1", switching && "invisible")}
-          >
-            {t("unassigned.removeParticipant")}
-          </span>
-        </span>
-      </div>
-    );
-  }
-
-  if (!canAdd) return null;
-
-  return (
-    <Button variant="outline" size="sm" onClick={onAdd}>
-      <UserPlus className="mr-1 h-4 w-4" />
-      {t("unassigned.addParticipant")}
-    </Button>
-  );
-}
-
-/**
  * The groups panel, **presentational**: a snapshot in, intents out.
  *
  * It owns everything about how seating looks and how a drag resolves — the
@@ -393,6 +298,36 @@ export function GroupsPanelView({
     );
   }, [snapshot]);
 
+  // Every chip's menu, decided off the same subjects a drop is resolved from,
+  // so the menu and the drag cannot disagree about a seat. A row whose action
+  // this shell has no flow behind is left out rather than drawn inert.
+  const onRequestSwitchClub = actions.onRequestSwitchClub;
+  const seatMenu = useMemo<SeatMenuContextValue>(
+    () => ({
+      itemsFor: (participationId) => {
+        const subject = dragSubjects.get(participationId);
+        if (!subject) return null;
+        return seatMenuItems(subject).filter(
+          (item) => item.action === "remove" || onRequestSwitchClub !== undefined,
+        );
+      },
+      onSelect: (participationId, firstName, action) => {
+        switch (action) {
+          case "switchClub":
+          case "move":
+            onRequestSwitchClub?.(participationId);
+            return;
+          case "remove":
+            // Admin removal is a hard delete with no refund — confirm before
+            // acting. Stash the chip's identity for the dialog copy.
+            setRemoving({ id: participationId, name: firstName });
+            return;
+        }
+      },
+    }),
+    [dragSubjects, onRequestSwitchClub],
+  );
+
   const sensors = useSensors(
     useSensor(PointerSensor, { activationConstraint: { distance: 5 } }),
   );
@@ -415,19 +350,6 @@ export function GroupsPanelView({
 
     switch (outcome.kind) {
       case "none":
-        return;
-      case "remove":
-        // Admin removal is a hard delete with no refund — confirm before
-        // acting. Stash the chip's identity for the dialog copy.
-        setRemoving({ id: participationId, name: firstName });
-        return;
-      case "switch":
-        // The seat is subscribed, so the zone the admin dropped on read
-        // "Switch club" rather than "Remove gamer". Nothing is written here —
-        // the shell's dialog owns the money — and a shell with no dialog
-        // behind it simply does nothing, the same way its chips would have
-        // carried no control.
-        actions.onRequestSwitchClub?.(participationId);
         return;
       case "blocked":
         // The money says no. Nothing is written; the dialog explains the manual
@@ -540,11 +462,10 @@ export function GroupsPanelView({
 
   return (
     <div className="@container space-y-3">
-      {/* The header is inside the DndContext so the "Add participant" button can
-          swap to the remove/switch drop zone mid-drag
-          (HeaderParticipantAction). The shell's picker sheets are deliberately
-          kept OUTSIDE it — see the `overlays` slot below. */}
+      {/* The shell's picker sheets are deliberately kept OUTSIDE the
+          DndContext — see the `overlays` slot below. */}
       <DndContext sensors={sensors} onDragEnd={handleDragEnd}>
+      <SeatMenuContext.Provider value={seatMenu}>
         {/* One arrangement at every width: the title on a row of its own, and
             under it a row holding the seat summary on the left and the actions
             right-packed at the end. The summary grows into the free width up to
@@ -595,29 +516,23 @@ export function GroupsPanelView({
                 className="max-w-sm min-w-56 flex-1"
               />
             )}
-            {/* The actions are one right-packed group (`ml-auto`), so while the
-                row has slack the drop zone the first one turns into mid-drag
-                grows leftward into it and Add group holds its place. On the
-                narrowest panels — the summary near its floor, a long locale's
-                label, a paid club with nothing in that slot at rest — the
-                group may instead wrap below the summary at drag start. That
-                rare wrap is accepted rather than reserving the zone's width at
-                rest, which would leave dead space on every paid club. Neither
-                is affirmative —
-                they are two independent additions, not the two answers to one
-                question — so the Button Order rule does not reorder them. */}
+            {/* The actions are one right-packed group (`ml-auto`). Neither is
+                affirmative — they are two independent additions, not the two
+                answers to one question — so the Button Order rule does not
+                reorder them. Add participant is absent on a product an admin
+                cannot comp a seat onto (one only a Stripe subscription can
+                create). */}
             <div className="ml-auto flex shrink-0 items-center gap-2">
-              {/* Always mounted, unlike the Add button it holds at rest: the
-                  drop zone is the only way a chip leaves this product, and a
-                  paid club — where the Add button is never offered — is exactly
-                  where the subscribed seats the switch serves live. */}
-              <HeaderParticipantAction
-                canAdd={canAddGamer}
-                onAdd={actions.onRequestAddParticipant}
-                subjectFor={(participationId) =>
-                  dragSubjects.get(participationId)
-                }
-              />
+              {canAddGamer && (
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={actions.onRequestAddParticipant}
+                >
+                  <UserPlus className="mr-1 h-4 w-4" />
+                  {t("unassigned.addParticipant")}
+                </Button>
+              )}
               <Button
                 variant="outline"
                 size="sm"
@@ -634,9 +549,9 @@ export function GroupsPanelView({
         <div className="space-y-3">
           {/* Hidden only on a product that auto-places into its single group
               with nobody waiting — which also removes the inbox drop target
-              there, deliberately: a member dragged off a column has the remove
-              zone (and the waitlist, where one is open) and nowhere else, and
-              resolveDrop is never asked about a target that isn't mounted. To
+              there, deliberately: a member dragged off a column has the other
+              columns (and the waitlist, where one is open) and nowhere else,
+              and resolveDrop is never asked about a target that isn't mounted. To
               park a gamer on such a product an admin adds a second group (the
               card reappears), drags them into the card, and deletes the extra
               group — the card then stays, because it is no longer empty.
@@ -723,12 +638,16 @@ export function GroupsPanelView({
         </div>
 
         <DragOverlay>
-          <DragOverlayContent
-            snapshot={snapshot}
-            gamePlatform={gamePlatform}
-            robloxRenders={robloxRenders}
-          />
+          {/* The lifted copy of a chip is never a menu trigger. */}
+          <SeatMenuContext.Provider value={null}>
+            <DragOverlayContent
+              snapshot={snapshot}
+              gamePlatform={gamePlatform}
+              robloxRenders={robloxRenders}
+            />
+          </SeatMenuContext.Provider>
         </DragOverlay>
+      </SeatMenuContext.Provider>
       </DndContext>
 
       {/* The shell's pickers, as siblings of the DndContext rather than children

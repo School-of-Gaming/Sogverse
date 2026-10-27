@@ -248,7 +248,7 @@ function productRow(productType: ProductType): ProductAdminDetailRow {
     product_type: productType,
     billing_mode: "paid",
     is_visible: true,
-    is_remote: false,
+    delivery_mode: "in_person",
     location_id: IDS.location,
     // A topic that names no game platform, so the roster draws identities for
     // nobody and this file stays about the marks.
@@ -305,7 +305,7 @@ function feedMember(
   participantId: string,
   firstName: string,
   flair: {
-    group_joined_at?: string | null;
+    group_joined_at?: string;
     note?: string | null;
     note_updated_by_first_name?: string | null;
     creations?: GeduGroupFeed["roster"][number]["creations"];
@@ -324,7 +324,7 @@ function feedMember(
     roblox_user_id: null,
     parent_email: `${firstName.toLowerCase()}.parent@example.com`,
     participant_email: null,
-    group_joined_at: flair.group_joined_at ?? null,
+    group_joined_at: flair.group_joined_at ?? "2025-09-01T00:00:00.000Z",
     note: flair.note ?? null,
     note_updated_by_first_name: flair.note_updated_by_first_name ?? null,
     // `[]` is what the RPC emits for a member with none — a list has a real
@@ -349,7 +349,7 @@ function adminSessions(): AdminProductSessions {
       end_date: null,
       // In person, so the site's section — and the details fields on it —
       // render.
-      is_remote: false,
+      delivery_mode: "in_person",
       schedule_slots: [],
     },
     site: {
@@ -408,7 +408,7 @@ function groupFeed(productType: ProductType): GeduGroupFeed {
       timezone: "Europe/Helsinki",
       start_date: "2025-09-01",
       end_date: null,
-      is_remote: false,
+      delivery_mode: "in_person",
       voice_room_mode: "sogverse",
       external_voice_url: null,
       material_url: null,

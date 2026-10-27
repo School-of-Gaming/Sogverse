@@ -19,9 +19,11 @@ BEGIN
       USING ERRCODE = 'foreign_key_violation';
   END IF;
 
-  IF NEW.is_remote = false THEN
+  -- Gamers attend a site on an in-person and on a hybrid product, so the
+  -- location of either has to be one.
+  IF NEW.delivery_mode IN ('in_person', 'hybrid') THEN
     IF loc_type <> 'site' THEN
-      RAISE EXCEPTION 'In-person product location must be a site (got %)', loc_type
+      RAISE EXCEPTION 'In-person or hybrid product location must be a site (got %)', loc_type
         USING ERRCODE = 'check_violation';
     END IF;
   ELSIF NEW.product_type = 'municipality_club' THEN

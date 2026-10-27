@@ -1,5 +1,5 @@
 import { formattingLocale, type SupportedLocale } from "@/lib/constants/locales";
-import { resolveTranslation } from "@/lib/i18n/resolve-translation";
+import { resolveRequiredTranslation } from "@/lib/i18n/resolve-translation";
 import type {
   HolidayCalendarChangePreview,
 } from "@/services/holiday-calendars/holiday-calendars.contracts";
@@ -47,7 +47,7 @@ export function summariseHolidayImpact(
         productId: product.productId,
         productType: product.productType,
         name:
-          resolveTranslation(product.translations, uiLocale)?.name ?? "",
+          resolveRequiredTranslation(product.translations, uiLocale).name,
         today: product.today,
         futureRemoved: distinctDates(product.removed.filter(upcoming)),
         futureRestored: distinctDates(product.restored.filter(upcoming)),

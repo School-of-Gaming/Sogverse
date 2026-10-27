@@ -1,6 +1,7 @@
 import { formatInTimeZone } from "date-fns-tz";
 import type {
   BrowseRowLocation,
+  DeliveryMode,
   ProductTopic,
   ProductType,
 } from "@/types";
@@ -147,7 +148,7 @@ interface ScenarioBase {
    */
   selfSignupState?: MyParticipationState;
   /**
-   * Online municipality club: `is_remote` with a municipality-typed location
+   * Online municipality club: delivered online with a municipality-typed location
    * (no school site), so the card/detail render the "online — {city}" location
    * line instead of the in-person school. Only meaningful for muni clubs.
    */
@@ -1364,10 +1365,10 @@ function buildBaseProduct(
         );
   const startDate = futureStart ?? schedule.startDate;
   const endDate = futureStart === null ? schedule.endDate : null;
-  // Online muni clubs are remote and reference a municipality node (not a
-  // school site); everything else keeps its per-type location + remoteness.
+  // Online muni clubs are online and reference a municipality node (not a
+  // school site); everything else keeps its per-type location + delivery mode.
   const isOnlineMuni = config.online === true;
-  const isRemote = isOnlineMuni ? true : copy.isRemote;
+  const deliveryMode: DeliveryMode = isOnlineMuni ? "online" : copy.deliveryMode;
   const locationFixture = isOnlineMuni
     ? MOCK_LOC_ESPOO_MUNI
     : pickLocationFixture(productType);
@@ -1384,7 +1385,7 @@ function buildBaseProduct(
     product_type: productType,
     billing_mode: billingMode,
     is_visible: true,
-    is_remote: isRemote,
+    delivery_mode: deliveryMode,
     // Audience, and the age range the schema ties to it: `min_age`/`max_age`
     // are required with a gamer audience and must be null without one, so a
     // parents-only fixture that kept 8–12 would be a row the database would
@@ -1502,7 +1503,7 @@ interface TypeCopy {
    * no blurb renders no card at all, and that is the common case.
    */
   long?: string;
-  isRemote: boolean;
+  deliveryMode: DeliveryMode;
 }
 
 const COPY: Record<ProductType, TypeCopy> = {
@@ -1527,13 +1528,13 @@ const COPY: Record<ProductType, TypeCopy> = {
       ].join("\n"),
       "Once you have signed up we mail you the server address and a short note about how the voice room works. How we look after your child's data while they are with us is set out in our [privacy policy](/privacy), and there is nothing else to do before the first evening.",
     ].join("\n\n"),
-    isRemote: true,
+    deliveryMode: "online",
   },
   municipality_club: {
     name: "Espoon Minecraft-kerho",
     description:
       "Funded by the City of Espoo and free for Espoo residents. We meet weekly at Tapiolan koulu after school — a relaxed group where kids build together, team up on projects, and make a few friends along the way.",
-    isRemote: false,
+    deliveryMode: "in_person",
   },
   camp: {
     name: "Minecraft Builders Camp",
@@ -1546,13 +1547,13 @@ const COPY: Record<ProductType, TypeCopy> = {
       "# Who it's for",
       "Curious kids who love games and want to try making one. No prior experience needed — just a laptop and an account.",
     ].join("\n\n"),
-    isRemote: false,
+    deliveryMode: "in_person",
   },
   event: {
     name: "Friday Night Mario Kart Tournament",
     description:
       "Bring your A-game for a bracket-style Mario Kart night — fast races, friendly rivalries, and snacks on us. One evening only, so come hang out with the crew and see who takes the crown.",
-    isRemote: false,
+    deliveryMode: "in_person",
   },
 };
 
@@ -1582,13 +1583,13 @@ const AUDIENCE_COPY: Record<
         "# What you take away",
         "A feel for the thing your child disappears into after school, some vocabulary to talk about it, and an evening with other parents who are working the same thing out.",
       ].join("\n\n"),
-      isRemote: true,
+      deliveryMode: "online",
     },
     event: {
       name: "Vanhempainilta · Parents' Evening",
       description:
         "One evening for the adults in our clubs: what the children are building, how the groups run, and what safe play online actually looks like. Coffee, a short talk, and plenty of time for questions.",
-      isRemote: false,
+      deliveryMode: "in_person",
     },
   },
   both: {
@@ -1596,7 +1597,7 @@ const AUDIENCE_COPY: Record<
       name: "Pokémon GO -perheretki · Family Outing",
       description:
         "A Saturday walk around the city for families — grown-ups and children on the same team, one seat each. Bring a charged phone and comfortable shoes; we supply the route, the snacks and someone who knows where the rare ones are.",
-      isRemote: false,
+      deliveryMode: "in_person",
     },
   },
 };

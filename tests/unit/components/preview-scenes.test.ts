@@ -15,9 +15,9 @@ import {
 } from "@/components/preview/scenes/topic-prep-scene";
 import {
   PRODUCT_TOPIC_VALUES,
-  resolveTopicPrep,
   topicHasPrep,
 } from "@/lib/products/topics";
+import { resolveTopicPrep } from "@/lib/products/topic-prep";
 import {
   GEDU_DASHBOARD_SCENARIOS,
   buildGeduDashboardFixture,
@@ -1069,7 +1069,7 @@ describe("site notes follow in-person, and only in-person", () => {
 
   it("gives the in-person camp a site with an address and a half-written pair", () => {
     const { data, site, groupNotes } = buildGroupWorkspaceFixture(now, "camp");
-    expect(data.product.is_remote).toBe(false);
+    expect(data.product.delivery_mode).toBe("in_person");
     expect(site).not.toBeNull();
     expect(site!.name.trim()).not.toBe("");
     expect(site!.address).not.toBeNull();
@@ -1084,9 +1084,9 @@ describe("site notes follow in-person, and only in-person", () => {
     expect(groupNotes.staffNote).not.toBeNull();
   });
 
-  it("gives the remote club no site at all", () => {
+  it("gives the online club no site at all", () => {
     const { data, site } = buildGroupWorkspaceFixture(now, "club");
-    expect(data.product.is_remote).toBe(true);
+    expect(data.product.delivery_mode).toBe("online");
     expect(site).toBeNull();
   });
 });
@@ -1844,7 +1844,7 @@ describe("the topic prep scene", () => {
     const listed = PRODUCT_TOPIC_VALUES.filter(topicHasPrep);
     expect(listed.length).toBeGreaterThan(0);
     for (const topic of listed) {
-      expect(resolveTopicPrep(topic, true), topic).not.toBeNull();
+      expect(resolveTopicPrep(topic, "online"), topic).not.toBeNull();
     }
   });
 
@@ -1854,7 +1854,7 @@ describe("the topic prep scene", () => {
     // what makes their emptiness visible instead of them silently dropping out
     // of the page.
     const emptied = PRODUCT_TOPIC_VALUES.filter(topicHasPrep).filter(
-      (topic) => resolveTopicPrep(topic, false) === null,
+      (topic) => resolveTopicPrep(topic, "in_person") === null,
     );
     expect([...emptied].sort()).toEqual([
       "minecraft_bedrock",
@@ -1867,15 +1867,15 @@ describe("the topic prep scene", () => {
     // The extra card the scene draws under "Any other topic". It is one card
     // for every label-only topic because their guides are identical — nothing in the
     // one-step form is keyed by topic — and it belongs to the remote column
-    // alone, which is what the scene's `isRemote` guard around it says.
+    // alone, which is what the plan being null in person says.
     const labelOnly = PRODUCT_TOPIC_VALUES.filter((t) => !topicHasPrep(t));
     expect(labelOnly.length).toBeGreaterThan(0);
 
     for (const topic of labelOnly) {
-      const remote = resolveTopicPrep(topic, true);
+      const remote = resolveTopicPrep(topic, "online");
       expect(remote?.form, topic).toBe("remoteOnly");
       expect(remote?.steps, topic).toHaveLength(1);
-      expect(resolveTopicPrep(topic, false), topic).toBeNull();
+      expect(resolveTopicPrep(topic, "in_person"), topic).toBeNull();
     }
   });
 });

@@ -7,7 +7,7 @@ import { ArrowLeft } from "lucide-react";
 import { useHolidayCalendarListWait } from "@/components/admin/holiday-calendars/holiday-calendar-picker";
 import { Card, CardContent } from "@/components/ui/card";
 import { resolveLocale } from "@/lib/constants/locales";
-import { resolveTranslation } from "@/lib/i18n/resolve-translation";
+import { resolveRequiredTranslation } from "@/lib/i18n/resolve-translation";
 import { useProductAdmin } from "@/services/products/products.queries";
 import { ProductFormEdit } from "./product-form-edit";
 import { PRODUCT_TYPE_CONFIG } from "./product-type-config";
@@ -61,9 +61,10 @@ export function EditProductPage({
           <Heading level={1} step="section">
             {product
               ? t("editPage.title", {
-                  name:
-                    resolveTranslation(product.product_translations, uiLocale)
-                      ?.name ?? t("list.untitled"),
+                  name: resolveRequiredTranslation(
+                    product.product_translations,
+                    uiLocale,
+                  ).name,
                 })
               : " "}
           </Heading>

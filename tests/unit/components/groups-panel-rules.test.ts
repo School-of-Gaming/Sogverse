@@ -6,11 +6,14 @@ import {
   heldProductIds,
   isSubscriptionShaped,
   isSwitchTarget,
+  moveAudienceBlock,
+  noSubscriptionMoveTarget,
   orderSwitchTargets,
   readDropData,
   readChipDragData,
   resolveDrop,
   robloxIdsFrom,
+  seatMenuItems,
   seatOfferAvailability,
   showUnassignedSection,
   switchTargetFacts,
@@ -47,7 +50,6 @@ const waitlisted: DragSubject = {
 const toGroup2 = { kind: "move", toGroupId: "group-2" } as const;
 const toUnassigned = { kind: "move", toGroupId: null } as const;
 const toWaitlist = { kind: "waitlist" } as const;
-const toRemoveZone = { kind: "remove" } as const;
 
 describe("readChipDragData", () => {
   it("reads a well-formed chip payload", () => {
@@ -68,7 +70,6 @@ describe("readChipDragData", () => {
 
 describe("readDropData", () => {
   it("reads each droppable's payload", () => {
-    expect(readDropData({ remove: true })).toEqual({ kind: "remove" });
     expect(readDropData({ waitlist: true })).toEqual({ kind: "waitlist" });
     expect(readDropData({ toGroupId: "group-1" })).toEqual({
       kind: "move",
@@ -84,7 +85,6 @@ describe("readDropData", () => {
   it("rejects anything that isn't one", () => {
     expect(readDropData(null)).toBeNull();
     expect(readDropData({})).toBeNull();
-    expect(readDropData({ remove: false })).toBeNull();
     expect(readDropData({ toGroupId: 7 })).toBeNull();
   });
 });
@@ -115,15 +115,6 @@ describe("resolveDrop — ordinary moves", () => {
     expect(
       resolveDrop(toUnassigned, { ...member, currentGroupId: null }, ONE_OFF),
     ).toEqual({ kind: "none" });
-  });
-
-  it("offers removal from a group or from the waitlist when no money is behind the seat", () => {
-    expect(resolveDrop(toRemoveZone, member, SUBSCRIPTION_CLUB)).toEqual({
-      kind: "remove",
-    });
-    expect(resolveDrop(toRemoveZone, waitlisted, SUBSCRIPTION_CLUB)).toEqual({
-      kind: "remove",
-    });
   });
 });
 
@@ -207,66 +198,6 @@ describe("resolveDrop — demoting onto the waitlist", () => {
     expect(resolveDrop(toWaitlist, waitlisted, SUBSCRIPTION_CLUB)).toEqual({
       kind: "none",
     });
-  });
-});
-
-describe("resolveDrop — removing a subscribed member", () => {
-  it("offers the club switch instead of removing an active subscribed seat", () => {
-    // Removal is refused by `admin_remove_participation` on exactly this
-    // condition — it CASCADEs family_subscriptions, so the subscription would
-    // bill on with nothing in the database left to cancel it. The switch
-    // exists for precisely the same seat, so the zone the admin dropped on
-    // read "Switch club" and the drop resolves to it. Whatever the product's
-    // own shape: the subscription is the participation's fact, not the club's.
-    for (const shape of [SUBSCRIPTION_CLUB, ONE_OFF]) {
-      expect(
-        resolveDrop(
-          toRemoveZone,
-          { ...member, hasLiveSubscription: true },
-          shape,
-        ),
-      ).toEqual({ kind: "switch" });
-    }
-  });
-
-  it("still refuses it from the waitlist, where there is nothing to switch", () => {
-    // A waitlisted row can carry a live subscription: the webhook writes one
-    // without the product lock, so a demote can land in that window. The
-    // dialog does not serve that edge — there is no active seat to move — so
-    // the refusal and its manual path stay.
-    expect(
-      resolveDrop(
-        toRemoveZone,
-        { ...waitlisted, hasLiveSubscription: true },
-        SUBSCRIPTION_CLUB,
-      ),
-    ).toEqual({ kind: "blocked", reason: "removeSubscribed" });
-  });
-
-  it("removes an active seat with no subscription behind it", () => {
-    // The other half of the split: the switch is keyed to the subscription,
-    // not to the chip being active, so an unsubscribed member on the same
-    // club still stages the ordinary removal confirm.
-    expect(
-      resolveDrop(
-        toRemoveZone,
-        { ...member, hasLiveSubscription: false },
-        SUBSCRIPTION_CLUB,
-      ),
-    ).toEqual({ kind: "remove" });
-  });
-
-  it("allows removal once the subscription is no longer live", () => {
-    // The flag is false for a cancelled subscription (the snapshot filters
-    // them out), which is what stops a dunning-dead row holding the seat
-    // forever — there is nothing left for the family to cancel.
-    expect(
-      resolveDrop(
-        toRemoveZone,
-        { ...member, hasLiveSubscription: false, hasPaymentMarker: true },
-        SUBSCRIPTION_CLUB,
-      ),
-    ).toEqual({ kind: "remove" });
   });
 });
 
@@ -391,13 +322,6 @@ describe("dragSubjectsFrom", () => {
     expect(
       resolveDrop(toWaitlist, subjects.get("p-subscribed")!, SUBSCRIPTION_CLUB),
     ).toEqual({ kind: "blocked", reason: "liveSubscription" });
-    expect(
-      resolveDrop(
-        toRemoveZone,
-        subjects.get("p-subscribed")!,
-        SUBSCRIPTION_CLUB,
-      ),
-    ).toEqual({ kind: "switch" });
   });
 });
 
@@ -1070,5 +994,139 @@ describe("isSwitchTarget", () => {
         midnightish,
       ),
     ).toBe(true);
+  });
+});
+
+describe("seatMenuItems", () => {
+  const subscribed: DragSubject = { ...member, hasLiveSubscription: true };
+
+  it("offers a subscribed seat the paid switch, and its removal disabled", () => {
+    // Removal is refused for exactly this seat by the database, and the
+    // switch exists exactly for it — the same split resolveDrop makes.
+    expect(seatMenuItems(subscribed)).toEqual([
+      { action: "switchClub", disabledReason: null },
+      { action: "remove", disabledReason: "subscriptionLive" },
+    ]);
+  });
+
+  it("offers an active seat with no subscription the move and the removal", () => {
+    // Whatever the product charges: a paid camp's seat was paid for once,
+    // and only the seat moves.
+    expect(seatMenuItems(member)).toEqual([
+      { action: "move", disabledReason: null },
+      { action: "remove", disabledReason: null },
+    ]);
+  });
+
+  it("offers a waitlisted row its removal alone", () => {
+    expect(seatMenuItems(waitlisted)).toEqual([
+      { action: "remove", disabledReason: null },
+    ]);
+  });
+
+  it("disables a subscribed waitlisted row's removal, and offers no switch", () => {
+    // The webhook-race edge (the webhook writes a subscription without the
+    // product lock, so a demote can land in that window): there is no active
+    // seat for the switch to move.
+    expect(
+      seatMenuItems({ ...waitlisted, hasLiveSubscription: true }),
+    ).toEqual([{ action: "remove", disabledReason: "subscriptionLive" }]);
+  });
+});
+
+describe("moveAudienceBlock", () => {
+  const audiences = [
+    { for_gamers: true, for_parents: false },
+    { for_gamers: false, for_parents: true },
+    { for_gamers: true, for_parents: true },
+  ] as const;
+
+  it("closes a product not open to parents to an adult's own seat, as gamers only", () => {
+    expect(audiences.map((a) => moveAudienceBlock(a, true))).toEqual([
+      "gamersOnly",
+      null,
+      null,
+    ]);
+  });
+
+  it("closes a product not open to gamers to a child's seat, as parents only", () => {
+    expect(audiences.map((a) => moveAudienceBlock(a, false))).toEqual([
+      null,
+      "parentsOnly",
+      null,
+    ]);
+  });
+});
+
+describe("noSubscriptionMoveTarget", () => {
+  const product = {
+    id: "camp-b",
+    product_type: "camp",
+    billing_mode: "free",
+    end_date: null,
+    timezone: "Europe/Helsinki",
+  } as const;
+
+  it("admits every product not billed monthly, paid or free, of every type", () => {
+    const shapes = [
+      { product_type: "camp", billing_mode: "free" },
+      { product_type: "camp", billing_mode: "paid" },
+      { product_type: "event", billing_mode: "free" },
+      { product_type: "event", billing_mode: "paid" },
+      { product_type: "consumer_club", billing_mode: "free" },
+      { product_type: "municipality_club", billing_mode: "external_contract" },
+    ] as const;
+    for (const shape of shapes) {
+      expect(
+        noSubscriptionMoveTarget({ ...product, ...shape }, "club-a", NOW),
+      ).toBe("target");
+    }
+    expect(
+      noSubscriptionMoveTarget({ ...product, end_date: "2026-06-15" }, "club-a", NOW),
+    ).toBe("target");
+  });
+
+  it("lists a club billed monthly as needing a subscription, not as a target", () => {
+    expect(
+      noSubscriptionMoveTarget(
+        { ...product, product_type: "consumer_club", billing_mode: "paid" },
+        "club-a",
+        NOW,
+      ),
+    ).toBe("needsSubscription");
+  });
+
+  it("hides the product the seat is already on", () => {
+    expect(noSubscriptionMoveTarget(product, "camp-b", NOW)).toBe("hidden");
+  });
+
+  it("hides a product whose last day has passed, read in its own zone", () => {
+    expect(
+      noSubscriptionMoveTarget({ ...product, end_date: "2026-06-14" }, "club-a", NOW),
+    ).toBe("hidden");
+    // Over is over whatever the billing: a finished monthly club is not shown
+    // disabled, it is not shown.
+    expect(
+      noSubscriptionMoveTarget(
+        {
+          ...product,
+          product_type: "consumer_club",
+          billing_mode: "paid",
+          end_date: "2026-06-14",
+        },
+        "club-a",
+        NOW,
+      ),
+    ).toBe("hidden");
+    const midnightish = new Date("2026-06-14T22:00:00Z");
+    const ending = { ...product, end_date: "2026-06-14" };
+    expect(noSubscriptionMoveTarget(ending, "club-a", midnightish)).toBe("hidden");
+    expect(
+      noSubscriptionMoveTarget(
+        { ...ending, timezone: "America/Los_Angeles" },
+        "club-a",
+        midnightish,
+      ),
+    ).toBe("target");
   });
 });

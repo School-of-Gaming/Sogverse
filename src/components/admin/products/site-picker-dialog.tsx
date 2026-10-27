@@ -157,7 +157,6 @@ export function SitePickerDialog({
   if (naming) {
     return (
       <LocationFormDialog
-        open
         onOpenChange={(next) => {
           if (!next) setNaming(false);
         }}

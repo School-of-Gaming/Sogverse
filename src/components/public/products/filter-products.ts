@@ -5,6 +5,7 @@ import {
   matchesAudienceFilter,
   type AudienceFilterValue,
 } from "@/lib/products/product-audience";
+import { gamersAttendSite, hasVoiceRoom } from "@/lib/products/delivery-mode";
 import type { ProductTag } from "./product-tag";
 import { resolveProductPrice, statesAPrice } from "./format-product-price";
 import { DEFAULT_CURRENCY } from "@/lib/constants/currency";
@@ -20,9 +21,11 @@ const BROWSE_CURRENCY = DEFAULT_CURRENCY;
 //   single-valued on a product (the `topic` enum column), so a product
 //   passes when its topic is in the selected set. OR semantics across the
 //   set (parent picking Minecraft AND Fortnite expects to see both).
-// - `format`: "online" / "in_person" / null. Maps directly to
-//   `products.is_remote`. Null means "no preference" and skips the
-//   filter. Single-valued — a product is one or the other, never both.
+// - `format`: "online" / "in_person" / null. Read off
+//   `products.delivery_mode`: "online" keeps every product with a voice room
+//   and "in_person" every product gamers attend a site for, so a hybrid
+//   product is under both. Null means "no preference" and skips the filter.
+//   Single-valued — one chip at a time.
 // - `price`: "free" / "paid" / null. Single-valued like format, and read off
 //   the very line the card prints in its footer rather than from pricing rules
 //   restated here: "free" is the line that says Free, "paid" is a line that
@@ -134,9 +137,10 @@ export function filterProducts(
       if (!filters.topics.includes(p.topic)) return false;
     }
     if (filters.format !== null) {
-      const isOnline = p.is_remote;
-      if (filters.format === "online" && !isOnline) return false;
-      if (filters.format === "in_person" && isOnline) return false;
+      if (filters.format === "online" && !hasVoiceRoom(p.delivery_mode)) return false;
+      if (filters.format === "in_person" && !gamersAttendSite(p.delivery_mode)) {
+        return false;
+      }
     }
     if (filters.price !== null) {
       if (priceKindOf(p) !== filters.price) return false;

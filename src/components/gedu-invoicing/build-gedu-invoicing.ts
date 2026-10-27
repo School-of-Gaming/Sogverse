@@ -1,6 +1,6 @@
 import { formattingLocale, type SupportedLocale } from "@/lib/constants/locales";
 import { breakContaining, breakName } from "@/lib/holiday-breaks";
-import { resolveTranslation } from "@/lib/i18n/resolve-translation";
+import { resolveRequiredTranslation } from "@/lib/i18n/resolve-translation";
 import {
   compareCalendarDates,
   recordHasHappened,
@@ -531,7 +531,7 @@ function buildClub(
     productType: product.product_type,
     segment:
       product.product_type === "municipality_club" ? "municipality" : "consumer",
-    name: resolveTranslation(product.product_translations, locale)?.name ?? "",
+    name: resolveRequiredTranslation(product.product_translations, locale).name,
     role,
     locationName:
       product.location === null

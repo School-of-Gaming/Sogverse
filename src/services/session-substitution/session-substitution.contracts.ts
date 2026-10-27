@@ -179,12 +179,12 @@ export const sessionProductDocument = z.object({
   topic: z.enum(Constants.public.Enums.product_topic),
   spoken_language_code: z.enum(Constants.public.Enums.spoken_language),
   timezone: z.string(),
-  is_remote: z.boolean(),
+  delivery_mode: z.enum(Constants.public.Enums.delivery_mode),
   /** How the sessions are joined — `src/lib/products/voice-room.ts`. */
   ...voiceRoomWireFields,
   start_date: z.string().nullable(),
   end_date: z.string().nullable(),
-  /** The venue, on in-person products only; null on anything remote. */
+  /** The venue, on in-person and hybrid products; null on an online one. */
   site_name: z.string().nullable(),
   translations: z.array(sessionProductTranslation),
   schedule_slots: z.array(sessionScheduleSlot),
@@ -429,3 +429,16 @@ export const sessionStaffGedu = z.object({
 });
 
 export type SessionStaffGedu = z.infer<typeof sessionStaffGedu>;
+
+/**
+ * Response of POST /api/substitution-notifications/observe: how many passed
+ * requests it filed for their messages to close. Only the count crosses the
+ * wire — the caller fires it on mount and reads nothing back.
+ */
+export const substitutionNotificationObservation = z.object({
+  closedOut: z.number().int().nonnegative(),
+});
+
+export type SubstitutionNotificationObservation = z.infer<
+  typeof substitutionNotificationObservation
+>;

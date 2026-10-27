@@ -220,12 +220,12 @@ CREATE TEMP TABLE cutover_home ON COMMIT DROP AS
 -- that carry one — so unlike sites there is no detach: section 2 parks these
 -- on the country row while the trees are exchanged, and section 4 puts them
 -- back by the same code join as everything else.
--- \`is_remote\` and \`product_type\` ride along because the park is only legal
+-- \`delivery_mode\` and \`product_type\` ride along because the park is only legal
 -- for the shapes the products trigger lets sit above site level; the check
 -- below is what turns the illegal case into a named failure here instead of an
 -- opaque one three statements later.
 CREATE TEMP TABLE cutover_products ON COMMIT DROP AS
-  SELECT p.id AS product_id, p.is_remote, p.product_type, s.type, s.external_code
+  SELECT p.id AS product_id, p.delivery_mode, p.product_type, s.type, s.external_code
     FROM public.products p
     JOIN cutover_scope s ON s.id = p.location_id;
 
@@ -234,9 +234,9 @@ CREATE TEMP TABLE cutover_products ON COMMIT DROP AS
 -- while the old tree is still standing and the row can still be described.
 --
 -- Everything in cutover_products points at a level row rather than a site —
--- that is what being in scope means — so an **in-person** product in here
+-- that is what being in scope means — so an **in-person** or **hybrid** product here
 -- already contradicts the trigger, which requires \`location_id\` to be a site
--- whenever \`is_remote\` is false. It is a relic from before the trigger existed,
+-- whenever \`delivery_mode\` is not online. It is a relic from before the trigger existed,
 -- and section 2's park would abort on it with the trigger's own message and no
 -- clue as to which row caused it.
 --
@@ -253,14 +253,14 @@ BEGIN
   SELECT count(*), string_agg(format('%s (%s, now under %s %s)', product_id, product_type, type, coalesce(external_code, '-')), ', ' ORDER BY product_id)
     INTO v_count, v_names
     FROM cutover_products
-   WHERE NOT is_remote
-      OR (is_remote
+   WHERE delivery_mode <> 'online'
+      OR (delivery_mode = 'online'
           AND product_type = 'municipality_club'
           AND type NOT IN ('country', 'region', 'municipality'));
 
   IF v_count > 0 THEN
     RAISE EXCEPTION
-      '${sqlTitle} cutover: % product(s) are anchored to a level their own shape forbids, so the ${iso} cutover cannot park them and put them back: %. An in-person product needs a site; an online municipality club needs a country, region or municipality. Fix each one before running this migration.',
+      '${sqlTitle} cutover: % product(s) are anchored to a level their own shape forbids, so the ${iso} cutover cannot park them and put them back: %. An in-person or hybrid product needs a site; an online municipality club needs a country, region or municipality. Fix each one before running this migration.',
       v_count, v_names;
   END IF;
 END;

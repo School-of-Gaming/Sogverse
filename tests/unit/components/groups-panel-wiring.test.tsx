@@ -1,5 +1,5 @@
 import { describe, it, expect, vi, beforeEach } from "vitest";
-import { act, render, screen } from "@testing-library/react";
+import { act, fireEvent, render, screen } from "@testing-library/react";
 import type { ComponentProps, ReactNode } from "react";
 import { GroupsPanel } from "@/components/admin/products/groups/groups-panel";
 import type { GeduPickerSheet } from "@/components/admin/products/gedu-picker-sheet";
@@ -73,6 +73,7 @@ vi.mock("@dnd-kit/core", () => ({
     isDragging: false,
   }),
   useDndContext: () => ({ active: null }),
+  useDndMonitor: () => {},
 }));
 
 // Keys echo, so assertions name the copy the panel reached for rather than the
@@ -117,20 +118,29 @@ vi.mock("@/components/admin/products/groups/waitlist-card", () => ({
   },
 }));
 // The club switch's own sheet: a stub, because what this file is about is
-// whether the drop *opened* it and for which seat. The sheet itself reads the
-// platform's whole club catalogue and talks to Stripe through the check route,
-// none of which the drag handler knows anything about. The stub renders
+// whether the seat menu *opened* it and for which seat. The sheet itself reads
+// the platform's whole club catalogue and talks to Stripe through the check
+// route, none of which the panel knows anything about. The stub renders
 // whatever it is handed, open or not — the sheet is always mounted, so "opened"
 // is a prop here rather than a mount.
 vi.mock("@/components/admin/products/groups/switch-club-sheet", () => ({
   SwitchClubSheet: ({
     open,
     participationId,
+    mode,
+    holderIsAdult,
   }: {
     open: boolean;
     participationId: string;
+    mode: string;
+    holderIsAdult: boolean;
   }) => (
-    <div data-testid="switch-club-sheet" data-open={String(open)}>
+    <div
+      data-testid="switch-club-sheet"
+      data-open={String(open)}
+      data-mode={mode}
+      data-adult={String(holderIsAdult)}
+    >
       {participationId}
     </div>
   ),
@@ -425,34 +435,8 @@ describe("GroupsPanel — the product's shape reaches the rule", () => {
   });
 });
 
-describe("GroupsPanel — the drop zone's answers, none of which write", () => {
-  it("opens the club switch instead of removing a subscribed member", () => {
-    // A paid consumer club is where every subscribed seat lives, and it is the
-    // one product shape whose header carries no Add button — so this also pins
-    // that the drop zone is reachable there at all. Removal is refused for
-    // this seat by the database, and the switch is what the zone offered
-    // instead; the drop opens the sheet and writes nothing on its own.
-    renderPanel("consumer_club", "paid");
-    drop(IDS.subscribedParticipation, { remove: true });
-
-    noMutationFired();
-    const sheet = screen.getByTestId("switch-club-sheet");
-    expect(sheet.dataset.open).toBe("true");
-    expect(sheet.textContent).toBe(IDS.subscribedParticipation);
-    // Neither the removal confirm nor the refusal the zone used to answer with.
-    expect(
-      screen.queryByText(
-        "admin.products.groupsPanel.removeParticipant.confirmCta",
-      ),
-    ).toBeNull();
-    expect(
-      screen.queryByText(
-        "admin.products.groupsPanel.blockedMove.removeSubscribed.title",
-      ),
-    ).toBeNull();
-  });
-
-  it("refuses to demote that member, and still writes nothing", () => {
+describe("GroupsPanel — a subscribed member, and the switch sheet at rest", () => {
+  it("refuses to demote a subscribed member, and writes nothing", () => {
     renderPanel("consumer_club", "paid");
     drop(IDS.subscribedParticipation, { waitlist: true });
 
@@ -462,25 +446,6 @@ describe("GroupsPanel — the drop zone's answers, none of which write", () => {
         "admin.products.groupsPanel.blockedMove.demoteSubscribed.title",
       ),
     ).toBeTruthy();
-  });
-
-  it("stages the confirm dialog when there is no subscription in the way", () => {
-    // The contrast case: removal is not refused per se, it is confirmed. The
-    // mutation still must not fire from the drop alone.
-    renderPanel("consumer_club", "paid");
-    drop(IDS.queuedParticipation, { remove: true });
-
-    expect(mutations.removeGamer).not.toHaveBeenCalled();
-    expect(
-      screen.getByText("admin.products.groupsPanel.removeParticipant.confirmCta"),
-    ).toBeTruthy();
-    // And no switch: the same zone, the same drop, decided by the seat's own
-    // subscription and by nothing else. The sheet is mounted either way — that
-    // is what lets it animate in and out — so "no switch" is a closed sheet,
-    // not an absent one.
-    expect(
-      screen.getByTestId("switch-club-sheet").dataset.open,
-    ).toBe("false");
   });
 
   it("keeps the sheet mounted and closed while nothing is switching", () => {
@@ -533,6 +498,158 @@ describe("GroupsPanel — the inbox says the placement rule by being absent", ()
     renderPanel("consumer_club", "paid");
 
     expect(screen.getByText(INBOX_TITLE)).toBeTruthy();
+  });
+});
+
+describe("GroupsPanel — the seat menu", () => {
+  // A seat in the inbox, the one card rendered for real, so a real chip is
+  // what gets pressed.
+  const INBOX_SEAT = "9d1e7b40-3c5a-4f2e-8a61-0b7c4d2e9f15";
+  const MENU = "admin.products.groupsPanel.seatMenu";
+
+  function seatInInbox(overrides: Partial<Participation> = {}) {
+    snapshotOverride = {
+      ...snapshot,
+      unassigned: [participation(INBOX_SEAT, overrides)],
+    };
+  }
+
+  function openMenu() {
+    const chip = screen.getByText("Aino").closest('[aria-haspopup="menu"]');
+    expect(chip).not.toBeNull();
+    fireEvent.click(chip!);
+  }
+
+  function expectUserLinkFirst() {
+    const [first] = screen.getAllByRole("menuitem");
+    expect(first.tagName).toBe("A");
+    expect(first.textContent).toBe(`${MENU}.goToUser`);
+    // The seat holder's page — the participant, not the parent.
+    expect(first.getAttribute("href")).toBe(`/admin/users/${IDS.gamer}`);
+  }
+
+  it("leads with a link to the seat holder's user page, which closes the menu", () => {
+    seatInInbox();
+    renderPanel("consumer_club", "free");
+    openMenu();
+
+    expectUserLinkFirst();
+    // jsdom cannot follow a link to another document; the href above is the
+    // navigation, so the default is cancelled once the panel has seen the click.
+    document.addEventListener("click", (event) => event.preventDefault(), {
+      once: true,
+    });
+    fireEvent.click(screen.getAllByRole("menuitem")[0]);
+    noMutationFired();
+    expect(screen.queryByRole("menu")).toBeNull();
+  });
+
+  it("opens the no-subscription move from a free product's seat, writing nothing", () => {
+    seatInInbox();
+    renderPanel("consumer_club", "free");
+    openMenu();
+
+    fireEvent.click(screen.getByRole("menuitem", { name: `${MENU}.move` }));
+
+    noMutationFired();
+    const sheet = screen.getByTestId("switch-club-sheet");
+    expect(sheet.dataset.open).toBe("true");
+    expect(sheet.dataset.mode).toBe("no_subscription");
+    // A child's seat: the picker closes products not open to gamers.
+    expect(sheet.dataset.adult).toBe("false");
+    expect(sheet.textContent).toBe(INBOX_SEAT);
+    expect(screen.queryByRole("menu")).toBeNull();
+  });
+
+  it("tells the sheet a parent's own seat is an adult's", () => {
+    // The chip's discriminator: the holder's address is emitted on a parent's
+    // own seat alone, and it is what the picker's audience rule reads.
+    seatInInbox({ participant_email: "parent@example.com" });
+    renderPanel("event", "paid");
+    openMenu();
+
+    fireEvent.click(screen.getByRole("menuitem", { name: `${MENU}.move` }));
+
+    const sheet = screen.getByTestId("switch-club-sheet");
+    expect(sheet.dataset.mode).toBe("no_subscription");
+    expect(sheet.dataset.adult).toBe("true");
+  });
+
+  it("stages the removal confirm, writing nothing until it is confirmed", () => {
+    seatInInbox();
+    renderPanel("consumer_club", "free");
+    openMenu();
+
+    fireEvent.click(screen.getByRole("menuitem", { name: `${MENU}.remove` }));
+
+    expect(mutations.removeGamer).not.toHaveBeenCalled();
+    expect(
+      screen.getByText("admin.products.groupsPanel.removeParticipant.confirmCta"),
+    ).toBeTruthy();
+  });
+
+  it("opens the no-subscription move from a paid camp's seat too", () => {
+    // A seat paid for once has no subscription behind it, so it moves like a
+    // free one: only the seat moves, whatever the product charges.
+    seatInInbox();
+    renderPanel("camp", "paid");
+    openMenu();
+
+    const move = screen.getByRole("menuitem", { name: `${MENU}.move` });
+    expect(move.getAttribute("aria-disabled")).not.toBe("true");
+    fireEvent.click(move);
+
+    noMutationFired();
+    const sheet = screen.getByTestId("switch-club-sheet");
+    expect(sheet.dataset.open).toBe("true");
+    expect(sheet.dataset.mode).toBe("no_subscription");
+  });
+
+  it("offers a subscribed seat the paid switch, in subscription mode", () => {
+    seatInInbox({ has_live_subscription: true, has_payment_marker: true });
+    renderPanel("consumer_club", "paid");
+    openMenu();
+
+    expectUserLinkFirst();
+    expect(
+      screen
+        .getByRole("menuitem", {
+          name: `${MENU}.remove ${MENU}.disabled.subscriptionLive`,
+        })
+        .getAttribute("aria-disabled"),
+    ).toBe("true");
+    fireEvent.click(
+      screen.getByRole("menuitem", { name: `${MENU}.switchClub` }),
+    );
+    const sheet = screen.getByTestId("switch-club-sheet");
+    expect(sheet.dataset.open).toBe("true");
+    expect(sheet.dataset.mode).toBe("subscription");
+  });
+
+  it("opens from the keyboard, and Escape closes it", () => {
+    seatInInbox();
+    renderPanel("consumer_club", "free");
+    const chip = screen.getByText("Aino").closest('[aria-haspopup="menu"]')!;
+
+    fireEvent.keyDown(chip, { key: "Enter" });
+    const menu = screen.getByRole("menu");
+    // The user page link is the first row the keyboard lands on, and the arrow
+    // keys carry on from it into the actions.
+    expect(document.activeElement).toBe(
+      screen.getByRole("menuitem", { name: `${MENU}.goToUser` }),
+    );
+    fireEvent.keyDown(menu, { key: "ArrowDown" });
+    expect(document.activeElement).toBe(
+      screen.getByRole("menuitem", { name: `${MENU}.move` }),
+    );
+    fireEvent.keyDown(menu, { key: "ArrowUp" });
+    fireEvent.keyDown(menu, { key: "ArrowUp" });
+    expect(document.activeElement).toBe(
+      screen.getByRole("menuitem", { name: `${MENU}.remove` }),
+    );
+
+    fireEvent.keyDown(document, { key: "Escape" });
+    expect(screen.queryByRole("menu")).toBeNull();
   });
 });
 

@@ -28,7 +28,7 @@ BEGIN
 
   v_month_end := (p_month_start + INTERVAL '1 month' - INTERVAL '1 day')::date;
 
-  WITH RECURSIVE candidate AS (
+  WITH candidate AS (
     SELECT p.*
       FROM public.products p
      WHERE p.product_type = 'municipality_club'
@@ -44,53 +44,24 @@ BEGIN
                   AND NOT public.group_session_is_cancelled(gs.group_id, gs.session_date)
              )
           OR (
-               p.start_date IS NOT NULL
-               AND p.start_date <= v_month_end
-               AND (p.end_date IS NULL OR p.end_date >= p_month_start)
+               p.start_date <= v_month_end
+               AND p.end_date >= p_month_start
              )
            )
   ),
-  -- The ancestor-or-self walk, one chain per candidate's own location. It
-  -- stops climbing the moment it has emitted a municipality, so the shortest
-  -- chain wins by construction; `depth` is kept so the DISTINCT ON below picks
-  -- the nearest one even if a tree ever nests two municipalities.
-  walk AS (
-    SELECT l.id AS origin_id,
-           l.id,
-           l.parent_id,
-           l.type,
-           l.name,
-           l.name_i18n,
-           0 AS depth
-      FROM public.locations l
-     WHERE l.id IN (
-             SELECT c.location_id FROM candidate c WHERE c.location_id IS NOT NULL
-           )
-     UNION ALL
-    SELECT w.origin_id,
-           l.id,
-           l.parent_id,
-           l.type,
-           l.name,
-           l.name_i18n,
-           w.depth + 1
-      FROM walk w
-      JOIN public.locations l ON l.id = w.parent_id
-     -- Two stops, and each earns its place: the first is the answer, the second
-     -- is a belt-and-braces bound on a tree the schema does not forbid a cycle
-     -- in beyond a row parenting itself.
-     WHERE w.type <> 'municipality'
-       AND w.depth < 16
-  ),
+  -- The nearest municipality in the lineage of each candidate's own location,
+  -- nearest by distance in case a tree ever nests two.
   municipality AS (
-    SELECT DISTINCT ON (w.origin_id)
-           w.origin_id,
-           w.id,
-           w.name,
-           w.name_i18n
-      FROM walk w
-     WHERE w.type = 'municipality'
-     ORDER BY w.origin_id, w.depth
+    SELECT DISTINCT ON (o.location_id)
+           o.location_id AS origin_id,
+           l.id,
+           l.name,
+           l.name_i18n
+      FROM (SELECT DISTINCT c.location_id FROM candidate c) AS o
+     CROSS JOIN LATERAL public.location_lineage(o.location_id) AS lin
+      JOIN public.locations l ON l.id = lin.location_id
+     WHERE l.type = 'municipality'
+     ORDER BY o.location_id, lin.distance
   )
   SELECT COALESCE(jsonb_agg(club.doc ORDER BY club.id), '[]'::jsonb)
     INTO v_clubs
@@ -107,14 +78,12 @@ BEGIN
                'planned_dates',          pd.items,
                'holiday_breaks',         hb.items,
                'location',
-                 CASE WHEN l.id IS NULL THEN NULL
-                      ELSE jsonb_build_object(
-                             'id',        l.id,
-                             'name',      l.name,
-                             'name_i18n', l.name_i18n,
-                             'type',      l.type
-                           )
-                 END,
+                 jsonb_build_object(
+                   'id',        l.id,
+                   'name',      l.name,
+                   'name_i18n', l.name_i18n,
+                   'type',      l.type
+                 ),
                'municipality',
                  CASE WHEN m.id IS NULL THEN NULL
                       ELSE jsonb_build_object(
@@ -147,7 +116,10 @@ BEGIN
                'group_ids',              gr.items
              ) AS doc
         FROM candidate c
-        LEFT JOIN public.locations l ON l.id = c.location_id
+        -- Every municipality club has a location, in person and online alike
+        -- (chk_products_in_person_has_location, chk_products_online_muni_has_location),
+        -- and its foreign key is ON DELETE RESTRICT.
+        JOIN public.locations l ON l.id = c.location_id
         LEFT JOIN municipality m ON m.origin_id = c.location_id
         -- The link is the club's own column and never the location's: one city
         -- can be two customers, and an association can buy clubs sited in a

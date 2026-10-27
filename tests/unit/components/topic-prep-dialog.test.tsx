@@ -1,7 +1,7 @@
 import { afterEach, describe, expect, it, vi } from "vitest";
 import { act, cleanup, render, screen } from "@testing-library/react";
 import { TopicPrepDialog } from "@/components/topic-prep/TopicPrepDialog";
-import { resolveTopicPrep } from "@/lib/products/topics";
+import { resolveTopicPrep } from "@/lib/products/topic-prep";
 import type { TopicPrepPlan } from "@/lib/products/topics";
 
 /**
@@ -36,7 +36,7 @@ const READY = "topicPrep.readyLabel";
  * the fixture cannot drift from the shape a surface actually passes.
  */
 function remoteOnlyPlan(): TopicPrepPlan {
-  const plan = resolveTopicPrep("esports", true);
+  const plan = resolveTopicPrep("esports", "online");
   if (!plan) throw new Error("a remote product always has a guide");
   return plan;
 }

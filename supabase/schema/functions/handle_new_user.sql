@@ -5,7 +5,7 @@
 CREATE FUNCTION public.handle_new_user() RETURNS trigger
     LANGUAGE plpgsql SECURITY DEFINER
     SET search_path TO 'public'
-    AS $$
+    AS $_$
 DECLARE
   profile_first_name   TEXT;
   profile_last_name    TEXT;
@@ -21,13 +21,16 @@ DECLARE
   utm_term_value       TEXT;
   registration_value   TIMESTAMPTZ;
 BEGIN
+  -- Both names trimmed of whitespace of every kind first, because the
+  -- profiles CHECKs refuse it at either edge. A first name of nothing but
+  -- whitespace is then '' and takes the stand-in like an absent one.
   profile_first_name := COALESCE(
-    NULLIF(NEW.raw_user_meta_data->>'first_name', ''),
+    NULLIF(regexp_replace(NEW.raw_user_meta_data->>'first_name', '^[[:space:]\u00A0\u200B\uFEFF]+|[[:space:]\u00A0\u200B\uFEFF]+$', '', 'g'), ''),
     'New User'
   );
 
   profile_last_name := COALESCE(
-    NULLIF(NEW.raw_user_meta_data->>'last_name', ''),
+    regexp_replace(NEW.raw_user_meta_data->>'last_name', '^[[:space:]\u00A0\u200B\uFEFF]+|[[:space:]\u00A0\u200B\uFEFF]+$', '', 'g'),
     ''
   );
 
@@ -116,7 +119,7 @@ BEGIN
 
   RETURN NEW;
 END;
-$$;
+$_$;
 
 
 --

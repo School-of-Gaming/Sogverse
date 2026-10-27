@@ -42,11 +42,19 @@ nothing is sent.
   the row is parked (`next_attempt_at` is infinity, `last_error` says why) until the request
   next changes. A parked or failing row is the first place to look when messages stop
   moving.
-- **Two `pg_cron` jobs:** a retry every minute that kicks the sync when a row is due and
-  unleased (a lost kick, a sync that died holding its lease, a backoff run out), and a
-  daily close-out at 00:15 UTC that enqueues every announced request still open whose
-  session date was yesterday in its product's zone — nothing writes to a request when its
-  date passes, so without it the buttons would stay up for a write that refuses them.
+- **Nothing runs on a clock; looking catches the notifications up.** An admin opening the
+  Substitutions page or a gedu opening their pool calls the observation route, which does
+  two things. It enqueues every announced request whose messages were last drawn open and
+  whose date is before today in its product's zone — nothing writes to a request when its
+  date passes, so without it the buttons would stay up for a write that refuses them. And
+  it kicks the sync when a row is due and unleased (a lost kick, a sync that died holding
+  its lease, a backoff run out). Both kicks go through the same Vault-gated `pg_net` call
+  as a write's, so a local page load sends nothing. The cost is latency: until somebody
+  looks, a passed request keeps its buttons and a stuck row waits.
+- **The sync records the state it drew**, last, once every message is up to date. That is
+  what makes the close-out file a passed request once rather than on every page load: once
+  drawn past it no longer matches. A request already in the outbox is skipped too, so a
+  failing row keeps its backoff and a parked one stays parked.
 
 The sync route answers 202 at once and drains after the response, one claim at a time, for
 up to 50 seconds of a 60-second function; whatever is left is the next kick's.
@@ -98,8 +106,8 @@ other offer keeps its card but, like every closed state, loses its Accept button
 marker is the filled state's alone: a cancelled session's message marks no one Accepted. The
 table carries each gedu's phone, written `+` and the stored digits, for an admin to ring.
 
-**Order within one sync:** the announcement, then the DMs, then the Slack message last, so
-its tags say who was reached.
+**Order within one sync:** the announcement, then the DMs, then the Slack message, so its
+tags say who was reached, and last the state they were drawn in.
 
 **The Slack message is English, written in the renderer** *(owner, 2026-10-08)*. The channel
 is staff-only and has no locale. The DMs are in the gedu's own app locale, else the default;
@@ -180,7 +188,7 @@ SELECT vault.update_secret(id, '<new value>') FROM vault.secrets WHERE name = 's
 ```
 
 The order against the deployment does not matter: a kick the route refuses leaves its row
-due, and the minute's retry kicks again once both sides hold the same secret. A
+due, and the next observation kicks again once both sides hold the same secret. A
 feature-branch preview against staging's database is synced by the staging deployment's
 code, since that is the URL in Vault.
 

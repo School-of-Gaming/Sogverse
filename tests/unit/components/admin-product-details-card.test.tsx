@@ -136,8 +136,10 @@ describe("the admin product details card", () => {
   it("states the shop's four facts in the family's words", () => {
     renderPage(syntheticConsumerProduct());
 
-    // A remote product with no place behind it: "Format", and "Online".
-    expect(valueOf("Format").textContent).toBe("Online");
+    // An online product with no place behind it: the delivery row says so,
+    // and there is no "Where" row to repeat it.
+    expect(valueOf("Delivery").textContent).toBe("Online");
+    expect(screen.queryByText("Where")).toBeNull();
     // A gamers-only product: the age range alone.
     expect(valueOf("Age range").textContent).toBe("Ages 7–12");
     expect(valueOf("Spoken language").textContent).toContain("EN");

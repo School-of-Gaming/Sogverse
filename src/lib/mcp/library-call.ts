@@ -3,7 +3,10 @@ import { z } from "zod-v4";
 import { readMcpCaller } from "@/lib/mcp/auth";
 import { createBearerClient } from "@/lib/supabase/bearer";
 import { getOrigin } from "@/lib/url";
-import { libraryWriteFailure } from "@/services/library/library.contracts";
+import {
+  libraryWriteFailure,
+  type AdminLibraryArticle,
+} from "@/services/library/library.contracts";
 import { LibraryService } from "@/services/library/library.service";
 import type { AppSupabaseClient } from "@/types";
 
@@ -32,6 +35,21 @@ export function refusal(text: string): CallToolResult {
 }
 
 export const NOT_FOUND = "No Library article has that id.";
+
+/**
+ * An article read back after a write that succeeded on it. Every write refuses
+ * an id with no article, and an article is never deleted, so it is there.
+ */
+export async function savedArticle(
+  service: LibraryService,
+  id: string,
+): Promise<AdminLibraryArticle> {
+  const article = await service.getAdminArticle(id);
+  if (article === null) {
+    throw new Error(`Library article ${id} is missing after a write succeeded on it`);
+  }
+  return article;
+}
 
 /**
  * A failed call as the AI app reads it. A database refusal carries the

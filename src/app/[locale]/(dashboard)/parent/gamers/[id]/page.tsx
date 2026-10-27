@@ -32,6 +32,7 @@ import { useRobloxAccount } from "@/services/roblox/roblox.queries";
 import { DISPLAY_NAME_MAX } from "@/lib/constants/account-limits";
 import { ROUTES } from "@/lib/constants/routes";
 import { computeAge } from "@/lib/gamer-age-eligibility";
+import { trimPersonName } from "@/lib/person-name-trim";
 import { useTimezone } from "@/providers";
 
 export default function GamerDetailsPage() {
@@ -90,7 +91,7 @@ export default function GamerDetailsPage() {
     try {
       await updateGamer.mutateAsync({
         gamerId: gamer.id,
-        updates: { firstName: firstName.trim() },
+        updates: { firstName: trimPersonName(firstName) },
       });
       setProfileSuccess(t('gamerDetail.profileUpdated'));
     } catch (error: unknown) {
@@ -231,7 +232,7 @@ export default function GamerDetailsPage() {
 
             <Button
               type="submit"
-              disabled={isSavingProfile || firstName.trim().length < 2}
+              disabled={isSavingProfile || trimPersonName(firstName).length < 2}
             >
               {isSavingProfile ? c('saving') : c('saveChanges')}
             </Button>

@@ -70,7 +70,7 @@ BEGIN
     'timezone',     p.timezone,
     'start_date',   p.start_date,
     'end_date',     p.end_date,
-    'is_remote',    p.is_remote,
+    'delivery_mode', p.delivery_mode,
     'voice_room_mode', p.voice_room_mode,
     'external_voice_url', p.external_voice_url,
     -- In shell parity with get_gedu_group_feed's, for the same reason the

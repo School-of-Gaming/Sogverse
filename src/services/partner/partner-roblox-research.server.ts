@@ -51,7 +51,7 @@ import {
  * The child's embed is inner so filtering on its role narrows the seats; the
  * activity's is inner so `from`/`to` on its start date do.
  */
-const RESEARCH_SEAT_COLUMNS = `id, product_id, group_id, participant_id, ${IN_SCOPE_SEAT_EMBED}, child:profiles!participations_participant_id_fkey!inner(role, gamer_profiles(birth_year, birth_month)), holder:profiles!participations_customer_id_fkey(home_location_id), activity:products!inner(product_type, is_remote, start_date, spoken_language_code)`;
+const RESEARCH_SEAT_COLUMNS = `id, product_id, group_id, participant_id, ${IN_SCOPE_SEAT_EMBED}, child:profiles!participations_participant_id_fkey!inner(role, gamer_profiles(birth_year, birth_month)), holder:profiles!participations_customer_id_fkey(home_location_id), activity:products!inner(product_type, delivery_mode, start_date, spoken_language_code)`;
 
 const seatId = z.string().uuid();
 
@@ -170,7 +170,7 @@ export async function readRobloxResearch(
             row.activity.spoken_language_code,
           ),
           type: row.activity.product_type,
-          delivery: productDelivery(row.activity.is_remote),
+          delivery: productDelivery(row.activity.delivery_mode),
           start_date,
         },
         published_game_url: published?.url ?? null,

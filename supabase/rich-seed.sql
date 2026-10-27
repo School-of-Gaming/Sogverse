@@ -99,6 +99,12 @@
 -- Substitutions page has an offer to approve, and gedu@example.com, who has
 -- not answered, finds it in their pool with Offer and Decline (section 11).
 --
+-- ONE CLUB IS HYBRID. The Minecraft Build Club meets at Sogverse-studio,
+-- Kamppi, with gedu@example.com in its Sogverse voice room rather than in the
+-- room, and parent@example.com's Milo and Otso hold seats on it, so the admin,
+-- the gedu and the family each see a product with both a site and a voice room
+-- (section 6, product 20).
+--
 -- TWO CLUBS FOLLOW A HOLIDAY CALENDAR. "Helsinki schools" breaks for a holiday
 -- week that ended a week before the build and for Christmas ahead, and the
 -- Creator Studio Club (gedu@example.com's, with parent@example.com's Otso and
@@ -761,7 +767,7 @@ BEGIN
         'short_description','Viikoittainen verkkokerho rakentamiseen, redstoneen ja selviytymiseen.',
         'long_description','Ohjaajamme vetävät joka viikko pienen verkkoryhmän omalla Java-palvelimellamme.\n\n- Rakennus- ja redstone-projektit lapset valitsevat itse\n- Suljettu palvelin, jolle ei pääse ulkopuolisia\n- Ohjaaja moderoi puhekanavaa koko ajan')
     ),
-    'minecraft_java', 'fi', true, v_tz,
+    'minecraft_java', 'fi', 'online', v_tz,
     now() - interval '230 days', true, false,
     p_min_age => 8, p_max_age => 12, p_is_visible => true,
     p_start_date => current_date - 210,
@@ -784,7 +790,7 @@ BEGIN
         'short_description','Tee oma Roblox-pelisi, kerta kerrallaan.',
         'long_description','Robloxin pelinteon kausi lapsille, jotka haluavat rakentaa eivätkä vain pelata. Aloitamme pohjasta ja lopetamme peliin, jonka jokainen voi jakaa perheelleen.')
     ),
-    'roblox_studio', 'fi', false, v_tz,
+    'roblox_studio', 'fi', 'in_person', v_tz,
     now() - interval '7 days', true, false,
     p_min_age => 9, p_max_age => 14, p_is_visible => true,
     p_location_id => v_helsinki,
@@ -809,7 +815,7 @@ BEGIN
         'short_description','Kenttäsuunnittelua ja yhteistyötä Fortnite Creativessa.',
         'long_description','Ilmoittautuminen avautuu pian. Kerhossa rakennetaan karttoja yhdessä ja pelataan ne jokaisen kerran lopuksi.')
     ),
-    'fortnite', 'en', true, v_tz,
+    'fortnite', 'en', 'online', v_tz,
     now() + interval '10 days', true, false,
     p_min_age => 10, p_max_age => 15, p_is_visible => true,
     p_start_date => current_date + 35,
@@ -831,7 +837,7 @@ BEGIN
         'short_description','Maksuton ja rauhallinen kerho videoiden, kansikuvien ja striimien tekoon.',
         'long_description','Pienet ryhmät, joka viikko sama rakenne eikä painetta näkyä kameralla. Suunniteltu erityisesti neuroepätyypillisiä lapsia ajatellen.')
     ),
-    'creator_studio', 'fi', true, v_tz,
+    'creator_studio', 'fi', 'online', v_tz,
     now() - interval '230 days', true, false,
     p_min_age => 8, p_max_age => 13, p_is_visible => true,
     p_start_date => current_date - 210,
@@ -855,7 +861,7 @@ BEGIN
         'short_description','Valmennettua joukkuepelaamista isommille lapsille. Luonnos, ei julkaistu.',
         'long_description','Vielä kesken: valmennussuunnitelma ja palkkiojako ovat sopimatta.')
     ),
-    'esports', 'fi', true, v_tz,
+    'esports', 'fi', 'online', v_tz,
     now() + interval '30 days', true, false,
     p_min_age => 12, p_max_age => 16, p_is_visible => false,
     p_start_date => current_date + 60,
@@ -878,7 +884,7 @@ BEGIN
         'short_description','Espoon kaupungin kanssa järjestettävä iltapäiväkerho. Perheille maksuton.',
         'long_description','Minecraft Educationia koulun kirjastossa kerran viikossa iltapäivällä, kaupungin kustantamana.')
     ),
-    'minecraft_education', 'fi', false, v_tz,
+    'minecraft_education', 'fi', 'in_person', v_tz,
     now() - interval '45 days', true, false,
     p_min_age => 9, p_max_age => 12, p_is_visible => true,
     p_location_id => v_espoo,
@@ -904,7 +910,7 @@ BEGIN
         'short_description','Viime syksyn kerho Tampereen kaupungin kanssa. Päättynyt.',
         'long_description','Kokonainen kausi Minecraft Bedrockia nuorisotilassa. Kaupungilta laskutettiin kauden lopussa.')
     ),
-    'minecraft_bedrock', 'fi', false, v_tz,
+    'minecraft_bedrock', 'fi', 'in_person', v_tz,
     now() - interval '220 days', true, false,
     p_min_age => 8, p_max_age => 12, p_is_visible => true,
     p_location_id => v_tampere,
@@ -930,7 +936,7 @@ BEGIN
         'short_description','Viisi päivää rakentamista kello kymmenestä kolmeen.',
         'long_description','Viikko Kampin studiollamme. Ota omat eväät mukaan, välipala ja juotavat saat meiltä. Jokainen päivä päättyy siihen, että ryhmä esittelee rakentamansa.')
     ),
-    'minecraft_java', 'fi', false, v_tz,
+    'minecraft_java', 'fi', 'in_person', v_tz,
     now() - interval '20 days', true, false,
     p_min_age => 8, p_max_age => 13, p_is_visible => true,
     p_location_id => v_helsinki,
@@ -953,7 +959,7 @@ BEGIN
         'short_description','Talvilomaleiri. Päättynyt.',
         'long_description','Neljä päivää Roblox Studiota talviloman aikana.')
     ),
-    'roblox_studio', 'fi', false, v_tz,
+    'roblox_studio', 'fi', 'in_person', v_tz,
     now() - interval '160 days', true, false,
     p_min_age => 9, p_max_age => 14, p_is_visible => true,
     p_location_id => v_tampere,
@@ -976,7 +982,7 @@ BEGIN
         'short_description','Kolme maksutonta verkkopäivää pelisuunnittelusta ja tekoälystä.',
         'long_description','Leiri on apurahoitettu, joten perheille se on maksuton. Paikkoja on rajoitetusti ja jono etenee, kun joku perääntyy.')
     ),
-    'ai', 'en', true, v_tz,
+    'ai', 'en', 'online', v_tz,
     now() - interval '10 days', true, false,
     p_min_age => 11, p_max_age => 15, p_is_visible => true,
     p_start_date => current_date + 14,
@@ -998,7 +1004,7 @@ BEGIN
         'short_description','Verkkoilta vanhemmille. Puolitoista tuntia, kysymyksiä saa esittää.',
         'long_description','Mitä lapset oikeasti tekevät Minecraftissa ja Robloxissa, mitä ikärajat tarkoittavat ja millainen on kohtuullinen ruutuaikasopimus kotona.')
     ),
-    'minecraft_java', 'fi', true, v_tz,
+    'minecraft_java', 'fi', 'online', v_tz,
     now() - interval '5 days', false, true,
     p_is_visible => true,
     p_start_date => current_date + 10,
@@ -1021,7 +1027,7 @@ BEGIN
         'short_description','Maksuton lauantai, jona perheet tekivät yhdessä pienen pelin.',
         'long_description','Neljä tuntia, yksi peli perhettä kohti ja lopuksi esittely.')
     ),
-    'game_studio', 'en', false, v_tz,
+    'game_studio', 'en', 'in_person', v_tz,
     now() - interval '30 days', true, true,
     p_min_age => 7, p_max_age => 15, p_is_visible => true,
     p_location_id => v_helsinki,
@@ -1050,7 +1056,7 @@ BEGIN
         'short_description','Maksuton verkkokerho yhdessä rakentamiseen Bedrockilla.',
         'long_description','Pieni verkkoryhmä Bedrockilla tableteilla, puhelimilla ja konsoleilla, ohjaaja mukana puhekanavalla koko ajan.')
     ),
-    'minecraft_bedrock', 'fi', true, v_tz,
+    'minecraft_bedrock', 'fi', 'online', v_tz,
     now() - interval '14 days', true, false,
     p_min_age => 8, p_max_age => 12, p_is_visible => true,
     p_start_date => v_live::date,
@@ -1077,7 +1083,7 @@ BEGIN
         'short_description','Viikoittainen verkkokerho Roblox Studiossa rakentamiseen ja skriptaamiseen.',
         'long_description','Pieni verkkoryhmä rakentaa yhdessä omia Roblox-maailmojaan ensimmäisestä palikasta ensimmäiseen skriptiin.\n\n- Joka viikko uusi rakennus- tai skriptaushaaste\n- Yksityiset palvelimet, joilla on vain oma ryhmä\n- Ohjaaja mukana puhekanavalla koko ajan')
     ),
-    'roblox_studio', 'fi', true, v_tz,
+    'roblox_studio', 'fi', 'online', v_tz,
     now() - interval '170 days', true, false,
     p_min_age => 10, p_max_age => 15, p_is_visible => true,
     p_start_date => current_date - 150,
@@ -1103,7 +1109,7 @@ BEGIN
         'short_description','Maksuton viikkokerho redstone-koneiden rakentamiseen vierekkäin.',
         'long_description','Pieni ryhmä kokoontuu kerran viikossa paikan päällä rakentamaan Minecraft Javassa ovia, hissejä ja laitteita. Ohjaaja on samassa tilassa auttamassa, kun piiri ei toimi.')
     ),
-    'minecraft_java', 'fi', false, v_tz,
+    'minecraft_java', 'fi', 'in_person', v_tz,
     now() - interval '40 days', true, false,
     p_min_age => 8, p_max_age => 12, p_is_visible => true,
     p_location_id => v_espoo,
@@ -1131,7 +1137,7 @@ BEGIN
         'short_description','Turun kaupungin kanssa järjestettävä verkkokerho. Perheille maksuton.',
         'long_description','Minecraft Educationia verkossa kerran viikossa iltapäivällä, kaupungin kirjastojen kustantamana.')
     ),
-    'minecraft_education', 'fi', true, v_tz,
+    'minecraft_education', 'fi', 'online', v_tz,
     v_quarter - interval '60 days', true, false,
     p_min_age => 9, p_max_age => 12, p_is_visible => true,
     p_location_id => v_muni_turku,
@@ -1158,7 +1164,7 @@ BEGIN
         'short_description','Vantaalaisen perheyhdistyksen kanssa järjestettävä verkkokerho. Perheille maksuton.',
         'long_description','Minecraft Bedrockia verkossa kerran viikossa iltapäivällä, yhdistyksen kustantamana.')
     ),
-    'minecraft_bedrock', 'sv', true, v_tz,
+    'minecraft_bedrock', 'sv', 'online', v_tz,
     v_quarter - interval '80 days', true, false,
     p_min_age => 8, p_max_age => 12, p_is_visible => true,
     p_location_id => v_muni_vantaa,
@@ -1186,7 +1192,7 @@ BEGIN
         'short_description','Kuukauden kokeilu Tampereen kaupungin koulujen kanssa. Päättynyt.',
         'long_description','Neljä iltapäivää e-urheilua verkossa, jotta koulut näkivät, haluavatko ne siitä kokonaisen kauden.')
     ),
-    'esports', 'fi', true, v_tz,
+    'esports', 'fi', 'online', v_tz,
     v_q_last - interval '30 days', true, false,
     p_min_age => 10, p_max_age => 13, p_is_visible => true,
     p_location_id => v_muni_tampere,
@@ -1213,7 +1219,7 @@ BEGIN
         'short_description','Helsingin kaupungin kanssa järjestettävä verkkokerho. Perheille maksuton.',
         'long_description','Robloxia verkossa kerran viikossa iltapäivällä, kaupungin kustantamana.')
     ),
-    'roblox_studio', 'fi', true, v_tz,
+    'roblox_studio', 'fi', 'online', v_tz,
     v_quarter - interval '10 days', true, false,
     p_min_age => 9, p_max_age => 13, p_is_visible => true,
     p_location_id => v_muni_helsinki,
@@ -1224,6 +1230,32 @@ BEGIN
       jsonb_build_object('weekday', 3, 'start_time', '16:00', 'duration_minutes', 60)),
     p_prices => jsonb_build_array(jsonb_build_object('currency','eur','price_cents',0)),
     p_primary_gedu_fee_cents => 6000, p_municipality_fee_cents => 15500
+  );
+
+  -- 20. Running, free and HYBRID, six weeks in: the children come to the
+  --     Kamppi studio, and the educator, with any child who cannot make it,
+  --     joins through the Sogverse voice room. A hybrid product holds a site
+  --     like an in-person one and only ever a Sogverse room.
+  PERFORM public.create_product(
+    'consumer_club', 'free',
+    jsonb_build_array(
+      jsonb_build_object('locale','en','name','Minecraft Build Club',
+        'short_description','A free weekly club at the Kamppi studio, with the educator joining on voice chat.',
+        'long_description','The group builds together at the studio once a week while the educator leads from the voice room. A child who cannot come in joins the same room from home.'),
+      jsonb_build_object('locale','fi','name','Minecraft-rakennuskerho',
+        'short_description','Maksuton viikkokerho Kampin studiolla, ohjaaja mukana puhekanavalla.',
+        'long_description','Ryhmä rakentaa yhdessä studiolla kerran viikossa, ja ohjaaja vetää kerhoa puhekanavalta. Lapsi, joka ei pääse paikalle, liittyy samaan kanavaan kotoa.')
+    ),
+    'minecraft_java', 'fi', 'hybrid', v_tz,
+    now() - interval '60 days', true, false,
+    p_min_age => 7, p_max_age => 12, p_is_visible => true,
+    p_location_id => v_helsinki,
+    p_start_date => current_date - 42,
+    p_seat_count => 10,
+    p_schedule_slots => jsonb_build_array(
+      jsonb_build_object('weekday', 3, 'start_time', '17:30', 'duration_minutes', 90)),
+    p_prices => jsonb_build_array(jsonb_build_object('currency','eur','price_cents',0)),
+    p_primary_gedu_fee_cents => 6000
   );
 
 END;
@@ -1266,6 +1298,7 @@ BEGIN
     ('Minecraft Bedrock Club',                   'Ryhmä A',      v_gedu,  'primary', NULL,           NULL),
     ('Roblox Builders Club',                     'Ryhmä A',      v_sofia, 'primary', NULL,           NULL),
     ('Minecraft Redstone Club',                  'Ryhmä A',      v_aino,  'primary', NULL,           NULL),
+    ('Minecraft Build Club',                     'Ryhmä A',      v_gedu,  'primary', NULL,           NULL),
     ('Schools Game Club',                        'Ryhmä 1',      v_gedu,  'primary', NULL,           NULL),
     ('Autumn Term Game Club',                    'Ryhmä 1',      v_sofia, 'primary', NULL,           NULL),
     ('Library Game Club',                        'Ryhmä 1',      v_mikko, 'primary', NULL,           NULL),
@@ -1400,6 +1433,11 @@ BEGIN
     ('Minecraft Redstone Club', 'aada@gamer.example.com',   'free'),
     ('Minecraft Redstone Club', 'oskari@gamer.example.com', 'free'),
     ('Minecraft Redstone Club', 'eino@gamer.example.com',   'free'),
+    ('Minecraft Build Club', 'milo@gamer.example.com',  'free'),
+    ('Minecraft Build Club', 'otso@gamer.example.com',  'free'),
+    ('Minecraft Build Club', 'onni@gamer.example.com',  'free'),
+    ('Minecraft Build Club', 'sanni@gamer.example.com', 'free'),
+    ('Minecraft Build Club', 'hugo@gamer.example.com',  'free'),
     ('Schools Game Club', 'milo@gamer.example.com',   'external'),
     ('Schools Game Club', 'elias@gamer.example.com',  'external'),
     ('Schools Game Club', 'venla@gamer.example.com',  'external'),
@@ -1638,7 +1676,8 @@ COMMIT;
 -- invoicing page: the Association Game Club, so its sessions bill without a
 -- record, and the Esports Pilot Club, whose every session was called off.
 --
--- On the ONLINE clubs, about seven in ten of the children marked present then
+-- On the ONLINE and HYBRID clubs — the ones with a voice room — about seven
+-- in ten of the children marked present then
 -- answer the feedback screen on the way out — written as the child, the way
 -- the screen writes it, under the child's own claims — and so does one in four
 -- of those marked absent, who joined late or left before the register. The
@@ -1706,7 +1745,7 @@ DECLARE
 BEGIN
   FOR grp IN
     SELECT g.id AS group_id, a.gedu_id, p.start_date, p.end_date, s.weekday,
-           p.is_remote, p.timezone, s.start_time, s.duration_minutes,
+           p.delivery_mode IN ('online', 'hybrid') AS online, p.timezone, s.start_time, s.duration_minutes,
            -- The groups whose answers lean, or never come, as the comment above says.
            (t.name = 'Creator Studio Club' AND g.name = 'Ryhmä A') AS weak_listening,
            (t.name = 'Minecraft Java Club' AND g.name = 'Ryhmä B') AS rising_gedu,
@@ -1739,7 +1778,7 @@ BEGIN
                              interval '1 day') dd
        WHERE EXTRACT(ISODOW FROM dd)::integer - 1 = grp.weekday
        ORDER BY dd DESC
-       LIMIT CASE WHEN grp.is_remote THEN 31 ELSE 10 END);
+       LIMIT CASE WHEN grp.online THEN 31 ELSE 10 END);
     v_total := COALESCE(array_length(v_dates, 1), 0);
     v_people := ARRAY(
       SELECT participant_id FROM public.participations
@@ -1784,7 +1823,7 @@ BEGIN
            AND s.child = array_position(v_people, v_person);
         v_scripted := FOUND;
 
-        CONTINUE WHEN NOT (grp.is_remote AND NOT grp.silent
+        CONTINUE WHEN NOT (grp.online AND NOT grp.silent
                            AND (v_scripted
                                 OR abs(hashtext('answered' || v_person || d)) % 100
                                    < CASE WHEN v_present THEN 70 ELSE 25 END));

@@ -1,5 +1,5 @@
 import { z } from "zod";
-import { resolveTranslation } from "@/lib/i18n/resolve-translation";
+import { resolveRequiredTranslation } from "@/lib/i18n/resolve-translation";
 import {
   SUPPORTED_LOCALES,
   type SupportedLocale,
@@ -234,25 +234,24 @@ export const oauthClientNameRows = z.array(
 
 /**
  * The version a reader of `locale` is shown: theirs, else English, else the
- * first written. Null only for an article with no version, which a published
- * one never is.
+ * first written. A published article always has one: publishing refuses an
+ * article with no complete version and copies only the complete ones, and
+ * unpublishing removes the versions with the publication.
  */
 export function localizeArticleSummary(
   article: PublishedLibraryArticleSummary,
   locale: SupportedLocale,
-): LocalizedLibraryArticleSummary | null {
+): LocalizedLibraryArticleSummary {
   const { versions, ...shared } = article;
-  const version = resolveTranslation(versions, locale);
-  return version === null ? null : { ...shared, ...version };
+  return { ...shared, ...resolveRequiredTranslation(versions, locale) };
 }
 
 export function localizeArticle(
   article: PublishedLibraryArticle,
   locale: SupportedLocale,
-): LocalizedLibraryArticle | null {
+): LocalizedLibraryArticle {
   const { versions, ...shared } = article;
-  const version = resolveTranslation(versions, locale);
-  return version === null ? null : { ...shared, ...version };
+  return { ...shared, ...resolveRequiredTranslation(versions, locale) };
 }
 
 // ---------------------------------------------------------------------------

@@ -147,6 +147,10 @@ describe("localizing a published article", () => {
     const finnishOnly = { ...article, versions: [article.versions[1]] };
     expect(localizeArticle(finnishOnly, "fr")).toMatchObject({ locale: "fi" });
   });
+
+  it("throws on a published article with no version, which publishing never leaves", () => {
+    expect(() => localizeArticle({ ...article, versions: [] }, "en")).toThrow();
+  });
 });
 
 describe("LibraryService", () => {

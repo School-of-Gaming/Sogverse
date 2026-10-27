@@ -57,7 +57,7 @@ function session(
     productName: "Minecraft Club",
     productType: "consumer_club",
     groupName: "A",
-    isRemote: false,
+    deliveryMode: "in_person",
     siteName: "Kallio School",
     ...overrides,
   };
@@ -146,7 +146,7 @@ describe("parseSubCustomId", () => {
 describe("buildSessionPickerMessage", () => {
   const sessions = [
     session(GROUP_A, "2026-10-06"),
-    session(GROUP_B, "2026-10-08", { isRemote: true, siteName: null, groupName: null, productName: "Roblox Studio" }),
+    session(GROUP_B, "2026-10-08", { deliveryMode: "online", siteName: null, groupName: null, productName: "Roblox Studio" }),
     session(GROUP_A, "2026-10-13"),
     session(GROUP_A, "2026-11-03"),
   ];

@@ -1,8 +1,8 @@
 # Topic prep — the "Before the first session" guide
 
 A product's topic can carry a short guide telling a family what to do before the first
-session: create the account, install the software, test it — and, on a remote product,
-get the mic and camera ready for the voice room. This directory holds the
+session: create the account, install the software, test it — and, on a product with a
+voice room, get the mic and camera ready for it. This directory holds the
 component that renders its body, the dialog an enrolment card opens it in, and the cookie
 that remembers a family has finished with it — its format, the server-side read, and the
 hook that writes it. The steps themselves are declared in the
@@ -43,10 +43,19 @@ vocabulary rules in `src/CLAUDE.md` bind here like anywhere else, and one of the
 hard: **never tell anyone to hand a password to a person.** Where source material says to,
 the guide says the opposite, as a mechanism a reader can hold us to.
 
+## The delivery mode is two inputs, asked separately
+
+**Rule: the resolver asks a product's delivery mode two questions, each through its own
+helper in `src/lib/products/delivery-mode.ts`, and never compares the mode itself.**
+`familyBringsOwnMachine` decides whether the topic's `ownDevice` steps (install, sign in,
+test) apply; `hasVoiceRoom` decides whether the shared voice-room step is appended. They
+are separate on purpose: what one helper answers for a mode changes that half of the guide
+and leaves the other alone, so a surface never needs to know which modes get which steps.
+
 ## Every step declares a scope, because in person we bring the machines
 
-**Rule: an `always` step renders on every product; an `ownDevice` step renders only on a
-remote one.** At an in-person product School of Gaming supplies the computers with
+**Rule: an `always` step renders on every product; an `ownDevice` step renders only where
+the family brings their own machine.** At an in-person product School of Gaming supplies the computers with
 everything already installed, so an install, sign-in or test step is not the family's to
 do there and is scoped to the device. A guide read on a phone the family owns has no
 device-scoped steps at all, because the phone is theirs wherever the session happens.
@@ -60,23 +69,23 @@ alongside the installs, and all three Minecraft topics have nothing to say in pe
 heading, no intro, no closing. The other topics with prep keep account steps that survive every
 filter, because those accounts are the family's own wherever the sessions happen — the
 family creates them, holds them, and brings them to an in-person session the same way they
-bring them to a remote one.
+bring them to an online one.
 
 ## One step belongs to the product, not to the topic
 
 **Rule: getting the mic and camera ready for the voice room is declared once, outside every
-topic, and appended as the last step of every remote guide.** It is a fact about a *remote*
-product — the session happens in a browser room, and in person there is no room to join —
-so writing it into every topic block would be one paragraph copied per topic, drifting
-apart the first time one of them was edited. Its scope is `ownDevice` for the reason the
-axis exists: the room runs on the family's own machine, and in person it does not run.
+topic, and appended as the last step of every guide for a product with a voice room.** It
+is a fact about the product's room, not about any topic — so writing it into every topic
+block would be one paragraph copied per topic, drifting apart the first time one of them
+was edited. It is added by `hasVoiceRoom`, never by its scope, and its scope says
+`ownDevice` because the room runs in a browser on a machine of the family's.
 
-**Consequence: a label-only topic now has a guide, on a remote product only.** The
+**Consequence: a label-only topic has a guide wherever there is a voice room.** The
 topics that name subject matter rather than one piece of software (the ones without an
-`info` block) brought no steps and rendered nothing; remotely they now
-render exactly one step, under a generic intro of its own rather than a topic's. That makes
-`null` unreachable on a remote product: every remote guide has at least the room to get
-ready for, and the empty answer is now an in-person answer alone.
+`info` block) bring no steps; with a room they render exactly one step, under a generic
+intro of its own rather than a topic's. The same form is the answer when every step a
+topic declares is filtered out but there is still a room. That makes `null` unreachable on
+a product with a voice room: the empty answer belongs to a product without one.
 
 **Consequence: an intro may not count the steps.** A guide that opened "Three things to sort
 out" was true of what the topic declared and false the moment a shared step joined it. The
@@ -93,7 +102,7 @@ Two consequences the surfaces have to honour:
 - **The intro has to be true of the form being rendered, so the plan names which intro to
   read.** A guide shortened to its account steps cannot open by promising software to
   install, so a topic with both scopes carries a second, accounts-only intro; a guide that
-  is only the shared remote step has no topic to open about at all, so it takes one generic
+  is only the shared voice-room step has no topic to open about at all, so it takes one generic
   intro. Those are the plan's three forms — `full`, `accountsOnly`, `remoteOnly` — and the
   discriminant exists precisely because each reads a different message key and only two of
   them have a topic narrow enough to key by. The **closing** deliberately has no twin:
@@ -189,7 +198,7 @@ somebody who has just pressed it.
 
 **A fixture surface states the answer rather than seeding a store.** The style guide
 draws several enrolment cards whose subject is what sits in the locked Join's slot, and
-every remote fixture has a guide behind it, so left alone each of those demos would show
+every fixture with a voice room has a guide behind it, so left alone each of those demos would show
 "Get ready" instead of the state it is named for. Because the answer is a prop, the page
 simply hands those cards a literal set and hands the one demo that *is* about the guide
 an empty one — and nothing a demo does touches, or is touched by, what a real family's
@@ -263,7 +272,7 @@ The card has one footer, and what the guide does there depends on what else is i
 - **And on a card whose footer would otherwise not be drawn**, which is the same placement
   with nothing above it. The footer is populated rather than reserved, so a card where
   every sentence branch comes up empty — an in-person seat whose location has no name yet,
-  a remote one with a room but nothing on its schedule — normally has no footer at all.
+  one with a room but nothing on its schedule — normally has no footer at all.
   The guide is enough to draw one for: those families have just paid and have the whole
   setup ahead of them, so a card that dropped the row would be withholding the guide from
   precisely the reader it is written for. **Anything deciding whether that row renders has

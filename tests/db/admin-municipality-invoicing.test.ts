@@ -203,7 +203,7 @@ describe("get_admin_municipality_invoicing", () => {
     // behind the ancestor-or-self case.
     const inPerson = await admin
       .from("products")
-      .update({ is_remote: false, location_id: TEST_IDS.LOCATION_SITE })
+      .update({ delivery_mode: "in_person", location_id: TEST_IDS.LOCATION_SITE })
       .in("id", IN_PERSON_PRODUCTS);
     expect(inPerson.error).toBeNull();
 
@@ -346,8 +346,8 @@ describe("get_admin_municipality_invoicing", () => {
     // A read that took the club's own location row as the municipality would
     // invoice a school; one that did not walk at all would find nothing.
     const club = invoiced(P_IN_MONTH);
-    expect(club?.location?.id).toBe(TEST_IDS.LOCATION_SITE);
-    expect(club?.location?.type).toBe("site");
+    expect(club?.location.id).toBe(TEST_IDS.LOCATION_SITE);
+    expect(club?.location.type).toBe("site");
     expect(club?.municipality.id).toBe(TEST_IDS.LOCATION_MUNICIPALITY);
   });
 
@@ -367,9 +367,9 @@ describe("get_admin_municipality_invoicing", () => {
     // the location and the invoicing target are one row; a walk that climbed
     // before it looked would run off the top of the tree and find nothing.
     const club = invoiced(P_AT_MUNICIPALITY);
-    expect(club?.location?.id).toBe(TEST_IDS.LOCATION_MUNICIPALITY);
-    expect(club?.location?.type).toBe("municipality");
-    expect(club?.municipality.id).toBe(club?.location?.id);
+    expect(club?.location.id).toBe(TEST_IDS.LOCATION_MUNICIPALITY);
+    expect(club?.location.type).toBe("municipality");
+    expect(club?.municipality.id).toBe(club?.location.id);
   });
 
   it("ships a schedule slot's start time as a bare HH:MM wall clock", () => {
@@ -442,7 +442,7 @@ describe("get_admin_municipality_invoicing", () => {
       // take: an in-person product's location must be a site.
       const moved = await admin
         .from("products")
-        .update({ is_remote: false, location_id: L_REGION_SITE })
+        .update({ delivery_mode: "in_person", location_id: L_REGION_SITE })
         .eq("id", P_NO_MUNICIPALITY);
       expect(moved.error).toBeNull();
 

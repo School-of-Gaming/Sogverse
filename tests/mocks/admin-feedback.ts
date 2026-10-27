@@ -18,7 +18,7 @@ export const FEEDBACK_CLUB_A: AdminFeedbackGroupRef = {
   productId: "product-a",
   productName: "Club A",
   productType: "consumer_club",
-  isRemote: true,
+  deliveryMode: "online",
 };
 export const FEEDBACK_CLUB_A2: AdminFeedbackGroupRef = {
   ...FEEDBACK_CLUB_A,
@@ -31,7 +31,7 @@ export const FEEDBACK_CLUB_B: AdminFeedbackGroupRef = {
   productId: "product-b",
   productName: "Club B",
   productType: "municipality_club",
-  isRemote: true,
+  deliveryMode: "online",
 };
 export const FEEDBACK_GEDU_AINO: AdminFeedbackGedu = { id: "gedu-aino", name: "Aino", role: "primary" };
 export const FEEDBACK_GEDU_MIKA: AdminFeedbackGedu = { id: "gedu-mika", name: "Mika", role: "assistant" };

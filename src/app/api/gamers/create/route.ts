@@ -56,7 +56,7 @@ export const POST = defineRoute({
   // exception the parent can act on: the missing-PIN refusal, which is mapped to
   // its own code below.
 
-  handler: async ({ request, user, body }) => {
+  handler: async ({ request, user, profile, body }) => {
     const admin = createAdminClient();
     const {
       firstName,
@@ -95,9 +95,8 @@ export const POST = defineRoute({
 
     // The address the auth user is created with. In `username` and `email` mode
     // the parent chose it, so a collision is theirs to resolve and GoTrue's
-    // uniqueness error is the answer. Only the generated handle is checked
-    // here — belt-and-braces, since 64 bits of entropy makes a collision
-    // vanishingly improbable, but it costs one indexed read to retry once.
+    // uniqueness error is the answer. In `parent` mode it is a generated handle
+    // carrying 64 bits of entropy.
     let authEmail: string;
     if (signIn === "username" && username !== undefined) {
       authEmail = usernameToSyntheticEmail(username);
@@ -105,12 +104,6 @@ export const POST = defineRoute({
       authEmail = email;
     } else if (signIn === "parent") {
       authEmail = randomSyntheticGamerEmail();
-      const { data: collision } = await admin
-        .from("profiles")
-        .select("id")
-        .eq("email", authEmail)
-        .maybeSingle();
-      if (collision) authEmail = randomSyntheticGamerEmail();
     } else {
       // Unreachable: the body schema refuses a mode without the field it needs.
       // Answered rather than asserted away, because a schema and a switch that
@@ -126,12 +119,7 @@ export const POST = defineRoute({
     // parent's UI never asks for the gamer's last_name; we copy it once here
     // and never sync. TODO(name-sync): if a parent later changes their
     // last_name, gamer profiles do not auto-update. Track as a follow-up.
-    const { data: parentProfile } = await admin
-      .from("profiles")
-      .select("last_name")
-      .eq("id", user.id)
-      .single();
-    const inheritedLastName = parentProfile?.last_name ?? "";
+    const inheritedLastName = profile.last_name;
 
     // Compose display_name for the Supabase auth dashboard label.
     const composedDisplayName = [firstName, inheritedLastName]

@@ -9,7 +9,8 @@ import {
 } from "@/lib/products/format-product-schedule";
 import type { SupportedLocale } from "@/lib/constants/locales";
 import { VOICE_CONFIG } from "@/lib/constants/voice";
-import type { ProductTopic, ProductType } from "@/types";
+import type { DeliveryMode, ProductTopic, ProductType } from "@/types";
+import { gamersAttendSite, hasVoiceRoom } from "@/lib/products/delivery-mode";
 import {
   nextSessionFor,
   topicPrepWindowEnd,
@@ -56,16 +57,20 @@ export interface EnrollmentFixtureSpec {
   participationId: string;
   productName: string;
   productType: ProductType;
-  /** Remote products have a voice room and no site; in-person the reverse. */
-  isRemote: boolean;
+  /**
+   * Online products have a voice room and no site; in-person the reverse; a
+   * hybrid one has both.
+   */
+  deliveryMode: DeliveryMode;
   /**
    * The product's topic, which decides *which* "Before the first session" guide
    * the card offers.
    *
    * **Optional, and it defaults to a label-only topic**, which on an in-person
-   * fixture is still no guide at all. On a *remote* one it is the shortest
-   * guide there is — the one shared step about the voice room's mic and camera
-   * — because every remote product has that step whatever its topic. A fixture
+   * fixture is still no guide at all. On one with a voice room it is the
+   * shortest guide there is — the one shared step about the room's mic and
+   * camera — because every product with a room has that step whatever its
+   * topic. A fixture
    * that is about the affordance itself names a topic with a longer one:
    * `roblox_studio` is the long one, three steps with per-platform notes and a
    * checklist, which is the one worth judging a scrolling dialog against.
@@ -167,7 +172,7 @@ export function buildEnrollmentFixture(
           startDate,
           endDate,
           cancelledUpcoming: spec.cancelledUpcomingSessions ?? 0,
-          lockedJoin: (spec.awaiting ?? false) && spec.isRemote,
+          lockedJoin: (spec.awaiting ?? false) && hasVoiceRoom(spec.deliveryMode),
         });
 
   const scheduleLines = scheduleCardLines(
@@ -212,25 +217,24 @@ export function buildEnrollmentFixture(
             endDate,
           }),
     // A label-only topic by default: it brings no steps of its own, so an
-    // untouched in-person fixture draws no prep affordance and a remote one
+    // untouched in-person fixture draws no prep affordance and one with a room
     // draws the shortest guide in the product. Every fixture carries its own
     // `participationId`, which is half the dismissal key, so a card dismissed
     // in a demo takes no other card's guide away with it.
     topic: spec.topic ?? "esports",
-    isRemote: spec.isRemote,
+    deliveryMode: spec.deliveryMode,
     voiceRoom: { mode: "sogverse" },
     nextSessionStart: next?.start ?? null,
     nextSessionEnd: next?.end ?? null,
     cancelledAhead: cancelledAhead.map((occurrence) => occurrence.start),
-    hasVoiceRoom: spec.isRemote,
+    hasVoiceRoom: hasVoiceRoom(spec.deliveryMode),
     // Left inert on purpose: a preview has no room to join, so the Join button
     // collapses to its inert form while still rendering its real open/locked
     // state.
     voiceHref: INERT_HREF,
-    // Never carried by a remote product, whatever the spec says: a product with
-    // a voice room has no building, and a card showing both would be claiming
-    // the family meets in two places.
-    siteName: spec.isRemote ? null : (spec.siteName ?? null),
+    // Carried exactly where the gamers attend a site, as the live read does:
+    // never on an online product, whatever the spec says.
+    siteName: gamersAttendSite(spec.deliveryMode) ? (spec.siteName ?? null) : null,
     // Inert for the same reason the Join is: a fixture surface must not
     // navigate to a page that would go looking for data. Still a real href, so
     // the card is a real link rather than a div pretending to be one — the

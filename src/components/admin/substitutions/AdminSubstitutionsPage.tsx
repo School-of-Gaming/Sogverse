@@ -12,6 +12,7 @@ import {
   useAdminSubstitutionQueue,
   useApproveSessionSubstitutionOffer,
   useSetSessionSubstitution,
+  useSubstitutionNotificationObservationOnMount,
 } from "@/services/session-substitution/session-substitution.queries";
 import {
   type AdminSubstitutionRequest,
@@ -47,6 +48,7 @@ export function AdminSubstitutionsPage({
   const timeZone = useTimezone();
   const now = useNow();
   const queryClient = useQueryClient();
+  useSubstitutionNotificationObservationOnMount();
 
   const { data: requests } = useAdminSubstitutionQueue(initialRequests);
   const approveOffer = useApproveSessionSubstitutionOffer();

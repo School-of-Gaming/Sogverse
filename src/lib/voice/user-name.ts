@@ -151,23 +151,25 @@ const NO_GAME_CONTEXT = {
  * slots, neither of which has any format rule behind it — a name a person chose
  * can never bleed into the slots after it, in either direction.
  *
- * **Three layouts are accepted, because a room outlives a deploy.** A token is
- * minted once at join and lives for the whole session window, so a deploy
- * landing mid-window puts both formats in one live room at the same time:
+ * Two layouts, the two `buildUserName` writes:
  *
- * - **6 slots** — the current layout. An unrecognised platform value degrades
- *   to no game context rather than throwing: these slots are cosmetic, and one
- *   peer minted by a newer deploy must not blank itself out of everyone's
- *   roster. (Contrast the role slot, which throws — it drives moderator UI.)
- * - **5 slots** — the legacy Minecraft-only layout
- *   (`…|minecraftUsername|minecraftUuid`). Read as platform `minecraft`, which
- *   is what it always was.
- * - **3 slots** — an instant room, which carries no game context at all.
+ * - **6 slots** — a room that surfaces a game identity. An unrecognised
+ *   platform value degrades to no game context rather than throwing: a token
+ *   is minted once at join and lives for the whole session window, so a deploy
+ *   landing mid-window can put a platform this bundle does not know into a live
+ *   room, and these slots are cosmetic — one peer minted by a newer deploy must
+ *   not blank itself out of everyone's roster. (Contrast the role slot, which
+ *   throws — it drives moderator UI.)
+ * - **3 slots** — a room that surfaces none, which carries no game context.
+ *
+ * Slots past the sixth are ignored, for the same mid-window reason: a later
+ * deploy that appends a slot must not break the roster of a peer still
+ * running this bundle.
  *
  * **Throws** when the role slot isn't a known voice role (including when the
- * name has no pipe separators at all). Our token routes are the only writers
- * of `user_name`, so a malformed role is a token-generation bug — surface it
- * loudly instead of papering over it with a sentinel role.
+ * name has no pipe separators at all), and on a slot count that is neither 3 nor at least 6. Our token
+ * routes are the only writers of `user_name`, so either is a token-generation
+ * bug — surface it loudly instead of papering over it with a sentinel.
  */
 export function parseUserName(userName: string | null | undefined): ParsedUserName {
   const parts = (userName || "").split("|");
@@ -184,29 +186,21 @@ export function parseUserName(userName: string | null | undefined): ParsedUserNa
     displayName: parts[2] || "Unknown",
   };
 
-  if (parts.length >= 6) {
-    const platform = parts[3] || "";
-    if (!isGamePlatform(platform)) return { ...head, ...NO_GAME_CONTEXT };
-    return {
-      ...head,
-      gamePlatform: platform,
-      gameUsername: parts[4] || null,
-      gameExternalId: decodeExternalId(platform, parts[5]),
-    };
+  if (parts.length === 3) return { ...head, ...NO_GAME_CONTEXT };
+  if (parts.length < 6) {
+    throw new Error(
+      `Malformed Daily user_name ${JSON.stringify(userName)}: ${parts.length} slots, not 3 or at least 6`,
+    );
   }
 
-  // Legacy Minecraft-only layout: the two trailing slots were always the
-  // Minecraft handle and its Mojang UUID.
-  if (parts.length > 3) {
-    return {
-      ...head,
-      gamePlatform: "minecraft",
-      gameUsername: parts[3] || null,
-      gameExternalId: parts[4] || null,
-    };
-  }
-
-  return { ...head, ...NO_GAME_CONTEXT };
+  const platform = parts[3];
+  if (!isGamePlatform(platform)) return { ...head, ...NO_GAME_CONTEXT };
+  return {
+    ...head,
+    gamePlatform: platform,
+    gameUsername: parts[4] || null,
+    gameExternalId: decodeExternalId(platform, parts[5]),
+  };
 }
 
 /**

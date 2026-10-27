@@ -134,7 +134,7 @@ describe("family product feed", () => {
 
     await admin
       .from("products")
-      .update({ is_remote: false, location_id: TEST_IDS.LOCATION_SITE })
+      .update({ delivery_mode: "in_person", location_id: TEST_IDS.LOCATION_SITE })
       .eq("id", PRODUCT_SITE);
 
     // The gedu-only lesson link, on the product the family reads. Seeded so

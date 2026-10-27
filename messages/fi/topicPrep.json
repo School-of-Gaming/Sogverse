@@ -33,7 +33,7 @@
     "rocket_league": "Tuomme koneet kerralle, ja Rocket League on niissä valmiina. Jokainen osallistuja tarvitsee silti oman Epic Games -tilin. Käy alla oleva vaihe läpi ennen kertaa.",
     "roblox_studio": "Tuomme tietokoneet kerralle, ja Roblox Studio on niissä valmiina. Jokainen osallistuja tarvitsee silti oman Roblox-tilin. Käy alla oleva vaihe läpi ennen kertaa."
   },
-  "remoteOnlyIntro": "Kerrat pidetään verkossa, äänihuoneessa. Käy alla oleva vaihe läpi ennen ensimmäistä kertaa.",
+  "remoteOnlyIntro": "Kerroilla käytetään äänihuonetta. Käy alla oleva vaihe läpi ennen ensimmäistä kertaa.",
   "steps": {
     "minecraftJavaAccount": {
       "title": "Hanki Microsoft-tili, jolla on Minecraft",

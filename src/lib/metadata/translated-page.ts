@@ -1,5 +1,5 @@
 import type { SupportedLocale } from "@/lib/constants/locales";
-import { resolveTranslation } from "@/lib/i18n/resolve-translation";
+import { resolveRequiredTranslation } from "@/lib/i18n/resolve-translation";
 import { INDEXED_LOCALES } from "@/lib/metadata/localized-page";
 
 /*
@@ -7,7 +7,7 @@ import { INDEXED_LOCALES } from "@/lib/metadata/localized-page";
  * per locale** — a Library article, a Team member — the one rule both follow.
  *
  * The URL's locale is the site's, and the page at any locale shows the text
- * `resolveTranslation()` picks there: the reader's locale, then English, then
+ * `resolveRequiredTranslation()` picks there: the reader's locale, then English, then
  * the earliest written in the site's locale order. A locale the author did not
  * write therefore shows another locale's words, and canonicalises to the page
  * of the locale whose words it shows. So only the locales written are language
@@ -31,12 +31,16 @@ export interface WrittenRow {
 /** Builds the page's path at a locale — `/fi/kirjasto/<slug>`. */
 export type TranslatedPagePath = (locale: SupportedLocale) => string;
 
-/** The locale whose words the page shows at `locale`: its own when written, else the fallback's. */
+/**
+ * The locale whose words the page shows at `locale`: its own when written,
+ * else the fallback's. Every page this rule serves has words in at least one
+ * locale — a live article or landing page, a public team member, a product.
+ */
 function translatedTextLocale(
   rows: readonly WrittenRow[],
   locale: SupportedLocale,
 ): SupportedLocale {
-  return resolveTranslation(rows, locale)?.locale ?? locale;
+  return resolveRequiredTranslation(rows, locale).locale;
 }
 
 /** Whether the page at `locale` shows words written in an indexed locale. */

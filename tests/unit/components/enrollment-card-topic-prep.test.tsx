@@ -93,7 +93,7 @@ function enrollment(
     productName: "Roblox Studio Club",
     productType: "consumer_club",
     topic: "roblox_studio",
-    isRemote: true,
+    deliveryMode: "online",
     voiceRoom: { mode: "sogverse" },
     prepWindowEnd: new Date(NOW.getTime() + 10 * 86_400_000),
     nextSessionStart: new Date(NOW.getTime() + 3 * 86_400_000),
@@ -245,6 +245,19 @@ describe("the prep guide in the Join's slot", () => {
  * shows, the guide in its slot, and not a word about placement. There is no
  * room behind it, so the Join never lights and the card never goes Live.
  */
+describe("a hybrid seat", () => {
+  it("draws the Join and names the site beside it", () => {
+    // Hybrid is hybrid for everyone on it: the gamers meet at the site and the
+    // sessions are joined in the room too, so the card says both.
+    renderCard(
+      { deliveryMode: "hybrid", siteName: "Kallion ala-aste" },
+      new Set([PARTICIPATION_ID]),
+    );
+    expect(lockedJoin()).toBeTruthy();
+    expect(screen.getByText("Kallion ala-aste")).toBeTruthy();
+  });
+});
+
 describe("a remote seat not yet in a group", () => {
   it("puts the guide in the locked Join's slot and says nothing about placement", () => {
     renderCard({ awaiting: true, prepWindowEnd: null });
@@ -296,7 +309,7 @@ describe("the prep guide beside a lit Join", () => {
 describe("the prep guide on the cards with no Join", () => {
   it("sits under the site line of an in-person card", () => {
     renderCard({
-      isRemote: false,
+      deliveryMode: "in_person",
       hasVoiceRoom: false,
       siteName: "Kirjasto Oodi, Helsinki",
     });
@@ -310,7 +323,7 @@ describe("the prep guide on the cards with no Join", () => {
     renderCard({
       awaiting: true,
       prepWindowEnd: null,
-      isRemote: false,
+      deliveryMode: "in_person",
       hasVoiceRoom: false,
       siteName: "Kirjasto Oodi, Helsinki",
     });
@@ -333,7 +346,7 @@ describe("the prep guide on the cards with no Join", () => {
   it("draws the footer for the guide alone on an in-person seat with no site named", () => {
     // A real row: the seat is in a group, and the location has no name on it
     // yet. Nothing else in the footer has anything to say.
-    renderCard({ isRemote: false, hasVoiceRoom: false, siteName: null });
+    renderCard({ deliveryMode: "in_person", hasVoiceRoom: false, siteName: null });
 
     expect(screen.getByText(TRIGGER)).toBeTruthy();
   });
@@ -380,7 +393,7 @@ describe("the cards that never offer it", () => {
     // A label-only topic names subject matter rather than one piece of
     // software, so there is nothing to install or sign into — and in person
     // there is no voice room to get ready for either.
-    renderCard({ topic: "esports", isRemote: false, hasVoiceRoom: false });
+    renderCard({ topic: "esports", deliveryMode: "in_person", hasVoiceRoom: false });
 
     expect(screen.queryByText(TRIGGER)).toBeNull();
   });
@@ -467,7 +480,7 @@ describe("the window the offer lives in", () => {
     renderCard(
       {
         prepWindowEnd: reopened,
-        isRemote: false,
+        deliveryMode: "in_person",
         hasVoiceRoom: false,
         siteName: "Kirjasto Oodi, Helsinki",
       },
@@ -486,7 +499,7 @@ describe("the window the offer lives in", () => {
   it("leaves the button under an in-person card's site alone when the window closes mid-read", () => {
     const spec = {
       prepWindowEnd: WINDOW_ENDS_SOON,
-      isRemote: false,
+      deliveryMode: "in_person" as const,
       hasVoiceRoom: false,
       siteName: "Kirjasto Oodi, Helsinki",
     };

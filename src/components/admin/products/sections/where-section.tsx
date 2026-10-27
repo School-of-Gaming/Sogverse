@@ -4,14 +4,22 @@ import { useTranslations } from "next-intl";
 import { cn } from "@/lib/cn";
 import { Field } from "@/components/ui/field";
 import { Input } from "@/components/ui/input";
-import { Constants } from "@/types";
+import { Constants, type DeliveryMode } from "@/types";
 import { FormSection } from "../form-primitives";
 import { ChosenSitePanel, LocationPicker } from "../location-picker";
 import {
   locationPickerMode,
+  offersVoiceRoomChoice,
   type FormState,
 } from "../product-form-state";
 import type { ProductTypeConfig } from "../product-type-config";
+
+/** Each delivery mode's label key under `admin.products.labels`. */
+const DELIVERY_MODE_LABEL = {
+  online: "online",
+  in_person: "inPerson",
+  hybrid: "hybrid",
+} as const satisfies Record<DeliveryMode, string>;
 
 interface WhereSectionProps {
   state: FormState;
@@ -22,7 +30,7 @@ interface WhereSectionProps {
 export function WhereSection({ state, setState, config }: WhereSectionProps) {
   const t = useTranslations("admin.products");
 
-  const pickerMode = locationPickerMode(config, state.isRemote);
+  const pickerMode = locationPickerMode(config, state.deliveryMode);
   const showLocationPicker = pickerMode !== null;
 
   return (
@@ -32,42 +40,41 @@ export function WhereSection({ state, setState, config }: WhereSectionProps) {
     >
       {config.allowsRemote && config.allowsInPerson ? (
         <div className="inline-flex rounded-md border border-border p-1">
-          <button
-            type="button"
-            onClick={() => setState({ ...state, isRemote: true })}
-            className={cn(
-              "rounded px-4 py-1.5 text-sm transition-colors",
-              state.isRemote
-                ? "bg-act text-act-foreground"
-                : "text-muted-foreground hover:text-foreground"
-            )}
-          >
-            {t("labels.online")}
-          </button>
-          <button
-            type="button"
-            onClick={() => setState({ ...state, isRemote: false })}
-            className={cn(
-              "rounded px-4 py-1.5 text-sm transition-colors",
-              !state.isRemote
-                ? "bg-act text-act-foreground"
-                : "text-muted-foreground hover:text-foreground"
-            )}
-          >
-            {t("labels.inPerson")}
-          </button>
+          {Constants.public.Enums.delivery_mode.map((mode) => (
+            <button
+              key={mode}
+              type="button"
+              aria-pressed={state.deliveryMode === mode}
+              onClick={() => setState({ ...state, deliveryMode: mode })}
+              className={cn(
+                "rounded px-4 py-1.5 text-sm transition-colors",
+                state.deliveryMode === mode
+                  ? "bg-act text-act-foreground"
+                  : "text-muted-foreground hover:text-foreground"
+              )}
+            >
+              {t(`labels.${DELIVERY_MODE_LABEL[mode]}`)}
+            </button>
+          ))}
         </div>
       ) : null}
+      {state.deliveryMode === "hybrid" && (
+        <p className="mt-2 text-xs text-muted-foreground">
+          {t("hints.hybridHint")}
+        </p>
+      )}
 
       <div className="mt-3 space-y-4">
         {showLocationPicker && (
           <>
             <Field
               label={
-                state.isRemote ? t("labels.municipality") : t("labels.site")
+                pickerMode === "municipality"
+                  ? t("labels.municipality")
+                  : t("labels.site")
               }
               hint={
-                state.isRemote
+                pickerMode === "municipality"
                   ? t("hints.municipalityHint")
                   : t("hints.siteHint")
               }
@@ -102,7 +109,7 @@ export function WhereSection({ state, setState, config }: WhereSectionProps) {
             the options: the meeting link here, and the join instructions in
             the per-language copy above, where every other translated field
             is. */}
-        {state.isRemote && (
+        {offersVoiceRoomChoice(state.deliveryMode) && (
           <>
             <Field label={t("voiceRoomModes.label")}>
               <div className="space-y-2">

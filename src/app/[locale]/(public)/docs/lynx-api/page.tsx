@@ -250,7 +250,7 @@ const PRODUCTS_FIELDS = [
   },
   {
     name: "delivery",
-    type: "online | in_person",
+    type: "online | in_person | hybrid",
     key: "resources.products.fields.delivery",
   },
   {

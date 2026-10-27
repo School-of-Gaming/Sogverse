@@ -129,9 +129,9 @@
           "id": "The product’s identifier.",
           "name": "The product’s name in every locale it has been written in, keyed by locale code. At least one is always present; which ones depends on the product.",
           "type": "What kind of product it is. A club runs weekly with no fixed end; a camp and an event run over set dates.",
-          "delivery": "How it is delivered. Lynx’s own names for its ways of delivering the Programme are not stored anywhere; <code>type</code> and <code>delivery</code> together are the two facts those names map onto.",
+          "delivery": "How it is delivered: <code>online</code>, joined remotely through the Sogverse voice room, another meeting or written join instructions, <code>in_person</code> at a site, or <code>hybrid</code>, where the children attend a site and the Game Educator, with any child who cannot attend, joins through the Sogverse voice room. Lynx’s own names for its ways of delivering the Programme are not stored anywhere; <code>type</code> and <code>delivery</code> together are the two facts those names map onto.",
           "audience": "Who may hold a seat on the product: <code>gamers</code> is <code>true</code> when children may, and <code>parents</code> is <code>true</code> when adults may take a seat themselves. At least one of the two is always <code>true</code>, and a product with both is one parents and children attend together.",
-          "location": "The municipality the product’s location is or lies within, with its two-letter country code; <code>city</code> is the municipality’s name. The rule is the same for online and in-person products: <code>null</code> when the product has no location, or its location lies within no municipality.",
+          "location": "The municipality the product’s location is or lies within, with its two-letter country code; <code>city</code> is the municipality’s name. The rule is the same for online, in-person and hybrid products: <code>null</code> when the product has no location, or its location lies within no municipality.",
           "status": "<code>pending</code> before its start date, <code>running</code> from its start date, <code>completed</code> once its end date has passed. Derived at read time from the product’s dates in its own timezone, so the value is never stale.",
           "dates": "When it runs. A consumer club may have no end date; every other product has one.",
           "timezone": "The IANA timezone the product’s dates and sessions are scheduled in.",
@@ -206,7 +206,7 @@
       },
       "feedback": {
         "title": "what a child said on the way out",
-        "intro": "What one child answered at the end of one session: five statements rated on a five-point bar and an optional note in their own words. Today feedback is collected after online sessions only. A child who rates no statement and writes no note leaves no row, so the response rate is this list against the online sessions in <code>/sessions</code>; one row is one child at one session, so a percentage over rows counts a child once per session they answered.",
+        "intro": "What one child answered at the end of one session: five statements rated on a five-point bar and an optional note in their own words. Today feedback is collected only from the children who join a session through its online room, on online and hybrid products. A child who rates no statement and writes no note leaves no row, so the response rate is this list against the sessions of online and hybrid products in <code>/sessions</code>; one row is one child at one session, so a percentage over rows counts a child once per session they answered.",
         "params": {
           "productId": "Only feedback from this product’s groups.",
           "groupId": "Only this group’s feedback.",
@@ -306,7 +306,7 @@
       "items": {
         "childIdentity": "Children’s surnames, birth days and gender, and parents’ phone numbers. The Programme’s privacy policy promises a birth month rather than a birth date, and the rest is not something the dashboards or the Roblox report use.",
         "releases": "Case-study and testimonial releases. The one media permission Sogverse holds already covers public use of a photograph by Lynx Educate, School of Gaming and Roblox; a child’s full name, a case study, a quotation or content linked to the child need a separate written release obtained outside the platform.",
-        "deliveryModel": "A delivery model label. Sogverse holds a product’s type and whether it is online or in person; a model taxonomy is Lynx’s to lay over those two fields.",
+        "deliveryModel": "A delivery model label. Sogverse holds a product’s type and whether it is online, in person or hybrid; a model taxonomy is Lynx’s to lay over those two fields.",
         "analytics": "Traffic anywhere but the landing page, the shop and the Programme’s product pages, and anything about a single visitor. The analytics behind <code>/traffic</code> are privacy-first by design: a page a family reaches after signing in is theirs, and a visitor is a count, never a record."
       }
     }

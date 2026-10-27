@@ -78,7 +78,7 @@ export function traineeFlairMaps(
   const newcomers: Record<string, string> = {};
   const notes: Record<string, Withheld> = {};
   for (const member of roster) {
-    if (drawsNewcomerBadge && member.group_joined_at !== null) {
+    if (drawsNewcomerBadge) {
       newcomers[member.participant_id] = member.group_joined_at;
     }
     if (member.has_note) notes[member.participant_id] = WITHHELD;

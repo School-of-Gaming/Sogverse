@@ -48,7 +48,7 @@ $$;
 -- Name: FUNCTION kick_substitution_notification_sync(); Type: COMMENT; Schema: public; Owner: -
 --
 
-COMMENT ON FUNCTION public.kick_substitution_notification_sync() IS 'Asks the app to drain the substitution notification outbox: queues a pg_net POST to the URL in the Vault secret substitution_sync_url, bearing the Vault secret substitution_sync_secret. pg_net sends it after the transaction commits and never if it rolls back. A no-op when either secret is missing — every local stack and CI — and it never raises: any failure is a WARNING, because a notification problem must never fail the write that caused it; the retry job kicks again. Granted to nobody.';
+COMMENT ON FUNCTION public.kick_substitution_notification_sync() IS 'Asks the app to drain the substitution notification outbox: queues a pg_net POST to the URL in the Vault secret substitution_sync_url, bearing the Vault secret substitution_sync_secret. pg_net sends it after the transaction commits and never if it rolls back. A no-op when either secret is missing — every local stack and CI — and it never raises: any failure is a WARNING, because a notification problem must never fail the write that caused it; the row stays due, and the next observation kicks again. Granted to nobody.';
 
 
 --

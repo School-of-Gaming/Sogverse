@@ -24,7 +24,8 @@ import { formatDate } from "@/lib/date-format";
 import type { PlannedSession } from "@/lib/planned-sessions";
 import { computeVoiceState, markCancelled } from "@/lib/voice-window";
 import { useNow, useTimezone } from "@/providers";
-import type { SessionAudience } from "@/types";
+import type { DeliveryMode, SessionAudience } from "@/types";
+import { hasVoiceRoom } from "@/lib/products/delivery-mode";
 import { FamilyProductBackLink } from "./BackLink";
 import { FamilyCreationsCard } from "./FamilyCreationsCard";
 import { FamilySessionFeed } from "./FamilySessionFeed";
@@ -128,12 +129,11 @@ export interface FamilyProductPageBodyProps {
    */
   plannedSessions: readonly PlannedSession[];
   /**
-   * Whether the product runs in a voice room rather than a building. The
-   * question is `is_remote`, never "does it have a site": a remote
-   * municipality club carries a location — the town it is run for — so a caller
-   * testing for one would print an address for a club that meets online.
+   * How the product is delivered. The Join is drawn where it has a voice room
+   * (online or hybrid); the site comes separately, and a hybrid page shows both.
+   * The room's question is asked of the mode, never "does it have a site".
    */
-  isRemote: boolean;
+  deliveryMode: DeliveryMode;
   /**
    * How the product's sessions are joined — the Sogverse room, a meeting
    * elsewhere, or instructions per locale. Always `sogverse` in person.
@@ -194,7 +194,7 @@ export interface FamilyProductPageBodyProps {
    * would let a surface silently stop showing a child their own work.
    */
   creations: readonly FamilyCreation[];
-  /** The site and its family-facing detail, or `null` for a remote product. */
+  /** The site and its family-facing detail, or `null` for an online product. */
   site: FamilyProductSite | null;
   /** Where the Join navigates when the window is open. */
   voiceHref: MaybeInertHrefObject;
@@ -284,7 +284,7 @@ export function FamilyProductPageBody({
   productName,
   schedule,
   plannedSessions,
-  isRemote,
+  deliveryMode,
   participant,
   groupName,
   paymentProblem = false,
@@ -348,7 +348,7 @@ export function FamilyProductPageBody({
   // A room only exists on a remote product, and only while the product still
   // has a session to come. A finished remote club has neither a Join nor a
   // locked button: locked promises an unlock that will never happen.
-  const showJoin = isRemote && voiceState.hasUpcomingSession;
+  const showJoin = hasVoiceRoom(deliveryMode) && voiceState.hasUpcomingSession;
 
   const groupNote = nonEmpty(groupPublicNote);
   const siteNote = nonEmpty(site?.publicNote ?? null);

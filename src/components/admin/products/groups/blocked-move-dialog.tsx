@@ -21,7 +21,7 @@ interface BlockedMoveDialogProps {
   onClose: () => void;
 }
 
-// Reason → message namespace. A total map rather than a ternary chain: a fourth
+// Reason → message namespace. A total map rather than a ternary chain: a third
 // refusal then fails to compile until its copy exists, instead of silently
 // falling through to whichever branch was last. `as const satisfies` rather than
 // an annotation, because next-intl's `t()` checks the key against the message
@@ -30,7 +30,6 @@ interface BlockedMoveDialogProps {
 const COPY_KEY = {
   unpaidPromote: "promoteUnpaid",
   liveSubscription: "demoteSubscribed",
-  removeSubscribed: "removeSubscribed",
 } as const satisfies Record<BlockedDropReason, string>;
 
 /**

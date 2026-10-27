@@ -110,7 +110,7 @@ const SCHOOL_CLUB: ProductBrowseRow = {
   start_date: "2026-01-12",
   end_date: null,
   image_path: null,
-  is_remote: false,
+  delivery_mode: "in_person",
   for_gamers: true,
   for_parents: false,
   min_age: 7,

@@ -8,13 +8,12 @@ import {
 } from "@/lib/mcp/cover-images";
 import { UPLOADER_VIEW_META, uploaderOpening } from "@/lib/mcp/image-uploader";
 import {
-  NOT_FOUND,
   OVERWRITES,
   READ_ONLY,
   answer,
   articleId,
   asAdmin,
-  refusal,
+  savedArticle,
 } from "@/lib/mcp/library-call";
 import {
   CATALOGUE_IMAGE_PURPOSES,
@@ -119,8 +118,7 @@ export function registerLibraryCoverTools(server: McpServer): void {
     ({ articleId: id, coverImageId }, ctx) =>
       asAdmin(ctx, async ({ service }) => {
         await service.setArticleCover(id, coverImageId);
-        const article = await service.getAdminArticle(id);
-        if (article === null) return refusal(NOT_FOUND);
+        const article = await savedArticle(service, id);
         const { draft, publication } = article;
         return answer({
           articleId: id,

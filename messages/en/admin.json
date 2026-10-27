@@ -36,7 +36,6 @@
       "title": "Gedu certification",
       "justNow": "{count} certified just now",
       "empty": "No Gedus are awaiting certification.",
-      "unnamed": "Unnamed Gedu",
       "registered": "registered {when}",
       "certify": "Certify",
       "certifying": "Certifying…",
@@ -504,8 +503,7 @@
           "pair": "two side by side",
           "row": "three in a row",
           "showcase": "one large quote, two side by side, then three in a row"
-        },
-        "missing": "A testimonial no longer in the store"
+        }
       }
     },
     "status": {
@@ -666,6 +664,7 @@
       "ageRange": "{min}–{max} yrs",
       "seats": "{count} seats",
       "online": "Online",
+      "hybrid": "Hybrid",
       "unlisted": "unlisted",
       "untitled": "(untitled)",
       "missingGeduFee": "Gedu fee missing",
@@ -728,7 +727,7 @@
         "visibility": "Visibility",
         "gamerPhotoConsents": "Photo asks",
         "marketingConsents": "Marketing asks",
-        "format": "Format",
+        "deliveryMode": "Delivery",
         "ageRange": "Age range",
         "publicLink": "Public link",
         "createdBy": "Created by",
@@ -819,6 +818,7 @@
       "spokenLanguage": "Spoken language",
       "online": "Online",
       "inPerson": "In person",
+      "hybrid": "Hybrid",
       "municipality": "Municipality this is for",
       "site": "Site",
       "startDate": "Start date",
@@ -913,6 +913,11 @@
       "none": "No voice room",
       "noneDescription": "Families are shown the join instructions you write for each language instead."
     },
+    "deliveryModes": {
+      "online": "Online",
+      "in_person": "In person",
+      "hybrid": "Hybrid"
+    },
     "endDateModes": {
       "ongoing": "No end date",
       "ongoingDescription": "The club runs indefinitely until you decide to wind it down.",
@@ -958,6 +963,7 @@
       "externalVoiceUrlHint": "Public: anyone can read this link, including visitors who are not signed in.",
       "municipalityHint": "Municipality clubs are always tied to a specific Finnish municipality — the one paying for it. Parents from that municipality will see it when they browse.",
       "siteHint": "Where sessions physically happen.",
+      "hybridHint": "Gamers come to the site. The Gedu, and any gamer who can’t make it there, joins through the Sogverse voice room.",
       "eventSingleDay": "Events happen on a single date.",
       "timezoneEntry": "Session times below are entered in this timezone. Parents see them converted to their own automatically.",
       "timezoneChangeMoves": "Session times below are entered in this timezone. Changing it moves every upcoming session to the same clock time in the new zone, while sessions that already have a report or attendance recorded keep the times they were held at.",
@@ -1212,8 +1218,6 @@
       "searchHint": "Type at least 2 characters to search.",
       "noParents": "No parents yet.",
       "noSearchResults": "No parents or gamers match your search.",
-      "unnamedParent": "Unnamed parent",
-      "unnamedGamer": "Unnamed gamer",
       "add": "Add",
       "adding": "Adding…",
       "added": "Added",
@@ -1238,8 +1242,7 @@
         "title": "Unassigned",
         "subtitle": "People who aren’t in a group yet. Drag them into one to place them.",
         "empty": "Everyone has a group.",
-        "addParticipant": "Add participant",
-        "removeParticipant": "Remove participant"
+        "addParticipant": "Add participant"
       },
       "empty": {
         "title": "No groups yet",
@@ -1313,22 +1316,19 @@
           "title": "The subscription is still live",
           "description": "Moving {name} to the waitlist would leave a live subscription behind, still billing the family for a seat they no longer hold.",
           "nextStep": "The family opens the billing card on their My SOG page, which takes them to Stripe's secure billing portal to cancel. Once the subscription ends, the seat is released."
-        },
-        "removeSubscribed": {
-          "title": "The subscription is still live",
-          "description": "Removing {name} would leave the family's subscription billing for a seat that no longer exists.",
-          "nextStep": "The family opens the billing card on their My SOG page, which takes them to Stripe's secure billing portal to cancel. Once the subscription ends, the seat is released."
         }
       },
       "switchClub": {
-        "dropZone": "Switch club",
         "title": "Switch club",
         "description": "Move {name} to another club. Nothing changes for the family today: the same card is charged on the same date, and from then on they pay the new club's price.",
         "searchPlaceholder": "Search clubs by name",
         "picker": {
           "empty": "There is no other club to switch to. A target has to be a club billed monthly that has not finished.",
           "noMatch": "No club matches this search. Try another name.",
-          "alreadyHolds": "Already has seat"
+          "alreadyHolds": "Already has seat",
+          "needsSubscription": "Needs a subscription",
+          "gamersOnly": "Gamers only",
+          "parentsOnly": "Parents only"
         },
         "facts": {
           "ageRange": "{ends, select, both {Ages {min}–{max}} from {Ages {min} and up} other {Ages {max} and under}}",
@@ -1360,18 +1360,51 @@
           "noLiveSubscription": "No live subscription stands behind this seat, so this is not the tool for it: remove the seat and enroll the gamer on the other club instead.",
           "targetNotPaidSubscriptionClub": "That product is not a club billed monthly, so a subscription cannot follow the seat onto it.",
           "sameProduct": "That is the club the gamer is already on.",
-          "alreadyOnTarget": "This gamer already holds a place on that club."
+          "alreadyOnTarget": "{name} already holds a place on that product.",
+          "targetIsSubscriptionClub": "That club is billed monthly, so a seat there needs a subscription, which this move cannot create.",
+          "targetNotOpenToParents": "That product is not open to parents, so a parent’s own seat cannot move onto it.",
+          "targetNotOpenToGamers": "That product is not open to gamers, so this gamer’s seat cannot move onto it."
         },
         "commit": {
           "stripeUpdated": "The subscription is already on the new club's price, but the seat did not move. Press Switch club again to finish — pressing again does not charge the family twice.",
           "stripeUpdatedStuck": "The subscription is already on the new club's price even though the seat could not move, so the family is billed for a club the gamer holds no place on. Sort this out in Stripe first.",
           "failed": "The switch did not complete. Press Switch club again — a repeated press replays the same request, so it never charges the family twice."
         },
-        "confirm": "Switch club"
+        "confirm": "Switch club",
+        "noSubscription": {
+          "title": "Move to another product",
+          "description": "Move {name} to another product.",
+          "searchPlaceholder": "Search products by name",
+          "picker": {
+            "empty": "There is no other product to move to. A target has to be a product that is not billed monthly and has not finished.",
+            "noMatch": "No product matches this search. Try another name."
+          },
+          "family": {
+            "label": "For the family",
+            "money": "No money is charged or refunded by this move.",
+            "priceDifference": "If the two prices differ, settle the difference in Stripe.",
+            "email": "They receive the new product’s confirmation email, and their calendar entry moves to it.",
+            "consents": "If the new product asks for consents, they are given on the family’s behalf, so the family is not asked for them."
+          },
+          "notStarted": "Starts {date}.",
+          "confirm": "Move",
+          "commitFailed": "The move did not complete. Press Move again.",
+          "commitConflict": "The seat changed while it was being moved, so nothing was moved. Close this and open the seat menu again."
+        }
       },
       "requirementGaps": {
         "title": "Assign anyway?",
         "action": "Assign anyway"
+      },
+      "seatMenu": {
+        "label": "Actions for {name}",
+        "goToUser": "Go to {name}’s user page",
+        "switchClub": "Switch club…",
+        "move": "Move to another product…",
+        "remove": "Remove from this product…",
+        "disabled": {
+          "subscriptionLive": "The family cancels the subscription in My SOG, and the seat ends with it."
+        }
       }
     },
     "seatLimitModes": {
@@ -1475,14 +1508,11 @@
     "unknown": "Unknown",
     "linkedGamers": "Linked Gamers",
     "linkedParents": "Linked Parents",
-    "unnamedGamer": "Unnamed Gamer",
-    "unnamedUser": "Unnamed User",
     "noConnectedGamers": "No connected gamers",
     "assignedProducts": "Assigned Products",
     "noAssignedProducts": "No assigned products",
     "unassignedGroup": "No group assigned",
     "needsGroup": "Needs group assignment",
-    "untitledProduct": "Untitled product",
     "gamerDetails": {
       "title": "Personal details",
       "edit": "Edit personal details",
@@ -1564,7 +1594,6 @@
     "slackNotLinked": "Not linked"
   },
   "locations": {
-    "editName": "Edit {name}",
     "addChildUnder": "Add {type} under {parent}",
     "location": "Location",
     "nameRequired": "Name is required",
@@ -1669,7 +1698,6 @@
     "justNow": "{count, plural, one {# substitute approved just now} other {# substitutes approved just now}}",
     "offersLabel": "Gedus offering to substitute",
     "away": "Away:",
-    "unnamed": "Unnamed Gedu",
     "reason": {
       "sick": "Sick",
       "other": "Other"

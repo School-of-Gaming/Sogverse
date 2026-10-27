@@ -300,7 +300,7 @@ describe("session substitutions", () => {
     });
 
     // Inserted directly rather than through createTestProduct: that helper always
-    // writes a REMOTE product and takes no fee arguments, and this file needs one
+    // writes an ONLINE product and takes no fee arguments, and this file needs one
     // of each and the two per-session fees the pool list reports.
     await admin.from("products").insert([
       {
@@ -309,7 +309,7 @@ describe("session substitutions", () => {
         billing_mode: "free",
         topic: "minecraft_java",
         spoken_language_code: "en",
-        is_remote: true,
+        delivery_mode: "online",
         location_id: null,
         timezone: "UTC",
         registration_opens_at: new Date(Date.now() - 60_000).toISOString(),
@@ -329,7 +329,7 @@ describe("session substitutions", () => {
         billing_mode: "free",
         topic: "minecraft_java",
         spoken_language_code: "en",
-        is_remote: false,
+        delivery_mode: "in_person",
         location_id: SITE,
         timezone: "UTC",
         registration_opens_at: new Date(Date.now() - 60_000).toISOString(),
@@ -347,7 +347,7 @@ describe("session substitutions", () => {
         billing_mode: "free",
         topic: "minecraft_java",
         spoken_language_code: "en",
-        is_remote: true,
+        delivery_mode: "online",
         location_id: null,
         timezone: "UTC",
         registration_opens_at: new Date(Date.now() - 60_000).toISOString(),
@@ -369,7 +369,7 @@ describe("session substitutions", () => {
         billing_mode: "free" as const,
         topic: "minecraft_java" as const,
         spoken_language_code: "en" as const,
-        is_remote: true,
+        delivery_mode: "online" as const,
         location_id: null,
         timezone: MIDDAY_ZONE,
         registration_opens_at: new Date(Date.now() - 60_000).toISOString(),
@@ -387,7 +387,7 @@ describe("session substitutions", () => {
         billing_mode: "external_contract",
         topic: "minecraft_java",
         spoken_language_code: "en",
-        is_remote: true,
+        delivery_mode: "online",
         location_id: TEST_IDS.LOCATION_MUNICIPALITY,
         timezone: "UTC",
         registration_opens_at: new Date(Date.now() - 60_000).toISOString(),
@@ -2382,6 +2382,31 @@ describe("session substitutions", () => {
       expect(online.error).toBeNull();
       expect(online.data).toEqual(expect.arrayContaining([subId, thirdId]));
     });
+
+    it("asks no coverage of a hybrid product, whose gedu joins online though its gamers are at the site", async () => {
+      await setCoverage(subId, []);
+      const toHybrid = await admin
+        .from("products")
+        .update({ delivery_mode: "hybrid" })
+        .eq("id", SITE_PRODUCT);
+      expect(toHybrid.error).toBeNull();
+      try {
+        const { data, error } = await adminAuth.rpc("get_gedus_covering_product", {
+          p_product_id: SITE_PRODUCT,
+        });
+        expect(error).toBeNull();
+        expect(data).toContain(subId);
+
+        const id = await seedRequest({ groupId: GROUP_SITE, date: utcDate(7) });
+        expect(await poolIds(subAuth)).toContain(id);
+      } finally {
+        const back = await admin
+          .from("products")
+          .update({ delivery_mode: "in_person" })
+          .eq("id", SITE_PRODUCT);
+        expect(back.error).toBeNull();
+      }
+    });
   });
 
   // -------------------------------------------------------------------------
@@ -2917,7 +2942,7 @@ describe("session substitutions", () => {
         .find((row) => row.id === open);
       expect(office?.product).toMatchObject({
         id: SITE_PRODUCT,
-        is_remote: false,
+        delivery_mode: "in_person",
         site_name: "Substitution Hall",
         topic: "minecraft_java",
         spoken_language_code: "en",
