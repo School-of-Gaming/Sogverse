@@ -146,7 +146,8 @@ Every write outside the repo is confirmed with the owner before it is made.
 
 ### 0. Before the day
 
-1. **Export Webflow to the team Drive.**
+1. **Export Webflow to the team Drive.** *Exported locally 2026-10-26; it reaches Drive
+   with step 2.6, where the details are.*
    - CMS collections (blog, lessons, camps, staff, categories) as CSV.
    - Form submissions.
    - Members and e-commerce orders, if the site used them. These hold personal data, so
@@ -407,14 +408,36 @@ removing the old staging host, so until then each change can be pointed back at
    the domain → branch mapping in the `vercel-analytics` skill and change its
    "verified" date to the day of the check.
 3. **Remove `sogverse.sog.gg/**` from the Supabase allow-list.**
-4. **Remove the old sitemaps a few weeks later:** `https://sogverse.sog.gg/sitemap.xml`
+4. **About two weeks after the cutover, review Search Console** once its reports describe
+   only this app. Issues reported before the move were deliberately left until now
+   (owner, 2026-10-27), because they mixed Webflow, the app and staging.
+   - Expected and fine: "Page with redirect" for old `sogverse.sog.gg` and `www.sog.gg`
+     addresses, and "Alternate page with proper canonical tag" for parameter variants.
+   - Events structured data: add `eventStatus` (scheduled) and `performer` (the
+     Organization) to the `Event` in `src/lib/products/`. Leave `offers.availability` and
+     `offers.validFrom` out on purpose: availability changes with every signup and would
+     go stale in search results, and the page shows no sales-start date to state.
+   - Anything else is a real finding about this app.
+5. **Remove the old sitemaps a few weeks later:** `https://sogverse.sog.gg/sitemap.xml`
    and the Webflow sitemap `https://www.sog.gg/sitemap.xml`, from both Search Console and
    Bing.
-5. **Cancel the Webflow subscription and every add-on**, once the exports are confirmed
+6. **Cancel the Webflow subscription and every add-on**, once the exports are confirmed
    on Drive. Then delete the `proxy-ssl.webflow.com` TXT record on the apex.
-6. **Delete the disabled live Stripe webhook** `we_1Ghre2CD5Q5ECgrcZmaxzWl8` (the old
+   - The export (2026-10-26) is in `~/work/webflow-export-2026-10-26`, with the scripts
+     that made it so it can be re-run just before cancelling. The token it uses is
+     `WEBFLOW_EXPORT_TOKEN` (read-only) in `~/work/sog-translations/.env`. Its
+     `personal/` folder goes to the restricted Drive folder.
+   - Two things aren't in it: the site's custom head and footer code, which no token can
+     read (copy it by hand from Site settings → Custom code), and the "My child is a
+     gamer" guidebook PDF, which Webflow refused to serve (download it from the Assets
+     panel if Sogverse's guide store doesn't already hold it).
+   - The add-ons are the connected apps Jetboost, LiveChat and Flowbase. Revoke the
+     site's API tokens with the subscription.
+   - The site's form webhooks also sent submissions to Zapier, Make, phoneflow and
+     nocodelytics. Check whether any of them keeps its own copy of that personal data.
+7. **Delete the disabled live Stripe webhook** `we_1Ghre2CD5Q5ECgrcZmaxzWl8` (the old
    WooCommerce shop at `sog.gg/?wc-api=wc_stripe`).
-7. **About 2027-10, delete the `sogverse.sog.gg` DNS record** and remove the domain from
+8. **About 2027-10, delete the `sogverse.sog.gg` DNS record** and remove the domain from
    Vercel.
 
 ## Acceptance criteria
