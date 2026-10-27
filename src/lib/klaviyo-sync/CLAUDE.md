@@ -144,8 +144,9 @@ These are writes to a hosted project, its deployments and the Klaviyo account, m
 owner or with the owner's say — never by a session on its own initiative.
 
 - **The key.** `KLAVIYO_PRIVATE_API_KEY` is one private key for the one Klaviyo account,
-  with Profiles read and write, Lists write, Subscriptions write, Events write and Data
-  Privacy write. A key missing a scope fails every call that needs it.
+  full access, or custom with at least Profiles read and write, Lists write, Subscriptions
+  write, Events write and Data Privacy write. A key missing a scope fails every call that
+  needs it.
 - **The lists**, all single opt-in, their ids from Lists & segments → the list → Settings:
   `KLAVIYO_MARKETING_CONSENT_LIST_ID` on Preview (`SV Staging`) and Production
   (`SV Marketing consent`, from `…_PRODUCTION`), and `KLAVIYO_ACCOUNT_LIST_ID`,
