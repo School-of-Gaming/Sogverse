@@ -1,5 +1,5 @@
 import { formatInTimeZone } from "date-fns-tz";
-import { isValidPhoneNumber } from "react-phone-number-input";
+import { isValidPhoneNumber } from "libphonenumber-js";
 import { SUPPORTED_CURRENCIES } from "@/lib/constants/currency";
 import { DEFAULT_LOCALE, isSupportedLocale, type SupportedLocale } from "@/lib/constants/locales";
 import { resolveTranslation } from "@/lib/i18n/resolve-translation";
