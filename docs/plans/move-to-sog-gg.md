@@ -118,6 +118,12 @@ Decided by the owner on 2026-10-15 and 2026-10-26.
   `substitution_sync_url`. On 2026-10-26 it was
   `https://sogverse.sog.gg/api/substitution-notifications/sync`. pg_net does not follow
   redirects.
+- **The Klaviyo parent sync URL sits beside it**, as `klaviyo_sync_url`, written on
+  2026-10-27 to `https://sogverse.sog.gg/api/klaviyo-sync/sync` (staging:
+  `https://sogverse-staging.sog.gg/api/klaviyo-sync/sync`). Its neighbour
+  `klaviyo_sync_secret` holds no host and stays. Nothing reads the entry until the
+  `feat/klaviyo-parent-sync` migration has run on that database; once it has, a stale host
+  fails silently: parent changes queue up and never reach Klaviyo. Update it either way.
 - **Updating a Stripe webhook endpoint's URL keeps its signing secret.** No Vercel env
   change is needed. The live endpoint is `we_1U2rZcCD5Q5ECgrcKzDSQRcJ` (2026-10-26).
 - **The email records stay untouched.** On 2026-10-26 the apex held:
@@ -325,8 +331,11 @@ back to `sog.gg` while that is still Webflow.
      `SET default_transaction_read_only = off;`, then
      `SELECT vault.update_secret(id, 'https://sog.gg/api/substitution-notifications/sync') FROM vault.secrets WHERE name = 'substitution_sync_url';`.
      Read the value back from `vault.decrypted_secrets`.
+   - **Klaviyo sync:** in the same session,
+     `SELECT vault.update_secret(id, 'https://sog.gg/api/klaviyo-sync/sync') FROM vault.secrets WHERE name = 'klaviyo_sync_url';`,
+     and read it back the same way.
 
-   This plan, approved by the owner on 2026-10-26, is the authority for these two
+   This plan, approved by the owner on 2026-10-26, is the authority for these
    production writes and for the Supabase Auth changes. Each one is still confirmed with
    the owner at the moment it is made.
 4. **Set Supabase Auth's site URL to `https://sog.gg`.** *Check:* a Google sign-in on
@@ -360,7 +369,8 @@ back to `sog.gg` while that is still Webflow.
      `https://staging.sog.gg/api/webhooks/stripe/products` (`stripe webhook_endpoints
      update`, without `--live`).
    - Staging Vault: `substitution_sync_url` becomes
-     `https://staging.sog.gg/api/substitution-notifications/sync`, the same way as step 3.
+     `https://staging.sog.gg/api/substitution-notifications/sync` and `klaviyo_sync_url`
+     becomes `https://staging.sog.gg/api/klaviyo-sync/sync`, the same way as step 3.
    - The staging Discord app's Interactions Endpoint URL, and the staging Slack app's
      Interactivity and `/link` URLs.
    - Claude connectors on staging: re-add them with `https://staging.sog.gg/api/mcp`.
