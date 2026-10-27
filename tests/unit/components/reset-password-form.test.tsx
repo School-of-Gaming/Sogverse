@@ -99,6 +99,9 @@ describe("mapping the update failure to copy", () => {
     await submitPassword("a-long-enough-password");
 
     expect(mockSupabaseClient.auth.signOut).toHaveBeenCalledTimes(1);
+    // Local is all that is left to do: the password change has already ended
+    // every other session the account held, and every AI-app grant.
+    expect(mockSupabaseClient.auth.signOut).toHaveBeenCalledWith({ scope: "local" });
   });
 
   it("leaves the session alone when the update itself failed", async () => {

@@ -36,7 +36,9 @@ round a step-up loop no scope can end.
 PostgREST checks only the JWT, so an access token from a revoked grant keeps working until
 it expires — up to one access-token lifetime, an hour. Only the role read is live: a
 demoted admin is refused on their next request. Nothing in Sogverse lists or revokes grants
-yet; that is done from the Supabase dashboard.
+yet; that is done from the Supabase dashboard. A grant is an ordinary session of the
+admin's, so a password change ends every grant they hold, and so does a sign-out of any
+`scope` other than `local`; that is why the app's own sign-outs use `local` scope.
 
 **Deleting an AI app's OAuth client cuts it off no faster than revoking a grant.** Supabase
 only marks the client deleted and leaves every grant and session it had in place, but its
