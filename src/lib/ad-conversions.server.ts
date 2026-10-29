@@ -2,7 +2,7 @@ import "server-only";
 import type {
   AdvertisedProductDetails,
   ConversionAccount,
-  MetaEnrolmentOutcome,
+  ReportedEnrolmentOutcome,
 } from "@/lib/marketing-events";
 import { reportMetaConversion } from "@/lib/meta-conversions.server";
 import { reportRedditConversion } from "@/lib/reddit-conversions.server";
@@ -33,7 +33,7 @@ export type AdConversion =
     }
   | {
       event: "enrolment";
-      outcome: MetaEnrolmentOutcome;
+      outcome: ReportedEnrolmentOutcome;
       product: AdvertisedProductDetails;
       sourcePath: string;
     };

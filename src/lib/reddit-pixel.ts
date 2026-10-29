@@ -42,6 +42,13 @@ const PIXEL_JS_SRC = "https://www.redditstatic.com/ads/pixel.js";
 /**
  * Reddit's global. It is callable, queues into `callQueue` until the library
  * has installed `sendEvent`, and then forwards every call to it.
+ *
+ * How the library arrives, read from Reddit's pixel.js rather than observed:
+ * at the end of its own top-level run it assigns `rdt.sendEvent` on the
+ * existing global — it fills our stub in, it does not replace `window.rdt` —
+ * and then drains `callQueue` synchronously. So by the script's `load`,
+ * `sendEvent` is set, and a `sendEvent` that is set is the one sign that a
+ * call reaches the library now rather than the queue.
  */
 interface Rdt {
   (...args: unknown[]): void;
@@ -62,15 +69,6 @@ declare global {
  * earlier document (tests reset the global) starts the load over.
  */
 let libraryLoaded: Promise<boolean> | null = null;
-
-/**
- * The global as it stood once the library had arrived, for the report that
- * cannot wait for a promise (`reportRedditEventNow`). Read off `window` at the
- * `load` rather than kept from the stub, so it holds whether the library
- * fills the stub in or replaces the global with its own; a stub installed
- * since — a new load after the global was reset — reads as not arrived.
- */
-let arrivedFor: Rdt | null = null;
 
 /** Reddit's queueing stub, exactly as its base code builds it. */
 function installStub(): Rdt {
@@ -111,10 +109,7 @@ export function loadRedditPixel(pixelId: string): Promise<boolean> {
   // The id on the URL is Reddit's own base code, which the library reads.
   script.src = `${PIXEL_JS_SRC}?pixel_id=${encodeURIComponent(pixelId)}`;
   libraryLoaded = new Promise<boolean>((resolve) => {
-    script.addEventListener("load", () => {
-      arrivedFor = window.rdt ?? null;
-      resolve(true);
-    });
+    script.addEventListener("load", () => resolve(true));
     script.addEventListener("error", () => resolve(false));
   });
   document.head.appendChild(script);
@@ -175,16 +170,20 @@ export function reportRedditEventNow(
   report: RedditBrowserEvent,
 ): boolean {
   if (typeof window === "undefined") return false;
-  if (window.rdt === undefined || window.rdt !== arrivedFor) return false;
   return trackIfStillOn(pathname, report);
 }
 
-/** The checks made at the moment of sending, and the send. */
+/**
+ * The checks made at the moment of sending, and the send — straight to the
+ * library's `sendEvent`, never through the stub. Without it the library has
+ * not arrived (or a `load` came without it), and the event is dropped rather
+ * than queued for a replay against a later URL.
+ */
 function trackIfStillOn(pathname: string, report: RedditBrowserEvent): boolean {
+  const sendEvent = window.rdt?.sendEvent;
+  if (typeof sendEvent !== "function") return false;
   if (!addressBarStillShows(pathname)) return false;
-  const rdt = window.rdt;
-  if (rdt === undefined) return false;
-  if ("product" in report) rdt("track", report.event, report.product);
-  else rdt("track", report.event);
+  if ("product" in report) sendEvent("track", report.event, report.product);
+  else sendEvent("track", report.event);
   return true;
 }

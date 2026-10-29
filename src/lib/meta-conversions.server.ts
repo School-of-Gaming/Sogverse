@@ -5,7 +5,7 @@ import {
   isValidPixelId,
   PIXEL_EVENTS,
   type ConversionAccount,
-  type MetaEnrolmentOutcome,
+  type ReportedEnrolmentOutcome,
   type MetaProductDetails,
 } from "@/lib/marketing-events";
 import { getOrigin } from "@/lib/url";
@@ -112,7 +112,7 @@ export type MetaConversion =
     }
   | {
       event: "enrolment";
-      outcome: MetaEnrolmentOutcome;
+      outcome: ReportedEnrolmentOutcome;
       product: MetaProductDetails;
       sourcePath: string;
     };

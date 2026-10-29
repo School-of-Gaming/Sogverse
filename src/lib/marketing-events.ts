@@ -101,12 +101,12 @@ export const ENROLMENT_OUTCOMES = [
 export type EnrolmentOutcome = (typeof ENROLMENT_OUTCOMES)[number];
 
 /**
- * The outcomes our servers report to Meta, both as `CompleteRegistration`.
- * Being handed to Stripe is not one: Meta's checkout start is the browser's
- * click, and a second report of it from here would count every paid attempt
- * twice.
+ * The outcomes our servers report to the advertising platforms, both as the
+ * platform's sign-up conversion. Being handed to Stripe is not one: every
+ * platform's checkout start is the browser's click, and a second report of it
+ * from here would count every paid attempt twice.
  */
-export type MetaEnrolmentOutcome = Exclude<EnrolmentOutcome, "sent_to_checkout">;
+export type ReportedEnrolmentOutcome = Exclude<EnrolmentOutcome, "sent_to_checkout">;
 
 /**
  * The account a server conversion is about: the one the request acts as — the

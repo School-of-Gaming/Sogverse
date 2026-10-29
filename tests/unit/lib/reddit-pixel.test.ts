@@ -52,13 +52,17 @@ const PRODUCT_VIEW: RedditBrowserEvent = {
   product: PRODUCT,
 };
 
-/** Every call made through the stub, in order. */
+/** Every call left in the stub's queue, in order. */
 function calls(): unknown[][] {
   return window.rdt?.callQueue ?? [];
 }
 
+/** Every call the library's `sendEvent` received, in order. */
+let sent: unknown[][] = [];
+
+/** The tracks that reached the library — never the queue's, which is replayed. */
 function tracked(): unknown[][] {
-  return calls().filter(([method]) => method === "track");
+  return sent.filter(([method]) => method === "track");
 }
 
 function insertedScripts(): HTMLScriptElement[] {
@@ -69,8 +73,22 @@ function insertedScripts(): HTMLScriptElement[] {
   );
 }
 
-/** jsdom fetches nothing, so the library's arrival is announced by hand. */
+/**
+ * jsdom fetches nothing, so the library's arrival is staged by hand, the way
+ * Reddit's pixel.js arrives: it installs `sendEvent` on the existing stub as
+ * it runs, and the script's `load` fires after.
+ */
 function libraryArrives() {
+  const rdt = window.rdt;
+  if (rdt === undefined) throw new Error("expected the stub");
+  rdt.sendEvent = (...args: unknown[]) => {
+    sent.push(args);
+  };
+  insertedScripts()[0]?.dispatchEvent(new Event("load"));
+}
+
+/** A `load` with no library behind it: `sendEvent` was never installed. */
+function scriptLoadsWithoutLibrary() {
   insertedScripts()[0]?.dispatchEvent(new Event("load"));
 }
 
@@ -87,6 +105,7 @@ beforeEach(() => {
   // A fresh global: the loader's first guard is `window.rdt`, so a stub left
   // behind by the previous case would make the next one assert about nothing.
   delete window.rdt;
+  sent = [];
   document.head.innerHTML = "";
   tabIsOn("/shop");
 });
@@ -157,17 +176,12 @@ describe("loadRedditPixel", () => {
   // call goes straight to it rather than into the queue.
   it("forwards to the library once it has installed itself", () => {
     void loadRedditPixel(PIXEL_ID);
-    const sent: unknown[][] = [];
-    const rdt = window.rdt;
-    if (rdt === undefined) throw new Error("expected the stub");
-    rdt.sendEvent = (...args: unknown[]) => {
-      sent.push(args);
-    };
+    libraryArrives();
 
-    rdt("track", "PageVisit");
+    window.rdt?.("track", "PageVisit");
 
-    expect(sent).toEqual([["track", "PageVisit"]]);
-    expect(tracked()).toEqual([]);
+    expect(tracked()).toEqual([["track", "PageVisit"]]);
+    expect(calls()).toEqual([["init", PIXEL_ID]]);
   });
 });
 
@@ -180,7 +194,21 @@ describe("reportRedditEvent", () => {
     libraryArrives();
     await report;
 
-    expect(calls().at(-1)).toEqual(["track", "PageVisit"]);
+    expect(tracked()).toEqual([["track", "PageVisit"]]);
+    expect(calls()).toEqual([["init", PIXEL_ID]]);
+  });
+
+  // "Arrived" means the library can take calls now. A `load` with no
+  // `sendEvent` behind it would leave a call in the queue, replayed later
+  // against whatever URL the tab shows then.
+  it("reports nothing, and queues nothing, when the script loads without installing the library", async () => {
+    const report = reportRedditEvent(PIXEL_ID, "/shop", PAGE_VISIT);
+
+    scriptLoadsWithoutLibrary();
+    await report;
+
+    expect(tracked()).toEqual([]);
+    expect(calls()).toEqual([["init", PIXEL_ID]]);
   });
 
   it("reports nothing when the tab has moved to another page meanwhile", async () => {
@@ -219,7 +247,7 @@ describe("reportRedditEvent", () => {
     libraryArrives();
     await report;
 
-    expect(calls().at(-1)).toEqual(["track", "PageVisit"]);
+    expect(tracked()).toEqual([["track", "PageVisit"]]);
   });
 
   it("compares the pathname through the URL parser, encoded or not", async () => {
@@ -229,7 +257,7 @@ describe("reportRedditEvent", () => {
     libraryArrives();
     await report;
 
-    expect(calls().at(-1)).toEqual(["track", "PageVisit"]);
+    expect(tracked()).toEqual([["track", "PageVisit"]]);
   });
 
   it("reports nothing when the library never loads", async () => {
@@ -248,7 +276,7 @@ describe("reportRedditEvent", () => {
     libraryArrives();
     await report;
 
-    expect(calls().at(-1)).toEqual(["track", "ViewContent", PRODUCT]);
+    expect(tracked()).toEqual([["track", "ViewContent", PRODUCT]]);
   });
 
   it("reports no product view when the tab has moved on meanwhile", async () => {
@@ -284,31 +312,43 @@ describe("reportRedditEventNow", () => {
     tabIsOn("/shop/abc-123");
     await libraryIsHere();
 
-    const sent = reportRedditEventNow("/shop/abc-123", CHECKOUT_START);
+    const reported = reportRedditEventNow("/shop/abc-123", CHECKOUT_START);
 
-    expect(sent).toBe(true);
+    expect(reported).toBe(true);
     expect(tracked()).toEqual([
       ["track", "AddToCart", { ...PRODUCT, value: 0 }],
     ]);
+    expect(calls()).toEqual([["init", PIXEL_ID]]);
   });
 
   it("drops the event, rather than queueing it, while the library is still downloading", () => {
     tabIsOn("/shop/abc-123");
     void loadRedditPixel(PIXEL_ID);
 
-    const sent = reportRedditEventNow("/shop/abc-123", CHECKOUT_START);
+    const reported = reportRedditEventNow("/shop/abc-123", CHECKOUT_START);
     libraryArrives();
 
-    expect(sent).toBe(false);
+    expect(reported).toBe(false);
     expect(tracked()).toEqual([]);
+    expect(calls()).toEqual([["init", PIXEL_ID]]);
+  });
+
+  it("drops the event when the script loaded without installing the library", async () => {
+    tabIsOn("/shop/abc-123");
+    const loaded = loadRedditPixel(PIXEL_ID);
+    scriptLoadsWithoutLibrary();
+    await loaded;
+
+    expect(reportRedditEventNow("/shop/abc-123", CHECKOUT_START)).toBe(false);
+    expect(calls()).toEqual([["init", PIXEL_ID]]);
   });
 
   it("never starts a load of its own", () => {
     tabIsOn("/shop/abc-123");
 
-    const sent = reportRedditEventNow("/shop/abc-123", CHECKOUT_START);
+    const reported = reportRedditEventNow("/shop/abc-123", CHECKOUT_START);
 
-    expect(sent).toBe(false);
+    expect(reported).toBe(false);
     expect(insertedScripts()).toHaveLength(0);
     expect(window.rdt).toBeUndefined();
   });

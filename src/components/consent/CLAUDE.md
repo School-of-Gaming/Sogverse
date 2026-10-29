@@ -29,8 +29,8 @@ browser:
    answered on a shared device.
 4. **The vendor's id is configured**, and is an id rather than a placeholder — a run of
    digits for Meta's pixel, an `a2_` or `t2_` id for Reddit's, a `GTM-` id for the
-   container. Unset means that script is off; for Meta's pixel it also means our servers
-   report nothing to Meta, one switch for both.
+   container. Unset means that script is off; for either pixel it also means our servers
+   report nothing to that platform, one switch for both.
 
 ## Why they load only on marketing pages
 

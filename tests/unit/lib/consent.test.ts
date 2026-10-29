@@ -257,6 +257,20 @@ describe("clearAdvertisingStorage", () => {
     expect(keysOf(storage)).toEqual(["sog-theme"]);
   });
 
+  // Reddit's keys are taken on their prefix because they were read, not seen:
+  // a key that reading missed is cleared all the same. Both real stores are
+  // pinned in the consent banner's withdrawal test.
+  it("removes a Reddit key nobody has named", () => {
+    const storage = fakeStorage({
+      _rdt_something: "1",
+      "sog-theme": "dark",
+    });
+
+    clearAdvertisingStorage(storage);
+
+    expect(keysOf(storage)).toEqual(["sog-theme"]);
+  });
+
   // The bug a remove-while-walking implementation has: deleting a key shifts
   // every later one down an index, so the next match is stepped over. Three
   // adjacent matches is the shape that catches it.

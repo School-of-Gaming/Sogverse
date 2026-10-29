@@ -5,7 +5,7 @@ import {
   isValidRedditPixelId,
   REDDIT_CONVERSION_EVENTS,
   type ConversionAccount,
-  type MetaEnrolmentOutcome,
+  type ReportedEnrolmentOutcome,
   type RedditProductDetails,
 } from "@/lib/marketing-events";
 import { getOrigin } from "@/lib/url";
@@ -60,7 +60,7 @@ export type RedditConversion =
     }
   | {
       event: "enrolment";
-      outcome: MetaEnrolmentOutcome;
+      outcome: ReportedEnrolmentOutcome;
       product: RedditProductDetails;
       sourcePath: string;
     };

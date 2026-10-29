@@ -132,23 +132,24 @@ export function advertisingCookieNames(cookies: string): string[] {
  * and a purpose to each of its keys, and Google's are taken on the prefix its
  * cookies already use.
  *
- * `_rdt_cfg` is Reddit's: the configuration its library caches in session
- * storage. Unlike the others it was read off the library's source, not
- * observed on a visit — which also means it may never be written here, since
- * the CSP refuses the fetch that configuration comes from. It is swept all the
- * same: a key the library can write is a key a withdrawal has to clear, and a
- * reading of its source cannot promise the store stays empty.
+ * Reddit's are taken on `_rdt_`, the prefix its cookies use too. The one key
+ * known — `_rdt_cfg`, the configuration its library caches in session
+ * storage — was read off the library's pixel.js, not observed on a visit, so
+ * the prefix covers whatever else that reading missed. It may never be written
+ * here, since the CSP refuses the fetch that configuration comes from; it is
+ * swept all the same: a key the library can write is a key a withdrawal has
+ * to clear, and a reading of its source cannot promise the store stays empty.
  */
 const ADVERTISING_STORAGE_KEYS = [
   "multiFbc",
   "lastExternalReferrer",
   "lastExternalReferrerTime",
-  "_rdt_cfg",
 ] as const;
 const ADVERTISING_STORAGE_PREFIXES = [
   "fbevents^$",
   "pixel_mutex:",
   "_gcl_",
+  "_rdt_",
 ] as const;
 
 /**
@@ -182,8 +183,8 @@ export interface ConsentState {
   /** Vercel Web Analytics and Speed Insights. */
   analytics: boolean;
   /**
-   * The Meta and Reddit pixels, the conversions our servers report to Meta, and
-   * the Tag Manager container.
+   * The Meta and Reddit pixels, the conversions our servers report to Meta and
+   * Reddit, and the Tag Manager container.
    */
   marketing: boolean;
   /** When the answer was given, ISO-8601. Stored so a refusal can age out. */
