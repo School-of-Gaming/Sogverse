@@ -5,7 +5,6 @@ import {
   klaviyoListsFor,
   klaviyoProfileFor,
   newsletterProperties,
-  productStartsAt,
   subscriptionSourceOnSend,
 } from "@/lib/klaviyo-sync/contract";
 import type {
@@ -325,45 +324,6 @@ describe("the lists", () => {
   });
 });
 
-describe("a product's first session", () => {
-  it("is the first slot after a start date the product does not meet on", () => {
-    // Tuesday 1 September; the Wednesday 17:00 slot, in Helsinki summer time.
-    expect(productStartsAt(CLUB)).toBe("2026-09-02T14:00:00.000Z");
-  });
-
-  it("is the start date itself when a slot falls on it, at that day's earliest slot", () => {
-    expect(
-      productStartsAt({
-        ...CLUB,
-        start_date: "2026-09-02",
-        slots: [
-          { weekday: 2, start_time: "18:30:00" },
-          { weekday: 2, start_time: "16:00:00" },
-          { weekday: 4, start_time: "09:00:00" },
-        ],
-      }),
-    ).toBe("2026-09-02T13:00:00.000Z");
-  });
-
-  it("takes the offset in force on the session's date, across the autumn clock change", () => {
-    const monday = (start_date: string): KlaviyoProduct => ({
-      ...CLUB,
-      start_date,
-      slots: [{ weekday: 0, start_time: "17:00:00" }],
-    });
-    // Helsinki leaves summer time early on Sunday 25 October 2026. The
-    // runtime is put in that zone too, where a walk over zoned instants would
-    // repeat or skip the changeover day.
-    vi.stubEnv("TZ", "Europe/Helsinki");
-    expect(productStartsAt(monday("2026-10-19"))).toBe("2026-10-19T14:00:00.000Z");
-    expect(productStartsAt(monday("2026-10-24"))).toBe("2026-10-26T15:00:00.000Z");
-  });
-
-  it("is null for a product with no slots", () => {
-    expect(productStartsAt(CAMP)).toBeNull();
-  });
-});
-
 describe("the events", () => {
   const base = {
     event_id: "e1",
@@ -473,7 +433,6 @@ describe("the events", () => {
           "product_url": "string",
           "seat_holder": "string",
           "spoken_language": "string",
-          "starts_at": "string",
           "topic": "string",
           "utm_campaign": "string",
           "utm_content": "null",
@@ -532,7 +491,6 @@ describe("the events", () => {
         seat_holder: "gamer",
         gamer_birth_year: 2016,
         gamer_gender: "boy",
-        starts_at: "2026-09-02T14:00:00.000Z",
         delivery_mode: "in_person",
         location: "Espoo",
         spoken_language: "fi",
@@ -571,7 +529,6 @@ describe("the events", () => {
     expect(event.properties).toMatchObject({
       product_id: null,
       billing_mode: null,
-      starts_at: null,
       product_url: null,
       seat_holder: "parent",
       gamer_birth_year: null,

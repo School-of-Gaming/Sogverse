@@ -1,15 +1,12 @@
 import { formatInTimeZone } from "date-fns-tz";
 import { isValidPhoneNumber } from "libphonenumber-js";
 import { getPathname } from "@/i18n/navigation";
-import { weekdayOf } from "@/lib/calendar-date";
 import { SUPPORTED_CURRENCIES } from "@/lib/constants/currency";
 import { DEFAULT_LOCALE, isSupportedLocale, type SupportedLocale } from "@/lib/constants/locales";
 import { ROUTES } from "@/lib/constants/routes";
 import { resolveTranslation } from "@/lib/i18n/resolve-translation";
 import type { KlaviyoEvent, KlaviyoPropertyValue } from "@/lib/klaviyo";
-import { dateTimeInstant } from "@/lib/schedule-occurrence";
 import { isProductionDeployment } from "@/lib/seo/deployment";
-import { firstSessionDate } from "@/lib/session-dates";
 import { UTM_FIELDS, UTM_QUERY_PARAMS, type UtmField } from "@/lib/utm";
 import type {
   KlaviyoEventRow,
@@ -130,12 +127,6 @@ export const EVENT_PROPERTIES = {
   gamerBirthYear: "gamer_birth_year",
   /** On an enrolment and a session: the gamer's gender; null on a parent's own seat or a gamer with none. */
   gamerGender: "gamer_gender",
-  /**
-   * On an enrolment: the product's first session, an ISO instant — the first
-   * slot on or after its start date, at that slot's time in the product's
-   * zone. Null when the product has no slots.
-   */
-  startsAt: "starts_at",
   /** On an enrolment. */
   deliveryMode: "delivery_mode",
   /** On an enrolment: the location's canonical name; null when the product has none. */
@@ -372,26 +363,6 @@ function seatProperties(
 }
 
 /**
- * The product's first session, as an ISO instant: the first date on or after
- * its start date that one of its slots falls on, at the earliest of that
- * day's slot times, read in the product's own zone — so the offset is the one
- * in force on that date. Null when the product has no slots, and so no time
- * of day to pin.
- */
-export function productStartsAt(product: KlaviyoProduct): string | null {
-  if (product.slots.length === 0) return null;
-  const date = firstSessionDate(
-    product.start_date,
-    product.slots.map((slot) => slot.weekday),
-  );
-  const [startTime] = product.slots
-    .filter((slot) => slot.weekday === weekdayOf(date))
-    .map((slot) => slot.start_time)
-    .sort();
-  return dateTimeInstant(date, startTime, product.timezone).toISOString();
-}
-
-/**
  * The absolute address of the product's page in the parent's locale, on the
  * canonical site origin. It is the shop address for every type: a
  * municipality club's page opens there too, and its town's `/schools/<slug>`
@@ -438,7 +409,6 @@ export function klaviyoEventFor(
         ...base,
         properties: {
           ...seatProperties(row.properties, locale),
-          [EVENT_PROPERTIES.startsAt]: product === null ? null : productStartsAt(product),
           [EVENT_PROPERTIES.deliveryMode]: product?.delivery_mode ?? null,
           [EVENT_PROPERTIES.location]: product?.location_name ?? null,
           [EVENT_PROPERTIES.spokenLanguage]: product?.spoken_language_code ?? null,
