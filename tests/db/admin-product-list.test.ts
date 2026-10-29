@@ -251,6 +251,10 @@ describe("ProductsService.getAdminListPage", () => {
       expect(
         await fixturesMatching({ search: CLUB_WED_SV, geduId: TEST_IDS.GEDU }),
       ).toEqual([CLUB_WED_SV]);
+      // A product the gedu is not on: only the gedu filter can empty this.
+      expect(
+        await fixturesMatching({ search: MUNI_AT_MUNI, geduId: TEST_IDS.GEDU }),
+      ).toEqual([]);
       expect(await fixturesMatching({ search: CLUB_WED_SV, weekday: 0 })).toEqual([]);
     });
 
