@@ -62,6 +62,11 @@ export function seatAnswerArgs(
 /**
  * The same answers as Checkout Session metadata, for a paid seat the webhook
  * writes once the money lands. Only the keys that hold a value are written.
+ *
+ * Because they ride the Checkout Session metadata, Stripe keeps both values
+ * with the payment, and the privacy policy's Stripe provider bullet names them
+ * for that reason: when either stops (or another starts) travelling through
+ * Stripe, that bullet changes in every locale in the same change.
  */
 export function seatAnswersToSessionMetadata(
   args: SeatAnswerArgs,
