@@ -43,11 +43,9 @@ const CLUB: KlaviyoProduct = {
   delivery_mode: "in_person",
   spoken_language_code: "fi",
   location_name: "Espoo",
-  // A Tuesday; the club meets on Wednesdays.
   start_date: "2026-09-01",
   end_date: "2027-05-31",
   timezone: "Europe/Helsinki",
-  slots: [{ weekday: 2, start_time: "17:00:00" }],
 };
 
 const CAMP: KlaviyoProduct = {
@@ -58,7 +56,6 @@ const CAMP: KlaviyoProduct = {
   product_type: "camp",
   start_date: "2026-06-01",
   end_date: "2026-06-05",
-  slots: [],
 };
 
 const EVENT: KlaviyoProduct = {

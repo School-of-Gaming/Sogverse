@@ -190,7 +190,6 @@ describe("drainKlaviyoSync", () => {
         start_date: "2026-09-01",
         end_date: null,
         timezone: "Europe/Helsinki",
-        slots: [],
       },
     };
     outbox({

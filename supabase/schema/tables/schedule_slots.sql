@@ -46,20 +46,6 @@ CREATE INDEX idx_schedule_slots_product ON public.schedule_slots USING btree (pr
 
 
 --
--- Name: schedule_slots schedule_slots_klaviyo_changed; Type: TRIGGER; Schema: public; Owner: -
---
-
-CREATE TRIGGER schedule_slots_klaviyo_changed AFTER UPDATE OF weekday, start_time ON public.schedule_slots FOR EACH ROW WHEN (((old.weekday IS DISTINCT FROM new.weekday) OR (old.start_time IS DISTINCT FROM new.start_time))) EXECUTE FUNCTION public.klaviyo_product_changed();
-
-
---
--- Name: schedule_slots schedule_slots_klaviyo_written; Type: TRIGGER; Schema: public; Owner: -
---
-
-CREATE TRIGGER schedule_slots_klaviyo_written AFTER INSERT OR DELETE ON public.schedule_slots FOR EACH ROW EXECUTE FUNCTION public.klaviyo_product_changed();
-
-
---
 -- Name: schedule_slots schedule_slots_updated_at; Type: TRIGGER; Schema: public; Owner: -
 --
 

@@ -28,18 +28,7 @@ CREATE FUNCTION public.klaviyo_product_document(p_product_id uuid) RETURNS jsonb
                            ),
            'start_date',   p.start_date,
            'end_date',     p.end_date,
-           'timezone',     p.timezone,
-           'slots',        COALESCE((
-                             SELECT jsonb_agg(
-                                      jsonb_build_object(
-                                        'weekday',    s.weekday,
-                                        'start_time', s.start_time
-                                      )
-                                      ORDER BY s.weekday
-                                    )
-                               FROM public.schedule_slots s
-                              WHERE s.product_id = p.id
-                           ), '[]'::jsonb)
+           'timezone',     p.timezone
          )
     FROM public.products p
    WHERE p.id = p_product_id;
@@ -50,7 +39,7 @@ $$;
 -- Name: FUNCTION klaviyo_product_document(p_product_id uuid); Type: COMMENT; Schema: public; Owner: -
 --
 
-COMMENT ON FUNCTION public.klaviyo_product_document(p_product_id uuid) IS 'One product as Klaviyo is told about it: id, every name with its locale (the app picks the reader''s through resolveTranslation, never SQL), topic, product_type, billing_mode, delivery_mode, spoken_language_code, location_name (the location''s canonical name, null when the product has none), start_date, end_date, timezone, and slots — every weekly slot as {weekday (0 = Monday), start_time (HH:MM:SS, the product''s zone)}, ordered by weekday, empty when it has none. NULL for a product that does not exist. Granted to nobody.';
+COMMENT ON FUNCTION public.klaviyo_product_document(p_product_id uuid) IS 'One product as Klaviyo is told about it: id, every name with its locale (the app picks the reader''s through resolveTranslation, never SQL), topic, product_type, billing_mode, delivery_mode, spoken_language_code, location_name (the location''s canonical name, null when the product has none), start_date, end_date and timezone. NULL for a product that does not exist. Granted to nobody.';
 
 
 --

@@ -23,7 +23,7 @@ $$;
 -- Name: FUNCTION klaviyo_product_changed(); Type: COMMENT; Schema: public; Owner: -
 --
 
-COMMENT ON FUNCTION public.klaviyo_product_changed() IS 'Trigger on products (topic, type, billing mode, delivery mode, spoken language, location, dates, zone), product_translations (a name written, changed or removed) and schedule_slots (a slot written, moved or removed): files every parent holding a participation in the product in the Klaviyo profile outbox. Granted to nobody.';
+COMMENT ON FUNCTION public.klaviyo_product_changed() IS 'Trigger on products (topic, type, billing mode, delivery mode, spoken language, location, dates, zone) and product_translations (a name written, changed or removed): files every parent holding a participation in the product in the Klaviyo profile outbox. Granted to nobody.';
 
 
 --

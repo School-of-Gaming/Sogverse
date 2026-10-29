@@ -13,7 +13,7 @@ import {
   createAuthenticatedClient,
 } from "./helpers";
 import { SEED, TEST_CREDENTIALS, TEST_IDS } from "./constants";
-import { createScheduleSlot, createTestProduct, deleteTestProducts } from "./product-helpers";
+import { createTestProduct, deleteTestProducts } from "./product-helpers";
 
 /**
  * Parents announce their changes to Klaviyo: the triggers that file a parent in
@@ -30,7 +30,7 @@ import { createScheduleSlot, createTestProduct, deleteTestProducts } from "./pro
  * names.
  *
  * Products 930-933 (see the product-helpers allocation registry): CLUB, a club
- * starting tomorrow with a Wednesday slot, ENDED, one that ended long ago,
+ * starting tomorrow, ENDED, one that ended long ago,
  * FREE, a free club, and MUNI, a municipality club on an external contract.
  */
 
@@ -131,7 +131,6 @@ describe("the Klaviyo sync", () => {
     );
     await deleteTestProducts(admin, PRODUCTS);
     await createTestProduct(admin, { id: CLUB, seatCount: null, topic: "roblox_studio" });
-    await createScheduleSlot(admin, CLUB, { weekday: 2, startTime: "17:30" });
     await createTestProduct(admin, { id: FREE, seatCount: null, billingMode: "free" });
     await createTestProduct(admin, {
       id: MUNI,
@@ -268,7 +267,7 @@ describe("the Klaviyo sync", () => {
       expect((await profileRow(TEST_IDS.CUSTOMER))?.seq).toBe(5);
     });
 
-    it("files every parent with a seat in a product whose language, slots or location's name change", async () => {
+    it("files every parent with a seat in a product whose language or location's name changes", async () => {
       const clubSeat = await seat(CLUB, "active");
       const muniSeat = await seat(MUNI, "active");
       await clearProfiles([TEST_IDS.CUSTOMER]);
@@ -277,17 +276,10 @@ describe("the Klaviyo sync", () => {
       expect((await profileRow(TEST_IDS.CUSTOMER))?.seq).toBe(1);
       await admin.from("products").update({ spoken_language_code: "en" }).eq("id", CLUB);
 
-      await createScheduleSlot(admin, CLUB, { weekday: 4, startTime: "10:00" });
-      expect((await profileRow(TEST_IDS.CUSTOMER))?.seq).toBe(3);
-      await admin.from("schedule_slots").update({ start_time: "11:00" }).eq("product_id", CLUB).eq("weekday", 4);
-      expect((await profileRow(TEST_IDS.CUSTOMER))?.seq).toBe(4);
-      await admin.from("schedule_slots").delete().eq("product_id", CLUB).eq("weekday", 4);
-      expect((await profileRow(TEST_IDS.CUSTOMER))?.seq).toBe(5);
-
       // The municipality club is at the seeded municipality.
       const { data: location } = await admin.from("locations").select("name").eq("id", TEST_IDS.LOCATION_MUNICIPALITY).single();
       await admin.from("locations").update({ name: "Klaviyo Helsinki" }).eq("id", TEST_IDS.LOCATION_MUNICIPALITY);
-      expect((await profileRow(TEST_IDS.CUSTOMER))?.seq).toBe(6);
+      expect((await profileRow(TEST_IDS.CUSTOMER))?.seq).toBe(3);
       await admin.from("locations").update({ name: location?.name ?? "" }).eq("id", TEST_IDS.LOCATION_MUNICIPALITY);
 
       await admin.from("participations").delete().in("id", [clubSeat, muniSeat]);
@@ -971,9 +963,8 @@ describe("the Klaviyo sync", () => {
         delivery_mode: "online",
         spoken_language_code: "en",
         location_name: null,
-        slots: [{ weekday: 2, start_time: "17:30:00" }],
       });
-      expect(byId.get(past)?.product).toMatchObject({ product_type: "camp", end_date: "2020-01-05", slots: [] });
+      expect(byId.get(past)?.product).toMatchObject({ product_type: "camp", end_date: "2020-01-05" });
       expect(byId.get(muni)?.product).toMatchObject({ billing_mode: "external_contract", location_name: "Helsinki" });
       expect(byId.get(active)?.product.names).toEqual(
         expect.arrayContaining([expect.objectContaining({ locale: "fi", name: "Klaviyo-kerho" })]),

@@ -17,9 +17,8 @@
 -- 3. The outbox stores each event's Klaviyo unique id and is unique on it,
 --    since a session event's id is not `<kind>:<source id>`.
 -- 4. The product document Klaviyo hears grows delivery_mode,
---    spoken_language_code, location_name and slots, and the triggers that
---    re-file a product's parents watch those columns, schedule_slots and the
---    location's name.
+--    spoken_language_code and location_name, and the triggers that re-file a
+--    product's parents watch those columns and the location's name.
 -- 5. Seats carry the booking's UTM tag and School of Gaming marketing answer,
 --    which create_participation, confirm_paid_participation and the waitlist
 --    join take as new optional arguments. A waitlist join's waitlisted event
@@ -178,24 +177,13 @@ CREATE OR REPLACE FUNCTION public.klaviyo_product_document(p_product_id uuid) RE
                            ),
            'start_date',   p.start_date,
            'end_date',     p.end_date,
-           'timezone',     p.timezone,
-           'slots',        COALESCE((
-                             SELECT jsonb_agg(
-                                      jsonb_build_object(
-                                        'weekday',    s.weekday,
-                                        'start_time', s.start_time
-                                      )
-                                      ORDER BY s.weekday
-                                    )
-                               FROM public.schedule_slots s
-                              WHERE s.product_id = p.id
-                           ), '[]'::jsonb)
+           'timezone',     p.timezone
          )
     FROM public.products p
    WHERE p.id = p_product_id;
 $$;
 
-COMMENT ON FUNCTION public.klaviyo_product_document(p_product_id uuid) IS 'One product as Klaviyo is told about it: id, every name with its locale (the app picks the reader''s through resolveTranslation, never SQL), topic, product_type, billing_mode, delivery_mode, spoken_language_code, location_name (the location''s canonical name, null when the product has none), start_date, end_date, timezone, and slots — every weekly slot as {weekday (0 = Monday), start_time (HH:MM:SS, the product''s zone)}, ordered by weekday, empty when it has none. NULL for a product that does not exist. Granted to nobody.';
+COMMENT ON FUNCTION public.klaviyo_product_document(p_product_id uuid) IS 'One product as Klaviyo is told about it: id, every name with its locale (the app picks the reader''s through resolveTranslation, never SQL), topic, product_type, billing_mode, delivery_mode, spoken_language_code, location_name (the location''s canonical name, null when the product has none), start_date, end_date and timezone. NULL for a product that does not exist. Granted to nobody.';
 
 -- What re-files a product's parents follows what the document reads.
 DROP TRIGGER products_klaviyo ON public.products;
@@ -215,18 +203,7 @@ CREATE TRIGGER products_klaviyo
         OR old.timezone IS DISTINCT FROM new.timezone)
   EXECUTE FUNCTION public.klaviyo_product_changed();
 
-CREATE TRIGGER schedule_slots_klaviyo_written
-  AFTER INSERT OR DELETE ON public.schedule_slots
-  FOR EACH ROW EXECUTE FUNCTION public.klaviyo_product_changed();
-
-CREATE TRIGGER schedule_slots_klaviyo_changed
-  AFTER UPDATE OF weekday, start_time ON public.schedule_slots
-  FOR EACH ROW
-  WHEN (old.weekday IS DISTINCT FROM new.weekday
-        OR old.start_time IS DISTINCT FROM new.start_time)
-  EXECUTE FUNCTION public.klaviyo_product_changed();
-
-COMMENT ON FUNCTION public.klaviyo_product_changed() IS 'Trigger on products (topic, type, billing mode, delivery mode, spoken language, location, dates, zone), product_translations (a name written, changed or removed) and schedule_slots (a slot written, moved or removed): files every parent holding a participation in the product in the Klaviyo profile outbox. Granted to nobody.';
+COMMENT ON FUNCTION public.klaviyo_product_changed() IS 'Trigger on products (topic, type, billing mode, delivery mode, spoken language, location, dates, zone) and product_translations (a name written, changed or removed): files every parent holding a participation in the product in the Klaviyo profile outbox. Granted to nobody.';
 
 CREATE OR REPLACE FUNCTION public.enqueue_klaviyo_parents_of_location(p_location_id uuid) RETURNS void
     LANGUAGE sql SECURITY DEFINER

@@ -32,15 +32,6 @@ export const klaviyoProduct = z.object({
   start_date: z.string(),
   end_date: z.string().nullable(),
   timezone: z.string(),
-  /** Every weekly slot, ordered by weekday; empty when the product has none. */
-  slots: z.array(
-    z.object({
-      /** 0 = Monday … 6 = Sunday. */
-      weekday: z.number(),
-      /** `HH:MM:SS`, a wall-clock time in the product's `timezone`. */
-      start_time: z.string(),
-    }),
-  ),
 });
 
 export type KlaviyoProduct = z.infer<typeof klaviyoProduct>;
