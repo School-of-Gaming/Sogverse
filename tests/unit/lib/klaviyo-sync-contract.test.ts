@@ -1,17 +1,24 @@
-import { afterEach, describe, expect, it, vi } from "vitest";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import {
   EVENT_METRICS,
   klaviyoEventFor,
   klaviyoListsFor,
   klaviyoProfileFor,
   newsletterProperties,
-  subscribesOnSend,
+  productStartsAt,
+  subscriptionSourceOnSend,
 } from "@/lib/klaviyo-sync/contract";
 import type {
   KlaviyoEventRow,
   KlaviyoParentSnapshot,
   KlaviyoProduct,
 } from "@/lib/klaviyo-sync/snapshot.contracts";
+
+// An enrolment's `product_url` is the locale-prefixed, translated address the
+// real path builder makes, which the setup's stub flattens; `next/navigation`
+// comes with it, since the setup's partial mock would starve next-intl.
+vi.unmock("@/i18n/navigation");
+vi.unmock("next/navigation");
 
 /**
  * **The Klaviyo contract is public, and these snapshots are its lock.**
@@ -34,9 +41,14 @@ const CLUB: KlaviyoProduct = {
   topic: "minecraft_java",
   product_type: "consumer_club",
   billing_mode: "paid",
+  delivery_mode: "in_person",
+  spoken_language_code: "fi",
+  location_name: "Espoo",
+  // A Tuesday; the club meets on Wednesdays.
   start_date: "2026-09-01",
   end_date: "2027-05-31",
   timezone: "Europe/Helsinki",
+  slots: [{ weekday: 2, start_time: "17:00:00" }],
 };
 
 const CAMP: KlaviyoProduct = {
@@ -47,6 +59,7 @@ const CAMP: KlaviyoProduct = {
   product_type: "camp",
   start_date: "2026-06-01",
   end_date: "2026-06-05",
+  slots: [],
 };
 
 const EVENT: KlaviyoProduct = {
@@ -152,6 +165,7 @@ function shapeOf(value: unknown): string {
   return typeof value;
 }
 
+beforeEach(() => vi.stubEnv("NEXT_PUBLIC_SITE_URL", "https://sogverse.sog.gg"));
 afterEach(() => vi.unstubAllEnvs());
 
 describe("the profile", () => {
@@ -159,31 +173,32 @@ describe("the profile", () => {
     expect(shapes(klaviyoProfileFor(FULL).properties)).toMatchInlineSnapshot(`
       {
         "sog_account_created_at": "string",
-        "sog_active_until": "string",
         "sog_country": "string",
         "sog_currency": "string",
         "sog_email_verified_at": "string",
         "sog_env": "string",
         "sog_first_payment_at": "string",
-        "sog_first_utm_campaign": "string",
-        "sog_first_utm_content": "string",
-        "sog_first_utm_medium": "string",
-        "sog_first_utm_source": "string",
-        "sog_first_utm_term": "string",
+        "sog_gamer_birth_years": "array<string>",
         "sog_gamer_count": "number",
-        "sog_gamers": "array<{"birth_year":"number","gender":"string"}>",
+        "sog_gamer_genders": "array<string>",
         "sog_home_location": "string",
         "sog_home_location_id": "string",
         "sog_last_payment_at": "string",
         "sog_linked_game_accounts": "array<string>",
         "sog_locale": "string",
-        "sog_purchased_product_types": "array<string>",
-        "sog_purchased_topics": "array<string>",
+        "sog_paid_until": "string",
+        "sog_product_topics": "array<string>",
+        "sog_product_types": "array<string>",
         "sog_registration_marketing_answer": "boolean",
         "sog_signup_intent": "string",
         "sog_signup_intent_id": "string",
         "sog_spoken_languages": "array<string>",
         "sog_total_paid_eur": "number",
+        "sog_utm_campaign": "string",
+        "sog_utm_content": "string",
+        "sog_utm_medium": "string",
+        "sog_utm_source": "string",
+        "sog_utm_term": "string",
         "sog_waitlisted_products": "array<string>",
       }
     `);
@@ -203,30 +218,58 @@ describe("the profile", () => {
     });
   });
 
-  it("counts only paid seats as purchases, and runs to the latest paid seat's end", () => {
+  it("lists every held seat's type and topic, and is paid until the latest paid seat's end", () => {
     vi.stubEnv("VERCEL_ENV", "production");
     const { properties } = klaviyoProfileFor(FULL);
     expect(properties).toMatchObject({
       sog_env: "production",
       sog_locale: "fi",
-      sog_gamers: [{ birth_year: 2016, gender: "boy" }],
-      // The municipality's contracted seat and the waitlisted event are no purchase.
-      sog_purchased_product_types: ["camp", "consumer_club"],
-      sog_purchased_topics: ["minecraft_java", "roblox_studio"],
-      // The club's paid period, as a Helsinki date; the camp ended in June.
-      sog_active_until: "2026-11-03",
+      sog_utm_source: "meta",
+      // The municipality's contracted seat counts; the waitlisted event does not.
+      sog_product_types: ["camp", "consumer_club", "municipality_club"],
+      sog_product_topics: ["digital_safety", "minecraft_java", "roblox_studio"],
+      // The club's paid period, as a Helsinki date; the camp ended in June,
+      // and the municipality's seat is not paid.
+      sog_paid_until: "2026-11-03",
       sog_waitlisted_products: ["Fortnite Event"],
       sog_total_paid_eur: 159,
       sog_registration_marketing_answer: true,
     });
   });
 
-  it("runs an event without an end date to its first day", () => {
+  it("is paid until an event without an end date's first day", () => {
     const { properties } = klaviyoProfileFor({
       ...FULL,
       participations: [{ id: "p3", status: "active", product: EVENT }],
     });
-    expect(properties.sog_active_until).toBe("2026-12-12");
+    expect(properties.sog_paid_until).toBe("2026-12-12");
+  });
+
+  it("is paid until nothing on free seats alone", () => {
+    const { properties } = klaviyoProfileFor({
+      ...FULL,
+      participations: [{ id: "p3", status: "active", product: { ...EVENT, billing_mode: "free" } }],
+    });
+    expect(properties.sog_paid_until).toBeNull();
+    expect(properties.sog_product_types).toEqual(["event"]);
+  });
+
+  it("lists one birth year per gamer, twins twice, and each gender once", () => {
+    const { properties } = klaviyoProfileFor({
+      ...FULL,
+      gamers: [
+        { birth_year: 2019, gender: null, minecraft: false, roblox: true },
+        { birth_year: 2016, gender: "girl", minecraft: false, roblox: false },
+        { birth_year: 2016, gender: "girl", minecraft: false, roblox: false },
+        { birth_year: 2014, gender: "boy", minecraft: true, roblox: false },
+      ],
+    });
+    expect(properties).toMatchObject({
+      sog_gamer_count: 4,
+      sog_gamer_birth_years: ["2014", "2016", "2016", "2019"],
+      sog_gamer_genders: ["boy", "girl"],
+      sog_linked_game_accounts: ["minecraft", "roblox"],
+    });
   });
 
   it("is staging everywhere off production", () => {
@@ -242,7 +285,9 @@ describe("the profile", () => {
     expect(profile.phoneNumber).toBeNull();
     expect(profile.country).toBeNull();
     expect(profile).not.toHaveProperty("locale");
-    expect(profile.properties.sog_active_until).toBeNull();
+    expect(profile.properties.sog_paid_until).toBeNull();
+    expect(profile.properties.sog_gamer_birth_years).toEqual([]);
+    expect(profile.properties.sog_gamer_genders).toEqual([]);
     expect(profile.properties.sog_total_paid_eur).toBe(0);
   });
 
@@ -258,16 +303,64 @@ describe("the lists", () => {
     expect(klaviyoListsFor(EMPTY)).toEqual(["account"]);
   });
 
-  it("counts neither a free seat nor a waitlisted one", () => {
+  it("counts a seat whatever its billing mode, an event included", () => {
     expect(
       klaviyoListsFor({
         ...FULL,
         participations: [
           { id: "p1", status: "active", product: { ...CLUB, billing_mode: "free" } },
-          { id: "p2", status: "waitlisted", product: CAMP },
+          { id: "p3", status: "active", product: { ...EVENT, billing_mode: "free" } },
         ],
       }),
+    ).toEqual(["account", "club", "event"]);
+  });
+
+  it("does not count a waitlisted seat", () => {
+    expect(
+      klaviyoListsFor({
+        ...FULL,
+        participations: [{ id: "p2", status: "waitlisted", product: CAMP }],
+      }),
     ).toEqual(["account"]);
+  });
+});
+
+describe("a product's first session", () => {
+  it("is the first slot after a start date the product does not meet on", () => {
+    // Tuesday 1 September; the Wednesday 17:00 slot, in Helsinki summer time.
+    expect(productStartsAt(CLUB)).toBe("2026-09-02T14:00:00.000Z");
+  });
+
+  it("is the start date itself when a slot falls on it, at that day's earliest slot", () => {
+    expect(
+      productStartsAt({
+        ...CLUB,
+        start_date: "2026-09-02",
+        slots: [
+          { weekday: 2, start_time: "18:30:00" },
+          { weekday: 2, start_time: "16:00:00" },
+          { weekday: 4, start_time: "09:00:00" },
+        ],
+      }),
+    ).toBe("2026-09-02T13:00:00.000Z");
+  });
+
+  it("takes the offset in force on the session's date, across the autumn clock change", () => {
+    const monday = (start_date: string): KlaviyoProduct => ({
+      ...CLUB,
+      start_date,
+      slots: [{ weekday: 0, start_time: "17:00:00" }],
+    });
+    // Helsinki leaves summer time early on Sunday 25 October 2026. The
+    // runtime is put in that zone too, where a walk over zoned instants would
+    // repeat or skip the changeover day.
+    vi.stubEnv("TZ", "Europe/Helsinki");
+    expect(productStartsAt(monday("2026-10-19"))).toBe("2026-10-19T14:00:00.000Z");
+    expect(productStartsAt(monday("2026-10-24"))).toBe("2026-10-26T15:00:00.000Z");
+  });
+
+  it("is null for a product with no slots", () => {
+    expect(productStartsAt(CAMP)).toBeNull();
   });
 });
 
@@ -277,6 +370,27 @@ describe("the events", () => {
     customer_id: PARENT,
     occurred_at: "2026-10-01T09:00:00+00:00",
   };
+  const gamerSeat = {
+    seat_holder: "gamer" as const,
+    gamer_birth_year: 2016,
+    gamer_gender: "boy" as const,
+  };
+  const enrolled = {
+    ...base,
+    kind: "enrolled",
+    unique_id: "enrolled:p1",
+    properties: {
+      source_id: "p1",
+      product: CLUB,
+      ...gamerSeat,
+      utm_source: "meta",
+      utm_medium: "paid",
+      utm_campaign: "autumn",
+      utm_content: null,
+      utm_term: null,
+      marketing_opt_in: true,
+    },
+  } satisfies KlaviyoEventRow;
   const rows: KlaviyoEventRow[] = [
     {
       ...base,
@@ -284,11 +398,19 @@ describe("the events", () => {
       unique_id: `account_created:${PARENT}`,
       properties: { source_id: PARENT, product: null },
     },
+    enrolled,
     {
       ...base,
-      kind: "purchase",
-      unique_id: "purchase:p1",
-      properties: { source_id: "p1", product: CLUB, first_purchase: true },
+      kind: "session",
+      unique_id: "session:s1:p1:present",
+      properties: {
+        source_id: "a1",
+        product: CLUB,
+        ...gamerSeat,
+        attended: true,
+        session_date: "2026-09-02",
+        session_starts_at: "2026-09-02T14:00:00+00:00",
+      },
     },
     {
       ...base,
@@ -319,8 +441,9 @@ describe("the events", () => {
     expect(EVENT_METRICS).toMatchInlineSnapshot(`
       {
         "account_created": "SV Account Created",
-        "purchase": "SV Purchase",
+        "enrolled": "SV Enrolled",
         "seat_offered": "SV Seat Offered",
+        "session": "SV Session",
         "subscription_cancelled": "SV Subscription Cancelled",
         "waitlisted": "SV Waitlisted",
       }
@@ -338,17 +461,43 @@ describe("the events", () => {
     ).toMatchInlineSnapshot(`
       {
         "SV Account Created": {},
-        "SV Purchase": {
-          "first_purchase": "boolean",
+        "SV Enrolled": {
+          "billing_mode": "string",
+          "delivery_mode": "string",
+          "gamer_birth_year": "number",
+          "gamer_gender": "string",
+          "location": "string",
           "product_id": "string",
           "product_name": "string",
           "product_type": "string",
+          "product_url": "string",
+          "seat_holder": "string",
+          "spoken_language": "string",
+          "starts_at": "string",
           "topic": "string",
+          "utm_campaign": "string",
+          "utm_content": "null",
+          "utm_medium": "string",
+          "utm_source": "string",
+          "utm_term": "null",
         },
         "SV Seat Offered": {
           "product_id": "string",
           "product_name": "string",
           "product_type": "string",
+          "topic": "string",
+        },
+        "SV Session": {
+          "attended": "boolean",
+          "billing_mode": "string",
+          "gamer_birth_year": "number",
+          "gamer_gender": "string",
+          "product_id": "string",
+          "product_name": "string",
+          "product_type": "string",
+          "seat_holder": "string",
+          "session_date": "string",
+          "session_starts_at": "string",
           "topic": "string",
         },
         "SV Subscription Cancelled": {
@@ -369,32 +518,84 @@ describe("the events", () => {
     `);
   });
 
-  it("keeps the row's unique id and time, and names the product in the parent's locale", () => {
-    const [, purchase] = rows.map((row) => klaviyoEventFor(row, FULL));
-    expect(purchase).toEqual({
-      metric: "SV Purchase",
-      uniqueId: "purchase:p1",
+  it("keeps the row's unique id and time, and words the product for the parent's locale", () => {
+    expect(klaviyoEventFor(enrolled, FULL)).toEqual({
+      metric: "SV Enrolled",
+      uniqueId: "enrolled:p1",
       time: "2026-10-01T09:00:00+00:00",
       properties: {
         product_id: CLUB.id,
         product_name: "Minecraft-kerho Espoo",
         product_type: "consumer_club",
         topic: "minecraft_java",
-        first_purchase: true,
+        billing_mode: "paid",
+        seat_holder: "gamer",
+        gamer_birth_year: 2016,
+        gamer_gender: "boy",
+        starts_at: "2026-09-02T14:00:00.000Z",
+        delivery_mode: "in_person",
+        location: "Espoo",
+        spoken_language: "fi",
+        product_url: `https://sogverse.sog.gg/fi/kauppa/${CLUB.id}`,
+        utm_source: "meta",
+        utm_medium: "paid",
+        utm_campaign: "autumn",
+        utm_content: null,
+        utm_term: null,
       },
     });
   });
 
-  it("subscribes only an account created with the box ticked", () => {
-    const [created, purchase] = rows;
+  it("links a municipality club's enrolment to its page at the shop address", () => {
+    const event = klaviyoEventFor(
+      { ...enrolled, properties: { ...enrolled.properties, product: MUNICIPAL } },
+      { ...FULL, profile: { ...FULL.profile, locale: "en" } },
+    );
+    expect(event.properties.product_url).toBe(`https://sogverse.sog.gg/en/shop/${MUNICIPAL.id}`);
+  });
+
+  it("says nothing of a product that is gone, and of a parent's own seat's gamer", () => {
+    const event = klaviyoEventFor(
+      {
+        ...enrolled,
+        properties: {
+          ...enrolled.properties,
+          product: null,
+          seat_holder: "parent",
+          gamer_birth_year: null,
+          gamer_gender: null,
+        },
+      },
+      FULL,
+    );
+    expect(event.properties).toMatchObject({
+      product_id: null,
+      billing_mode: null,
+      starts_at: null,
+      product_url: null,
+      seat_holder: "parent",
+      gamer_birth_year: null,
+      gamer_gender: null,
+    });
+  });
+
+  it("subscribes a ticked account creation and an enrolment that said yes, each under its own source", () => {
+    const [created, , session] = rows;
     const answered = (answer: boolean | null): KlaviyoParentSnapshot => ({
       ...FULL,
       attribution: { ...FULL.attribution, registration_marketing_consent: answer },
     });
-    expect(subscribesOnSend(created, answered(true))).toBe(true);
-    expect(subscribesOnSend(created, answered(false))).toBe(false);
-    expect(subscribesOnSend(created, answered(null))).toBe(false);
-    expect(subscribesOnSend(purchase, answered(true))).toBe(false);
+    const optIn = (answer: boolean | null): KlaviyoEventRow => ({
+      ...enrolled,
+      properties: { ...enrolled.properties, marketing_opt_in: answer },
+    });
+    expect(subscriptionSourceOnSend(created, answered(true))).toBe("Sogverse account registration");
+    expect(subscriptionSourceOnSend(created, answered(false))).toBeNull();
+    expect(subscriptionSourceOnSend(created, answered(null))).toBeNull();
+    expect(subscriptionSourceOnSend(optIn(true), answered(null))).toBe("Sogverse product sign-up");
+    expect(subscriptionSourceOnSend(optIn(false), answered(true))).toBeNull();
+    expect(subscriptionSourceOnSend(optIn(null), answered(true))).toBeNull();
+    expect(subscriptionSourceOnSend(session, answered(true))).toBeNull();
   });
 });
 

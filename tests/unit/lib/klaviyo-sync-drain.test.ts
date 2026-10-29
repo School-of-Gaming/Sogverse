@@ -7,9 +7,10 @@ import type { KlaviyoParentSnapshot } from "@/lib/klaviyo-sync/snapshot.contract
  * is upserted onto the profile Klaviyo already holds for their id and added
  * to its lists — production's history lists, or staging's one list — and one
  * without is deleted; one row's failure is finished with a label and the rest
- * go on; an event whose parent is gone is finished unsent; and the one
- * subscription goes only with a ticked account creation, into the marketing
- * consent list.
+ * go on; an event whose parent is gone is finished unsent; an event goes
+ * under the row's own unique id; and a subscription goes only with a ticked
+ * account creation or an enrolment that said yes to the product's mailing
+ * ask, into the marketing consent list under that answer's source.
  */
 
 const klaviyo = {
@@ -183,9 +184,13 @@ describe("drainKlaviyoSync", () => {
         topic: "minecraft_java" as const,
         product_type: "consumer_club" as const,
         billing_mode: "paid" as const,
+        delivery_mode: "in_person" as const,
+        spoken_language_code: "fi" as const,
+        location_name: null,
         start_date: "2026-09-01",
         end_date: null,
         timezone: "Europe/Helsinki",
+        slots: [],
       },
     };
     outbox({
@@ -285,6 +290,59 @@ describe("drainKlaviyoSync", () => {
       { p_event_id: "e1" },
       { p_event_id: "e2" },
       { p_event_id: "e3" },
+    ]);
+  });
+
+  it("sends an enrolment under the row's unique id and subscribes only a yes to the product's ask", async () => {
+    const enrolment = (eventId: string, optIn: boolean | null) => ({
+      event_id: eventId,
+      kind: "enrolled",
+      unique_id: `enrolled:${eventId}`,
+      customer_id: KEPT,
+      occurred_at: "2026-10-01T09:00:00+00:00",
+      properties: {
+        source_id: eventId,
+        product: null,
+        seat_holder: "gamer",
+        gamer_birth_year: 2016,
+        gamer_gender: null,
+        utm_source: null,
+        utm_medium: null,
+        utm_campaign: null,
+        utm_content: null,
+        utm_term: null,
+        marketing_opt_in: optIn,
+      },
+    });
+    outbox({
+      events: ["e1", "e2", "e3"].map((id) => ({
+        event_id: id,
+        kind: "enrolled",
+        customer_id: KEPT,
+      })),
+      eventRows: [enrolment("e1", true), enrolment("e2", false), enrolment("e3", null)],
+      // The registration's own answer has no say over an enrolment's.
+      snapshots: [snapshot(KEPT, true)],
+    });
+
+    const result = await drainKlaviyoSync();
+
+    expect(result).toMatchObject({ eventsSent: 3, failed: 0 });
+    for (const [i, id] of ["e1", "e2", "e3"].entries()) {
+      expect(klaviyo.createKlaviyoEvent).toHaveBeenNthCalledWith(
+        i + 1,
+        { email: `${KEPT}@example.com`, externalId: KEPT },
+        expect.objectContaining({ metric: "SV Enrolled", uniqueId: `enrolled:${id}` }),
+      );
+    }
+    expect(klaviyo.subscribeKlaviyoProfile.mock.calls).toEqual([
+      [
+        {
+          email: `${KEPT}@example.com`,
+          listId: "list-consent",
+          customSource: "Sogverse product sign-up",
+        },
+      ],
     ]);
   });
 
