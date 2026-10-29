@@ -239,7 +239,7 @@ function landingPage(
     publishedAt: "2026-10-01T08:00:00Z",
     sections: [],
     pictures: {},
-    versions: versions.map((v) => ({ ...v, title: v.slug, summary: "S" })),
+    versions: versions.map((v) => ({ ...v, title: v.slug, summary: "S", heroImageId: null })),
   };
 }
 

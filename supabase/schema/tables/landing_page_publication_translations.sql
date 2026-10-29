@@ -46,7 +46,7 @@ COMMENT ON COLUMN public.landing_page_publication_translations.share_title IS 'T
 -- Name: COLUMN landing_page_publication_translations.share_image_id; Type: COMMENT; Schema: public; Owner: -
 --
 
-COMMENT ON COLUMN public.landing_page_publication_translations.share_image_id IS 'The live share picture in this language, copied by publishing, or NULL to use the hero''s. The catalogue''s replace and removal change it without a republish, as they do the pictures in sections.';
+COMMENT ON COLUMN public.landing_page_publication_translations.share_image_id IS 'The live share picture in this language, copied by publishing, or NULL to use this language''s hero picture. The catalogue''s replace and removal change it without a republish, as they do the pictures in sections and in the words.';
 
 
 --
@@ -76,7 +76,7 @@ ALTER TABLE ONLY public.landing_page_publication_translations
 -- Name: landing_page_publication_translations trg_landing_page_publication_translations_refresh_pictures; Type: TRIGGER; Schema: public; Owner: -
 --
 
-CREATE TRIGGER trg_landing_page_publication_translations_refresh_pictures AFTER INSERT OR DELETE OR UPDATE OF share_image_id ON public.landing_page_publication_translations FOR EACH ROW EXECUTE FUNCTION public.refresh_landing_pictures();
+CREATE TRIGGER trg_landing_page_publication_translations_refresh_pictures AFTER INSERT OR DELETE OR UPDATE OF share_image_id, section_texts ON public.landing_page_publication_translations FOR EACH ROW EXECUTE FUNCTION public.refresh_landing_pictures();
 
 
 --

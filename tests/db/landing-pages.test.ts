@@ -48,7 +48,9 @@ import { inTurn } from "../helpers/in-turn";
  * and their rules; the derived completeness; pictures from the image
  * catalogue, with the catalogue's replace (`repoint_landing_images`) and
  * removal (a trigger) reaching both copies; the shapes each section's
- * pictures may be, held equal to the section registry's; the share card
+ * pictures may be, held equal to the section registry's; the hero picture,
+ * each language's own in its hero words, derived, refused, required with its
+ * alt text, moved, unset and cloned per language; the share card
  * override per language — a share picture held to every one of the
  * catalogue's guarantees, and to the wide shape, while any language of either
  * copy names it, and share words — with publishing, the clone and the
@@ -105,6 +107,7 @@ const SHOT_1 = "00000000-0000-4000-8000-0000000008a2";
 const SHOT_2 = "00000000-0000-4000-8000-0000000008a3";
 const FAQ = "00000000-0000-4000-8000-0000000008a4";
 const FAQ_1 = "00000000-0000-4000-8000-0000000008a5";
+const ASIDE = "00000000-0000-4000-8000-0000000008aa";
 
 const hex = (seed: string): string => seed.repeat(8);
 
@@ -125,14 +128,20 @@ const pictured = (entry: string) => {
   return { path: row?.path, purpose: row?.purpose };
 };
 
-/** The fixture structure: a hero with a picture, and a call to action. */
-function structure(heroImage: string | null = PIC_A): LandingSection[] {
+/**
+ * The fixture structure: a hero and a call to action. The hero's picture is
+ * each language's own, in its words, never the structure's.
+ */
+function structure(): LandingSection[] {
   return [
-    heroImage === null
-      ? { id: HERO, type: "hero" }
-      : { id: HERO, type: "hero", imageId: heroImage },
+    { id: HERO, type: "hero" },
     { id: CTA, type: "cta", background: "default", button: { kind: "internal", path: "/shop" } },
   ];
+}
+
+/** A text section picturing `imageId`, for a picture the structure names. */
+function aside(imageId: string): LandingSection {
+  return { id: ASIDE, type: "text", background: "default", imageSide: "end", imageId };
 }
 
 /** Every required word of `structure()` in one language. */
@@ -191,7 +200,7 @@ describe("landing pages", () => {
     expect(entries.error).toBeNull();
     const pages = await admin.from("landing_pages").insert([
       { id: PAGE_A, sections: structure() },
-      { id: PAGE_B, sections: structure(null) },
+      { id: PAGE_B, sections: structure() },
     ]);
     expect(pages.error).toBeNull();
     const versions = await admin.from("landing_page_translations").insert([
@@ -238,6 +247,25 @@ describe("landing pages", () => {
       .eq("page_id", id)
       .order("locale");
     return data ?? [];
+  }
+
+  /**
+   * Each language's hero picture, by locale, in both copies: the imageId in
+   * the hero section's words. Read raw, as the database holds it.
+   */
+  async function heroPictures(id: string, heroId: string = HERO) {
+    const read = async (table: "landing_page_translations" | "landing_page_publication_translations") => {
+      const { data, error } = await admin.from(table).select("locale, section_texts").eq("page_id", id).order("locale");
+      expect(error).toBeNull();
+      return Object.fromEntries(
+        (data ?? []).flatMap(({ locale, section_texts }) => {
+          const hero = asObject(section_texts)[heroId];
+          const picture = hero === undefined ? undefined : asObject(hero).imageId;
+          return picture === undefined ? [] : [[locale, picture]];
+        }),
+      );
+    };
+    return { draft: await read("landing_page_translations"), live: await read("landing_page_publication_translations") };
   }
 
   beforeAll(async () => {
@@ -372,7 +400,7 @@ describe("landing pages", () => {
       const { error } = await adminAuth.rpc("save_landing_page_structure", {
         p_id: PAGE_A,
         p_sections: [
-          { id: HERO, type: "hero", imageId: PIC_A },
+          { id: HERO, type: "hero" },
           { id: CTA, type: "cta", button: { kind: "internal", path: "/shop" } },
         ],
       });
@@ -388,7 +416,7 @@ describe("landing pages", () => {
   describe("create and save", () => {
     it("creates a page whole, stamping the admin and deriving a missing slug from the title", async () => {
       const { id } = await service.createPage({
-        sections: structure(null),
+        sections: structure(),
         versions: [
           {
             locale: "fi",
@@ -406,7 +434,7 @@ describe("landing pages", () => {
         .eq("id", id)
         .single();
       expect(row?.author_id).toBe(TEST_IDS.ADMIN);
-      expect(row?.sections).toEqual(structure(null));
+      expect(row?.sections).toEqual(structure());
       expect(row?.pictures).toEqual({});
       const [fi] = await draftVersions(id);
       expect(fi.slug).toBe("fixture-pelikerhot-aanekoskella");
@@ -428,14 +456,15 @@ describe("landing pages", () => {
     it("refuses a section of no known type, and a picture that is not a uuid", async () => {
       const unknown = await adminAuth.rpc("save_landing_page_structure", {
         p_id: PAGE_A,
-        p_sections: [...structure(null), { id: GALLERY, type: "video" }],
+        p_sections: [...structure(), { id: GALLERY, type: "video" }],
       });
       expect(unknown.error?.code).toBe("23514");
       const badPicture = await adminAuth.rpc("save_landing_page_structure", {
         p_id: PAGE_A,
-        p_sections: [{ id: HERO, type: "hero", imageId: "not-an-id" }],
+        p_sections: [...structure(), { ...aside(PIC_A), imageId: "not-an-id" }],
       });
       expect(badPicture.error?.code).toBe("23514");
+      expect(badPicture.error?.message).toBe("The picture of section 3 must be a catalogue entry's lowercase uuid");
     });
 
     it("knows every section type the registry does", async () => {
@@ -540,7 +569,7 @@ describe("landing pages", () => {
     it("refuses an id no page has", async () => {
       const structureOnly = await adminAuth.rpc("save_landing_page_structure", {
         p_id: PAGE_MISSING,
-        p_sections: structure(null),
+        p_sections: structure(),
       });
       expect(structureOnly.error?.code).toBe("P0002");
       const one = await adminAuth.rpc("save_landing_page_version", {
@@ -873,7 +902,7 @@ describe("landing pages", () => {
       const live = await new LandingPageService(anon).getPublishedPage(PAGE_A);
       expect(live?.versions.map((v) => v.locale)).toEqual(["en"]);
       expect(live?.sections).toEqual(structure());
-      expect(live?.pictures).toEqual({ [PIC_A]: pictured(PIC_A) });
+      expect(live?.pictures).toEqual({});
       expect(live?.versions[0].sectionTexts).toEqual(words("en"));
 
       const bySlug = await new LandingPageService(anon).getPublishedPageBySlug("en", SLUG_A);
@@ -882,7 +911,14 @@ describe("landing pages", () => {
 
       const listed = await new LandingPageService(anon).listPublishedPages();
       expect(listed.find((page) => page.id === PAGE_A)?.versions).toEqual([
-        { locale: "en", title: "Fixture landing en", summary: "A summary in en.", slug: SLUG_A },
+        {
+          locale: "en",
+          title: "Fixture landing en",
+          summary: "A summary in en.",
+          slug: SLUG_A,
+          // The list reads each version's hero picture alone of its words.
+          heroImageId: null,
+        },
       ]);
     });
 
@@ -934,10 +970,10 @@ describe("landing pages", () => {
         const client = clientFor(role);
         const calls = [
           client.rpc("create_landing_page", {
-            p_sections: structure(null),
+            p_sections: structure(),
             p_versions: [{ locale: "en", title: "T" }],
           }),
-          client.rpc("save_landing_page_structure", { p_id: PAGE_A, p_sections: structure(null) }),
+          client.rpc("save_landing_page_structure", { p_id: PAGE_A, p_sections: structure() }),
           client.rpc("save_landing_page_version", { p_id: PAGE_A, p_locale: "en", p_title: "T" }),
           client.rpc("remove_landing_page_version", { p_id: PAGE_A, p_locale: "fi" }),
           client.rpc("publish_landing_page", { p_id: PAGE_A }),
@@ -1092,10 +1128,10 @@ describe("landing pages", () => {
       // A minted id, so no fixture range is spent on a product deleted mid-case.
       const doomed = await createTestProduct(admin, { seatCount: null });
       try {
-        await service.saveStructure(PAGE_A, withPicks([doomed, LISTED]));
+        await service.saveStructure(PAGE_A, [...withPicks([doomed, LISTED]), aside(PIC_A)]);
         await deleteTestProducts(admin, [doomed]);
         // Reordering keeps the stale pick and adds nothing new: accepted.
-        await service.saveStructure(PAGE_A, withPicks([LISTED, doomed]));
+        await service.saveStructure(PAGE_A, [...withPicks([LISTED, doomed]), aside(PIC_A)]);
         // A catalogue replace rewrites the structure around it: accepted.
         const { error } = await adminAuth.rpc("repoint_landing_images", {
           p_from: PIC_A,
@@ -1181,12 +1217,12 @@ describe("landing pages", () => {
       await reseed();
       const product = await adminAuth.rpc("save_landing_page_structure", {
         p_id: PAGE_A,
-        p_sections: structure(PRODUCT_PICTURE),
+        p_sections: [...structure(), aside(PRODUCT_PICTURE)],
       });
       expect(product.error?.code).toBe("23514");
       const gone = await adminAuth.rpc("save_landing_page_structure", {
         p_id: PAGE_A,
-        p_sections: structure(PAGE_MISSING),
+        p_sections: [...structure(), aside(PAGE_MISSING)],
       });
       expect(gone.error?.code).toBe("23503");
       // True of an id that never existed as of one removed since it was chosen.
@@ -1198,6 +1234,11 @@ describe("landing pages", () => {
 
     it("a replace moves both copies' pictures, a live page's without a republish", async () => {
       await reseed();
+      await service.saveStructure(PAGE_A, [...structure(), aside(PIC_A)]);
+      await service.saveVersion(PAGE_A, {
+        ...version("en", SLUG_A),
+        sectionTexts: { ...words("en"), [ASIDE]: { heading: "Aside", body: "Body", imageAlt: "Alt" } },
+      });
       await service.publishPage(PAGE_A);
       const { data: moved, error } = await adminAuth.rpc("repoint_landing_images", {
         p_from: PIC_A,
@@ -1207,7 +1248,8 @@ describe("landing pages", () => {
       expect(moved).toBe(1);
 
       const view = await service.getAdminPage(PAGE_A);
-      expect(view?.draft.sections[0]).toEqual({ id: HERO, type: "hero", imageId: PIC_B });
+      expect(view?.draft.sections[2]).toEqual(aside(PIC_B));
+      expect(view?.publication?.sections[2]).toEqual(aside(PIC_B));
       expect(view?.draft.pictures).toEqual({ [PIC_B]: pictured(PIC_B) });
       expect(view?.publication?.pictures).toEqual({ [PIC_B]: pictured(PIC_B) });
       expect(view?.hasUnpublishedChanges).toBe(false);
@@ -1215,6 +1257,7 @@ describe("landing pages", () => {
 
     it("refuses to repoint at a product picture, moving nothing", async () => {
       await reseed();
+      await service.saveStructure(PAGE_A, [...structure(), aside(PIC_A)]);
       const { error } = await adminAuth.rpc("repoint_landing_images", {
         p_from: PIC_A,
         p_to: PRODUCT_PICTURE,
@@ -1233,26 +1276,31 @@ describe("landing pages", () => {
         images: [{ id: SHOT_1, imageId: PIC_DOOMED_TOO }],
       };
       await writePage(PAGE_A, {
-        sections: [...structure(PIC_DOOMED), gallery],
+        sections: [...structure(), aside(PIC_DOOMED), gallery],
         versions: [
           {
             ...version("en", SLUG_A),
-            sectionTexts: { ...words("en"), [GALLERY]: { alts: { [SHOT_1]: "Doomed" } } },
+            sectionTexts: {
+              ...words("en"),
+              [ASIDE]: { heading: "Aside", body: "Body", imageAlt: "Doomed aside" },
+              [GALLERY]: { alts: { [SHOT_1]: "Doomed" } },
+            },
           },
         ],
       });
       await service.publishPage(PAGE_A);
 
       // Removed by the admin's own session, as the catalogue's route does.
-      const hero = await adminAuth.from("catalogue_images").delete().eq("id", PIC_DOOMED);
-      expect(hero.error).toBeNull();
+      const single = await adminAuth.from("catalogue_images").delete().eq("id", PIC_DOOMED);
+      expect(single.error).toBeNull();
       const shot = await adminAuth.from("catalogue_images").delete().eq("id", PIC_DOOMED_TOO);
       expect(shot.error).toBeNull();
 
+      const unpictured = { id: ASIDE, type: "text", background: "default", imageSide: "end" };
       const view = await service.getAdminPage(PAGE_A);
-      expect(view?.draft.sections).toEqual(structure(null));
+      expect(view?.draft.sections).toEqual([...structure(), unpictured]);
       expect(view?.draft.pictures).toEqual({});
-      expect(view?.publication?.sections).toEqual(structure(null));
+      expect(view?.publication?.sections).toEqual([...structure(), unpictured]);
       expect(view?.publication?.pictures).toEqual({});
       expect(Object.keys(view?.publication?.versions[0].sectionTexts ?? {})).toEqual(
         expect.arrayContaining([HERO, CTA]),
@@ -1283,10 +1331,7 @@ describe("landing pages", () => {
         background: "default",
         images: [{ id: SHOT_2, imageId: PIC_B }],
       });
-      expect(view?.draft.pictures).toEqual({
-        [PIC_A]: pictured(PIC_A),
-        [PIC_B]: pictured(PIC_B),
-      });
+      expect(view?.draft.pictures).toEqual({ [PIC_B]: pictured(PIC_B) });
     });
   });
 
@@ -1329,14 +1374,14 @@ describe("landing pages", () => {
         expect(error?.message).toContain(shareImageId);
         expect(error?.message).not.toContain("catalogue_images");
         const created = await adminAuth.rpc("create_landing_page", {
-          p_sections: structure(null),
+          p_sections: structure(),
           p_versions: [{ locale: "en", title: "Fixture share", share_image_id: shareImageId }],
         });
         expect(created.error?.code).toBe(code);
       }
       const { draft } = await copies(PAGE_A);
       expect(draft.versions.map((v) => v.locale)).toEqual(["en"]);
-      expect(draft.pictures).toEqual({ [PIC_A]: pictured(PIC_A) });
+      expect(draft.pictures).toEqual({});
     });
 
     it("is per language: a picture only Finnish names is in use, by its path, until Finnish lets it go", async () => {
@@ -1353,7 +1398,7 @@ describe("landing pages", () => {
         ["en", "", null, ""],
         ["fi", "Liity kerhoon", PIC_B, "Kerho"],
       ]);
-      expect(draft.pictures).toEqual({ [PIC_A]: pictured(PIC_A), [PIC_B]: pictured(PIC_B) });
+      expect(draft.pictures).toEqual({ [PIC_B]: pictured(PIC_B) });
       expect(await usedBy(PIC_B)).toEqual([false]);
       // None of it counts toward completeness.
       for (const row of await draftVersions(PAGE_A)) expect(row.is_complete).toBe(true);
@@ -1364,7 +1409,7 @@ describe("landing pages", () => {
 
       // A write of Finnish without it lets it go.
       await service.saveVersion(PAGE_A, version("fi", FI_SLUG));
-      expect((await copies(PAGE_A)).draft.pictures).toEqual({ [PIC_A]: pictured(PIC_A) });
+      expect((await copies(PAGE_A)).draft.pictures).toEqual({});
       expect(await usedBy(PIC_B)).toEqual([]);
     });
 
@@ -1374,10 +1419,7 @@ describe("landing pages", () => {
       await service.saveVersion(PAGE_A, { ...version("fi", FI_SLUG), shareImageId: PIC_B });
       await service.saveVersion(PAGE_A, version("en", SLUG_A));
 
-      expect((await copies(PAGE_A)).draft.pictures).toEqual({
-        [PIC_A]: pictured(PIC_A),
-        [PIC_B]: pictured(PIC_B),
-      });
+      expect((await copies(PAGE_A)).draft.pictures).toEqual({ [PIC_B]: pictured(PIC_B) });
     });
 
     it("refuses a share title longer than a share card's", async () => {
@@ -1406,7 +1448,7 @@ describe("landing pages", () => {
       });
       minted.push(id);
       const { draft } = await copies(id);
-      expect(draft.pictures).toEqual({ [PIC_A]: pictured(PIC_A), [PIC_B]: pictured(PIC_B) });
+      expect(draft.pictures).toEqual({ [PIC_B]: pictured(PIC_B) });
       expect(draft.versions[0]).toMatchObject({
         shareTitle: "Created with a card",
         shareImageId: PIC_B,
@@ -1426,7 +1468,7 @@ describe("landing pages", () => {
       await service.publishPage(PAGE_A);
 
       const live = await new LandingPageService(anon).getPublishedPage(PAGE_A);
-      expect(live?.pictures).toEqual({ [PIC_A]: pictured(PIC_A), [PIC_B]: pictured(PIC_B) });
+      expect(live?.pictures).toEqual({ [PIC_B]: pictured(PIC_B) });
       expect(live?.versions.map((v) => [v.locale, v.shareTitle, v.shareImageId, v.shareImageAlt])).toEqual([
         ["en", "Join a fixture club", null, "A fixture"],
         ["fi", "", PIC_B, ""],
@@ -1459,7 +1501,7 @@ describe("landing pages", () => {
       await service.publishPage(PAGE_A);
       const republished = await new LandingPageService(anon).getPublishedPage(PAGE_A);
       expect(republished?.versions[1].shareImageId).toBeNull();
-      expect(republished?.pictures).toEqual({ [PIC_A]: pictured(PIC_A) });
+      expect(republished?.pictures).toEqual({});
       expect(await changed()).toBe(false);
       expect(await usedBy(PIC_B)).toEqual([]);
     });
@@ -1470,12 +1512,12 @@ describe("landing pages", () => {
       await service.publishPage(PAGE_A);
 
       await service.removeVersion(PAGE_A, "fi");
-      expect((await copies(PAGE_A)).draft.pictures).toEqual({ [PIC_A]: pictured(PIC_A) });
+      expect((await copies(PAGE_A)).draft.pictures).toEqual({});
       // Finnish is still live, its picture with it.
       expect(await usedBy(PIC_B)).toEqual([true]);
 
       await service.publishPage(PAGE_A);
-      expect((await copies(PAGE_A)).publication?.pictures).toEqual({ [PIC_A]: pictured(PIC_A) });
+      expect((await copies(PAGE_A)).publication?.pictures).toEqual({});
       expect(await usedBy(PIC_B)).toEqual([]);
 
       // And an unpublish takes the live copy's with it.
@@ -1503,7 +1545,7 @@ describe("landing pages", () => {
       expect(view.publication?.versions[1].shareImageId).toBe(PIC_DOOMED);
       expect(view.draft.sections).toEqual(structure());
       for (const paths of [view.draft.pictures, view.publication?.pictures]) {
-        expect(paths).toEqual({ [PIC_A]: pictured(PIC_A), [PIC_DOOMED]: pictured(PIC_DOOMED) });
+        expect(paths).toEqual({ [PIC_DOOMED]: pictured(PIC_DOOMED) });
       }
       expect(view.hasUnpublishedChanges).toBe(false);
     });
@@ -1540,14 +1582,251 @@ describe("landing pages", () => {
       const view = await copies(PAGE_A);
       expect(view.draft.versions[1]).toMatchObject({ shareImageId: null, shareImageAlt: "Tuhoon" });
       expect(view.publication?.versions[1].shareImageId).toBeNull();
-      // The hero's picture stays, and is what the card falls back to.
+      // The structure is untouched; the card falls back to this language's hero picture, when it names one.
       expect(view.draft.sections).toEqual(structure());
-      expect(view.draft.pictures).toEqual({ [PIC_A]: pictured(PIC_A) });
-      expect(view.publication?.pictures).toEqual({ [PIC_A]: pictured(PIC_A) });
+      expect(view.draft.pictures).toEqual({});
+      expect(view.publication?.pictures).toEqual({});
       expect(view.hasUnpublishedChanges).toBe(false);
       // A removal moves the working copy's last-saved time, as for any picture.
       const { data: after } = await admin.from("landing_pages").select("updated_at").eq("id", PAGE_A).single();
       expect(Date.parse(after?.updated_at ?? "")).toBeGreaterThan(Date.parse(before?.updated_at ?? ""));
+    });
+  });
+
+  // -------------------------------------------------------------------------
+  // The hero picture, per language
+  // -------------------------------------------------------------------------
+
+  describe("the hero picture", () => {
+    const FI_SLUG = "fixture-landing-a-fi";
+    const SLUGS = { en: SLUG_A, fi: FI_SLUG } as const;
+
+    /**
+     * Writes one complete language of page A, its hero's words replaced by
+     * `hero` beside the headline — through the RPC, since the hero picture in
+     * the words is what this file holds the database to.
+     */
+    function writeLanguage(locale: "en" | "fi", hero: Record<string, Json>) {
+      return adminAuth.rpc("save_landing_page_version", {
+        p_id: PAGE_A,
+        p_locale: locale,
+        p_title: `Fixture landing ${locale}`,
+        p_summary: `A summary in ${locale}.`,
+        p_slug: SLUGS[locale],
+        p_section_texts: { ...words(locale), [HERO]: { headline: `Fixture headline ${locale}`, ...hero } },
+      });
+    }
+
+    async function picturesOf(id: string) {
+      const draft = await admin.from("landing_pages").select("sections, pictures").eq("id", id).single();
+      const live = await admin.from("landing_page_publications").select("sections, pictures").eq("page_id", id).maybeSingle();
+      return { draft: draft.data, live: live.data };
+    }
+
+    /** Which copies of page A the catalogue's usage map lists under an entry. */
+    async function usedBy(entry: string) {
+      const usage = await new CatalogueImagesService(adminAuth).getUsage();
+      return (usage[entry] ?? [])
+        .filter((user) => user.kind === "landing-page" && user.id === PAGE_A)
+        .map((user) => (user.kind === "landing-page" ? user.is_live : null));
+    }
+
+    async function completeness(id: string) {
+      return Object.fromEntries((await draftVersions(id)).map(({ locale, is_complete }) => [locale, is_complete]));
+    }
+
+    it("is each language's own: two languages name two pictures, each in use while its language names it", async () => {
+      await reseed();
+      expect((await writeLanguage("en", { imageId: PIC_A, imageAlt: "A" })).error).toBeNull();
+      expect((await writeLanguage("fi", { imageId: PIC_B, imageAlt: "B" })).error).toBeNull();
+
+      expect((await heroPictures(PAGE_A)).draft).toEqual({ en: PIC_A, fi: PIC_B });
+      const { draft } = await picturesOf(PAGE_A);
+      // The structure names no picture; the page's pictures are its languages'.
+      expect(draft?.sections).toEqual(structure());
+      expect(draft?.pictures).toEqual({ [PIC_A]: pictured(PIC_A), [PIC_B]: pictured(PIC_B) });
+      expect(await usedBy(PIC_B)).toEqual([false]);
+
+      // Finnish letting its picture go lets it go from the page, and English's stays.
+      expect((await writeLanguage("fi", {})).error).toBeNull();
+      expect((await heroPictures(PAGE_A)).draft).toEqual({ en: PIC_A });
+      expect((await picturesOf(PAGE_A)).draft?.pictures).toEqual({ [PIC_A]: pictured(PIC_A) });
+      expect(await usedBy(PIC_B)).toEqual([]);
+
+      // Two languages naming one picture keep it in use while either does.
+      expect((await writeLanguage("fi", { imageId: PIC_A, imageAlt: "A" })).error).toBeNull();
+      expect((await writeLanguage("en", {})).error).toBeNull();
+      expect((await picturesOf(PAGE_A)).draft?.pictures).toEqual({ [PIC_A]: pictured(PIC_A) });
+
+      // Removing the language that names it lets it go.
+      expect((await adminAuth.rpc("remove_landing_page_version", { p_id: PAGE_A, p_locale: "fi" })).error).toBeNull();
+      expect((await picturesOf(PAGE_A)).draft?.pictures).toEqual({});
+    });
+
+    it("refuses a hero picture that is not a wide landing picture, not an id, or gone, saving nothing", async () => {
+      await reseed();
+      const notAnId = "The hero picture of the fi version must be a catalogue entry's lowercase uuid";
+      const cases: [Json, string, string][] = [
+        [PRODUCT_PICTURE, "23514", `The picture ${PRODUCT_PICTURE} is a product picture, and a landing page shows only landing pictures`],
+        [SQUARE, "23514", `A hero section's picture must be wide 16:9, because it is the page's link preview, and the picture ${SQUARE} is square 1:1`],
+        [PORTRAIT, "23514", `A hero section's picture must be wide 16:9, because it is the page's link preview, and the picture ${PORTRAIT} is portrait 4:5`],
+        [PAGE_MISSING, "23503", `No picture in the catalogue has the id ${PAGE_MISSING}`],
+        ["not-an-id", "23514", notAnId],
+        [42, "23514", notAnId],
+        [null, "23514", notAnId],
+      ];
+      for (const [imageId, code, message] of cases) {
+        const { error } = await writeLanguage("fi", { imageId, imageAlt: "Kuva" });
+        expect(error?.code, String(imageId)).toBe(code);
+        expect(error?.message, String(imageId)).toBe(message);
+      }
+      // As a page is created, too.
+      const created = await adminAuth.rpc("create_landing_page", {
+        p_sections: structure(),
+        p_versions: [{ locale: "en", title: "Fixture hero", section_texts: { [HERO]: { imageId: SQUARE } } }],
+      });
+      expect(created.error?.code).toBe("23514");
+      expect((await draftVersions(PAGE_A)).map(({ locale }) => locale)).toEqual(["en"]);
+      expect((await picturesOf(PAGE_A)).draft?.pictures).toEqual({});
+    });
+
+    it("is refused in the structure, which no longer takes one", async () => {
+      await reseed();
+      const sections = [{ id: HERO, type: "hero", imageId: PIC_A }, structure()[1]];
+      const message = "The hero section takes no picture in the structure: each language version names its own";
+      const { data } = await admin.rpc("landing_sections_problem", { p_sections: sections });
+      expect(data).toBe(message);
+      const saved = await adminAuth.rpc("save_landing_page_structure", { p_id: PAGE_A, p_sections: sections });
+      expect(saved.error?.code).toBe("23514");
+      expect(saved.error?.message).toBe(message);
+      const created = await adminAuth.rpc("create_landing_page", {
+        p_sections: sections,
+        p_versions: [{ locale: "en", title: "Fixture hero" }],
+      });
+      expect(created.error?.message).toBe(message);
+      expect((await picturesOf(PAGE_A)).draft?.sections).toEqual(structure());
+    });
+
+    it("needs its alt text exactly in the versions that name one", async () => {
+      await reseed();
+      // English names a picture with no alt text; Finnish names none and has none.
+      expect((await writeLanguage("en", { imageId: PIC_A })).error).toBeNull();
+      expect((await writeLanguage("fi", {})).error).toBeNull();
+      expect(await completeness(PAGE_A)).toEqual({ en: false, fi: true });
+
+      const { data: missing } = await admin.rpc("landing_version_missing", {
+        p_sections: [structure()[0]],
+        p_title: "T",
+        p_summary: "S",
+        p_slug: "s",
+        p_section_texts: { [HERO]: { headline: "H", imageId: PIC_A } },
+      });
+      expect(missing).toEqual([`sections.${HERO}.imageAlt`]);
+
+      expect((await writeLanguage("en", { imageId: PIC_A, imageAlt: "A" })).error).toBeNull();
+      expect(await completeness(PAGE_A)).toEqual({ en: true, fi: true });
+      // Publishing takes both, each with its own picture or none.
+      expect((await adminAuth.rpc("publish_landing_page", { p_id: PAGE_A })).error).toBeNull();
+      expect((await heroPictures(PAGE_A)).live).toEqual({ en: PIC_A });
+    });
+
+    it("is what publishing copies per language, and a replace moves it only where a version names it, a live page's without a republish", async () => {
+      await reseed();
+      expect((await writeLanguage("en", { imageId: PIC_DOOMED, imageAlt: "En" })).error).toBeNull();
+      expect((await writeLanguage("fi", { imageId: PIC_B, imageAlt: "Fi" })).error).toBeNull();
+      expect((await adminAuth.rpc("publish_landing_page", { p_id: PAGE_A })).error).toBeNull();
+
+      expect(await heroPictures(PAGE_A)).toEqual({
+        draft: { en: PIC_DOOMED, fi: PIC_B },
+        live: { en: PIC_DOOMED, fi: PIC_B },
+      });
+      const before = await picturesOf(PAGE_A);
+      expect(before.live?.sections).toEqual(structure());
+      expect(before.live?.pictures).toEqual({ [PIC_DOOMED]: pictured(PIC_DOOMED), [PIC_B]: pictured(PIC_B) });
+      expect(await usedBy(PIC_B)).toEqual([true]);
+
+      const { data: moved, error } = await adminAuth.rpc("repoint_landing_images", { p_from: PIC_DOOMED, p_to: PIC_A });
+      expect(error).toBeNull();
+      expect(moved).toBe(1);
+
+      expect(await heroPictures(PAGE_A)).toEqual({
+        draft: { en: PIC_A, fi: PIC_B },
+        live: { en: PIC_A, fi: PIC_B },
+      });
+      const after = await picturesOf(PAGE_A);
+      for (const copy of [after.draft, after.live]) {
+        expect(copy?.pictures).toEqual({ [PIC_A]: pictured(PIC_A), [PIC_B]: pictured(PIC_B) });
+      }
+      // Both copies moved alike, so nothing reads as unpublished.
+      const digest = async (table: "landing_page_translations" | "landing_page_publication_translations") =>
+        (await admin.from(table).select("locale, texts_md5").eq("page_id", PAGE_A).order("locale")).data;
+      expect(await digest("landing_page_translations")).toEqual(await digest("landing_page_publication_translations"));
+    });
+
+    it("a removal unsets it only in the versions naming it, in both copies, keeping its alt text", async () => {
+      await reseed();
+      expect((await writeLanguage("en", { imageId: PIC_DOOMED, imageAlt: "Doomed" })).error).toBeNull();
+      expect((await writeLanguage("fi", { imageId: PIC_B, imageAlt: "Fi" })).error).toBeNull();
+      expect((await adminAuth.rpc("publish_landing_page", { p_id: PAGE_A })).error).toBeNull();
+      const { data: before } = await admin.from("landing_pages").select("updated_at").eq("id", PAGE_A).single();
+
+      const removed = await adminAuth.from("catalogue_images").delete().eq("id", PIC_DOOMED);
+      expect(removed.error).toBeNull();
+
+      expect(await heroPictures(PAGE_A)).toEqual({ draft: { fi: PIC_B }, live: { fi: PIC_B } });
+      const after = await picturesOf(PAGE_A);
+      for (const copy of [after.draft, after.live]) {
+        expect(copy?.sections).toEqual(structure());
+        expect(copy?.pictures).toEqual({ [PIC_B]: pictured(PIC_B) });
+      }
+      for (const table of ["landing_page_translations", "landing_page_publication_translations"] as const) {
+        const { data } = await admin.from(table).select("section_texts").eq("page_id", PAGE_A).eq("locale", "en").single();
+        expect(asObject(data?.section_texts)[HERO]).toEqual({ headline: "Fixture headline en", imageAlt: "Doomed" });
+      }
+      // English, with no picture, needs no alt text and stays complete.
+      expect(await completeness(PAGE_A)).toEqual({ en: true, fi: true });
+      // A removal moves the working copy's last-saved time, as for any picture.
+      const { data: later } = await admin.from("landing_pages").select("updated_at").eq("id", PAGE_A).single();
+      expect(Date.parse(later?.updated_at ?? "")).toBeGreaterThan(Date.parse(before?.updated_at ?? ""));
+    });
+
+    it("stays with each language through a structure save", async () => {
+      await reseed();
+      expect((await writeLanguage("en", { imageId: PIC_A, imageAlt: "A" })).error).toBeNull();
+      const saved = await adminAuth.rpc("save_landing_page_structure", {
+        p_id: PAGE_A,
+        p_sections: [...structure(), aside(PIC_B)],
+      });
+      expect(saved.error).toBeNull();
+      expect((await heroPictures(PAGE_A)).draft).toEqual({ en: PIC_A });
+      expect((await picturesOf(PAGE_A)).draft?.pictures).toEqual({
+        [PIC_A]: pictured(PIC_A),
+        [PIC_B]: pictured(PIC_B),
+      });
+    });
+
+    it("is carried by a clone, each language's own", async () => {
+      await reseed();
+      expect((await writeLanguage("en", { imageId: PIC_A, imageAlt: "A" })).error).toBeNull();
+      expect((await writeLanguage("fi", { imageId: PIC_B, imageAlt: "B" })).error).toBeNull();
+      const { data: id, error } = await adminAuth.rpc("clone_landing_page", {
+        p_id: PAGE_A,
+        p_versions: [
+          { locale: "en", title: "Fixture hero (Copy)", default_slug: "fixture-hero-copy" },
+          { locale: "fi", title: "Fixture hero (kopio)", default_slug: "fixture-hero-kopio" },
+        ],
+      });
+      expect(error).toBeNull();
+      if (id === null) throw new Error("no clone");
+      minted.push(id);
+
+      const { draft } = await picturesOf(id);
+      const hero = asObject(Array.isArray(draft?.sections) ? draft.sections[0] : null);
+      expect(hero.type).toBe("hero");
+      expect(hero.id).not.toBe(HERO);
+      expect((await heroPictures(id, String(hero.id))).draft).toEqual({ en: PIC_A, fi: PIC_B });
+      expect(draft?.pictures).toEqual({ [PIC_A]: pictured(PIC_A), [PIC_B]: pictured(PIC_B) });
+      expect(await completeness(id)).toEqual({ en: true, fi: true });
     });
   });
 
@@ -1579,9 +1858,8 @@ describe("landing pages", () => {
     });
 
     /** The fixture structure with one more section, whose picture is `imageId`. */
-    function withPicture(type: "hero" | "text" | "image" | "guide", imageId: string): LandingSection[] {
-      const [hero, cta] = structure(null);
-      if (type === "hero") return [{ id: HERO, type: "hero", imageId }, cta];
+    function withPicture(type: "text" | "image" | "guide", imageId: string): LandingSection[] {
+      const [hero, cta] = structure();
       if (type === "text") return [hero, { id: GALLERY, type: "text", background: "default", imageSide: "start", imageId }, cta];
       if (type === "guide") return [hero, { id: GALLERY, type: "guide", background: "default", guideId: SHAPES_GUIDE, imageId }, cta];
       return [hero, { id: GALLERY, type: "image", background: "default", images: [{ id: SHOT_1, imageId }] }, cta];
@@ -1607,10 +1885,19 @@ describe("landing pages", () => {
 
     it.each(cases)("a $type section takes a $shape picture: $takes, as the registry declares", async ({ type, shape, takes }) => {
       await reseed();
-      const { error } = await adminAuth.rpc("save_landing_page_structure", {
-        p_id: PAGE_A,
-        p_sections: withPicture(type, OF_SHAPE[shape]),
-      });
+      // The hero's picture is a language's own, in its words.
+      const { error } =
+        type === "hero"
+          ? await adminAuth.rpc("save_landing_page_version", {
+              p_id: PAGE_A,
+              p_locale: "en",
+              p_title: "Fixture landing en",
+              p_section_texts: { [HERO]: { headline: "Shapes", imageId: OF_SHAPE[shape] } },
+            })
+          : await adminAuth.rpc("save_landing_page_structure", {
+              p_id: PAGE_A,
+              p_sections: withPicture(type, OF_SHAPE[shape]),
+            });
       if (takes) {
         expect(error).toBeNull();
       } else {
@@ -1636,7 +1923,7 @@ describe("landing pages", () => {
       });
       await service.publishPage(PAGE_A);
       const view = await service.getAdminPage(PAGE_A);
-      const expected = { [PIC_A]: pictured(PIC_A), [PORTRAIT]: pictured(PORTRAIT) };
+      const expected = { [PORTRAIT]: pictured(PORTRAIT) };
       expect(view?.draft.pictures).toEqual(expected);
       expect(view?.publication?.pictures).toEqual(expected);
       expect(view?.publication?.pictures[PORTRAIT].purpose).toBe("landing_portrait_image");
@@ -1697,18 +1984,41 @@ describe("landing pages", () => {
           ],
         },
       ]);
+      // English names a hero picture, in its words.
+      const english = await adminAuth.rpc("save_landing_page_version", {
+        p_id: PAGE_A,
+        p_locale: "en",
+        p_title: "Fixture landing en",
+        p_section_texts: { [HERO]: { headline: "Shapes", imageAlt: "Hero", imageId: PIC_A } },
+      });
+      expect(english.error).toBeNull();
       // The catalogue's replace hands the repoint an entry of the old one's
-      // own purpose; another shape is refused by the section it would land in.
+      // own purpose; another shape is refused by the section, or the hero, it
+      // would land in.
       const mixed = await adminAuth.rpc("repoint_landing_images", { p_from: SQUARE, p_to: PIC_B });
       expect(mixed.error?.code).toBe("23514");
       const hero = await adminAuth.rpc("repoint_landing_images", { p_from: PIC_A, p_to: SQUARE });
       expect(hero.error?.code).toBe("23514");
+      expect(hero.error?.message).toContain("A hero section's picture must be wide 16:9");
 
       const same = await adminAuth.rpc("repoint_landing_images", { p_from: SQUARE, p_to: SQUARE_TOO });
       expect(same.error).toBeNull();
-      const view = await service.getAdminPage(PAGE_A);
-      expect(view?.draft.sections[0]).toEqual({ id: HERO, type: "hero", imageId: PIC_A });
-      expect(view?.draft.pictures).toEqual({ [PIC_A]: pictured(PIC_A), [SQUARE_TOO]: pictured(SQUARE_TOO) });
+      // Read raw: the hero picture in the words is the database's half alone.
+      const { data: row } = await admin.from("landing_pages").select("sections, pictures").eq("id", PAGE_A).single();
+      expect(row?.sections).toEqual([
+        ...structure(),
+        {
+          id: GALLERY,
+          type: "image",
+          background: "default",
+          images: [
+            { id: SHOT_1, imageId: SQUARE_TOO },
+            { id: SHOT_2, imageId: SQUARE_TOO },
+          ],
+        },
+      ]);
+      expect(row?.pictures).toEqual({ [PIC_A]: pictured(PIC_A), [SQUARE_TOO]: pictured(SQUARE_TOO) });
+      expect((await heroPictures(PAGE_A)).draft).toEqual({ en: PIC_A });
     });
 
     it("a removal unlinks a picture of any landing shape", async () => {
@@ -1721,7 +2031,7 @@ describe("landing pages", () => {
       expect(removed.error).toBeNull();
       const view = await service.getAdminPage(PAGE_A);
       expect(view?.draft.sections[2]).toEqual({ id: GALLERY, type: "text", background: "default", imageSide: "end" });
-      expect(view?.draft.pictures).toEqual({ [PIC_A]: pictured(PIC_A) });
+      expect(view?.draft.pictures).toEqual({});
     });
   });
 
@@ -1781,7 +2091,7 @@ describe("landing pages", () => {
      * both backgrounds, with a sticky section on each side.
      */
     const RICH: LandingSection[] = [
-      { id: S_HERO, type: "hero", imageId: PIC_A, button: { kind: "internal", path: "/shop" } },
+      { id: S_HERO, type: "hero", button: { kind: "internal", path: "/shop" } },
       { id: S_TEXT, type: "text", background: "card", imageId: PIC_B, imageSide: "end" },
       { id: S_GALLERY, type: "image", background: "default", images: [{ id: item(1), imageId: PIC_A }, { id: item(2), imageId: PIC_B }] },
       { id: S_POINTS, type: "points", background: "default", items: [{ id: item(3), icon: "star" }, { id: item(4), icon: "rocket" }] },

@@ -1,5 +1,6 @@
-import type { McpServer } from "@modelcontextprotocol/server";
+import type { CallToolResult, McpServer } from "@modelcontextprotocol/server";
 import { z } from "zod-v4";
+import { SUPPORTED_LOCALES, type SupportedLocale } from "@/lib/constants/locales";
 import { catalogueImageUrl } from "@/lib/images/catalogue-image-url";
 import { describeMissingWords } from "@/lib/landing-pages/describe-missing";
 import {
@@ -17,6 +18,7 @@ import {
   IMAGE_SECTION_MAX_PICTURES,
   LANDING_SECTIONS,
   LANDING_SECTION_TYPES,
+  landingHeroImageId,
   type LandingSection,
   type LandingSectionOf,
   type LandingSectionType,
@@ -36,6 +38,8 @@ import {
   unpublishedChanges,
 } from "@/lib/mcp/landing-pages-call";
 import { CatalogueImagesService } from "@/services/catalogue-images/catalogue-images.service";
+import type { AdminLandingPage } from "@/services/landing-pages/landing-pages.contracts";
+import type { LandingPageService } from "@/services/landing-pages/landing-pages.service";
 import type { CatalogueImagePurpose } from "@/types";
 
 /*
@@ -66,9 +70,10 @@ const SECTION_SHAPES = LANDING_SECTION_TYPES.flatMap((type) => {
 }).join("; ");
 
 /**
- * The section types that show one picture, in an `imageId` of their own: the
- * types with pictures whose registry schema carries that field, where the
- * image section carries a list of picture items instead.
+ * The section types that show one picture, in an `imageId` of their own in the
+ * structure: the types with pictures whose registry schema carries that field,
+ * where the image section carries a list of picture items instead and the hero
+ * names its picture in each language's words.
  */
 type OnePictureType = {
   [Type in LandingSectionType]: "imageId" extends keyof LandingSectionOf<Type> ? Type : never;
@@ -88,7 +93,7 @@ function showsOnePicture(section: LandingSection): section is LandingSectionOf<O
   return ONE_PICTURE.has(section.type);
 }
 
-const PICTURE_RULES = `A landing page picture is an entry of Sogverse's picture catalogue in one of three shapes, each a JPEG of one exact size: ${SHAPES_WITH_SIZES}. The shape is the entry's for good: a replace keeps it. Many sections and pages may share one. A ${ONE_PICTURE_NAMES} section shows one picture, an image section one to four. Shapes by section: ${SECTION_SHAPES}. A hero's is wide because it is also the page's link preview. An image section's pictures must all be one shape, so its grid lines up: to change its shape, send all its pictures at once with save_landing_page_structure, or remove all but one and replace that one. Each picture needs alt text in every language before that language is complete. Placing a picture changes the working copy only: readers see it after the next publish.`;
+const PICTURE_RULES = `A landing page picture is an entry of Sogverse's picture catalogue in one of three shapes, each a JPEG of one exact size: ${SHAPES_WITH_SIZES}. The shape is the entry's for good: a replace keeps it. Many sections and pages may share one. A ${ONE_PICTURE_NAMES} section shows one picture, an image section one to four. A hero shows one too, but each language names its own, with no shared one and no fallback: a language without one shows none, so when adding a language set its hero picture too, and for the same picture everywhere set the same id in every language. Shapes by section: ${SECTION_SHAPES}. A hero's is wide because it is also that language's link preview. An image section's pictures must all be one shape, so its grid lines up: to change its shape, send all its pictures at once with save_landing_page_structure, or remove all but one and replace that one. Each picture needs alt text in every language that shows it before that language is complete. Placing a picture changes the working copy only: readers see it after the next publish.`;
 
 /**
  * What the model is told to do with pictures the uploader has added to the
@@ -96,7 +101,7 @@ const PICTURE_RULES = `A landing page picture is an entry of Sogverse's picture 
  * placing tools, choosing by the section rules, where the database is the
  * final judge of whether a picture fits.
  */
-const UPLOADED_NEXT_STEP = `Then place the uploaded pictures where the admin wants them: with set_landing_section_image — imageId for a ${ONE_PICTURE_NAMES} section, which shows one picture, or imageIds to add several to the end of an image section — or in a new section through save_landing_page_structure, choosing for each section only a shape it takes (${SECTION_SHAPES}; an image section's pictures all one shape), and write each one's alt text in every language with save_landing_page_text. A picture that does not fit where the admin wanted it stays in the catalogue, in list_landing_images, for another section: tell the admin so.`;
+const UPLOADED_NEXT_STEP = `Then place the uploaded pictures where the admin wants them: with set_landing_section_image — imageId for a hero section in each language that should show it (locale), or for a ${ONE_PICTURE_NAMES} section, which shows one picture, or imageIds to add several to the end of an image section — or in a new section through save_landing_page_structure, choosing for each section only a shape it takes (${SECTION_SHAPES}; an image section's pictures all one shape), and write each one's alt text in every language with save_landing_page_text. A picture that does not fit where the admin wanted it stays in the catalogue, in list_landing_images, for another section: tell the admin so.`;
 
 const shape = z
   .enum(LANDING_PICTURE_SHAPES)
@@ -110,6 +115,12 @@ const sectionId = z
   .guid()
   .toLowerCase()
   .describe("The section's id, as get_landing_page lists it.");
+
+const heroLocale = z
+  .enum(SUPPORTED_LOCALES)
+  .describe(
+    "For a hero section only, and required there: the language whose hero picture this is. Each language names its own hero picture; no other language is touched.",
+  );
 
 const pictureItemId = z
   .guid()
@@ -208,6 +219,76 @@ function shapeNameOf(purpose: CatalogueImagePurpose): string {
     : purpose;
 }
 
+/**
+ * Set or remove one language's hero picture: that language's words written
+ * whole with only the hero's picture changed, through the service's own
+ * one-language save, so no other language and not the structure is touched.
+ */
+async function placeHeroPicture(
+  service: LandingPageService,
+  page: AdminLandingPage,
+  hero: LandingSectionOf<"hero">,
+  input: {
+    pageId: string;
+    imageId?: string | null;
+    imageIds?: readonly string[];
+    pictureId?: string;
+    locale?: SupportedLocale;
+  },
+): Promise<CallToolResult> {
+  if (input.imageIds !== undefined) {
+    return refusal("A hero shows one picture in each language: send imageId, not imageIds.");
+  }
+  if (input.pictureId !== undefined) {
+    return refusal("A hero section has one picture and no picture items: leave pictureId out.");
+  }
+  if (input.locale === undefined) {
+    return refusal(
+      "A hero's picture is each language's own: name the language with locale, and set it once per language that should show it.",
+    );
+  }
+  // exact-locale: the tool writes the version it was asked for
+  const version = page.draft.versions.find((v) => v.locale === input.locale);
+  if (version === undefined) {
+    return refusal(
+      `The page has no ${input.locale} version: write it with save_landing_page_text first, its hero picture included.`,
+    );
+  }
+  const words = Object.hasOwn(version.sectionTexts, hero.id) ? version.sectionTexts[hero.id] : {};
+  const others = Object.fromEntries(Object.entries(words).filter(([field]) => field !== "imageId"));
+  const imageId = input.imageId ?? null;
+  await service.saveVersion(input.pageId, {
+    locale: version.locale,
+    title: version.title,
+    summary: version.summary,
+    slug: version.slug,
+    sectionTexts: {
+      ...version.sectionTexts,
+      [hero.id]: imageId === null ? others : { ...others, imageId },
+    },
+    shareTitle: version.shareTitle,
+    shareImageId: version.shareImageId,
+    shareImageAlt: version.shareImageAlt,
+  });
+  const after = await savedPage(service, input.pageId);
+  // exact-locale: the version the tool wrote
+  const saved = after.draft.versions.find((v) => v.locale === version.locale);
+  const prefix = `sections.${hero.id}.`;
+  const missing = (saved?.missing ?? [])
+    .filter((path) => path.startsWith(prefix))
+    .map((path) => describeMissingWords(path, after.draft.sections));
+  return answer({
+    pageId: input.pageId,
+    sectionId: hero.id,
+    locale: version.locale,
+    heroImageId:
+      saved === undefined ? null : landingHeroImageId(after.draft.sections, saved.sectionTexts),
+    // The alt text the picture still needs in this language.
+    missingInSection: missing.length === 0 ? [] : [{ locale: version.locale, missing }],
+    hasUnpublishedChanges: unpublishedChanges(after.publication !== null, after.hasUnpublishedChanges),
+  });
+}
+
 export function registerLandingImageTools(server: McpServer): void {
   server.registerTool(
     "list_landing_images",
@@ -278,12 +359,13 @@ export function registerLandingImageTools(server: McpServer): void {
     "set_landing_section_image",
     {
       title: "Place a picture in a landing page section",
-      description: `Put a catalogue picture in one section of the page's structure, by its catalogue id from list_landing_images; nothing else in the structure or any language's words is touched. In a ${ONE_PICTURE_NAMES} section, which shows one picture, it replaces the section's picture, and null removes it. In an image section, pictureId names the picture item to replace (or, with null, to remove); without it the picture is added at the end. To add several pictures to the end of an image section in one write, send imageIds in place of imageId, in the order they are to show, as many as the section has room for; the answer then lists their new item ids as pictureIds, in the same order. The answer says which languages now lack the picture's alt text. ${PICTURE_RULES} An id no catalogue entry has, an entry that is not a landing page picture, or one of a shape the section does not take is refused, saying which.`,
+      description: `Put a catalogue picture in one section of the page, by its catalogue id from list_landing_images; nothing else is touched. In a hero section it sets the hero picture of the one language named by locale, written into that language's hero words, and null removes it; send it once per language that should show it. In a ${ONE_PICTURE_NAMES} section, which shows one picture, it replaces the section's picture, and null removes it. In an image section, pictureId names the picture item to replace (or, with null, to remove); without it the picture is added at the end. To add several pictures to the end of an image section in one write, send imageIds in place of imageId, in the order they are to show, as many as the section has room for; the answer then lists their new item ids as pictureIds, in the same order. The answer says which languages now lack the picture's alt text. ${PICTURE_RULES} An id no catalogue entry has, an entry that is not a landing page picture, or one of a shape the section does not take is refused, saying which.`,
       inputSchema: z.object({
         pageId,
         sectionId,
         imageId: z
           .guid()
+          .toLowerCase()
           .nullable()
           .optional()
           .describe(
@@ -298,6 +380,7 @@ export function registerLandingImageTools(server: McpServer): void {
             "In an image section, the catalogue ids of several landing page pictures to add at its end, in order, in place of imageId.",
           ),
         pictureId: pictureItemId.optional(),
+        locale: heroLocale.optional(),
       }),
       annotations: OVERWRITES,
     },
@@ -315,6 +398,12 @@ export function registerLandingImageTools(server: McpServer): void {
         const target = sections.find((section) => section.id === input.sectionId);
         if (target === undefined) {
           return refusal(`The page has no section ${input.sectionId}.`);
+        }
+        if (target.type === "hero") return placeHeroPicture(service, page, target, input);
+        if (input.locale !== undefined) {
+          return refusal(
+            "locale is for a hero section, whose picture each language names: every other section's pictures are the same in every language, so leave it out.",
+          );
         }
         const result =
           input.imageIds === undefined
