@@ -23,9 +23,9 @@ vi.mock("@/lib/brevo", () => ({
 // A place in a queue is a family committing to a product, so it is reported as
 // an enrolment. Mocked at its own module boundary: whether anything is actually
 // sent is decided inside the reporter, from the request's consent cookie.
-const mockReportMetaConversion = vi.fn();
-vi.mock("@/lib/meta-conversions.server", () => ({
-  reportMetaConversion: (...args: unknown[]) => mockReportMetaConversion(...args),
+const mockReportAdConversion = vi.fn();
+vi.mock("@/lib/ad-conversions.server", () => ({
+  reportAdConversion: (...args: unknown[]) => mockReportAdConversion(...args),
 }));
 
 // The spot is committed before the mail is even attempted, so the send is
@@ -891,26 +891,37 @@ describe("POST /api/participations/waitlist", () => {
 
       expect(res.status).toBe(200);
       await settleDeferred();
-      expect(mockReportMetaConversion).toHaveBeenCalledTimes(1);
+      expect(mockReportAdConversion).toHaveBeenCalledTimes(1);
       const [request, conversion, account] =
-        mockReportMetaConversion.mock.calls[0];
+        mockReportAdConversion.mock.calls[0];
       expect(request).toBeInstanceOf(Request);
       // The signed-in customer's own id and address, never the participant's.
       expect(account).toEqual({ id: CUSTOMER_ID, email: "parent@example.test" });
       // And which product the place in line is for, as the shared builder
-      // describes it. The price it carries never reaches Meta: the report
-      // itself drops value and currency from every waitlisted enrolment
-      // (asserted in the meta-conversions unit tests).
+      // describes it to each platform. The price it carries never reaches
+      // either: each report itself drops value and currency from every
+      // waitlisted enrolment (asserted in the meta- and reddit-conversions
+      // unit tests).
       expect(conversion).toEqual({
         event: "enrolment",
         outcome: "waitlisted",
         product: {
-          content_ids: [PRODUCT_ID],
-          content_type: "product",
-          content_name: "Roblox Studio Club",
-          content_category: "roblox_studio",
-          value: 49,
-          currency: "EUR",
+          meta: {
+            content_ids: [PRODUCT_ID],
+            content_type: "product",
+            content_name: "Roblox Studio Club",
+            content_category: "roblox_studio",
+            value: 49,
+            currency: "EUR",
+          },
+          reddit: {
+            products: [
+              { id: PRODUCT_ID, name: "Roblox Studio Club", category: "roblox_studio" },
+            ],
+            itemCount: 1,
+            value: 49,
+            currency: "EUR",
+          },
         },
         sourcePath: `/shop/${PRODUCT_ID}`,
       });
@@ -932,7 +943,7 @@ describe("POST /api/participations/waitlist", () => {
 
       expect(res.status).toBe(200);
       await settleDeferred();
-      expect(mockReportMetaConversion).not.toHaveBeenCalled();
+      expect(mockReportAdConversion).not.toHaveBeenCalled();
     });
 
     // A product that vanished between the join and the read, or a read the
@@ -948,7 +959,7 @@ describe("POST /api/participations/waitlist", () => {
 
       expect(res.status).toBe(200);
       await settleDeferred();
-      expect(mockReportMetaConversion).not.toHaveBeenCalled();
+      expect(mockReportAdConversion).not.toHaveBeenCalled();
     });
 
     it("reports nothing on a replay of a join that already happened", async () => {
@@ -969,7 +980,7 @@ describe("POST /api/participations/waitlist", () => {
 
       expect(res.status).toBe(200);
       expect(deferred).toHaveLength(0);
-      expect(mockReportMetaConversion).not.toHaveBeenCalled();
+      expect(mockReportAdConversion).not.toHaveBeenCalled();
     });
   });
 });

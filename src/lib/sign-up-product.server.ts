@@ -1,15 +1,16 @@
 import "server-only";
 import {
+  advertisedProductDetails,
   isAdvertisedProduct,
-  metaProductDetails,
-  type MetaProductDetails,
+  type AdvertisedProductDetails,
 } from "@/lib/marketing-events";
 import { signUpTargetFrom } from "@/lib/sign-up-intent.server";
 import { createAnonClient } from "@/lib/supabase/anon";
 
 /**
- * The product a parent's sign-up started from, in Meta's product fields — or
- * `undefined`, and then the account-creation report names no product.
+ * The product a parent's sign-up started from, in every advertising
+ * platform's product fields — or `undefined`, and then the account-creation
+ * report names no product.
  *
  * **The value is untrusted.** It is the `?redirect=` the register page was
  * opened with, carried in the registration body by our own forms, so a client
@@ -21,17 +22,17 @@ import { createAnonClient } from "@/lib/supabase/anon";
  * **Decided by the product row, never by the URL**, exactly as for an
  * enrolment: a product we do not advertise names nothing. The row is read with
  * the anon client, so only a product the public shop would show anyone can be
- * named, and the fields are the ones `metaProductDetails()` builds for the
- * enrolment — one product, described one way.
+ * named, and the fields are the ones `advertisedProductDetails()` builds for
+ * the enrolment — one product, described one way.
  *
  * **It never throws.** No redirect, another page, an unknown or unadvertised
- * product and a failed read all answer `undefined`: the Lead goes out as it
+ * product and a failed read all answer `undefined`: the lead goes out as it
  * would have without a product, and nothing about the registration waits on
  * or fails over it.
  */
 export async function signUpProductFor(
   redirect: string | undefined,
-): Promise<MetaProductDetails | undefined> {
+): Promise<AdvertisedProductDetails | undefined> {
   try {
     const productId = shopProductIdFrom(redirect);
     if (!productId) return undefined;
@@ -46,9 +47,9 @@ export async function signUpProductFor(
     if (error) throw error;
     if (!product || !isAdvertisedProduct(product)) return undefined;
 
-    return metaProductDetails(product);
+    return advertisedProductDetails(product);
   } catch (error) {
-    console.error("[meta-sign-up-product] could not read the product", error);
+    console.error("[sign-up-product] could not read the product", error);
     return undefined;
   }
 }

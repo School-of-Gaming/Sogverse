@@ -1,5 +1,6 @@
 import { describe, expect, it } from "vitest";
 import {
+  advertisedProductDetails,
   isAdvertisedProduct,
   isValidPixelId,
   isValidRedditPixelId,
@@ -280,6 +281,27 @@ describe("redditProductDetails", () => {
     expect(reddit.currency).toBe(meta.currency);
     expect("value" in reddit).toBe("value" in meta);
     expect("currency" in reddit).toBe("currency" in meta);
+  });
+});
+
+/**
+ * What a server conversion carries: one product, in each platform's fields,
+ * built by each platform's own builder in the same currency.
+ */
+describe("advertisedProductDetails", () => {
+  it("is each platform's description of the same product", () => {
+    const product = {
+      id: "8f0c1c55-6b0e-4a43-9d1a-2f4b8c7e9a10",
+      topic: "roblox_studio" as const,
+      billing_mode: "paid" as const,
+      product_translations: [{ locale: "en", name: "Roblox Studio Club" }],
+      product_prices: [{ currency: "eur", price_cents: 4900 }],
+    };
+
+    expect(advertisedProductDetails(product, "eur")).toEqual({
+      meta: metaProductDetails(product, "eur"),
+      reddit: redditProductDetails(product, "eur"),
+    });
   });
 });
 

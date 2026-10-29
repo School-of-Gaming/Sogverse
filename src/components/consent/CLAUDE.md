@@ -175,23 +175,31 @@ nothing about who Meta looks for. Making it once per person would mean storage o
 that the withdrawal sweep then has to clear — not worth building unless someone reports
 or bids on checkout starts as a figure in itself.
 
-From our servers, through Meta's Conversions API (`src/lib/meta-conversions.server.ts`),
-each one sent after the response has gone out so it can neither delay nor fail what the
-family asked for:
+From our servers, through Meta's and Reddit's Conversions APIs, each one sent after the
+response has gone out so it can neither delay nor fail what the family asked for:
 
-- **an account was created** — reported as a lead, someone reachable who has committed to
-  nothing, and naming the product whose page the sign-up started from when that was an
-  advertised product's page;
-- **an enrolment** — a seat taken or a place in a queue accepted, carrying which of the
-  two it was.
+- **an account was created** — reported as a lead (Meta's `Lead`, Reddit's `LEAD`),
+  someone reachable who has committed to nothing, and naming the product whose page the
+  sign-up started from when that was an advertised product's page;
+- **an enrolment** — a seat taken or a place in a queue accepted (Meta's
+  `CompleteRegistration`, Reddit's `SIGN_UP`), carrying which of the two it was to Meta.
+  Reddit's event has no field for it, so Reddit tells the two apart only by the missing
+  value on a queue place.
 
-Handing a parent to Stripe is reported from neither side to Meta: its checkout start is the
-browser's click above, and a server report as well would count every paid attempt twice.
+**A route reports a conversion once, to every platform at once** (`src/lib/ad-conversions.server.ts`),
+with the product already described in each platform's fields; each platform's reporter
+applies its own switch and the consent gate and swallows its own failures, so one
+platform refusing or switched off leaves the other's report untouched. A new platform is
+added there, never at a call site.
+
+Handing a parent to Stripe is reported from neither side to either platform: its checkout
+start is the browser's click above, and a server report as well would count every paid
+attempt twice.
 (Analytics still hears it, as its own `checkout` push from the panel.)
 
 The enrolment, the lead from a product page, and the browser's product view and checkout
-start, name the product in Meta's standard product fields, and the browser's two product
-events to Reddit state the same facts in Reddit's, all built from one place so they cannot
+start, name the product in Meta's standard product fields, and every one of them to Reddit
+states the same facts in Reddit's, all built from one place so they cannot
 describe one product two ways: its id, its English name whatever the visitor's locale, its topic as the category —
 an enum value, stable across renames, and the axis a campaign is run per — and the price
 the family pays with its currency, zero for a free product. A paid product with no price in the currency
@@ -201,7 +209,7 @@ caller passed, because nobody has paid or committed to pay and a priced queue wo
 campaign to count a full product's waitlist as revenue. **A lead carries no value either**,
 for the same reason and by the same rule in the server report. On the browser's two product
 events these are only facts the product's public page shows anyone. On the server's
-enrolment they ride beside the parent's email and account-id hashes, so Meta learns that an
+enrolment they ride beside the parent's email and account-id hashes, so each platform learns that an
 identifiable parent signed up for that named club, camp or event — which the privacy policy
 says — and on a lead, that an identifiable parent opened an account from that product's page.
 
@@ -222,17 +230,21 @@ product row, never by the URL it was reached from**. No role check is needed on 
 the three routes are customer-only, so a gamer cannot reach one.
 
 **What identifies a person in a server report, exhaustively:** the user agent, the IP the
-request arrived from, Meta's own browser and click cookies if the browser carries them, a
-SHA-256 hash of the parent's own account email (Meta's advanced matching), and a SHA-256
-hash of the parent's own account id (Meta's `external_id`) — both hashed on our server, so
-neither the address nor the id is ever sent or logged, and never a gamer's. The address is
-sent whether or not it has been verified; that is standard practice and accepted as such.
-The id hash is the same on every report for that account, so Meta can join one parent's
-events across visits and devices. With the product fields above, that tells Meta which
-product an identifiable parent signed up for, or opened an account from. No name, and
-nothing about a child beyond that — not their name, age, account or its id, or anything
-else. The privacy policy's Meta entry says
-this in plain words; adding a field there is a privacy-policy edit.
+request arrived from, the platform's own browser and click cookies if the browser carries
+them (Meta's `_fbp` and `_fbc`, Reddit's `_rdt_uuid` and `_rdt_cid` — each platform is
+sent only its own), a SHA-256 hash of the parent's own account email, and a SHA-256 hash
+of the parent's own account id (`external_id`) — both hashed on our server, so neither the
+address nor the id is ever sent or logged, and never a gamer's. **The two platforms
+canonicalise the email differently before hashing**: Meta trims and lowercases; Reddit also
+removes every dot from the local part and drops everything from a `+` on, so one address
+hashes to two different values and neither may be "fixed" to match the other. The address
+is sent whether or not it has been verified; that is standard practice and accepted as
+such. The id hash is the same on every report for that account, so each platform can join
+one parent's events across visits and devices. With the product fields above, that tells
+the platform which product an identifiable parent signed up for, or opened an account
+from. No name, and nothing about a child beyond that — not their name, age, account or its
+id, or anything else. The privacy policy's entry for each platform says this in plain
+words; adding a field there is a privacy-policy edit.
 
 A completed purchase is reported nowhere today. When it is, it belongs on the same
 server-side path, from the payment webhook — which is the only place that knows money

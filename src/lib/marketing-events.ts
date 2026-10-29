@@ -109,6 +109,20 @@ export type EnrolmentOutcome = (typeof ENROLMENT_OUTCOMES)[number];
 export type MetaEnrolmentOutcome = Exclude<EnrolmentOutcome, "sent_to_checkout">;
 
 /**
+ * The account a server conversion is about: the one the request acts as — the
+ * parent it just registered, or the signed-in customer — and never anyone else.
+ * Every caller is a customer-only route, so this is always the parent's own
+ * address and account id, and never a gamer's or a participant's. Either is
+ * `null` when the caller has none to hand: the report still goes, without that
+ * field's hash.
+ */
+export interface ConversionAccount {
+  /** The parent's own account id — their auth user, which is their profile. */
+  id: string | null;
+  email: string | null;
+}
+
+/**
  * Whether a product is one we advertise, and therefore one whose signups are
  * worth reporting as conversions.
  *
@@ -195,6 +209,26 @@ export function redditProductDetails(
     products: [{ id: facts.id, name: facts.name, category: facts.category }],
     itemCount: 1,
     ...(facts.price !== undefined && facts.price),
+  };
+}
+
+/**
+ * One product in every platform's fields at once — what a server conversion
+ * carries, so each platform's report reads its own description and no caller
+ * can build one and forget the other.
+ */
+export interface AdvertisedProductDetails {
+  meta: MetaProductDetails;
+  reddit: RedditProductDetails;
+}
+
+export function advertisedProductDetails(
+  product: ProductFactsSource,
+  currency: SupportedCurrency = DEFAULT_CURRENCY,
+): AdvertisedProductDetails {
+  return {
+    meta: metaProductDetails(product, currency),
+    reddit: redditProductDetails(product, currency),
   };
 }
 

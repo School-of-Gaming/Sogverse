@@ -12,8 +12,8 @@ import { getEmailTranslator } from "@/lib/email-templates/translator";
 import { createEmailVerificationToken } from "@/lib/email-verification";
 import { utmMetadataForConsent } from "@/lib/utm";
 import { parseConsentCookieHeader } from "@/lib/consent";
-import { reportMetaConversion } from "@/lib/meta-conversions.server";
-import { signUpProductFor } from "@/lib/meta-sign-up-product.server";
+import { reportAdConversion } from "@/lib/ad-conversions.server";
+import { signUpProductFor } from "@/lib/sign-up-product.server";
 import {
   resolveSignUpIntent,
   signUpIntentColumns,
@@ -306,13 +306,13 @@ export const POST = defineRoute({
 
     const response = NextResponse.json({ userId });
 
-    // The account-creation conversion, reported from here to Meta rather than
-    // by a script on the next page the browser loads. This handler is the only
+    // The account-creation conversion, reported from here to the advertising
+    // platforms rather than by a script on the next page the browser loads. This handler is the only
     // place that knows an account was created, exactly once — the marker cookie
     // this replaced had to survive a redirect and a page load, and was lost or
     // double-counted whenever it did not.
     //
-    // AFTER the response, so a Meta round trip cannot delay or fail a
+    // AFTER the response, so a platform's round trip cannot delay or fail a
     // registration that has already succeeded. The helper decides for itself
     // whether to send anything: it refuses unless this request's own consent
     // cookie says marketing is allowed, so an un-consented registration reports
@@ -325,7 +325,7 @@ export const POST = defineRoute({
     // is an ordinary customer, and a gamer cannot reach a registration form at
     // all.
     after(async () =>
-      reportMetaConversion(
+      reportAdConversion(
         request,
         {
           event: "account_created",
