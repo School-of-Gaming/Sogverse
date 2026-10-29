@@ -132,8 +132,10 @@ it was given, and never sends a no.** Two moments give one:
   `sog_registration_marketing_answer` property.
 - **A product sign-up that asked.** A product may ask "I want emails from School of
   Gaming", unticked, with every booking. The answer is stored on the seat, never in
-  `marketing_consents`, and a yes subscribes the parent when that seat's `SV Enrolled`
-  goes out, under the custom source `Sogverse product sign-up`.
+  `marketing_consents`, and a yes subscribes the parent when the `SV Enrolled` of that
+  seat's booking goes out, under the custom source `Sogverse product sign-up`. Only the
+  booking carries it: a seat that leaves the waitlist again later files an `SV Enrolled`
+  with no answer, so a parent who has unsubscribed since is not subscribed again.
 
 Both subscribe to email marketing into the marketing-consent list — `SV Marketing consent`
 in production, `SV Staging` elsewhere, the same list the newsletter form subscribes into.
@@ -194,6 +196,9 @@ owner or with the owner's say — never by a session on its own initiative.
   on Vercel Preview and Production before this code deploys — the sign-up and the
   registration tick fail without it. It is already set on both. Once this is released,
   `KLAVIYO_NEWSLETTER_LIST_ID` is deleted from Vercel and from `.env.local`.
+  `KLAVIYO_EVENT_LIST_ID` has to be on Vercel Production before this code reaches
+  production — without it every parent holding a seat on an event fails their profile row
+  until it is set.
 - **The secret.** `KLAVIYO_SYNC_SECRET`, one random value per environment, on Vercel
   Preview (the unsuffixed value) and Production (`KLAVIYO_SYNC_SECRET_PRODUCTION`),
   sensitive, then a redeploy. An unset secret refuses every call to the sync route.

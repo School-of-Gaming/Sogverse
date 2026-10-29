@@ -67,7 +67,7 @@ COMMENT ON COLUMN public.klaviyo_event_outbox.occurred_at IS 'When it happened, 
 -- Name: COLUMN klaviyo_event_outbox.facts; Type: COMMENT; Schema: public; Owner: -
 --
 
-COMMENT ON COLUMN public.klaviyo_event_outbox.facts IS 'The facts of the moment, as they stood when the event was filed. enrolled: seat_holder (parent or gamer), gamer_birth_year and gamer_gender (null on a parent''s own seat), the seat''s utm_source, utm_medium, utm_campaign, utm_content, utm_term and marketing_opt_in (its school_of_gaming_marketing_opt_in). session: attended, session_date, session_starts_at, and the same seat_holder, gamer_birth_year and gamer_gender. subscription_cancelled: the subscription''s status and current_period_end. Empty for account_created, waitlisted and seat_offered.';
+COMMENT ON COLUMN public.klaviyo_event_outbox.facts IS 'The facts of the moment, as they stood when the event was filed. enrolled: seat_holder (parent or gamer), gamer_birth_year and gamer_gender (null on a parent''s own seat), the seat''s utm_source, utm_medium, utm_campaign, utm_content, utm_term and marketing_opt_in (its school_of_gaming_marketing_opt_in on the booking itself, null on every later activation). session: attended, session_date, session_starts_at, and the same seat_holder, gamer_birth_year and gamer_gender. subscription_cancelled: the subscription''s status and current_period_end. Empty for account_created, waitlisted and seat_offered.';
 
 
 --

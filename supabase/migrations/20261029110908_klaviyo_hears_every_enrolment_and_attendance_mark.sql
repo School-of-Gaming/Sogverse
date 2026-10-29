@@ -47,12 +47,12 @@ ALTER TABLE public.participations
   ADD COLUMN utm_term text,
   ADD COLUMN school_of_gaming_marketing_opt_in boolean;
 
-COMMENT ON COLUMN public.participations.utm_source IS 'The utm_source of the visit that led to this booking, or NULL. Written once, when the seat is created, by create_participation or confirm_paid_participation, and only when the booking request carried marketing cookie consent — the same server-side gate the account''s own UTM columns are written under (src/lib/utm.ts); the values arrive already shaped by the proxy''s UTM sanitiser. Case preserved. Read by the Klaviyo enrolled event; a label that grants nothing.';
+COMMENT ON COLUMN public.participations.utm_source IS 'The utm_source of the visit that led to this booking, or NULL. Written once, when the seat is created, by create_participation or confirm_paid_participation, and only when the booking request carried marketing cookie consent — the same server-side gate the account''s own UTM columns are written under. The participation create route reads the values from the request and cleans them with the UTM module''s sanitiser (src/lib/utm.ts) under that marketing-cookie gate; a paid seat''s values travel through the Stripe Checkout Session metadata to the webhook, which hands them to confirm_paid_participation. Case preserved. Read by the Klaviyo enrolled event; a label that grants nothing.';
 COMMENT ON COLUMN public.participations.utm_medium IS 'The utm_medium of the visit that led to this booking, or NULL. Same rules as utm_source.';
 COMMENT ON COLUMN public.participations.utm_campaign IS 'The utm_campaign of the visit that led to this booking, or NULL. Same rules as utm_source.';
 COMMENT ON COLUMN public.participations.utm_content IS 'The utm_content of the visit that led to this booking, or NULL. Same rules as utm_source.';
 COMMENT ON COLUMN public.participations.utm_term IS 'The utm_term of the visit that led to this booking, or NULL. Same rules as utm_source.';
-COMMENT ON COLUMN public.participations.school_of_gaming_marketing_opt_in IS 'The parent''s answer to the product''s "I want emails from School of Gaming" box when they booked this seat: true or false when the product asked (a school_of_gaming row in product_marketing_consents), NULL when it did not. Written once with the seat, by create_participation or confirm_paid_participation. It goes to Klaviyo on the enrolled event, where marketing acts on it; it is never written to marketing_consents, because Klaviyo owns School of Gaming''s mailing consent.';
+COMMENT ON COLUMN public.participations.school_of_gaming_marketing_opt_in IS 'The parent''s answer to the product''s "I want emails from School of Gaming" box when they booked this seat: true or false when the product asked (a school_of_gaming row in product_marketing_consents), NULL when it did not. Written once with the seat, by create_participation or confirm_paid_participation. A yes subscribes the parent to School of Gaming''s Klaviyo list once, when the seat''s first enrolment is sent; a later re-activation of the seat (off the waitlist) does not carry it again, and the answer itself is never an event property. It is never written to marketing_consents, because Klaviyo owns School of Gaming''s mailing consent.';
 
 -- ---------------------------------------------------------------------------
 -- 3. The outbox stores Klaviyo's unique id
@@ -70,7 +70,7 @@ COMMENT ON TABLE public.klaviyo_event_outbox IS 'Things that happened to a paren
 COMMENT ON COLUMN public.klaviyo_event_outbox.unique_id IS 'Klaviyo''s unique id for the event, which it deduplicates on: `<kind>:<source id>` for every kind but session, whose id is `session:<session id>:<participant id>:<status>` so that a mark corrected to another status is a second event.';
 COMMENT ON COLUMN public.klaviyo_event_outbox.source_id IS 'The row the event is about: the parent''s profile id for account_created, a participation for enrolled, waitlisted and seat_offered, a family subscription for subscription_cancelled, a session_attendance row for session.';
 COMMENT ON COLUMN public.klaviyo_event_outbox.occurred_at IS 'When it happened, taken from the source row: the profile''s creation, the participation''s activation, waitlisting or seat offer, the subscription''s update, the attendance mark''s recorded_at.';
-COMMENT ON COLUMN public.klaviyo_event_outbox.facts IS 'The facts of the moment, as they stood when the event was filed. enrolled: seat_holder (parent or gamer), gamer_birth_year and gamer_gender (null on a parent''s own seat), the seat''s utm_source, utm_medium, utm_campaign, utm_content, utm_term and marketing_opt_in (its school_of_gaming_marketing_opt_in). session: attended, session_date, session_starts_at, and the same seat_holder, gamer_birth_year and gamer_gender. subscription_cancelled: the subscription''s status and current_period_end. Empty for account_created, waitlisted and seat_offered.';
+COMMENT ON COLUMN public.klaviyo_event_outbox.facts IS 'The facts of the moment, as they stood when the event was filed. enrolled: seat_holder (parent or gamer), gamer_birth_year and gamer_gender (null on a parent''s own seat), the seat''s utm_source, utm_medium, utm_campaign, utm_content, utm_term and marketing_opt_in (its school_of_gaming_marketing_opt_in on the booking itself, null on every later activation). session: attended, session_date, session_starts_at, and the same seat_holder, gamer_birth_year and gamer_gender. subscription_cancelled: the subscription''s status and current_period_end. Empty for account_created, waitlisted and seat_offered.';
 
 -- ---------------------------------------------------------------------------
 -- 4. Filing an event under its unique id
@@ -272,7 +272,10 @@ BEGIN
 
   -- Each event is a status the participation ARRIVES at, so a write that
   -- leaves the status where it was is not one. A seat is held once it is
-  -- active, whatever the product charges.
+  -- active, whatever the product charges. The marketing answer was given with
+  -- the booking, so only the booking (the insert) carries it: a seat demoted
+  -- to the waitlist and later promoted again records null, or the drain would
+  -- subscribe a parent who may have unsubscribed since.
   IF NEW.status = 'active'::public.participation_status
      AND v_old_status IS DISTINCT FROM NEW.status THEN
     PERFORM public.enqueue_klaviyo_event(
@@ -286,7 +289,9 @@ BEGIN
              'utm_campaign',     NEW.utm_campaign,
              'utm_content',      NEW.utm_content,
              'utm_term',         NEW.utm_term,
-             'marketing_opt_in', NEW.school_of_gaming_marketing_opt_in
+             'marketing_opt_in', CASE WHEN TG_OP = 'INSERT'
+                                      THEN NEW.school_of_gaming_marketing_opt_in
+                                 END
            )
     );
   END IF;
@@ -313,7 +318,7 @@ BEGIN
 END;
 $$;
 
-COMMENT ON FUNCTION public.klaviyo_participation_changed() IS 'Trigger on participations, after an insert, a delete, or an update of status, product_id or seat_offer_sent_at that changes it: files the participation''s parent in the Klaviyo profile outbox, and files the events it shows — enrolled when it arrives at active (by insert or from the waitlist) on a product of any billing mode, with klaviyo_seat_holder_facts and the seat''s UTM tag and School of Gaming marketing answer; waitlisted when it arrives at waitlisted; seat_offered when a seat offer is first stamped on it. Granted to nobody.';
+COMMENT ON FUNCTION public.klaviyo_participation_changed() IS 'Trigger on participations, after an insert, a delete, or an update of status, product_id or seat_offer_sent_at that changes it: files the participation''s parent in the Klaviyo profile outbox, and files the events it shows — enrolled when it arrives at active (by insert or from the waitlist) on a product of any billing mode, with klaviyo_seat_holder_facts, the seat''s UTM tag and — on the insert that books the seat only — its School of Gaming marketing answer (null on a later activation, so a re-activated seat never re-subscribes); waitlisted when it arrives at waitlisted; seat_offered when a seat offer is first stamped on it. Granted to nobody.';
 
 -- The purchases still waiting are enrolments now: they take the new facts
 -- from their seat, and one whose seat is gone can no longer be described.

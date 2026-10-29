@@ -76,7 +76,7 @@ COMMENT ON COLUMN public.participations.seat_offer_expiry_notified_at IS 'When s
 -- Name: COLUMN participations.utm_source; Type: COMMENT; Schema: public; Owner: -
 --
 
-COMMENT ON COLUMN public.participations.utm_source IS 'The utm_source of the visit that led to this booking, or NULL. Written once, when the seat is created, by create_participation or confirm_paid_participation, and only when the booking request carried marketing cookie consent — the same server-side gate the account''s own UTM columns are written under (src/lib/utm.ts); the values arrive already shaped by the proxy''s UTM sanitiser. Case preserved. Read by the Klaviyo enrolled event; a label that grants nothing.';
+COMMENT ON COLUMN public.participations.utm_source IS 'The utm_source of the visit that led to this booking, or NULL. Written once, when the seat is created, by create_participation or confirm_paid_participation, and only when the booking request carried marketing cookie consent — the same server-side gate the account''s own UTM columns are written under. The participation create route reads the values from the request and cleans them with the UTM module''s sanitiser (src/lib/utm.ts) under that marketing-cookie gate; a paid seat''s values travel through the Stripe Checkout Session metadata to the webhook, which hands them to confirm_paid_participation. Case preserved. Read by the Klaviyo enrolled event; a label that grants nothing.';
 
 
 --
@@ -111,7 +111,7 @@ COMMENT ON COLUMN public.participations.utm_term IS 'The utm_term of the visit t
 -- Name: COLUMN participations.school_of_gaming_marketing_opt_in; Type: COMMENT; Schema: public; Owner: -
 --
 
-COMMENT ON COLUMN public.participations.school_of_gaming_marketing_opt_in IS 'The parent''s answer to the product''s "I want emails from School of Gaming" box when they booked this seat: true or false when the product asked (a school_of_gaming row in product_marketing_consents), NULL when it did not. Written once with the seat, by create_participation or confirm_paid_participation. It goes to Klaviyo on the enrolled event, where marketing acts on it; it is never written to marketing_consents, because Klaviyo owns School of Gaming''s mailing consent.';
+COMMENT ON COLUMN public.participations.school_of_gaming_marketing_opt_in IS 'The parent''s answer to the product''s "I want emails from School of Gaming" box when they booked this seat: true or false when the product asked (a school_of_gaming row in product_marketing_consents), NULL when it did not. Written once with the seat, by create_participation or confirm_paid_participation. A yes subscribes the parent to School of Gaming''s Klaviyo list once, when the seat''s first enrolment is sent; a later re-activation of the seat (off the waitlist) does not carry it again, and the answer itself is never an event property. It is never written to marketing_consents, because Klaviyo owns School of Gaming''s mailing consent.';
 
 
 --

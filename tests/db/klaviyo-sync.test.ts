@@ -561,6 +561,42 @@ describe("the Klaviyo sync", () => {
       await admin.from("participations").delete().eq("id", participationId);
     });
 
+    it("carries the School of Gaming answer only with the booking, never with a later re-activation", async () => {
+      await clearEvents([TEST_IDS.CUSTOMER]);
+      const adminUser = await createAuthenticatedClient(
+        TEST_CREDENTIALS.ADMIN.email,
+        TEST_CREDENTIALS.ADMIN.password,
+      );
+      const { data, error } = await admin.rpc("create_participation", {
+        p_product_id: FREE,
+        p_participant_id: TEST_IDS.GAMER,
+        p_customer_id: TEST_IDS.CUSTOMER,
+        p_purchase_shape: "free",
+        p_currency: "eur",
+        p_utm_source: "lynx",
+        p_school_of_gaming_marketing_opt_in: true,
+      });
+      expect(error).toBeNull();
+      const participationId = z.object({ participation_id: z.string() }).parse(data).participation_id;
+      expect(await eventRow("enrolled", participationId)).toMatchObject({
+        facts: { utm_source: "lynx", marketing_opt_in: true },
+      });
+
+      // The booking's event has been sent, so the next activation files anew.
+      await clearEvents([TEST_IDS.CUSTOMER]);
+      const demoted = await adminUser.rpc("demote_to_waitlist", { p_participation_id: participationId });
+      expect(demoted.error).toBeNull();
+      const promoted = await adminUser.rpc("promote_from_waitlist", { p_participation_id: participationId });
+      expect(promoted.error).toBeNull();
+
+      // The seat still holds the parent's answer; the re-activation does not repeat it.
+      expect(await eventRow("enrolled", participationId)).toMatchObject({
+        facts: { ...GAMER_SEAT_UNTAGGED, utm_source: "lynx", marketing_opt_in: null },
+      });
+
+      await admin.from("participations").delete().eq("id", participationId);
+    });
+
     it("tells a parent's own seat apart from their gamer's", async () => {
       await clearEvents([TEST_IDS.CUSTOMER]);
       const { data, error } = await admin
