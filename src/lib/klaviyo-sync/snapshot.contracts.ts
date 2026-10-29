@@ -151,8 +151,21 @@ const seatHolderFacts = {
 export const klaviyoEventRow = z.discriminatedUnion("kind", [
   z.object({
     ...eventBase,
-    kind: z.enum(["account_created", "waitlisted", "seat_offered"]),
+    kind: z.enum(["account_created", "seat_offered"]),
     properties: z.object(eventProperties),
+  }),
+  z.object({
+    ...eventBase,
+    /** A place in line taken, or a seat demoted onto the waitlist. */
+    kind: z.literal("waitlisted"),
+    properties: z.object({
+      ...eventProperties,
+      /**
+       * The answer to the product's School of Gaming mailing ask, given with
+       * the waitlist join; null when it did not ask, and on a demotion.
+       */
+      marketing_opt_in: z.boolean().nullable(),
+    }),
   }),
   z.object({
     ...eventBase,

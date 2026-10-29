@@ -495,7 +495,10 @@ describe("the Klaviyo sync", () => {
       });
 
       const waiting = await seat(ENDED, "waitlisted");
-      expect(await eventRow("waitlisted", waiting)).toMatchObject({ product_id: ENDED, facts: {} });
+      expect(await eventRow("waitlisted", waiting)).toMatchObject({
+        product_id: ENDED,
+        facts: { marketing_opt_in: null },
+      });
       expect(await eventRow("enrolled", waiting)).toBeNull();
 
       const offeredAt = new Date().toISOString();
@@ -592,6 +595,59 @@ describe("the Klaviyo sync", () => {
       // The seat still holds the parent's answer; the re-activation does not repeat it.
       expect(await eventRow("enrolled", participationId)).toMatchObject({
         facts: { ...GAMER_SEAT_UNTAGGED, utm_source: "lynx", marketing_opt_in: null },
+      });
+
+      await admin.from("participations").delete().eq("id", participationId);
+    });
+
+    it("carries a waitlist join's School of Gaming answer on its waitlisted event, and not on the promotion", async () => {
+      await clearEvents([TEST_IDS.CUSTOMER]);
+      const adminUser = await createAuthenticatedClient(
+        TEST_CREDENTIALS.ADMIN.email,
+        TEST_CREDENTIALS.ADMIN.password,
+      );
+      const { data, error } = await customer.rpc("join_product_waitlist", {
+        p_product_id: FREE,
+        p_participant_id: TEST_IDS.GAMER,
+        p_utm_source: "lynx",
+        p_utm_campaign: "lynx-autumn",
+        p_school_of_gaming_marketing_opt_in: true,
+      });
+      expect(error).toBeNull();
+      const participationId = z.object({ participation_id: z.string() }).parse(data).participation_id;
+
+      const { data: written } = await admin
+        .from("participations")
+        .select("utm_source, utm_campaign, school_of_gaming_marketing_opt_in")
+        .eq("id", participationId)
+        .single();
+      expect(written).toEqual({
+        utm_source: "lynx",
+        utm_campaign: "lynx-autumn",
+        school_of_gaming_marketing_opt_in: true,
+      });
+      expect(await eventRow("waitlisted", participationId)).toMatchObject({
+        facts: { marketing_opt_in: true },
+      });
+
+      // Promoted into the seat: the enrolment keeps the tag but not the answer.
+      const promoted = await adminUser.rpc("promote_from_waitlist", { p_participation_id: participationId });
+      expect(promoted.error).toBeNull();
+      expect(await eventRow("enrolled", participationId)).toMatchObject({
+        facts: {
+          ...GAMER_SEAT_UNTAGGED,
+          utm_source: "lynx",
+          utm_campaign: "lynx-autumn",
+          marketing_opt_in: null,
+        },
+      });
+
+      // Demoted back onto the waitlist: that waitlisted event carries no answer.
+      await clearEvents([TEST_IDS.CUSTOMER]);
+      const demoted = await adminUser.rpc("demote_to_waitlist", { p_participation_id: participationId });
+      expect(demoted.error).toBeNull();
+      expect(await eventRow("waitlisted", participationId)).toMatchObject({
+        facts: { marketing_opt_in: null },
       });
 
       await admin.from("participations").delete().eq("id", participationId);

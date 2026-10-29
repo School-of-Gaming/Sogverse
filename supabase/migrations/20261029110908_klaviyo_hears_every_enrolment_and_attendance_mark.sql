@@ -21,8 +21,9 @@
 --    re-file a product's parents watch those columns, schedule_slots and the
 --    location's name.
 -- 5. Seats carry the booking's UTM tag and School of Gaming marketing answer,
---    which create_participation and confirm_paid_participation take as new
---    optional arguments.
+--    which create_participation, confirm_paid_participation and the waitlist
+--    join take as new optional arguments. A waitlist join's waitlisted event
+--    carries the answer, as a seat taken at once's enrolled event does.
 -- 6. A product's signup panel may ask the School of Gaming mailing question.
 --    The answer lives on the seat; set_marketing_consent still refuses it.
 
@@ -47,12 +48,12 @@ ALTER TABLE public.participations
   ADD COLUMN utm_term text,
   ADD COLUMN school_of_gaming_marketing_opt_in boolean;
 
-COMMENT ON COLUMN public.participations.utm_source IS 'The utm_source of the visit that led to this booking, or NULL. Written once, when the seat is created, by create_participation or confirm_paid_participation, and only when the booking request carried marketing cookie consent — the same server-side gate the account''s own UTM columns are written under. The participation create route reads the values from the request and cleans them with the UTM module''s sanitiser (src/lib/utm.ts) under that marketing-cookie gate; a paid seat''s values travel through the Stripe Checkout Session metadata to the webhook, which hands them to confirm_paid_participation. Case preserved. Read by the Klaviyo enrolled event; a label that grants nothing.';
+COMMENT ON COLUMN public.participations.utm_source IS 'The utm_source of the visit that led to this booking, or NULL. Written once, when the seat or place in line is created, by create_participation, confirm_paid_participation or join_waitlist, and only when the booking request carried marketing cookie consent — the same server-side gate the account''s own UTM columns are written under. The participation create and waitlist routes read the values from the request and cleans them with the UTM module''s sanitiser (src/lib/utm.ts) under that marketing-cookie gate; a paid seat''s values travel through the Stripe Checkout Session metadata to the webhook, which hands them to confirm_paid_participation. Case preserved. Read by the Klaviyo enrolled event; a label that grants nothing.';
 COMMENT ON COLUMN public.participations.utm_medium IS 'The utm_medium of the visit that led to this booking, or NULL. Same rules as utm_source.';
 COMMENT ON COLUMN public.participations.utm_campaign IS 'The utm_campaign of the visit that led to this booking, or NULL. Same rules as utm_source.';
 COMMENT ON COLUMN public.participations.utm_content IS 'The utm_content of the visit that led to this booking, or NULL. Same rules as utm_source.';
 COMMENT ON COLUMN public.participations.utm_term IS 'The utm_term of the visit that led to this booking, or NULL. Same rules as utm_source.';
-COMMENT ON COLUMN public.participations.school_of_gaming_marketing_opt_in IS 'The parent''s answer to the product''s "I want emails from School of Gaming" box when they booked this seat: true or false when the product asked (a school_of_gaming row in product_marketing_consents), NULL when it did not. Written once with the seat, by create_participation or confirm_paid_participation. A yes subscribes the parent to School of Gaming''s Klaviyo list once, when the seat''s first enrolment is sent; a later re-activation of the seat (off the waitlist) does not carry it again, and the answer itself is never an event property. It is never written to marketing_consents, because Klaviyo owns School of Gaming''s mailing consent.';
+COMMENT ON COLUMN public.participations.school_of_gaming_marketing_opt_in IS 'The parent''s answer to the product''s "I want emails from School of Gaming" box when they booked this seat: true or false when the product asked (a school_of_gaming row in product_marketing_consents), NULL when it did not. Written once with the seat or place in line, by create_participation, confirm_paid_participation or join_waitlist. A yes subscribes the parent to School of Gaming''s Klaviyo list once, when the event the booking''s own insert files is sent — enrolled for a seat taken at once, waitlisted for a waitlist join; a later promotion or demotion of the row does not carry it again, and the answer itself is never an event property. It is never written to marketing_consents, because Klaviyo owns School of Gaming''s mailing consent.';
 
 -- ---------------------------------------------------------------------------
 -- 3. The outbox stores Klaviyo's unique id
@@ -70,7 +71,7 @@ COMMENT ON TABLE public.klaviyo_event_outbox IS 'Things that happened to a paren
 COMMENT ON COLUMN public.klaviyo_event_outbox.unique_id IS 'Klaviyo''s unique id for the event, which it deduplicates on: `<kind>:<source id>` for every kind but session, whose id is `session:<session id>:<participant id>:<status>` so that a mark corrected to another status is a second event.';
 COMMENT ON COLUMN public.klaviyo_event_outbox.source_id IS 'The row the event is about: the parent''s profile id for account_created, a participation for enrolled, waitlisted and seat_offered, a family subscription for subscription_cancelled, a session_attendance row for session.';
 COMMENT ON COLUMN public.klaviyo_event_outbox.occurred_at IS 'When it happened, taken from the source row: the profile''s creation, the participation''s activation, waitlisting or seat offer, the subscription''s update, the attendance mark''s recorded_at.';
-COMMENT ON COLUMN public.klaviyo_event_outbox.facts IS 'The facts of the moment, as they stood when the event was filed. enrolled: seat_holder (parent or gamer), gamer_birth_year and gamer_gender (null on a parent''s own seat), the seat''s utm_source, utm_medium, utm_campaign, utm_content, utm_term and marketing_opt_in (its school_of_gaming_marketing_opt_in on the booking itself, null on every later activation). session: attended, session_date, session_starts_at, and the same seat_holder, gamer_birth_year and gamer_gender. subscription_cancelled: the subscription''s status and current_period_end. Empty for account_created, waitlisted and seat_offered.';
+COMMENT ON COLUMN public.klaviyo_event_outbox.facts IS 'The facts of the moment, as they stood when the event was filed. enrolled: seat_holder (parent or gamer), gamer_birth_year and gamer_gender (null on a parent''s own seat), the seat''s utm_source, utm_medium, utm_campaign, utm_content, utm_term and marketing_opt_in (its school_of_gaming_marketing_opt_in on the booking itself, null on every later activation). session: attended, session_date, session_starts_at, and the same seat_holder, gamer_birth_year and gamer_gender. subscription_cancelled: the subscription''s status and current_period_end. waitlisted: marketing_opt_in (the row''s school_of_gaming_marketing_opt_in on the waitlist join itself, null when a seat is demoted onto the waitlist). Empty for account_created and seat_offered.';
 
 -- ---------------------------------------------------------------------------
 -- 4. Filing an event under its unique id
@@ -273,9 +274,9 @@ BEGIN
   -- Each event is a status the participation ARRIVES at, so a write that
   -- leaves the status where it was is not one. A seat is held once it is
   -- active, whatever the product charges. The marketing answer was given with
-  -- the booking, so only the booking (the insert) carries it: a seat demoted
-  -- to the waitlist and later promoted again records null, or the drain would
-  -- subscribe a parent who may have unsubscribed since.
+  -- the booking, so only the booking (the insert) carries it: a seat promoted
+  -- off the waitlist, or demoted and promoted again, records null, or the
+  -- drain would subscribe a parent who may have unsubscribed since.
   IF NEW.status = 'active'::public.participation_status
      AND v_old_status IS DISTINCT FROM NEW.status THEN
     PERFORM public.enqueue_klaviyo_event(
@@ -298,10 +299,18 @@ BEGIN
 
   IF NEW.status = 'waitlisted'::public.participation_status
      AND v_old_status IS DISTINCT FROM NEW.status THEN
+    -- A waitlist join is the booking on this path, so its insert carries the
+    -- answer exactly as a seat taken at once does; a seat demoted back onto
+    -- the waitlist later records null.
     PERFORM public.enqueue_klaviyo_event(
       'waitlisted'::public.klaviyo_event_kind,
       NEW.id, NEW.customer_id, NEW.product_id,
-      COALESCE(NEW.waitlisted_at, now())
+      COALESCE(NEW.waitlisted_at, now()),
+      jsonb_build_object(
+        'marketing_opt_in', CASE WHEN TG_OP = 'INSERT'
+                                 THEN NEW.school_of_gaming_marketing_opt_in
+                            END
+      )
     );
   END IF;
 
@@ -318,7 +327,7 @@ BEGIN
 END;
 $$;
 
-COMMENT ON FUNCTION public.klaviyo_participation_changed() IS 'Trigger on participations, after an insert, a delete, or an update of status, product_id or seat_offer_sent_at that changes it: files the participation''s parent in the Klaviyo profile outbox, and files the events it shows — enrolled when it arrives at active (by insert or from the waitlist) on a product of any billing mode, with klaviyo_seat_holder_facts, the seat''s UTM tag and — on the insert that books the seat only — its School of Gaming marketing answer (null on a later activation, so a re-activated seat never re-subscribes); waitlisted when it arrives at waitlisted; seat_offered when a seat offer is first stamped on it. Granted to nobody.';
+COMMENT ON FUNCTION public.klaviyo_participation_changed() IS 'Trigger on participations, after an insert, a delete, or an update of status, product_id or seat_offer_sent_at that changes it: files the participation''s parent in the Klaviyo profile outbox, and files the events it shows — enrolled when it arrives at active (by insert or from the waitlist) on a product of any billing mode, with klaviyo_seat_holder_facts, the seat''s UTM tag and — on the insert that books the seat only — its School of Gaming marketing answer (null on a later activation, so a re-activated seat never re-subscribes); waitlisted when it arrives at waitlisted, with — on the insert that joins the waitlist only — the same answer (null when a seat is demoted onto it); seat_offered when a seat offer is first stamped on it. Granted to nobody.';
 
 -- The purchases still waiting are enrolments now: they take the new facts
 -- from their seat, and one whose seat is gone can no longer be described.
@@ -341,6 +350,12 @@ DELETE FROM public.klaviyo_event_outbox e
    AND NOT EXISTS (
          SELECT 1 FROM public.participations part WHERE part.id = e.source_id
        );
+
+-- The waitlist joins still waiting were filed before any join asked the
+-- question, so each records that it carries no answer.
+UPDATE public.klaviyo_event_outbox
+   SET facts = jsonb_build_object('marketing_opt_in', NULL)
+ WHERE kind = 'waitlisted'::public.klaviyo_event_kind;
 
 -- ---------------------------------------------------------------------------
 -- 8. An attendance mark files a session event
@@ -720,6 +735,170 @@ COMMENT ON FUNCTION public.confirm_paid_participation(uuid, uuid, uuid, text, te
 
 REVOKE ALL ON FUNCTION public.confirm_paid_participation(uuid, uuid, uuid, text, text, text, text, text, text, boolean) FROM PUBLIC;
 GRANT ALL ON FUNCTION public.confirm_paid_participation(uuid, uuid, uuid, text, text, text, text, text, text, boolean) TO service_role;
+
+-- A waitlist join is a booking too: the place in line records the same tag
+-- and answer, and the waitlisted event its insert files carries the answer.
+
+DROP FUNCTION public.join_product_waitlist(uuid, uuid, text[]);
+DROP FUNCTION public.join_waitlist(uuid, uuid, uuid, text[]);
+
+CREATE FUNCTION public.join_waitlist(p_product_id uuid, p_participant_id uuid, p_customer_id uuid, p_consented_documents text[] DEFAULT NULL::text[], p_utm_source text DEFAULT NULL::text, p_utm_medium text DEFAULT NULL::text, p_utm_campaign text DEFAULT NULL::text, p_utm_content text DEFAULT NULL::text, p_utm_term text DEFAULT NULL::text, p_school_of_gaming_marketing_opt_in boolean DEFAULT NULL::boolean) RETURNS jsonb
+    LANGUAGE plpgsql SECURITY DEFINER
+    SET search_path TO ''
+    AS $$
+DECLARE
+  v_product           public.products;
+  v_existing_id       UUID;
+  v_existing_ts       TIMESTAMPTZ;
+  v_existing_status   public.participation_status;
+  v_now               TIMESTAMPTZ;
+  v_position          INTEGER;
+  v_participation_id  UUID;
+  v_is_parent         BOOLEAN;
+BEGIN
+  SELECT * INTO v_product FROM public.products WHERE id = p_product_id FOR UPDATE;
+  IF NOT FOUND THEN
+    RAISE EXCEPTION 'product % does not exist', p_product_id
+      USING ERRCODE = 'no_data_found';
+  END IF;
+
+  -- Same audience gate as create_participation, and for the same reason: a
+  -- queue is a promise of a seat, so it has to refuse exactly the seats the
+  -- signup path would. See that function for why `=` rather than
+  -- `IS NOT DISTINCT FROM`, and for why the parent-link arm is what keeps a
+  -- parent from enrolling another adult.
+  IF p_participant_id = p_customer_id THEN
+    IF NOT v_product.for_parents THEN
+      RAISE EXCEPTION 'product % is not open to parents', p_product_id
+        USING ERRCODE = 'check_violation';
+    END IF;
+  ELSE
+    SELECT EXISTS (
+      SELECT 1 FROM public.parent_gamer
+      WHERE parent_id = p_customer_id AND gamer_id = p_participant_id
+    ) INTO v_is_parent;
+    IF NOT v_is_parent THEN
+      RAISE EXCEPTION 'customer % is not the parent of gamer %', p_customer_id, p_participant_id
+        USING ERRCODE = 'check_violation';
+    END IF;
+
+    IF NOT v_product.for_gamers THEN
+      RAISE EXCEPTION 'product % is not open to gamers', p_product_id
+        USING ERRCODE = 'check_violation';
+    END IF;
+  END IF;
+
+  IF NOT v_product.waitlist_enabled THEN
+    RAISE EXCEPTION 'waitlist is not enabled for this product'
+      USING ERRCODE = 'check_violation';
+  END IF;
+
+  -- Idempotency: existing waitlisted/reserving/active row → return it as-is,
+  -- flagged so the caller can tell this apart from the INSERT below.
+  SELECT id, waitlisted_at, status
+    INTO v_existing_id, v_existing_ts, v_existing_status
+    FROM public.participations
+    WHERE product_id = p_product_id
+      AND participant_id = p_participant_id
+      AND status IN ('waitlisted', 'reserving', 'active')
+    LIMIT 1;
+  IF v_existing_id IS NOT NULL THEN
+    IF v_existing_status = 'waitlisted' THEN
+      SELECT COUNT(*) INTO v_position
+        FROM public.participations
+        WHERE product_id = p_product_id AND status = 'waitlisted'
+          AND (waitlisted_at < v_existing_ts
+               OR (waitlisted_at = v_existing_ts AND id <= v_existing_id));
+    ELSE
+      -- Already holds a spot (active/reserving) — not on the waitlist.
+      v_position := 0;
+    END IF;
+    RETURN jsonb_build_object(
+      'participation_id', v_existing_id,
+      'waitlist_position', v_position,
+      'status', v_existing_status::text,
+      'idempotent', TRUE
+    );
+  END IF;
+
+  -- THE ENROLMENT CONDITIONS, below the idempotency return so a replay
+  -- records nothing: the same enrolment agreed once. Raises check_violation
+  -- naming any required document the caller did not agree to; otherwise writes
+  -- one acceptance row per required document at its current version. Joining a
+  -- queue IS the enrolment moment on this path — meeting the conditions for the
+  -- first time at promotion would ask a family to agree at the moment they are
+  -- least able to decline.
+  --
+  -- The customer is both the agreeing party and the actor, for the
+  -- reason create_participation states.
+  PERFORM public.record_required_consents(
+    p_product_id, p_customer_id, p_participant_id, p_customer_id,
+    p_consented_documents
+  );
+
+  -- Stamp the join time; order is derived from it, never stored as a rank.
+  -- clock_timestamp(), NOT now(): now() is transaction_timestamp() (frozen at
+  -- transaction start), so concurrent joins serialized on the gate lock can
+  -- carry equal/inverted stamps and both compute rank 1. clock_timestamp()
+  -- reads the wall clock at this statement — which runs under the lock, after
+  -- the prior joiner committed — so stamps are monotonic with real join order.
+  v_now := clock_timestamp();
+  INSERT INTO public.participations (
+    product_id, participant_id, customer_id, status, waitlisted_at,
+    utm_source, utm_medium, utm_campaign, utm_content, utm_term,
+    school_of_gaming_marketing_opt_in
+  ) VALUES (
+    p_product_id, p_participant_id, p_customer_id, 'waitlisted', v_now,
+    p_utm_source, p_utm_medium, p_utm_campaign, p_utm_content, p_utm_term,
+    p_school_of_gaming_marketing_opt_in
+  )
+  RETURNING id INTO v_participation_id;
+
+  SELECT COUNT(*) INTO v_position
+    FROM public.participations
+    WHERE product_id = p_product_id AND status = 'waitlisted'
+      AND (waitlisted_at < v_now
+           OR (waitlisted_at = v_now AND id <= v_participation_id));
+
+  -- The one call that wrote a row. Everything that must happen exactly once per
+  -- place in line keys on this.
+  RETURN jsonb_build_object(
+    'participation_id', v_participation_id,
+    'waitlist_position', v_position,
+    'status', 'waitlisted',
+    'idempotent', FALSE
+  );
+END;
+$$;
+
+COMMENT ON FUNCTION public.join_waitlist(uuid, uuid, uuid, text[], text, text, text, text, text, boolean) IS 'Waitlist engine behind join_product_waitlist: gates the audience, refuses a product with the waitlist off, and either writes a waitlisted participation stamped with clock_timestamp() or returns the waitlisted/reserving/active row already there. Returns participation_id, waitlist_position (0 when the row already holds a seat rather than a place in line), status, and idempotent — false only on the call that ran the INSERT, true on a call that recognised an existing row. Anything that must happen exactly once per place in line (the confirmation email) keys on idempotent=false; the flag is the only way to tell a replay apart, since both answers are otherwise identical. It takes p_consented_documents and calls record_required_consents just below the idempotency return, so joining a queue is held to the same enrolment conditions as taking a seat — a family that could queue unconsented would first meet the conditions at promotion, which is the moment they are least able to decline — and a replay records nothing, because it is the same enrolment agreed once. It names p_customer_id as the acceptance''s accepted_by as well as its customer, the parent having ticked the boxes themselves. The join''s UTM tag (p_utm_source … p_utm_term) and School of Gaming mailing answer (p_school_of_gaming_marketing_opt_in, NULL when not asked) are written onto the row it inserts, as create_participation writes them onto a seat, where the Klaviyo waitlisted and enrolled events read them; a replay writes neither. No EXECUTE grant to anyone: the guarded wrapper is the only caller.';
+
+REVOKE ALL ON FUNCTION public.join_waitlist(uuid, uuid, uuid, text[], text, text, text, text, text, boolean) FROM PUBLIC;
+
+CREATE FUNCTION public.join_product_waitlist(p_product_id uuid, p_participant_id uuid, p_consented_documents text[] DEFAULT NULL::text[], p_utm_source text DEFAULT NULL::text, p_utm_medium text DEFAULT NULL::text, p_utm_campaign text DEFAULT NULL::text, p_utm_content text DEFAULT NULL::text, p_utm_term text DEFAULT NULL::text, p_school_of_gaming_marketing_opt_in boolean DEFAULT NULL::boolean) RETURNS jsonb
+    LANGUAGE plpgsql SECURITY DEFINER
+    SET search_path TO ''
+    AS $$
+BEGIN
+  PERFORM public.assert_role('customer');
+
+  -- Everything else — product lock, parent-of-gamer check, waitlist_enabled
+  -- gate, idempotency, the consent gate, the clock_timestamp() ordering stamp,
+  -- the row's tag and answer — lives in the engine. This function's whole job
+  -- is authorization plus pinning the actor to the session.
+  RETURN public.join_waitlist(
+    p_product_id, p_participant_id, (SELECT auth.uid()), p_consented_documents,
+    p_utm_source, p_utm_medium, p_utm_campaign, p_utm_content, p_utm_term,
+    p_school_of_gaming_marketing_opt_in
+  );
+END;
+$$;
+
+COMMENT ON FUNCTION public.join_product_waitlist(uuid, uuid, text[], text, text, text, text, text, boolean) IS 'Guarded, authenticated-facing entry point for joining a product waitlist. The customer is auth.uid(); the parent-of-gamer check and the required-consent gate both live in join_waitlist. The UTM tag and School of Gaming mailing answer are written onto the row a fresh join inserts. The waitlist route passes the tag only under the request''s marketing cookie consent; a parent calling this function directly can label only their own place in line, with values they typed themselves rather than ones read off a tracked visit, and the label grants nothing.';
+
+REVOKE ALL ON FUNCTION public.join_product_waitlist(uuid, uuid, text[], text, text, text, text, text, boolean) FROM PUBLIC;
+GRANT ALL ON FUNCTION public.join_product_waitlist(uuid, uuid, text[], text, text, text, text, text, boolean) TO authenticated;
+GRANT ALL ON FUNCTION public.join_product_waitlist(uuid, uuid, text[], text, text, text, text, text, boolean) TO service_role;
 
 -- ---------------------------------------------------------------------------
 -- 11. A product may ask the School of Gaming mailing question

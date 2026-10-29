@@ -5262,6 +5262,12 @@ export type Database = {
           p_consented_documents?: string[]
           p_participant_id: string
           p_product_id: string
+          p_school_of_gaming_marketing_opt_in?: boolean
+          p_utm_campaign?: string
+          p_utm_content?: string
+          p_utm_medium?: string
+          p_utm_source?: string
+          p_utm_term?: string
         }
         Returns: Json
       }
@@ -5271,6 +5277,12 @@ export type Database = {
           p_customer_id: string
           p_participant_id: string
           p_product_id: string
+          p_school_of_gaming_marketing_opt_in?: boolean
+          p_utm_campaign?: string
+          p_utm_content?: string
+          p_utm_medium?: string
+          p_utm_source?: string
+          p_utm_term?: string
         }
         Returns: Json
       }

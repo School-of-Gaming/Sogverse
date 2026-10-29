@@ -46,6 +46,27 @@ export type CreateParticipationResponse = z.infer<
 const consentedDocuments = z.array(z.string()).optional();
 
 /**
+ * What both enrolment doors carry for the row they create beyond who and what,
+ * because a place in a queue is a booking too.
+ */
+const seatAnswersBody = {
+  /**
+   * The UTM tag this visit arrived with, as the browser holds it. Stored on the
+   * row only when the request's own consent cookie grants marketing — the
+   * route decides that, never the body (`src/lib/utm.ts`). Plain strings, for
+   * the reason `registrationUtmBody` gives: a malformed value becomes NULL,
+   * never a refused booking.
+   */
+  utm: registrationUtmBody.optional(),
+  /**
+   * The parent's answer to the product's School of Gaming mailing box: present
+   * exactly when the panel showed it, `false` for a box left unticked. Absent
+   * means the box was not asked, which the row stores as NULL.
+   */
+  schoolOfGamingMarketingOptIn: z.boolean().optional(),
+};
+
+/**
  * Request body of POST /api/checkout/products/create. The purchase shape and
  * currency are enums rather than free strings so the route never has to ask
  * "is this one of the four we support?" after the fact — and the coherence
@@ -66,20 +87,7 @@ export const createCheckoutBody = z.object({
   ] as const satisfies readonly PurchaseShape[]),
   currency: z.enum(SUPPORTED_CURRENCIES),
   consentedDocuments,
-  /**
-   * The UTM tag this visit arrived with, as the browser holds it. Stored on the
-   * seat only when the request's own consent cookie grants marketing — the
-   * route decides that, never the body (`src/lib/utm.ts`). Plain strings, for
-   * the reason `registrationUtmBody` gives: a malformed value becomes NULL,
-   * never a refused booking.
-   */
-  utm: registrationUtmBody.optional(),
-  /**
-   * The parent's answer to the product's School of Gaming mailing box: present
-   * exactly when the panel showed it, `false` for a box left unticked. Absent
-   * means the box was not asked, which the seat stores as NULL.
-   */
-  schoolOfGamingMarketingOptIn: z.boolean().optional(),
+  ...seatAnswersBody,
 });
 
 /**
@@ -116,6 +124,7 @@ export const joinWaitlistBody = z.object({
   productId: z.string().uuid("productId must be a UUID"),
   participantId: z.string().uuid("participantId must be a UUID"),
   consentedDocuments,
+  ...seatAnswersBody,
 });
 
 /**

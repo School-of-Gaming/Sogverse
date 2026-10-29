@@ -947,7 +947,7 @@
         },
         "schoolOfGaming": {
           "label": "School of Gaming",
-          "description": "Ticking this adds an optional question to this product’s signup: parents are asked whether they want emails from School of Gaming about our clubs, camps and news. They may decline, and the seat is unaffected. Not asked when a parent joins the waitlist."
+          "description": "Ticking this adds an optional question to this product’s signup: parents are asked whether they want emails from School of Gaming about our clubs, camps and news. They may decline, and the seat is unaffected."
         }
       }
     },

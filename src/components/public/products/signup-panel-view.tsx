@@ -529,7 +529,6 @@ function SignupBody(props: SignupPanelViewProps) {
         // in place to the live action label.
         onSubmit={isWaitlist ? props.onJoinWaitlist : props.onSubmit}
         ctaLabelActive={isWaitlist ? t("ctaWaitlist") : activeLabel}
-        waitlist={isWaitlist}
         active={active}
         variant={isWaitlist ? "secondary" : "default"}
       />
@@ -559,13 +558,6 @@ interface FormOrAuthProps extends SignupPanelViewProps {
    * is resolved centrally in SignupForm, so there's no separate idle label.
    */
   ctaLabelActive: string;
-  /**
-   * Whether the CTA joins the waitlist rather than taking a seat. It decides
-   * which optional asks can be offered: an answer recorded on the seat
-   * (School of Gaming's own box) has nowhere to go from a queue place, so it
-   * is not asked there.
-   */
-  waitlist: boolean;
   active: boolean;
   variant?: "default" | "secondary";
 }
@@ -1329,14 +1321,9 @@ function SignupForm(
         onGrantedChange={props.onGamerPhotoConsentChange}
       />
 
-      {/* On a waitlist join, only the asks recorded on the account: School of
-          Gaming's own box is stored on the seat a booking creates, and a
-          queue place is no seat — a tick there would be silently lost. */}
       <OptionalMarketingSection
         disabled={!anyoneSelectable}
-        rows={describeMarketingConsents(props.marketingConsentTypes).filter(
-          (row) => !props.waitlist || row.ask.recordedOn === "account",
-        )}
+        rows={describeMarketingConsents(props.marketingConsentTypes)}
         granted={props.marketingConsents}
         onGrantedChange={props.onMarketingConsentChange}
       />

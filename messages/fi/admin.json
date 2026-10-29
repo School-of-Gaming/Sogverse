@@ -947,7 +947,7 @@
         },
         "schoolOfGaming": {
           "label": "School of Gaming",
-          "description": "Tämän valitseminen lisää tuotteen ilmoittautumiseen vapaaehtoisen kysymyksen: vanhemmilta kysytään, haluavatko he School of Gamingilta sähköpostia kerhoistamme, leireistämme ja uutisistamme. Vanhempi voi kieltäytyä, eikä se vaikuta paikkaan. Kysymystä ei esitetä, kun vanhempi liittyy jonotuslistalle."
+          "description": "Tämän valitseminen lisää tuotteen ilmoittautumiseen vapaaehtoisen kysymyksen: vanhemmilta kysytään, haluavatko he School of Gamingilta sähköpostia kerhoistamme, leireistämme ja uutisistamme. Vanhempi voi kieltäytyä, eikä se vaikuta paikkaan."
         }
       }
     },

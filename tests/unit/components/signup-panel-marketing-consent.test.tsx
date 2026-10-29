@@ -371,7 +371,7 @@ describe("a product that asks for School of Gaming's own marketing", () => {
     expect(onMarketingConsentChange).toHaveBeenCalledWith(SOG, true);
   });
 
-  it("is not asked on a waitlist join, where no seat would carry the answer", () => {
+  it("is asked on a waitlist join exactly as the partner's box is", () => {
     const { container } = render(
       <SignupPanelView
         {...panel({
@@ -381,9 +381,8 @@ describe("a product that asks for School of Gaming's own marketing", () => {
       />,
     );
 
-    expect(container.textContent).not.toContain("schoolOfGaming");
-    // The partner's box is recorded on the account, so it is still asked.
+    expect(container.textContent).toContain("schoolOfGaming");
     expect(container.textContent).toContain("lynxEducate");
-    expect(checkboxes(container)).toHaveLength(2);
+    expect(checkboxes(container)).toHaveLength(3);
   });
 });

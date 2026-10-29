@@ -6,6 +6,11 @@ process.env.NEXT_PUBLIC_SITE_URL = "https://test.sogverse.local";
 
 import { DELETE, POST } from "@/app/api/participations/waitlist/route";
 import { NextResponse } from "next/server";
+import {
+  CONSENT_COOKIE_NAME,
+  consentForPurposes,
+  serialiseConsent,
+} from "@/lib/consent";
 
 // --- Mocks ---
 
@@ -970,6 +975,109 @@ describe("POST /api/participations/waitlist", () => {
       expect(res.status).toBe(200);
       expect(deferred).toHaveLength(0);
       expect(mockReportMetaConversion).not.toHaveBeenCalled();
+    });
+  });
+
+  // -- What the place in line records, as a seat does --
+  //
+  // The visit's UTM tag is written only under marketing cookie consent read
+  // off THIS request (src/lib/utm.ts); the School of Gaming box is the
+  // parent's own answer and passes through as given.
+  describe("the place in line's tag and answer", () => {
+    const TAG = {
+      source: "lynx",
+      medium: "email",
+      campaign: "lynx-summer-a",
+      content: "hero",
+      term: "minecraft",
+    };
+    const UTM_ARGS = [
+      "p_utm_source",
+      "p_utm_medium",
+      "p_utm_campaign",
+      "p_utm_content",
+      "p_utm_term",
+    ];
+    const BODY = { productId: PRODUCT_ID, participantId: GAMER_ID };
+
+    function consentCookie(purposes: { analytics: boolean; marketing: boolean }): string {
+      const value = serialiseConsent(
+        consentForPurposes(purposes, new Date("2026-10-01T10:00:00Z")),
+      );
+      return `${CONSENT_COOKIE_NAME}=${encodeURIComponent(value)}`;
+    }
+
+    function requestWith(body: unknown, cookie?: string): Request {
+      return new Request("http://localhost:3000/api/participations/waitlist", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          ...(cookie ? { cookie } : {}),
+        },
+        body: JSON.stringify(body),
+      });
+    }
+
+    function rpcArgs(): Record<string, unknown> {
+      const call = mockRpc.mock.calls.find(([name]) => name === "join_product_waitlist");
+      if (call === undefined) throw new Error("join_product_waitlist was not called");
+      return call[1];
+    }
+
+    beforeEach(() => {
+      mockAuthenticatedCustomer();
+      mockRpc.mockResolvedValue({
+        data: {
+          participation_id: PARTICIPATION_ID,
+          waitlist_position: 1,
+          status: "waitlisted",
+          idempotent: true,
+        },
+        error: null,
+      });
+    });
+
+    it("stores the tag when the request's cookie grants marketing", async () => {
+      await POST(
+        requestWith({ ...BODY, utm: TAG }, consentCookie({ analytics: false, marketing: true })),
+      );
+      expect(rpcArgs()).toMatchObject({
+        p_utm_source: "lynx",
+        p_utm_medium: "email",
+        p_utm_campaign: "lynx-summer-a",
+        p_utm_content: "hero",
+        p_utm_term: "minecraft",
+      });
+    });
+
+    it("stores no tag without a consent cookie, or under analytics-only consent", async () => {
+      await POST(requestWith({ ...BODY, utm: TAG }));
+      for (const key of UTM_ARGS) expect(rpcArgs()).not.toHaveProperty(key);
+
+      mockRpc.mockClear();
+      await POST(
+        requestWith({ ...BODY, utm: TAG }, consentCookie({ analytics: true, marketing: false })),
+      );
+      for (const key of UTM_ARGS) expect(rpcArgs()).not.toHaveProperty(key);
+    });
+
+    it("passes the School of Gaming answer through as given, needing no marketing cookie", async () => {
+      await POST(
+        requestWith(
+          { ...BODY, schoolOfGamingMarketingOptIn: true },
+          consentCookie({ analytics: false, marketing: false }),
+        ),
+      );
+      expect(rpcArgs().p_school_of_gaming_marketing_opt_in).toBe(true);
+
+      mockRpc.mockClear();
+      await POST(requestWith({ ...BODY, schoolOfGamingMarketingOptIn: false }));
+      expect(rpcArgs().p_school_of_gaming_marketing_opt_in).toBe(false);
+    });
+
+    it("sends no answer when the box was not asked", async () => {
+      await POST(requestWith(BODY));
+      expect(rpcArgs()).not.toHaveProperty("p_school_of_gaming_marketing_opt_in");
     });
   });
 });

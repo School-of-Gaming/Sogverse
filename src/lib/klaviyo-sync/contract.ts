@@ -473,9 +473,9 @@ export function klaviyoEventFor(
  * The custom source of the email-marketing subscription sending this event
  * also makes, or null when it makes none. Two answers subscribe: the
  * registration form's ticked box, sent with the account's creation, and a yes
- * to a product's School of Gaming mailing ask, sent with that seat's
- * enrolment. Every other answer — unticked, no, never asked — leaves consent
- * alone.
+ * to a product's School of Gaming mailing ask, sent with the event the
+ * booking's own insert filed — the seat's enrolment, or the waitlist join.
+ * Every other answer — unticked, no, never asked — leaves consent alone.
  */
 export function subscriptionSourceOnSend(
   row: KlaviyoEventRow,
@@ -487,6 +487,7 @@ export function subscriptionSourceOnSend(
         ? ACCOUNT_REGISTRATION_CUSTOM_SOURCE
         : null;
     case "enrolled":
+    case "waitlisted":
       return row.properties.marketing_opt_in === true ? PRODUCT_SIGNUP_CUSTOM_SOURCE : null;
     default:
       return null;

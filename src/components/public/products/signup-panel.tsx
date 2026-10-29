@@ -341,7 +341,7 @@ export function SignupPanel({
       // marketing consent (`src/lib/utm.ts`).
       utm: utmRegistrationBody(utm),
       // School of Gaming's own box, which `recordConsentAnswers` above never
-      // writes: its answer is stored on the seat this request creates.
+      // writes: its answer is stored on the row this request creates.
       schoolOfGamingMarketingOptIn: fields.schoolOfGamingMarketingOptIn,
     };
     createMutation.mutate(input, {
@@ -430,6 +430,9 @@ export function SignupPanel({
         productId: product.id,
         participantId: fields.selectedParticipantId,
         consentedDocuments: consentedDocuments(),
+        // A place in line is a booking too, and records what a seat does.
+        utm: utmRegistrationBody(utm),
+        schoolOfGamingMarketingOptIn: fields.schoolOfGamingMarketingOptIn,
       },
       {
         onSuccess: (response) => {

@@ -45,9 +45,10 @@ export interface MarketingConsentAsk {
    *   took.
    * - `seat` — School of Gaming's own list: Klaviyo owns that consent, so the
    *   answer is never written to the account (`set_marketing_consent` refuses
-   *   it). It is stored on the seat the booking creates and reaches Klaviyo
-   *   with the enrolment, so it travels in the enrolment request itself — and
-   *   only a request that creates a seat can carry it.
+   *   it). It is stored on the row the booking creates — the seat, or the
+   *   place in line — and reaches Klaviyo with the event that row's creation
+   *   files, so it travels in the booking request itself, whichever door the
+   *   parent took.
    */
   recordedOn: "account" | "seat";
 }

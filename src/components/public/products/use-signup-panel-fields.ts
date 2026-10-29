@@ -145,8 +145,9 @@ export interface SignupPanelFields {
   /**
    * **The answer to School of Gaming's own box, which is not one of the
    * answers above.** Klaviyo owns that consent, so it is never written to the
-   * account: it is stored on the seat the booking creates and travels in the
-   * enrolment request (the ask's `recordedOn: "seat"`). `marketingConsentAnswers`
+   * account: it is stored on the row the booking creates — a seat or a place
+   * in line — and travels in the booking request (the ask's
+   * `recordedOn: "seat"`). `marketingConsentAnswers`
    * holds only the account-recorded asks for that reason.
    *
    * `null` when the product does not ask; otherwise the box as it stands,

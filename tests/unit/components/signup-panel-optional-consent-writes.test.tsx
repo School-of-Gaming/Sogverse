@@ -377,9 +377,8 @@ describe("the writes never get in the enrolment's way", () => {
 /**
  * **School of Gaming's own box travels with the enrolment, never through the
  * consent writer.** Klaviyo owns that consent and `set_marketing_consent`
- * refuses it; the answer is stored on the seat the create route writes, so it
- * rides the create request — and a waitlist join, which writes no seat, does
- * not ask it.
+ * refuses it; the answer is stored on the row the booking writes, so it rides
+ * the booking request — the create request, or the waitlist join.
  */
 describe("School of Gaming's own box", () => {
   const SOG: MarketingConsentType = "school_of_gaming";
@@ -426,7 +425,7 @@ describe("School of Gaming's own box", () => {
     });
   });
 
-  it("is neither asked nor sent on the waitlist door", () => {
+  it("is asked and sent on the waitlist door exactly as on a booking", () => {
     const { container } = render(
       panel({
         state: { kind: "full_waitlist", seatCount: 8 },
@@ -434,15 +433,18 @@ describe("School of Gaming's own box", () => {
       }),
     );
 
-    // Rules, photo, Lynx's — ours is not drawn.
-    expect(boxes(container)).toHaveLength(3);
+    // Rules, photo, ours, Lynx's — the same boxes a booking shows.
+    expect(boxes(container)).toHaveLength(4);
+    fireEvent.click(sogBox(container));
     agreeToTheRules(container);
     fireEvent.click(cta(container));
 
     expect(waitlistMutate).toHaveBeenCalledTimes(1);
-    expect(waitlistMutate.mock.calls[0][0]).not.toHaveProperty(
-      "schoolOfGamingMarketingOptIn",
-    );
+    expect(waitlistMutate.mock.calls[0][0]).toMatchObject({
+      schoolOfGamingMarketingOptIn: true,
+      // The stubbed visit carries no tag, so every field is omitted.
+      utm: {},
+    });
     expect(setMarketingMutate).toHaveBeenCalledTimes(1);
     expect(onlyCall(setMarketingMutate)).toMatchObject({
       consentType: LYNX_MARKETING,

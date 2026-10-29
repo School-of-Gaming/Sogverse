@@ -23,9 +23,9 @@ BEGIN
   -- Each event is a status the participation ARRIVES at, so a write that
   -- leaves the status where it was is not one. A seat is held once it is
   -- active, whatever the product charges. The marketing answer was given with
-  -- the booking, so only the booking (the insert) carries it: a seat demoted
-  -- to the waitlist and later promoted again records null, or the drain would
-  -- subscribe a parent who may have unsubscribed since.
+  -- the booking, so only the booking (the insert) carries it: a seat promoted
+  -- off the waitlist, or demoted and promoted again, records null, or the
+  -- drain would subscribe a parent who may have unsubscribed since.
   IF NEW.status = 'active'::public.participation_status
      AND v_old_status IS DISTINCT FROM NEW.status THEN
     PERFORM public.enqueue_klaviyo_event(
@@ -48,10 +48,18 @@ BEGIN
 
   IF NEW.status = 'waitlisted'::public.participation_status
      AND v_old_status IS DISTINCT FROM NEW.status THEN
+    -- A waitlist join is the booking on this path, so its insert carries the
+    -- answer exactly as a seat taken at once does; a seat demoted back onto
+    -- the waitlist later records null.
     PERFORM public.enqueue_klaviyo_event(
       'waitlisted'::public.klaviyo_event_kind,
       NEW.id, NEW.customer_id, NEW.product_id,
-      COALESCE(NEW.waitlisted_at, now())
+      COALESCE(NEW.waitlisted_at, now()),
+      jsonb_build_object(
+        'marketing_opt_in', CASE WHEN TG_OP = 'INSERT'
+                                 THEN NEW.school_of_gaming_marketing_opt_in
+                            END
+      )
     );
   END IF;
 
@@ -73,7 +81,7 @@ $$;
 -- Name: FUNCTION klaviyo_participation_changed(); Type: COMMENT; Schema: public; Owner: -
 --
 
-COMMENT ON FUNCTION public.klaviyo_participation_changed() IS 'Trigger on participations, after an insert, a delete, or an update of status, product_id or seat_offer_sent_at that changes it: files the participation''s parent in the Klaviyo profile outbox, and files the events it shows — enrolled when it arrives at active (by insert or from the waitlist) on a product of any billing mode, with klaviyo_seat_holder_facts, the seat''s UTM tag and — on the insert that books the seat only — its School of Gaming marketing answer (null on a later activation, so a re-activated seat never re-subscribes); waitlisted when it arrives at waitlisted; seat_offered when a seat offer is first stamped on it. Granted to nobody.';
+COMMENT ON FUNCTION public.klaviyo_participation_changed() IS 'Trigger on participations, after an insert, a delete, or an update of status, product_id or seat_offer_sent_at that changes it: files the participation''s parent in the Klaviyo profile outbox, and files the events it shows — enrolled when it arrives at active (by insert or from the waitlist) on a product of any billing mode, with klaviyo_seat_holder_facts, the seat''s UTM tag and — on the insert that books the seat only — its School of Gaming marketing answer (null on a later activation, so a re-activated seat never re-subscribes); waitlisted when it arrives at waitlisted, with — on the insert that joins the waitlist only — the same answer (null when a seat is demoted onto it); seat_offered when a seat offer is first stamped on it. Granted to nobody.';
 
 
 --

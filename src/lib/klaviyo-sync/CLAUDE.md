@@ -131,11 +131,12 @@ it was given, and never sends a no.** Two moments give one:
   source `Sogverse account registration`. The answer, yes or no, is also the
   `sog_registration_marketing_answer` property.
 - **A product sign-up that asked.** A product may ask "I want emails from School of
-  Gaming", unticked, with every booking. The answer is stored on the seat, never in
-  `marketing_consents`, and a yes subscribes the parent when the `SV Enrolled` of that
-  seat's booking goes out, under the custom source `Sogverse product sign-up`. Only the
-  booking carries it: a seat that leaves the waitlist again later files an `SV Enrolled`
-  with no answer, so a parent who has unsubscribed since is not subscribed again.
+  Gaming", unticked, with every booking, a waitlist join included. The answer is stored
+  on the participation, never in `marketing_consents`, and a yes subscribes the parent,
+  under the custom source `Sogverse product sign-up`, when the event the booking's own
+  insert files goes out: `SV Enrolled` for a seat taken at once, `SV Waitlisted` for a
+  waitlist join. A later promotion or demotion never carries it, so a parent who has
+  unsubscribed since is not subscribed again. The answer is never an event property.
 
 Both subscribe to email marketing into the marketing-consent list — `SV Marketing consent`
 in production, `SV Staging` elsewhere, the same list the newsletter form subscribes into.

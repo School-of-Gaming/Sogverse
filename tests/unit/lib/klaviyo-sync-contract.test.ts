@@ -416,7 +416,7 @@ describe("the events", () => {
       ...base,
       kind: "waitlisted",
       unique_id: "waitlisted:p3",
-      properties: { source_id: "p3", product: EVENT },
+      properties: { source_id: "p3", product: EVENT, marketing_opt_in: true },
     },
     {
       ...base,
@@ -579,8 +579,14 @@ describe("the events", () => {
     });
   });
 
-  it("subscribes a ticked account creation and an enrolment that said yes, each under its own source", () => {
+  it("subscribes a ticked account creation, and an enrolment or a waitlist join that said yes, each under its own source", () => {
     const [created, , session] = rows;
+    const waitlisted = rows.find((row) => row.kind === "waitlisted");
+    if (waitlisted?.kind !== "waitlisted") throw new Error("fixture has no waitlisted row");
+    const joined = (answer: boolean | null): KlaviyoEventRow => ({
+      ...waitlisted,
+      properties: { ...waitlisted.properties, marketing_opt_in: answer },
+    });
     const answered = (answer: boolean | null): KlaviyoParentSnapshot => ({
       ...FULL,
       attribution: { ...FULL.attribution, registration_marketing_consent: answer },
@@ -595,7 +601,16 @@ describe("the events", () => {
     expect(subscriptionSourceOnSend(optIn(true), answered(null))).toBe("Sogverse product sign-up");
     expect(subscriptionSourceOnSend(optIn(false), answered(true))).toBeNull();
     expect(subscriptionSourceOnSend(optIn(null), answered(true))).toBeNull();
+    expect(subscriptionSourceOnSend(joined(true), answered(null))).toBe("Sogverse product sign-up");
+    expect(subscriptionSourceOnSend(joined(false), answered(true))).toBeNull();
+    expect(subscriptionSourceOnSend(joined(null), answered(true))).toBeNull();
     expect(subscriptionSourceOnSend(session, answered(true))).toBeNull();
+  });
+
+  it("never sends the waitlist join's answer as an event property", () => {
+    const waitlisted = rows.find((row) => row.kind === "waitlisted");
+    if (waitlisted === undefined) throw new Error("fixture has no waitlisted row");
+    expect(klaviyoEventFor(waitlisted, FULL).properties).not.toHaveProperty("marketing_opt_in");
   });
 });
 

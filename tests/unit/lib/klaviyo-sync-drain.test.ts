@@ -346,6 +346,43 @@ describe("drainKlaviyoSync", () => {
     ]);
   });
 
+  it("subscribes a waitlist join that said yes, and no other", async () => {
+    const join = (eventId: string, optIn: boolean | null) => ({
+      event_id: eventId,
+      kind: "waitlisted",
+      unique_id: `waitlisted:${eventId}`,
+      customer_id: KEPT,
+      occurred_at: "2026-10-01T09:00:00+00:00",
+      properties: { source_id: eventId, product: null, marketing_opt_in: optIn },
+    });
+    outbox({
+      events: ["e1", "e2", "e3"].map((id) => ({
+        event_id: id,
+        kind: "waitlisted",
+        customer_id: KEPT,
+      })),
+      eventRows: [join("e1", true), join("e2", false), join("e3", null)],
+      snapshots: [snapshot(KEPT, true)],
+    });
+
+    const result = await drainKlaviyoSync();
+
+    expect(result).toMatchObject({ eventsSent: 3, failed: 0 });
+    expect(klaviyo.createKlaviyoEvent).toHaveBeenCalledWith(
+      { email: `${KEPT}@example.com`, externalId: KEPT },
+      expect.objectContaining({ metric: "SV Waitlisted", uniqueId: "waitlisted:e1" }),
+    );
+    expect(klaviyo.subscribeKlaviyoProfile.mock.calls).toEqual([
+      [
+        {
+          email: `${KEPT}@example.com`,
+          listId: "list-consent",
+          customSource: "Sogverse product sign-up",
+        },
+      ],
+    ]);
+  });
+
   it("fails a ticked account creation, sending nothing, when the consent list is not configured", async () => {
     vi.stubEnv("KLAVIYO_MARKETING_CONSENT_LIST_ID", "");
     outbox({

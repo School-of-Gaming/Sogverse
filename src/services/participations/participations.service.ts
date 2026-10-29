@@ -450,7 +450,27 @@ export type JoinWaitlistInput = {
   /** Ticked consent document slugs — see `CreateParticipationInput`. A queue
    *  place is held to the same enrolment conditions as a seat. */
   consentedDocuments: string[];
+  /** The visit's UTM tag — see `CreateParticipationInput`. */
+  utm: UtmInput;
+  /** The School of Gaming mailing answer — see `CreateParticipationInput`. */
+  schoolOfGamingMarketingOptIn: boolean | null;
 };
+
+/**
+ * A booking's JSON body with an unasked School of Gaming box left off the wire
+ * rather than sent as null: absent is the one spelling the routes read as "not
+ * asked".
+ */
+function bookingBody<T extends { schoolOfGamingMarketingOptIn: boolean | null }>(
+  input: T,
+): string {
+  const { schoolOfGamingMarketingOptIn, ...rest } = input;
+  return JSON.stringify(
+    schoolOfGamingMarketingOptIn === null
+      ? rest
+      : { ...rest, schoolOfGamingMarketingOptIn },
+  );
+}
 
 export type LeaveWaitlistInput = {
   participationId: string;
@@ -873,17 +893,10 @@ export class ParticipationsService {
   async createParticipation(
     input: CreateParticipationInput,
   ): Promise<CreateParticipationResponse> {
-    const { schoolOfGamingMarketingOptIn, ...rest } = input;
     const response = await fetch("/api/checkout/products/create", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      // An unasked box is left off the wire rather than sent as null: absent
-      // is the one spelling the route reads as "not asked".
-      body: JSON.stringify(
-        schoolOfGamingMarketingOptIn === null
-          ? rest
-          : { ...rest, schoolOfGamingMarketingOptIn },
-      ),
+      body: bookingBody(input),
     });
     if (!response.ok) {
       // An `ApiError` rather than a bare `Error`: the panel branches on the
@@ -898,7 +911,7 @@ export class ParticipationsService {
     const response = await fetch("/api/participations/waitlist", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(input),
+      body: bookingBody(input),
     });
     if (!response.ok) {
       // Same shape as the signup door above, and for the same reason: this
