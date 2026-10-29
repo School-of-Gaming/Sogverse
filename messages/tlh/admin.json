@@ -944,6 +944,10 @@
         "lynxEducate": {
           "label": "Lynx Educate",
           "description": "DawIvchugh, ghItlhDaq ra’be’lu’bogh tlhob chel: Lynx Educate-vaD De’wI’ HeywI’ lunob ’e’ luchaw’ ’e’ tlhoblu’ vavpu’. jangbe’laH vav, ’ej quSDaj chIlbe’."
+        },
+        "schoolOfGaming": {
+          "label": "noH Quj yejHaD",
+          "description": "DawIvchugh, ghItlhDaq ra’be’lu’bogh tlhob chel: noH Quj yejHaD QIn luneH’a’ vavpu’? jangbe’laH vav, ’ej quSDaj chIlbe’. tetlh luqaDDI’ vavpu’, tlhoblu’be’."
         }
       }
     },

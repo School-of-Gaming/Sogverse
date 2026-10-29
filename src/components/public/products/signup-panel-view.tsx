@@ -529,6 +529,7 @@ function SignupBody(props: SignupPanelViewProps) {
         // in place to the live action label.
         onSubmit={isWaitlist ? props.onJoinWaitlist : props.onSubmit}
         ctaLabelActive={isWaitlist ? t("ctaWaitlist") : activeLabel}
+        waitlist={isWaitlist}
         active={active}
         variant={isWaitlist ? "secondary" : "default"}
       />
@@ -558,6 +559,13 @@ interface FormOrAuthProps extends SignupPanelViewProps {
    * is resolved centrally in SignupForm, so there's no separate idle label.
    */
   ctaLabelActive: string;
+  /**
+   * Whether the CTA joins the waitlist rather than taking a seat. It decides
+   * which optional asks can be offered: an answer recorded on the seat
+   * (School of Gaming's own box) has nowhere to go from a queue place, so it
+   * is not asked there.
+   */
+  waitlist: boolean;
   active: boolean;
   variant?: "default" | "secondary";
 }
@@ -591,7 +599,7 @@ interface FormOrAuthProps extends SignupPanelViewProps {
 //
 // **The consent rows that carry a marker are the ones that do NOT gate the
 // button.** The optional rows below the section — a photo permission for the
-// selected child, a partner's mailing list — are the same bordered control as
+// selected child, our own or a partner's mailing list — are the same bordered control as
 // the gates above them (the border draws the click target, not the stakes), so
 // each one's info-toned hint sentence, which opens with the word "Optional", is
 // what a reader (and, through `aria-describedby`, a screen reader) tells them
@@ -1285,7 +1293,7 @@ function SignupForm(
 
       {/* Below the conditions and above the button: the optional questions, in
           the order the product asks them — the child's photo permission, then
-          the partner's mailing list — and deliberately NOT rows inside the
+          the mailing lists — and deliberately NOT rows inside the
           section above. See the sections' own notes: the section above is one
           act the button names, and neither of these gates it. What tells them
           apart from a gate is each one's info-toned hint sentence, not the
@@ -1321,9 +1329,14 @@ function SignupForm(
         onGrantedChange={props.onGamerPhotoConsentChange}
       />
 
+      {/* On a waitlist join, only the asks recorded on the account: School of
+          Gaming's own box is stored on the seat a booking creates, and a
+          queue place is no seat — a tick there would be silently lost. */}
       <OptionalMarketingSection
         disabled={!anyoneSelectable}
-        rows={describeMarketingConsents(props.marketingConsentTypes)}
+        rows={describeMarketingConsents(props.marketingConsentTypes).filter(
+          (row) => !props.waitlist || row.ask.recordedOn === "account",
+        )}
         granted={props.marketingConsents}
         onGrantedChange={props.onMarketingConsentChange}
       />
@@ -1624,7 +1637,8 @@ function OptionalGamerPhotoSection({
 }
 
 /**
- * **The optional ask: a partner's mailing list, offered on the way past.**
+ * **The optional asks: a mailing list — ours or a partner's — offered on the
+ * way past.**
  *
  * Everything about it is chosen to say "this is not one of those" to a reader
  * who has just met the Required consent section, because the single most
@@ -1652,7 +1666,7 @@ function OptionalGamerPhotoSection({
  *   is a statement about the moment of enrolment and cannot be unmade; this is
  *   a standing permission about a mailbox, and the parent owns it afterwards.
  *
- * **The partner is a link, and it opens in a new tab** — the same treatment a
+ * **A partner is a link, and it opens in a new tab** — the same treatment a
  * consent document's name gets, for the same two reasons. A parent asked to
  * hand their address to somebody has to be able to look at who that somebody
  * is, and the panel behind them is holding a half-filled form that must survive
@@ -1698,11 +1712,16 @@ function OptionalMarketingSection({
           label={
             <span className="text-muted-foreground">
               {t.rich(ask.sentenceKey, {
-                link: (chunks) => (
-                  <ConsentSentenceLink href={ask.href}>
-                    {chunks}
-                  </ConsentSentenceLink>
-                ),
+                // Our own list's sentence names nobody to go and look up, so it
+                // carries no link tag and this goes unused.
+                link: (chunks) =>
+                  ask.href === null ? (
+                    chunks
+                  ) : (
+                    <ConsentSentenceLink href={ask.href}>
+                      {chunks}
+                    </ConsentSentenceLink>
+                  ),
               })}
             </span>
           }

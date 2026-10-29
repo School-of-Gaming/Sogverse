@@ -11,6 +11,7 @@ import type {
   SessionAudience,
 } from "@/types";
 import type { SupportedCurrency } from "@/lib/constants/currency";
+import type { UtmInput } from "@/lib/utm";
 import { gamersAttendSite } from "@/lib/products/delivery-mode";
 import type { QueryData } from "@supabase/supabase-js";
 import {
@@ -389,6 +390,17 @@ export type CreateParticipationInput = {
    * is what keeps a new signup surface from forgetting the question exists.
    */
   consentedDocuments: string[];
+  /**
+   * The visit's UTM tag, as the browser holds it. Whether any of it is stored
+   * is the route's decision, from the request's own consent cookie.
+   */
+  utm: UtmInput;
+  /**
+   * The answer to the product's School of Gaming mailing box, or `null` when
+   * the product does not ask. Required for the same reason the documents are:
+   * a caller has to state it.
+   */
+  schoolOfGamingMarketingOptIn: boolean | null;
 };
 
 /**
@@ -861,10 +873,17 @@ export class ParticipationsService {
   async createParticipation(
     input: CreateParticipationInput,
   ): Promise<CreateParticipationResponse> {
+    const { schoolOfGamingMarketingOptIn, ...rest } = input;
     const response = await fetch("/api/checkout/products/create", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(input),
+      // An unasked box is left off the wire rather than sent as null: absent
+      // is the one spelling the route reads as "not asked".
+      body: JSON.stringify(
+        schoolOfGamingMarketingOptIn === null
+          ? rest
+          : { ...rest, schoolOfGamingMarketingOptIn },
+      ),
     });
     if (!response.ok) {
       // An `ApiError` rather than a bare `Error`: the panel branches on the

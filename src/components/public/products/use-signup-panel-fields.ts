@@ -143,6 +143,17 @@ export interface SignupPanelFields {
     granted: boolean;
   }[];
   /**
+   * **The answer to School of Gaming's own box, which is not one of the
+   * answers above.** Klaviyo owns that consent, so it is never written to the
+   * account: it is stored on the seat the booking creates and travels in the
+   * enrolment request (the ask's `recordedOn: "seat"`). `marketingConsentAnswers`
+   * holds only the account-recorded asks for that reason.
+   *
+   * `null` when the product does not ask; otherwise the box as it stands,
+   * `false` for one left alone, on the same terms as every other answer here.
+   */
+  schoolOfGamingMarketingOptIn: boolean | null;
+  /**
    * **The product's optional photo asks**, as stored — whether photos and
    * videos of the selected child may be taken and used. Empty on almost every
    * product, and the block ceases to exist when it is.
@@ -408,10 +419,19 @@ export function useSignupPanelFields(
   );
   // Only over the rows actually on screen. A stored type this deploy cannot
   // name is not rendered, so nobody answered it and nothing is sent about it.
-  const marketingConsentAnswers = marketingRows.map((row) => ({
-    consentType: row.type,
-    granted: marketingValue(row.type),
-  }));
+  // Split by where each answer is recorded: the account's go through the
+  // consent writer, the seat's ride the enrolment request.
+  const marketingConsentAnswers = marketingRows
+    .filter((row) => row.ask.recordedOn === "account")
+    .map((row) => ({
+      consentType: row.type,
+      granted: marketingValue(row.type),
+    }));
+  const schoolOfGamingMarketingOptIn = marketingRows.some(
+    (row) => row.type === "school_of_gaming",
+  )
+    ? marketingValue("school_of_gaming")
+    : null;
 
   // The photo asks, which differ from the marketing asks in exactly one way:
   // **the answer belongs to a particular child**, so it does not survive the
@@ -498,6 +518,7 @@ export function useSignupPanelFields(
         return next;
       }),
     marketingConsentAnswers,
+    schoolOfGamingMarketingOptIn,
     gamerPhotoConsentTypes,
     gamerPhotoConsentsEnabled,
     gamerPhotoConsents,

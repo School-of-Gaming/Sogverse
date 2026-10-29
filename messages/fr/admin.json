@@ -944,6 +944,10 @@
         "lynxEducate": {
           "label": "Lynx Educate",
           "description": "Cocher cette case ajoute une question facultative à l’inscription à ce produit : il est demandé aux parents s’ils souhaitent partager leur adresse e-mail avec Lynx Educate. Un parent peut refuser, et la place n’est pas affectée."
+        },
+        "schoolOfGaming": {
+          "label": "School of Gaming",
+          "description": "Cocher cette case ajoute une question facultative à l’inscription à ce produit : il est demandé aux parents s’ils souhaitent recevoir des e-mails de School of Gaming sur nos clubs, nos camps et nos actualités. Un parent peut refuser, et la place n’est pas affectée. La question n’est pas posée lorsqu’un parent rejoint la liste d’attente."
         }
       }
     },

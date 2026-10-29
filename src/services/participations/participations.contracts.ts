@@ -2,6 +2,7 @@ import { z } from "zod";
 import { SUPPORTED_CURRENCIES } from "@/lib/constants/currency";
 import { Constants, type PurchaseShape } from "@/types";
 import { plannedSessionRow } from "@/lib/planned-sessions";
+import { registrationUtmBody } from "@/services/users/parent-registration.contracts";
 
 /**
  * Response of POST /api/checkout/products/create — the signup outcomes: paid
@@ -65,7 +66,42 @@ export const createCheckoutBody = z.object({
   ] as const satisfies readonly PurchaseShape[]),
   currency: z.enum(SUPPORTED_CURRENCIES),
   consentedDocuments,
+  /**
+   * The UTM tag this visit arrived with, as the browser holds it. Stored on the
+   * seat only when the request's own consent cookie grants marketing — the
+   * route decides that, never the body (`src/lib/utm.ts`). Plain strings, for
+   * the reason `registrationUtmBody` gives: a malformed value becomes NULL,
+   * never a refused booking.
+   */
+  utm: registrationUtmBody.optional(),
+  /**
+   * The parent's answer to the product's School of Gaming mailing box: present
+   * exactly when the panel showed it, `false` for a box left unticked. Absent
+   * means the box was not asked, which the seat stores as NULL.
+   */
+  schoolOfGamingMarketingOptIn: z.boolean().optional(),
 });
+
+/**
+ * What a paid booking's Checkout Session carries for the seat beyond who and
+ * what: the UTM tag the route let through its consent gate, and the School of
+ * Gaming mailing answer. Written by the checkout route, read back by the Stripe
+ * webhook into `confirm_paid_participation`. Every key is optional — a key is
+ * written only when it holds a value — and the answer is spelled as a string
+ * because Stripe metadata holds nothing else.
+ */
+export const seatAnswersSessionMetadata = z.object({
+  utmSource: z.string().optional(),
+  utmMedium: z.string().optional(),
+  utmCampaign: z.string().optional(),
+  utmContent: z.string().optional(),
+  utmTerm: z.string().optional(),
+  schoolOfGamingMarketingOptIn: z.enum(["true", "false"]).optional(),
+});
+
+export type SeatAnswersSessionMetadata = z.infer<
+  typeof seatAnswersSessionMetadata
+>;
 
 /**
  * Request body of POST /api/participations/waitlist.

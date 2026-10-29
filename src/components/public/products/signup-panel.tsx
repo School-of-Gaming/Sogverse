@@ -15,6 +15,8 @@ import { GTM_EVENTS } from "@/lib/gtm-events";
 import { isAdvertisedProduct } from "@/lib/marketing-events";
 import { localizedLocationName } from "@/lib/locations/localized-name";
 import { useAuth } from "@/providers/auth-provider";
+import { useUtm } from "@/providers";
+import { utmRegistrationBody } from "@/lib/utm";
 import {
   useSetMarketingConsent,
 } from "@/services/marketing-consents/marketing-consents.queries";
@@ -149,6 +151,7 @@ export function SignupPanel({
 }: SignupPanelProps) {
   const router = useRouter();
   const { user, refreshProfile } = useAuth();
+  const utm = useUtm();
 
   // Pricing / gamer selection / agreed / locale+currency — the view props
   // shared verbatim with the preview panel. This panel only adds the live
@@ -333,6 +336,13 @@ export function SignupPanel({
       purchaseShape,
       currency: fields.currency,
       consentedDocuments: consentedDocuments(),
+      // The visit's tag, sent whatever the cookie banner said: the route reads
+      // the consent cookie off this request and stores the tag only under
+      // marketing consent (`src/lib/utm.ts`).
+      utm: utmRegistrationBody(utm),
+      // School of Gaming's own box, which `recordConsentAnswers` above never
+      // writes: its answer is stored on the seat this request creates.
+      schoolOfGamingMarketingOptIn: fields.schoolOfGamingMarketingOptIn,
     };
     createMutation.mutate(input, {
       onSuccess: (response) => {
