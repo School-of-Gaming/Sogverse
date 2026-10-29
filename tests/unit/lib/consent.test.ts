@@ -242,6 +242,21 @@ describe("clearAdvertisingStorage", () => {
     expect(keysOf(storage)).toEqual(["sog-theme", "fbp"]);
   });
 
+  // Reddit's one key is the exception to "as observed": it was read off the
+  // library's source, not seen on a visit, because the CSP refuses the
+  // configuration fetch that would fill it. It is pinned all the same, so a
+  // policy change that lets the configuration in cannot leave it behind.
+  it("removes the configuration the Reddit library caches", () => {
+    const storage = fakeStorage({
+      _rdt_cfg: '{"pixelEventConfigs":[]}',
+      "sog-theme": "dark",
+    });
+
+    clearAdvertisingStorage(storage);
+
+    expect(keysOf(storage)).toEqual(["sog-theme"]);
+  });
+
   // The bug a remove-while-walking implementation has: deleting a key shifts
   // every later one down an index, so the next match is stepped over. Three
   // adjacent matches is the shape that catches it.
@@ -290,6 +305,16 @@ describe("advertisingCookieNames", () => {
       "_gid",
       "_gcl_au",
     ]);
+  });
+
+  // The names come from reading Reddit's library rather than from a granted
+  // visit, which is why the sweep takes the family by prefix.
+  it("finds every cookie the Reddit library writes", () => {
+    expect(
+      advertisingCookieNames(
+        "_rdt_uuid=1757.abc; _rdt_cid=1234567890; _rdt_em=ff8d98; _rdt_pn=ab12; rdt_note=ours",
+      ),
+    ).toEqual(["_rdt_uuid", "_rdt_cid", "_rdt_em", "_rdt_pn"]);
   });
 
   it("leaves everything else alone", () => {

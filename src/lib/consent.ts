@@ -66,8 +66,14 @@ export const CONSENT_MAX_AGE_SECONDS = 180 * 24 * 60 * 60;
  * `_ga_<property id>` — a name that depends on which property the container is
  * configured against and is therefore unknowable here. `_gid` is the day-scoped
  * visitor id, and `_gcl_` covers the conversion linker's family, the ad click
- * this device arrived on among them. Nothing we set ourselves begins with any
- * of these.
+ * this device arrived on among them.
+ *
+ * Reddit's are one prefix, `_rdt_`, over the four its library writes: its
+ * browser id (`_rdt_uuid`), the ad click (`_rdt_cid`), and the hashed email and
+ * phone its automatic matching would store (`_rdt_em`, `_rdt_pn`). Those names
+ * come from reading the library's source rather than from a granted visit, so
+ * the prefix covers whatever else it writes under the same family. Nothing we
+ * set ourselves begins with any of these.
  */
 export const ADVERTISING_COOKIE_PREFIXES = [
   "_fbp",
@@ -76,6 +82,7 @@ export const ADVERTISING_COOKIE_PREFIXES = [
   "_ga",
   "_gid",
   "_gcl_",
+  "_rdt_",
 ] as const;
 
 /**
@@ -124,11 +131,19 @@ export function advertisingCookieNames(cookies: string): string[] {
  * The prefixed entries are matched rather than named: Meta appends a pixel id
  * and a purpose to each of its keys, and Google's are taken on the prefix its
  * cookies already use.
+ *
+ * `_rdt_cfg` is Reddit's: the configuration its library caches in session
+ * storage. Unlike the others it was read off the library's source, not
+ * observed on a visit — which also means it may never be written here, since
+ * the CSP refuses the fetch that configuration comes from. It is swept all the
+ * same: a key the library can write is a key a withdrawal has to clear, and a
+ * reading of its source cannot promise the store stays empty.
  */
 const ADVERTISING_STORAGE_KEYS = [
   "multiFbc",
   "lastExternalReferrer",
   "lastExternalReferrerTime",
+  "_rdt_cfg",
 ] as const;
 const ADVERTISING_STORAGE_PREFIXES = [
   "fbevents^$",
@@ -167,8 +182,8 @@ export interface ConsentState {
   /** Vercel Web Analytics and Speed Insights. */
   analytics: boolean;
   /**
-   * The Meta Pixel, the conversions our servers report to Meta, and the Tag
-   * Manager container.
+   * The Meta and Reddit pixels, the conversions our servers report to Meta, and
+   * the Tag Manager container.
    */
   marketing: boolean;
   /** When the answer was given, ISO-8601. Stored so a refusal can age out. */
