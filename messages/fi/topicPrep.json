@@ -127,7 +127,7 @@
     },
     "remoteSession": {
       "title": "Laita mikrofoni ja kamera kuntoon",
-      "body": "Kerta pidetään äänihuoneessa, joka toimii verkkoselaimessa. Osallistuja voi liittyä millä tahansa laitteella: sillä tietokoneella, jolla peli on, tai puhelimella tai tabletilla konsolin vieressä. Parhaiten toimivat kuulokkeet tai nappikuulokkeet, joissa on mikrofoni, jotta pelin ääni ei kaiu takaisin muille. Kun osallistuja liittyy ensimmäisen kerran, selain kysyy lupaa käyttää mikrofonia ja kameraa. Anna lupa. Kamera on vapaaehtoinen. Kun sen laittaa päälle, Gedu eli pelikasvattaja näkee, että jokainen huoneessa on se, joka sanoo olevansa. Etsi rauhallinen paikka ja liity ensimmäisellä kerralla muutama minuutti etuajassa."
+      "body": "Tarvitset mikrofonin, jotta voit keskustella Gedun eli pelikasvattajan ja muiden ryhmäläisten kanssa. Kuulokkeet, joissa on mikrofoni, toimivat parhaiten, sillä ne vähentävät taustahälyä ja estävät pelisi ääniä kiertämästä takaisin muiden osallistujien kuulokkeisiin. Kokoontuminen tapahtuu äänihuoneessa, joka toimii nettiselaimessa. Voit liittyä tietokoneella, jolla pelaat, tai esimerkiksi puhelimella tai tabletilla. Kun liityt, nettiselaimesi pyytää lupaa käyttää mikrofonia. Salli käyttö, jotta muut kuulevat sinut. Sinun ei ole pakko pitää kameraa päällä, mutta saat käyttää sitä, jos haluat. Kun kamera on päällä, Gedu näkee, että jokainen huoneessa on se, joka sanoo olevansa. Etsi rauhallinen paikka ja liity ensimmäisellä kerralla muutama minuutti etuajassa."
     }
   },
   "platformNotes": {
