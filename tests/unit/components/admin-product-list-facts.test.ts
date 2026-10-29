@@ -4,6 +4,7 @@ import {
   type ProductWhereSource,
 } from "@/components/admin/products/product-where-line";
 import {
+  filterProductsBySearch,
   matchesProductSearch,
   normalizeProductSearch,
 } from "@/components/admin/products/product-name-search";
@@ -171,5 +172,25 @@ describe("product name search", () => {
     expect(
       rows.filter((row) => matchesProductSearch(row, needle)).map((r) => r.id),
     ).toEqual(["a"]);
+  });
+
+  describe("by product ID", () => {
+    const ID = "8e624b5f-d4bf-45e0-84d0-0c7613cbac29";
+    const byId = [
+      { id: ID, product_translations: [{ name: "Roblox Club" }] },
+      // Named with the very ID, which must not make it a match.
+      { id: "0b7c1f0e-2a51-4d8e-9a43-5f1c2d3e4b5a", product_translations: [{ name: `Copy of ${ID}` }] },
+    ];
+
+    it("finds exactly the product with that ID, not one named with it", () => {
+      expect(filterProductsBySearch(byId, ` ${ID.toUpperCase()} `)).toEqual([
+        byId[0],
+      ]);
+    });
+
+    it("leaves name search unchanged for text that is not a whole ID", () => {
+      expect(filterProductsBySearch(byId, "roblox")).toEqual([byId[0]]);
+      expect(filterProductsBySearch(byId, ID.slice(0, 8))).toEqual([byId[1]]);
+    });
   });
 });

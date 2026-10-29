@@ -243,6 +243,17 @@ describe("ProductsService.getAdminListPage", () => {
       expect(await fixturesMatching({ search: "bRAVO" })).toEqual([CLUB_WED_SV]);
     });
 
+    // The gedu filter also narrows `id`, so this pins that the two compose.
+    it("finds a product by its whole ID, ANDed with the other filters", async () => {
+      expect(await fixturesMatching({ search: CLUB_WED_SV.toUpperCase() })).toEqual([
+        CLUB_WED_SV,
+      ]);
+      expect(
+        await fixturesMatching({ search: CLUB_WED_SV, geduId: TEST_IDS.GEDU }),
+      ).toEqual([CLUB_WED_SV]);
+      expect(await fixturesMatching({ search: CLUB_WED_SV, weekday: 0 })).toEqual([]);
+    });
+
     it("keeps the products scheduled on the weekday", async () => {
       expect(await fixturesMatching({ weekday: 0 })).toEqual([CLUB_MON_WED, MUNI_AT_MUNI]);
       expect(await fixturesMatching({ weekday: 2 })).toEqual([CLUB_MON_WED, CLUB_WED_SV]);

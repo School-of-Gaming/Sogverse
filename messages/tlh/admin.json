@@ -1188,7 +1188,7 @@
       "type": "Segh",
       "allTypes": "Hoch",
       "search": "nej",
-      "searchPlaceholder": "pong nej…",
+      "searchPlaceholder": "pong qoj ngoq nej…",
       "showing": "cha’lu’ {count}/{total}",
       "clear": "yIteq",
       "noMatches": "pagh {type, select, consumerClub {ghomHom tlhIngan} municipalityClub {ghomHom veng} camp {pa’ Qugh} other {Qu’mey}} DaSamlaH. yInej 'ej yIwIv latlh!",
@@ -1321,7 +1321,7 @@
       "switchClub": {
         "title": "ghom’a’ yIchIj",
         "description": "latlh ghom’a’Daq {name} vIH. DaHjaj qorDu’vaD pagh choH: rap nav, rap jaj je; ghIq ghom’a’ chu’ Huch DIl qorDu’.",
-        "searchPlaceholder": "pongDaq ghom’a’ yISam",
+        "searchPlaceholder": "pongDaq qoj ngoqDaq ghom’a’ yISam",
         "picker": {
           "empty": "latlh ghom’a’ tu’lu’be’. jarmey Huch poQnIS ghom’a’, ’ej rInbe’nIS.",
           "noMatch": "ghom’a’ tu’lu’be’ QulmeHvam. latlh pong yInID.",
@@ -1374,7 +1374,7 @@
         "noSubscription": {
           "title": "latlh ngoptlhInDaq yIvIH",
           "description": "latlh ngoptlhInDaq {name} yIvIH.",
-          "searchPlaceholder": "pongDaq ngoptlhIn yISam",
+          "searchPlaceholder": "pongDaq qoj ngoqDaq ngoptlhIn yISam",
           "picker": {
             "empty": "latlh ngoptlhIn tu’lu’be’. jar Hoch DIlbe’lu’nIS ngoptlhIn, ’ej rInbe’nIS.",
             "noMatch": "Sambogh ngoptlhIn tu’lu’be’. latlh pong yInId."

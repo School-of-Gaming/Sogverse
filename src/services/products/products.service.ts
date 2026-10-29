@@ -13,6 +13,7 @@ import type {
 import type { QueryData } from "@supabase/supabase-js";
 import { z } from "zod";
 import { escapeLikePattern } from "@/lib/search";
+import { productIdFromSearch } from "@/lib/products/product-id-search";
 import {
   keysetPage,
   quoteFilterValue,
@@ -349,10 +350,10 @@ export interface AdminProductListFilters {
   /** One product type, or null for every type. */
   type: ProductType | null;
   /**
-   * What the admin typed, trimmed; empty is "no search". Matched as a
-   * case-insensitive substring of any one of the product's names, in every
-   * locale — an admin may have typed the English name while reading the list
-   * in Finnish.
+   * What the admin typed, trimmed; empty is "no search". A whole product ID
+   * finds that product alone; anything else is matched as a case-insensitive
+   * substring of any one of the product's names, in every locale — an admin
+   * may have typed the English name while reading the list in Finnish.
    */
   search: string;
   /** A weekday the product must be scheduled on (0 = Monday), or null. */
@@ -728,11 +729,16 @@ export class ProductsService {
       query = query.eq("spoken_language_code", filters.spokenLanguage);
     }
 
+    // A search that is a whole product ID finds that product alone, names
+    // unconsulted; the browser picker asks the same function, so the two agree.
     // PostgREST reads `*` in an ilike pattern as a wildcard before SQL sees it,
     // and there is no escaping it — so it is dropped rather than left to match
     // every name. No product is named with one.
+    const searchedId = productIdFromSearch(filters.search);
     const needle = filters.search.replaceAll("*", "").trim();
-    if (needle !== "") {
+    if (searchedId !== null) {
+      query = query.eq("id", searchedId);
+    } else if (needle !== "") {
       query = query
         .ilike("name_match.name", `%${escapeLikePattern(needle)}%`)
         .not("name_match", "is", null);

@@ -1188,7 +1188,7 @@
       "type": "Type",
       "allTypes": "Tous",
       "search": "Recherche",
-      "searchPlaceholder": "Rechercher par nom…",
+      "searchPlaceholder": "Rechercher par nom ou identifiant…",
       "showing": "Affichage de {count} sur {total}",
       "clear": "Effacer",
       "noMatches": "Aucun {type, select, consumerClub {club grand public} municipalityClub {club municipal} camp {stage} other {événement}} ne correspond à la recherche et aux filtres sélectionnés.",
@@ -1321,7 +1321,7 @@
       "switchClub": {
         "title": "Changer de club",
         "description": "Déplacez {name} vers un autre club. Rien ne change pour la famille aujourd’hui : la même carte est débitée à la même date, puis la famille paie le prix du nouveau club.",
-        "searchPlaceholder": "Rechercher un club par son nom",
+        "searchPlaceholder": "Rechercher un club par son nom ou son identifiant",
         "picker": {
           "empty": "Il n’y a aucun autre club vers lequel basculer. La destination doit être un club facturé chaque mois et qui n’est pas terminé.",
           "noMatch": "Aucun club ne correspond à cette recherche. Essayez un autre nom.",
@@ -1374,7 +1374,7 @@
         "noSubscription": {
           "title": "Déplacer vers un autre produit",
           "description": "Déplacez {name} vers un autre produit.",
-          "searchPlaceholder": "Rechercher un produit par son nom",
+          "searchPlaceholder": "Rechercher un produit par son nom ou son identifiant",
           "picker": {
             "empty": "Il n’y a aucun autre produit vers lequel déplacer. La destination doit être un produit qui n’est pas facturé chaque mois et qui n’est pas terminé.",
             "noMatch": "Aucun produit ne correspond à cette recherche. Essayez un autre nom."
