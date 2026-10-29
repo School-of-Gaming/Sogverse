@@ -37,11 +37,23 @@ const ESPOO_PAGE: PublishedLandingPageSummary = {
   id: ESPOO,
   firstPublishedAt: "2026-09-02T08:00:00Z",
   publishedAt: "2026-10-01T08:00:00Z",
-  sections: [{ id: HERO, type: "hero", imageId: PICTURE }],
+  sections: [{ id: HERO, type: "hero" }],
   pictures: { [PICTURE]: { path: "pictures/espoo.jpg", purpose: "landing_image" } },
   versions: [
-    { locale: "en", title: "Clubs in Espoo", summary: "For Espoo families.", slug: "clubs-espoo" },
-    { locale: "fi", title: "Kerhot Espoossa", summary: "Espoon perheille.", slug: "kerhot-espoo" },
+    {
+      locale: "en",
+      title: "Clubs in Espoo",
+      summary: "For Espoo families.",
+      slug: "clubs-espoo",
+      heroImageId: PICTURE,
+    },
+    {
+      locale: "fi",
+      title: "Kerhot Espoossa",
+      summary: "Espoon perheille.",
+      slug: "kerhot-espoo",
+      heroImageId: PICTURE,
+    },
   ],
 };
 
@@ -53,7 +65,13 @@ const ESBO_PAGE: PublishedLandingPageSummary = {
   sections: [{ id: HERO, type: "hero" }],
   pictures: {},
   versions: [
-    { locale: "sv", title: "Klubbar i Esbo", summary: "För familjer i Esbo.", slug: "klubbar-esbo" },
+    {
+      locale: "sv",
+      title: "Klubbar i Esbo",
+      summary: "För familjer i Esbo.",
+      slug: "klubbar-esbo",
+      heroImageId: null,
+    },
   ],
 };
 
@@ -96,6 +114,14 @@ describe("the index's entries", () => {
 
     expect(espoo.card.pictureSrc).toContain("pictures/espoo.jpg");
     expect(esbo.card.pictureSrc).toBeNull();
+  });
+
+  it("shows the hero picture of the version it shows, and none where that version names none", () => {
+    const [en, fi] = ESPOO_PAGE.versions;
+    const page = { ...ESPOO_PAGE, versions: [en, { ...fi, heroImageId: null }] };
+
+    expect(discoverIndexEntries([page], "en")[0].card.pictureSrc).toContain("pictures/espoo.jpg");
+    expect(discoverIndexEntries([page], "fi")[0].card.pictureSrc).toBeNull();
   });
 
   it("is empty with nothing live", () => {

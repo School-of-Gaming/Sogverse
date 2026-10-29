@@ -288,12 +288,13 @@ function textLang(context: Pick<LandingRenderContext, "locale" | "textLocale">) 
 /**
  * The page's opening and its only H1, drawn the way the home hero is: the
  * headline in ink over one world rule that runs its measure, the line under
- * it, one act button. Centred alone; with a picture, the words and the picture
+ * it, one act button. Centred alone; with a picture — the shown language's
+ * own, from its words — the words and the picture
  * share the width from `lg`, the words first on a phone so the headline and the
  * button are what the first screen shows.
  */
 function HeroSection({ section, text, context }: LandingSectionProps<"hero">) {
-  const picture = section.imageId === undefined ? null : context.picture(section.imageId);
+  const picture = text.imageId === undefined ? null : context.picture(text.imageId);
   const eyebrow = written(text.eyebrow);
   const subline = written(text.subline);
   const buttonLabel = written(text.buttonLabel);

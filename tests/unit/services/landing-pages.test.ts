@@ -197,8 +197,8 @@ describe("reading in a language", () => {
     sections: [],
     pictures: {},
     versions: [
-      { locale: "fi", title: "Kerhot", summary: "S", slug: "kerhot" },
-      { locale: "sv", title: "Klubbar", summary: "S", slug: "klubbar" },
+      { locale: "fi", title: "Kerhot", summary: "S", slug: "kerhot", heroImageId: null },
+      { locale: "sv", title: "Klubbar", summary: "S", slug: "klubbar", heroImageId: null },
     ],
   };
 
@@ -207,7 +207,7 @@ describe("reading in a language", () => {
     expect(localizeLandingPageSummary(page, "fr").slug).toBe("kerhot");
     expect(
       localizeLandingPageSummary(
-        { ...page, versions: [...page.versions, { locale: "en", title: "Clubs", summary: "S", slug: "clubs" }] },
+        { ...page, versions: [...page.versions, { locale: "en", title: "Clubs", summary: "S", slug: "clubs", heroImageId: null }] },
         "fr",
       ).slug,
     ).toBe("clubs");

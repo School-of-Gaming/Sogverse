@@ -911,7 +911,14 @@ describe("landing pages", () => {
 
       const listed = await new LandingPageService(anon).listPublishedPages();
       expect(listed.find((page) => page.id === PAGE_A)?.versions).toEqual([
-        { locale: "en", title: "Fixture landing en", summary: "A summary in en.", slug: SLUG_A },
+        {
+          locale: "en",
+          title: "Fixture landing en",
+          summary: "A summary in en.",
+          slug: SLUG_A,
+          // The list reads each version's hero picture alone of its words.
+          heroImageId: null,
+        },
       ]);
     });
 

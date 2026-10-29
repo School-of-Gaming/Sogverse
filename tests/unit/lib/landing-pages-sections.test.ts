@@ -48,12 +48,8 @@ describe("the section registry", () => {
 
 describe("a section's shared fields", () => {
   it("parses a section of every type, lowercasing its ids", () => {
-    const hero = landingSection.parse({
-      id: I.hero.toUpperCase(),
-      type: "hero",
-      imageId: ` ${I.picture} `,
-    });
-    expect(hero).toEqual({ id: I.hero, type: "hero", imageId: I.picture });
+    const hero = landingSection.parse({ id: I.hero.toUpperCase(), type: "hero" });
+    expect(hero).toEqual({ id: I.hero, type: "hero" });
     for (const section of everySection()) {
       expect(landingSection.parse(section)).toEqual(section);
     }
@@ -64,6 +60,15 @@ describe("a section's shared fields", () => {
       landingSection.safeParse({ id: I.cta, type: "cta", background: "default", button: { kind: "internal", path: "/" }, imageId: I.picture })
         .success,
     ).toBe(false);
+  });
+
+  it("takes the hero's picture in a language's words, never in the structure", () => {
+    expect(landingSection.safeParse({ id: I.hero, type: "hero", imageId: I.picture }).success).toBe(
+      false,
+    );
+    expect(LANDING_SECTIONS.hero.text.parse({ imageId: ` ${I.picture.toUpperCase()} ` })).toEqual({
+      imageId: I.picture,
+    });
   });
 
   it("refuses an id that is not a uuid", () => {
