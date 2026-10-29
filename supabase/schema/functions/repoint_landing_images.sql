@@ -18,10 +18,10 @@ BEGIN
       USING ERRCODE = 'null_value_not_allowed';
   END IF;
 
-  -- pictures names every version's share picture as well as the sections'
-  -- pictures, so a copy whose only use of p_from is a share picture is found
-  -- and counted too; sections is set either way, which moves the working
-  -- copy's last-saved time and saver as for any picture.
+  -- pictures names every version's share and hero pictures as well as the
+  -- sections' pictures, so a copy whose only use of p_from is in a version is
+  -- found and counted too; sections is set either way, which moves the
+  -- working copy's last-saved time and saver as for any picture.
   WITH drafts AS (
     UPDATE public.landing_pages
        SET sections = public.landing_sections_repointed(sections, p_from, p_to)
@@ -37,9 +37,23 @@ BEGIN
   SELECT count(*) INTO v_moved
     FROM (SELECT id FROM drafts UNION SELECT page_id FROM live) AS moved;
 
-  -- The share pictures, once the copies have been found by them. Each version
-  -- moved re-derives its copy's pictures, which refuses a p_to that is gone,
-  -- not a landing picture or not wide.
+  -- The versions' pictures, once the copies have been found by them: each
+  -- language's hero picture, in the words of the structure's first section,
+  -- and its share picture. Each version moved re-derives its copy's
+  -- pictures, which refuses a p_to that is gone, not a landing picture or
+  -- not wide.
+  UPDATE public.landing_page_translations AS t
+     SET section_texts = jsonb_set(t.section_texts, ARRAY[p.sections->0->>'id', 'imageId'], to_jsonb(p_to::text))
+    FROM public.landing_pages AS p
+   WHERE p.id = t.page_id
+     AND t.section_texts #>> ARRAY[p.sections->0->>'id', 'imageId'] = p_from::text;
+
+  UPDATE public.landing_page_publication_translations AS t
+     SET section_texts = jsonb_set(t.section_texts, ARRAY[p.sections->0->>'id', 'imageId'], to_jsonb(p_to::text))
+    FROM public.landing_page_publications AS p
+   WHERE p.page_id = t.page_id
+     AND t.section_texts #>> ARRAY[p.sections->0->>'id', 'imageId'] = p_from::text;
+
   UPDATE public.landing_page_translations
      SET share_image_id = p_to
    WHERE share_image_id = p_from;
@@ -57,7 +71,7 @@ $$;
 -- Name: FUNCTION repoint_landing_images(p_from uuid, p_to uuid); Type: COMMENT; Schema: public; Owner: -
 --
 
-COMMENT ON FUNCTION public.repoint_landing_images(p_from uuid, p_to uuid) IS 'Admin-gated landing half of the image catalogue''s replace: points every landing page picture that is entry p_from — in the sections or as any language''s share picture, working and published copies alike — at entry p_to, and returns how many pages moved (a page whose two copies both moved counts once). A live page''s picture changes without a republish. The catalogue''s replace hands it an entry of p_from''s own purpose, so a picture keeps its shape; the picture triggers re-derive each copy''s pictures and refuse a p_to that is gone, not a landing picture, or of a shape its section or a share picture does not take. Either argument NULL raises null_value_not_allowed. SECURITY DEFINER because no landing page table carries a write grant.';
+COMMENT ON FUNCTION public.repoint_landing_images(p_from uuid, p_to uuid) IS 'Admin-gated landing half of the image catalogue''s replace: points every landing page picture that is entry p_from — in the sections, or as any language''s hero picture (in its words) or share picture, working and published copies alike — at entry p_to, and returns how many pages moved (a page whose two copies both moved counts once). A live page''s picture changes without a republish. The catalogue''s replace hands it an entry of p_from''s own purpose, so a picture keeps its shape; the picture triggers re-derive each copy''s pictures and refuse a p_to that is gone, not a landing picture, or of a shape its section, a hero or a share picture does not take. Either argument NULL raises null_value_not_allowed. SECURITY DEFINER because no landing page table carries a write grant.';
 
 
 --

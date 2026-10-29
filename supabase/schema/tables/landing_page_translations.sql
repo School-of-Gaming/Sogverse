@@ -28,7 +28,7 @@ CREATE TABLE public.landing_page_translations (
 -- Name: TABLE landing_page_translations; Type: COMMENT; Schema: public; Owner: -
 --
 
-COMMENT ON TABLE public.landing_page_translations IS 'One language version of a landing page''s WORKING COPY — its title, summary, slug and the text of every section in that locale, which may be saved incomplete. At least one per page: save_landing_page refuses an empty set, and remove_landing_page_version refuses to remove the last. The public never reads this table: publishing copies the complete versions to landing_page_publication_translations. Admin-only end to end: SELECT for authenticated behind an admin policy, nothing for anon, and no write grant — the writers are save_landing_page, which writes a new page''s set, save_landing_page_version, which writes one, remove_landing_page_version, which removes one, the structure cascade (cascade_landing_structure), which drops the text of a section the structure no longer holds, and the catalogue''s replace (repoint_landing_images) and removal (unlink_removed_landing_image), which move or unset a version''s share picture.';
+COMMENT ON TABLE public.landing_page_translations IS 'One language version of a landing page''s WORKING COPY — its title, summary, slug and the text of every section in that locale, its hero picture among them, which may be saved incomplete. At least one per page: save_landing_page refuses an empty set, and remove_landing_page_version refuses to remove the last. The public never reads this table: publishing copies the complete versions to landing_page_publication_translations. Admin-only end to end: SELECT for authenticated behind an admin policy, nothing for anon, and no write grant — the writers are save_landing_page, which writes a new page''s set, save_landing_page_version, which writes one, remove_landing_page_version, which removes one, the structure cascade (cascade_landing_structure), which drops the text of a section the structure no longer holds, and the catalogue''s replace (repoint_landing_images) and removal (unlink_removed_landing_image), which move or unset a version''s hero picture and share picture.';
 
 
 --
@@ -63,7 +63,7 @@ COMMENT ON COLUMN public.landing_page_translations.slug IS 'The page''s address 
 -- Name: COLUMN landing_page_translations.section_texts; Type: COMMENT; Schema: public; Owner: -
 --
 
-COMMENT ON COLUMN public.landing_page_translations.section_texts IS 'The text of each section in this language, as {section id: {field: text, ...}}. A key names a section of the page''s structure; the text of a section the structure drops is dropped with it. Which fields each section type has, and which are required, is the application''s section registry; landing_version_missing is the SQL half of the required rule.';
+COMMENT ON COLUMN public.landing_page_translations.section_texts IS 'The text of each section in this language, as {section id: {field: text, ...}}. A key names a section of the page''s structure; the text of a section the structure drops is dropped with it. The hero section''s words also carry this language''s hero picture, as imageId: a wide landing picture''s catalogue id, absent for none — the pictures apply_landing_pictures derives, the catalogue''s replace moves and its removal unsets. Which fields each section type has, and which are required, is the application''s section registry; landing_version_missing is the SQL half of the required rule.';
 
 
 --
@@ -91,7 +91,7 @@ COMMENT ON COLUMN public.landing_page_translations.share_title IS 'The link prev
 -- Name: COLUMN landing_page_translations.share_image_id; Type: COMMENT; Schema: public; Owner: -
 --
 
-COMMENT ON COLUMN public.landing_page_translations.share_image_id IS 'The share picture in this language: a wide 16:9 landing picture (a landing_image catalogue entry) the link preview shows in place of the hero''s picture, or NULL to use the hero''s. No foreign key, as for the pictures in sections: the copy''s pictures names it (apply_landing_pictures, kept current by refresh_landing_pictures), which refuses an entry that is gone, not a landing picture or not wide, and the catalogue''s replace moves it and its removal unsets it.';
+COMMENT ON COLUMN public.landing_page_translations.share_image_id IS 'The share picture in this language: a wide 16:9 landing picture (a landing_image catalogue entry) the link preview shows in place of this language''s hero picture, or NULL to use that. No foreign key, as for the pictures in sections: the copy''s pictures names it (apply_landing_pictures, kept current by refresh_landing_pictures), which refuses an entry that is gone, not a landing picture or not wide, and the catalogue''s replace moves it and its removal unsets it.';
 
 
 --
@@ -127,7 +127,7 @@ CREATE TRIGGER trg_landing_page_translations_completeness BEFORE INSERT OR UPDAT
 -- Name: landing_page_translations trg_landing_page_translations_refresh_pictures; Type: TRIGGER; Schema: public; Owner: -
 --
 
-CREATE TRIGGER trg_landing_page_translations_refresh_pictures AFTER INSERT OR DELETE OR UPDATE OF share_image_id ON public.landing_page_translations FOR EACH ROW EXECUTE FUNCTION public.refresh_landing_pictures();
+CREATE TRIGGER trg_landing_page_translations_refresh_pictures AFTER INSERT OR DELETE OR UPDATE OF share_image_id, section_texts ON public.landing_page_translations FOR EACH ROW EXECUTE FUNCTION public.refresh_landing_pictures();
 
 
 --

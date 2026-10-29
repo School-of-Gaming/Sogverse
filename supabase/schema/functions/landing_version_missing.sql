@@ -46,7 +46,8 @@ BEGIN
         IF v_section ? 'button' AND NOT public.landing_text_is_written(v_texts->'buttonLabel') THEN
           v_missing := array_append(v_missing, v_prefix || 'buttonLabel');
         END IF;
-        IF v_section ? 'imageId' AND NOT public.landing_text_is_written(v_texts->'imageAlt') THEN
+        -- The hero's picture is this version's own, in its words.
+        IF v_texts ? 'imageId' AND NOT public.landing_text_is_written(v_texts->'imageAlt') THEN
           v_missing := array_append(v_missing, v_prefix || 'imageAlt');
         END IF;
       WHEN 'text' THEN
@@ -128,7 +129,7 @@ $$;
 -- Name: FUNCTION landing_version_missing(p_sections jsonb, p_title text, p_summary text, p_slug text, p_section_texts jsonb); Type: COMMENT; Schema: public; Owner: -
 --
 
-COMMENT ON FUNCTION public.landing_version_missing(p_sections jsonb, p_title text, p_summary text, p_slug text, p_section_texts jsonb) IS 'The SQL half of the landing pages'' required-text rule: what one language version still needs before publishing takes it, given the page''s structure, as a list of paths — title, summary, slug, then per section in order sections.<id>.<field>, sections.<id>.items.<item id>.<field> or sections.<id>.alts.<picture item id>. Empty means complete. Required: hero headline, its buttonLabel when it has a button and its imageAlt when it has a picture; text heading, body and imageAlt with a picture; image an alt per picture; points and steps heading and each item''s title and body; testimonials nothing; products nothing; guide heading and imageAlt with a picture; faq heading and each item''s question and answer; cta and subscribe heading and buttonLabel. Written means landing_text_is_written. The TypeScript rule in src/lib/landing-pages/sections/ is the other half, and a DB test holds the two equal.';
+COMMENT ON FUNCTION public.landing_version_missing(p_sections jsonb, p_title text, p_summary text, p_slug text, p_section_texts jsonb) IS 'The SQL half of the landing pages'' required-text rule: what one language version still needs before publishing takes it, given the page''s structure, as a list of paths — title, summary, slug, then per section in order sections.<id>.<field>, sections.<id>.items.<item id>.<field> or sections.<id>.alts.<picture item id>. Empty means complete. Required: hero headline, its buttonLabel when it has a button and its imageAlt when this version''s hero words name a picture (an imageId key); text heading, body and imageAlt with a picture; image an alt per picture; points and steps heading and each item''s title and body; testimonials nothing; products nothing; guide heading and imageAlt with a picture; faq heading and each item''s question and answer; cta and subscribe heading and buttonLabel. Written means landing_text_is_written. The TypeScript rule in src/lib/landing-pages/sections/ is the other half, and a DB test holds the two equal.';
 
 
 --
