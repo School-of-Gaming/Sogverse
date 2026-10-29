@@ -1188,7 +1188,7 @@
       "type": "Tyyppi",
       "allTypes": "Kaikki",
       "search": "Haku",
-      "searchPlaceholder": "Hae nimellä…",
+      "searchPlaceholder": "Hae nimellä tai tunnisteella…",
       "showing": "Näytetään {count} / {total}",
       "clear": "Tyhjennä",
       "noMatches": "Yksikään {type, select, consumerClub {kuluttajakerho} municipalityClub {kuntakerho} camp {leiri} other {tapahtuma}} ei vastaa hakua ja valittuja suodattimia.",
@@ -1321,7 +1321,7 @@
       "switchClub": {
         "title": "Vaihda kerhoa",
         "description": "{name} siirtyy toiseen kerhoon. Perheelle ei muutu tänään mitään: samalta kortilta veloitetaan samana päivänä, ja siitä eteenpäin perhe maksaa uuden kerhon hinnan.",
-        "searchPlaceholder": "Hae kerhoja nimellä",
+        "searchPlaceholder": "Hae kerhoja nimellä tai tunnisteella",
         "picker": {
           "empty": "Muuta kerhoa ei ole tarjolla. Kohteen pitää olla kuukausittain laskutettava kerho, joka ei ole vielä päättynyt.",
           "noMatch": "Haku ei osu yhteenkään kerhoon. Kokeile toista nimeä.",
@@ -1374,7 +1374,7 @@
         "noSubscription": {
           "title": "Siirrä toiseen tuotteeseen",
           "description": "{name} siirtyy toiseen tuotteeseen.",
-          "searchPlaceholder": "Hae tuotteita nimellä",
+          "searchPlaceholder": "Hae tuotteita nimellä tai tunnisteella",
           "picker": {
             "empty": "Muuta tuotetta ei ole tarjolla. Kohde ei saa olla kuukausittain laskutettava, eikä se saa olla vielä päättynyt.",
             "noMatch": "Yksikään tuote ei vastaa hakua. Kokeile toista nimeä."
