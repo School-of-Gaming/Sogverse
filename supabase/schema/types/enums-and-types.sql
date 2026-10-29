@@ -171,10 +171,11 @@ COMMENT ON TYPE public.invoice_billing_cadence IS 'How often an invoice customer
 
 CREATE TYPE public.klaviyo_event_kind AS ENUM (
     'account_created',
-    'purchase',
+    'enrolled',
     'waitlisted',
     'seat_offered',
-    'subscription_cancelled'
+    'subscription_cancelled',
+    'session'
 );
 
 
@@ -182,7 +183,7 @@ CREATE TYPE public.klaviyo_event_kind AS ENUM (
 -- Name: TYPE klaviyo_event_kind; Type: COMMENT; Schema: public; Owner: -
 --
 
-COMMENT ON TYPE public.klaviyo_event_kind IS 'What happened to a parent, as a Klaviyo event: account_created (they accepted the terms for the first time, which only a parent''s registration does), purchase (a participation on a paid product became active), waitlisted (a participation joined a waitlist), seat_offered (a waitlisted participation was offered a seat) and subscription_cancelled (a family subscription moved to canceling or cancelled). The sync sends each with the unique id `<kind>:<source id>`, so a retry, or the same transition happening twice, is never counted twice.';
+COMMENT ON TYPE public.klaviyo_event_kind IS 'What happened to a parent, as a Klaviyo event: account_created (they accepted the terms for the first time, which only a parent''s registration does), enrolled (a participation on a product of any billing mode became active), waitlisted (a participation joined a waitlist), seat_offered (a waitlisted participation was offered a seat), subscription_cancelled (a family subscription moved to canceling or cancelled) and session (an attendance mark was written, or its status changed). The sync sends each with the unique id stored on its outbox row, so a retry, or the same transition happening twice, is never counted twice.';
 
 
 --

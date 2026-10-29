@@ -1659,6 +1659,7 @@ export type Database = {
           occurred_at: string
           product_id: string | null
           source_id: string
+          unique_id: string
         }
         Insert: {
           attempts?: number
@@ -1673,6 +1674,7 @@ export type Database = {
           occurred_at: string
           product_id?: string | null
           source_id: string
+          unique_id: string
         }
         Update: {
           attempts?: number
@@ -1687,6 +1689,7 @@ export type Database = {
           occurred_at?: string
           product_id?: string | null
           source_id?: string
+          unique_id?: string
         }
         Relationships: []
       }
@@ -2375,12 +2378,18 @@ export type Database = {
           id: string
           participant_id: string
           product_id: string
+          school_of_gaming_marketing_opt_in: boolean | null
           seat_offer_expiry_notified_at: string | null
           seat_offer_sent_at: string | null
           signed_up_at: string
           status: Database["public"]["Enums"]["participation_status"]
           stripe_checkout_session_id: string | null
           updated_at: string
+          utm_campaign: string | null
+          utm_content: string | null
+          utm_medium: string | null
+          utm_source: string | null
+          utm_term: string | null
           waitlisted_at: string | null
         }
         Insert: {
@@ -2391,12 +2400,18 @@ export type Database = {
           id?: string
           participant_id: string
           product_id: string
+          school_of_gaming_marketing_opt_in?: boolean | null
           seat_offer_expiry_notified_at?: string | null
           seat_offer_sent_at?: string | null
           signed_up_at?: string
           status: Database["public"]["Enums"]["participation_status"]
           stripe_checkout_session_id?: string | null
           updated_at?: string
+          utm_campaign?: string | null
+          utm_content?: string | null
+          utm_medium?: string | null
+          utm_source?: string | null
+          utm_term?: string | null
           waitlisted_at?: string | null
         }
         Update: {
@@ -2407,12 +2422,18 @@ export type Database = {
           id?: string
           participant_id?: string
           product_id?: string
+          school_of_gaming_marketing_opt_in?: boolean | null
           seat_offer_expiry_notified_at?: string | null
           seat_offer_sent_at?: string | null
           signed_up_at?: string
           status?: Database["public"]["Enums"]["participation_status"]
           stripe_checkout_session_id?: string | null
           updated_at?: string
+          utm_campaign?: string | null
+          utm_content?: string | null
+          utm_medium?: string | null
+          utm_source?: string | null
+          utm_term?: string | null
           waitlisted_at?: string | null
         }
         Relationships: [
@@ -4577,6 +4598,12 @@ export type Database = {
           p_customer_id: string
           p_participant_id: string
           p_product_id: string
+          p_school_of_gaming_marketing_opt_in?: boolean
+          p_utm_campaign?: string
+          p_utm_content?: string
+          p_utm_medium?: string
+          p_utm_source?: string
+          p_utm_term?: string
         }
         Returns: Json
       }
@@ -4646,6 +4673,12 @@ export type Database = {
           p_participant_id: string
           p_product_id: string
           p_purchase_shape: string
+          p_school_of_gaming_marketing_opt_in?: boolean
+          p_utm_campaign?: string
+          p_utm_content?: string
+          p_utm_medium?: string
+          p_utm_source?: string
+          p_utm_term?: string
         }
         Returns: Json
       }
@@ -4732,6 +4765,7 @@ export type Database = {
           p_occurred_at: string
           p_product_id: string
           p_source_id: string
+          p_unique_id?: string
         }
         Returns: undefined
       }
@@ -5253,6 +5287,10 @@ export type Database = {
       }
       klaviyo_product_document: {
         Args: { p_product_id: string }
+        Returns: Json
+      }
+      klaviyo_seat_holder_facts: {
+        Args: { p_customer_id: string; p_participant_id: string }
         Returns: Json
       }
       landing_button_is_valid: { Args: { p_button: Json }; Returns: boolean }
@@ -5927,10 +5965,11 @@ export type Database = {
       invoice_billing_cadence: "monthly" | "quarterly" | "half_yearly"
       klaviyo_event_kind:
         | "account_created"
-        | "purchase"
+        | "enrolled"
         | "waitlisted"
         | "seat_offered"
         | "subscription_cancelled"
+        | "session"
       library_article_category:
         | "online_safety"
         | "screen_time"
@@ -6122,10 +6161,11 @@ export const Constants = {
       invoice_billing_cadence: ["monthly", "quarterly", "half_yearly"],
       klaviyo_event_kind: [
         "account_created",
-        "purchase",
+        "enrolled",
         "waitlisted",
         "seat_offered",
         "subscription_cancelled",
+        "session",
       ],
       library_article_category: [
         "online_safety",

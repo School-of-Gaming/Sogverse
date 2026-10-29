@@ -23,10 +23,24 @@ export const klaviyoProduct = z.object({
   product_type: z.enum(enums.product_type),
   /** Only a seat on a `paid` product is a purchase. */
   billing_mode: z.enum(enums.billing_mode),
+  delivery_mode: z.enum(enums.delivery_mode),
+  /** The language the product is taught in. */
+  spoken_language_code: z.enum(enums.spoken_language),
+  /** The location's canonical name; null when the product has no location. */
+  location_name: z.string().nullable(),
   /** Calendar dates, `YYYY-MM-DD`. */
   start_date: z.string(),
   end_date: z.string().nullable(),
   timezone: z.string(),
+  /** Every weekly slot, ordered by weekday; empty when the product has none. */
+  slots: z.array(
+    z.object({
+      /** 0 = Monday … 6 = Sunday. */
+      weekday: z.number(),
+      /** `HH:MM:SS`, a wall-clock time in the product's `timezone`. */
+      start_time: z.string(),
+    }),
+  ),
 });
 
 export type KlaviyoProduct = z.infer<typeof klaviyoProduct>;
@@ -108,7 +122,10 @@ export const klaviyoParentSnapshotRow = z.object({
 
 const eventBase = {
   event_id: z.string(),
-  /** `<kind>:<source id>` — Klaviyo's unique id for the event. */
+  /**
+   * Klaviyo's unique id for the event: `<kind>:<source id>`, except a
+   * session's, which is `session:<session id>:<participant id>:<status>`.
+   */
   unique_id: z.string(),
   customer_id: z.string(),
   occurred_at: z.string(),
@@ -118,6 +135,13 @@ const eventProperties = {
   source_id: z.string(),
   /** Null when the event names no product, or the product is gone. */
   product: klaviyoProduct.nullable(),
+};
+
+/** Who holds the seat an event is about. The gamer facts are null on a parent's own seat. */
+const seatHolderFacts = {
+  seat_holder: z.enum(["parent", "gamer"]),
+  gamer_birth_year: z.number().nullable(),
+  gamer_gender: z.enum(enums.gender_type).nullable(),
 };
 
 /**
@@ -132,11 +156,33 @@ export const klaviyoEventRow = z.discriminatedUnion("kind", [
   }),
   z.object({
     ...eventBase,
-    kind: z.literal("purchase"),
+    /** A seat held, on a product of any billing mode. */
+    kind: z.literal("enrolled"),
     properties: z.object({
       ...eventProperties,
-      /** Whether the parent held no other seat on a paid product when this one was bought. */
-      first_purchase: z.boolean(),
+      ...seatHolderFacts,
+      /** The UTM tag of the visit that led to the booking, written only under marketing cookie consent. */
+      utm_source: z.string().nullable(),
+      utm_medium: z.string().nullable(),
+      utm_campaign: z.string().nullable(),
+      utm_content: z.string().nullable(),
+      utm_term: z.string().nullable(),
+      /** The answer to the product's School of Gaming mailing ask; null when it did not ask. */
+      marketing_opt_in: z.boolean().nullable(),
+    }),
+  }),
+  z.object({
+    ...eventBase,
+    /** One attendance mark. */
+    kind: z.literal("session"),
+    properties: z.object({
+      ...eventProperties,
+      ...seatHolderFacts,
+      attended: z.boolean(),
+      /** The session's date in the product's zone, `YYYY-MM-DD`. */
+      session_date: z.string(),
+      /** The session's scheduled start, an ISO instant. */
+      session_starts_at: z.string(),
     }),
   }),
   z.object({

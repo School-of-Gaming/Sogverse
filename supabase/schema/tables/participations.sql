@@ -17,6 +17,12 @@ CREATE TABLE public.participations (
     group_joined_at timestamp with time zone,
     seat_offer_sent_at timestamp with time zone,
     seat_offer_expiry_notified_at timestamp with time zone,
+    utm_source text,
+    utm_medium text,
+    utm_campaign text,
+    utm_content text,
+    utm_term text,
+    school_of_gaming_marketing_opt_in boolean,
     CONSTRAINT chk_participations_group_joined_at_iff_group CHECK (((group_id IS NULL) = (group_joined_at IS NULL))),
     CONSTRAINT chk_participations_offer_notice_needs_offer CHECK (((seat_offer_expiry_notified_at IS NULL) OR (seat_offer_sent_at IS NOT NULL))),
     CONSTRAINT chk_participations_offer_only_when_waitlisted CHECK (((seat_offer_sent_at IS NULL) OR (status = 'waitlisted'::public.participation_status))),
@@ -64,6 +70,48 @@ COMMENT ON COLUMN public.participations.seat_offer_sent_at IS 'When a seat offer
 --
 
 COMMENT ON COLUMN public.participations.seat_offer_expiry_notified_at IS 'When staff were emailed that this offer ran out with no answer. Orthogonal to whether the offer is live or expired: it records that a notification happened, not the offer''s standing. Claimed atomically by claim_expired_seat_offer_notifications, whose UPDATE ... WHERE seat_offer_expiry_notified_at IS NULL is what makes the mail exactly-once under concurrency with no lock held across the send. Cleared whenever a fresh offer is stamped, so a re-offer that expires again notifies again.';
+
+
+--
+-- Name: COLUMN participations.utm_source; Type: COMMENT; Schema: public; Owner: -
+--
+
+COMMENT ON COLUMN public.participations.utm_source IS 'The utm_source of the visit that led to this booking, or NULL. Written once, when the seat is created, by create_participation or confirm_paid_participation, and only when the booking request carried marketing cookie consent — the same server-side gate the account''s own UTM columns are written under (src/lib/utm.ts); the values arrive already shaped by the proxy''s UTM sanitiser. Case preserved. Read by the Klaviyo enrolled event; a label that grants nothing.';
+
+
+--
+-- Name: COLUMN participations.utm_medium; Type: COMMENT; Schema: public; Owner: -
+--
+
+COMMENT ON COLUMN public.participations.utm_medium IS 'The utm_medium of the visit that led to this booking, or NULL. Same rules as utm_source.';
+
+
+--
+-- Name: COLUMN participations.utm_campaign; Type: COMMENT; Schema: public; Owner: -
+--
+
+COMMENT ON COLUMN public.participations.utm_campaign IS 'The utm_campaign of the visit that led to this booking, or NULL. Same rules as utm_source.';
+
+
+--
+-- Name: COLUMN participations.utm_content; Type: COMMENT; Schema: public; Owner: -
+--
+
+COMMENT ON COLUMN public.participations.utm_content IS 'The utm_content of the visit that led to this booking, or NULL. Same rules as utm_source.';
+
+
+--
+-- Name: COLUMN participations.utm_term; Type: COMMENT; Schema: public; Owner: -
+--
+
+COMMENT ON COLUMN public.participations.utm_term IS 'The utm_term of the visit that led to this booking, or NULL. Same rules as utm_source.';
+
+
+--
+-- Name: COLUMN participations.school_of_gaming_marketing_opt_in; Type: COMMENT; Schema: public; Owner: -
+--
+
+COMMENT ON COLUMN public.participations.school_of_gaming_marketing_opt_in IS 'The parent''s answer to the product''s "I want emails from School of Gaming" box when they booked this seat: true or false when the product asked (a school_of_gaming row in product_marketing_consents), NULL when it did not. Written once with the seat, by create_participation or confirm_paid_participation. It goes to Klaviyo on the enrolled event, where marketing acts on it; it is never written to marketing_consents, because Klaviyo owns School of Gaming''s mailing consent.';
 
 
 --
