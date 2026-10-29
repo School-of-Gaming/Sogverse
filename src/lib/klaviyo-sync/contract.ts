@@ -73,8 +73,8 @@ export const PROFILE_PROPERTIES = {
   signupIntentId: "sog_signup_intent_id",
   /**
    * The registration form's mailing-list answer, as a fact. Never consent:
-   * consent is Klaviyo's own subscription status, sent once at account
-   * creation for a yes.
+   * consent is Klaviyo's own subscription status, sent once for a yes, with
+   * the account's creation event.
    */
   registrationMarketingAnswer: "sog_registration_marketing_answer",
   gamerCount: "sog_gamer_count",
