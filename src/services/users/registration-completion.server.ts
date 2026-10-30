@@ -5,11 +5,11 @@ import { parseConsentCookieHeader } from "@/lib/consent";
 import {
   UTM_FIELDS,
   UTM_QUERY_PARAMS,
+  utmFromCookieHeader,
   utmMetadataForConsent,
   type UtmField,
 } from "@/lib/utm";
 import type { Database } from "@/types/database.types";
-import type { RegistrationUtmBody } from "./parent-registration.contracts";
 
 /**
  * What the two registration-completion routes — parent and Gedu — share: the
@@ -70,22 +70,21 @@ export type UtmProfileColumns = Partial<
 >;
 
 /**
- * The attribution columns for the account's one and only UTM write.
+ * The attribution columns for the account's one and only UTM write, from the
+ * attribution cookie this request carried.
  *
  * **Consent-gated exactly as signup metadata is**, through the one exported
- * gate, read off this request's own `Cookie` header: counsel reads the landing
+ * gate, read off the same `Cookie` header: counsel reads the landing
  * link's UTM parameters as tracking under the marketing purpose, so without a
  * stored marketing grant every key is omitted and the columns stay NULL. The
  * columns are write-once and a provider-created row arrives with them NULL, so
  * this is their first write, not an overwrite.
  */
-export function utmProfileColumns(
-  request: Request,
-  utm: RegistrationUtmBody | undefined,
-): UtmProfileColumns {
+export function utmProfileColumns(request: Request): UtmProfileColumns {
+  const cookieHeader = request.headers.get("cookie");
   const metadata = utmMetadataForConsent(
-    parseConsentCookieHeader(request.headers.get("cookie")),
-    utm,
+    parseConsentCookieHeader(cookieHeader),
+    utmFromCookieHeader(cookieHeader),
   );
   // The gate omits a key that did not survive, so presence is the test.
   const columns: UtmProfileColumns = {};

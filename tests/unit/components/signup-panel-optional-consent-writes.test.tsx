@@ -55,8 +55,6 @@ vi.mock("next-intl", async () => {
 vi.mock("@/providers", () => ({
   useNow: () => new Date("2026-01-05T12:00:00Z"),
   useTimezone: () => "Europe/Helsinki",
-  // The visit arrived with no campaign tag; the panel sends what it holds.
-  useUtm: () => ({ source: null, medium: null, campaign: null, content: null, term: null }),
 }));
 
 vi.mock("@/providers/auth-provider", () => ({
@@ -412,17 +410,14 @@ describe("School of Gaming's own box", () => {
     expect(setMarketingMutate).not.toHaveBeenCalled();
   });
 
-  it("sends null when the product does not ask, beside the visit's tag", () => {
+  it("sends null when the product does not ask, and never a campaign tag", () => {
     const { container } = render(panel());
 
     agreeToTheRules(container);
     fireEvent.click(cta(container));
 
-    expect(createInput()).toMatchObject({
-      schoolOfGamingMarketingOptIn: null,
-      // The stubbed visit carries no tag, so every field is omitted.
-      utm: {},
-    });
+    expect(createInput()).toMatchObject({ schoolOfGamingMarketingOptIn: null });
+    expect(createInput()).not.toHaveProperty("utm");
   });
 
   it("is asked and sent on the waitlist door exactly as on a booking", () => {
@@ -442,9 +437,8 @@ describe("School of Gaming's own box", () => {
     expect(waitlistMutate).toHaveBeenCalledTimes(1);
     expect(waitlistMutate.mock.calls[0][0]).toMatchObject({
       schoolOfGamingMarketingOptIn: true,
-      // The stubbed visit carries no tag, so every field is omitted.
-      utm: {},
     });
+    expect(waitlistMutate.mock.calls[0][0]).not.toHaveProperty("utm");
     expect(setMarketingMutate).toHaveBeenCalledTimes(1);
     expect(onlyCall(setMarketingMutate)).toMatchObject({
       consentType: LYNX_MARKETING,

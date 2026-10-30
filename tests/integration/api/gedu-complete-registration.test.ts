@@ -81,6 +81,7 @@ vi.mock("@/lib/roblox", async (importOriginal) => {
 import { POST } from "@/app/api/gedu/complete-registration/route";
 import { REGISTRATION_ALREADY_COMPLETE } from "@/services/users/parent-registration.contracts";
 import { CONSENT_COOKIE_NAME } from "@/lib/consent";
+import { attributionCookie } from "../../mocks/attribution-cookie";
 import { ROUTES } from "@/lib/constants/routes";
 
 const USER_ID = "66666666-6666-4666-8666-666666666666";
@@ -96,14 +97,23 @@ const validBody = {
   locationIds: [LOCATION_ID],
   minecraftUsername: "AinoBuilds",
   robloxUsername: "builderman",
-  utm: { source: "recruit", campaign: "gedu-autumn", term: "game educator" },
 };
+
+/** Every case's browser holds a tag; what it may do with it is the consent's. */
+const ATTRIBUTION = attributionCookie({
+  source: "recruit",
+  campaign: "gedu-autumn",
+  term: "game educator",
+});
 
 function request(
   body: unknown,
   { marketing }: { marketing?: boolean } = {},
 ): Request {
-  const headers: Record<string, string> = { "Content-Type": "application/json" };
+  const headers: Record<string, string> = {
+    "Content-Type": "application/json",
+    cookie: ATTRIBUTION,
+  };
   if (marketing !== undefined) {
     const value = encodeURIComponent(
       JSON.stringify({
@@ -113,7 +123,7 @@ function request(
         marketing,
       }),
     );
-    headers.cookie = `${CONSENT_COOKIE_NAME}=${value}`;
+    headers.cookie = `${CONSENT_COOKIE_NAME}=${value}; ${ATTRIBUTION}`;
   }
   return new Request("http://localhost:3000/api/gedu/complete-registration", {
     method: "POST",

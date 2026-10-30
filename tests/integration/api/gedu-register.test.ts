@@ -66,6 +66,7 @@ import { POST } from "@/app/api/gedu/register/route";
 import { GAME_USERNAME_MAX_LENGTH } from "@/lib/constants/game-platforms";
 import { verifyEmailVerificationToken } from "@/lib/email-verification";
 import { CONSENT_COOKIE_NAME } from "@/lib/consent";
+import { attributionCookie } from "../../mocks/attribution-cookie";
 import { asObject, getString } from "../../helpers/json";
 import { INVISIBLE_ONLY_NAME } from "../../helpers/invisible-characters";
 
@@ -99,6 +100,7 @@ function registerRequest(body: unknown, rawBody?: string): Request {
 function registerRequestWithConsent(
   consent: { analytics: boolean; marketing: boolean },
   body: unknown,
+  attribution = "",
 ): Request {
   const value = encodeURIComponent(
     JSON.stringify({
@@ -112,7 +114,7 @@ function registerRequestWithConsent(
     method: "POST",
     headers: {
       "Content-Type": "application/json",
-      cookie: `locale=en; ${CONSENT_COOKIE_NAME}=${value}`,
+      cookie: `locale=en; ${CONSENT_COOKIE_NAME}=${value}; ${attribution}`,
     },
     body: JSON.stringify(body),
   });
@@ -413,35 +415,40 @@ describe("POST /api/gedu/register", () => {
 
   // -- UTM attribution --
   //
-  // The values travel in the body (the form POSTs here with no utm params on
-  // the URL, so the proxy's header is simply absent on this request) and reach
+  // The tag is read off the attribution cookie this request carried, and reaches
   // the profile-creation trigger through the same five user-metadata keys the
-  // parent path uses. The body schema takes them as plain strings on purpose:
-  // the educator never typed them and cannot see them, so a malformed one must
-  // not 400 them.
+  // parent path uses. The educator never typed the values and cannot see them,
+  // so a malformed one must not 400 them.
   //
   // And they are persisted only when the request's own consent cookie grants
   // MARKETING — the same ruling and the same server-side gate as the parent
   // route, because it is the same five columns on the same table.
 
   const GRANTED = { analytics: true, marketing: true };
+  const ATTRIBUTION = attributionCookie({
+    source: "Lynx",
+    medium: "email",
+    campaign: "lynx-summer-a",
+    content: "jobs-board",
+    term: "game educator",
+  });
 
   function signupMetadata() {
     return asObject(asObject(mockCreateUser.mock.calls[0][0]).user_metadata);
   }
 
+  function expectNoUtmKeys() {
+    const metadata = signupMetadata();
+    expect(metadata).not.toHaveProperty("utm_source");
+    expect(metadata).not.toHaveProperty("utm_medium");
+    expect(metadata).not.toHaveProperty("utm_campaign");
+    expect(metadata).not.toHaveProperty("utm_content");
+    expect(metadata).not.toHaveProperty("utm_term");
+  }
+
   it("passes valid utm values through to the signup metadata when marketing consent was granted", async () => {
     const response = await POST(
-      registerRequestWithConsent(GRANTED, {
-        ...validBody,
-        utm: {
-          source: "Lynx",
-          medium: "email",
-          campaign: "lynx-summer-a",
-          content: "jobs-board",
-          term: "game educator",
-        },
-      }),
+      registerRequestWithConsent(GRANTED, validBody, ATTRIBUTION),
     );
 
     expect(response.status).toBe(200);
@@ -453,53 +460,30 @@ describe("POST /api/gedu/register", () => {
     expect(metadata.utm_term).toBe("game educator");
   });
 
-  it("drops every utm key when the request carries no consent cookie", async () => {
+  it("drops every utm key when the attribution cookie arrives with no consent cookie", async () => {
     const response = await POST(
-      registerRequest({
-        ...validBody,
-        utm: {
-          source: "Lynx",
-          medium: "email",
-          campaign: "lynx-summer-a",
-          content: "jobs-board",
-          term: "game educator",
-        },
+      new Request("http://localhost:3000/api/gedu/register", {
+        method: "POST",
+        headers: { "Content-Type": "application/json", cookie: ATTRIBUTION },
+        body: JSON.stringify(validBody),
       }),
     );
 
     expect(response.status).toBe(200);
-    const metadata = signupMetadata();
-    expect(metadata).not.toHaveProperty("utm_source");
-    expect(metadata).not.toHaveProperty("utm_medium");
-    expect(metadata).not.toHaveProperty("utm_campaign");
-    expect(metadata).not.toHaveProperty("utm_content");
-    expect(metadata).not.toHaveProperty("utm_term");
+    expectNoUtmKeys();
   });
 
   it("drops every utm key on analytics-only", async () => {
     const response = await POST(
       registerRequestWithConsent(
         { analytics: true, marketing: false },
-        {
-          ...validBody,
-          utm: {
-            source: "Lynx",
-            medium: "email",
-            campaign: "lynx-summer-a",
-            content: "jobs-board",
-            term: "game educator",
-          },
-        },
+        validBody,
+        ATTRIBUTION,
       ),
     );
 
     expect(response.status).toBe(200);
-    const metadata = signupMetadata();
-    expect(metadata).not.toHaveProperty("utm_source");
-    expect(metadata).not.toHaveProperty("utm_medium");
-    expect(metadata).not.toHaveProperty("utm_campaign");
-    expect(metadata).not.toHaveProperty("utm_content");
-    expect(metadata).not.toHaveProperty("utm_term");
+    expectNoUtmKeys();
   });
 
   it("drops every utm key when the educator rejected the banner outright", async () => {
@@ -509,34 +493,22 @@ describe("POST /api/gedu/register", () => {
     const response = await POST(
       registerRequestWithConsent(
         { analytics: false, marketing: false },
-        {
-          ...validBody,
-          utm: {
-            source: "Lynx",
-            medium: "email",
-            campaign: "lynx-summer-a",
-            content: "jobs-board",
-            term: "game educator",
-          },
-        },
+        validBody,
+        ATTRIBUTION,
       ),
     );
 
     expect(response.status).toBe(200);
-    const metadata = signupMetadata();
-    expect(metadata).not.toHaveProperty("utm_source");
-    expect(metadata).not.toHaveProperty("utm_medium");
-    expect(metadata).not.toHaveProperty("utm_campaign");
-    expect(metadata).not.toHaveProperty("utm_content");
-    expect(metadata).not.toHaveProperty("utm_term");
+    expectNoUtmKeys();
   });
 
   it("registers successfully with NULL when a utm value is malformed", async () => {
     const response = await POST(
-      registerRequestWithConsent(GRANTED, {
-        ...validBody,
-        utm: { source: "=SUM(A1)", campaign: "lynx-summer-a" },
-      }),
+      registerRequestWithConsent(
+        GRANTED,
+        validBody,
+        attributionCookie({ source: "=SUM(A1)", campaign: "lynx-summer-a" }),
+      ),
     );
 
     // A 400 here would let whoever authored the marketing link break somebody
@@ -552,23 +524,27 @@ describe("POST /api/gedu/register", () => {
     const response = await POST(registerRequestWithConsent(GRANTED, validBody));
 
     expect(response.status).toBe(200);
-    const metadata = signupMetadata();
-    expect(metadata).not.toHaveProperty("utm_source");
-    expect(metadata).not.toHaveProperty("utm_medium");
-    expect(metadata).not.toHaveProperty("utm_campaign");
-    expect(metadata).not.toHaveProperty("utm_content");
-    expect(metadata).not.toHaveProperty("utm_term");
+    expectNoUtmKeys();
+  });
+
+  // A tab open across the deploy still posts the tag it held in memory. It must
+  // be neither refused nor believed.
+  it("ignores a utm field in the body", async () => {
+    const response = await POST(
+      registerRequestWithConsent(GRANTED, {
+        ...validBody,
+        utm: { campaign: "from-an-old-bundle" },
+      }),
+    );
+
+    expect(response.status).toBe(200);
+    expectNoUtmKeys();
   });
 
   it("never passes the utm values to the promotion RPC", async () => {
     // register_gedu names a targeted column list and mentions none of the
     // five, so the trigger-written values survive promotion untouched.
-    await POST(
-      registerRequestWithConsent(GRANTED, {
-        ...validBody,
-        utm: { campaign: "lynx-summer-a" },
-      }),
-    );
+    await POST(registerRequestWithConsent(GRANTED, validBody, ATTRIBUTION));
 
     const args = asObject(mockRpc.mock.calls[0][1]);
     expect(Object.keys(args)).not.toContain("p_utm_source");

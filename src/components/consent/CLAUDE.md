@@ -309,13 +309,39 @@ library rewrites its own session cookie as the document is torn down — measure
 third of a second after the deletion — and the reload then arrives too late to matter,
 leaving a cookie no later document will ever remove, because consent is now refused and
 the script never loads again. So the deletion before the reload is best-effort, and the
-guarantee is a standing invariant checked on every mount: **an advertising cookie may
-exist only in a document where marketing is granted.** In a document where it is not,
+guarantee is a standing invariant checked on every mount: **an advertising cookie, or our
+own attribution cookie, may exist only in a document where marketing is granted.** In a document where it is not,
 nothing is running to undo the clearing, which is the whole of why it holds. Stating it as
 an invariant rather than as a step in the withdrawal also buys two things the withdrawal
 path could not: it clears whatever an earlier failure stranded, with no migration and no
 list of affected browsers, and it clears what the legacy site leaves on the registrable
 domain, which sets its tags without asking anybody.
+
+## The attribution cookie
+
+**`sog_attribution` is ours: first party, no vendor sets or needs it, and it is the one
+cookie here that is not an advertising script's.** It sits behind marketing all the same,
+because it keeps a campaign link's tag on the device (`src/lib/utm.ts` has the legal
+reasoning). It holds the latest tagged link's five values for 30 days, and a later tagged
+link overwrites it. The proxy writes it when a landing request already carries marketing
+consent; otherwise the proxy passes the tag to the page in memory, and the banner writes it
+if marketing is accepted during that document's life. Neither writes it for a signed-in
+gamer, or for a session whose role is unknown.
+
+**It is not httpOnly because the banner writes it from client code**, so a script in the
+page can read it. A value it holds is therefore never trusted: it is sanitised again on
+every read.
+
+Withdrawing marketing deletes it with the advertising cookies, and the mount invariant
+above removes it from any document where marketing is not granted.
+
+**Consent is checked again at read, off the request itself.** A tag written during consent
+is usable only while the request storing it still carries marketing consent, so a cookie
+that outlived its consent stores nothing, even before a document has mounted to remove it.
+
+**It did not change the question (owner's ruling, 2026-10-30).** Marketing consent already
+governed storing the tag, so the cookie is a change in how that is kept: the banner names
+no cookie, the privacy policy describes it, and the consent version stayed where it was.
 
 ## What a new recipient does and does not cost
 

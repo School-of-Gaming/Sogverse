@@ -120,7 +120,7 @@ export { AuthProvider } from "./auth-provider";
 export { LocaleProvider, useLocaleControl } from "./locale-provider";
 export { TimezoneProvider, useTimezone } from "./timezone-provider";
 export { NowProvider, useNow } from "./now-provider";
-export { UtmProvider, useUtm } from "./utm-provider";
+export { UtmProvider } from "./utm-provider";
 // Re-exported here so a consumer asking for "the providers" finds it beside
 // its neighbours. It is *defined* in `@/components/consent`, next to the
 // banner and the gated scripts it serves, because those three are one feature.

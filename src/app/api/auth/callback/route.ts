@@ -6,7 +6,6 @@ import { ROLE_POST_LOGIN_PATHS } from "@/lib/constants/roles";
 import { ROUTES } from "@/lib/constants/routes";
 import { isSupportedLocale } from "@/lib/constants/locales";
 import { getOrigin } from "@/lib/url";
-import { NO_UTM_ATTRIBUTION } from "@/lib/utm";
 import type { OAuthLoginError } from "@/lib/google-sign-in";
 import {
   completeRegistrationQuery,
@@ -128,16 +127,14 @@ export async function GET(request: Request) {
     // whatever `next` said.** Google hands over no name, terms or consents, so
     // nothing else is useful until they are given. The page keeps the locale
     // the register page was read in when `next` carried one, the Gedu variant
-    // only when the Gedu register page asked for it, the landing link's
-    // attribution, which the round trip through Google would otherwise lose,
-    // and the product page the account set out from: the finish page's own
+    // only when the Gedu register page asked for it, and the product page the
+    // account set out from: the finish page's own
     // `redirect` when `next` was the finish page, or `next` itself when it was
     // a product page (the login page's Google button sends its `?redirect=`).
     const pathname = finishTarget?.pathname ?? ROUTES.completeRegistration;
     registrationIntent = new URLSearchParams(
       completeRegistrationQuery({
         asGedu: finishTarget?.asGedu ?? false,
-        utm: finishTarget?.utm ?? NO_UTM_ATTRIBUTION,
         redirect: finishTarget ? finishTarget.redirect : next,
       }),
     ).toString();

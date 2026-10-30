@@ -66,7 +66,6 @@ export const POST = defineRoute({
       lastName,
       homeLocationId,
       locale: requestedLocale,
-      utm,
       redirect,
       marketingConsent,
     } = body;
@@ -117,7 +116,7 @@ export const POST = defineRoute({
         last_name: lastName,
         ...(homeLocationId ? { home_location_id: homeLocationId } : {}),
         ...(requestedLocale ? { locale: requestedLocale } : {}),
-        ...utmProfileColumns(request, utm),
+        ...utmProfileColumns(request),
         ...signUpIntentColumns(signUpIntent),
         registration_marketing_consent: marketingConsent ?? false,
         ...(emailVerifiedByGoogle ? { email_verified_at: now } : {}),

@@ -5,34 +5,6 @@ import { SUPPORTED_LOCALES } from "@/lib/constants/locales";
 import { GAMER_EMAIL_DOMAIN } from "@/lib/gamer-sign-in";
 
 /**
- * Marketing provenance as it travels in a registration body: the five UTM
- * fields this visit arrived with, each present or absent.
- *
- * **Plain optional strings on purpose — no format rule here.** This is a
- * deliberate exception to the usual "the body schema is the validation"
- * discipline, and it exists because of who supplies the values: not the person
- * filling in the form, who never typed them and cannot see them, but whoever
- * authored the link they clicked. A format rule on the schema would turn a
- * malformed marketing param into a 400 that blocks a legitimate registration.
- * Each route runs the values through the shared sanitiser instead, where a bad
- * one becomes NULL and the registration succeeds.
- *
- * **Defined once and imported by the educator schema too**, rather than written
- * out in both places. Both registration routes hand these to the same signup
- * trigger under the same five metadata keys, so a second copy is a shape that
- * can drift while both ends still type-check.
- */
-export const registrationUtmBody = z.object({
-  source: z.string().optional(),
-  medium: z.string().optional(),
-  campaign: z.string().optional(),
-  content: z.string().optional(),
-  term: z.string().optional(),
-});
-
-export type RegistrationUtmBody = z.infer<typeof registrationUtmBody>;
-
-/**
  * Request body for public parent self-registration (`POST /api/auth/register`).
  * Shared by the route (which validates with it) and the register form.
  *
@@ -118,19 +90,12 @@ export const registerParentBody = z.object({
    */
   locale: z.enum(SUPPORTED_LOCALES).optional(),
   /**
-   * Marketing provenance: the UTM values this visit arrived with, if any.
-   *
-   * See `registrationUtmBody` — the same shape the educator registration takes,
-   * and the reason it is defined once.
-   */
-  utm: registrationUtmBody.optional(),
-  /**
    * The `?redirect=` the register page was opened with — the product page a
    * sign-up started from — so the account-creation report can name that
    * product.
    *
-   * **A plain optional string, no format rule**, for `utm`'s reason: a bad
-   * value must never cost a registration. The route treats it as untrusted and
+   * **A plain optional string, no format rule**: a bad value must never cost a
+   * registration. The route treats it as untrusted and
    * names a product only for an advertised shop product page it resolves to.
    */
   redirect: z.string().optional(),
@@ -211,7 +176,6 @@ export const completeParentRegistrationBody = registerParentBody.pick({
   lastName: true,
   homeLocationId: true,
   locale: true,
-  utm: true,
   redirect: true,
   marketingConsent: true,
   acceptedTerms: true,

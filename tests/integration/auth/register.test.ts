@@ -139,6 +139,7 @@ import { REGISTER_WEAK_PASSWORD } from "@/services/users/parent-registration.con
 import { REGISTRATION_CONSENT_DOCUMENTS } from "@/lib/constants/consent-documents";
 import { verifyEmailVerificationToken } from "@/lib/email-verification";
 import { CONSENT_COOKIE_NAME } from "@/lib/consent";
+import { attributionCookie } from "../../mocks/attribution-cookie";
 import { asObject } from "../../helpers/json";
 
 const NEW_USER_ID = "88888888-8888-4888-8888-888888888888";
@@ -180,6 +181,7 @@ function registerRequestWithConsent(
   },
   body: unknown = validBody,
   version = 1,
+  attribution = "",
 ): Request {
   const value = encodeURIComponent(
     JSON.stringify({
@@ -193,8 +195,17 @@ function registerRequestWithConsent(
     method: "POST",
     headers: {
       "Content-Type": "application/json",
-      cookie: `locale=en; ${CONSENT_COOKIE_NAME}=${value}`,
+      cookie: `locale=en; ${CONSENT_COOKIE_NAME}=${value}; ${attribution}`,
     },
+    body: JSON.stringify(body),
+  });
+}
+
+/** A registration whose browser carries the given cookies and no consent one. */
+function registerRequestCarrying(cookie: string, body: unknown = validBody): Request {
+  return new Request("http://localhost:3000/api/auth/register", {
+    method: "POST",
+    headers: { "Content-Type": "application/json", cookie },
     body: JSON.stringify(body),
   });
 }
@@ -508,19 +519,16 @@ describe("POST /api/auth/register", () => {
   // banner can be in and what each one persists.
 
   const GRANTED = { analytics: true, marketing: true };
-  const UTM_BODY = {
-    ...validBody,
-    utm: {
-      source: "Lynx",
-      medium: "email",
-      campaign: "lynx-summer-a",
-      content: "hero",
-      term: "roblox club",
-    },
-  };
+  const ATTRIBUTION = attributionCookie({
+    source: "Lynx",
+    medium: "email",
+    campaign: "lynx-summer-a",
+    content: "hero",
+    term: "roblox club",
+  });
 
   it("passes valid utm values through to the signup metadata when marketing consent was granted", async () => {
-    await POST(registerRequestWithConsent(GRANTED, UTM_BODY));
+    await POST(registerRequestWithConsent(GRANTED, validBody, 1, ATTRIBUTION));
 
     const metadata = signupMetadata();
     expect(metadata.utm_source).toBe("Lynx");
@@ -530,10 +538,11 @@ describe("POST /api/auth/register", () => {
     expect(metadata.utm_term).toBe("roblox club");
   });
 
-  it("drops every utm key when the request carries no consent cookie", async () => {
+  it("drops every utm key when the attribution cookie arrives with no consent cookie", async () => {
     // No cookie is not an answer, and an unanswered banner is not consent — so
-    // the account is created and all five columns stay NULL.
-    const response = await POST(registerRequest(UTM_BODY));
+    // the account is created and all five columns stay NULL, whatever else the
+    // browser still holds.
+    const response = await POST(registerRequestCarrying(ATTRIBUTION));
 
     expect(response.status).toBe(200);
     const metadata = signupMetadata();
@@ -551,7 +560,9 @@ describe("POST /api/auth/register", () => {
     const response = await POST(
       registerRequestWithConsent(
         { analytics: true, marketing: false },
-        UTM_BODY,
+        validBody,
+        1,
+        ATTRIBUTION,
       ),
     );
 
@@ -568,7 +579,9 @@ describe("POST /api/auth/register", () => {
     await POST(
       registerRequestWithConsent(
         { analytics: false, marketing: false },
-        UTM_BODY,
+        validBody,
+        1,
+        ATTRIBUTION,
       ),
     );
 
@@ -588,7 +601,7 @@ describe("POST /api/auth/register", () => {
     // route, with the bytes a returning visitor's browser would actually carry
     // — a grant on every purpose, stamped with a version we no longer honour.
     const response = await POST(
-      registerRequestWithConsent({ analytics: true, marketing: true }, UTM_BODY, 0),
+      registerRequestWithConsent({ analytics: true, marketing: true }, validBody, 0, ATTRIBUTION),
     );
 
     expect(response.status).toBe(200);
@@ -604,7 +617,9 @@ describe("POST /api/auth/register", () => {
     // `marketingConsent` is the mailing-list tick on the form. It is not the
     // banner's answer, it arrives in a body a stranger controls, and it must
     // not be able to buy an attribution the cookie refused.
-    await POST(registerRequest({ ...UTM_BODY, marketingConsent: true }));
+    await POST(
+      registerRequestCarrying(ATTRIBUTION, { ...validBody, marketingConsent: true }),
+    );
 
     const metadata = signupMetadata();
     expect(metadata).not.toHaveProperty("utm_campaign");
@@ -615,16 +630,32 @@ describe("POST /api/auth/register", () => {
     // else's registration. The fields are independent, so the well-formed
     // campaign beside the refused source still lands.
     const response = await POST(
-      registerRequestWithConsent(GRANTED, {
-        ...validBody,
-        utm: { source: "=SUM(A1)", campaign: "lynx-summer-a" },
-      }),
+      registerRequestWithConsent(
+        GRANTED,
+        validBody,
+        1,
+        attributionCookie({ source: "=SUM(A1)", campaign: "lynx-summer-a" }),
+      ),
     );
 
     expect(response.status).toBe(200);
     const metadata = signupMetadata();
     expect(metadata).not.toHaveProperty("utm_source");
     expect(metadata.utm_campaign).toBe("lynx-summer-a");
+  });
+
+  // A tab open across the deploy still posts the tag it held in memory. It must
+  // be neither refused nor believed.
+  it("ignores a utm field in the body", async () => {
+    const response = await POST(
+      registerRequestWithConsent(GRANTED, {
+        ...validBody,
+        utm: { campaign: "from-an-old-bundle" },
+      }),
+    );
+
+    expect(response.status).toBe(200);
+    expect(signupMetadata()).not.toHaveProperty("utm_campaign");
   });
 
   it("sends no utm keys at all when the parent arrived without any", async () => {

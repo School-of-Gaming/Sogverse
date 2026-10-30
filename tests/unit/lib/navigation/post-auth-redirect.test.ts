@@ -5,7 +5,6 @@ import {
   resolveCompleteRegistrationIntent,
   resolveSafeRedirect,
 } from "@/lib/navigation/post-auth-redirect";
-import { NO_UTM_ATTRIBUTION } from "@/lib/utm";
 
 describe("resolveSafeRedirect", () => {
   it("returns null when no redirect is provided", () => {
@@ -166,14 +165,11 @@ describe("resolveSafeRedirect with the finish page allowed", () => {
 });
 
 describe("readCompleteRegistrationTarget", () => {
-  const NO_UTM = NO_UTM_ATTRIBUTION;
-
   it("splits the raw pathname from the variant it asked for", () => {
     expect(readCompleteRegistrationTarget("/fr/complete-registration")).toEqual(
       {
         pathname: "/fr/complete-registration",
         asGedu: null,
-        utm: NO_UTM,
         redirect: null,
       },
     );
@@ -182,7 +178,6 @@ describe("readCompleteRegistrationTarget", () => {
     ).toEqual({
       pathname: "/fi/complete-registration",
       asGedu: true,
-      utm: NO_UTM,
       redirect: null,
     });
     expect(
@@ -193,15 +188,12 @@ describe("readCompleteRegistrationTarget", () => {
     ).toMatchObject({ asGedu: null });
   });
 
-  it("reads the attribution through the sanitiser", () => {
+  it("carries no attribution an old address still holds", () => {
     expect(
-      readCompleteRegistrationTarget(
-        "/complete-registration?utm_source=Lynx&utm_medium=%3Dx&utm_campaign=a&utm_campaign=b&utm_content=hero&utm_term=%2Bx",
-      ),
+      readCompleteRegistrationTarget("/complete-registration?utm_source=Lynx"),
     ).toEqual({
       pathname: "/complete-registration",
       asGedu: null,
-      utm: { ...NO_UTM_ATTRIBUTION, source: "Lynx", content: "hero" },
       redirect: null,
     });
   });
@@ -232,29 +224,16 @@ describe("readCompleteRegistrationTarget", () => {
 });
 
 describe("completeRegistrationQuery", () => {
-  const UTM = {
-    source: "Lynx",
-    medium: null,
-    campaign: "summer",
-    content: "hero",
-    term: "minecraft",
-  };
-
-  it("puts the variant first, then the attribution, then the product page", () => {
+  it("puts the variant first, then the product page", () => {
     expect(
       Object.entries(
         completeRegistrationQuery({
           asGedu: true,
-          utm: UTM,
           redirect: "/fi/kauppa/abc-123",
         }),
       ),
     ).toEqual([
       ["as", "gedu"],
-      ["utm_source", "Lynx"],
-      ["utm_campaign", "summer"],
-      ["utm_content", "hero"],
-      ["utm_term", "minecraft"],
       ["redirect", "/fi/kauppa/abc-123"],
     ]);
   });
@@ -262,18 +241,13 @@ describe("completeRegistrationQuery", () => {
   it("emits a redirect only once it has passed the allowlist", () => {
     for (const unsafe of ["/admin", "https://evil.example/shop/x", "/shop/../admin"]) {
       expect(
-        completeRegistrationQuery({ asGedu: false, utm: UTM, redirect: unsafe }),
+        completeRegistrationQuery({ asGedu: false, redirect: unsafe }),
       ).not.toHaveProperty("redirect");
     }
   });
 
   it("is empty for a parent with nothing to carry", () => {
-    expect(
-      completeRegistrationQuery({
-        asGedu: false,
-        utm: NO_UTM_ATTRIBUTION,
-      }),
-    ).toEqual({});
+    expect(completeRegistrationQuery({ asGedu: false })).toEqual({});
   });
 });
 
@@ -283,21 +257,13 @@ describe("completeRegistrationQuery", () => {
  * whatever its own address lacks.
  */
 describe("resolveCompleteRegistrationIntent", () => {
-  const COOKIE =
-    "as=gedu&utm_source=Lynx&utm_campaign=summer&utm_content=hero&utm_term=minecraft&redirect=%2Ffi%2Fkauppa%2Fabc-123";
+  const COOKIE = "as=gedu&utm_source=Lynx&redirect=%2Ffi%2Fkauppa%2Fabc-123";
 
   it("falls back to the cookie for everything a bare address lacks", () => {
     expect(
       resolveCompleteRegistrationIntent(new URLSearchParams(), COOKIE),
     ).toEqual({
       asGedu: true,
-      utm: {
-        source: "Lynx",
-        medium: null,
-        campaign: "summer",
-        content: "hero",
-        term: "minecraft",
-      },
       redirect: "/fi/kauppa/abc-123",
     });
   });
@@ -305,15 +271,11 @@ describe("resolveCompleteRegistrationIntent", () => {
   it("lets the address win for each part it carries", () => {
     expect(
       resolveCompleteRegistrationIntent(
-        new URLSearchParams(
-          "as=parent&utm_medium=email&redirect=%2Fshop%2Fxyz",
-        ),
+        new URLSearchParams("as=parent&redirect=%2Fshop%2Fxyz"),
         COOKIE,
       ),
     ).toEqual({
       asGedu: false,
-      // Whole, never merged field by field with the cookie's.
-      utm: { ...NO_UTM_ATTRIBUTION, medium: "email" },
       redirect: "/shop/xyz",
     });
   });
@@ -323,20 +285,18 @@ describe("resolveCompleteRegistrationIntent", () => {
       resolveCompleteRegistrationIntent(new URLSearchParams(), undefined),
     ).toEqual({
       asGedu: false,
-      utm: NO_UTM_ATTRIBUTION,
       redirect: null,
     });
   });
 
-  it("reads the cookie through the same sanitisers as the address", () => {
+  it("reads the cookie through the same checks as the address", () => {
     expect(
       resolveCompleteRegistrationIntent(
         new URLSearchParams(),
-        "as=admin&utm_source=%3Dformula&redirect=%2Fadmin",
+        "as=admin&redirect=%2Fadmin",
       ),
     ).toEqual({
       asGedu: false,
-      utm: NO_UTM_ATTRIBUTION,
       redirect: null,
     });
   });
