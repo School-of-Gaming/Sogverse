@@ -129,6 +129,13 @@ check runs before any script is loaded at all, so such a page never has their co
 it. A visitor who moved on gets no report for either page; a query with anything else in
 it gets none.
 
+**The query allowlist is one list for every script, so each platform's click id reaches
+all of them.** A page reached from a Reddit ad loads Meta's pixel and the container too,
+and both see `rdt_cid` in the address, exactly as Reddit sees `fbclid` and `gclid`. That
+is accepted: a click id is an opaque token naming one ad click, the visitor has allowed
+marketing for every platform at once, and a per-platform list would split one gate into
+several for no protection a reader could name.
+
 **An event other than a page view may sit in the container's queue, and the distinction is
 worth keeping straight.** What makes a page view unsafe to queue is not its payload but
 its *permission*: the question is whether the tab is still on the page that authorised a
