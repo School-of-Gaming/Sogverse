@@ -83,15 +83,68 @@ function paintCamera(participant: VoiceParticipant): Paint {
   };
 }
 
-/** A pretend build plan: a wall going up block by block, and a cursor pointing at it. */
-function paintScreen(participant: VoiceParticipant): Paint {
-  const theme = readTheme();
-  const { width, height } = SCREEN_SIZE;
+/** What a fake screen draws inside the frame every fake screen shares. */
+type ScreenLook = (ctx: CanvasRenderingContext2D, seconds: number, ink: string) => void;
+
+/** A wall going up block by block. */
+const buildPlanLook: ScreenLook = (ctx, seconds) => {
   const block = 56;
   const columns = 14;
   const rows = 7;
-  const left = (width - columns * block) / 2;
+  const left = (SCREEN_SIZE.width - columns * block) / 2;
   const top = 130;
+  const placed = columns * 2 + Math.floor(seconds * 3) % (columns * (rows - 2) + 12);
+  for (let index = 0; index < Math.min(placed, columns * rows); index++) {
+    const column = index % columns;
+    const row = rows - 1 - Math.floor(index / columns);
+    ctx.fillStyle = PICKS[(column * 3 + row * 5) % PICKS.length].hex;
+    ctx.fillRect(left + column * block + 2, top + row * block + 2, block - 4, block - 4);
+  }
+};
+
+/** A checklist with its current line stepping down it. */
+const questListLook: ScreenLook = (ctx, seconds, ink) => {
+  const lines = 8;
+  const current = Math.floor(seconds / 2) % lines;
+  for (let line = 0; line < lines; line++) {
+    const y = 140 + line * 62;
+    if (line === current) {
+      ctx.fillStyle = PICKS[3].hex;
+      ctx.globalAlpha = 0.35;
+      ctx.fillRect(56, y - 10, 1168, 54);
+      ctx.globalAlpha = 1;
+    }
+    ctx.fillStyle = PICKS[line % PICKS.length].hex;
+    ctx.fillRect(76, y, 34, 34);
+    ctx.fillStyle = ink;
+    ctx.globalAlpha = 0.7;
+    ctx.fillRect(134, y + 8, 380 + ((line * 173) % 560), 16);
+    ctx.globalAlpha = 1;
+  }
+};
+
+/** Tall bars rising and falling across the whole screen. */
+const scoreChartLook: ScreenLook = (ctx, seconds) => {
+  const bars = 9;
+  const floor = 640;
+  for (let bar = 0; bar < bars; bar++) {
+    const size = 120 + 170 * (1 + Math.sin(seconds * 0.7 + bar * 1.3));
+    ctx.fillStyle = PICKS[(bar * 2 + 7) % PICKS.length].hex;
+    ctx.fillRect(76 + bar * 130, floor - size, 88, size);
+  }
+};
+
+const SCREEN_LOOKS = [
+  { title: "build plan", paint: buildPlanLook },
+  { title: "quest list", paint: questListLook },
+  { title: "score chart", paint: scoreChartLook },
+] as const;
+
+/** A pretend screen in one of the looks, with a cursor pointing at it. */
+function paintScreen(participant: VoiceParticipant, lookIndex: number): Paint {
+  const theme = readTheme();
+  const { width, height } = SCREEN_SIZE;
+  const look = SCREEN_LOOKS[lookIndex % SCREEN_LOOKS.length];
 
   return (ctx, seconds) => {
     ctx.fillStyle = theme.ground;
@@ -104,15 +157,9 @@ function paintScreen(participant: VoiceParticipant): Paint {
     ctx.font = `600 34px ${theme.face}`;
     ctx.textAlign = "left";
     ctx.textBaseline = "middle";
-    ctx.fillText(`${participant.userName}: build plan`, 56, 76);
+    ctx.fillText(`${participant.userName}: ${look.title}`, 56, 76);
 
-    const placed = columns * 2 + Math.floor(seconds * 3) % (columns * (rows - 2) + 12);
-    for (let index = 0; index < Math.min(placed, columns * rows); index++) {
-      const column = index % columns;
-      const row = rows - 1 - Math.floor(index / columns);
-      ctx.fillStyle = PICKS[(column * 3 + row * 5) % PICKS.length].hex;
-      ctx.fillRect(left + column * block + 2, top + row * block + 2, block - 4, block - 4);
-    }
+    look.paint(ctx, seconds, theme.ink);
 
     const cursorX = width / 2 + Math.cos(seconds * 0.8) * 420;
     const cursorY = height / 2 + Math.sin(seconds * 1.3) * 190;
@@ -136,6 +183,8 @@ class FakeVideoFeeds {
   private readonly feeds = new Map<string, Feed>();
   private frame: number | null = null;
   private lastPaint = 0;
+  /** Which look each person's screen wears, kept so it stays theirs when a feed restarts. */
+  private readonly screenLooks = new Map<string, number>();
 
   acquire(participant: VoiceParticipant, source: VideoSource): MediaStream {
     const key = `${participant.sessionId}:${source}`;
@@ -150,7 +199,10 @@ class FakeVideoFeeds {
     canvas.height = height;
     const ctx = canvas.getContext("2d");
     if (!ctx) throw new Error("this browser has no 2d canvas to fake a video with");
-    const paint = source === "camera" ? paintCamera(participant) : paintScreen(participant);
+    const paint =
+      source === "camera"
+        ? paintCamera(participant)
+        : paintScreen(participant, this.screenLookOf(participant));
     paint(ctx, performance.now() / 1000);
     const feed = { ctx, paint, stream: canvas.captureStream(12), holders: 1 };
     this.feeds.set(key, feed);
@@ -170,6 +222,12 @@ class FakeVideoFeeds {
       cancelAnimationFrame(this.frame);
       this.frame = null;
     }
+  }
+
+  private screenLookOf({ sessionId }: VoiceParticipant) {
+    const look = this.screenLooks.get(sessionId) ?? this.screenLooks.size;
+    this.screenLooks.set(sessionId, look);
+    return look;
   }
 
   private tick = (now: number) => {

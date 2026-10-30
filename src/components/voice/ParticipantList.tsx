@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo, useRef, type ReactNode } from "react";
+import { useMemo, useRef } from "react";
 import { Users } from "lucide-react";
 import { useTranslations } from "next-intl";
 import { Heading } from "@sog/ui";
@@ -39,16 +39,9 @@ function gameAvatarUrlFor(
   return renders[String(id)] ?? null;
 }
 
-/** What a room adds to one person's row. The live room adds nothing. */
-export interface ParticipantRowMark {
-  avatarClassName?: string;
-  nameBadge?: ReactNode;
-}
-
 export function ParticipantList({
   participantChatControls,
   order,
-  rowMark,
 }: {
   /**
    * The chat lock offered against each person, from whoever supplied the room's
@@ -63,7 +56,6 @@ export function ParticipantList({
   participantChatControls?: ParticipantChatControls;
   /** The order the rows are drawn in, where it is not the room's own. */
   order?: (participants: VoiceParticipant[]) => VoiceParticipant[];
-  rowMark?: (participant: VoiceParticipant) => ParticipantRowMark | undefined;
 }) {
   const {
     participants,
@@ -126,7 +118,6 @@ export function ParticipantList({
         <ParticipantRowWithGlow
           key={p.sessionId}
           participant={p}
-          mark={rowMark?.(p)}
           gameAvatarUrl={gameAvatarUrlFor(p, robloxRenders)}
           lockState={
             lockStates.get(p.sessionId) ?? { audio: false, video: false }
@@ -154,7 +145,6 @@ export function ParticipantList({
 /** Wraps ParticipantRow with the speaking-glow hook (needs sessionId for audio analysis). */
 function ParticipantRowWithGlow({
   participant,
-  mark,
   gameAvatarUrl,
   lockState,
   isLocalOwner,
@@ -165,7 +155,6 @@ function ParticipantRowWithGlow({
   onLock,
 }: {
   participant: VoiceParticipant;
-  mark?: ParticipantRowMark;
   /** Resolved by the list, never by the row. See `gameAvatarUrlFor`. */
   gameAvatarUrl: string | null | undefined;
   lockState: LockState;
@@ -195,8 +184,6 @@ function ParticipantRowWithGlow({
   return (
     <ParticipantRow
       participant={{ ...participant, gameAvatarUrl }}
-      avatarClassName={mark?.avatarClassName}
-      nameBadge={mark?.nameBadge}
       lockState={lockState}
       isModView={isLocalOwner}
       moderationLock={moderationLock}

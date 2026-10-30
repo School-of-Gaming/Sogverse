@@ -19,9 +19,8 @@ import type { VoiceParticipant } from "../hooks/types";
 import { VoiceAvatar } from "../VoiceAvatar";
 import { useVoiceRoom } from "../VoiceRoomProvider";
 import { readMemberDrag, readZoneDrop } from "../ZoneList";
-import { GEDU_AVATAR_OUTLINE, GeduWord } from "./GeduMark";
 import { useParticipantGlow } from "./use-participant-glow";
-import { isGedu, type RoomStage } from "./use-room-stage";
+import type { RoomStage } from "./use-room-stage";
 import { useZoneManagement } from "./use-zone-management";
 import { useRenderVideo } from "./VideoSurface";
 import { ZoneEntry } from "./ZoneEntry";
@@ -105,7 +104,7 @@ export function DesktopZoneRail({ stage }: { stage: RoomStage }) {
           <div className="drag-ghost flex w-12 flex-col items-center gap-1">
             <VoiceAvatar
               userId={activeParticipant.userId}
-              className={cn("shadow-lg", isGedu(activeParticipant) && GEDU_AVATAR_OUTLINE)}
+              className="shadow-lg"
             />
             <span className="w-full truncate text-center text-[10px] leading-tight">
               {activeParticipant.userName}
@@ -200,15 +199,12 @@ function RailMember({
         isDragging && "opacity-50",
       )}
     >
-      {/* The role word would otherwise replace the title as the name. */}
-      <span className="sr-only">{p.userName}</span>
-      <GeduWord participant={p} />
       <VoiceAvatar
         ref={glowRef}
         userId={p.userId}
         videoOn={p.videoOn && showVideo}
         isLocal={p.isLocal}
-        className={cn("h-7 w-7 border border-border", isGedu(p) && GEDU_AVATAR_OUTLINE)}
+        className="h-7 w-7 border border-border"
       >
         {renderVideo(p, "camera")}
       </VoiceAvatar>

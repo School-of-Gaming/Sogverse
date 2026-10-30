@@ -9,7 +9,7 @@ import { cn } from "@/lib/cn";
 import { useVoiceRoom } from "../VoiceRoomProvider";
 import type { VoiceParticipant } from "../hooks/types";
 import { fitTileGrid, TILE_GAP_PX, type TileAspectRange } from "./fit-tile-grid";
-import { StageTile } from "./StageTile";
+import { SharePreviewTile, StageTile } from "./StageTile";
 import { useTileFlip } from "./use-tile-flip";
 import { useRenderVideo } from "./VideoSurface";
 
@@ -37,7 +37,7 @@ function useElementSize(ref: RefObject<HTMLElement | null>) {
   return size;
 }
 
-/** The share, drawn whole in whatever box the stage gives it. */
+/** The big share, drawn whole in whatever box the stage gives it. */
 function StageShare({
   sharer,
   className,
@@ -46,7 +46,7 @@ function StageShare({
   className?: string;
 }) {
   const t = useTranslations("voice");
-  const { isScreenSharing, stopScreenShare } = useVoiceRoom();
+  const { stopScreenShare } = useVoiceRoom();
   const renderVideo = useRenderVideo();
   return (
     <div
@@ -61,7 +61,7 @@ function StageShare({
           {t("sharerScreen", { name: sharer.userName })}
         </Badge>
       </div>
-      {isScreenSharing && (
+      {sharer.isLocal && (
         <div className="absolute bottom-2 left-1/2 -translate-x-1/2">
           <Button
             variant="destructive"
@@ -79,8 +79,9 @@ function StageShare({
 }
 
 /**
- * The stage: the people in your zone, as big as the space allows, and the share
- * above them when someone in view is sharing.
+ * The stage: the people in your zone, as big as the space allows, and one share
+ * above them when anyone in view is sharing. The other shares come first among
+ * the tiles, so a long run of people never hides one.
  *
  * The tiles keep one parent through every arrangement, grid or strip, so a share
  * starting glides the same elements to their new places and their video keeps
@@ -90,13 +91,17 @@ function StageShare({
  */
 export function TileStage({
   members,
-  sharer,
+  bigShare,
+  otherShares,
+  onShowShare,
   shareLayout,
   tileAspect,
   minTileWidth,
 }: {
   members: VoiceParticipant[];
-  sharer: VoiceParticipant | null;
+  bigShare: VoiceParticipant | null;
+  otherShares: VoiceParticipant[];
+  onShowShare: (sessionId: string) => void;
   /**
    * Where the tiles go while a share is up. `strip` is a single row under it, for
    * a wide screen; `below` keeps the grid in the space a 16:9 share leaves, for a
@@ -110,15 +115,15 @@ export function TileStage({
   const tilesRef = useRef<HTMLDivElement>(null);
   const stage = useElementSize(stageRef);
 
-  const isStrip = sharer !== null && shareLayout === "strip";
+  const isStrip = bigShare !== null && shareLayout === "strip";
   const grid =
     stage === null || isStrip
       ? null
       : fitTileGrid({
-          count: members.length,
+          count: otherShares.length + members.length,
           width: stage.width - 2 * TILE_BLEED_PX,
           height:
-            (sharer === null
+            (bigShare === null
               ? stage.height
               : stage.height - stage.width / SHARE_ASPECT - TILE_GAP_PX) -
             2 * TILE_BLEED_PX,
@@ -126,18 +131,22 @@ export function TileStage({
           minTileWidth,
         });
 
+  const tileClassName = isStrip ? "aspect-video h-full" : undefined;
+  const tileStyle =
+    grid === null ? undefined : { width: grid.tileWidth, height: grid.tileHeight };
+
   useTileFlip(
     tilesRef,
-    `${isStrip ? "strip" : "grid"}|${sharer !== null}|${members
+    `${isStrip ? "strip" : "grid"}|${bigShare !== null}|${[...otherShares, ...members]
       .map((p) => p.sessionId)
-      .join(",")}`,
+      .join(",")}|${otherShares.length}`,
   );
 
   return (
     <div ref={stageRef} className="flex h-full min-h-0 w-full flex-col gap-2">
-      {sharer !== null && (
+      {bigShare !== null && (
         <StageShare
-          sharer={sharer}
+          sharer={bigShare}
           className={shareLayout === "strip" ? "flex-1" : "aspect-video shrink-0"}
         />
       )}
@@ -168,19 +177,27 @@ export function TileStage({
             grid?.scrolls && "mt-0",
           )}
         >
-          {(isStrip || grid !== null) &&
-            members.map((p) => (
-              <StageTile
-                key={p.sessionId}
-                participant={p}
-                className={isStrip ? "aspect-video h-full" : undefined}
-                style={
-                  grid === null
-                    ? undefined
-                    : { width: grid.tileWidth, height: grid.tileHeight }
-                }
-              />
-            ))}
+          {(isStrip || grid !== null) && (
+            <>
+              {otherShares.map((p) => (
+                <SharePreviewTile
+                  key={`screen:${p.sessionId}`}
+                  sharer={p}
+                  onShow={() => onShowShare(p.sessionId)}
+                  className={tileClassName}
+                  style={tileStyle}
+                />
+              ))}
+              {members.map((p) => (
+                <StageTile
+                  key={p.sessionId}
+                  participant={p}
+                  className={tileClassName}
+                  style={tileStyle}
+                />
+              ))}
+            </>
+          )}
         </div>
       </div>
     </div>

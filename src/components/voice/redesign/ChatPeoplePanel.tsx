@@ -2,25 +2,14 @@
 
 import { useTranslations } from "next-intl";
 import { cn } from "@/lib/cn";
-import type { VoiceParticipant } from "../hooks/types";
 import { ParticipantList } from "../ParticipantList";
-import { GEDU_AVATAR_OUTLINE, GeduBadge } from "./GeduMark";
 import type { VoiceRoomRedesignProps } from "./types";
-import { geduFirst, isGedu } from "./use-room-stage";
+import { geduFirst } from "./use-room-stage";
 
 export type PanelTab = "chat" | "people";
 
 /** Fills the panel's box, which is what the room grants the chat in both layouts. */
 const CHAT_HEIGHT = "h-full";
-
-/** A Gedu's row wears what their avatar and tile wear elsewhere in the room. */
-function geduRowMark(p: VoiceParticipant) {
-  if (!isGedu(p)) return undefined;
-  return {
-    avatarClassName: cn("border", GEDU_AVATAR_OUTLINE),
-    nameBadge: <GeduBadge participant={p} className="order-2 h-5 w-5 shrink-0" />,
-  };
-}
 
 /** Every tab sets one weight, so switching changes no label's width. */
 function PanelTabButton({
@@ -101,7 +90,6 @@ export function PanelBody({
         <ParticipantList
           participantChatControls={participantChatControls}
           order={geduFirst}
-          rowMark={geduRowMark}
         />
       </div>
     </div>

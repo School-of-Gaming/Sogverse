@@ -3,11 +3,11 @@
 import type { CSSProperties } from "react";
 import { MicOff } from "lucide-react";
 import { useTranslations } from "next-intl";
+import { Badge } from "@/components/ui/badge";
 import { Identicon } from "@/components/ui/identicon";
 import { cn } from "@/lib/cn";
 import { AVATAR_SIZE } from "@/lib/constants/voice-zones";
 import type { VoiceParticipant } from "../hooks/types";
-import { GeduMark } from "./GeduMark";
 import { useParticipantGlow } from "./use-participant-glow";
 import { useRenderVideo } from "./VideoSurface";
 
@@ -49,7 +49,6 @@ export function StageTile({
             <Identicon id={p.userId} size={AVATAR_SIZE} />
           </div>
         )}
-        <GeduMark participant={p} />
         <span className="glass absolute bottom-1.5 left-1.5 max-w-[calc(100%-0.75rem)] truncate rounded-md px-2 py-0.5 text-xs font-medium">
           {p.isLocal ? t("tileYou", { name: p.userName }) : p.userName}
         </span>
@@ -65,5 +64,44 @@ export function StageTile({
         className="pointer-events-none absolute -inset-0.5 rounded-xl border-2 border-transparent"
       />
     </div>
+  );
+}
+
+/** A share that is not the big one: live, in a tile's place, and pressed to make it big. */
+export function SharePreviewTile({
+  sharer,
+  onShow,
+  className,
+  style,
+}: {
+  sharer: VoiceParticipant;
+  onShow: () => void;
+  className?: string;
+  style?: CSSProperties;
+}) {
+  const t = useTranslations("voice");
+  const renderVideo = useRenderVideo();
+
+  return (
+    <button
+      type="button"
+      data-tile-id={`screen:${sharer.sessionId}`}
+      onClick={onShow}
+      style={style}
+      className={cn(
+        "relative shrink-0 rounded-xl border-2 border-border bg-card transition-colors hover:border-act focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-act",
+        className,
+      )}
+    >
+      <div className="relative h-full w-full overflow-hidden rounded-[10px]">
+        {renderVideo(sharer, "screen")}
+        <Badge
+          variant="outline"
+          className="glass absolute left-1.5 top-1.5 block max-w-[calc(100%-0.75rem)] truncate"
+        >
+          {t("sharerScreen", { name: sharer.userName })}
+        </Badge>
+      </div>
+    </button>
   );
 }

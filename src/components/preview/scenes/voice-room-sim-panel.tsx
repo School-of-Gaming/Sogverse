@@ -22,7 +22,7 @@ export function VoiceRoomSimPanel({
   state: SimulationState;
 }) {
   const [open, setOpen] = useState(false);
-  const sharing = state.sharerSessionId !== null;
+  const sharers = state.participants.filter((p) => p.screenShareOn);
 
   return (
     <div
@@ -56,13 +56,24 @@ export function VoiceRoomSimPanel({
             ))}
           </div>
           <p className="text-muted-foreground">Make it happen</p>
-          <Button
-            variant="outline"
-            size="sm"
-            onClick={() => (sharing ? simulation.stopShare() : simulation.startShare())}
-          >
-            {sharing ? "Stop the share" : "Start a share"}
+          <Button variant="outline" size="sm" onClick={() => simulation.startShare()}>
+            Add a share
           </Button>
+          {sharers.length > 0 && (
+            <div className="flex max-h-28 flex-col gap-1.5 overflow-y-auto">
+              {sharers.map((p) => (
+                <Button
+                  key={p.sessionId}
+                  variant="outline"
+                  size="sm"
+                  className="shrink-0"
+                  onClick={() => simulation.stopShare(p.sessionId)}
+                >
+                  Stop {p.userName}&apos;s share
+                </Button>
+              ))}
+            </div>
+          )}
           <Button variant="outline" size="sm" onClick={() => simulation.someoneJoins()}>
             Someone joins
           </Button>

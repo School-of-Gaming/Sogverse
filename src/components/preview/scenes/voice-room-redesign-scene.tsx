@@ -115,7 +115,7 @@ export function VoiceRoomRedesignScene({
     return { direction, onSetLock: (locked) => chat.setLock(userId, locked) };
   };
 
-  const { participants, sharerSessionId } = room;
+  const { participants } = room;
   const participantsByZone = new Map(
     zones.map((zone) => [zone.id, participants.filter((p) => p.zoneId === zone.id)]),
   );
@@ -146,11 +146,15 @@ export function VoiceRoomRedesignScene({
     cameraAllowed: true,
     toggleMic: () => simulation.toggleMic(),
     toggleCamera: () => simulation.toggleCamera(),
-    screenSharerSessionId: sharerSessionId,
+    screenSharerSessionId: participants.find((p) => p.screenShareOn)?.sessionId ?? null,
     canScreenShare: viewer.isModerator,
-    isScreenSharing: sharerSessionId !== null && sharerSessionId === localSessionId,
-    startScreenShare: async () => simulation.startShare(localSessionId ?? undefined),
-    stopScreenShare: () => simulation.stopShare(),
+    isScreenSharing: local?.screenShareOn ?? false,
+    startScreenShare: async () => {
+      simulation.startShare(localSessionId ?? undefined);
+    },
+    stopScreenShare: () => {
+      if (localSessionId !== null) simulation.stopShare(localSessionId);
+    },
     isBroadcasting: false,
     toggleBroadcast: noop,
     isDeafened: false,

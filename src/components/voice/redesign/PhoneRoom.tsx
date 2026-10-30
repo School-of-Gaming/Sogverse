@@ -91,7 +91,9 @@ export function PhoneRoom({
       <main className="min-h-0 flex-1 p-2">
         <TileStage
           members={stage.stageMembers}
-          sharer={stage.sharer}
+          bigShare={stage.bigShare}
+          otherShares={stage.otherShares}
+          onShowShare={stage.showShare}
           shareLayout="below"
           tileAspect={TILE_ASPECT}
           minTileWidth={MIN_TILE_WIDTH}

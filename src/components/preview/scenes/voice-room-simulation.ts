@@ -51,7 +51,6 @@ export interface SimulationSetup {
 
 export interface SimulationState {
   participants: VoiceParticipant[];
-  sharerSessionId: string | null;
   paused: boolean;
   /** How many people the crowd drifts towards in the reader's zone. */
   roomSize: number;
@@ -84,6 +83,8 @@ export class RoomSimulation {
   private readonly timers = new Set<ReturnType<typeof setTimeout>>();
   private mounted = false;
   private chatListener: ((burst: ChatTypingBurst) => void) | null = null;
+  /** The script's own share, which outlives a pause so a resume still ends it. */
+  private scriptedSharer: string | null = null;
 
   constructor({ participants, bench, openZoneIds, script }: SimulationSetup) {
     this.bench = bench;
@@ -92,7 +93,6 @@ export class RoomSimulation {
     const local = participants.find((p) => p.isLocal);
     this.state = {
       participants,
-      sharerSessionId: null,
       paused: false,
       roomSize: participants.filter((p) => p.zoneId === local?.zoneId).length,
     };
@@ -159,32 +159,20 @@ export class RoomSimulation {
     if (local) this.patchLocal({ videoOn: !local.videoOn });
   }
 
-  /** Somebody in the reader's zone shares, a member of staff if there is one. */
+  /**
+   * `sessionId` shares, or else somebody in the reader's zone who is not sharing
+   * yet, a member of staff if there is one. Says who, or nothing if nobody is left.
+   */
   startShare(sessionId?: string) {
-    if (this.state.sharerSessionId !== null) return;
-    const others = this.peopleHere().filter((p) => !p.isLocal);
+    const others = this.peopleHere().filter((p) => !p.isLocal && !p.screenShareOn);
     const sharer =
       sessionId ?? (others.find((p) => p.role === "gedu") ?? this.pick(others))?.sessionId;
-    if (sharer === undefined) return;
-    this.state = {
-      ...this.state,
-      sharerSessionId: sharer,
-      participants: this.state.participants.map((p) =>
-        p.sessionId === sharer ? { ...p, screenShareOn: true } : p,
-      ),
-    };
-    this.notify();
+    if (sharer !== undefined) this.patch(sharer, { screenShareOn: true });
+    return sharer;
   }
 
-  stopShare() {
-    this.state = {
-      ...this.state,
-      sharerSessionId: null,
-      participants: this.state.participants.map((p) =>
-        p.screenShareOn ? { ...p, screenShareOn: false } : p,
-      ),
-    };
-    this.notify();
+  stopShare(sessionId: string) {
+    this.patch(sessionId, { screenShareOn: false });
   }
 
   /** Someone new arrives in the reader's zone. */
@@ -318,9 +306,10 @@ export class RoomSimulation {
 
   private runShare() {
     this.after(this.script.shareGapMs, () => {
-      this.startShare();
+      this.scriptedSharer ??= this.startShare() ?? null;
       this.after(this.script.shareLengthMs, () => {
-        this.stopShare();
+        if (this.scriptedSharer !== null) this.stopShare(this.scriptedSharer);
+        this.scriptedSharer = null;
         this.runShare();
       });
     });
@@ -345,7 +334,7 @@ export class RoomSimulation {
   private isMovable(p: VoiceParticipant) {
     return (
       !p.isLocal &&
-      p.sessionId !== this.state.sharerSessionId &&
+      !p.screenShareOn &&
       this.openZoneIds.includes(p.zoneId)
     );
   }

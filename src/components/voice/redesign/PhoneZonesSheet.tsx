@@ -14,9 +14,8 @@ import { cn } from "@/lib/cn";
 import type { VoiceParticipant } from "../hooks/types";
 import { VoiceAvatar } from "../VoiceAvatar";
 import { useVoiceRoom } from "../VoiceRoomProvider";
-import { GEDU_AVATAR_OUTLINE, GeduWord } from "./GeduMark";
 import { useParticipantGlow } from "./use-participant-glow";
-import { isGedu, type RoomStage } from "./use-room-stage";
+import type { RoomStage } from "./use-room-stage";
 import { useZoneManagement } from "./use-zone-management";
 import { ZoneEntry } from "./ZoneEntry";
 
@@ -37,12 +36,11 @@ function SheetAvatar({
       style={steadyGlow}
       className={cn("shrink-0 rounded-md", p.isSpeaking && "relative z-10")}
     >
-      <GeduWord participant={p} />
       <VoiceAvatar
         ref={glowRef}
         userId={p.userId}
         isLocal={p.isLocal}
-        className={cn(SHEET_AVATAR, isGedu(p) && GEDU_AVATAR_OUTLINE)}
+        className={SHEET_AVATAR}
       />
     </div>
   );
