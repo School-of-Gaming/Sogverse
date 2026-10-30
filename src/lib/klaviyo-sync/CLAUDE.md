@@ -77,8 +77,9 @@ always deliberate.
   through Stripe's own integration, and payments are profile totals
   (`sog_first_payment_at`, `sog_last_payment_at`, `sog_total_paid_eur`), never events. It
   says who holds the seat and, on a gamer's, the child's birth year and gender, and it
-  carries the UTM tag of the visit that led to the booking — stored on the seat when it is
-  made, and only under marketing cookie consent, the same gate as the account's own tag.
+  carries the UTM tag the browser's attribution cookie held at booking — stored on the seat
+  when it is made, and only under marketing cookie consent, the same gate as the account's
+  own tag.
   `SV Waitlisted` carries the waitlist join's tag under the same five names.
 - `SV Session` is one event per attendance mark a gedu writes, present or absent. A mark
   changed to the other status is a new event, keyed by session, gamer and status, so a
@@ -96,7 +97,7 @@ always deliberate.
   staging registration with the mailing-list box ticked subscribes that real address.
   Staging accounts therefore use addresses that exist nowhere in production — a
   plus-address of a mailbox the tester owns (`name+staging-1@…`) is the usual one.
-- The account's `sog_utm_…` properties — the visit the account was created on — and the
+- The account's `sog_utm_…` properties — the tag the account was created with — and the
   newsletter's `sog_newsletter_…` ones are separate on purpose: a subscriber who later
   opens an account is one profile.
 

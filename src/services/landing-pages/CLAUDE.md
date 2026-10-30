@@ -324,8 +324,8 @@ The list is single opt-in, so the reader is on it as soon as the route answers. 
 holds an account's marketing consent on the account's own profile, so a sign-up under an
 account's address subscribes that same profile, exactly as ticking the box in Settings
 would. The profile carries
-the address, the names given, the page's locale, the landing page's id, and the visit's
-UTM values only under marketing consent — nothing else. The two custom ones are named in
+the address, the names given, the page's locale, the landing page's id, and the attribution
+cookie's UTM values only under marketing consent — nothing else. The two custom ones are named in
 the Klaviyo contract (`src/lib/klaviyo-sync/`): `sog_newsletter_page` and
 `sog_newsletter_utm_source` … `_term`, never the account sync's `sog_utm_…` names,
 because a subscriber who later opens an account is one Klaviyo profile carrying

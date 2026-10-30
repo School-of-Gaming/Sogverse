@@ -2,6 +2,7 @@ import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
 import { fromZonedTime } from "date-fns-tz";
 import { invitationPlanWindow } from "@/lib/email-templates/product-confirmation-invitation";
 import { planRows, planSessions } from "../../mocks/planned-sessions";
+import { attributionCookie } from "../../mocks/attribution-cookie";
 
 // The confirmation mail's My SOG link comes from getOrigin(), which falls back
 // to NEXT_PUBLIC_SITE_URL when the request carries no trusted Host.
@@ -2255,21 +2256,21 @@ describe("POST /api/checkout/products/create", () => {
 
 // ── What the seat records beyond who and what ───────────────────────
 //
-// Two answers ride the booking onto the seat: the visit's UTM tag, written only
-// under marketing cookie consent read off THIS request (src/lib/utm.ts), and
+// Two answers ride the booking onto the seat: the attribution cookie's UTM tag,
+// written only under marketing cookie consent read off THIS request (src/lib/utm.ts), and
 // the parent's answer to the product's School of Gaming mailing box — true,
 // false, or absent when the panel did not ask. A free or external seat takes
 // them straight into create_participation; a paid one carries them on the
 // Checkout Session for the webhook.
 
 describe("POST /api/checkout/products/create — the seat answers", () => {
-  const TAG = {
+  const TAG = attributionCookie({
     source: "lynx",
     medium: "email",
     campaign: "lynx-summer-a",
     content: "hero",
     term: "minecraft",
-  };
+  });
 
   const UTM_ARGS = [
     "p_utm_source",
@@ -2399,12 +2400,12 @@ describe("POST /api/checkout/products/create — the seat answers", () => {
   });
 
   describe("the UTM tag, gated on marketing cookie consent", () => {
-    it("stores the tag when the request's cookie grants marketing", async () => {
+    it("stores the attribution cookie's tag when the request's cookie grants marketing", async () => {
       freeSeat();
       await POST(
         requestWith(
-          { ...FREE_BODY, utm: TAG },
-          consentCookie({ analytics: false, marketing: true }),
+          FREE_BODY,
+          `${consentCookie({ analytics: false, marketing: true })}; ${TAG}`,
         ),
       );
       expect(rpcArgs()).toMatchObject({
@@ -2418,7 +2419,7 @@ describe("POST /api/checkout/products/create — the seat answers", () => {
 
     it("stores nothing when there is no consent cookie at all", async () => {
       freeSeat();
-      await POST(requestWith({ ...FREE_BODY, utm: TAG }));
+      await POST(requestWith(FREE_BODY, TAG));
       for (const key of UTM_ARGS) expect(rpcArgs()).not.toHaveProperty(key);
     });
 
@@ -2426,8 +2427,8 @@ describe("POST /api/checkout/products/create — the seat answers", () => {
       freeSeat();
       await POST(
         requestWith(
-          { ...FREE_BODY, utm: TAG },
-          consentCookie({ analytics: true, marketing: false }),
+          FREE_BODY,
+          `${consentCookie({ analytics: true, marketing: false })}; ${TAG}`,
         ),
       );
       for (const key of UTM_ARGS) expect(rpcArgs()).not.toHaveProperty(key);
@@ -2437,12 +2438,27 @@ describe("POST /api/checkout/products/create — the seat answers", () => {
       freeSeat();
       await POST(
         requestWith(
-          { ...FREE_BODY, utm: { source: "=HYPERLINK()", campaign: "lynx-summer-a" } },
-          consentCookie({ analytics: false, marketing: true }),
+          FREE_BODY,
+          `${consentCookie({ analytics: false, marketing: true })}; ${attributionCookie({
+            source: "=HYPERLINK()",
+            campaign: "lynx-summer-a",
+          })}`,
         ),
       );
       expect(rpcArgs()).not.toHaveProperty("p_utm_source");
       expect(rpcArgs().p_utm_campaign).toBe("lynx-summer-a");
+    });
+
+    it("strips a utm field an old bundle still posts, rather than refusing the booking", async () => {
+      freeSeat();
+      const res = await POST(
+        requestWith(
+          { ...FREE_BODY, utm: { campaign: "from-an-old-bundle" } },
+          consentCookie({ analytics: false, marketing: true }),
+        ),
+      );
+      expect(res.status).toBe(200);
+      for (const key of UTM_ARGS) expect(rpcArgs()).not.toHaveProperty(key);
     });
   });
 
@@ -2468,8 +2484,8 @@ describe("POST /api/checkout/products/create — the seat answers", () => {
       paidClub();
       const res = await POST(
         requestWith(
-          { ...VALID_BODY, utm: TAG, schoolOfGamingMarketingOptIn: false },
-          consentCookie({ analytics: false, marketing: true }),
+          { ...VALID_BODY, schoolOfGamingMarketingOptIn: false },
+          `${consentCookie({ analytics: false, marketing: true })}; ${TAG}`,
         ),
       );
       expect(res.status).toBe(200);
@@ -2490,12 +2506,43 @@ describe("POST /api/checkout/products/create — the seat answers", () => {
       );
     });
 
+    // The case the cookie exists for: a parent lands from a campaign, signs in on
+    // a full reload that loses everything held in memory, and books. The body
+    // says nothing about the tag, as a panel's after a reload does not.
+    it("carries the cookie's tag after a sign-in reload, into the validation call and the session", async () => {
+      paidClub();
+      const res = await POST(
+        requestWith(
+          VALID_BODY,
+          `${consentCookie({ analytics: false, marketing: true })}; ${TAG}`,
+        ),
+      );
+      expect(res.status).toBe(200);
+      expect(rpcArgs()).toMatchObject({
+        p_utm_source: "lynx",
+        p_utm_campaign: "lynx-summer-a",
+      });
+      expect(mockStripeSessionCreate.mock.calls[0][0].metadata).toMatchObject({
+        utmSource: "lynx",
+        utmCampaign: "lynx-summer-a",
+      });
+    });
+
+    it("carries no tag after that reload without marketing consent", async () => {
+      paidClub();
+      await POST(requestWith(VALID_BODY, TAG));
+      for (const key of UTM_ARGS) expect(rpcArgs()).not.toHaveProperty(key);
+      expect(mockStripeSessionCreate.mock.calls[0][0].metadata).not.toHaveProperty(
+        "utmCampaign",
+      );
+    });
+
     it("writes no tag without marketing consent, and no answer when the box was not asked", async () => {
       paidClub();
       await POST(
         requestWith(
-          { ...VALID_BODY, utm: TAG },
-          consentCookie({ analytics: true, marketing: false }),
+          VALID_BODY,
+          `${consentCookie({ analytics: true, marketing: false })}; ${TAG}`,
         ),
       );
       expect(mockStripeSessionCreate).toHaveBeenCalledTimes(1);

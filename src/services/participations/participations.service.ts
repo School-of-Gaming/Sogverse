@@ -11,7 +11,6 @@ import type {
   SessionAudience,
 } from "@/types";
 import type { SupportedCurrency } from "@/lib/constants/currency";
-import type { UtmInput } from "@/lib/utm";
 import { gamersAttendSite } from "@/lib/products/delivery-mode";
 import type { QueryData } from "@supabase/supabase-js";
 import {
@@ -390,11 +389,6 @@ export type CreateParticipationInput = {
    * is what keeps a new signup surface from forgetting the question exists.
    */
   consentedDocuments: string[];
-  /**
-   * The visit's UTM tag, as the browser holds it. Whether any of it is stored
-   * is the route's decision, from the request's own consent cookie.
-   */
-  utm: UtmInput;
   /**
    * The answer to the product's School of Gaming mailing box, or `null` when
    * the product does not ask. Required for the same reason the documents are:

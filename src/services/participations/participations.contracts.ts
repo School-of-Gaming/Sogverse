@@ -2,7 +2,6 @@ import { z } from "zod";
 import { SUPPORTED_CURRENCIES } from "@/lib/constants/currency";
 import { Constants, type PurchaseShape } from "@/types";
 import { plannedSessionRow } from "@/lib/planned-sessions";
-import { registrationUtmBody } from "@/services/users/parent-registration.contracts";
 
 /**
  * Response of POST /api/checkout/products/create — the signup outcomes: paid
@@ -50,14 +49,6 @@ const consentedDocuments = z.array(z.string()).optional();
  * because a place in a queue is a booking too.
  */
 const seatAnswersBody = {
-  /**
-   * The UTM tag this visit arrived with, as the browser holds it. Stored on the
-   * row only when the request's own consent cookie grants marketing — the
-   * route decides that, never the body (`src/lib/utm.ts`). Plain strings, for
-   * the reason `registrationUtmBody` gives: a malformed value becomes NULL,
-   * never a refused booking.
-   */
-  utm: registrationUtmBody.optional(),
   /**
    * The parent's answer to the product's School of Gaming mailing box: present
    * exactly when the panel showed it, `false` for a box left unticked. Absent

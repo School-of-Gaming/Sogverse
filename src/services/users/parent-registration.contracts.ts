@@ -5,24 +5,6 @@ import { SUPPORTED_LOCALES } from "@/lib/constants/locales";
 import { GAMER_EMAIL_DOMAIN } from "@/lib/gamer-sign-in";
 
 /**
- * Marketing provenance as a booking's checkout body still carries it: the five
- * UTM fields this visit arrived with, each present or absent.
- *
- * **Plain optional strings on purpose — no format rule here.** The values come
- * from whoever authored the link, not from the person filling in the form, so
- * a format rule would turn a malformed marketing param into a 400 that blocks
- * a legitimate booking. The route runs them through the shared sanitiser
- * instead, where a bad one becomes NULL.
- */
-export const registrationUtmBody = z.object({
-  source: z.string().optional(),
-  medium: z.string().optional(),
-  campaign: z.string().optional(),
-  content: z.string().optional(),
-  term: z.string().optional(),
-});
-
-/**
  * Request body for public parent self-registration (`POST /api/auth/register`).
  * Shared by the route (which validates with it) and the register form.
  *
