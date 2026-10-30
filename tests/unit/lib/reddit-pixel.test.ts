@@ -122,14 +122,14 @@ describe("loadRedditPixel", () => {
     expect(Array.isArray(window.rdt?.callQueue)).toBe(true);
   });
 
-  it("inserts the library exactly once, asynchronously, with the pixel id", () => {
+  // Requested by id, Reddit serves the library with the Events Manager
+  // configuration inline, which the CSP cannot refuse.
+  it("inserts the generic library exactly once, asynchronously, without the pixel id", () => {
     void loadRedditPixel(PIXEL_ID);
 
     const scripts = insertedScripts();
     expect(scripts).toHaveLength(1);
-    expect(scripts[0].src).toBe(
-      `https://www.redditstatic.com/ads/pixel.js?pixel_id=${PIXEL_ID}`,
-    );
+    expect(scripts[0].src).toBe("https://www.redditstatic.com/ads/pixel.js");
     expect(scripts[0].async).toBe(true);
   });
 

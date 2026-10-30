@@ -28,7 +28,10 @@
  * no switch for that the way Meta's `autoConfig` is one, so the CSP leaves
  * the configuration host out of
  * `connect-src`, so the fetch fails and the library runs on the calls this
- * module makes and nothing else (`src/proxy.ts`).
+ * module makes and nothing else (`src/proxy.ts`). That holds only because the
+ * library is requested without the pixel id: asked for by id, Reddit serves a
+ * copy with the configuration written into the script itself, so there is no
+ * fetch for the CSP to refuse — seen on staging with the real pixel.
  */
 
 import { isReportableQuery, addressBarStillShows } from "@/lib/marketing-pages";
@@ -106,8 +109,9 @@ export function loadRedditPixel(pixelId: string): Promise<boolean> {
 
   const script = document.createElement("script");
   script.async = true;
-  // The id on the URL is Reddit's own base code, which the library reads.
-  script.src = `${PIXEL_JS_SRC}?pixel_id=${encodeURIComponent(pixelId)}`;
+  // No `?pixel_id=`, unlike Reddit's base code: that copy carries the Events
+  // Manager configuration inline, past the CSP (see the module comment).
+  script.src = PIXEL_JS_SRC;
   libraryLoaded = new Promise<boolean>((resolve) => {
     script.addEventListener("load", () => resolve(true));
     script.addEventListener("error", () => resolve(false));
