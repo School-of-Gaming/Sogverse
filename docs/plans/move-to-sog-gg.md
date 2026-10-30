@@ -417,7 +417,8 @@ removing the old staging host, so until then each change can be pointed back at
 
 1. **About a week later, look for stragglers.** Run the step 0.4 query again over the
    days since the cutover. Every non-browser caller on `sogverse.sog.gg` is now getting
-   308s; move each one, Lynx included if they haven't switched.
+   308s; move each one, Lynx included if they haven't switched. If DNS has held, delete
+   `~/work/sog-gg-dns-before-2026-10-30.tsv`: a rollback no longer needs it.
 2. **Land `feat/move-to-sog-gg`** in the next normal release. Before merging, re-verify
    the domain → branch mapping in the `vercel-analytics` skill and change its
    "verified" date to the day of the check.
