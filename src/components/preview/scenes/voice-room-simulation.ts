@@ -61,7 +61,6 @@ export interface SimulationState {
   /** Whether the moderator running the session is presenting to the whole room. */
   presenting: boolean;
   /** A reader who does not moderate has no Share button until the panel gives them one. */
-  readerCanShare: boolean;
 }
 
 export const ROOM_SIZES = [3, 6, 12, 25, 50] as const;
@@ -106,7 +105,6 @@ export class RoomSimulation {
       lockStates: new Map(),
       shareLocks: new Set(),
       presenting: false,
-      readerCanShare: false,
     };
   }
 
@@ -220,10 +218,6 @@ export class RoomSimulation {
   moderatorShares() {
     const moderator = this.state.participants.find((p) => p.isOwner);
     if (moderator) this.startShare(moderator.sessionId);
-  }
-
-  setReaderCanShare(readerCanShare: boolean) {
-    this.update({ readerCanShare });
   }
 
   /** A new open zone joins the places the crowd wanders; a private one stays out of it. */

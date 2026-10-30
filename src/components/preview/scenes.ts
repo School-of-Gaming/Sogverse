@@ -57,8 +57,8 @@ import type { ProductTopic } from "@/types";
  * takes a third of the width on a surface designed to use width. `"auth"` is
  * the signed-out shell — the public one with its `<main>` centring a single
  * narrow column, which is the whole geometry of a page whose body is one card.
- * `"fullscreen"` is no site chrome at all, for a body that fills the viewport
- * itself.
+ * `"fullscreen"` composes no chrome, for a body that fills the viewport and
+ * renders the header itself.
  */
 export type PreviewChromeKind =
   | "public"
@@ -519,7 +519,7 @@ export const PREVIEW_SCENES = [
     surface: "voice-room-redesign",
     title: "Voice room (draft redesign)",
     description:
-      "The zone you are in is the stage: two native layouts over one fixture context, desktop from `lg` and phone below it, with no site chrome.",
+      "The zone you are in is the stage: two native layouts over one fixture context, desktop from `lg` and phone below it, under the site header.",
     chrome: "fullscreen",
     scenarios: [
       { slug: "gamer", label: "Gamer" },

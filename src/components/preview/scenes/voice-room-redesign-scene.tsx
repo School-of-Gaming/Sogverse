@@ -209,7 +209,7 @@ export function VoiceRoomRedesignScene({
     toggleMic: () => simulation.toggleMic(),
     toggleCamera: () => simulation.toggleCamera(),
     screenSharerSessionId: participants.find((p) => p.screenShareOn)?.sessionId ?? null,
-    canScreenShare: viewer.isModerator || room.readerCanShare,
+    canScreenShare: true,
     isScreenSharing: local?.screenShareOn ?? false,
     startScreenShare: async () => {
       simulation.startShare(localSessionId ?? undefined);

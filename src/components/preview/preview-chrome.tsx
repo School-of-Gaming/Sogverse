@@ -22,8 +22,8 @@ import type { PreviewChromeKind } from "./scenes";
  * and only `/preview/*`'s admin gate can get anybody here at all, so it is the
  * real component reading the real role rather than a mock of one.
  *
- * `"fullscreen"` composes nothing: the body fills the viewport and owns every
- * pixel of it, so a scene's body can have no site links on it at all.
+ * `"fullscreen"` composes nothing: the body fills the viewport and renders the
+ * header itself, because what the header's slot holds is only known inside it.
  */
 export function PreviewChrome({
   chrome,

@@ -1,11 +1,9 @@
 "use client";
 
-import { useState } from "react";
+import { useState, type Dispatch, type SetStateAction } from "react";
 import { MapPin, MessageSquare, MoreHorizontal, Users } from "lucide-react";
 import { useTranslations } from "next-intl";
 import { Heading } from "@sog/ui";
-import { LogoBadge } from "@/components/layout/logo-badge";
-import { SENDER_NAME } from "@/lib/constants/brand";
 import {
   Sheet,
   SheetContent,
@@ -14,30 +12,29 @@ import {
 } from "@/components/ui/sheet";
 import { PanelBody, PanelTabs, type PanelTab } from "./ChatPeoplePanel";
 import { PhoneZonesSheet } from "./PhoneZonesSheet";
-import { RoomAccount } from "./RoomAccount";
 import {
   CameraControl,
   LabelledButton,
   LeaveControl,
   MicCell,
   ModeratorControls,
-  useHasModeratorControls,
+  useHasControlsBesideShare,
 } from "./RoomControls";
 import { TileStage } from "./TileStage";
 import type { VoiceRoomRedesignProps } from "./types";
 import type { RoomStage } from "./use-room-stage";
-import { ZoneGlyph } from "./ZoneEntry";
 
 /** Taller than wide at the most, so the 360px floor's two columns fill a tall stage. */
 const TILE_ASPECT = { min: 2 / 3, max: 4 / 3 };
 const MIN_TILE_WIDTH = 150;
 const CELL = "min-w-0 flex-1";
 
-type OpenSheet = "zones" | "panel" | "more" | null;
+export type OpenSheet = "zones" | "panel" | "more" | null;
 
 /**
- * The room in a hand: the stage fills the screen between a strip saying where
- * you are and a bar of big labelled targets, and everything else is a sheet.
+ * The room in a hand: the stage fills the screen between the site header and a
+ * bar of big labelled targets, and everything else is a sheet. Which sheet is
+ * open is held above, because the header's zone opens the Zones sheet too.
  *
  * **The bar is five cells, or six for a moderator or trainee, which is why Chat
  * and People share one.** At the 360px floor six cells are 55px each and hold a
@@ -51,44 +48,33 @@ type OpenSheet = "zones" | "panel" | "more" | null;
  */
 export function PhoneRoom({
   stage,
-  title,
   titleAccessory,
   chat,
   participantChatControls,
   participantShareControls,
-  shareLocked,
   leaveLabel,
-}: VoiceRoomRedesignProps & { stage: RoomStage }) {
+  sheet,
+  setSheet,
+}: VoiceRoomRedesignProps & {
+  stage: RoomStage;
+  sheet: OpenSheet;
+  setSheet: Dispatch<SetStateAction<OpenSheet>>;
+}) {
   const t = useTranslations("voice");
-  const hasMore = useHasModeratorControls();
-  const [sheet, setSheet] = useState<OpenSheet>(null);
+  const hasMore = useHasControlsBesideShare();
   const [tab, setTab] = useState<PanelTab>("chat");
   const closeTo = (next: boolean) => {
     if (!next) setSheet(null);
   };
 
   return (
-    <div className="flex h-dvh flex-col overflow-hidden bg-background pb-[env(safe-area-inset-bottom)] pt-[env(safe-area-inset-top)]">
-      <Heading level={1} step="card-title" srOnly>
-        {title ?? t("voiceRoom")}
-      </Heading>
-
-      <header className="flex shrink-0 items-center gap-2 border-b border-border px-1 py-0.5">
-        {/* Not a link: leaving for the home page would drop the call. The badge
-            alone, because at 360px the wordmark's 123px is the zone name's room. */}
-        <LogoBadge alt={SENDER_NAME} className="h-6 w-auto shrink-0" />
-        <button
-          type="button"
-          onClick={() => setSheet("zones")}
-          aria-haspopup="dialog"
-          className="flex min-h-9 min-w-0 flex-1 items-center gap-2 rounded-md px-1 text-left hover:bg-hover focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-act"
-        >
-          {stage.currentZone && <ZoneGlyph zone={stage.currentZone} />}
-          <span className="truncate text-sm font-medium">{stage.currentZoneName}</span>
-        </button>
-        {titleAccessory}
-        <RoomAccount />
-      </header>
+    <div className="flex min-h-0 flex-1 flex-col pb-[env(safe-area-inset-bottom)]">
+      {/* Below the header, because the room code does not fit beside it at 360px. */}
+      {titleAccessory && (
+        <div className="flex shrink-0 justify-end border-b border-border p-1">
+          {titleAccessory}
+        </div>
+      )}
 
       <main className="min-h-0 flex-1 p-2">
         <TileStage
@@ -179,8 +165,8 @@ export function PhoneRoom({
             <SheetHeader onClose={() => setSheet(null)}>
               <SheetTitle>{t("stage.more")}</SheetTitle>
             </SheetHeader>
-            <div className="grid grid-cols-3 gap-2 p-4">
-              <ModeratorControls shareLocked={shareLocked} />
+            <div className="grid grid-cols-2 gap-2 p-4">
+              <ModeratorControls omitShare />
             </div>
           </SheetContent>
         </Sheet>

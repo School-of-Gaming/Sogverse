@@ -155,23 +155,26 @@ export function CameraControl({ cellClassName }: { cellClassName?: string }) {
   );
 }
 
-/** Whether this viewer has any of the controls {@link ModeratorControls} draws. */
-export function useHasModeratorControls(): boolean {
-  const { canScreenShare, isModerator } = useVoiceRoom();
+/** Whether this viewer has any of {@link ModeratorControls} once Share is left out. */
+export function useHasControlsBesideShare(): boolean {
+  const { isModerator } = useVoiceRoom();
   const locks = useVoiceModeratorLocks();
-  return canScreenShare || isModerator || locks !== null;
+  return isModerator || locks !== null;
 }
 
 /**
  * Share, broadcast and deafen: working for a moderator, each locked and
  * explaining itself for a viewer the page handed locks, and nothing for anyone
- * else. Both layouts draw the same set.
+ * else. The phone layout leaves Share out for everyone, because a phone browser
+ * cannot share a screen.
  */
 export function ModeratorControls({
   cellClassName,
+  omitShare = false,
   shareLocked = false,
 }: {
   cellClassName?: string;
+  omitShare?: boolean;
   /** A moderator has locked this viewer out of sharing: Share stays, padlocked. */
   shareLocked?: boolean;
 }) {
@@ -196,7 +199,9 @@ export function ModeratorControls({
       icon: ReactNode;
       label: string;
     }[] = [
-      { explanation: locks.screenShare, icon: <ScreenShare />, label: t("stage.share") },
+      ...(omitShare
+        ? []
+        : [{ explanation: locks.screenShare, icon: <ScreenShare />, label: t("stage.share") }]),
       { explanation: locks.broadcast, icon: <Megaphone />, label: t("broadcast") },
       { explanation: locks.deafen, icon: <Headphones />, label: t("deafen") },
     ];
@@ -216,7 +221,7 @@ export function ModeratorControls({
 
   return (
     <>
-      {canScreenShare && (
+      {canScreenShare && !omitShare && (
         <LabelledButton
           icon={isScreenSharing ? <ScreenShareOff /> : <ScreenShare />}
           label={isScreenSharing ? t("stopSharing") : t("stage.share")}

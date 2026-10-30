@@ -1,17 +1,22 @@
 "use client";
 
+import Image from "next/image";
+import type { ReactNode } from "react";
 import { Link } from "@/i18n/navigation";
 import { usePathname } from "@/i18n/navigation";
 import { useTranslations } from "next-intl";
+import sogLogoSimple from "@/assets/brand/sog-logo-simple.svg";
 import { SogWordmark } from "@/components/brand/sog-wordmark";
+import { Avatar } from "@/components/ui/avatar";
+import { Identicon } from "@/components/ui/identicon";
+import { UnknownAvatar } from "@/components/ui/unknown-avatar";
 import { useAuth } from "@/providers";
 import { cn } from "@/lib/cn";
 import { SENDER_NAME } from "@/lib/constants/brand";
 import { ROLE_DASHBOARD_PATHS, type UserRole } from "@/lib/constants/roles";
 import { ROUTES } from "@/lib/constants/routes";
-import { AccountSlot } from "@/components/layout/account-slot";
+import { AccountMenu } from "@/components/layout/account-menu";
 import { LocalePicker } from "@/components/layout/locale-picker";
-import { LogoBadge } from "@/components/layout/logo-badge";
 import {
   hasMyProfileItem,
   hasOwnNavItem,
@@ -24,6 +29,9 @@ import {
 } from "@/components/layout/public-nav";
 import { TabBar } from "@/components/layout/tab-bar";
 import { trackDashboardNav } from "@/lib/analytics";
+
+/** The badge's true viewBox, handed to `next/image` so it reserves the right box. */
+const LOGO_INTRINSIC = { width: 379, height: 207.5 } as const;
 
 /**
  * Every nav link's shape. The `min-h-11` is a real 44px touch target, which a
@@ -57,11 +65,18 @@ interface HeaderProps {
    * a scene is genuinely being looked at by the admin who opened it.
    */
   navRole?: UserRole;
+  /**
+   * Takes the nav links' place at every width, for a page nobody should wander
+   * out of by accident: a voice room puts the reader's current zone here. No tab
+   * bar is drawn beside it either, whatever the path. It has to shrink, so it
+   * sets its own `min-w-0` and truncates what it holds.
+   */
+  navSlot?: ReactNode;
 }
 
-export function Header({ navRole }: HeaderProps) {
+export function Header({ navRole, navSlot }: HeaderProps) {
   const pathname = usePathname();
-  const { user, profile } = useAuth();
+  const { user, profile, isLoading } = useAuth();
   const t = useTranslations("header");
   const c = useTranslations("common");
   // "My SOG" — the name every role's dashboard goes by to the people using it.
@@ -119,7 +134,7 @@ export function Header({ navRole }: HeaderProps) {
   // reaching for mute could tap out of the session; leaving takes the room's own
   // deliberate Leave. Without the bar `--tab-bar-height` resolves to zero
   // (`globals.css`), so nothing reserves its space.
-  const showsTabBar = !isAtOrUnder(pathname, ROUTES.voice.prefix);
+  const showsTabBar = !navSlot && !isAtOrUnder(pathname, ROUTES.voice.prefix);
 
   const dashboardPath = profile?.role
     ? ROLE_DASHBOARD_PATHS[profile.role]
@@ -148,6 +163,74 @@ export function Header({ navRole }: HeaderProps) {
   // is called what the dashboard is called — the same string the visible word
   // beside it sets, and the same shape the avatar link's `aria-label` uses.
   const logoLabel = logoHref === ROUTES.home ? SENDER_NAME : dashboardLabel;
+
+  /**
+   * The account slot, in its four states — all of them the same 32px box in
+   * the same place, so nothing on the strip moves as auth resolves:
+   *
+   *   - while auth is resolving, a non-interactive faded silhouette. The slot
+   *     must not become a control that a hurried click could fire before we
+   *     know whose account it belongs to;
+   *   - signed in with a profile, the avatar is the trigger of the account
+   *     menu, which owns everything that used to hang off this slot (the
+   *     dashboard trip, the family switch, settings, sign-out);
+   *   - signed in with the profile row still in flight, the identicon behind a
+   *     link to login. The menu is built entirely from the role, so there is no
+   *     menu to offer yet — but the slot is the only account affordance on the
+   *     page and must never be a dead end, so it keeps the exit it had before
+   *     the menu existed. Login is the right one precisely *because* a
+   *     signed-in visitor never arrives there: the proxy looks their role up
+   *     and bounces them straight to their own dashboard. What the trip buys is
+   *     the repair — it is a full-page navigation, so the RSC reads the profile
+   *     again and hands the root layout a header with its menu in place.
+   *     Nothing about the session is re-established; the session was never the
+   *     thing that failed, the profile read was;
+   *   - signed out, a plain link to login, unchanged.
+   */
+  const accountSlot = isLoading ? (
+    <span className="rounded-md">
+      <Avatar className="h-8 w-8">
+        <UnknownAvatar faded />
+      </Avatar>
+    </span>
+  ) : user ? (
+    profile ? (
+      <AccountMenu
+        userId={profile.id}
+        role={profile.role}
+        firstName={profile.first_name}
+        registrationOwed={profile.registration_completed_at === null}
+        // Carried through rather than resolved here: the menu's copy of the
+        // override governs only its own nav rows (the gedu's three items),
+        // exactly as this one governs only the strip.
+        navRole={navRole}
+      />
+    ) : (
+      <Link
+        href={ROUTES.login}
+        // Not "Sign in": this reader already is. The label names what the trip
+        // actually does for them — the login route bounces a signed-in visitor
+        // onward to their own account — and it stays role-agnostic, because the
+        // profile that would say which dashboard is the thing that is missing.
+        aria-label={t("continueToAccount")}
+        className="rounded-md focus:outline-none focus:ring-2 focus:ring-act"
+      >
+        <Avatar className="h-8 w-8">
+          <Identicon id={user.id} size={32} />
+        </Avatar>
+      </Link>
+    )
+  ) : (
+    <Link
+      href={ROUTES.login}
+      aria-label={c("signIn")}
+      className="rounded-md focus:outline-none focus:ring-2 focus:ring-act"
+    >
+      <Avatar className="h-8 w-8">
+        <UnknownAvatar />
+      </Avatar>
+    </Link>
+  );
 
   /**
    * What is set beside the badge — and it is a different thing
@@ -186,6 +269,8 @@ export function Header({ navRole }: HeaderProps) {
         isOnLogoTarget
           ? "text-act"
           : "text-muted-foreground group-hover:text-act",
+        // Below `lg` the slot needs this word's room. The link keeps `logoLabel`.
+        navSlot && "hidden lg:inline",
       )}
     >
       {dashboardLabel}
@@ -201,7 +286,14 @@ export function Header({ navRole }: HeaderProps) {
     // The true viewBox goes in as width/height, which is what lets `w-auto`
     // reserve the right box before the file lands.
     <span className="flex items-center gap-2">
-      <LogoBadge className="h-9 w-auto lg:h-11" />
+      <Image
+        src={sogLogoSimple}
+        alt=""
+        width={LOGO_INTRINSIC.width}
+        height={LOGO_INTRINSIC.height}
+        className="h-9 w-auto lg:h-11"
+        unoptimized
+      />
       {brandText}
     </span>
   );
@@ -314,79 +406,95 @@ export function Header({ navRole }: HeaderProps) {
             `NAV_LINK_CLASS`'s `whitespace-nowrap` is there so that the next word
             that does not fit overflows visibly instead of wrapping quietly
             inside its own box.
-          */}
-          <div className="flex items-center gap-2 lg:gap-3">
-            <div className="-ml-2 hidden items-center gap-1 lg:flex">
-              {/*
-                First in the run, per the owner: the role's own destinations
-                sit left of the public ones.
 
-                That is also where the slack is, which is what makes the one
-                window where these items can arrive late — a session the server
-                missed — harmless. This whole block is anchored to the strip's
-                right edge, so an item joining at its *leading* edge grows the
-                group leftward into the space beside the logo; the public links,
-                the picker and the avatar hold their positions to the pixel. It is
-                the right-packed-run case of the late-arriving-mark rule, and the
-                order is therefore load-bearing: putting a role's item anywhere
-                else in the run would push the links after it sideways.
-              */}
-              {showsGeduItems && (
-                <>
+            **`navSlot` shares the same strip**, and below `lg` it takes the
+            signed-in lockup's word for its own room, leaving the badge. The
+            wordmark stays, because it is the brand rather than a destination.
+            Room for the slot at 360, in px, measured in a voice room, of which a
+            zone's 28px mark and 6px gap come first:
+
+              who          en     fi     sv     fr    tlh
+              signed in  134.8  141.3  134.1  136.1  128.2
+              signed out   3.8   10.3    3.1    5.2    0.0
+
+            So a signed-in zone name gets 94 to 107px at 360 and truncates past
+            that, and a signed-out reader's slot is clipped to almost nothing.
+            390 adds 30px.
+          */}
+          <div className={cn("flex items-center gap-2 lg:gap-3", navSlot && "min-w-0")}>
+            {navSlot ?? (
+              <div className="-ml-2 hidden items-center gap-1 lg:flex">
+                {/*
+                  First in the run, per the owner: the role's own destinations
+                  sit left of the public ones.
+
+                  That is also where the slack is, which is what makes the one
+                  window where these items can arrive late — a session the server
+                  missed — harmless. This whole block is anchored to the strip's
+                  right edge, so an item joining at its *leading* edge grows the
+                  group leftward into the space beside the logo; the public links,
+                  the picker and the avatar hold their positions to the pixel. It is
+                  the right-packed-run case of the late-arriving-mark rule, and the
+                  order is therefore load-bearing: putting a role's item anywhere
+                  else in the run would push the links after it sideways.
+                */}
+                {showsGeduItems && (
+                  <>
+                    <Link
+                      href={ROUTES.gedu.invoicing}
+                      className={cn(
+                        NAV_LINK_CLASS,
+                        isOnInvoicing ? "text-act" : "text-muted-foreground",
+                      )}
+                      aria-current={isOnInvoicing ? "page" : undefined}
+                    >
+                      {t("invoicing")}
+                    </Link>
+                    <Link
+                      href={ROUTES.gedu.substitutions}
+                      className={cn(
+                        NAV_LINK_CLASS,
+                        isOnSubstitutions ? "text-act" : "text-muted-foreground",
+                      )}
+                      aria-current={isOnSubstitutions ? "page" : undefined}
+                    >
+                      {t("nav.substitutions")}
+                    </Link>
+                  </>
+                )}
+                {showsMyProfile && (
                   <Link
-                    href={ROUTES.gedu.invoicing}
+                    href={ROUTES.settingsTeamProfile}
                     className={cn(
                       NAV_LINK_CLASS,
-                      isOnInvoicing ? "text-act" : "text-muted-foreground",
+                      isOnTeamProfile ? "text-act" : "text-muted-foreground",
                     )}
-                    aria-current={isOnInvoicing ? "page" : undefined}
+                    aria-current={isOnTeamProfile ? "page" : undefined}
                   >
-                    {t("invoicing")}
+                    {t("teamProfile")}
                   </Link>
-                  <Link
-                    href={ROUTES.gedu.substitutions}
+                )}
+                {publicDestinations.map((destination) => (
+                  <PublicDestinationLink
+                    key={destination.key}
+                    destination={destination}
                     className={cn(
                       NAV_LINK_CLASS,
-                      isOnSubstitutions ? "text-act" : "text-muted-foreground",
+                      destination.isActive ? "text-act" : "text-muted-foreground",
                     )}
-                    aria-current={isOnSubstitutions ? "page" : undefined}
                   >
-                    {t("nav.substitutions")}
-                  </Link>
-                </>
-              )}
-              {showsMyProfile && (
-                <Link
-                  href={ROUTES.settingsTeamProfile}
-                  className={cn(
-                    NAV_LINK_CLASS,
-                    isOnTeamProfile ? "text-act" : "text-muted-foreground",
-                  )}
-                  aria-current={isOnTeamProfile ? "page" : undefined}
-                >
-                  {t("teamProfile")}
-                </Link>
-              )}
-              {publicDestinations.map((destination) => (
-                <PublicDestinationLink
-                  key={destination.key}
-                  destination={destination}
-                  className={cn(
-                    NAV_LINK_CLASS,
-                    destination.isActive ? "text-act" : "text-muted-foreground",
-                  )}
-                >
-                  {destination.label}
-                </PublicDestinationLink>
-              ))}
-            </div>
+                    {destination.label}
+                  </PublicDestinationLink>
+                ))}
+              </div>
+            )}
 
             {/* The settings cog used to sit here, ahead of the picker. It is now
                 a row in the account menu: one affordance behind the avatar rather
                 than two icons competing for the narrowest part of the strip. */}
             <div className="flex shrink-0 items-center gap-2 lg:gap-3">
               <LocalePicker />
-              <AccountSlot navRole={navRole} />
+              {accountSlot}
             </div>
           </div>
         </nav>

@@ -2,18 +2,15 @@
 
 import { useState } from "react";
 import { useTranslations } from "next-intl";
-import { Heading } from "@sog/ui";
-import { SogWordmark } from "@/components/brand/sog-wordmark";
-import { LogoBadge } from "@/components/layout/logo-badge";
-import { SENDER_NAME } from "@/lib/constants/brand";
+import { cn } from "@/lib/cn";
 import { PanelBody, PanelTabs, type PanelTab } from "./ChatPeoplePanel";
-import { RoomAccount } from "./RoomAccount";
 import { DesktopZoneRail } from "./DesktopZoneRail";
 import {
   CameraControl,
   LeaveControl,
   MicCell,
   ModeratorControls,
+  useHasControlsBesideShare,
 } from "./RoomControls";
 import { TileStage } from "./TileStage";
 import type { VoiceRoomRedesignProps } from "./types";
@@ -21,82 +18,63 @@ import type { RoomStage } from "./use-room-stage";
 
 const TILE_ASPECT = { min: 4 / 3, max: 16 / 9 };
 const MIN_TILE_WIDTH = 200;
-/** The rule in the column gap that sets Leave apart from what it sits beside. */
-const LEAVE_CELL =
-  "col-start-3 before:absolute before:inset-y-1 before:-left-1 before:w-px before:bg-border";
+/** The rule in the gap that sets Leave apart from what it sits beside. */
+const LEAVE_RULE =
+  "before:absolute before:inset-y-1 before:-left-1 before:w-px before:bg-border";
+const ONE_ROW_CELL = "min-w-0 flex-1";
 
 /**
- * The room on a wide screen: nothing scrolls but the panels, and there are no
- * site links, because a child clicking Shop would drop out of the call. The
- * zone you are in is the stage, between the left column and the chat and people
- * on the right, and all three run the full height under the top bar.
+ * The room on a wide screen: nothing scrolls but the panels. The zone you are in
+ * is the stage, between the left column and the chat and people on the right, and
+ * all three run the full height under the site header.
  */
 export function DesktopRoom({
   stage,
-  title,
-  titleAccessory,
   chat,
   participantChatControls,
   participantShareControls,
   shareLocked,
   leaveLabel,
 }: VoiceRoomRedesignProps & { stage: RoomStage }) {
-  const t = useTranslations("voice");
-
   return (
-    <div className="flex h-dvh flex-col overflow-hidden bg-background">
-      <header className="flex shrink-0 items-center gap-3 border-b border-border px-4 py-2">
-        <Heading level={1} step="card-title" srOnly>
-          {title ?? t("voiceRoom")}
-        </Heading>
-        {/* Not a link: leaving for the home page would drop the call. */}
-        <div className="flex min-w-0 items-center gap-2">
-          <LogoBadge alt={SENDER_NAME} className="h-8 w-auto shrink-0" />
-          <SogWordmark height={15} className="shrink-0 text-foreground" />
-        </div>
-        {titleAccessory}
-        <RoomAccount className="ml-auto" />
-      </header>
-
-      <div className="flex min-h-0 flex-1">
-        <div className="flex w-80 shrink-0 flex-col border-r border-border xl:w-96">
-          <DesktopZoneRail stage={stage} />
-          <RailControls stage={stage} shareLocked={shareLocked} leaveLabel={leaveLabel} />
-        </div>
-        <main className="min-w-0 flex-1 p-2">
-          <TileStage
-            members={stage.stageMembers}
-            presenter={stage.presenter}
-            bigShare={stage.bigShare}
-            otherShares={stage.otherShares}
-            onShowShare={stage.showShare}
-            shareLayout="strip"
-            tileAspect={TILE_ASPECT}
-            minTileWidth={MIN_TILE_WIDTH}
-          />
-        </main>
-        <SidePanel
-          chat={chat}
-          participantChatControls={participantChatControls}
-          participantShareControls={participantShareControls}
-        />
+    <div className="flex min-h-0 flex-1">
+      <div className="flex w-80 shrink-0 flex-col border-r border-border xl:w-96">
+        <DesktopZoneRail stage={stage} />
+        <RailControls stage={stage} shareLocked={shareLocked} leaveLabel={leaveLabel} />
       </div>
+      <main className="min-w-0 flex-1 p-2">
+        <TileStage
+          members={stage.stageMembers}
+          presenter={stage.presenter}
+          bigShare={stage.bigShare}
+          otherShares={stage.otherShares}
+          onShowShare={stage.showShare}
+          shareLayout="strip"
+          tileAspect={TILE_ASPECT}
+          minTileWidth={MIN_TILE_WIDTH}
+        />
+      </main>
+      <SidePanel
+        chat={chat}
+        participantChatControls={participantChatControls}
+        participantShareControls={participantShareControls}
+      />
     </div>
   );
 }
 
 /**
- * The controls at the foot of the left column, in three equal columns.
+ * The controls at the foot of the left column, with Leave last and in the same
+ * corner for every viewer.
  *
- * **Everyone gets the row of mic, camera and Leave, and a moderator's or
- * trainee's three tools are one more row on top of it**, so the columns line up
- * and Leave is in the same corner for every viewer. The two start classes hold
- * that when a row is short: a viewer with Share alone, or a room with no camera.
+ * **Six controls are two rows of three, and fewer are one row of equal cells.**
+ * A moderator's or trainee's Share, Broadcast and Deafen sit above Mic, Camera
+ * and Leave. Anyone else has Mic, Camera, Share and Leave at most, on one row.
  *
- * The column is 320px at the narrowest, which leaves 96px a cell inside the
- * padding and gaps, and 92px for a label. That holds French's longest labels on
- * two lines, and the longest single words in any locale whole. Anything added to
- * this grid does that arithmetic again.
+ * The narrowest column is 320px, which leaves four cells 69.75px each and 65.75px
+ * for a label. Measured in every locale, each label fits on two lines at most, and
+ * the tightest word is Finnish "jakaminen" at 64.7px, so a label a word longer
+ * than that breaks mid-word. Anything added to this row does that arithmetic again.
  */
 function RailControls({
   stage,
@@ -106,19 +84,24 @@ function RailControls({
   stage: RoomStage;
 }) {
   const t = useTranslations("voice.stage");
+  const twoRows = useHasControlsBesideShare();
   return (
     <nav
       aria-label={t("controls")}
-      className="grid shrink-0 grid-cols-3 gap-x-2 gap-y-1 border-t border-border p-2"
+      className={cn(
+        "shrink-0 gap-2 border-t border-border p-2",
+        twoRows ? "grid grid-cols-3 gap-y-1" : "flex",
+      )}
     >
-      <ModeratorControls shareLocked={shareLocked} />
-      <MicCell cellClassName="col-start-1" />
-      <CameraControl />
+      {twoRows && <ModeratorControls shareLocked={shareLocked} />}
+      <MicCell cellClassName={twoRows ? undefined : ONE_ROW_CELL} />
+      <CameraControl cellClassName={twoRows ? undefined : ONE_ROW_CELL} />
+      {!twoRows && <ModeratorControls cellClassName={ONE_ROW_CELL} shareLocked={shareLocked} />}
       <LeaveControl
         leaving={stage.leaving}
         onLeave={() => void stage.leave()}
         label={leaveLabel}
-        cellClassName={LEAVE_CELL}
+        cellClassName={cn(LEAVE_RULE, twoRows ? "col-start-3" : ONE_ROW_CELL)}
       />
     </nav>
   );

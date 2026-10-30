@@ -102,24 +102,14 @@ export function VoiceRoomSimPanel({
             Moderator moves you
           </Button>
           {!readerModerates && reader !== undefined && (
-            <>
-              <Button
-                variant={state.readerCanShare ? "default" : "outline"}
-                size="sm"
-                aria-pressed={state.readerCanShare}
-                onClick={() => simulation.setReaderCanShare(!state.readerCanShare)}
-              >
-                You can share
-              </Button>
-              <Button
-                variant={readerShareLocked ? "default" : "outline"}
-                size="sm"
-                aria-pressed={readerShareLocked}
-                onClick={() => simulation.lockShare(reader.sessionId, !readerShareLocked)}
-              >
-                Your share locked
-              </Button>
-            </>
+            <Button
+              variant={readerShareLocked ? "default" : "outline"}
+              size="sm"
+              aria-pressed={readerShareLocked}
+              onClick={() => simulation.lockShare(reader.sessionId, !readerShareLocked)}
+            >
+              Your share locked
+            </Button>
           )}
         </div>
       )}
