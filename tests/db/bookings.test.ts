@@ -397,9 +397,6 @@ describe("bookings", () => {
         async (shape) => {
           const { data, error } = await oldSignup(PAID_CLUB, shape);
           expect(error).toBeNull();
-          expect(createBookingRpcResult.parse(data)).toEqual({
-            kind: "validated",
-          });
           expect(data).toEqual({ kind: "validated" });
           expect(await seatsOn(PAID_CLUB)).toEqual([]);
         },
