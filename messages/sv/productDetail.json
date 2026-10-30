@@ -70,6 +70,7 @@
     "holidayBreaks": "Lov"
   },
   "signupPanel": {
+    "checkoutAlreadyPaid": "Betalningen för den här bokningen behandlas redan. Bokningen visas snart i Min SOG.",
     "verb": {
       "consumer_club": "Anmäl dig",
       "municipality_club": "Registrera dig",

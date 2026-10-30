@@ -4,7 +4,7 @@ import type { Database } from "@/types/database.types";
 import { createAdminTestClient } from "./helpers";
 import { TEST_IDS } from "./constants";
 import { createTestProduct, deleteTestProducts } from "./product-helpers";
-import { createParticipationRpcResult } from "@/services/participations/participations.contracts";
+import { createBookingRpcResult } from "@/services/participations/participations.contracts";
 
 /**
  * create_booking for municipality clubs (billing_mode =
@@ -83,14 +83,13 @@ describe("create_booking — external_contract (municipality) registration", () 
     const res = await register(PRODUCT_MUNI, TEST_IDS.GAMER);
     expect(res.error).toBeNull();
 
-    const parsed = createParticipationRpcResult.parse(res.data);
-    expect(parsed.kind).toBe("external_active");
-    expect(parsed.participation_id).toBeTruthy();
+    const parsed = createBookingRpcResult.parse(res.data);
+    if (parsed.kind !== "external_active") throw new Error(parsed.kind);
 
     const { data: row } = await admin
       .from("participations")
       .select("status, waitlisted_at, booking:bookings(purchase_shape, status, stripe_checkout_session_id)")
-      .eq("id", parsed.participation_id!)
+      .eq("id", parsed.participation_id)
       .single();
     expect(row?.status).toBe("active");
     // External registrations hold the seat outright — invoiced off-platform, so
@@ -110,14 +109,14 @@ describe("create_booking — external_contract (municipality) registration", () 
       .eq("id", PRODUCT_MUNI);
 
     const first = await register(PRODUCT_MUNI, TEST_IDS.GAMER);
-    expect(createParticipationRpcResult.parse(first.data).kind).toBe(
+    expect(createBookingRpcResult.parse(first.data).kind).toBe(
       "external_active",
     );
 
     // Second child, no seat left → full (so the UI can offer the waitlist).
     const second = await register(PRODUCT_MUNI, TEST_IDS.GAMER_2);
     expect(second.error).toBeNull();
-    expect(createParticipationRpcResult.parse(second.data).kind).toBe("full");
+    expect(createBookingRpcResult.parse(second.data).kind).toBe("full");
   });
 
   it("rejects registration before the registration window opens", async () => {
@@ -139,7 +138,7 @@ describe("create_booking — external_contract (municipality) registration", () 
 
   it("is idempotent against a second registration for the same gamer", async () => {
     const first = await register(PRODUCT_MUNI, TEST_IDS.GAMER);
-    expect(createParticipationRpcResult.parse(first.data).kind).toBe(
+    expect(createBookingRpcResult.parse(first.data).kind).toBe(
       "external_active",
     );
 

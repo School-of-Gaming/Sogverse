@@ -1,6 +1,5 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
 import type { Database } from "@/types/database.types";
-import { z } from "zod";
 import { TEST_IDS } from "./constants";
 
 /**
@@ -640,19 +639,6 @@ export async function insertPaidBooking(
   if (error) throw new Error(`paid booking failed: ${error.message}`);
   return data.id;
 }
-
-/** What confirm_booking answers, as the seat tests read it. */
-export const confirmBookingResult = z.discriminatedUnion("kind", [
-  z.object({
-    kind: z.literal("settled"),
-    participation_id: z.string(),
-    idempotent: z.boolean(),
-  }),
-  z.object({
-    kind: z.literal("duplicate_payment"),
-    existing_participation_id: z.string(),
-  }),
-]);
 
 /**
  * What the Stripe webhook does when a Session completes: confirms the Session's

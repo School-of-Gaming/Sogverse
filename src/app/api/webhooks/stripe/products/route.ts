@@ -3,7 +3,10 @@ import type Stripe from "stripe";
 import { stripe } from "@/lib/stripe/client";
 import { currentPeriodEndOf } from "@/lib/stripe/subscription-period";
 import { createAdminClient } from "@/lib/supabase/admin";
-import { confirmPaidParticipationRpcResult } from "@/services/participations/participations.contracts";
+import {
+  confirmBookingRpcResult,
+  confirmPaidParticipationRpcResult,
+} from "@/services/participations/participations.contracts";
 import { sendProductConfirmationEmail } from "@/services/participations/product-confirmation-email.server";
 import { seatAnswerArgsFromSessionMetadata } from "@/services/participations/seat-answers";
 import { isSupportedCurrency } from "@/lib/constants/currency";
@@ -47,8 +50,9 @@ export async function POST(request: Request) {
         break;
 
       // No `checkout.session.expired` case on purpose: an abandoned session
-      // leaves nothing in the database to reclaim. The participation is created
-      // here, at payment confirmation, not before Checkout.
+      // leaves a pending booking that holds nothing, so there is nothing to
+      // reclaim. The participation is created here, at payment confirmation,
+      // not before Checkout.
 
       case "invoice.paid":
         await handleInvoicePaid(admin, event);
@@ -111,18 +115,12 @@ async function handleCheckoutCompleted(
     session.payment_status === "no_payment_required";
   if (session.payment_status !== "paid" && !isZeroDueSubscription) return;
 
-  const purchaseShape = session.metadata?.purchaseShape;
-  const customerId = session.metadata?.customerId;
-  const participantId = session.metadata?.participantId;
-  const productId = session.metadata?.productId;
-  // Our integration currency, always EUR. Safe to pair with `amount_total`
-  // below: even with Adaptive Pricing on, `session.amount_total`/`currency`
-  // report the EUR settlement amount we receive — the customer's local
-  // currency lives in `session.presentment_details`, which we don't record.
-  const currency = session.metadata?.currency;
-  if (!purchaseShape || !customerId || !participantId || !productId || !currency) {
-    return;
-  }
+  // `client_reference_id` is the booking the route wrote before Checkout.
+  // legacy-checkout-session: a Session created before bookings has none, and
+  // identifies itself by its metadata instead. One without that is not ours.
+  const bookingId = session.client_reference_id;
+  const legacyFacts = bookingId ? null : legacyFactsFromMetadata(session);
+  if (!bookingId && !legacyFacts) return;
 
   // Idempotency on payments — UNIQUE on stripe_event_id is the safety net.
   // This guard runs FIRST, before any write: it reads "a payment exists for this
@@ -135,47 +133,21 @@ async function handleCheckoutCompleted(
     .maybeSingle();
   if (existingPayment) return;
 
+  // The money has arrived, so this is where the participation is created, and
+  // the answer carries every fact the writes below need. Two outcomes:
+  //   settled           — a fresh seat, or the seat this very session already
+  //                       bought (the re-run case). Either way the writes below
+  //                       are the right ones to make.
+  //   duplicate_payment — a different payment already put this participant on
+  //                       this product. Handled below.
+  const confirmed = legacyFacts
+    ? await confirmLegacySession(admin, session, legacyFacts)
+    : await confirmBooking(admin, bookingId!, session.id);
+  const { customerId, participantId, productId, purchaseShape, currency } =
+    confirmed.facts;
   const isSubscription = purchaseShape.startsWith("subscription_");
 
-  // The money has arrived, so this is where the participation is created — the
-  // (product, gamer, customer) triple comes from metadata we wrote ourselves
-  // when the session was built. The session's own id goes in too: the row
-  // records it, which is what lets a re-run of this handler recognise its own
-  // earlier work instead of reading it as a second payment. The RPC returns:
-  //   'confirmed'         — a fresh active row, or the row this very session
-  //                         already bought (the re-run case). Either way the
-  //                         writes below are the right ones to make.
-  //   'duplicate_payment' — a different payment already put this participant on
-  //                         this product. Handled below.
-  const { data: confirmResult, error: confirmErr } = await admin.rpc(
-    "confirm_paid_participation",
-    {
-      p_product_id: productId,
-      p_participant_id: participantId,
-      p_customer_id: customerId,
-      p_checkout_session_id: session.id,
-      // The visit's UTM tag (already through the checkout route's marketing
-      // consent gate) and the School of Gaming mailing answer, each written
-      // onto the session only when it held a value. A session from before they
-      // travelled carries neither, and the seat stores NULL.
-      ...seatAnswerArgsFromSessionMetadata(session.metadata),
-    },
-  );
-  if (confirmErr) {
-    throw new Error(`confirm_paid_participation failed: ${confirmErr.message}`);
-  }
-  const parsedConfirm =
-    confirmPaidParticipationRpcResult.safeParse(confirmResult);
-  if (!parsedConfirm.success) {
-    // Unexpected shape from the RPC — throw so the route returns 500 and
-    // Stripe retries, same as an RPC error above.
-    throw new Error(
-      `confirm_paid_participation returned an unexpected shape: ${parsedConfirm.error.message}`,
-    );
-  }
-  const confirmJson = parsedConfirm.data;
-
-  if (confirmJson.kind === "duplicate_payment") {
+  if (confirmed.kind === "duplicate_payment") {
     // Rare: the parent completed two Stripe sessions for the same
     // (product, gamer) — the original tab and a retry tab — or paid for a seat
     // the gamer already held. Log loudly and record the payment under
@@ -186,7 +158,7 @@ async function handleCheckoutCompleted(
     console.error(
       "[stripe/products webhook] duplicate payment detected — admin must refund manually",
       {
-        existingParticipationId: confirmJson.existing_participation_id,
+        existingParticipationId: confirmed.existingParticipationId,
         eventId: event.id,
         customerId,
         participantId,
@@ -243,10 +215,46 @@ async function handleCheckoutCompleted(
         gamerId: participantId,
         productId,
         purchaseShape,
-        existingParticipationId: confirmJson.existing_participation_id,
+        existingParticipationId: confirmed.existingParticipationId,
       },
     });
 
+    return;
+  }
+
+  // A redelivery after the seat this session bought was cancelled. It can only
+  // get this far when the first delivery died before its payment row, so nothing
+  // recorded the money. The seat stays cancelled, which rules out every
+  // seat-dependent write below: no subscription row and no mail. The payment
+  // still lands, as the commit marker and the record of the charge, and a live
+  // subscription now has nothing tracking it, so the log names it for a person.
+  if (confirmed.participationId === null) {
+    console.error(
+      "[stripe/products webhook] completed session for a seat that has since been cancelled — check the subscription and refund by hand",
+      {
+        eventId: event.id,
+        customerId,
+        participantId,
+        productId,
+        subscription: expandableId(session.subscription),
+        paymentIntent: expandableId(session.payment_intent),
+      },
+    );
+    await insertPaymentRow(admin, {
+      stripeEventId: event.id,
+      customerId,
+      amountCents: session.amount_total ?? 0,
+      currency,
+      purpose: paymentPurposeFor(purchaseShape),
+      stripePaymentIntentId: expandableId(session.payment_intent),
+      stripeInvoiceId: expandableId(session.invoice),
+      metadata: {
+        gamerId: participantId,
+        productId,
+        purchaseShape,
+        participationId: null,
+      },
+    });
     return;
   }
 
@@ -259,9 +267,9 @@ async function handleCheckoutCompleted(
   // and gets another shot at the sub row — instead of the guard skipping it
   // forever and leaving a live, untracked recurring Stripe sub (renewals would
   // then drop in handleInvoicePaid, and a cancellation would find no row to tear
-  // the participation down). That re-run is only safe because the participation
-  // records the session that bought it: the RPC above hands back the same row
-  // rather than mistaking it for a second payment.
+  // the participation down). That re-run is only safe because the booking records
+  // that it settled: the RPC above hands back the same seat rather than mistaking
+  // it for a second payment.
   //
   // Each subscription Checkout creates a brand-new Stripe sub (one per
   // gamer×club), so there's nothing to find-or-merge — just insert, keyed to the
@@ -285,7 +293,7 @@ async function handleCheckoutCompleted(
 
     const { error: subErr } = await admin.from("family_subscriptions").insert({
       customer_id: customerId,
-      participation_id: confirmJson.participation_id,
+      participation_id: confirmed.participationId,
       stripe_subscription_id: subId,
       stripe_customer_id: stripeCustomerId,
       stripe_price_id: sub.items.data[0]?.price.id ?? null,
@@ -327,7 +335,7 @@ async function handleCheckoutCompleted(
       gamerId: participantId,
       productId,
       purchaseShape,
-      participationId: confirmJson.participation_id,
+      participationId: confirmed.participationId,
     },
   });
 
@@ -337,10 +345,10 @@ async function handleCheckoutCompleted(
   // **What guards it is `idempotent === false`, and nothing else can.** Stripe
   // redelivers, and a redelivery that gets this far — because the first attempt
   // died before writing its payment row, so the guard at the top of the handler
-  // did not short-circuit it — calls the RPC again and is answered `confirmed`
+  // did not short-circuit it — calls the RPC again and is answered `settled`
   // with the same participation id. The two answers are indistinguishable
   // except for this flag, which the function sets from whether it INSERTed or
-  // recognised the row this very Checkout Session had already bought. Keying on
+  // found the booking already settled. Keying on
   // the id, or on the absence of a payment row, would send the mail twice.
   //
   // **Last, after every write.** The payment row is this handler's commit
@@ -350,7 +358,7 @@ async function handleCheckoutCompleted(
   // later write: its retry reports `idempotent`, so no mail is ever sent for
   // that seat. The seat itself is intact and visible in My SOG, which is the
   // outcome that matters.
-  if (!confirmJson.idempotent) {
+  if (!confirmed.idempotent) {
     await sendProductConfirmationEmail({
       client: admin,
       // Stripe's request, deliberately. `getOrigin` honours a Host only when it
@@ -361,18 +369,134 @@ async function handleCheckoutCompleted(
       customerId,
       participantId,
       productId,
-      participationId: confirmJson.participation_id,
+      participationId: confirmed.participationId,
       // The price shape, from the shape that was bought: a club is a monthly
       // subscription, a camp or event is paid once.
       mode: isSubscription ? "subscription" : "upfront",
-      // Our integration currency, written onto the session's metadata when it
-      // was built. Anything outside the supported set cannot be formatted, and
+      // Our integration currency, as the booking recorded it. Anything outside the supported set cannot be formatted, and
       // the mail then states no price rather than a wrong one.
       currency: isSupportedCurrency(currency) ? currency : undefined,
       // Null on everything but a club bought before it starts — see above.
       firstChargeAt,
     });
   }
+}
+
+/** What every write after the confirm takes its facts from. */
+interface ConfirmedFacts {
+  customerId: string;
+  participantId: string;
+  productId: string;
+  purchaseShape: string;
+  currency: string;
+}
+
+/** A confirm's answer, the same from both paths. */
+type ConfirmOutcome = { facts: ConfirmedFacts } & (
+  | { kind: "settled"; participationId: string | null; idempotent: boolean }
+  | { kind: "duplicate_payment"; existingParticipationId: string | null }
+);
+
+async function confirmBooking(
+  admin: Admin,
+  bookingId: string,
+  checkoutSessionId: string,
+): Promise<ConfirmOutcome> {
+  const { data, error } = await admin.rpc("confirm_booking", {
+    p_booking_id: bookingId,
+    p_checkout_session_id: checkoutSessionId,
+  });
+  if (error) throw new Error(`confirm_booking failed: ${error.message}`);
+  const parsed = confirmBookingRpcResult.safeParse(data);
+  if (!parsed.success) {
+    // Unexpected shape from the RPC — throw so the route returns 500 and Stripe
+    // retries, same as an RPC error above.
+    throw new Error(
+      `confirm_booking returned an unexpected shape: ${parsed.error.message}`,
+    );
+  }
+  const result = parsed.data;
+  const facts: ConfirmedFacts = {
+    customerId: result.customer_id,
+    participantId: result.participant_id,
+    productId: result.product_id,
+    purchaseShape: result.purchase_shape,
+    currency: result.currency,
+  };
+  return result.kind === "settled"
+    ? {
+        facts,
+        kind: "settled",
+        participationId: result.participation_id,
+        idempotent: result.idempotent,
+      }
+    : {
+        facts,
+        kind: "duplicate_payment",
+        existingParticipationId: result.existing_participation_id,
+      };
+}
+
+/**
+ * legacy-checkout-session: who and what a Session created before bookings bought,
+ * from the metadata the old checkout route wrote. Null on a Session that is not
+ * ours: the account also carries Sessions from other sources.
+ */
+function legacyFactsFromMetadata(
+  session: Stripe.Checkout.Session,
+): ConfirmedFacts | null {
+  const purchaseShape = session.metadata?.purchaseShape;
+  const customerId = session.metadata?.customerId;
+  const participantId = session.metadata?.participantId;
+  const productId = session.metadata?.productId;
+  // Our integration currency, always EUR. Safe to pair with `amount_total`:
+  // even with Adaptive Pricing on, `session.amount_total`/`currency` report the
+  // EUR settlement amount we receive — the customer's local currency lives in
+  // `session.presentment_details`, which we don't record.
+  const currency = session.metadata?.currency;
+  if (!purchaseShape || !customerId || !participantId || !productId || !currency) {
+    return null;
+  }
+  return { customerId, participantId, productId, purchaseShape, currency };
+}
+
+/**
+ * legacy-checkout-session: the confirm for a Session created before bookings. The
+ * function writes a booking from these arguments and takes the one confirm path.
+ */
+async function confirmLegacySession(
+  admin: Admin,
+  session: Stripe.Checkout.Session,
+  facts: ConfirmedFacts,
+): Promise<ConfirmOutcome> {
+  const { data, error } = await admin.rpc("confirm_paid_participation", {
+    p_product_id: facts.productId,
+    p_participant_id: facts.participantId,
+    p_customer_id: facts.customerId,
+    p_checkout_session_id: session.id,
+    ...seatAnswerArgsFromSessionMetadata(session.metadata),
+  });
+  if (error) {
+    throw new Error(`confirm_paid_participation failed: ${error.message}`);
+  }
+  const parsed = confirmPaidParticipationRpcResult.safeParse(data);
+  if (!parsed.success) {
+    throw new Error(
+      `confirm_paid_participation returned an unexpected shape: ${parsed.error.message}`,
+    );
+  }
+  return parsed.data.kind === "confirmed"
+    ? {
+        facts,
+        kind: "settled",
+        participationId: parsed.data.participation_id,
+        idempotent: parsed.data.idempotent,
+      }
+    : {
+        facts,
+        kind: "duplicate_payment",
+        existingParticipationId: parsed.data.existing_participation_id,
+      };
 }
 
 /**

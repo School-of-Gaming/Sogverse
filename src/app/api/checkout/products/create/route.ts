@@ -12,9 +12,10 @@ import {
 } from "@/lib/constants/locales";
 import { resolveRequiredTranslation } from "@/lib/i18n/resolve-translation";
 import {
+  CHECKOUT_ALREADY_PAID_CODE,
+  createBookingRpcResult,
   createCheckoutBody,
   createParticipationResponse,
-  createParticipationRpcResult,
 } from "@/services/participations/participations.contracts";
 import { sendProductConfirmationEmail } from "@/services/participations/product-confirmation-email.server";
 import { ROUTES } from "@/lib/constants/routes";
@@ -35,10 +36,7 @@ import { reportAdConversion } from "@/lib/ad-conversions.server";
 import { getOrigin } from "@/lib/url";
 import { parseConsentCookieHeader } from "@/lib/consent";
 import { utmFromCookieHeader } from "@/lib/utm";
-import {
-  seatAnswerArgs,
-  seatAnswersToSessionMetadata,
-} from "@/services/participations/seat-answers";
+import { seatAnswerArgs } from "@/services/participations/seat-answers";
 
 /**
  * POST /api/checkout/products/create
@@ -83,7 +81,7 @@ export const POST = defineRoute({
   // them verbatim beside the signup button. The consent refusal is the one
   // exception and is swapped for a code below, before it can be disclosed.
   discloseErrorMessages:
-    "create_participation's messages are the user-facing explanation of a refused signup, and the shop surface renders them as-is",
+    "create_booking's messages are the user-facing explanation of a refused signup, and the shop surface renders them as-is",
 
   handler: async ({ request, user, profile, body }) => {
     const { productId, participantId, purchaseShape } = body;
@@ -188,7 +186,7 @@ export const POST = defineRoute({
       );
     }
 
-    // What the seat records beyond who and what: the attribution cookie's UTM
+    // What the booking records beyond who and what: the attribution cookie's UTM
     // tag and the parent's answer to the product's School of Gaming mailing
     // box. The tag is GATED ON MARKETING CONSENT, and both it and the consent
     // are read off THIS request's own cookie header, exactly as account
@@ -202,14 +200,14 @@ export const POST = defineRoute({
       body.schoolOfGamingMarketingOptIn,
     );
 
-    // For a paid shape this call only *validates* — it runs every signup rule
-    // (parent-of, lifecycle, registration window, currency, already-enrolled,
-    // seat cap) under the product gate lock and writes nothing. The row is
-    // created from the Stripe webhook once payment lands, so a parent who
-    // abandons Checkout leaves nothing behind and there is no seat to release.
-    // The no-charge shapes (free, external) still activate here and now.
+    // Every signup rule (parent-of, lifecycle, registration window, currency,
+    // already-enrolled, seat cap) runs here under the product gate lock, and the
+    // booking is written. The no-charge shapes (free, external) take their seat
+    // in the same call. A paid booking holds nothing: the seat is created from
+    // the Stripe webhook once the money lands, and a parent who abandons Checkout
+    // leaves a pending booking that blocks nobody.
     const { data: rpcResult, error: rpcErr } = await admin.rpc(
-      "create_participation",
+      "create_booking",
       {
         p_product_id: productId,
         p_participant_id: participantId,
@@ -224,9 +222,6 @@ export const POST = defineRoute({
         // would put a second copy of the rule outside the lock, where it could
         // read a requirement set that changed a moment later.
         p_consented_documents: body.consentedDocuments,
-        // Written onto the seat for the two no-charge shapes; ignored by the
-        // paid ones, which carry the same values through the Checkout Session
-        // to the webhook instead.
         ...seatAnswers,
       },
     );
@@ -236,10 +231,10 @@ export const POST = defineRoute({
     // — see `consent-refusal.ts` for why this one is not the parent's to read.
     if (rpcErr) throw consentRefusalError(rpcErr) ?? rpcErr;
 
-    const rpcParsed = createParticipationRpcResult.safeParse(rpcResult);
+    const rpcParsed = createBookingRpcResult.safeParse(rpcResult);
     if (!rpcParsed.success) {
       console.error(
-        "create_participation returned an unexpected shape:",
+        "create_booking returned an unexpected shape:",
         rpcParsed.error.message,
       );
       throw new ApiError("Failed to start checkout", 500);
@@ -251,12 +246,6 @@ export const POST = defineRoute({
     }
 
     if (rpcJson.kind === "free_active" || rpcJson.kind === "external_active") {
-      if (!rpcJson.participation_id) {
-        throw new ApiError(
-          `create_participation returned ${rpcJson.kind} with no participation id`,
-          500,
-        );
-      }
       // The seat is live and nothing else in this request can fail it, so the
       // confirmation mail goes out here — but AFTER the response, not inside
       // it. The outcome the parent is waiting on is already committed, and the
@@ -335,12 +324,20 @@ export const POST = defineRoute({
           };
     }
 
-    // kind === 'validated' — the signup is acceptable and nothing was written.
-    // Nothing below this line needs unwinding on failure: an escape from the
-    // block leaves the database exactly as it was, so the try/catch exists only
-    // to keep raw Stripe/PostgREST text away from a parent (this route
-    // discloses its error messages) and to answer with a deliberate status.
+    // kind === 'pending' — the signup is acceptable and the booking is written.
+    // Nothing below this line needs unwinding on failure: a booking with no
+    // Session holds nothing and reads as abandoned, so the try/catch exists only
+    // to keep raw Stripe/PostgREST text away from a parent (this route discloses
+    // its error messages) and to answer with a deliberate status.
+    const bookingId = rpcJson.booking_id;
     try {
+      // At most one payable Session per seat, always at the current price: an
+      // earlier one still open for this (product, participant) goes first,
+      // whichever guardian opened it.
+      for (const openSessionId of rpcJson.open_checkout_sessions) {
+        await expireOpenSession(admin, openSessionId);
+      }
+
       const stripeCustomerId = await getOrCreateStripeCustomer(admin, user.id);
 
       // Every paid signup — single-payment AND subscription — goes through Stripe
@@ -352,15 +349,15 @@ export const POST = defineRoute({
 
       const origin = getOrigin(request);
       // Success lands on the confirmation page keyed by the Checkout Session,
-      // not by a participation — there is no participation yet, and the session
-      // id is the only handle both ends share. `{CHECKOUT_SESSION_ID}` is
-      // Stripe's literal placeholder, substituted at redirect time; it must
-      // reach Stripe unencoded. The page resolves it back to the row the webhook
-      // wrote (Stripe waits up to 10s on our endpoint before redirecting, so it
-      // is almost always there) and shows a finalizing state if it is not.
+      // not by a participation — there is no participation yet.
+      // `{CHECKOUT_SESSION_ID}` is Stripe's literal placeholder, substituted at
+      // redirect time; it must reach Stripe unencoded. The page reads the booking
+      // that holds this session id, and shows a finalizing state until the
+      // webhook has settled it (Stripe waits up to 10s on our endpoint before
+      // redirecting, so it almost always has).
       const successUrl = `${origin}${ROUTES.shopPaidConfirmation("{CHECKOUT_SESSION_ID}")}`;
       // Cancel bounces straight back to the product page so the parent can
-      // retry. Nothing to undo — no row was written.
+      // retry. Nothing to undo — the booking holds nothing.
       const cancelUrl = `${origin}${ROUTES.shopProductPath(productId)}`;
 
       // The three links the Slack notification offers its reader: the product's
@@ -397,30 +394,24 @@ export const POST = defineRoute({
       // time the other has to move.
       const shopProductUrl = `${origin}${ROUTES.shopProductPath(productId)}`;
 
-      // The metadata IS the link between this session and the participation the
-      // webhook will create. Nothing else carries it, so every field here is
-      // load-bearing rather than informational. The webhook and the
-      // confirmation page read `participantId` back by exactly this name.
+      // A Stripe Workflow reads all of these, not us: it posts a Slack
+      // notification naming the product and linking to it. Nothing in this repo
+      // reads them, and the link back to our data is `client_reference_id` below.
       //
-      // `productName`, `productType` and the three `*Url` keys are read by a
-      // Stripe Workflow, not by us: it posts a Slack notification naming the
-      // product and linking to it. The type no longer picks a link — the
+      // `productId` is the Workflow's trigger condition: it is how the account's
+      // other Sessions are told from ours. The type no longer picks a link — the
       // finished URLs above do — but it stays, because it can gate which
       // purchases trigger a notification at all. It ships as the raw Postgres
       // enum (`camp`, `consumer_club`, `municipality_club`, `event`), so a
       // template wanting prose has to map it rather than interpolate it.
       // camelCase, matching the object they join.
       const sessionMetadata = {
-        customerId: user.id,
-        participantId,
         productId,
         productName: defaultLocaleProductName,
         productType: product.product_type,
         adminProductUrl,
         adminUserUrl,
         shopProductUrl,
-        purchaseShape,
-        currency,
       };
 
       // What finance reads. Stripe metadata does not propagate between objects
@@ -432,9 +423,9 @@ export const POST = defineRoute({
       // carries the same facts as the *current* catalogue entry.
       //
       // snake_case, matching the Stripe Product metadata convention. The
-      // session's own camelCase keys above are load-bearing — the webhook and
-      // the confirmation page read them — so the two sets stay separate rather
-      // than one being renamed into the other.
+      // session's own camelCase keys above have a different reader, the Slack
+      // Workflow, so the two sets stay separate rather than one being renamed
+      // into the other.
       //
       // `locale` (what the parent browses in) and `spoken_language_code` (what
       // the product is delivered in) are different facts: a Finnish-speaking
@@ -461,8 +452,8 @@ export const POST = defineRoute({
       }
       if (product.end_date) purchaseMetadata.delivery_end = product.end_date;
 
-      // This no longer pins a reservation lifetime — nothing is held, and the
-      // expiry event isn't even handled. It bounds a *stale tab*: the Session
+      // This pins no reservation lifetime — nothing is held, and the expiry
+      // event isn't even handled. It bounds a *stale tab*: the Session
       // freezes the amount at creation, so leaving it payable for Stripe's
       // 24h default means a forgotten tab can pay yesterday's price and create
       // a participation long after the parent last looked at the product.
@@ -493,13 +484,10 @@ export const POST = defineRoute({
         automatic_tax: { enabled: true },
         customer_update: { address: "auto" },
         expires_at: expiresAt,
-        // The seat answers ride the session alone: the webhook writes them onto
-        // the seat it creates, and no other Stripe object has a use for them —
-        // so they stay out of the subscription's copy below.
-        metadata: {
-          ...sessionMetadata,
-          ...seatAnswersToSessionMetadata(seatAnswers),
-        },
+        // The whole of the link between this Session and our data: the webhook
+        // confirms the booking it names, and the booking holds everything else.
+        client_reference_id: bookingId,
+        metadata: sessionMetadata,
         success_url: successUrl,
         cancel_url: cancelUrl,
         line_items: [],
@@ -583,11 +571,9 @@ export const POST = defineRoute({
         // since a parent can now hold a seat themselves, the participant may be
         // the payer.
         sessionParams.subscription_data = {
-          // The session's keys and the subscription's are two objects, not one
-          // shared reference: the session keeps exactly the camelCase set the
-          // webhook reads, and the subscription carries that set *plus* the
-          // finance snapshot, because nothing propagates from the session to it.
-          metadata: { ...sessionMetadata, ...purchaseMetadata },
+          // The finance snapshot alone: nothing propagates from the session to
+          // the subscription, and nothing reads the session's keys from here.
+          metadata: purchaseMetadata,
           description: `${parentLocaleProductName} — ${await pickParticipantName(
             admin,
             participantId,
@@ -629,11 +615,23 @@ export const POST = defineRoute({
         throw new ApiError("Stripe did not return a Checkout URL", 502);
       }
 
+      // Before the parent can reach Checkout, so a later attempt finds this
+      // Session in `open_checkout_sessions`, and so the confirmation page can
+      // read the booking by it.
+      const { error: storeErr } = await admin
+        .from("bookings")
+        .update({
+          stripe_checkout_session_id: session.id,
+          checkout_closes_at: new Date(session.expires_at * 1000).toISOString(),
+        })
+        .eq("id", bookingId);
+      if (storeErr) throw storeErr;
+
       // Nothing is reported to an advertising platform here. The checkout
       // start is the parent's
       // click on the product page, reported from the browser for free and paid
       // products alike, so a report from this handler would count every paid
-      // attempt twice. The seat itself is written from the Stripe webhook, which
+      // attempt twice. The seat is written from the Stripe webhook, which
       // is where a completed purchase would be reported from the day we report
       // one.
       return { status: "redirect" as const, checkoutUrl: session.url };
@@ -647,6 +645,41 @@ export const POST = defineRoute({
     }
   },
 });
+
+/**
+ * Expire an earlier Session for this seat and record that it closed.
+ *
+ * Stripe refuses to expire a Session that is no longer open, and the one case
+ * that matters is one that has just completed: the money has moved and the
+ * webhook is on its way, so a second Session would charge the family twice. The
+ * refusal is told apart by asking Stripe for the Session's status rather than by
+ * reading the error. A Session that expired by itself in the meantime is what we
+ * wanted anyway.
+ */
+async function expireOpenSession(
+  admin: ReturnType<typeof createAdminClient>,
+  checkoutSessionId: string,
+): Promise<void> {
+  try {
+    await stripe.checkout.sessions.expire(checkoutSessionId);
+  } catch (expireErr) {
+    const { status } = await stripe.checkout.sessions.retrieve(checkoutSessionId);
+    if (status === "complete") {
+      throw new ApiError(
+        "This booking's payment is already going through",
+        409,
+        CHECKOUT_ALREADY_PAID_CODE,
+      );
+    }
+    if (status !== "expired") throw expireErr;
+  }
+
+  const { error } = await admin
+    .from("bookings")
+    .update({ checkout_closes_at: new Date().toISOString() })
+    .eq("stripe_checkout_session_id", checkoutSessionId);
+  if (error) throw error;
+}
 
 /** The seat holder's first name, for the subscription description the parent reads in the billing portal. */
 async function pickParticipantName(

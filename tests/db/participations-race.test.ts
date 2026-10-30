@@ -6,13 +6,13 @@ import { TEST_IDS, TEST_CREDENTIALS } from "./constants";
 import {
   createTestProduct,
   deleteTestProducts,
-  confirmBookingResult,
   payForBooking,
 } from "./product-helpers";
 import { z } from "zod";
 import { getString, getNumber } from "../helpers/json";
 import {
-  createParticipationRpcResult,
+  confirmBookingRpcResult,
+  createBookingRpcResult,
   joinWaitlistRpcResult,
 } from "@/services/participations/participations.contracts";
 
@@ -142,7 +142,7 @@ describe("participations race + idempotency", () => {
         p_currency: "eur",
       });
       expect(pending.error).toBeNull();
-      expect(pending.data).toMatchObject({ kind: "pending" });
+      expect(createBookingRpcResult.parse(pending.data).kind).toBe("pending");
 
       const { data: rows } = await admin
         .from("participations")
@@ -162,7 +162,7 @@ describe("participations race + idempotency", () => {
         p_currency: "eur",
       });
       // Covers the 'full' kind of the same contract schema (no id).
-      expect(createParticipationRpcResult.parse(second.data).kind).toBe("full");
+      expect(createBookingRpcResult.parse(second.data).kind).toBe("full");
     });
 
     it.each(["active", "waitlisted", "completed"] as const)(
@@ -212,10 +212,11 @@ describe("participations race + idempotency", () => {
 
     it("creates an active row and records the session that bought it", async () => {
       const result = await payForBooking(admin, PRODUCT_CONFIRM, TEST_IDS.GAMER, TEST_IDS.CUSTOMER, "cs_confirm_1");
-      const body = confirmBookingResult.parse(result.data);
-      expect(body.kind).toBe("settled");
-      const participationId =
-        body.kind === "settled" ? body.participation_id : "";
+      const body = confirmBookingRpcResult.parse(result.data);
+      if (body.kind !== "settled" || !body.participation_id) {
+        throw new Error("expected a settled seat");
+      }
+      const participationId = body.participation_id;
 
       const { data: row } = await admin
         .from("participations")
@@ -235,8 +236,8 @@ describe("participations race + idempotency", () => {
       const first = await payForBooking(admin, PRODUCT_CONFIRM, TEST_IDS.GAMER, TEST_IDS.CUSTOMER, "cs_replay_1");
       const second = await payForBooking(admin, PRODUCT_CONFIRM, TEST_IDS.GAMER, TEST_IDS.CUSTOMER, "cs_replay_1");
 
-      const a = confirmBookingResult.parse(first.data);
-      const b = confirmBookingResult.parse(second.data);
+      const a = confirmBookingRpcResult.parse(first.data);
+      const b = confirmBookingRpcResult.parse(second.data);
       expect(a.kind).toBe("settled");
       expect(b.kind).toBe("settled");
       expect(b.kind === "settled" && b.participation_id).toBe(
@@ -261,10 +262,10 @@ describe("participations race + idempotency", () => {
       // webhook records the charge and cancels the second subscription instead
       // of looping on Stripe retries.
       const first = await payForBooking(admin, PRODUCT_CONFIRM, TEST_IDS.GAMER, TEST_IDS.CUSTOMER, "cs_dup_first");
-      const firstBody = confirmBookingResult.parse(first.data);
+      const firstBody = confirmBookingRpcResult.parse(first.data);
 
       const second = await payForBooking(admin, PRODUCT_CONFIRM, TEST_IDS.GAMER, TEST_IDS.CUSTOMER, "cs_dup_second");
-      const secondBody = confirmBookingResult.parse(second.data);
+      const secondBody = confirmBookingRpcResult.parse(second.data);
 
       expect(secondBody.kind).toBe("duplicate_payment");
       expect(
@@ -299,7 +300,7 @@ describe("participations race + idempotency", () => {
         .single();
 
       const result = await payForBooking(admin, PRODUCT_CONFIRM, TEST_IDS.GAMER_2, TEST_IDS.CUSTOMER, "cs_waitlist_clash");
-      const body = confirmBookingResult.parse(result.data);
+      const body = confirmBookingRpcResult.parse(result.data);
       expect(body.kind).toBe("duplicate_payment");
       expect(
         body.kind === "duplicate_payment" && body.existing_participation_id,
@@ -480,7 +481,7 @@ describe("participations race + idempotency", () => {
     it("confirms an over-cap payment on a full product and writes the seat", async () => {
       // The one seat, taken.
       const filled = await payForBooking(admin, PRODUCT_PAID_CAP, TEST_IDS.GAMER, TEST_IDS.CUSTOMER, "cs_soft_cap_first");
-      expect(confirmBookingResult.parse(filled.data).kind).toBe(
+      expect(confirmBookingRpcResult.parse(filled.data).kind).toBe(
         "settled",
       );
 
@@ -492,19 +493,21 @@ describe("participations race + idempotency", () => {
         p_purchase_shape: "subscription_monthly",
         p_currency: "eur",
       });
-      expect(createParticipationRpcResult.parse(gate.data).kind).toBe("full");
+      expect(createBookingRpcResult.parse(gate.data).kind).toBe("full");
 
       // But someone who passed that gate earlier and has now paid gets their
       // seat regardless — this is the soft half, and it must stay true.
       const overCap = await payForBooking(admin, PRODUCT_PAID_CAP, TEST_IDS.GAMER_2, TEST_IDS.CUSTOMER, "cs_soft_cap_over");
       expect(overCap.error).toBeNull();
-      const parsed = confirmBookingResult.parse(overCap.data);
-      expect(parsed.kind).toBe("settled");
+      const parsed = confirmBookingRpcResult.parse(overCap.data);
+      if (parsed.kind !== "settled" || !parsed.participation_id) {
+        throw new Error("expected a settled seat");
+      }
 
       const { data: row } = await admin
         .from("participations")
         .select("status")
-        .eq("id", parsed.kind === "settled" ? parsed.participation_id : "")
+        .eq("id", parsed.participation_id)
         .single();
       expect(row?.status).toBe("active");
 

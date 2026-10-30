@@ -10,7 +10,7 @@ import {
 } from "./helpers";
 import { TEST_IDS, TEST_CREDENTIALS } from "./constants";
 import { createTestProduct, deleteTestProducts } from "./product-helpers";
-import { createParticipationRpcResult } from "@/services/participations/participations.contracts";
+import { createBookingRpcResult } from "@/services/participations/participations.contracts";
 
 /**
  * Product-required consents: the enrolment conditions a parent must
@@ -313,7 +313,7 @@ describe("product required consents", () => {
         PRIVACY,
       ]);
       expect(res.error).toBeNull();
-      expect(createParticipationRpcResult.parse(res.data).kind).toBe(
+      expect(createBookingRpcResult.parse(res.data).kind).toBe(
         "free_active",
       );
 
@@ -365,7 +365,7 @@ describe("product required consents", () => {
         [TERMS, PRIVACY],
       );
       expect(res.error).toBeNull();
-      expect(res.data).toMatchObject({ kind: "pending" });
+      expect(createBookingRpcResult.parse(res.data).kind).toBe("pending");
 
       // The seat genuinely does not exist yet — it arrives from the Stripe
       // webhook — and the consent record is here anyway, because the parent
@@ -430,7 +430,7 @@ describe("product required consents", () => {
         "free",
       );
       expect(res.error).toBeNull();
-      expect(createParticipationRpcResult.parse(res.data).kind).toBe(
+      expect(createBookingRpcResult.parse(res.data).kind).toBe(
         "free_active",
       );
       expect(await acceptancesFor(PRODUCT_REQUIRES_NOTHING)).toEqual([]);

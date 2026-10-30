@@ -64,6 +64,9 @@ function createWebhookRequest(): Request {
   });
 }
 
+// The suites below that use this event directly are the Session from before
+// bookings, which names who bought what in its metadata.
+// legacy-checkout-session: they go with the webhook's branch for such a Session.
 function createCompletedEvent(overrides: Partial<{
   id: string;
   paymentIntent: string | null;
@@ -396,7 +399,7 @@ function mockAdmin(opts: AdminMockOptions = {}) {
       };
     }
     // `participations` deliberately has no entry: the handler reaches that
-    // table only through confirm_paid_participation, never with a direct write.
+    // table only through the confirm RPCs, never with a direct write.
     // A table appearing here that shouldn't should fail loudly.
     throw new Error(`Unexpected table in admin mock: ${table}`);
   });
@@ -1703,6 +1706,205 @@ describe("POST /api/webhooks/stripe/products", () => {
 // the seat confirm_paid_participation writes. A key the route wrote nothing
 // under stays out of the call, so the seat stores NULL.
 
+describe("POST /api/webhooks/stripe/products — a Session with a booking", () => {
+  const BOOKING_ID = "88888888-8888-8888-8888-888888888888";
+  const FACTS = {
+    booking_id: BOOKING_ID,
+    customer_id: CUSTOMER_ID,
+    participant_id: GAMER_ID,
+    product_id: PRODUCT_ID,
+    purchase_shape: "subscription_monthly",
+    currency: "eur",
+  };
+  const SETTLED = {
+    kind: "settled",
+    ...FACTS,
+    participation_id: PARTICIPATION_ID,
+    idempotent: false,
+  };
+
+  /** A completed Session as the route creates it: a booking id and Slack's keys. */
+  function bookingEvent() {
+    const event = createCompletedEvent({
+      purchaseShape: "subscription_monthly",
+      subscription: SUB_ID,
+    });
+    Object.assign(event.data.object, {
+      client_reference_id: BOOKING_ID,
+      metadata: { productId: PRODUCT_ID, productName: "Test Club" },
+    });
+    return event;
+  }
+
+  beforeEach(() => {
+    vi.clearAllMocks();
+    mockSendTransactionalEmail.mockResolvedValue(undefined);
+    mockSubscriptionsRetrieve.mockResolvedValue({
+      id: SUB_ID,
+      status: "active",
+      cancel_at_period_end: false,
+      current_period_end: 1900000000,
+      items: { data: [{ price: { id: "price_test_1" } }] },
+    });
+    mockConstructEvent.mockReturnValue(bookingEvent());
+  });
+
+  it("confirms the booking the Session names", async () => {
+    mockAdmin();
+    mockAdminRpc.mockResolvedValueOnce({ data: SETTLED, error: null });
+
+    const res = await POST(createWebhookRequest());
+    expect(res.status).toBe(200);
+    expect(mockAdminRpc).toHaveBeenNthCalledWith(1, "confirm_booking", {
+      p_booking_id: BOOKING_ID,
+      p_checkout_session_id: SESSION_ID,
+    });
+  });
+
+  it("takes every later write's facts from the result, the session's metadata naming nobody", async () => {
+    const inserts = mockAdmin();
+    mockAdminRpc.mockResolvedValueOnce({ data: SETTLED, error: null });
+
+    await POST(createWebhookRequest());
+
+    expect(inserts.family_subscriptions).toEqual([
+      expect.objectContaining({
+        customer_id: CUSTOMER_ID,
+        participation_id: PARTICIPATION_ID,
+        stripe_subscription_id: SUB_ID,
+        currency: "eur",
+      }),
+    ]);
+    expect(inserts.payments).toEqual([
+      expect.objectContaining({
+        customer_id: CUSTOMER_ID,
+        currency: "eur",
+        purpose: "subscription_invoice",
+        metadata: {
+          gamerId: GAMER_ID,
+          productId: PRODUCT_ID,
+          purchaseShape: "subscription_monthly",
+          participationId: PARTICIPATION_ID,
+        },
+      }),
+    ]);
+    expect(mockSendTransactionalEmail).toHaveBeenCalledTimes(1);
+  });
+
+  it("sends no mail on a redelivery, and still repairs what the first attempt left", async () => {
+    const inserts = mockAdmin();
+    mockAdminRpc.mockResolvedValueOnce({
+      data: { ...SETTLED, idempotent: true },
+      error: null,
+    });
+
+    const res = await POST(createWebhookRequest());
+    expect(res.status).toBe(200);
+    expect(inserts.family_subscriptions).toHaveLength(1);
+    expect(inserts.payments).toHaveLength(1);
+    expect(mockSendTransactionalEmail).not.toHaveBeenCalled();
+  });
+
+  it("bails before confirming when the event is already recorded", async () => {
+    mockAdmin({ existingPayment: { id: PAYMENT_ROW_ID } });
+
+    const res = await POST(createWebhookRequest());
+    expect(res.status).toBe(200);
+    expect(mockAdminRpc).not.toHaveBeenCalled();
+  });
+
+  it("cancels and records a duplicate, with the facts from the result", async () => {
+    const inserts = mockAdmin();
+    const consoleError = vi.spyOn(console, "error").mockImplementation(() => {});
+    mockAdminRpc.mockResolvedValueOnce({
+      data: {
+        kind: "duplicate_payment",
+        ...FACTS,
+        existing_participation_id: PARTICIPATION_ID,
+        existing_status: "active",
+      },
+      error: null,
+    });
+
+    const res = await POST(createWebhookRequest());
+    expect(res.status).toBe(200);
+    expect(mockSubscriptionsCancel).toHaveBeenCalledWith(SUB_ID);
+    expect(inserts.family_subscriptions).toEqual([]);
+    expect(inserts.payments).toEqual([
+      expect.objectContaining({
+        customer_id: CUSTOMER_ID,
+        purpose: "reservation_duplicate",
+        metadata: expect.objectContaining({
+          existingParticipationId: PARTICIPATION_ID,
+        }),
+      }),
+    ]);
+    expect(mockSendTransactionalEmail).not.toHaveBeenCalled();
+    consoleError.mockRestore();
+  });
+
+  it("records a repeated duplicate whose seat has gone", async () => {
+    const inserts = mockAdmin();
+    const consoleError = vi.spyOn(console, "error").mockImplementation(() => {});
+    mockAdminRpc.mockResolvedValueOnce({
+      data: {
+        kind: "duplicate_payment",
+        ...FACTS,
+        existing_participation_id: null,
+        existing_status: null,
+      },
+      error: null,
+    });
+
+    const res = await POST(createWebhookRequest());
+    expect(res.status).toBe(200);
+    expect(inserts.payments).toHaveLength(1);
+    consoleError.mockRestore();
+  });
+
+  it("makes no seat-dependent write when the seat has since been cancelled", async () => {
+    const inserts = mockAdmin();
+    const consoleError = vi.spyOn(console, "error").mockImplementation(() => {});
+    mockAdminRpc.mockResolvedValueOnce({
+      data: { ...SETTLED, participation_id: null, idempotent: true },
+      error: null,
+    });
+
+    const res = await POST(createWebhookRequest());
+    expect(res.status).toBe(200);
+    expect(mockSubscriptionsRetrieve).not.toHaveBeenCalled();
+    expect(inserts.family_subscriptions).toEqual([]);
+    expect(mockSendTransactionalEmail).not.toHaveBeenCalled();
+    // The money still moved, so the charge is recorded and the event is done.
+    expect(inserts.payments).toEqual([
+      expect.objectContaining({
+        customer_id: CUSTOMER_ID,
+        metadata: expect.objectContaining({ participationId: null }),
+      }),
+    ]);
+    expect(consoleError).toHaveBeenCalledWith(
+      expect.stringContaining("since been cancelled"),
+      expect.objectContaining({ subscription: SUB_ID }),
+    );
+    consoleError.mockRestore();
+  });
+
+  it.each([
+    ["an RPC error", { data: null, error: { message: "session mismatch" } }],
+    ["an unknown shape", { data: { kind: "confirmed" }, error: null }],
+  ])("answers 500 so Stripe retries on %s", async (_name, answer) => {
+    const inserts = mockAdmin();
+    const consoleError = vi.spyOn(console, "error").mockImplementation(() => {});
+    mockAdminRpc.mockResolvedValueOnce(answer);
+
+    const res = await POST(createWebhookRequest());
+    expect(res.status).toBe(500);
+    expect(inserts.payments).toEqual([]);
+    consoleError.mockRestore();
+  });
+});
+
+// legacy-checkout-session: reads the answers back off a pre-bookings Session.
 describe("POST /api/webhooks/stripe/products — the seat answers", () => {
   beforeEach(() => {
     vi.clearAllMocks();

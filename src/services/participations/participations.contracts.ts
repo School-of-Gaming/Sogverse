@@ -25,6 +25,14 @@ export type CreateParticipationResponse = z.infer<
 >;
 
 /**
+ * The 409 the checkout route answers when an earlier Checkout Session for the
+ * same seat has already completed: the payment is on its way to the webhook, so
+ * a second Session would charge the family twice. It carries a code because the
+ * signup panel has a translated sentence for it rather than the route's text.
+ */
+export const CHECKOUT_ALREADY_PAID_CODE = "checkout_already_paid";
+
+/**
  * The consent documents the parent ticked on their way to this request — the
  * slugs of `consent_documents` rows, one per box. Shared by both enrolment
  * doors, because a place in a queue is held to the same conditions as a seat.
@@ -57,6 +65,15 @@ const seatAnswersBody = {
   schoolOfGamingMarketingOptIn: z.boolean().optional(),
 };
 
+// Spelled out rather than derived so the compiler checks it against the shared
+// union — adding a shape there fails the build until it is decided here too.
+const purchaseShape = z.enum([
+  "subscription_monthly",
+  "single_payment",
+  "free",
+  "external",
+] as const satisfies readonly PurchaseShape[]);
+
 /**
  * Request body of POST /api/checkout/products/create. The purchase shape and
  * currency are enums rather than free strings so the route never has to ask
@@ -67,27 +84,18 @@ const seatAnswersBody = {
 export const createCheckoutBody = z.object({
   productId: z.string().min(1, "productId is required"),
   participantId: z.string().min(1, "participantId is required"),
-  // Spelled out rather than derived so the compiler checks it against the
-  // shared union below — adding a shape there fails the build until it is
-  // decided here too.
-  purchaseShape: z.enum([
-    "subscription_monthly",
-    "single_payment",
-    "free",
-    "external",
-  ] as const satisfies readonly PurchaseShape[]),
+  purchaseShape,
   currency: z.enum(SUPPORTED_CURRENCIES),
   consentedDocuments,
   ...seatAnswersBody,
 });
 
 /**
- * What a paid booking's Checkout Session carries for the seat beyond who and
- * what: the UTM tag the route let through its consent gate, and the School of
- * Gaming mailing answer. Written by the checkout route, read back by the Stripe
- * webhook into `confirm_paid_participation`. Every key is optional — a key is
- * written only when it holds a value — and the answer is spelled as a string
- * because Stripe metadata holds nothing else.
+ * legacy-checkout-session: what a Checkout Session created before bookings
+ * carries for the seat beyond who and what: the UTM tag and the School of Gaming
+ * mailing answer. Read by the Stripe webhook into `confirm_paid_participation`.
+ * Every key is optional and the answer is spelled as a string, because Stripe
+ * metadata holds nothing else.
  */
 export const seatAnswersSessionMetadata = z.object({
   utmSource: z.string().optional(),
@@ -171,34 +179,74 @@ export const joinWaitlistResponse = z.object({
 export type JoinWaitlistResponse = z.infer<typeof joinWaitlistResponse>;
 
 /**
- * `create_participation` RPC result (Json in codegen; structure from
- * supabase/schema/functions/). `validated` is the paid outcome: every rule
- * passed, but no row was written — a paid participation is created at payment
- * confirmation, so an abandoned checkout leaves nothing behind. The no-charge
- * shapes still come back with a row. `participation_id` stays optional because
- * the route turns its absence into a controlled 500 per kind — the schema
- * checks structure, the route checks the per-kind invariants.
+ * `create_booking` RPC result (Json in codegen; structure from
+ * supabase/schema/functions/). The no-charge shapes come back holding the seat
+ * they just took. `pending` is the paid outcome: the booking is written and holds
+ * nothing, and `open_checkout_sessions` names every Session still open for this
+ * (product, participant), which the route expires before opening a new one.
  */
-export const createParticipationRpcResult = z.object({
-  kind: z.enum(["free_active", "external_active", "validated", "full"]),
-  participation_id: z.string().optional(),
-});
+export const createBookingRpcResult = z.discriminatedUnion("kind", [
+  z.object({ kind: z.literal("free_active"), participation_id: z.string() }),
+  z.object({
+    kind: z.literal("external_active"),
+    participation_id: z.string(),
+  }),
+  z.object({
+    kind: z.literal("pending"),
+    booking_id: z.string(),
+    open_checkout_sessions: z.array(z.string()),
+  }),
+  z.object({ kind: z.literal("full") }),
+]);
+
+/** The booking's own facts, which every `confirm_booking` answer carries. */
+const confirmedBookingFacts = {
+  booking_id: z.string(),
+  customer_id: z.string(),
+  participant_id: z.string(),
+  product_id: z.string(),
+  purchase_shape: purchaseShape,
+  currency: z.string(),
+};
 
 /**
- * `confirm_paid_participation` RPC result (Json in codegen; structure from
- * supabase/schema/functions/). Called from the Stripe webhook once payment
- * lands: `confirmed` carries the row it just created, `duplicate_payment` names
- * the row that was already there — the parent paid twice for one (product,
- * gamer), and the route records the charge and cancels a live subscription
- * rather than writing a second seat.
+ * `confirm_booking` RPC result (Json in codegen; structure from
+ * supabase/schema/functions/). Called from the Stripe webhook once payment lands,
+ * and every later write there takes its facts from this answer.
  *
- * `idempotent` is the axis a replay is told apart on, and it is why it is
- * modelled here rather than dropped as noise. Stripe redelivers, and both
- * deliveries answer `confirmed` with the same participation id — the second one
- * because this very Checkout Session already bought that row, not because a new
- * one was written. Anything that must happen exactly once per seat (a
- * confirmation email) keys on `idempotent === false`; anything that is naturally
- * idempotent can ignore it.
+ * `settled` is a seat this booking bought. `participation_id` is NULL on a
+ * redelivery after that seat was cancelled: the booking stays settled and the
+ * seat does not come back.
+ *
+ * `duplicate_payment` names the seat that was already there: the parent paid
+ * twice for one (product, participant), and the route records the charge and
+ * cancels a live subscription rather than writing a second seat. Its ids are NULL
+ * on a repeat if that seat has since gone.
+ *
+ * `idempotent` is the axis a replay is told apart on. Anything that must happen
+ * exactly once per seat (a confirmation email) keys on `idempotent === false`.
+ */
+export const confirmBookingRpcResult = z.discriminatedUnion("kind", [
+  z.object({
+    kind: z.literal("settled"),
+    ...confirmedBookingFacts,
+    participation_id: z.string().nullable(),
+    /** False when this call created the seat; true when it recognised its own. */
+    idempotent: z.boolean(),
+  }),
+  z.object({
+    kind: z.literal("duplicate_payment"),
+    ...confirmedBookingFacts,
+    existing_participation_id: z.string().nullable(),
+    existing_status: z.string().nullable(),
+  }),
+]);
+
+/**
+ * legacy-checkout-session: `confirm_paid_participation` RPC result, for a
+ * Checkout Session created before bookings. `idempotent` has the same polarity as
+ * `confirm_booking`'s. Both ids are required: the function raises rather than
+ * answer without one.
  */
 export const confirmPaidParticipationRpcResult = z.discriminatedUnion("kind", [
   z.object({
@@ -218,7 +266,7 @@ export const confirmPaidParticipationRpcResult = z.discriminatedUnion("kind", [
  * supabase/schema/functions/).
  *
  * `idempotent` is the same axis, with the same polarity, as
- * `confirm_paid_participation`'s above, and for the same reason: the RPC returns
+ * `confirm_booking`'s above, and for the same reason: the RPC returns
  * an existing waitlisted/reserving/active row shape-identically to a fresh
  * insert, so this flag is the only thing that tells a replay apart. False only
  * on the call that ran the INSERT. Required rather than optional — an optional

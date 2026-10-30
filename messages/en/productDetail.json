@@ -70,6 +70,7 @@
     "holidayBreaks": "Holiday breaks"
   },
   "signupPanel": {
+    "checkoutAlreadyPaid": "This booking's payment is already going through. It will appear in My SOG shortly.",
     "verb": {
       "consumer_club": "Enrol",
       "municipality_club": "Register",

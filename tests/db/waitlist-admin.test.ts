@@ -5,7 +5,7 @@ import { createAdminTestClient, createAuthenticatedClient } from "./helpers";
 import { TEST_IDS, TEST_CREDENTIALS } from "./constants";
 import { createTestProduct, deleteTestProducts, insertPaidBooking } from "./product-helpers";
 import {
-  createParticipationRpcResult,
+  createBookingRpcResult,
   demoteToWaitlistRpcResult,
   joinWaitlistRpcResult,
   promoteFromWaitlistRpcResult,
@@ -129,9 +129,9 @@ describe("waitlist — admin read + promote/demote + self position", () => {
       p_currency: "eur",
     });
     expect(res.error).toBeNull();
-    const parsed = createParticipationRpcResult.parse(res.data);
-    expect(parsed.kind).toBe("external_active");
-    return parsed.participation_id!;
+    const parsed = createBookingRpcResult.parse(res.data);
+    if (parsed.kind !== "external_active") throw new Error(parsed.kind);
+    return parsed.participation_id;
   }
 
   it("get_product_groups_with_details returns the waitlist in derived order", async () => {
@@ -546,11 +546,11 @@ describe("waitlist — admin read + promote/demote + self position", () => {
       p_currency: "eur",
     });
     expect(enrolled.error).toBeNull();
-    const parsed = createParticipationRpcResult.parse(enrolled.data);
-    expect(parsed.kind).toBe("free_active");
+    const parsed = createBookingRpcResult.parse(enrolled.data);
+    if (parsed.kind !== "free_active") throw new Error(parsed.kind);
 
     const res = await adminUser.rpc("demote_to_waitlist", {
-      p_participation_id: parsed.participation_id!,
+      p_participation_id: parsed.participation_id,
     });
     expect(res.error).toBeNull();
     expect(demoteToWaitlistRpcResult.parse(res.data).kind).toBe("demoted");
@@ -558,7 +558,7 @@ describe("waitlist — admin read + promote/demote + self position", () => {
     const { data: row } = await admin
       .from("participations")
       .select("status, group_id, waitlisted_at")
-      .eq("id", parsed.participation_id!)
+      .eq("id", parsed.participation_id)
       .single();
     expect(row?.status).toBe("waitlisted");
     expect(row?.group_id).toBeNull();

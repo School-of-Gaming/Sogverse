@@ -64,7 +64,7 @@ export function buildPricingOption({
 // the `unavailable` case (product not sold in the viewer's currency), which the
 // signup panel renders as a disabled CTA rather than a submit. Every other kind
 // has a real shape, including `external` (municipality clubs: instant, off-
-// platform, no Stripe — see create_participation's external_contract branch).
+// platform, no Stripe — see create_booking's external_contract branch).
 export function purchaseShapeFor(option: PricingOption): PurchaseShape | null {
   switch (option.kind) {
     case "subscription":

@@ -5,7 +5,7 @@ import type { Database } from "@/types/database.types";
 import { productGroupsSnapshot } from "@/services/groups/groups.contracts";
 import {
   confirmPaidParticipationRpcResult,
-  createParticipationRpcResult,
+  createBookingRpcResult,
 } from "@/services/participations/participations.contracts";
 import { createAdminTestClient, createAuthenticatedClient } from "./helpers";
 import { TEST_IDS, TEST_CREDENTIALS } from "./constants";
@@ -397,7 +397,7 @@ describe("bookings", () => {
         async (shape) => {
           const { data, error } = await oldSignup(PAID_CLUB, shape);
           expect(error).toBeNull();
-          expect(createParticipationRpcResult.parse(data)).toEqual({
+          expect(createBookingRpcResult.parse(data)).toEqual({
             kind: "validated",
           });
           expect(data).toEqual({ kind: "validated" });
@@ -411,7 +411,7 @@ describe("bookings", () => {
       ])("seats a no-charge signup on the spot (%s)", async (productId, shape, kind) => {
         const { data, error } = await oldSignup(productId, shape);
         expect(error).toBeNull();
-        expect(createParticipationRpcResult.parse(data).kind).toBe(kind);
+        expect(createBookingRpcResult.parse(data).kind).toBe(kind);
 
         const [seat] = await seatsOn(productId);
         expect(data).toEqual({ kind, participation_id: seat.id });

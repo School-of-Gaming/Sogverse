@@ -6,7 +6,7 @@ import { TEST_CREDENTIALS, TEST_IDS } from "./constants";
 import { createTestProduct, deleteTestProducts } from "./product-helpers";
 import {
   adminEnrollParticipantRpcResult,
-  createParticipationRpcResult,
+  createBookingRpcResult,
 } from "@/services/participations/participations.contracts";
 
 /**
@@ -188,7 +188,7 @@ describe("automatic placement into a single group", () => {
     it("places a free signup into the product's only group", async () => {
       const res = await register(FREE_ONE_GROUP, "free");
       expect(res.error).toBeNull();
-      expect(createParticipationRpcResult.parse(res.data).kind).toBe(
+      expect(createBookingRpcResult.parse(res.data).kind).toBe(
         "free_active",
       );
 
@@ -227,7 +227,7 @@ describe("automatic placement into a single group", () => {
       // landing in the inbox to be dragged into the single column by hand.
       const res = await register(MUNI_ONE_GROUP, "external");
       expect(res.error).toBeNull();
-      expect(createParticipationRpcResult.parse(res.data).kind).toBe(
+      expect(createBookingRpcResult.parse(res.data).kind).toBe(
         "external_active",
       );
 
@@ -273,7 +273,7 @@ describe("automatic placement into a single group", () => {
         TEST_IDS.GAMER_2,
       );
       expect(secondRes.error).toBeNull();
-      expect(createParticipationRpcResult.parse(secondRes.data).kind).toBe(
+      expect(createBookingRpcResult.parse(secondRes.data).kind).toBe(
         "full",
       );
 

@@ -77,9 +77,10 @@ always deliberate.
   through Stripe's own integration, and payments are profile totals
   (`sog_first_payment_at`, `sog_last_payment_at`, `sog_total_paid_eur`), never events. It
   says who holds the seat and, on a gamer's, the child's birth year and gender, and it
-  carries the UTM tag the browser's attribution cookie held at booking — stored on the seat
-  when it is made, and only under marketing cookie consent, the same gate as the account's
-  own tag.
+  carries the UTM tag the browser's attribution cookie held at booking — stored on the
+  booking, read through the seat's link to it, and only under marketing cookie consent, the
+  same gate as the account's own tag. A seat with no booking (an admin's, a partner's) files
+  it with no tag.
   `SV Waitlisted` carries the waitlist join's tag under the same five names.
 - `SV Session` is one event per attendance mark a gedu writes, present or absent. A mark
   changed to the other status is a new event, keyed by session, gamer and status, so a
@@ -134,7 +135,8 @@ it was given, and never sends a no.** Two moments give one:
   `sog_registration_marketing_answer` property.
 - **A product sign-up that asked.** A product may ask "I want emails from School of
   Gaming", unticked, with every booking, a waitlist join included. The answer is stored
-  on the participation, never in `marketing_consents`, and a yes subscribes the parent,
+  on the booking, never in `marketing_consents` and never on the seat, where a signed-in
+  child could read it, and a yes subscribes the parent,
   under the custom source `Sogverse product sign-up`, when the event the booking's own
   insert files goes out: `SV Enrolled` for a seat taken at once, `SV Waitlisted` for a
   waitlist join. A later promotion or demotion never carries it, so a parent who has
