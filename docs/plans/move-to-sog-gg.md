@@ -279,8 +279,10 @@ Every write outside the repo is confirmed with the owner before it is made.
      Re-read with `vercel api "/v6/domains/<domain>/config?projectIdOrName=sogverse"
      --scope school-of-gaming` before the hour. The existing hosts point at
      `cname.vercel-dns.com`, which Vercel ranks second and still serves.
-8. **At Nordname, at least a day before the hour.** With no fixed date, do this once the
-   heads-up has gone out; it changes nothing for visitors while it waits:
+8. **At Nordname, at least a day before the hour.** *Done 2026-10-30, and Vercel has
+   verified all three domains.* It changes nothing for visitors while it waits. The zone
+   as it stood before is saved in `~/work/sog-gg-dns-before-2026-10-30.tsv`, and it's
+   edited at `andoria.nordname.net:2222`, not on the Nordname site:
    - Lower the TTL on the apex `A` and the `www` CNAME to 300 s.
    - Add the `_vercel` TXT records from step 0.7.
    - Add a `staging` CNAME to `cname.vercel-dns.com`. A new name changes nothing for
