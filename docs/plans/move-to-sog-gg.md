@@ -183,9 +183,10 @@ Every write outside the repo is confirmed with the owner before it is made.
    `npm run gates` passes.
    Until this branch is released, `supabase/config.toml` documents the old values.
    That's accepted, since the file is never pushed to prod.
-3. **Message the two external API users: Lynx and the Minecraft server team.** Draft each
-   with `/slack-msg` or `/whatsapp-msg`. Each message gives the date and the hour, and
-   says:
+3. **Message the two external API users: Lynx and the Minecraft server team.** The cutover
+   has no fixed date: it runs at a quiet hour the owner calls (decided 2026-10-30). So send
+   a heads-up naming the week, then a second message at the start of the hour. Draft each
+   with `/slack-msg` or `/whatsapp-msg`. The heads-up says:
    - their base URL moves from `https://sogverse.sog.gg` to `https://sog.gg`, and Lynx's
      staging one from `https://sogverse-staging.sog.gg` to `https://staging.sog.gg`
      (Lynx calls both);
@@ -193,7 +194,8 @@ Every write outside the repo is confirmed with the owner before it is made.
    - their calls fail from the cutover until they switch.
 
    For the Minecraft servers, a failing join check keeps players out, so their change has
-   to land within the hour. Agree with them who makes it, at that time.
+   to land within the hour. Agree with them who makes it and how they're reached at short
+   notice, and start the hour only once that person has answered.
 4. **Re-pull the machine-caller list**, and add anything new to step 1.6:
 
    ```bash
@@ -277,7 +279,8 @@ Every write outside the repo is confirmed with the owner before it is made.
      Re-read with `vercel api "/v6/domains/<domain>/config?projectIdOrName=sogverse"
      --scope school-of-gaming` before the hour. The existing hosts point at
      `cname.vercel-dns.com`, which Vercel ranks second and still serves.
-8. **The day before, at Nordname:**
+8. **At Nordname, at least a day before the hour.** With no fixed date, do this once the
+   heads-up has gone out; it changes nothing for visitors while it waits:
    - Lower the TTL on the apex `A` and the `www` CNAME to 300 s.
    - Add the `_vercel` TXT records from step 0.7.
    - Add a `staging` CNAME to `cname.vercel-dns.com`. A new name changes nothing for
