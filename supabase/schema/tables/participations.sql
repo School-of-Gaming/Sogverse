@@ -13,16 +13,10 @@ CREATE TABLE public.participations (
     created_at timestamp with time zone DEFAULT now() NOT NULL,
     updated_at timestamp with time zone DEFAULT now() NOT NULL,
     waitlisted_at timestamp with time zone,
-    stripe_checkout_session_id text,
     group_joined_at timestamp with time zone,
     seat_offer_sent_at timestamp with time zone,
     seat_offer_expiry_notified_at timestamp with time zone,
-    utm_source text,
-    utm_medium text,
-    utm_campaign text,
-    utm_content text,
-    utm_term text,
-    school_of_gaming_marketing_opt_in boolean,
+    booking_id uuid,
     CONSTRAINT chk_participations_group_joined_at_iff_group CHECK (((group_id IS NULL) = (group_joined_at IS NULL))),
     CONSTRAINT chk_participations_offer_notice_needs_offer CHECK (((seat_offer_expiry_notified_at IS NULL) OR (seat_offer_sent_at IS NOT NULL))),
     CONSTRAINT chk_participations_offer_only_when_waitlisted CHECK (((seat_offer_sent_at IS NULL) OR (status = 'waitlisted'::public.participation_status))),
@@ -42,13 +36,6 @@ COMMENT ON TABLE public.participations IS 'One row per seat on a product: who ho
 --
 
 COMMENT ON COLUMN public.participations.participant_id IS 'The profile occupying this seat: a gamer enrolled by their parent, or — on a product whose audience admits adults — the paying customer themselves (participant_id = customer_id is what a self seat looks like). The column is named for what it means rather than for any one role that fills it.';
-
-
---
--- Name: COLUMN participations.stripe_checkout_session_id; Type: COMMENT; Schema: public; Owner: -
---
-
-COMMENT ON COLUMN public.participations.stripe_checkout_session_id IS 'Stripe Checkout Session that paid for this seat. NULL for no-charge seats (free, municipality, admin enrollment, waitlist) and for rows predating the create-on-confirmation flow.';
 
 
 --
@@ -73,45 +60,18 @@ COMMENT ON COLUMN public.participations.seat_offer_expiry_notified_at IS 'When s
 
 
 --
--- Name: COLUMN participations.utm_source; Type: COMMENT; Schema: public; Owner: -
+-- Name: COLUMN participations.booking_id; Type: COMMENT; Schema: public; Owner: -
 --
 
-COMMENT ON COLUMN public.participations.utm_source IS 'The utm_source of the visit that led to this booking, or NULL. Written once, when the seat or place in line is created, by create_participation, confirm_paid_participation or join_waitlist, and only when the booking request carried marketing cookie consent — the same server-side gate the account''s own UTM columns are written under. The participation create and waitlist routes read the values from the request and clean them with the UTM module''s sanitiser (src/lib/utm.ts) under that marketing-cookie gate; a paid seat''s values travel through the Stripe Checkout Session metadata to the webhook, which hands them to confirm_paid_participation. Case preserved. Read by the Klaviyo enrolled and waitlisted events; a label that grants nothing.';
-
-
---
--- Name: COLUMN participations.utm_medium; Type: COMMENT; Schema: public; Owner: -
---
-
-COMMENT ON COLUMN public.participations.utm_medium IS 'The utm_medium of the visit that led to this booking, or NULL. Same rules as utm_source.';
+COMMENT ON COLUMN public.participations.booking_id IS 'The booking this seat came from, where the UTM tag and the School of Gaming answer live and which says whether money was involved. NULL for a seat an admin or a partner created. Promotion, a seat offer''s acceptance, demotion and an admin''s move all keep it, so after a move the booking''s product_id can differ from the seat''s.';
 
 
 --
--- Name: COLUMN participations.utm_campaign; Type: COMMENT; Schema: public; Owner: -
+-- Name: participations participations_booking_id_key; Type: CONSTRAINT; Schema: public; Owner: -
 --
 
-COMMENT ON COLUMN public.participations.utm_campaign IS 'The utm_campaign of the visit that led to this booking, or NULL. Same rules as utm_source.';
-
-
---
--- Name: COLUMN participations.utm_content; Type: COMMENT; Schema: public; Owner: -
---
-
-COMMENT ON COLUMN public.participations.utm_content IS 'The utm_content of the visit that led to this booking, or NULL. Same rules as utm_source.';
-
-
---
--- Name: COLUMN participations.utm_term; Type: COMMENT; Schema: public; Owner: -
---
-
-COMMENT ON COLUMN public.participations.utm_term IS 'The utm_term of the visit that led to this booking, or NULL. Same rules as utm_source.';
-
-
---
--- Name: COLUMN participations.school_of_gaming_marketing_opt_in; Type: COMMENT; Schema: public; Owner: -
---
-
-COMMENT ON COLUMN public.participations.school_of_gaming_marketing_opt_in IS 'The parent''s answer to the product''s "I want emails from School of Gaming" box when they booked this seat: true or false when the product asked (a school_of_gaming row in product_marketing_consents), NULL when it did not. Written once with the seat or place in line, by create_participation, confirm_paid_participation or join_waitlist. A yes subscribes the parent to School of Gaming''s Klaviyo list once, when the event the booking''s own insert files is sent — enrolled for a seat taken at once, waitlisted for a waitlist join; a later promotion or demotion of the row does not carry it again, and the answer itself is never an event property. It is never written to marketing_consents, because Klaviyo owns School of Gaming''s mailing consent.';
+ALTER TABLE ONLY public.participations
+    ADD CONSTRAINT participations_booking_id_key UNIQUE (booking_id);
 
 
 --
@@ -172,13 +132,6 @@ CREATE UNIQUE INDEX uq_participations_active_or_waitlisted ON public.participati
 
 
 --
--- Name: uq_participations_checkout_session; Type: INDEX; Schema: public; Owner: -
---
-
-CREATE UNIQUE INDEX uq_participations_checkout_session ON public.participations USING btree (stripe_checkout_session_id) WHERE (stripe_checkout_session_id IS NOT NULL);
-
-
---
 -- Name: participations participations_klaviyo_changed; Type: TRIGGER; Schema: public; Owner: -
 --
 
@@ -232,6 +185,14 @@ CREATE TRIGGER trg_participations_stamp_group_joined_at BEFORE INSERT OR UPDATE 
 --
 
 CREATE TRIGGER trg_validate_participations_group BEFORE INSERT OR UPDATE OF group_id, product_id ON public.participations FOR EACH ROW EXECUTE FUNCTION public.validate_participations_group();
+
+
+--
+-- Name: participations participations_booking_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.participations
+    ADD CONSTRAINT participations_booking_id_fkey FOREIGN KEY (booking_id) REFERENCES public.bookings(id) ON DELETE SET NULL;
 
 
 --

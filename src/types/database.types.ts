@@ -52,6 +52,102 @@ export type Database = {
           },
         ]
       }
+      bookings: {
+        Row: {
+          checkout_closes_at: string | null
+          created_at: string
+          currency: string | null
+          customer_id: string
+          id: string
+          participant_id: string
+          product_id: string
+          purchase_shape: string | null
+          school_of_gaming_marketing_opt_in: boolean | null
+          settled_at: string | null
+          status: Database["public"]["Enums"]["booking_status"]
+          stripe_checkout_session_id: string | null
+          utm_campaign: string | null
+          utm_content: string | null
+          utm_medium: string | null
+          utm_source: string | null
+          utm_term: string | null
+        }
+        Insert: {
+          checkout_closes_at?: string | null
+          created_at?: string
+          currency?: string | null
+          customer_id: string
+          id?: string
+          participant_id: string
+          product_id: string
+          purchase_shape?: string | null
+          school_of_gaming_marketing_opt_in?: boolean | null
+          settled_at?: string | null
+          status?: Database["public"]["Enums"]["booking_status"]
+          stripe_checkout_session_id?: string | null
+          utm_campaign?: string | null
+          utm_content?: string | null
+          utm_medium?: string | null
+          utm_source?: string | null
+          utm_term?: string | null
+        }
+        Update: {
+          checkout_closes_at?: string | null
+          created_at?: string
+          currency?: string | null
+          customer_id?: string
+          id?: string
+          participant_id?: string
+          product_id?: string
+          purchase_shape?: string | null
+          school_of_gaming_marketing_opt_in?: boolean | null
+          settled_at?: string | null
+          status?: Database["public"]["Enums"]["booking_status"]
+          stripe_checkout_session_id?: string | null
+          utm_campaign?: string | null
+          utm_content?: string | null
+          utm_medium?: string | null
+          utm_source?: string | null
+          utm_term?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "bookings_customer_id_fkey"
+            columns: ["customer_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "bookings_customer_id_fkey"
+            columns: ["customer_id"]
+            isOneToOne: false
+            referencedRelation: "user_list_entries"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "bookings_participant_id_fkey"
+            columns: ["participant_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "bookings_participant_id_fkey"
+            columns: ["participant_id"]
+            isOneToOne: false
+            referencedRelation: "user_list_entries"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "bookings_product_id_fkey"
+            columns: ["product_id"]
+            isOneToOne: false
+            referencedRelation: "products"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       catalogue_images: {
         Row: {
           created_at: string
@@ -2371,6 +2467,7 @@ export type Database = {
       }
       participations: {
         Row: {
+          booking_id: string | null
           created_at: string
           customer_id: string
           group_id: string | null
@@ -2378,21 +2475,15 @@ export type Database = {
           id: string
           participant_id: string
           product_id: string
-          school_of_gaming_marketing_opt_in: boolean | null
           seat_offer_expiry_notified_at: string | null
           seat_offer_sent_at: string | null
           signed_up_at: string
           status: Database["public"]["Enums"]["participation_status"]
-          stripe_checkout_session_id: string | null
           updated_at: string
-          utm_campaign: string | null
-          utm_content: string | null
-          utm_medium: string | null
-          utm_source: string | null
-          utm_term: string | null
           waitlisted_at: string | null
         }
         Insert: {
+          booking_id?: string | null
           created_at?: string
           customer_id: string
           group_id?: string | null
@@ -2400,21 +2491,15 @@ export type Database = {
           id?: string
           participant_id: string
           product_id: string
-          school_of_gaming_marketing_opt_in?: boolean | null
           seat_offer_expiry_notified_at?: string | null
           seat_offer_sent_at?: string | null
           signed_up_at?: string
           status: Database["public"]["Enums"]["participation_status"]
-          stripe_checkout_session_id?: string | null
           updated_at?: string
-          utm_campaign?: string | null
-          utm_content?: string | null
-          utm_medium?: string | null
-          utm_source?: string | null
-          utm_term?: string | null
           waitlisted_at?: string | null
         }
         Update: {
+          booking_id?: string | null
           created_at?: string
           customer_id?: string
           group_id?: string | null
@@ -2422,21 +2507,21 @@ export type Database = {
           id?: string
           participant_id?: string
           product_id?: string
-          school_of_gaming_marketing_opt_in?: boolean | null
           seat_offer_expiry_notified_at?: string | null
           seat_offer_sent_at?: string | null
           signed_up_at?: string
           status?: Database["public"]["Enums"]["participation_status"]
-          stripe_checkout_session_id?: string | null
           updated_at?: string
-          utm_campaign?: string | null
-          utm_content?: string | null
-          utm_medium?: string | null
-          utm_source?: string | null
-          utm_term?: string | null
           waitlisted_at?: string | null
         }
         Relationships: [
+          {
+            foreignKeyName: "participations_booking_id_fkey"
+            columns: ["booking_id"]
+            isOneToOne: true
+            referencedRelation: "bookings"
+            referencedColumns: ["id"]
+          },
           {
             foreignKeyName: "participations_customer_id_fkey"
             columns: ["customer_id"]
@@ -4592,12 +4677,18 @@ export type Database = {
         Args: { p_id: string; p_versions: Json }
         Returns: string
       }
+      confirm_booking: {
+        Args: { p_booking_id: string; p_checkout_session_id?: string }
+        Returns: Json
+      }
       confirm_paid_participation: {
         Args: {
           p_checkout_session_id: string
+          p_currency?: string
           p_customer_id: string
           p_participant_id: string
           p_product_id: string
+          p_purchase_shape?: string
           p_school_of_gaming_marketing_opt_in?: boolean
           p_utm_campaign?: string
           p_utm_content?: string
@@ -4610,6 +4701,23 @@ export type Database = {
       consume_discord_link_token: { Args: { p_token: string }; Returns: string }
       consume_slack_link_token: { Args: { p_token: string }; Returns: string }
       count_active_seats: { Args: { p_product_id: string }; Returns: number }
+      create_booking: {
+        Args: {
+          p_consented_documents?: string[]
+          p_currency: string
+          p_customer_id: string
+          p_participant_id: string
+          p_product_id: string
+          p_purchase_shape: string
+          p_school_of_gaming_marketing_opt_in?: boolean
+          p_utm_campaign?: string
+          p_utm_content?: string
+          p_utm_medium?: string
+          p_utm_source?: string
+          p_utm_term?: string
+        }
+        Returns: Json
+      }
       create_gamer: {
         Args: {
           p_birth_month: number
@@ -4664,23 +4772,6 @@ export type Database = {
           p_versions: Json
         }
         Returns: string
-      }
-      create_participation: {
-        Args: {
-          p_consented_documents?: string[]
-          p_currency: string
-          p_customer_id: string
-          p_participant_id: string
-          p_product_id: string
-          p_purchase_shape: string
-          p_school_of_gaming_marketing_opt_in?: boolean
-          p_utm_campaign?: string
-          p_utm_content?: string
-          p_utm_medium?: string
-          p_utm_source?: string
-          p_utm_term?: string
-        }
-        Returns: Json
       }
       create_product: {
         Args: {
@@ -5959,6 +6050,7 @@ export type Database = {
     }
     Enums: {
       billing_mode: "paid" | "free" | "external_contract"
+      booking_status: "pending" | "settled" | "duplicate"
       catalogue_image_purpose:
         | "product"
         | "library_cover"
@@ -6154,6 +6246,7 @@ export const Constants = {
   public: {
     Enums: {
       billing_mode: ["paid", "free", "external_contract"],
+      booking_status: ["pending", "settled", "duplicate"],
       catalogue_image_purpose: [
         "product",
         "library_cover",

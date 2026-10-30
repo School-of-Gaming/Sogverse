@@ -525,7 +525,7 @@ describe("the Klaviyo sync", () => {
 
     it("records the booking's UTM tag and School of Gaming answer the seat writer was handed", async () => {
       await clearEvents([TEST_IDS.CUSTOMER]);
-      const { data, error } = await admin.rpc("create_participation", {
+      const { data, error } = await admin.rpc("create_booking", {
         p_product_id: FREE,
         p_participant_id: TEST_IDS.GAMER,
         p_customer_id: TEST_IDS.CUSTOMER,
@@ -541,10 +541,10 @@ describe("the Klaviyo sync", () => {
 
       const { data: written } = await admin
         .from("participations")
-        .select("utm_source, utm_medium, utm_campaign, utm_content, utm_term, school_of_gaming_marketing_opt_in")
+        .select("booking:bookings(utm_source, utm_medium, utm_campaign, utm_content, utm_term, school_of_gaming_marketing_opt_in)")
         .eq("id", participationId)
         .single();
-      expect(written).toEqual({
+      expect(written?.booking).toEqual({
         utm_source: "lynx",
         utm_medium: "email",
         utm_campaign: "lynx-autumn",
@@ -571,7 +571,7 @@ describe("the Klaviyo sync", () => {
         TEST_CREDENTIALS.ADMIN.email,
         TEST_CREDENTIALS.ADMIN.password,
       );
-      const { data, error } = await admin.rpc("create_participation", {
+      const { data, error } = await admin.rpc("create_booking", {
         p_product_id: FREE,
         p_participant_id: TEST_IDS.GAMER,
         p_customer_id: TEST_IDS.CUSTOMER,
@@ -593,7 +593,7 @@ describe("the Klaviyo sync", () => {
       const promoted = await adminUser.rpc("promote_from_waitlist", { p_participation_id: participationId });
       expect(promoted.error).toBeNull();
 
-      // The seat still holds the parent's answer; the re-activation does not repeat it.
+      // The booking still holds the parent's answer; the re-activation does not repeat it.
       expect(await eventRow("enrolled", participationId)).toMatchObject({
         facts: { ...GAMER_SEAT_UNTAGGED, utm_source: "lynx", marketing_opt_in: null },
       });
@@ -619,10 +619,10 @@ describe("the Klaviyo sync", () => {
 
       const { data: written } = await admin
         .from("participations")
-        .select("utm_source, utm_campaign, school_of_gaming_marketing_opt_in")
+        .select("booking:bookings(utm_source, utm_campaign, school_of_gaming_marketing_opt_in)")
         .eq("id", participationId)
         .single();
-      expect(written).toEqual({
+      expect(written?.booking).toEqual({
         utm_source: "lynx",
         utm_campaign: "lynx-autumn",
         school_of_gaming_marketing_opt_in: true,
@@ -647,7 +647,7 @@ describe("the Klaviyo sync", () => {
       });
 
       // Demoted back onto the waitlist: that waitlisted event keeps the tag of
-      // the visit that made the row, but carries no answer.
+      // the visit that made the booking, but carries no answer.
       await clearEvents([TEST_IDS.CUSTOMER]);
       const demoted = await adminUser.rpc("demote_to_waitlist", { p_participation_id: participationId });
       expect(demoted.error).toBeNull();

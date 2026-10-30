@@ -19,10 +19,10 @@ import {
  * (group_id NULL), which is what every enrollment did before.
  *
  * Both instant-active writers are covered, because they are separate bodies
- * that have to agree: `create_participation` (the family self-enrollment path)
+ * that have to agree: `create_booking` (the family self-enrollment path)
  * and `admin_enroll_participant` (comp-enrollment). The paid case is only
- * meaningful on the admin path — `create_participation` never writes a row at
- * all for a paid shape, it returns kind='validated' and leaves the seat to the
+ * meaningful on the admin path — `create_booking` never writes a seat at
+ * all for a paid shape, it returns kind='pending' and leaves the seat to the
  * Stripe webhook — so that is where the paid-stays-unassigned case lives.
  *
  * `group_joined_at` is asserted on an auto-placed row: nothing here writes that
@@ -170,13 +170,13 @@ describe("automatic placement into a single group", () => {
     await deleteTestProducts(admin, ALL_PRODUCTS);
   });
 
-  describe("create_participation — the family self-enrollment path", () => {
+  describe("create_booking — the family self-enrollment path", () => {
     function register(
       productId: string,
       shape: "free" | "external",
       gamerId: string = TEST_IDS.GAMER,
     ) {
-      return admin.rpc("create_participation", {
+      return admin.rpc("create_booking", {
         p_product_id: productId,
         p_participant_id: gamerId,
         p_customer_id: TEST_IDS.CUSTOMER,

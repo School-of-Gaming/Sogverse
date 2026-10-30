@@ -1474,14 +1474,14 @@ BEGIN
                               FROM public.product_required_consents
                              WHERE product_id = v_product);
     BEGIN
-      v_result := public.create_participation(
+      v_result := public.create_booking(
         v_product, v_gamer, v_parent, r.shape, 'eur', v_consents);
 
-      IF v_result->>'kind' = 'validated' THEN
-        -- A made-up checkout-session id. It has to be unique per seat (the
+      IF v_result->>'kind' = 'pending' THEN
+        -- A made-up checkout-session id. It has to be unique per booking (the
         -- table says so), and it stands for nothing in Stripe.
-        PERFORM public.confirm_paid_participation(
-          v_product, v_gamer, v_parent,
+        PERFORM public.confirm_booking(
+          (v_result->>'booking_id')::uuid,
           'cs_test_' || md5(v_product::text || v_gamer::text));
       END IF;
     END;
@@ -1504,9 +1504,9 @@ BEGIN
                             'hanna.salminen@example.com', 'camille.dubois@example.com',
                             'james.whitfield@example.com', 'tomi.hakala@example.com')
   LOOP
-    v_result := public.create_participation(v_event, r.id, r.id, 'single_payment', 'eur');
-    IF v_result->>'kind' = 'validated' THEN
-      PERFORM public.confirm_paid_participation(v_event, r.id, r.id,
+    v_result := public.create_booking(v_event, r.id, r.id, 'single_payment', 'eur');
+    IF v_result->>'kind' = 'pending' THEN
+      PERFORM public.confirm_booking((v_result->>'booking_id')::uuid,
         'cs_test_' || md5(v_event::text || r.id::text));
     END IF;
   END LOOP;

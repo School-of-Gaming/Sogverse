@@ -1,5 +1,6 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
 import type { Database } from "@/types/database.types";
+import { z } from "zod";
 import { TEST_IDS } from "./constants";
 
 /**
@@ -25,6 +26,7 @@ import { TEST_IDS } from "./constants";
  *   5b1–5b5        participations-race.test.ts (5b2 is its soft-cap product)
  *   5b6–5b7        participations-rls.test.ts
  *   5b8–5b9        participations-external.test.ts
+ *   5ba–5bf        bookings.test.ts
  *   5c1            product-seat-counts-trigger.test.ts
  *   5c2            cancel-participation.test.ts
  *   5c3–5c6        get-my-participation-subscription-states.test.ts
@@ -494,7 +496,7 @@ function tomorrow(timeZone: string): string {
 /**
  * Creates a v2 product with sensible defaults: paid consumer_club, 1 seat,
  * starting tomorrow and with no end date — which derives as `pending`, so
- * create_participation accepts signups — and registration already open.
+ * create_booking accepts signups — and registration already open.
  * Returns the product id.
  *
  * The caller is responsible for deletion (CASCADE handles participations
@@ -606,4 +608,79 @@ export async function resetFamilySubs(
     .from("family_subscriptions")
     .delete()
     .in("customer_id", [TEST_IDS.CUSTOMER, TEST_IDS.CUSTOMER_2]);
+}
+
+/**
+ * A pending booking in a paid shape with its Checkout Session stored, as the
+ * checkout route leaves one. A test that wants a seat with a payment marker
+ * links its row to this through `booking_id`.
+ */
+export async function insertPaidBooking(
+  admin: SupabaseClient<Database>,
+  booking: {
+    productId: string;
+    participantId: string;
+    customerId: string;
+    checkoutSessionId: string;
+  },
+): Promise<string> {
+  const { data, error } = await admin
+    .from("bookings")
+    .insert({
+      product_id: booking.productId,
+      participant_id: booking.participantId,
+      customer_id: booking.customerId,
+      purchase_shape: "subscription_monthly",
+      currency: "eur",
+      stripe_checkout_session_id: booking.checkoutSessionId,
+      checkout_closes_at: new Date(Date.now() + 1_800_000).toISOString(),
+    })
+    .select("id")
+    .single();
+  if (error) throw new Error(`paid booking failed: ${error.message}`);
+  return data.id;
+}
+
+/** What confirm_booking answers, as the seat tests read it. */
+export const confirmBookingResult = z.discriminatedUnion("kind", [
+  z.object({
+    kind: z.literal("settled"),
+    participation_id: z.string(),
+    idempotent: z.boolean(),
+  }),
+  z.object({
+    kind: z.literal("duplicate_payment"),
+    existing_participation_id: z.string(),
+  }),
+]);
+
+/**
+ * What the Stripe webhook does when a Session completes: confirms the Session's
+ * booking. A second call with the same session id is a redelivery of the event,
+ * so it finds the booking the first call made.
+ */
+export async function payForBooking(
+  admin: SupabaseClient<Database>,
+  productId: string,
+  participantId: string,
+  customerId: string,
+  checkoutSessionId: string,
+) {
+  const { data: existing } = await admin
+    .from("bookings")
+    .select("id")
+    .eq("stripe_checkout_session_id", checkoutSessionId)
+    .maybeSingle();
+  const bookingId =
+    existing?.id ??
+    (await insertPaidBooking(admin, {
+      productId,
+      participantId,
+      customerId,
+      checkoutSessionId,
+    }));
+  return admin.rpc("confirm_booking", {
+    p_booking_id: bookingId,
+    p_checkout_session_id: checkoutSessionId,
+  });
 }

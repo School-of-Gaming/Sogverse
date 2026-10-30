@@ -3,7 +3,7 @@ import type { SupabaseClient } from "@supabase/supabase-js";
 import type { Database } from "@/types/database.types";
 import { createAdminTestClient, createAuthenticatedClient } from "./helpers";
 import { TEST_IDS, TEST_CREDENTIALS } from "./constants";
-import { createTestProduct, deleteTestProducts } from "./product-helpers";
+import { createTestProduct, deleteTestProducts, insertPaidBooking } from "./product-helpers";
 import {
   createParticipationRpcResult,
   demoteToWaitlistRpcResult,
@@ -121,7 +121,7 @@ describe("waitlist — admin read + promote/demote + self position", () => {
 
   /** Registers a gamer as an active (external) participation; returns its id. */
   async function registerActive(gamerId: string): Promise<string> {
-    const res = await admin.rpc("create_participation", {
+    const res = await admin.rpc("create_booking", {
       p_product_id: PRODUCT_MUNI,
       p_participant_id: gamerId,
       p_customer_id: TEST_IDS.CUSTOMER,
@@ -215,16 +215,22 @@ describe("waitlist — admin read + promote/demote + self position", () => {
   it("get_product_groups_with_details flags which waitlisted rows money once arrived for", async () => {
     // The promote dialog's condition, and the branch where it decides
     // something. Both rows are waitlisted and otherwise identical; the marker
-    // is the recorded Checkout Session id, which demotion does NOT clear. So
+    // is a booking in a paid shape, which demotion does NOT clear. So
     // it is what separates a camper who genuinely paid and was later moved to
     // the waitlist — who promotes back with a plain drag — from a family that
     // only ever joined the queue, who gets the dialog. Keying the refusal on
     // the product's billing alone would trap the former there forever.
     const paid = await joinWaitlist(TEST_IDS.GAMER);
     await joinWaitlist(TEST_IDS.GAMER_2);
+    const paidBooking = await insertPaidBooking(admin, {
+      productId: PRODUCT_MUNI,
+      participantId: TEST_IDS.GAMER,
+      customerId: TEST_IDS.CUSTOMER,
+      checkoutSessionId: "cs_test_waitlist_marker",
+    });
     await admin
       .from("participations")
-      .update({ stripe_checkout_session_id: "cs_test_waitlist_marker" })
+      .update({ booking_id: paidBooking })
       .eq("id", paid);
 
     const res = await adminUser.rpc("get_product_groups_with_details", {
@@ -528,11 +534,11 @@ describe("waitlist — admin read + promote/demote + self position", () => {
   });
 
   it("demote_to_waitlist demotes a free-club member, which the old type rule refused", async () => {
-    // A free club enrolls through create_participation's free branch, exactly
+    // A free club enrolls through create_booking's free branch, exactly
     // as a free event does — instant active row, no Stripe, so no subscription
     // to orphan. A product-type rule would refuse this purely for being a
     // consumer club; there is nothing here to protect and the drag goes through.
-    const enrolled = await admin.rpc("create_participation", {
+    const enrolled = await admin.rpc("create_booking", {
       p_product_id: PRODUCT_FREE_CLUB,
       p_participant_id: TEST_IDS.GAMER,
       p_customer_id: TEST_IDS.CUSTOMER,
