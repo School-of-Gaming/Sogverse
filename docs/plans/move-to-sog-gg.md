@@ -245,6 +245,14 @@ Every write outside the repo is confirmed with the owner before it is made.
      pages and spotlights that link to `www.sog.gg` or bare `sog.gg` Webflow pages. After
      the cutover those links open this app's 404. Find them with a read-only prod query
      over the authored text columns, and fix them in the admin UI.
+
+   Checked 2026-10-30. No action needed: Meta's verification of `sog.gg` rests on no tag
+   on the Webflow site, and the Pixel's allow-list covers `sog.gg` and its subdomains; the
+   Sogverse Tag Manager container has no hostname filters; Daily.co has no domain
+   restriction; Brevo's templates link only to the bare `https://sog.gg`; prod's stored
+   text holds one old link, in a past session report, which renders with no link. The
+   Google and Klaviyo changes are in step 1.6's table. Still open: Reddit Ads, the ad
+   links in Meta Ads Manager, and the staging OAuth client.
 6. **Add `https://sog.gg/**` to Supabase Auth's redirect allow-list**, keeping
    `sogverse.sog.gg/**`. It is harmless before the cutover.
    - Every Supabase Auth change in this plan goes through the Management API:
@@ -361,8 +369,8 @@ back to `sog.gg` while that is still Webflow.
    | WhatsApp | Webhook callback URL in the Meta app | Meta's verification handshake passes on save |
    | Claude connectors | Re-add with `https://sog.gg/api/mcp`, for the owner and Reksi | `whoami` answers |
    | Minecraft servers | The Minecraft server team changes the base URL in their config, as agreed in step 0.3 | A join check succeeds |
-   | Google Cloud OAuth | Consent screen URLs, and JavaScript origins if they list the old host | Saved |
-   | Anything step 0.5 found | As found | As found |
+   | Google Cloud OAuth (project `sogverse`) | Add `https://sog.gg` to the Sogverse client's JavaScript origins, and set the consent screen's home, privacy and terms URLs to `sog.gg`. `sog.gg` is already an authorised domain, and the redirect URI is Supabase's | A Google sign-in on `sog.gg` works |
+   | Klaviyo | The live flows Kesäleiri Lead Flow (FI) and New Flow - Guidebook Download (Finnish) link to Webflow camp and schedule pages (found 2026-10-30): repoint them to the shop | The flow emails link to `sog.gg` pages that exist |
 7. **Move staging to `staging.sog.gg`.** It's the same work as production's, on test
    data. Nothing here can drop real data or money, so it runs after production is
    confirmed working.
