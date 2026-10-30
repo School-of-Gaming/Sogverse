@@ -17,8 +17,9 @@
  * **Only the public content routes carry translated slugs.** Dashboard, auth,
  * voice, settings and preview segments are app surfaces rather than indexable
  * content, so they keep their English segments in every locale and are declared
- * here as a plain string (one value for all locales). The Roblox programme pages and `/docs` are
- * brand/partner surfaces and stay English too.
+ * here as a plain string (one value for all locales). `/roblox` and `/docs` are
+ * brand/partner surfaces and stay English too; the two Roblox format pages
+ * translate only the word after the brand name.
  *
  * **Klingon reuses the English slugs.** URLs are infrastructure; the easter egg
  * is the content.
@@ -105,6 +106,20 @@ export const PATHNAMES = {
     fr: "/a-propos",
     tlh: "/about",
   },
+  "/roblox-online": {
+    en: "/roblox-online",
+    fi: "/roblox-verkossa",
+    sv: "/roblox-online",
+    fr: "/roblox-en-ligne",
+    tlh: "/roblox-online",
+  },
+  "/roblox-all": {
+    en: "/roblox-all",
+    fi: "/roblox-kaikki",
+    sv: "/roblox-alla",
+    fr: "/roblox-tous",
+    tlh: "/roblox-all",
+  },
   "/library": {
     en: "/library",
     fi: "/kirjasto",
@@ -184,8 +199,6 @@ export const PATHNAMES = {
   "/docs/minecraft-api": "/docs/minecraft-api",
   "/docs/lynx-api": "/docs/lynx-api",
   "/roblox": "/roblox",
-  "/roblox-all": "/roblox-all",
-  "/roblox-online": "/roblox-online",
   "/roblox/privacy": "/roblox/privacy",
   "/roblox/safeguarding": "/roblox/safeguarding",
   "/roblox/terms": "/roblox/terms",
