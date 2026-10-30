@@ -152,8 +152,7 @@ Every write outside the repo is confirmed with the owner before it is made.
 
 ### 0. Before the day
 
-1. **Export Webflow to the team Drive.** *Exported locally 2026-10-26; it reaches Drive
-   with step 2.6, where the details are.*
+1. **Export Webflow to the team Drive.** *Done 2026-10-30; step 2.6 has the details.*
    - CMS collections (blog, lessons, camps, staff, categories) as CSV.
    - Form submissions.
    - Members and e-commerce orders, if the site used them. These hold personal data, so
@@ -438,8 +437,8 @@ removing the old staging host, so until then each change can be pointed back at
    Bing.
 6. **Cancel the Webflow subscription and every add-on**, once the exports are confirmed
    on Drive. Then delete the `proxy-ssl.webflow.com` TXT record on the apex.
-   - The export (2026-10-26) is in `~/work/webflow-export-2026-10-26`, with the scripts
-     that made it so it can be re-run just before cancelling. The token it uses is
+   - The export (2026-10-26) is in the team Drive's Webflow folder, with the scripts that
+     made it so it can be re-run just before cancelling. The token it uses is
      `WEBFLOW_EXPORT_TOKEN` (read-only) in `~/work/sog-translations/.env`. Its
      `personal/` folder goes to the restricted Drive folder.
    - The site's custom code and the "My child is a gamer" guidebook were added on
