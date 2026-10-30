@@ -373,7 +373,16 @@ describe("the events", () => {
       ...base,
       kind: "waitlisted",
       unique_id: "waitlisted:p3",
-      properties: { source_id: "p3", product: EVENT, marketing_opt_in: true },
+      properties: {
+        source_id: "p3",
+        product: EVENT,
+        utm_source: "meta",
+        utm_medium: "paid",
+        utm_campaign: "autumn",
+        utm_content: null,
+        utm_term: null,
+        marketing_opt_in: true,
+      },
     },
     {
       ...base,
@@ -469,6 +478,11 @@ describe("the events", () => {
           "product_name": "string",
           "product_type": "string",
           "topic": "string",
+          "utm_campaign": "string",
+          "utm_content": "null",
+          "utm_medium": "string",
+          "utm_source": "string",
+          "utm_term": "null",
         },
       }
     `);

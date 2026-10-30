@@ -345,14 +345,23 @@ describe("drainKlaviyoSync", () => {
     ]);
   });
 
-  it("subscribes a waitlist join that said yes, and no other", async () => {
+  it("subscribes a waitlist join that said yes, and no other, and sends the join's campaign tag", async () => {
     const join = (eventId: string, optIn: boolean | null) => ({
       event_id: eventId,
       kind: "waitlisted",
       unique_id: `waitlisted:${eventId}`,
       customer_id: KEPT,
       occurred_at: "2026-10-01T09:00:00+00:00",
-      properties: { source_id: eventId, product: null, marketing_opt_in: optIn },
+      properties: {
+        source_id: eventId,
+        product: null,
+        utm_source: "meta",
+        utm_medium: "paid",
+        utm_campaign: "autumn",
+        utm_content: null,
+        utm_term: null,
+        marketing_opt_in: optIn,
+      },
     });
     outbox({
       events: ["e1", "e2", "e3"].map((id) => ({
@@ -369,7 +378,17 @@ describe("drainKlaviyoSync", () => {
     expect(result).toMatchObject({ eventsSent: 3, failed: 0 });
     expect(klaviyo.createKlaviyoEvent).toHaveBeenCalledWith(
       { email: `${KEPT}@example.com`, externalId: KEPT },
-      expect.objectContaining({ metric: "SV Waitlisted", uniqueId: "waitlisted:e1" }),
+      expect.objectContaining({
+        metric: "SV Waitlisted",
+        uniqueId: "waitlisted:e1",
+        properties: expect.objectContaining({
+          utm_source: "meta",
+          utm_medium: "paid",
+          utm_campaign: "autumn",
+          utm_content: null,
+          utm_term: null,
+        }),
+      }),
     );
     expect(klaviyo.subscribeKlaviyoProfile.mock.calls).toEqual([
       [

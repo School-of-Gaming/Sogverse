@@ -135,7 +135,7 @@ export const EVENT_PROPERTIES = {
   spokenLanguage: "spoken_language",
   /** On an enrolment: the absolute address of the product's page, in the parent's locale. */
   productUrl: "product_url",
-  /** On an enrolment: the UTM tag of the visit that led to the booking. */
+  /** On an enrolment and a waitlisting: the UTM tag of the visit that led to the booking or the waitlist join. */
   utm: {
     source: "utm_source",
     medium: "utm_medium",
@@ -362,6 +362,17 @@ function seatProperties(
   };
 }
 
+/** The UTM tag an enrolment or a waitlisting carries, under its event property names. */
+function utmProperties(
+  properties: Extract<KlaviyoEventRow, { kind: "enrolled" | "waitlisted" }>["properties"],
+): KlaviyoProperties {
+  const utm: KlaviyoProperties = {};
+  for (const field of UTM_FIELDS) {
+    utm[EVENT_PROPERTIES.utm[field]] = properties[`utm_${field}`];
+  }
+  return utm;
+}
+
 /**
  * The absolute address of the product's page in the parent's locale, on the
  * canonical site origin. It is the shop address for every type: a
@@ -396,15 +407,18 @@ export function klaviyoEventFor(
   switch (row.kind) {
     case "account_created":
       return { ...base, properties: {} };
-    case "waitlisted":
     case "seat_offered":
       return { ...base, properties: productProperties(row.properties.product, locale) };
+    case "waitlisted":
+      return {
+        ...base,
+        properties: {
+          ...productProperties(row.properties.product, locale),
+          ...utmProperties(row.properties),
+        },
+      };
     case "enrolled": {
       const { product } = row.properties;
-      const utm: KlaviyoProperties = {};
-      for (const field of UTM_FIELDS) {
-        utm[EVENT_PROPERTIES.utm[field]] = row.properties[`utm_${field}`];
-      }
       return {
         ...base,
         properties: {
@@ -413,7 +427,7 @@ export function klaviyoEventFor(
           [EVENT_PROPERTIES.location]: product?.location_name ?? null,
           [EVENT_PROPERTIES.spokenLanguage]: product?.spoken_language_code ?? null,
           [EVENT_PROPERTIES.productUrl]: product === null ? null : productUrl(product, locale),
-          ...utm,
+          ...utmProperties(row.properties),
         },
       };
     }

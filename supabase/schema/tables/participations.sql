@@ -76,7 +76,7 @@ COMMENT ON COLUMN public.participations.seat_offer_expiry_notified_at IS 'When s
 -- Name: COLUMN participations.utm_source; Type: COMMENT; Schema: public; Owner: -
 --
 
-COMMENT ON COLUMN public.participations.utm_source IS 'The utm_source of the visit that led to this booking, or NULL. Written once, when the seat or place in line is created, by create_participation, confirm_paid_participation or join_waitlist, and only when the booking request carried marketing cookie consent — the same server-side gate the account''s own UTM columns are written under. The participation create and waitlist routes read the values from the request and cleans them with the UTM module''s sanitiser (src/lib/utm.ts) under that marketing-cookie gate; a paid seat''s values travel through the Stripe Checkout Session metadata to the webhook, which hands them to confirm_paid_participation. Case preserved. Read by the Klaviyo enrolled event; a label that grants nothing.';
+COMMENT ON COLUMN public.participations.utm_source IS 'The utm_source of the visit that led to this booking, or NULL. Written once, when the seat or place in line is created, by create_participation, confirm_paid_participation or join_waitlist, and only when the booking request carried marketing cookie consent — the same server-side gate the account''s own UTM columns are written under. The participation create and waitlist routes read the values from the request and clean them with the UTM module''s sanitiser (src/lib/utm.ts) under that marketing-cookie gate; a paid seat''s values travel through the Stripe Checkout Session metadata to the webhook, which hands them to confirm_paid_participation. Case preserved. Read by the Klaviyo enrolled and waitlisted events; a label that grants nothing.';
 
 
 --

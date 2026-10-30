@@ -56,6 +56,16 @@ const GAMER_SEAT_UNTAGGED = {
   marketing_opt_in: null,
 };
 
+/** What a waitlisted event with no booking tag and no answer says, and all it says. */
+const WAITLISTED_UNTAGGED = {
+  utm_source: null,
+  utm_medium: null,
+  utm_campaign: null,
+  utm_content: null,
+  utm_term: null,
+  marketing_opt_in: null,
+};
+
 type ProfileOutbox = Database["public"]["Tables"]["klaviyo_profile_outbox"]["Row"];
 type EventOutbox = Database["public"]["Tables"]["klaviyo_event_outbox"]["Row"];
 type EventKind = Database["public"]["Enums"]["klaviyo_event_kind"];
@@ -487,10 +497,9 @@ describe("the Klaviyo sync", () => {
       });
 
       const waiting = await seat(ENDED, "waitlisted");
-      expect(await eventRow("waitlisted", waiting)).toMatchObject({
-        product_id: ENDED,
-        facts: { marketing_opt_in: null },
-      });
+      const waitlisted = await eventRow("waitlisted", waiting);
+      expect(waitlisted?.product_id).toBe(ENDED);
+      expect(waitlisted?.facts).toEqual(WAITLISTED_UNTAGGED);
       expect(await eventRow("enrolled", waiting)).toBeNull();
 
       const offeredAt = new Date().toISOString();
@@ -592,7 +601,7 @@ describe("the Klaviyo sync", () => {
       await admin.from("participations").delete().eq("id", participationId);
     });
 
-    it("carries a waitlist join's School of Gaming answer on its waitlisted event, and not on the promotion", async () => {
+    it("carries a waitlist join's campaign tag on every waitlisted event, and its School of Gaming answer only on the join", async () => {
       await clearEvents([TEST_IDS.CUSTOMER]);
       const adminUser = await createAuthenticatedClient(
         TEST_CREDENTIALS.ADMIN.email,
@@ -618,8 +627,11 @@ describe("the Klaviyo sync", () => {
         utm_campaign: "lynx-autumn",
         school_of_gaming_marketing_opt_in: true,
       });
-      expect(await eventRow("waitlisted", participationId)).toMatchObject({
-        facts: { marketing_opt_in: true },
+      expect((await eventRow("waitlisted", participationId))?.facts).toEqual({
+        ...WAITLISTED_UNTAGGED,
+        utm_source: "lynx",
+        utm_campaign: "lynx-autumn",
+        marketing_opt_in: true,
       });
 
       // Promoted into the seat: the enrolment keeps the tag but not the answer.
@@ -634,12 +646,15 @@ describe("the Klaviyo sync", () => {
         },
       });
 
-      // Demoted back onto the waitlist: that waitlisted event carries no answer.
+      // Demoted back onto the waitlist: that waitlisted event keeps the tag of
+      // the visit that made the row, but carries no answer.
       await clearEvents([TEST_IDS.CUSTOMER]);
       const demoted = await adminUser.rpc("demote_to_waitlist", { p_participation_id: participationId });
       expect(demoted.error).toBeNull();
-      expect(await eventRow("waitlisted", participationId)).toMatchObject({
-        facts: { marketing_opt_in: null },
+      expect((await eventRow("waitlisted", participationId))?.facts).toEqual({
+        ...WAITLISTED_UNTAGGED,
+        utm_source: "lynx",
+        utm_campaign: "lynx-autumn",
       });
 
       await admin.from("participations").delete().eq("id", participationId);

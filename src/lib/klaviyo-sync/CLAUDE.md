@@ -79,6 +79,7 @@ always deliberate.
   says who holds the seat and, on a gamer's, the child's birth year and gender, and it
   carries the UTM tag of the visit that led to the booking — stored on the seat when it is
   made, and only under marketing cookie consent, the same gate as the account's own tag.
+  `SV Waitlisted` carries the waitlist join's tag under the same five names.
 - `SV Session` is one event per attendance mark a gedu writes, present or absent. A mark
   changed to the other status is a new event, keyed by session, gamer and status, so a
   mark set back to what it was is the earlier event again and Klaviyo does not count it

@@ -136,6 +136,18 @@ const seatHolderFacts = {
 };
 
 /**
+ * The UTM tag of the visit that led to the booking or the waitlist join,
+ * written on the seat only under marketing cookie consent.
+ */
+const bookingUtmFacts = {
+  utm_source: z.string().nullable(),
+  utm_medium: z.string().nullable(),
+  utm_campaign: z.string().nullable(),
+  utm_content: z.string().nullable(),
+  utm_term: z.string().nullable(),
+};
+
+/**
  * One row of `get_klaviyo_events`. A claimed id with no row belongs to a parent
  * who is gone: finish it unsent.
  */
@@ -151,6 +163,7 @@ export const klaviyoEventRow = z.discriminatedUnion("kind", [
     kind: z.literal("waitlisted"),
     properties: z.object({
       ...eventProperties,
+      ...bookingUtmFacts,
       /**
        * The answer to the product's School of Gaming mailing ask, given with
        * the waitlist join; null when it did not ask, and on a demotion.
@@ -165,12 +178,7 @@ export const klaviyoEventRow = z.discriminatedUnion("kind", [
     properties: z.object({
       ...eventProperties,
       ...seatHolderFacts,
-      /** The UTM tag of the visit that led to the booking, written only under marketing cookie consent. */
-      utm_source: z.string().nullable(),
-      utm_medium: z.string().nullable(),
-      utm_campaign: z.string().nullable(),
-      utm_content: z.string().nullable(),
-      utm_term: z.string().nullable(),
+      ...bookingUtmFacts,
       /** The answer to the product's School of Gaming mailing ask; null when it did not ask. */
       marketing_opt_in: z.boolean().nullable(),
     }),

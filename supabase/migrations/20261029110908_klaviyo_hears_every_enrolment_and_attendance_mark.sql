@@ -22,7 +22,8 @@
 -- 5. Seats carry the booking's UTM tag and School of Gaming marketing answer,
 --    which create_participation, confirm_paid_participation and the waitlist
 --    join take as new optional arguments. A waitlist join's waitlisted event
---    carries the answer, as a seat taken at once's enrolled event does.
+--    carries the tag and the answer, as a seat taken at once's enrolled event
+--    does.
 -- 6. A product's signup panel may ask the School of Gaming mailing question.
 --    The answer lives on the seat; set_marketing_consent still refuses it.
 
@@ -47,7 +48,7 @@ ALTER TABLE public.participations
   ADD COLUMN utm_term text,
   ADD COLUMN school_of_gaming_marketing_opt_in boolean;
 
-COMMENT ON COLUMN public.participations.utm_source IS 'The utm_source of the visit that led to this booking, or NULL. Written once, when the seat or place in line is created, by create_participation, confirm_paid_participation or join_waitlist, and only when the booking request carried marketing cookie consent — the same server-side gate the account''s own UTM columns are written under. The participation create and waitlist routes read the values from the request and cleans them with the UTM module''s sanitiser (src/lib/utm.ts) under that marketing-cookie gate; a paid seat''s values travel through the Stripe Checkout Session metadata to the webhook, which hands them to confirm_paid_participation. Case preserved. Read by the Klaviyo enrolled event; a label that grants nothing.';
+COMMENT ON COLUMN public.participations.utm_source IS 'The utm_source of the visit that led to this booking, or NULL. Written once, when the seat or place in line is created, by create_participation, confirm_paid_participation or join_waitlist, and only when the booking request carried marketing cookie consent — the same server-side gate the account''s own UTM columns are written under. The participation create and waitlist routes read the values from the request and clean them with the UTM module''s sanitiser (src/lib/utm.ts) under that marketing-cookie gate; a paid seat''s values travel through the Stripe Checkout Session metadata to the webhook, which hands them to confirm_paid_participation. Case preserved. Read by the Klaviyo enrolled and waitlisted events; a label that grants nothing.';
 COMMENT ON COLUMN public.participations.utm_medium IS 'The utm_medium of the visit that led to this booking, or NULL. Same rules as utm_source.';
 COMMENT ON COLUMN public.participations.utm_campaign IS 'The utm_campaign of the visit that led to this booking, or NULL. Same rules as utm_source.';
 COMMENT ON COLUMN public.participations.utm_content IS 'The utm_content of the visit that led to this booking, or NULL. Same rules as utm_source.';
@@ -70,7 +71,7 @@ COMMENT ON TABLE public.klaviyo_event_outbox IS 'Things that happened to a paren
 COMMENT ON COLUMN public.klaviyo_event_outbox.unique_id IS 'Klaviyo''s unique id for the event, which it deduplicates on: `<kind>:<source id>` for every kind but session, whose id is `session:<session id>:<participant id>:<status>` so that a mark corrected to another status is a second event.';
 COMMENT ON COLUMN public.klaviyo_event_outbox.source_id IS 'The row the event is about: the parent''s profile id for account_created, a participation for enrolled, waitlisted and seat_offered, a family subscription for subscription_cancelled, a session_attendance row for session.';
 COMMENT ON COLUMN public.klaviyo_event_outbox.occurred_at IS 'When it happened, taken from the source row: the profile''s creation, the participation''s activation, waitlisting or seat offer, the subscription''s update, the attendance mark''s recorded_at.';
-COMMENT ON COLUMN public.klaviyo_event_outbox.facts IS 'The facts of the moment, as they stood when the event was filed. enrolled: seat_holder (parent or gamer), gamer_birth_year and gamer_gender (null on a parent''s own seat), the seat''s utm_source, utm_medium, utm_campaign, utm_content, utm_term and marketing_opt_in (its school_of_gaming_marketing_opt_in on the booking itself, null on every later activation). session: attended, session_date, session_starts_at, and the same seat_holder, gamer_birth_year and gamer_gender. subscription_cancelled: the subscription''s status and current_period_end. waitlisted: marketing_opt_in (the row''s school_of_gaming_marketing_opt_in on the waitlist join itself, null when a seat is demoted onto the waitlist). Empty for account_created and seat_offered.';
+COMMENT ON COLUMN public.klaviyo_event_outbox.facts IS 'The facts of the moment, as they stood when the event was filed. enrolled: seat_holder (parent or gamer), gamer_birth_year and gamer_gender (null on a parent''s own seat), the seat''s utm_source, utm_medium, utm_campaign, utm_content, utm_term and marketing_opt_in (its school_of_gaming_marketing_opt_in on the booking itself, null on every later activation). session: attended, session_date, session_starts_at, and the same seat_holder, gamer_birth_year and gamer_gender. subscription_cancelled: the subscription''s status and current_period_end. waitlisted: the row''s utm_source, utm_medium, utm_campaign, utm_content, utm_term and marketing_opt_in (its school_of_gaming_marketing_opt_in on the waitlist join itself, null when a seat is demoted onto the waitlist). Empty for account_created and seat_offered.';
 
 -- ---------------------------------------------------------------------------
 -- 4. Filing an event under its unique id
@@ -278,12 +279,18 @@ BEGIN
      AND v_old_status IS DISTINCT FROM NEW.status THEN
     -- A waitlist join is the booking on this path, so its insert carries the
     -- answer exactly as a seat taken at once does; a seat demoted back onto
-    -- the waitlist later records null.
+    -- the waitlist later records null. The UTM tag is the visit that made the
+    -- row, read off it on every filing, as enrolled reads it.
     PERFORM public.enqueue_klaviyo_event(
       'waitlisted'::public.klaviyo_event_kind,
       NEW.id, NEW.customer_id, NEW.product_id,
       COALESCE(NEW.waitlisted_at, now()),
       jsonb_build_object(
+        'utm_source',       NEW.utm_source,
+        'utm_medium',       NEW.utm_medium,
+        'utm_campaign',     NEW.utm_campaign,
+        'utm_content',      NEW.utm_content,
+        'utm_term',         NEW.utm_term,
         'marketing_opt_in', CASE WHEN TG_OP = 'INSERT'
                                  THEN NEW.school_of_gaming_marketing_opt_in
                             END
@@ -304,7 +311,7 @@ BEGIN
 END;
 $$;
 
-COMMENT ON FUNCTION public.klaviyo_participation_changed() IS 'Trigger on participations, after an insert, a delete, or an update of status, product_id or seat_offer_sent_at that changes it: files the participation''s parent in the Klaviyo profile outbox, and files the events it shows — enrolled when it arrives at active (by insert or from the waitlist) on a product of any billing mode, with klaviyo_seat_holder_facts, the seat''s UTM tag and — on the insert that books the seat only — its School of Gaming marketing answer (null on a later activation, so a re-activated seat never re-subscribes); waitlisted when it arrives at waitlisted, with — on the insert that joins the waitlist only — the same answer (null when a seat is demoted onto it); seat_offered when a seat offer is first stamped on it. Granted to nobody.';
+COMMENT ON FUNCTION public.klaviyo_participation_changed() IS 'Trigger on participations, after an insert, a delete, or an update of status, product_id or seat_offer_sent_at that changes it: files the participation''s parent in the Klaviyo profile outbox, and files the events it shows — enrolled when it arrives at active (by insert or from the waitlist) on a product of any billing mode, with klaviyo_seat_holder_facts, the seat''s UTM tag and — on the insert that books the seat only — its School of Gaming marketing answer (null on a later activation, so a re-activated seat never re-subscribes); waitlisted when it arrives at waitlisted, with the row''s UTM tag and — on the insert that joins the waitlist only — the same answer (null when a seat is demoted onto it); seat_offered when a seat offer is first stamped on it. Granted to nobody.';
 
 -- The purchases still waiting are enrolments now: they take the new facts
 -- from their seat, and one whose seat is gone can no longer be described.
@@ -329,9 +336,16 @@ DELETE FROM public.klaviyo_event_outbox e
        );
 
 -- The waitlist joins still waiting were filed before any join asked the
--- question, so each records that it carries no answer.
+-- question or kept a tag, so each records that it carries neither.
 UPDATE public.klaviyo_event_outbox
-   SET facts = jsonb_build_object('marketing_opt_in', NULL)
+   SET facts = jsonb_build_object(
+                 'utm_source',       NULL,
+                 'utm_medium',       NULL,
+                 'utm_campaign',     NULL,
+                 'utm_content',      NULL,
+                 'utm_term',         NULL,
+                 'marketing_opt_in', NULL
+               )
  WHERE kind = 'waitlisted'::public.klaviyo_event_kind;
 
 -- ---------------------------------------------------------------------------
