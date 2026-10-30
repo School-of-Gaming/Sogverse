@@ -17,7 +17,7 @@
  * **Only the public content routes carry translated slugs.** Dashboard, auth,
  * voice, settings and preview segments are app surfaces rather than indexable
  * content, so they keep their English segments in every locale and are declared
- * here as a plain string (one value for all locales). `/roblox` and `/docs` are
+ * here as a plain string (one value for all locales). The Roblox programme pages and `/docs` are
  * brand/partner surfaces and stay English too.
  *
  * **Klingon reuses the English slugs.** URLs are infrastructure; the easter egg
