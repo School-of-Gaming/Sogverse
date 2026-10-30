@@ -84,7 +84,7 @@ export function PhoneZonesSheet({
                 key={zone.id}
                 zone={zone}
                 label={stage.zoneLabel(zone)}
-                count={members.length}
+                occupied={members.length > 0}
                 isCurrent={zone.id === currentZoneId}
                 onEnter={onEnter}
                 manage={moving === null ? manageFor(zone) : undefined}

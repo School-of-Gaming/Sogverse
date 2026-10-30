@@ -81,7 +81,7 @@ export function DesktopZoneRail({ stage }: { stage: RoomStage }) {
     >
       <aside
         aria-label={t("stage.zones")}
-        className="w-56 shrink-0 space-y-2 overflow-y-auto border-r border-border p-2 xl:w-64"
+        className="min-h-0 flex-1 space-y-2 overflow-y-auto p-2"
       >
         <p className="px-1 text-xs text-muted-foreground">{t("zonesDescription")}</p>
         {zones.map((zone) => (
@@ -145,7 +145,7 @@ function RailZone({
     <ZoneEntry
       zone={zone}
       label={label}
-      count={members.length}
+      occupied={members.length > 0}
       isCurrent={isCurrent}
       isDropTarget={isOver && canDropHere}
       onEnter={onEnter}

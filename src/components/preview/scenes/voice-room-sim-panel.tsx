@@ -9,9 +9,10 @@ import { ROOM_SIZES, type RoomSimulation, type SimulationState } from "./voice-r
 
 /**
  * The developer's handle on the pretend call: not part of the room, so it wears
- * a dashed edge and stays folded until asked for. It sits in the dock's empty
- * corner on a wide screen and just above the bar on a phone, below the sheets so
- * they still cover it.
+ * a dashed edge and stays folded until asked for. It sits in the stage's bottom
+ * corner, which on a wide screen means inside the right panel's width (`w-80`,
+ * `xl:w-96`), and just above the bar on a phone, below the sheets so they still
+ * cover it.
  */
 export function VoiceRoomSimPanel({
   simulation,
@@ -26,7 +27,7 @@ export function VoiceRoomSimPanel({
   return (
     <div
       className={cn(
-        "glass fixed bottom-[5.25rem] right-1 z-40 flex flex-col gap-2 rounded-md border border-dashed border-border p-1.5 text-xs lg:bottom-2 lg:left-2 lg:right-auto",
+        "glass fixed bottom-[5.25rem] right-1 z-40 flex flex-col gap-2 rounded-md border border-dashed border-border p-1.5 text-xs lg:bottom-3 lg:right-[20.75rem] xl:right-[24.75rem]",
         open && "w-44",
       )}
     >

@@ -121,7 +121,7 @@ export class RoomSimulation {
     this.patchLocal({ zoneId });
   }
 
-  /** A move the reader did not make: the room tells it apart by that alone. */
+  /** A move the reader did not make: on to the next open zone. */
   moderatorMovesReader() {
     const here = this.hereZoneId();
     const next = this.openZoneIds[(this.openZoneIds.indexOf(here) + 1) % this.openZoneIds.length];

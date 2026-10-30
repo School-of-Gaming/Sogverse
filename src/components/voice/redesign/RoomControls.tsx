@@ -76,7 +76,7 @@ export function LabelledButton({
  * since it makes the reader audible to everyone. The word states what is true
  * now, and the accessible name says what a press does.
  */
-export function MicControl({ cellClassName }: { cellClassName?: string }) {
+function MicControl() {
   const t = useTranslations("voice");
   const { micOn, toggleMic, joining, localLocks } = useVoiceRoom();
   const name = localLocks.audio
@@ -94,13 +94,12 @@ export function MicControl({ cellClassName }: { cellClassName?: string }) {
       moderatorLocked={localLocks.audio}
       title={name}
       aria-label={name}
-      cellClassName={cellClassName}
     />
   );
 }
 
-/** The device chevron beside the mic, with its error badge. */
-export function MicSettings() {
+/** The device chevron on the mic's corner, with its error badge. */
+function MicSettings() {
   const { joining, audioInputs, currentAudioInputId, setAudioInput, mediaError } =
     useVoiceRoom();
   if (joining) return null;
@@ -112,6 +111,22 @@ export function MicSettings() {
       mediaError={mediaError}
       levelIndicator={<MicLevelIndicator />}
     />
+  );
+}
+
+/**
+ * The mic with its device chevron riding the corner, so it costs no width of a
+ * cell's own. The chevron stays here in both layouts because its error badge is
+ * how a reader whose mic has failed finds out.
+ */
+export function MicCell({ cellClassName }: { cellClassName?: string }) {
+  return (
+    <div className={cn("relative", cellClassName)}>
+      <MicControl />
+      <div className="absolute -right-0.5 -top-0.5">
+        <MicSettings />
+      </div>
+    </div>
   );
 }
 

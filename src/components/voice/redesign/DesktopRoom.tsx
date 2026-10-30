@@ -4,34 +4,30 @@ import { useState } from "react";
 import { Mic } from "lucide-react";
 import { useTranslations } from "next-intl";
 import { Heading } from "@sog/ui";
-import { cn } from "@/lib/cn";
-import { ParticipantList } from "../ParticipantList";
+import { PanelBody, PanelTabs, type PanelTab } from "./ChatPeoplePanel";
 import { DesktopZoneRail } from "./DesktopZoneRail";
-import { useHearStatus } from "./room-status";
 import {
   CameraControl,
   LeaveControl,
-  MicControl,
-  MicSettings,
+  MicCell,
   ModeratorControls,
 } from "./RoomControls";
 import { TileStage } from "./TileStage";
 import type { VoiceRoomRedesignProps } from "./types";
 import type { RoomStage } from "./use-room-stage";
 import { ZoneGlyph } from "./ZoneEntry";
-import { ZoneMoveNoticeHost } from "./ZoneMoveNotice";
 
 const TILE_ASPECT = { min: 4 / 3, max: 16 / 9 };
 const MIN_TILE_WIDTH = 200;
-const CELL = "min-w-[4.75rem]";
-/** Fills the panel's box, which is what the room grants the chat here. */
-const CHAT_HEIGHT = "h-full";
+/** The rule in the column gap that sets Leave apart from what it sits beside. */
+const LEAVE_CELL =
+  "col-start-3 before:absolute before:inset-y-1 before:-left-1 before:w-px before:bg-border";
 
 /**
  * The room on a wide screen: nothing scrolls but the panels, and there are no
  * site links, because a child clicking Shop would drop out of the call. The
- * zone you are in is the stage, between the zones on the left and the chat and
- * people on the right, over the controls.
+ * zone you are in is the stage, between the left column and the chat and people
+ * on the right, and all three run the full height under the top bar.
  */
 export function DesktopRoom({
   stage,
@@ -42,7 +38,6 @@ export function DesktopRoom({
   leaveLabel,
 }: VoiceRoomRedesignProps & { stage: RoomStage }) {
   const t = useTranslations("voice");
-  const hearStatus = useHearStatus(stage);
 
   return (
     <div className="flex h-dvh flex-col overflow-hidden bg-background">
@@ -57,15 +52,17 @@ export function DesktopRoom({
         <div className="ml-auto flex min-w-0 items-center gap-2">
           {stage.currentZone && <ZoneGlyph zone={stage.currentZone} />}
           <p className="truncate text-sm font-medium">
-            {t("stage.statusLine", { zone: stage.currentZoneName, status: hearStatus })}
+            {t("stage.youAreIn", { zone: stage.currentZoneName })}
           </p>
         </div>
       </header>
 
       <div className="flex min-h-0 flex-1">
-        <DesktopZoneRail stage={stage} />
-        <main className="relative min-w-0 flex-1 p-2">
-          <ZoneMoveNoticeHost stage={stage} />
+        <div className="flex w-60 shrink-0 flex-col border-r border-border xl:w-64">
+          <DesktopZoneRail stage={stage} />
+          <RailControls stage={stage} leaveLabel={leaveLabel} />
+        </div>
+        <main className="min-w-0 flex-1 p-2">
           <TileStage
             members={stage.stageMembers}
             sharer={stage.sharer}
@@ -76,92 +73,68 @@ export function DesktopRoom({
         </main>
         <SidePanel chat={chat} participantChatControls={participantChatControls} />
       </div>
-
-      <footer className="flex shrink-0 items-center justify-center gap-2 border-t border-border p-2">
-        <div className="flex items-center gap-1">
-          <MicControl cellClassName={CELL} />
-          <MicSettings />
-        </div>
-        <CameraControl cellClassName={CELL} />
-        <ModeratorControls cellClassName={CELL} />
-        <LeaveControl
-          leaving={stage.leaving}
-          onLeave={() => void stage.leave()}
-          label={leaveLabel}
-          cellClassName={cn(CELL, "ml-4")}
-        />
-      </footer>
     </div>
   );
 }
 
 /**
- * Chat and People as two tabs, or People alone where the room has no chat.
+ * The controls at the foot of the left column, in three equal columns.
  *
- * **The chat stays mounted behind the People tab**, so a half-written message,
- * the log's scroll position and the live subscription all survive a look at the
- * people. It sits in an absolutely filled box so `h-full` has a definite height
- * to take, and that box's bottom padding is the line the chat's typing indicator
- * draws into. The chat's root has no height of its own, so the box hands it one.
+ * **Everyone gets the row of mic, camera and Leave, and a moderator's or
+ * trainee's three tools are one more row on top of it**, so the columns line up
+ * and Leave is in the same corner for every viewer. The two start classes hold
+ * that when a row is short: a viewer with Share alone, or a room with no camera.
+ *
+ * The column is 240px at the narrowest, which leaves 69px a cell inside the
+ * padding and gaps, and 63px for a label. That holds French's longest labels on
+ * two lines, and the longest single words in any locale ("vaimennus", at about
+ * 61px) whole. Anything added to this grid does that arithmetic again.
  */
+function RailControls({
+  stage,
+  leaveLabel,
+}: {
+  stage: RoomStage;
+  leaveLabel: VoiceRoomRedesignProps["leaveLabel"];
+}) {
+  const t = useTranslations("voice.stage");
+  return (
+    <nav
+      aria-label={t("controls")}
+      className="grid shrink-0 grid-cols-3 gap-x-2 gap-y-1 border-t border-border p-2"
+    >
+      <ModeratorControls />
+      <MicCell cellClassName="col-start-1" />
+      <CameraControl />
+      <LeaveControl
+        leaving={stage.leaving}
+        onLeave={() => void stage.leave()}
+        label={leaveLabel}
+        cellClassName={LEAVE_CELL}
+      />
+    </nav>
+  );
+}
+
 function SidePanel({
   chat,
   participantChatControls,
 }: Pick<VoiceRoomRedesignProps, "chat" | "participantChatControls">) {
-  const t = useTranslations("voice.stage");
-  const [tab, setTab] = useState<"chat" | "people">("chat");
-  const showChat = chat !== undefined && tab === "chat";
+  const [tab, setTab] = useState<PanelTab>("chat");
 
   return (
     <aside className="flex w-80 shrink-0 flex-col border-l border-border xl:w-96">
       {chat !== undefined && (
-        <div role="tablist" className="flex shrink-0 gap-1 border-b border-border px-2 pt-1">
-          <PanelTab selected={showChat} onSelect={() => setTab("chat")}>
-            {t("chat")}
-          </PanelTab>
-          <PanelTab selected={!showChat} onSelect={() => setTab("people")}>
-            {t("people")}
-          </PanelTab>
+        <div className="shrink-0 border-b border-border px-2 pt-1">
+          <PanelTabs tab={tab} onSelect={setTab} />
         </div>
       )}
-      <div className="relative min-h-0 flex-1">
-        {chat !== undefined && (
-          <div className={cn("absolute inset-0 px-2 pb-6 pt-2 [&>*]:h-full", !showChat && "hidden")}>
-            {chat(CHAT_HEIGHT)}
-          </div>
-        )}
-        <div className={cn("absolute inset-0 overflow-y-auto p-2", showChat && "hidden")}>
-          <ParticipantList participantChatControls={participantChatControls} />
-        </div>
-      </div>
+      <PanelBody
+        tab={tab}
+        chat={chat}
+        participantChatControls={participantChatControls}
+        className="min-h-0 flex-1"
+      />
     </aside>
-  );
-}
-
-/** Every tab sets one weight, so switching changes no label's width. */
-function PanelTab({
-  selected,
-  onSelect,
-  children,
-}: {
-  selected: boolean;
-  onSelect: () => void;
-  children: string;
-}) {
-  return (
-    <button
-      type="button"
-      role="tab"
-      aria-selected={selected}
-      onClick={onSelect}
-      className={cn(
-        "rounded-t-md border-b-2 px-3 py-1.5 text-sm font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-act",
-        selected
-          ? "border-act text-act"
-          : "border-transparent text-muted-foreground hover:text-foreground",
-      )}
-    >
-      {children}
-    </button>
   );
 }

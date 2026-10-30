@@ -1,25 +1,22 @@
 "use client";
 
 import { useState } from "react";
-import { ChevronDown, MessageSquare, MoreHorizontal, Users } from "lucide-react";
+import { MapPin, MessageSquare, MoreHorizontal, Users } from "lucide-react";
 import { useTranslations } from "next-intl";
 import { Heading } from "@sog/ui";
 import {
   Sheet,
-  SheetBody,
   SheetContent,
   SheetHeader,
   SheetTitle,
 } from "@/components/ui/sheet";
-import { ParticipantList } from "../ParticipantList";
+import { PanelBody, PanelTabs, type PanelTab } from "./ChatPeoplePanel";
 import { PhoneZonesSheet } from "./PhoneZonesSheet";
-import { useHearStatus } from "./room-status";
 import {
   CameraControl,
   LabelledButton,
   LeaveControl,
-  MicControl,
-  MicSettings,
+  MicCell,
   ModeratorControls,
   useHasModeratorControls,
 } from "./RoomControls";
@@ -27,24 +24,27 @@ import { TileStage } from "./TileStage";
 import type { VoiceRoomRedesignProps } from "./types";
 import type { RoomStage } from "./use-room-stage";
 import { ZoneGlyph } from "./ZoneEntry";
-import { ZoneMoveNoticeHost } from "./ZoneMoveNotice";
 
 /** Taller than wide at the most, so the 360px floor's two columns fill a tall stage. */
 const TILE_ASPECT = { min: 2 / 3, max: 4 / 3 };
 const MIN_TILE_WIDTH = 150;
-/** The whole chat surface's height inside its sheet: one height, granted here. */
-const CHAT_HEIGHT = "h-[65dvh]";
+const CELL = "min-w-0 flex-1";
 
-type OpenSheet = "zones" | "chat" | "people" | "more" | null;
+type OpenSheet = "zones" | "panel" | "more" | null;
 
 /**
  * The room in a hand: the stage fills the screen between a strip saying where
  * you are and a bar of big labelled targets, and everything else is a sheet.
  *
+ * **The bar is five cells, or six for a moderator or trainee, which is why Chat
+ * and People share one.** At the 360px floor six cells are 55px each and hold a
+ * 49px label, so every word on the bar has to fit 49px in every locale: a label
+ * wraps between words, and a word that is too long breaks mid-word. Anything
+ * added to the bar does that arithmetic again.
+ *
  * **The sheets stay mounted while closed**, which is the sheet's own design and
  * what keeps a half-written message and the chat's subscription alive between
- * looks. The mic's device chevron stays on the mic cell rather than moving into
- * More, because its error badge is how a reader whose mic has failed finds out.
+ * looks.
  */
 export function PhoneRoom({
   stage,
@@ -55,9 +55,9 @@ export function PhoneRoom({
   leaveLabel,
 }: VoiceRoomRedesignProps & { stage: RoomStage }) {
   const t = useTranslations("voice");
-  const hearStatus = useHearStatus(stage);
   const hasMore = useHasModeratorControls();
   const [sheet, setSheet] = useState<OpenSheet>(null);
+  const [tab, setTab] = useState<PanelTab>("chat");
   const closeTo = (next: boolean) => {
     if (!next) setSheet(null);
   };
@@ -68,30 +68,22 @@ export function PhoneRoom({
         {title ?? t("voiceRoom")}
       </Heading>
 
-      <header className="flex shrink-0 items-center gap-2 border-b border-border px-2 py-1">
+      <header className="flex shrink-0 items-center gap-2 border-b border-border px-1 py-0.5">
         <button
           type="button"
           onClick={() => setSheet("zones")}
           aria-haspopup="dialog"
-          className="flex min-h-11 min-w-0 flex-1 items-center gap-2 rounded-md px-2 text-left hover:bg-hover focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-act"
+          className="flex min-h-9 min-w-0 flex-1 items-center gap-2 rounded-md px-1 text-left hover:bg-hover focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-act"
         >
           {stage.currentZone && <ZoneGlyph zone={stage.currentZone} />}
-          <span className="flex min-w-0 flex-1 flex-col">
-            <span className="truncate text-sm font-medium">
-              {t("stage.youAreIn", { zone: stage.currentZoneName })}
-            </span>
-            <span className="truncate text-xs text-muted-foreground">{hearStatus}</span>
-          </span>
-          <span className="flex shrink-0 items-center gap-0.5 text-xs font-medium">
-            {t("stage.zones")}
-            <ChevronDown className="h-4 w-4" aria-hidden />
+          <span className="truncate text-sm font-medium">
+            {t("stage.youAreIn", { zone: stage.currentZoneName })}
           </span>
         </button>
         {titleAccessory}
       </header>
 
-      <main className="relative min-h-0 flex-1 p-2">
-        <ZoneMoveNoticeHost stage={stage} />
+      <main className="min-h-0 flex-1 p-2">
         <TileStage
           members={stage.stageMembers}
           sharer={stage.sharer}
@@ -105,30 +97,23 @@ export function PhoneRoom({
         aria-label={t("stage.controls")}
         className="flex shrink-0 gap-1 border-t border-border p-1"
       >
-        <div className="relative min-w-0 flex-1">
-          <MicControl />
-          <div className="absolute -right-0.5 -top-0.5">
-            <MicSettings />
-          </div>
-        </div>
-        <CameraControl cellClassName="min-w-0 flex-1" />
-        {chat !== undefined && (
-          <LabelledButton
-            icon={<MessageSquare />}
-            label={t("stage.chat")}
-            variant="outline"
-            aria-haspopup="dialog"
-            onClick={() => setSheet("chat")}
-            cellClassName="min-w-0 flex-1"
-          />
-        )}
+        <MicCell cellClassName={CELL} />
+        <CameraControl cellClassName={CELL} />
         <LabelledButton
-          icon={<Users />}
-          label={t("stage.people")}
+          icon={<MapPin />}
+          label={t("stage.zones")}
           variant="outline"
           aria-haspopup="dialog"
-          onClick={() => setSheet("people")}
-          cellClassName="min-w-0 flex-1"
+          onClick={() => setSheet("zones")}
+          cellClassName={CELL}
+        />
+        <LabelledButton
+          icon={chat !== undefined ? <MessageSquare /> : <Users />}
+          label={chat !== undefined ? t("stage.chat") : t("stage.people")}
+          variant="outline"
+          aria-haspopup="dialog"
+          onClick={() => setSheet("panel")}
+          cellClassName={CELL}
         />
         {hasMore && (
           <LabelledButton
@@ -137,14 +122,14 @@ export function PhoneRoom({
             variant="outline"
             aria-haspopup="dialog"
             onClick={() => setSheet("more")}
-            cellClassName="min-w-0 flex-1"
+            cellClassName={CELL}
           />
         )}
         <LeaveControl
           leaving={stage.leaving}
           onLeave={() => void stage.leave()}
           label={leaveLabel}
-          cellClassName="min-w-0 flex-1"
+          cellClassName={CELL}
         />
       </nav>
 
@@ -154,26 +139,26 @@ export function PhoneRoom({
         stage={stage}
       />
 
-      {chat !== undefined && (
-        <Sheet open={sheet === "chat"} onOpenChange={closeTo} side="bottom">
-          <SheetContent>
-            <SheetHeader onClose={() => setSheet(null)}>
-              <SheetTitle>{t("stage.chat")}</SheetTitle>
-            </SheetHeader>
-            {/* The bottom padding is the line the typing indicator draws into. */}
-            <div className="px-2 pb-6 pt-2">{chat(CHAT_HEIGHT)}</div>
-          </SheetContent>
-        </Sheet>
-      )}
-
-      <Sheet open={sheet === "people"} onOpenChange={closeTo} side="bottom">
+      <Sheet open={sheet === "panel"} onOpenChange={closeTo} side="bottom">
         <SheetContent>
-          <SheetHeader onClose={() => setSheet(null)}>
-            <SheetTitle>{t("stage.people")}</SheetTitle>
-          </SheetHeader>
-          <SheetBody className="max-h-[70dvh] px-3">
-            <ParticipantList participantChatControls={participantChatControls} />
-          </SheetBody>
+          {chat !== undefined ? (
+            <SheetHeader onClose={() => setSheet(null)} className="items-center px-2 py-1">
+              <Heading level={2} step="card-title" srOnly>
+                {t("stage.chat")}
+              </Heading>
+              <PanelTabs tab={tab} onSelect={setTab} />
+            </SheetHeader>
+          ) : (
+            <SheetHeader onClose={() => setSheet(null)}>
+              <SheetTitle>{t("stage.people")}</SheetTitle>
+            </SheetHeader>
+          )}
+          <PanelBody
+            tab={tab}
+            chat={chat}
+            participantChatControls={participantChatControls}
+            className="h-[70dvh]"
+          />
         </SheetContent>
       </Sheet>
 
