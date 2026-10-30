@@ -628,7 +628,7 @@ export const ROUTES = {
    * The Programme's own privacy policy, supplementing the platform one at
    * `/privacy`. Shares `/roblox`'s unpublished posture exactly — noindex, no
    * sitemap entry, no nav link — and flips to published in the same change that
-   * publishes `/roblox`. It is reached from `/roblox` itself and from the
+   * publishes the programme pages. It is reached from them and from the
    * general privacy policy's section on the Creator Academy, which links it for
    * everything that section does not itself state; being linked from a
    * published page changes nothing about the noindex posture, which is the
@@ -638,15 +638,15 @@ export const ROUTES = {
   /**
    * The Programme's joint child safeguarding policy, held by Lynx Educate and
    * School of Gaming together. Same posture as `robloxPrivacy` above — noindex,
-   * no sitemap entry, no nav link, reachable only from `/roblox` itself — and
-   * flips to published in the same change that publishes `/roblox`.
+   * no sitemap entry, no nav link, reachable only from the programme pages — and
+   * flips to published in the same change that publishes the programme pages.
    */
   robloxSafeguarding: "/roblox/safeguarding",
   /**
    * The Programme's own terms, supplementing the platform ones at
    * `/terms-and-conditions`. Same posture as `robloxPrivacy` above — noindex,
-   * no sitemap entry, no nav link, reachable only from `/roblox` itself — and
-   * flips to published in the same change that publishes `/roblox`.
+   * no sitemap entry, no nav link, reachable only from the programme pages — and
+   * flips to published in the same change that publishes the programme pages.
    */
   robloxTerms: "/roblox/terms",
   privacy: "/privacy",

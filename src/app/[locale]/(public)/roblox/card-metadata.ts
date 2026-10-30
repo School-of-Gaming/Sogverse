@@ -4,9 +4,9 @@ import { resolveLocale } from "@/lib/constants/locales";
 import { ogCardImage } from "@/lib/og/card-metadata";
 
 /**
- * The programme's social card, as the four pages that carry it declare it.
+ * The programme's social card, as the six pages that carry it declare it.
  *
- * **All four declare it explicitly.** The card used to reach the three
+ * **All six declare it explicitly.** The card used to reach the three
  * sub-pages through the `opengraph-image` file convention, which is gone (see
  * `@/lib/og/cards`) — and a sub-page that declared nothing would now fall back
  * to the site-wide card, so the link a family is sent to the privacy policy

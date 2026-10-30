@@ -8,7 +8,7 @@ import { PartnerLockup } from "@/components/roblox/partner-lockup";
 import type { ProgrammeFormat } from "./programme-filters";
 
 /**
- * The /roblox hero: the programme name, its three-beat tagline, CTA, partner
+ * The programme page hero: the programme name, its three-beat tagline, CTA, partner
  * lockup.
  *
  * **The headline is the programme's own name**, stacked over two lines with the

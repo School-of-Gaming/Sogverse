@@ -4,6 +4,7 @@ import { unstable_cache } from "next/cache";
 
 import { PartnerQueryError } from "@/lib/api/partner-auth.server";
 import { SUPPORTED_LOCALES } from "@/lib/constants/locales";
+import { ROUTES } from "@/lib/constants/routes";
 import {
   MAX_FILTER_LENGTH,
   VercelAnalyticsClient,
@@ -55,7 +56,7 @@ type TermEntry = TrafficPage["by_term"][number];
  * on one row. The landing page is one page at three addresses, one per format,
  * and Lynx is told about it as one page.
  */
-const LANDING_ROUTES = ["/roblox", "/roblox-online", "/roblox-all"];
+const LANDING_ROUTES = [ROUTES.roblox, ROUTES.robloxOnline, ROUTES.robloxAll];
 const SHOP_ROUTE = "/shop";
 
 /**
