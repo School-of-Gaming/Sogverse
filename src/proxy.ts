@@ -153,7 +153,8 @@ function isPinExemptPath(pathname: string, isAuthRoute: boolean): boolean {
 // match also covers the per-municipality pages (/schools/[slug]).
 // ROUTES.roblox is the Roblox programme landing page — public so it can be
 // shared with Lynx and Roblox, but kept out of robots.txt and the sitemap
-// rather than gated.
+// rather than gated. ROUTES.robloxOnline and ROUTES.robloxAll are the same page
+// at their own addresses, which the prefix match below does not reach.
 // ROUTES.verifyEmail is public rather than an AUTH_ROUTE: an auth route bounces
 // a signed-in visitor to their dashboard, and the person clicking a
 // verification link is very often already signed in — that bounce would eat the
@@ -179,7 +180,7 @@ function isPinExemptPath(pathname: string, isAuthRoute: boolean): boolean {
 // Gedu or an admin there with a one-time `?token=` the login bounce would drop.
 // The page gates itself, and spending the token is a role-gated POST.
 // ROUTES.linkSlack is the Slack app's twin of it, for admins.
-const PUBLIC_ROUTES = [ROUTES.home, ROUTES.shop, ROUTES.schools, ROUTES.about, ROUTES.library, ROUTES.team, ROUTES.discover, ROUTES.privacy, ROUTES.termsAndConditions, ROUTES.antiBullying, ROUTES.attributions, ROUTES.docs, ROUTES.forgotPassword, ROUTES.resetPassword, ROUTES.resetPin, ROUTES.verifyEmail, ROUTES.seatOffer, ROUTES.roblox, ROUTES.voice.prefix, ROUTES.oauthConsent, ROUTES.linkDiscord, ROUTES.linkSlack];
+const PUBLIC_ROUTES = [ROUTES.home, ROUTES.shop, ROUTES.schools, ROUTES.about, ROUTES.library, ROUTES.team, ROUTES.discover, ROUTES.privacy, ROUTES.termsAndConditions, ROUTES.antiBullying, ROUTES.attributions, ROUTES.docs, ROUTES.forgotPassword, ROUTES.resetPassword, ROUTES.resetPin, ROUTES.verifyEmail, ROUTES.seatOffer, ROUTES.roblox, ROUTES.robloxOnline, ROUTES.robloxAll, ROUTES.voice.prefix, ROUTES.oauthConsent, ROUTES.linkDiscord, ROUTES.linkSlack];
 
 // The /voice/* prefix is public for instant rooms, but /voice/group/[id] is
 // the authenticated group voice room — seat-holders (a gamer, or a parent on

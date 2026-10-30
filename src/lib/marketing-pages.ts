@@ -40,6 +40,8 @@ export const MARKETING_PAGES = [
   "/",
   "/about",
   "/roblox",
+  "/roblox-online",
+  "/roblox-all",
   "/shop",
   "/shop/[id]",
   "/discover/[idOrSlug]",
