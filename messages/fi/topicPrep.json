@@ -34,7 +34,7 @@
     "roblox_studio": "Tuomme tietokoneet kerralle, ja Roblox Studio on niissä valmiina. Jokainen osallistuja tarvitsee silti oman Roblox-tilin. Käy alla oleva vaihe läpi ennen kertaa."
   },
   "remoteOnlyIntro": "Kerroilla käytetään äänihuonetta. Käy alla oleva vaihe läpi ennen ensimmäistä kertaa.",
-  "hybridIntro": "Kerho kokoaa osallistujat yhteen sekä paikan päällä että etänä. Gedu, eli pelikasvattaja, ohjaa kerhoa etäyhteydellä. Kaikki juttelevat toisilleen yhteisessä äänipuhelussa.",
+  "hybridIntro": "Kerho kokoaa osallistujat yhteen sekä paikan päällä että etänä. Gedu, eli pelikasvattaja, ohjaa kerhoa etäyhteydellä. Kaikki juttelevat toisilleen yhteisessä äänihuoneessa.",
   "homeHeading": "Osallistuminen kotoa käsin",
   "steps": {
     "minecraftJavaAccount": {
@@ -133,7 +133,7 @@
     },
     "venueVoiceRoom": {
       "title": "Äänihuoneeseen liittyminen paikan päällä",
-      "body": "Paikan päällä olevat osallistujat liittyvät ryhmän äänihuoneeseen Sogversessa haluamallaan laitteella. Kuulokkeita ei tarvita. Jokainen osallistuja tarvitsee keinon kirjautua sisään: jos hänellä ei vielä ole omia tunnuksia, huoltaja voi asettaa ne Oman SOGin Pelaajan asetuksista, jotta kenenkään ei tarvitse jakaa huoltajan tunnuksia."
+      "body": "Paikan päällä olevat osallistujat liittyvät ryhmän äänihuoneeseen Sogversessa haluamallaan laitteella. Kuulokkeita ei tarvita. Jokainen osallistuja tarvitsee keinon kirjautua sisään: jos hänellä ei vielä ole omia tunnuksia, vanhempi voi asettaa ne Oman SOGin Pelaajan asetuksista, jotta kenenkään ei tarvitse jakaa vanhemman tunnuksia."
     }
   },
   "platformNotes": {

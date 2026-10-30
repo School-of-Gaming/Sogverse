@@ -84,18 +84,17 @@ import type { GamePlatform } from "@/lib/constants/game-platforms";
 // guide for a product with a room (in a hybrid guide, the last step of the home
 // section). Written into every topic's block it would be one paragraph copied
 // per topic, drifting apart the first time one of them was edited. It is also
-// why the label-only topics render a guide on such a product: there is exactly
-// one thing to do beforehand, and it is this.
+// why the label-only topics render a guide on such a product: on an online one
+// it is the one thing to do beforehand.
 //
-// **The two are separate inputs on purpose.** Whether the install-and-test
-// steps apply and whether the voice-room step applies are different questions
-// of the delivery mode, and the resolver asks each through its own helper, so
-// changing what one helper answers for a mode changes that half of the guide
-// and nothing else.
+// **The two are separate inputs on purpose.** Outside the hybrid guide, whether
+// the install-and-test steps apply and whether the voice-room step applies are
+// different questions of the delivery mode, and the resolver asks each through
+// its own helper.
 //
 // **A hybrid guide is two sections, because its gamers are in two places.**
-// One reader's child sits at the venue on a machine we brought and another's
-// joins from home, and the mail and the card cannot tell which. So the first
+// One reader's child is at the venue and another's joins from home, and the
+// mail and the card cannot tell which. So the first
 // section holds what applies wherever the child is — the topic's `always` steps
 // and joining the room from the venue, which is its own shared step because
 // nothing about it is the mic-and-camera step's setup — and a second section,

@@ -47,11 +47,10 @@ the guide says the opposite, as a mechanism a reader can hold us to.
 
 **Rule: the resolver asks a product's delivery mode through the helpers in
 `src/lib/products/delivery-mode.ts`, and never compares the mode itself.** A product with
-both a voice room and gamers at a site takes the hybrid guide below. For any other,
-`familyBringsOwnMachine` decides whether the topic's `ownDevice` steps (install, sign in,
-test) apply and `hasVoiceRoom` decides whether the shared voice-room step is appended. They
-are separate on purpose: what one helper answers for a mode changes that half of the guide
-and leaves the other alone, so a surface never needs to know which modes get which steps.
+both a voice room and gamers at a site takes the hybrid guide below, decided first. For any
+other, `familyBringsOwnMachine` decides whether the topic's `ownDevice` steps (install, sign
+in, test) apply and `hasVoiceRoom` decides whether the shared voice-room step is appended,
+so a surface never needs to know which modes get which steps.
 
 ## A hybrid guide has two sections, because its gamers are in two places
 
@@ -63,10 +62,10 @@ The first list is the topic's `always` steps followed by the venue step; the sec
 topic's `ownDevice` steps followed by the mic-and-camera step. Each list numbers from one.
 
 **Rule: joining the room from the venue is a shared step of its own, not the mic-and-camera
-step.** A child at the venue has a machine of ours, no headset to choose and nothing to
-test; what they need is a sign-in of their own, so the step says who sets one up and where.
-It belongs to the hybrid guide alone, and its scope says `always` because that sign-in is
-the family's wherever the machine came from.
+step.** A child at the venue has no headset to choose and nothing to test, and joins on
+whichever device they prefer; what they need is a way to sign in, so the step says who sets
+one up and where. It belongs to the hybrid guide alone, and its scope says `always` because
+that sign-in is the family's wherever the device came from.
 
 Both shared steps are there whatever the topic brought, so every topic has a hybrid guide:
 a label-only topic's is the two shared steps, and a topic with no `always` steps opens on

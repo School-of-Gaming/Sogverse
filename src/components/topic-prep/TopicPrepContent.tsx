@@ -28,8 +28,8 @@ import type { TopicPrepPlan, TopicPrepStep } from "@/lib/products/topics";
 // School of Gaming brings the machines; where there is a voice room the shared
 // step about its mic and camera is appended. A hybrid product takes two
 // sections, the second for joining from home. See the registry's header note
-// for that split, and for why a label-only topic's guide is that shared step
-// alone.
+// for that split, and for why a label-only topic has a guide wherever there is
+// a room.
 
 export interface TopicPrepContentProps {
   /** What to render — `resolveTopicPrep`'s answer, resolved by the surface. */
@@ -129,7 +129,7 @@ export function TopicPrepContent({ plan }: TopicPrepContentProps) {
       {/* One closing for every topic and every form. A per-topic one
           would have needed a twin apiece — "everything installed and tested"
           is false of a guide that showed no install step — and there was
-          nothing topic-specific left to say once it had to be true of both. */}
+          nothing topic-specific left to say once it had to be true of every form. */}
       <p className="text-sm text-muted-foreground">{t("closing")}</p>
     </div>
   );
