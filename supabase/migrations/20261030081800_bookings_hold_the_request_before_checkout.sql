@@ -57,6 +57,10 @@ CREATE TABLE public.bookings (
   CONSTRAINT chk_bookings_currency CHECK (currency IN ('eur', 'gbp', 'usd')),
   CONSTRAINT chk_bookings_shape_iff_currency CHECK (
     (purchase_shape IS NULL) = (currency IS NULL)
+  ),
+  CONSTRAINT chk_bookings_no_shape_is_settled_without_session CHECK (
+    purchase_shape IS NOT NULL
+    OR (status = 'settled' AND stripe_checkout_session_id IS NULL)
   )
 );
 
@@ -69,7 +73,7 @@ COMMENT ON TABLE public.bookings IS 'One row per request a family made for a pla
 COMMENT ON COLUMN public.bookings.product_id IS 'The product requested. A seat an admin later moves keeps its booking, so this can differ from the seat''s product_id: the booking records the request.';
 COMMENT ON COLUMN public.bookings.participant_id IS 'Who the place is for: a gamer, or the customer on an adult''s own seat.';
 COMMENT ON COLUMN public.bookings.customer_id IS 'The parent who booked, and the only reader of the row.';
-COMMENT ON COLUMN public.bookings.purchase_shape IS 'subscription_monthly, single_payment, free or external. NULL exactly on a booking with no purchase in it, which is a waitlist join, and then currency is NULL too (chk_bookings_shape_iff_currency). A paid shape is what a seat''s payment marker reads.';
+COMMENT ON COLUMN public.bookings.purchase_shape IS 'subscription_monthly, single_payment, free or external. NULL exactly on a booking with no purchase in it, which is a waitlist join, and then currency is NULL too (chk_bookings_shape_iff_currency) and the booking is settled with no Checkout Session (chk_bookings_no_shape_is_settled_without_session). A paid shape is what a seat''s payment marker reads.';
 COMMENT ON COLUMN public.bookings.currency IS 'The currency of the purchase. NULL exactly when purchase_shape is.';
 COMMENT ON COLUMN public.bookings.utm_source IS 'The utm_source of the visit that led to this booking, or NULL. Written once, by create_booking or join_waitlist, and only when the request carried marketing cookie consent, the same server-side gate the account''s own UTM columns are written under: the routes read the values from the request and clean them with the UTM module''s sanitiser (src/lib/utm.ts) under that gate. Case preserved. Read by the Klaviyo enrolled and waitlisted events through participations.booking_id; a label that grants nothing.';
 COMMENT ON COLUMN public.bookings.utm_medium IS 'The utm_medium of the visit that led to this booking, or NULL. Same rules as utm_source.';
@@ -78,7 +82,7 @@ COMMENT ON COLUMN public.bookings.utm_content IS 'The utm_content of the visit t
 COMMENT ON COLUMN public.bookings.utm_term IS 'The utm_term of the visit that led to this booking, or NULL. Same rules as utm_source.';
 COMMENT ON COLUMN public.bookings.school_of_gaming_marketing_opt_in IS 'The parent''s answer to the product''s "I want emails from School of Gaming" box: true or false when the product asked (a school_of_gaming row in product_marketing_consents), NULL when it did not. A yes subscribes the parent to School of Gaming''s Klaviyo list once, when the event the seat''s own insert files is sent: enrolled for a seat taken at once, waitlisted for a waitlist join. A later promotion or demotion of the seat does not carry it again, and the answer itself is never an event property. It is never written to marketing_consents, because Klaviyo owns School of Gaming''s mailing consent.';
 COMMENT ON COLUMN public.bookings.status IS 'pending, settled or duplicate; see the booking_status type. Set by confirm_booking, or to settled by join_waitlist, which has no money to wait for.';
-COMMENT ON COLUMN public.bookings.stripe_checkout_session_id IS 'The Stripe Checkout Session for this booking, set by the checkout route right after creating it. NULL on a no-charge booking and a waitlist join. confirm_booking refuses a different session from the one stored here.';
+COMMENT ON COLUMN public.bookings.stripe_checkout_session_id IS 'The Stripe Checkout Session for this booking, set by the checkout route right after creating it. NULL on a no-charge booking and a waitlist join. confirm_booking refuses any session but the one stored here.';
 COMMENT ON COLUMN public.bookings.checkout_closes_at IS 'When the Checkout Session stops being payable: its expires_at, reset to now() when the checkout route expires it to replace it.';
 COMMENT ON COLUMN public.bookings.settled_at IS 'When the booking left pending.';
 
@@ -253,18 +257,18 @@ BEGIN
     RETURN v_duplicate;
   END IF;
 
-  IF v_booking.stripe_checkout_session_id IS NOT NULL
-     AND v_booking.stripe_checkout_session_id IS DISTINCT FROM p_checkout_session_id THEN
-    RAISE EXCEPTION 'booking % belongs to another checkout session', p_booking_id
+  -- Only the Session the booking holds confirms it. The checkout route stores
+  -- the id before the parent receives the Checkout URL, so a booking holding
+  -- none was never paid through Stripe, and a free or external one passes none.
+  IF v_booking.stripe_checkout_session_id IS DISTINCT FROM p_checkout_session_id THEN
+    RAISE EXCEPTION 'checkout session % is not the one booking % holds', p_checkout_session_id, p_booking_id
       USING ERRCODE = 'check_violation';
   END IF;
 
   IF v_existing_id IS NOT NULL THEN
     UPDATE public.bookings
        SET status = 'duplicate',
-           settled_at = now(),
-           stripe_checkout_session_id =
-             COALESCE(stripe_checkout_session_id, p_checkout_session_id)
+           settled_at = now()
      WHERE id = p_booking_id;
     RETURN v_duplicate;
   END IF;
@@ -298,9 +302,7 @@ BEGIN
 
   UPDATE public.bookings
      SET status = 'settled',
-         settled_at = now(),
-         stripe_checkout_session_id =
-           COALESCE(stripe_checkout_session_id, p_checkout_session_id)
+         settled_at = now()
    WHERE id = p_booking_id;
 
   RETURN v_facts || jsonb_build_object(
@@ -311,7 +313,7 @@ BEGIN
 END;
 $$;
 
-COMMENT ON FUNCTION public.confirm_booking(uuid, text) IS 'Turns a booking into a seat: the one path, called in the same transaction for a free or external booking and from the Stripe webhook for a paid one. Locks the product, then the booking. A booking already settled returns kind=settled with idempotent=true and the seat''s id, which is NULL if the seat has since been cancelled, and writes nothing, so a redelivered event never puts a seat back. A booking already duplicate returns kind=duplicate_payment again. A session id different from the one the booking stores raises check_violation. If the participant already holds an active, waitlisted or completed seat on the product the booking becomes duplicate and returns kind=duplicate_payment with existing_participation_id and existing_status, both NULL on a repeat if that seat has since gone. Otherwise it inserts the active seat, placed automatically when the product charges nothing and has exactly one group, and returns kind=settled with idempotent=false. Every return carries the booking''s booking_id, customer_id, participant_id, product_id, purchase_shape and currency, so the webhook reads nothing from Stripe metadata. Deliberately audience-ungated: validation happened before the money, and an after-money recorder refusing would strand a charge with no seat. service_role only: it has no auth.uid() and trusts the calling route.';
+COMMENT ON FUNCTION public.confirm_booking(uuid, text) IS 'Turns a booking into a seat: the one path, called in the same transaction for a free or external booking and from the Stripe webhook for a paid one. Locks the product, then the booking. A booking already settled returns kind=settled with idempotent=true and the seat''s id, which is NULL if the seat has since been cancelled, and writes nothing, so a redelivered event never puts a seat back. A booking already duplicate returns kind=duplicate_payment again. A session id other than the one the booking stores raises check_violation, and that includes passing one to a booking that stores none. If the participant already holds an active, waitlisted or completed seat on the product the booking becomes duplicate and returns kind=duplicate_payment with existing_participation_id and existing_status, both NULL on a repeat if that seat has since gone. Otherwise it inserts the active seat, placed automatically when the product charges nothing and has exactly one group, and returns kind=settled with idempotent=false. Every return carries the booking''s booking_id, customer_id, participant_id, product_id, purchase_shape and currency, so the webhook reads nothing from Stripe metadata. Deliberately audience-ungated: validation happened before the money, and an after-money recorder refusing would strand a charge with no seat. service_role only: it has no auth.uid() and trusts the calling route.';
 
 REVOKE ALL ON FUNCTION public.confirm_booking(uuid, text) FROM PUBLIC;
 GRANT ALL ON FUNCTION public.confirm_booking(uuid, text) TO service_role;
@@ -512,9 +514,10 @@ REVOKE ALL ON FUNCTION public.create_booking(uuid, uuid, uuid, text, text, text[
 GRANT ALL ON FUNCTION public.create_booking(uuid, uuid, uuid, text, text, text[], text, text, text, text, text, boolean) TO service_role;
 
 -- legacy-checkout-session: the old checkout route's call. Same signature and
--- grant as before bookings, so the grant carries over. A paid signup leaves a
--- pending booking that no Session ever joins: the old route never learns its id,
--- so it reads as abandoned.
+-- grant as before bookings, so the grant carries over. A paid signup's pending
+-- booking is deleted again: the old route never learns its id, and
+-- confirm_paid_participation writes its own. The consent acceptances stay,
+-- because the parent agreed.
 CREATE OR REPLACE FUNCTION public.create_participation(
   p_product_id uuid,
   p_participant_id uuid,
@@ -543,6 +546,7 @@ BEGIN
   );
 
   IF v_result->>'kind' = 'pending' THEN
+    DELETE FROM public.bookings WHERE id = (v_result->>'booking_id')::uuid;
     RETURN jsonb_build_object('kind', 'validated');
   END IF;
 
@@ -550,7 +554,7 @@ BEGIN
 END;
 $$;
 
-COMMENT ON FUNCTION public.create_participation(uuid, uuid, uuid, text, text, text[], text, text, text, text, text, boolean) IS 'legacy-checkout-session: kept for the deployment window, for the checkout route from before bookings, and removed by the follow-up. Calls create_booking and returns its answer, with a paid shape''s kind=pending reported as kind=validated, the answer that route expects: kind=free_active or kind=external_active with participation_id, kind=full, or kind=validated. service_role only, on the footing create_booking states.';
+COMMENT ON FUNCTION public.create_participation(uuid, uuid, uuid, text, text, text[], text, text, text, text, text, boolean) IS 'legacy-checkout-session: kept for the deployment window, for the checkout route from before bookings, and removed by the follow-up. Calls create_booking and returns its answer, with a paid shape''s kind=pending reported as kind=validated, after deleting the pending booking, because that route never learns its id and confirm_paid_participation writes its own; the required consents it recorded stay. So it answers as that route expects: kind=free_active or kind=external_active with participation_id, kind=full, or kind=validated. service_role only, on the footing create_booking states.';
 
 -- ---------------------------------------------------------------------------
 -- 5. legacy-checkout-session: confirm_paid_participation goes through a booking
@@ -579,7 +583,8 @@ BEGIN
   -- legacy-checkout-session: a Session created without a booking has none, so
   -- one is made here from its metadata, and the seat takes the one confirm path.
   -- A redelivery finds the booking this call or the backfill wrote. The shape
-  -- comes from the product and the currency is eur, the old route's only one.
+  -- comes from the product. The currency is an assumption: the old route's is
+  -- not among these arguments, and nothing reads this booking's.
   SELECT CASE WHEN product_type = 'consumer_club'
               THEN 'subscription_monthly' ELSE 'single_payment' END
     INTO v_purchase_shape
@@ -640,7 +645,7 @@ BEGIN
 END;
 $$;
 
-COMMENT ON FUNCTION public.confirm_paid_participation(uuid, uuid, uuid, text, text, text, text, text, text, boolean) IS 'legacy-checkout-session: kept for the deployment window and for redeliveries of Checkout Sessions created before bookings, and removed by the follow-up. service_role only: the arguments come from that Session''s metadata. Writes a booking from them, or reuses the one holding this session id, with subscription_monthly on a consumer_club and single_payment on anything else, in eur, so the seat counts as paid. Confirms it through confirm_booking, writes the session id onto a fresh seat because the old confirmation page finds the seat by it, and returns the shapes the old webhook expects: kind=confirmed with participation_id and idempotent, or kind=duplicate_payment with existing_participation_id and existing_status. A redelivery whose seat has since been cancelled raises check_violation instead: that webhook requires a seat id, and the seat must not come back.';
+COMMENT ON FUNCTION public.confirm_paid_participation(uuid, uuid, uuid, text, text, text, text, text, text, boolean) IS 'legacy-checkout-session: kept for the deployment window and for redeliveries of Checkout Sessions created before bookings, and removed by the follow-up. service_role only: the arguments come from that Session''s metadata. Writes a booking from them, or reuses the one holding this session id, with subscription_monthly on a consumer_club and single_payment on anything else, so the seat counts as paid. Its currency of eur is an assumption on this path, because the Session''s currency is not among the arguments, and nothing reads it. Confirms it through confirm_booking, writes the session id onto a fresh seat because the old confirmation page finds the seat by it, and returns the shapes the old webhook expects: kind=confirmed with participation_id and idempotent, or kind=duplicate_payment with existing_participation_id and existing_status. A redelivery whose seat has since been cancelled raises check_violation instead: that webhook requires a seat id, and the seat must not come back.';
 
 -- ---------------------------------------------------------------------------
 -- 6. A waitlist join writes a booking
@@ -1023,9 +1028,9 @@ BEGIN
   -- same join as the other two.
   --
   -- has_payment_marker remains a real read and remains the branch where it
-  -- decides something: demotion leaves the Checkout Session id in place, so a
-  -- family that paid and was later demoted is distinguishable here from one
-  -- that only ever queued.
+  -- decides something: demotion leaves the seat's booking in place, so a family
+  -- that paid and was later demoted still has a paid shape here, where one that
+  -- only ever queued has none.
   --
   -- The two seat-offer stamps are the same story one step further on:
   -- this is the ONLY arm where either can be non-NULL, and the waitlist card is
@@ -1197,8 +1202,12 @@ CREATE FUNCTION pg_temp.reworded(p_current text, p_from text, p_to text) RETURNS
     LANGUAGE plpgsql
     AS $$
 BEGIN
+  -- Hosted databases have lost comments, and a comment is no reason to abort a
+  -- release. On a fresh database CI's generated-schema comparison catches a
+  -- wording that failed to apply.
   IF p_current IS NULL OR position(p_from IN p_current) = 0 THEN
-    RAISE EXCEPTION 'comment does not say: %', p_from;
+    RAISE NOTICE 'comment left alone, it does not say: %', p_from;
+    RETURN p_current;
   END IF;
   RETURN replace(p_current, p_from, p_to);
 END;

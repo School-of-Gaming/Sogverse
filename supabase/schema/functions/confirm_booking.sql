@@ -72,18 +72,18 @@ BEGIN
     RETURN v_duplicate;
   END IF;
 
-  IF v_booking.stripe_checkout_session_id IS NOT NULL
-     AND v_booking.stripe_checkout_session_id IS DISTINCT FROM p_checkout_session_id THEN
-    RAISE EXCEPTION 'booking % belongs to another checkout session', p_booking_id
+  -- Only the Session the booking holds confirms it. The checkout route stores
+  -- the id before the parent receives the Checkout URL, so a booking holding
+  -- none was never paid through Stripe, and a free or external one passes none.
+  IF v_booking.stripe_checkout_session_id IS DISTINCT FROM p_checkout_session_id THEN
+    RAISE EXCEPTION 'checkout session % is not the one booking % holds', p_checkout_session_id, p_booking_id
       USING ERRCODE = 'check_violation';
   END IF;
 
   IF v_existing_id IS NOT NULL THEN
     UPDATE public.bookings
        SET status = 'duplicate',
-           settled_at = now(),
-           stripe_checkout_session_id =
-             COALESCE(stripe_checkout_session_id, p_checkout_session_id)
+           settled_at = now()
      WHERE id = p_booking_id;
     RETURN v_duplicate;
   END IF;
@@ -117,9 +117,7 @@ BEGIN
 
   UPDATE public.bookings
      SET status = 'settled',
-         settled_at = now(),
-         stripe_checkout_session_id =
-           COALESCE(stripe_checkout_session_id, p_checkout_session_id)
+         settled_at = now()
    WHERE id = p_booking_id;
 
   RETURN v_facts || jsonb_build_object(
@@ -135,7 +133,7 @@ $$;
 -- Name: FUNCTION confirm_booking(p_booking_id uuid, p_checkout_session_id text); Type: COMMENT; Schema: public; Owner: -
 --
 
-COMMENT ON FUNCTION public.confirm_booking(p_booking_id uuid, p_checkout_session_id text) IS 'Turns a booking into a seat: the one path, called in the same transaction for a free or external booking and from the Stripe webhook for a paid one. Locks the product, then the booking. A booking already settled returns kind=settled with idempotent=true and the seat''s id, which is NULL if the seat has since been cancelled, and writes nothing, so a redelivered event never puts a seat back. A booking already duplicate returns kind=duplicate_payment again. A session id different from the one the booking stores raises check_violation. If the participant already holds an active, waitlisted or completed seat on the product the booking becomes duplicate and returns kind=duplicate_payment with existing_participation_id and existing_status, both NULL on a repeat if that seat has since gone. Otherwise it inserts the active seat, placed automatically when the product charges nothing and has exactly one group, and returns kind=settled with idempotent=false. Every return carries the booking''s booking_id, customer_id, participant_id, product_id, purchase_shape and currency, so the webhook reads nothing from Stripe metadata. Deliberately audience-ungated: validation happened before the money, and an after-money recorder refusing would strand a charge with no seat. service_role only: it has no auth.uid() and trusts the calling route.';
+COMMENT ON FUNCTION public.confirm_booking(p_booking_id uuid, p_checkout_session_id text) IS 'Turns a booking into a seat: the one path, called in the same transaction for a free or external booking and from the Stripe webhook for a paid one. Locks the product, then the booking. A booking already settled returns kind=settled with idempotent=true and the seat''s id, which is NULL if the seat has since been cancelled, and writes nothing, so a redelivered event never puts a seat back. A booking already duplicate returns kind=duplicate_payment again. A session id other than the one the booking stores raises check_violation, and that includes passing one to a booking that stores none. If the participant already holds an active, waitlisted or completed seat on the product the booking becomes duplicate and returns kind=duplicate_payment with existing_participation_id and existing_status, both NULL on a repeat if that seat has since gone. Otherwise it inserts the active seat, placed automatically when the product charges nothing and has exactly one group, and returns kind=settled with idempotent=false. Every return carries the booking''s booking_id, customer_id, participant_id, product_id, purchase_shape and currency, so the webhook reads nothing from Stripe metadata. Deliberately audience-ungated: validation happened before the money, and an after-money recorder refusing would strand a charge with no seat. service_role only: it has no auth.uid() and trusts the calling route.';
 
 
 --

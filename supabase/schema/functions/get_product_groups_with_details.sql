@@ -234,9 +234,9 @@ BEGIN
   -- same join as the other two.
   --
   -- has_payment_marker remains a real read and remains the branch where it
-  -- decides something: demotion leaves the Checkout Session id in place, so a
-  -- family that paid and was later demoted is distinguishable here from one
-  -- that only ever queued.
+  -- decides something: demotion leaves the seat's booking in place, so a family
+  -- that paid and was later demoted still has a paid shape here, where one that
+  -- only ever queued has none.
   --
   -- The two seat-offer stamps are the same story one step further on:
   -- this is the ONLY arm where either can be non-NULL, and the waitlist card is

@@ -398,12 +398,6 @@ export type CreateParticipationInput = {
 };
 
 /**
- * The single participation behind a just-completed signup, for the purchase
- * confirmation page. The page joins this to the full product detail (via
- * `useProductDetail`) for pricing + schedule, so this shape carries only what
- * the product row can't: which product, who it's for, and the row's status.
- */
-/**
  * What a Checkout Session's booking says about the purchase. `seat_gone` is a
  * settled booking whose seat has since been cancelled: an old link, revisited.
  */
@@ -413,6 +407,12 @@ export type CheckoutConfirmation =
   | { state: "pending" }
   | { state: "seat_gone" };
 
+/**
+ * The single participation behind a just-completed signup, for the purchase
+ * confirmation page. The page joins this to the full product detail (via
+ * `useProductDetail`) for pricing + schedule, so this shape carries only what
+ * the product row can't: which product, who it's for, and the row's status.
+ */
 export interface ParticipationConfirmation {
   /**
    * The row's own id. Carried because the page can arrive holding a Stripe

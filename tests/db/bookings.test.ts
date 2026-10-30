@@ -3,6 +3,7 @@ import type { SupabaseClient } from "@supabase/supabase-js";
 import { z } from "zod";
 import type { Database } from "@/types/database.types";
 import { productGroupsSnapshot } from "@/services/groups/groups.contracts";
+import { ParticipationsService } from "@/services/participations/participations.service";
 import {
   confirmPaidParticipationRpcResult,
   createBookingRpcResult,
@@ -296,12 +297,15 @@ describe("bookings", () => {
       expect((await readBooking(bookingId)).status).toBe("settled");
     });
 
-    it("stores the session when the webhook beats the route to it", async () => {
+    it("refuses a session on a booking that holds none", async () => {
       const bookingId = await pendingBooking(PAID_CLUB);
-      await confirm(bookingId, "cs_booking_early_webhook");
-      expect((await readBooking(bookingId)).stripe_checkout_session_id).toBe(
-        "cs_booking_early_webhook",
-      );
+      const { error } = await confirm(bookingId, "cs_booking_not_held");
+      expect(error?.code).toBe("23514");
+      expect(await readBooking(bookingId)).toMatchObject({
+        status: "pending",
+        stripe_checkout_session_id: null,
+      });
+      expect(await seatsOn(PAID_CLUB)).toEqual([]);
     });
 
     it("answers a redelivery with the same seat and writes nothing", async () => {
@@ -393,12 +397,21 @@ describe("bookings", () => {
       }
 
       it.each(["subscription_monthly", "single_payment"])(
-        "answers a paid %s signup with validated and no seat",
+        "answers a paid %s signup with validated, no seat and no booking",
         async (shape) => {
           const { data, error } = await oldSignup(PAID_CLUB, shape);
           expect(error).toBeNull();
           expect(data).toEqual({ kind: "validated" });
           expect(await seatsOn(PAID_CLUB)).toEqual([]);
+
+          // afterEach settles every pending booking, so one here is this call's.
+          const { data: left, error: readError } = await admin
+            .from("bookings")
+            .select("id")
+            .eq("product_id", PAID_CLUB)
+            .eq("status", "pending");
+          expect(readError).toBeNull();
+          expect(left).toEqual([]);
         },
       );
 
@@ -622,6 +635,25 @@ describe("bookings", () => {
       });
       expect(error?.code).toBe("23514");
     });
+
+    it.each([
+      ["pending", { status: "pending" as const }],
+      [
+        "settled with a session",
+        {
+          status: "settled" as const,
+          stripe_checkout_session_id: "cs_booking_no_shape",
+        },
+      ],
+    ])("a booking with no shape cannot be %s", async (_state, row) => {
+      const { error } = await admin.from("bookings").insert({
+        product_id: WAITLIST_CLUB,
+        participant_id: TEST_IDS.GAMER,
+        customer_id: TEST_IDS.CUSTOMER,
+        ...row,
+      });
+      expect(error?.code).toBe("23514");
+    });
   });
 
   describe("the payment marker reads a paid shape, not a booking", () => {
@@ -719,6 +751,55 @@ describe("bookings", () => {
         .update({ status: "settled" })
         .eq("id", id);
       expect(error?.code).toBe("42501");
+    });
+  });
+
+  describe("the confirmation page's read", () => {
+    async function settledBooking(): Promise<string> {
+      const session = `cs_booking_confirmation_${crypto.randomUUID()}`;
+      const bookingId = await insertPaidBooking(admin, {
+        productId: PAID_CAMP,
+        participantId: TEST_IDS.GAMER,
+        customerId: TEST_IDS.CUSTOMER,
+        checkoutSessionId: session,
+      });
+      const { error } = await admin.rpc("confirm_booking", {
+        p_booking_id: bookingId,
+        p_checkout_session_id: session,
+      });
+      expect(error).toBeNull();
+      return session;
+    }
+
+    it("hands the parent who booked their settled booking's seat", async () => {
+      const session = await settledBooking();
+      const [seat] = await seatsOn(PAID_CAMP);
+
+      const answer = await new ParticipationsService(
+        customer,
+      ).getConfirmationByCheckoutSession(session);
+
+      expect(answer).toEqual({
+        state: "settled",
+        confirmation: {
+          participationId: seat.id,
+          status: "active",
+          productId: PAID_CAMP,
+          customerId: TEST_IDS.CUSTOMER,
+          participantName: expect.any(String),
+          isSelfSeat: false,
+        },
+      });
+    });
+
+    it("hands a different parent nothing", async () => {
+      const session = await settledBooking();
+
+      const answer = await new ParticipationsService(
+        customer2,
+      ).getConfirmationByCheckoutSession(session);
+
+      expect(answer).toBeNull();
     });
   });
 

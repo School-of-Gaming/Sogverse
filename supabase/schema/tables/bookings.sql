@@ -21,6 +21,7 @@ CREATE TABLE public.bookings (
     created_at timestamp with time zone DEFAULT now() NOT NULL,
     settled_at timestamp with time zone,
     CONSTRAINT chk_bookings_currency CHECK ((currency = ANY (ARRAY['eur'::text, 'gbp'::text, 'usd'::text]))),
+    CONSTRAINT chk_bookings_no_shape_is_settled_without_session CHECK (((purchase_shape IS NOT NULL) OR ((status = 'settled'::public.booking_status) AND (stripe_checkout_session_id IS NULL)))),
     CONSTRAINT chk_bookings_purchase_shape CHECK ((purchase_shape = ANY (ARRAY['subscription_monthly'::text, 'single_payment'::text, 'free'::text, 'external'::text]))),
     CONSTRAINT chk_bookings_shape_iff_currency CHECK (((purchase_shape IS NULL) = (currency IS NULL)))
 );
@@ -58,7 +59,7 @@ COMMENT ON COLUMN public.bookings.customer_id IS 'The parent who booked, and the
 -- Name: COLUMN bookings.purchase_shape; Type: COMMENT; Schema: public; Owner: -
 --
 
-COMMENT ON COLUMN public.bookings.purchase_shape IS 'subscription_monthly, single_payment, free or external. NULL exactly on a booking with no purchase in it, which is a waitlist join, and then currency is NULL too (chk_bookings_shape_iff_currency). A paid shape is what a seat''s payment marker reads.';
+COMMENT ON COLUMN public.bookings.purchase_shape IS 'subscription_monthly, single_payment, free or external. NULL exactly on a booking with no purchase in it, which is a waitlist join, and then currency is NULL too (chk_bookings_shape_iff_currency) and the booking is settled with no Checkout Session (chk_bookings_no_shape_is_settled_without_session). A paid shape is what a seat''s payment marker reads.';
 
 
 --
@@ -121,7 +122,7 @@ COMMENT ON COLUMN public.bookings.status IS 'pending, settled or duplicate; see 
 -- Name: COLUMN bookings.stripe_checkout_session_id; Type: COMMENT; Schema: public; Owner: -
 --
 
-COMMENT ON COLUMN public.bookings.stripe_checkout_session_id IS 'The Stripe Checkout Session for this booking, set by the checkout route right after creating it. NULL on a no-charge booking and a waitlist join. confirm_booking refuses a different session from the one stored here.';
+COMMENT ON COLUMN public.bookings.stripe_checkout_session_id IS 'The Stripe Checkout Session for this booking, set by the checkout route right after creating it. NULL on a no-charge booking and a waitlist join. confirm_booking refuses any session but the one stored here.';
 
 
 --
