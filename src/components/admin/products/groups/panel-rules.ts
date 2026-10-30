@@ -117,7 +117,7 @@ export interface DragSubject {
    */
   hasLiveSubscription: boolean;
   /**
-   * The participation carries a payment marker (its recorded Checkout Session),
+   * The participation carries a payment marker (a booking of a paid shape),
    * i.e. money once arrived for this seat. Demotion preserves the marker, so a
    * camper who paid and was later demoted still has one and promotes plainly;
    * a family who joined the queue without paying never has one.

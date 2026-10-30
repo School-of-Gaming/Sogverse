@@ -38,6 +38,9 @@ change the plan:
   parent's own `consent_acceptances` go with `customer_id`, and their gamers'
   `gamer_consent_acceptances` go with the gamer (step 3 deletes the gamers first), so
   only an acceptance made for someone who survives the delete blocks.
+- **`bookings`** cascade from the customer and the participant, abandoned ones included,
+  and hold the UTM tag and the School of Gaming answer. An erasure is the only thing that
+  removes a booking, so expect abandoned ones in the count.
 - **`customer_profiles.stripe_customer_id`** set means a Stripe customer exists (step 5).
 - **A `lynx_educate` row in `marketing_consents`** means Lynx Educate holds the family for
   its own marketing, and has had their programme data through the partner API. Deleting

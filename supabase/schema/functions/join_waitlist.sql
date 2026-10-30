@@ -14,6 +14,7 @@ DECLARE
   v_now               TIMESTAMPTZ;
   v_position          INTEGER;
   v_participation_id  UUID;
+  v_booking_id        UUID;
   v_is_parent         BOOLEAN;
 BEGIN
   SELECT * INTO v_product FROM public.products WHERE id = p_product_id FOR UPDATE;
@@ -22,7 +23,7 @@ BEGIN
       USING ERRCODE = 'no_data_found';
   END IF;
 
-  -- Same audience gate as create_participation, and for the same reason: a
+  -- Same audience gate as create_booking, and for the same reason: a
   -- queue is a promise of a seat, so it has to refuse exactly the seats the
   -- signup path would. See that function for why `=` rather than
   -- `IS NOT DISTINCT FROM`, and for why the parent-link arm is what keeps a
@@ -90,7 +91,7 @@ BEGIN
   -- least able to decline.
   --
   -- The customer is both the agreeing party and the actor, for the
-  -- reason create_participation states.
+  -- reason create_booking states.
   PERFORM public.record_required_consents(
     p_product_id, p_customer_id, p_participant_id, p_customer_id,
     p_consented_documents
@@ -103,14 +104,25 @@ BEGIN
   -- reads the wall clock at this statement — which runs under the lock, after
   -- the prior joiner committed — so stamps are monotonic with real join order.
   v_now := clock_timestamp();
-  INSERT INTO public.participations (
-    product_id, participant_id, customer_id, status, waitlisted_at,
+
+  -- The request and its answers. Settled from the start, because there is no
+  -- money to wait for, and with no purchase shape or currency for the same
+  -- reason, which is what keeps it from reading as a payment marker.
+  INSERT INTO public.bookings (
+    product_id, participant_id, customer_id, status, settled_at,
     utm_source, utm_medium, utm_campaign, utm_content, utm_term,
     school_of_gaming_marketing_opt_in
   ) VALUES (
-    p_product_id, p_participant_id, p_customer_id, 'waitlisted', v_now,
+    p_product_id, p_participant_id, p_customer_id, 'settled', v_now,
     p_utm_source, p_utm_medium, p_utm_campaign, p_utm_content, p_utm_term,
     p_school_of_gaming_marketing_opt_in
+  )
+  RETURNING id INTO v_booking_id;
+
+  INSERT INTO public.participations (
+    product_id, participant_id, customer_id, status, waitlisted_at, booking_id
+  ) VALUES (
+    p_product_id, p_participant_id, p_customer_id, 'waitlisted', v_now, v_booking_id
   )
   RETURNING id INTO v_participation_id;
 
@@ -136,7 +148,7 @@ $$;
 -- Name: FUNCTION join_waitlist(p_product_id uuid, p_participant_id uuid, p_customer_id uuid, p_consented_documents text[], p_utm_source text, p_utm_medium text, p_utm_campaign text, p_utm_content text, p_utm_term text, p_school_of_gaming_marketing_opt_in boolean); Type: COMMENT; Schema: public; Owner: -
 --
 
-COMMENT ON FUNCTION public.join_waitlist(p_product_id uuid, p_participant_id uuid, p_customer_id uuid, p_consented_documents text[], p_utm_source text, p_utm_medium text, p_utm_campaign text, p_utm_content text, p_utm_term text, p_school_of_gaming_marketing_opt_in boolean) IS 'Waitlist engine behind join_product_waitlist: gates the audience, refuses a product with the waitlist off, and either writes a waitlisted participation stamped with clock_timestamp() or returns the waitlisted/reserving/active row already there. Returns participation_id, waitlist_position (0 when the row already holds a seat rather than a place in line), status, and idempotent — false only on the call that ran the INSERT, true on a call that recognised an existing row. Anything that must happen exactly once per place in line (the confirmation email) keys on idempotent=false; the flag is the only way to tell a replay apart, since both answers are otherwise identical. It takes p_consented_documents and calls record_required_consents just below the idempotency return, so joining a queue is held to the same enrolment conditions as taking a seat — a family that could queue unconsented would first meet the conditions at promotion, which is the moment they are least able to decline — and a replay records nothing, because it is the same enrolment agreed once. It names p_customer_id as the acceptance''s accepted_by as well as its customer, the parent having ticked the boxes themselves. The join''s UTM tag (p_utm_source … p_utm_term) and School of Gaming mailing answer (p_school_of_gaming_marketing_opt_in, NULL when not asked) are written onto the row it inserts, as create_participation writes them onto a seat, where the Klaviyo waitlisted and enrolled events read them; a replay writes neither. No EXECUTE grant to anyone: the guarded wrapper is the only caller.';
+COMMENT ON FUNCTION public.join_waitlist(p_product_id uuid, p_participant_id uuid, p_customer_id uuid, p_consented_documents text[], p_utm_source text, p_utm_medium text, p_utm_campaign text, p_utm_content text, p_utm_term text, p_school_of_gaming_marketing_opt_in boolean) IS 'Waitlist engine behind join_product_waitlist: gates the audience, refuses a product with the waitlist off, and either writes a waitlisted participation stamped with clock_timestamp() or returns the waitlisted/reserving/active row already there. Returns participation_id, waitlist_position (0 when the row already holds a seat rather than a place in line), status, and idempotent — false only on the call that ran the INSERT, true on a call that recognised an existing row. Anything that must happen exactly once per place in line (the confirmation email) keys on idempotent=false; the flag is the only way to tell a replay apart, since both answers are otherwise identical. It takes p_consented_documents and calls record_required_consents just below the idempotency return, so joining a queue is held to the same enrolment conditions as taking a seat — a family that could queue unconsented would first meet the conditions at promotion, which is the moment they are least able to decline — and a replay records nothing, because it is the same enrolment agreed once. It names p_customer_id as the acceptance''s accepted_by as well as its customer, the parent having ticked the boxes themselves. The join''s UTM tag (p_utm_source … p_utm_term) and School of Gaming mailing answer (p_school_of_gaming_marketing_opt_in, NULL when not asked) are written onto a settled booking it inserts, with no purchase shape and no currency because no money is involved, and the waitlisted row links to it through booking_id, where the Klaviyo waitlisted and enrolled events read them; a replay writes neither. No EXECUTE grant to anyone: the guarded wrapper is the only caller.';
 
 
 --

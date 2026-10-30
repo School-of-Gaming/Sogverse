@@ -15,7 +15,9 @@ import { vi } from "vitest";
  */
 export function createStripeMock() {
   return {
-    checkout: { sessions: { create: vi.fn() } },
+    checkout: {
+      sessions: { create: vi.fn(), expire: vi.fn(), retrieve: vi.fn() },
+    },
     prices: { create: vi.fn() },
     products: { search: vi.fn(), create: vi.fn(), update: vi.fn() },
     subscriptions: { retrieve: vi.fn(), update: vi.fn(), cancel: vi.fn() },

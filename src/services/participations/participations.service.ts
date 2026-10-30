@@ -398,6 +398,16 @@ export type CreateParticipationInput = {
 };
 
 /**
+ * What a Checkout Session's booking says about the purchase. `seat_gone` is a
+ * settled booking whose seat has since been cancelled: an old link, revisited.
+ */
+export type CheckoutConfirmation =
+  | { state: "settled"; confirmation: ParticipationConfirmation }
+  | { state: "duplicate" }
+  | { state: "pending" }
+  | { state: "seat_gone" };
+
+/**
  * The single participation behind a just-completed signup, for the purchase
  * confirmation page. The page joins this to the full product detail (via
  * `useProductDetail`) for pricing + schedule, so this shape carries only what
@@ -782,30 +792,25 @@ export class ParticipationsService {
   }
 
   /**
-   * The same read for a paid signup, which arrives holding a Stripe Checkout
-   * Session id instead of a participation id — the row did not exist when the
-   * `success_url` was built, so there was nothing else to key it on. The row
-   * records the session that bought it, which is what closes the loop.
+   * The read for a paid signup, which arrives holding a Stripe Checkout Session
+   * id instead of a participation id — no seat existed when the `success_url` was
+   * built. The booking records the Session and the seat records the booking.
    *
-   * Same RLS gate as the sibling above (`customer_id = auth.uid()`, or the
-   * gamer's own row), so a session id belonging to someone else reads as null
-   * rather than as anyone's order.
-   *
-   * Null is NOT the same "stale link" answer here: the webhook creates the row,
-   * and Stripe waits up to ten seconds on it before redirecting, so null almost
-   * always means "not written *yet*". The page shows a finalizing state and
-   * polls this until it lands, rather than telling a parent who just paid that
-   * their order could not be found.
+   * `bookings` is readable only by the customer who booked, so a session id
+   * belonging to someone else reads as null rather than as anyone's order. Null
+   * also covers a legacy-checkout-session Session the webhook has not reached yet,
+   * which has no booking until then; the page falls back to Stripe for those.
    */
   async getConfirmationByCheckoutSession(
     checkoutSessionId: string,
-  ): Promise<ParticipationConfirmation | null> {
+  ): Promise<CheckoutConfirmation | null> {
     const { data, error } = await this.supabase
-      .from("participations")
+      .from("bookings")
       .select(
         `
-          id, status, product_id, participant_id, customer_id,
-          participant:profiles!participations_participant_id_fkey(first_name)
+          status, participant_id, customer_id,
+          participant:profiles!bookings_participant_id_fkey(first_name),
+          seat:participations(id, status, product_id)
         `,
       )
       .eq("stripe_checkout_session_id", checkoutSessionId)
@@ -814,21 +819,27 @@ export class ParticipationsService {
     if (error) throw error;
     if (!data) return null;
 
+    if (data.status !== "settled") return { state: data.status };
+    if (!data.seat) return { state: "seat_gone" };
+
     return {
-      participationId: data.id,
-      status: data.status,
-      productId: data.product_id,
-      customerId: data.customer_id,
-      participantName: data.participant.first_name,
-      isSelfSeat: data.participant_id === data.customer_id,
+      state: "settled",
+      confirmation: {
+        participationId: data.seat.id,
+        status: data.seat.status,
+        productId: data.seat.product_id,
+        customerId: data.customer_id,
+        participantName: data.participant.first_name,
+        isSelfSeat: data.participant_id === data.customer_id,
+      },
     };
   }
 
   /**
-   * Does this participant — a child, or the buyer themselves on a for-parents
-   * product — already hold a spot on this product? Asked by the paid
-   * confirmation page when the session it arrived with bought nothing, to tell
-   * the two reasons for that apart: the webhook has not landed yet (wait), or
+   * legacy-checkout-session: does this participant — a child, or the buyer
+   * themselves on a for-parents product — already hold a spot on this product?
+   * Asked by the paid confirmation page when a Session from before bookings has
+   * no booking yet, to tell the two reasons for that apart: the webhook has not landed yet (wait), or
    * the payment was refused as a duplicate because the seat was already taken
    * (there will never be a row for this session, so waiting is a dead end).
    *

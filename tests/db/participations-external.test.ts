@@ -4,10 +4,10 @@ import type { Database } from "@/types/database.types";
 import { createAdminTestClient } from "./helpers";
 import { TEST_IDS } from "./constants";
 import { createTestProduct, deleteTestProducts } from "./product-helpers";
-import { createParticipationRpcResult } from "@/services/participations/participations.contracts";
+import { createBookingRpcResult } from "@/services/participations/participations.contracts";
 
 /**
- * create_participation for municipality clubs (billing_mode =
+ * create_booking for municipality clubs (billing_mode =
  * 'external_contract'). These are invoiced off-platform, so registration is
  * instant — active on the spot, no Stripe — mirroring the 'free' branch but gated
  * on the external billing mode.
@@ -26,7 +26,7 @@ const ALL_TEST_PRODUCTS = [PRODUCT_MUNI, PRODUCT_PAID];
 // effective-status gate would read the product as completed and refuse signups.
 const FAR_FUTURE = "2099-12-31";
 
-describe("create_participation — external_contract (municipality) registration", () => {
+describe("create_booking — external_contract (municipality) registration", () => {
   let admin: SupabaseClient<Database>;
 
   beforeAll(async () => {
@@ -70,7 +70,7 @@ describe("create_participation — external_contract (municipality) registration
   });
 
   function register(productId: string, gamerId: string) {
-    return admin.rpc("create_participation", {
+    return admin.rpc("create_booking", {
       p_product_id: productId,
       p_participant_id: gamerId,
       p_customer_id: TEST_IDS.CUSTOMER,
@@ -83,19 +83,22 @@ describe("create_participation — external_contract (municipality) registration
     const res = await register(PRODUCT_MUNI, TEST_IDS.GAMER);
     expect(res.error).toBeNull();
 
-    const parsed = createParticipationRpcResult.parse(res.data);
-    expect(parsed.kind).toBe("external_active");
-    expect(parsed.participation_id).toBeTruthy();
+    const parsed = createBookingRpcResult.parse(res.data);
+    if (parsed.kind !== "external_active") throw new Error(parsed.kind);
 
     const { data: row } = await admin
       .from("participations")
-      .select("status, stripe_checkout_session_id, waitlisted_at")
-      .eq("id", parsed.participation_id!)
+      .select("status, waitlisted_at, booking:bookings(purchase_shape, status, stripe_checkout_session_id)")
+      .eq("id", parsed.participation_id)
       .single();
     expect(row?.status).toBe("active");
     // External registrations hold the seat outright — invoiced off-platform, so
     // no Stripe session bought it, and never on the waitlist.
-    expect(row?.stripe_checkout_session_id).toBeNull();
+    expect(row?.booking).toEqual({
+      purchase_shape: "external",
+      status: "settled",
+      stripe_checkout_session_id: null,
+    });
     expect(row?.waitlisted_at).toBeNull();
   });
 
@@ -106,14 +109,14 @@ describe("create_participation — external_contract (municipality) registration
       .eq("id", PRODUCT_MUNI);
 
     const first = await register(PRODUCT_MUNI, TEST_IDS.GAMER);
-    expect(createParticipationRpcResult.parse(first.data).kind).toBe(
+    expect(createBookingRpcResult.parse(first.data).kind).toBe(
       "external_active",
     );
 
     // Second child, no seat left → full (so the UI can offer the waitlist).
     const second = await register(PRODUCT_MUNI, TEST_IDS.GAMER_2);
     expect(second.error).toBeNull();
-    expect(createParticipationRpcResult.parse(second.data).kind).toBe("full");
+    expect(createBookingRpcResult.parse(second.data).kind).toBe("full");
   });
 
   it("rejects registration before the registration window opens", async () => {
@@ -135,7 +138,7 @@ describe("create_participation — external_contract (municipality) registration
 
   it("is idempotent against a second registration for the same gamer", async () => {
     const first = await register(PRODUCT_MUNI, TEST_IDS.GAMER);
-    expect(createParticipationRpcResult.parse(first.data).kind).toBe(
+    expect(createBookingRpcResult.parse(first.data).kind).toBe(
       "external_active",
     );
 

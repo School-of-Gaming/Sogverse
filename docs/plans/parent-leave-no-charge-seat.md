@@ -34,7 +34,7 @@ cancellation already has.**
 
 - **The gate is the seat's money, not the product's type or billing mode.** A seat is
   the parent's to give back when its participation has **no payment marker**
-  (`stripe_checkout_session_id` is null) **and no `family_subscriptions` row of any
+  (its booking is not a paid shape) **and no `family_subscriptions` row of any
   status**. The marker is stamped on every seat bought through Checkout since the
   create-on-confirmation flow; the subscription row covers the paid seats from before
   it, which were bound to their Stripe subscriptions by hand and carry no session id.

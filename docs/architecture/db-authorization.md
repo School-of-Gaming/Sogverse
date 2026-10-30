@@ -168,10 +168,9 @@ the verification spine treats each kind differently:
   legitimately drive, and left the engines themselves service_role-only. The ones
   that remain reachable *only* by service_role are the ones whose callers genuinely
   have no session: the Stripe webhook's cancel and confirm paths, and the checkout
-  route's pre-payment validation. The confirmation function is the sharpest of
-  these — its arguments are trusted precisely because we wrote them into the
-  Checkout Session ourselves, so an `authenticated` grant would be handing a caller
-  a free seat.
+  route's booking. The confirmation function is the sharpest of these — it turns a
+  booking into a seat because our own webhook says the money arrived, so an
+  `authenticated` grant would be handing a caller a free seat.
 
 Several of these are `LANGUAGE sql`, where "first statement" has no meaning — all
 current `sql`-language functions are predicates or self-scoping helpers, which is

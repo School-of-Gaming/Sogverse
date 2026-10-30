@@ -10,14 +10,14 @@ import {
 } from "./helpers";
 import { TEST_IDS, TEST_CREDENTIALS } from "./constants";
 import { createTestProduct, deleteTestProducts } from "./product-helpers";
-import { createParticipationRpcResult } from "@/services/participations/participations.contracts";
+import { createBookingRpcResult } from "@/services/participations/participations.contracts";
 
 /**
  * Product-required consents: the enrolment conditions a parent must
  * agree to before a seat — or a place in line — is theirs.
  *
  * Both enrolment doors are covered here, and they are covered together on
- * purpose: `create_participation` and `join_waitlist` reach the same gate
+ * purpose: `create_booking` and `join_waitlist` reach the same gate
  * through the same helper, and a suite that exercised only one of them would
  * pass while the other silently let an unconsented family in.
  *
@@ -200,7 +200,7 @@ describe("product required consents", () => {
     purchaseShape: string,
     consented?: string[],
   ) {
-    return admin.rpc("create_participation", {
+    return admin.rpc("create_booking", {
       p_product_id: productId,
       p_participant_id: participantId,
       p_customer_id: TEST_IDS.CUSTOMER,
@@ -216,7 +216,7 @@ describe("product required consents", () => {
   // The seat path
   // -------------------------------------------------------------------------
 
-  describe("create_participation", () => {
+  describe("create_booking", () => {
     it("refuses an enrolment that agrees to nothing, naming both documents", async () => {
       const res = await enroll(PRODUCT_FREE_REQUIRES, TEST_IDS.GAMER, "free");
 
@@ -270,7 +270,7 @@ describe("product required consents", () => {
     // acceptance rows saying the parent had agreed.
 
     it("refuses an array whose only element is NULL, writing nothing", async () => {
-      const res = await callServiceRoleRpcResult("create_participation", {
+      const res = await callServiceRoleRpcResult("create_booking", {
         p_product_id: PRODUCT_FREE_REQUIRES,
         p_participant_id: TEST_IDS.GAMER,
         p_customer_id: TEST_IDS.CUSTOMER,
@@ -293,7 +293,7 @@ describe("product required consents", () => {
       // The shape a caller would actually send: agree to the one document you
       // are willing to agree to, and let the NULL cover the other. Through a
       // three-valued membership test this records acceptance of BOTH.
-      const res = await callServiceRoleRpcResult("create_participation", {
+      const res = await callServiceRoleRpcResult("create_booking", {
         p_product_id: PRODUCT_FREE_REQUIRES,
         p_participant_id: TEST_IDS.GAMER,
         p_customer_id: TEST_IDS.CUSTOMER,
@@ -313,7 +313,7 @@ describe("product required consents", () => {
         PRIVACY,
       ]);
       expect(res.error).toBeNull();
-      expect(createParticipationRpcResult.parse(res.data).kind).toBe(
+      expect(createBookingRpcResult.parse(res.data).kind).toBe(
         "free_active",
       );
 
@@ -357,7 +357,7 @@ describe("product required consents", () => {
       );
     });
 
-    it("records acceptances on the PAID shape, which writes no participation row", async () => {
+    it("records acceptances on the PAID shape, which writes no seat", async () => {
       const res = await enroll(
         PRODUCT_PAID_REQUIRES,
         TEST_IDS.GAMER,
@@ -365,9 +365,7 @@ describe("product required consents", () => {
         [TERMS, PRIVACY],
       );
       expect(res.error).toBeNull();
-      expect(createParticipationRpcResult.parse(res.data).kind).toBe(
-        "validated",
-      );
+      expect(createBookingRpcResult.parse(res.data).kind).toBe("pending");
 
       // The seat genuinely does not exist yet — it arrives from the Stripe
       // webhook — and the consent record is here anyway, because the parent
@@ -432,7 +430,7 @@ describe("product required consents", () => {
         "free",
       );
       expect(res.error).toBeNull();
-      expect(createParticipationRpcResult.parse(res.data).kind).toBe(
+      expect(createBookingRpcResult.parse(res.data).kind).toBe(
         "free_active",
       );
       expect(await acceptancesFor(PRODUCT_REQUIRES_NOTHING)).toEqual([]);
@@ -484,7 +482,7 @@ describe("product required consents", () => {
       // This is the door that makes a NULL element a live security defect rather
       // than a theoretical one: `join_product_waitlist` is granted directly to
       // `authenticated` and passes its array straight through, so any signed-in
-      // customer could send it. `create_participation` is service-role only and
+      // customer could send it. `create_booking` is service-role only and
       // sits behind a route. Same gate, same fix, and this is the half a real
       // caller can reach.
       const res = await callRpcRaw(customerToken, "join_product_waitlist", {

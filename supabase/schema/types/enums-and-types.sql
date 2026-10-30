@@ -10,6 +10,24 @@ CREATE TYPE public.billing_mode AS ENUM (
 
 
 --
+-- Name: booking_status; Type: TYPE; Schema: public; Owner: -
+--
+
+CREATE TYPE public.booking_status AS ENUM (
+    'pending',
+    'settled',
+    'duplicate'
+);
+
+
+--
+-- Name: TYPE booking_status; Type: COMMENT; Schema: public; Owner: -
+--
+
+COMMENT ON TYPE public.booking_status IS 'Where a booking stands: pending (still being processed: for a paid shape, waiting for the money), settled (processing finished and produced its seat or place in line) or duplicate (processing finished, but the participant already held a seat on the product). Whether a pending booking is abandoned is derived when read, never stored.';
+
+
+--
 -- Name: catalogue_image_purpose; Type: TYPE; Schema: public; Owner: -
 --
 

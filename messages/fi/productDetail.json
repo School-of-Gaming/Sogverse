@@ -70,6 +70,7 @@
     "holidayBreaks": "Loma-ajat"
   },
   "signupPanel": {
+    "checkoutAlreadyPaid": "Tämän ilmoittautumisen maksu on jo käsittelyssä. Ilmoittautuminen näkyy pian Oma SOG -sivullasi.",
     "verb": {
       "consumer_club": "Ilmoittaudu",
       "municipality_club": "Ilmoittaudu",

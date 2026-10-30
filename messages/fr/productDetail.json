@@ -70,6 +70,7 @@
     "holidayBreaks": "Vacances"
   },
   "signupPanel": {
+    "checkoutAlreadyPaid": "Le paiement de cette réservation est déjà en cours. Elle apparaîtra bientôt dans Mon SOG.",
     "verb": {
       "consumer_club": "S’inscrire",
       "municipality_club": "S’inscrire",

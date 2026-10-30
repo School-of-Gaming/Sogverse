@@ -7,59 +7,71 @@ CREATE FUNCTION public.confirm_paid_participation(p_product_id uuid, p_participa
     SET search_path TO ''
     AS $$
 DECLARE
-  v_conflict_id      UUID;
-  v_conflict_session TEXT;
-  v_conflict_status  public.participation_status;
-  v_participation_id UUID;
+  v_purchase_shape TEXT;
+  v_booking_id     UUID;
+  v_result         JSONB;
 BEGIN
-  PERFORM 1 FROM public.products WHERE id = p_product_id FOR UPDATE;
+  -- legacy-checkout-session: a Session created without a booking has none, so
+  -- one is made here from its metadata, and the seat takes the one confirm path.
+  -- A redelivery finds the booking this call or the backfill wrote. The shape
+  -- comes from the product. The currency is an assumption: the old route's is
+  -- not among these arguments, and nothing reads this booking's.
+  SELECT CASE WHEN product_type = 'consumer_club'
+              THEN 'subscription_monthly' ELSE 'single_payment' END
+    INTO v_purchase_shape
+    FROM public.products WHERE id = p_product_id FOR UPDATE;
   IF NOT FOUND THEN
     RAISE EXCEPTION 'product % does not exist', p_product_id
       USING ERRCODE = 'no_data_found';
   END IF;
 
-  -- Pre-check the partial UNIQUE on (product_id, participant_id): under the gate lock
-  -- this decides the outcome, and the index itself is left as the backstop.
-  SELECT id, status, stripe_checkout_session_id
-    INTO v_conflict_id, v_conflict_status, v_conflict_session
-    FROM public.participations
-    WHERE product_id = p_product_id
-      AND participant_id = p_participant_id
-      AND status    IN ('active', 'waitlisted', 'completed')
-    LIMIT 1;
+  INSERT INTO public.bookings (
+    product_id, participant_id, customer_id, purchase_shape, currency,
+    utm_source, utm_medium, utm_campaign, utm_content, utm_term,
+    school_of_gaming_marketing_opt_in, stripe_checkout_session_id
+  ) VALUES (
+    p_product_id, p_participant_id, p_customer_id, v_purchase_shape, 'eur',
+    p_utm_source, p_utm_medium, p_utm_campaign, p_utm_content, p_utm_term,
+    p_school_of_gaming_marketing_opt_in, p_checkout_session_id
+  )
+  ON CONFLICT (stripe_checkout_session_id) DO NOTHING;
 
-  IF v_conflict_id IS NOT NULL THEN
-    IF v_conflict_session IS NOT NULL
-       AND v_conflict_session = p_checkout_session_id THEN
-      RETURN jsonb_build_object(
-        'kind', 'confirmed',
-        'participation_id', v_conflict_id,
-        'idempotent', TRUE
-      );
+  SELECT id INTO v_booking_id
+    FROM public.bookings
+    WHERE stripe_checkout_session_id = p_checkout_session_id;
+
+  v_result := public.confirm_booking(v_booking_id, p_checkout_session_id);
+
+  -- The old webhook requires a seat id on both answers, and a redelivery whose
+  -- seat has since gone has none to give. Refusing keeps a cancelled seat
+  -- cancelled and stops that webhook before it writes a subscription for a seat
+  -- that is not there: it answers 500, and Stripe's retries leave the failure
+  -- in the logs.
+  IF COALESCE(v_result->>'participation_id', v_result->>'existing_participation_id') IS NULL THEN
+    RAISE EXCEPTION 'checkout session % has no seat to confirm: it has since been cancelled', p_checkout_session_id
+      USING ERRCODE = 'check_violation';
+  END IF;
+
+  IF v_result->>'kind' = 'settled' THEN
+    -- The old confirmation page finds a paid seat by this column, and without it
+    -- reads a parent's fresh purchase as a duplicate payment.
+    IF NOT (v_result->>'idempotent')::boolean THEN
+      UPDATE public.participations
+         SET stripe_checkout_session_id = p_checkout_session_id
+       WHERE id = (v_result->>'participation_id')::uuid;
     END IF;
 
     RETURN jsonb_build_object(
-      'kind', 'duplicate_payment',
-      'existing_participation_id', v_conflict_id,
-      'existing_status', v_conflict_status::text
+      'kind', 'confirmed',
+      'participation_id', v_result->'participation_id',
+      'idempotent', v_result->'idempotent'
     );
   END IF;
 
-  INSERT INTO public.participations (
-    product_id, participant_id, customer_id, status, stripe_checkout_session_id,
-    utm_source, utm_medium, utm_campaign, utm_content, utm_term,
-    school_of_gaming_marketing_opt_in
-  ) VALUES (
-    p_product_id, p_participant_id, p_customer_id, 'active', p_checkout_session_id,
-    p_utm_source, p_utm_medium, p_utm_campaign, p_utm_content, p_utm_term,
-    p_school_of_gaming_marketing_opt_in
-  )
-  RETURNING id INTO v_participation_id;
-
   RETURN jsonb_build_object(
-    'kind', 'confirmed',
-    'participation_id', v_participation_id,
-    'idempotent', FALSE
+    'kind', 'duplicate_payment',
+    'existing_participation_id', v_result->'existing_participation_id',
+    'existing_status', v_result->'existing_status'
   );
 END;
 $$;
@@ -69,7 +81,7 @@ $$;
 -- Name: FUNCTION confirm_paid_participation(p_product_id uuid, p_participant_id uuid, p_customer_id uuid, p_checkout_session_id text, p_utm_source text, p_utm_medium text, p_utm_campaign text, p_utm_content text, p_utm_term text, p_school_of_gaming_marketing_opt_in boolean); Type: COMMENT; Schema: public; Owner: -
 --
 
-COMMENT ON FUNCTION public.confirm_paid_participation(p_product_id uuid, p_participant_id uuid, p_customer_id uuid, p_checkout_session_id text, p_utm_source text, p_utm_medium text, p_utm_campaign text, p_utm_content text, p_utm_term text, p_school_of_gaming_marketing_opt_in boolean) IS 'Creates the active participation for a paid signup once Stripe confirms payment. service_role only — the arguments come from Checkout Session metadata we wrote. Deliberately audience-ungated: validation happened before the money, and this after-money recorder refusing would strand a charge with no seat. Returns kind=confirmed with participation_id (idempotent=true when this same session already bought the seat), or kind=duplicate_payment with existing_participation_id when a different payment already put this participant on this product. The booking''s UTM tag (p_utm_source … p_utm_term, which the route passes only under marketing cookie consent) and the parent''s answer to the product''s School of Gaming mailing ask (p_school_of_gaming_marketing_opt_in, NULL when not asked) are written onto the seat, where the Klaviyo enrolled event reads them.';
+COMMENT ON FUNCTION public.confirm_paid_participation(p_product_id uuid, p_participant_id uuid, p_customer_id uuid, p_checkout_session_id text, p_utm_source text, p_utm_medium text, p_utm_campaign text, p_utm_content text, p_utm_term text, p_school_of_gaming_marketing_opt_in boolean) IS 'legacy-checkout-session: kept for the deployment window and for redeliveries of Checkout Sessions created before bookings, and removed by the follow-up. service_role only: the arguments come from that Session''s metadata. Writes a booking from them, or reuses the one holding this session id, with subscription_monthly on a consumer_club and single_payment on anything else, so the seat counts as paid. Its currency of eur is an assumption on this path, because the Session''s currency is not among the arguments, and nothing reads it. Confirms it through confirm_booking, writes the session id onto a fresh seat because the old confirmation page finds the seat by it, and returns the shapes the old webhook expects: kind=confirmed with participation_id and idempotent, or kind=duplicate_payment with existing_participation_id and existing_status. A redelivery whose seat has since been cancelled raises check_violation instead: that webhook requires a seat id, and the seat must not come back.';
 
 
 --

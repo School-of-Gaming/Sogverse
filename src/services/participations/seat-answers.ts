@@ -12,9 +12,8 @@ import {
 } from "./participations.contracts";
 
 /**
- * What a booking writes onto the seat it creates beyond who and what — the
- * visit's UTM tag and the School of Gaming mailing answer — as the parameters
- * `create_participation` and `confirm_paid_participation` both take.
+ * What a booking records beyond who and what — the visit's UTM tag and the
+ * School of Gaming mailing answer — as the parameters `create_booking` takes.
  *
  * A key is present only when it holds a value, so an absent one reaches the
  * RPC's DEFAULT NULL: no consent, no tag, or a product that did not ask.
@@ -23,7 +22,7 @@ export type SeatAnswerArgs = Partial<
   Record<`p_${(typeof UTM_QUERY_PARAMS)[UtmField]}`, string>
 > & { p_school_of_gaming_marketing_opt_in?: boolean };
 
-/** The session-metadata key each UTM field travels under. */
+/** legacy-checkout-session: the metadata key each UTM field travels under on a Session created before bookings. */
 const UTM_SESSION_KEYS = {
   source: "utmSource",
   medium: "utmMedium",
@@ -60,32 +59,8 @@ export function seatAnswerArgs(
 }
 
 /**
- * The same answers as Checkout Session metadata, for a paid seat the webhook
- * writes once the money lands. Only the keys that hold a value are written.
- *
- * Because they ride the Checkout Session metadata, Stripe keeps both values
- * with the payment, and the privacy policy's Stripe provider bullet names them
- * for that reason: when either stops (or another starts) travelling through
- * Stripe, that bullet changes in every locale in the same change.
- */
-export function seatAnswersToSessionMetadata(
-  args: SeatAnswerArgs,
-): Record<string, string> {
-  const metadata: Record<string, string> = {};
-  for (const field of UTM_FIELDS) {
-    const value = args[`p_${UTM_QUERY_PARAMS[field]}`];
-    if (value !== undefined) metadata[UTM_SESSION_KEYS[field]] = value;
-  }
-  const optIn = args.p_school_of_gaming_marketing_opt_in;
-  if (optIn !== undefined) {
-    metadata.schoolOfGamingMarketingOptIn = optIn ? "true" : "false";
-  }
-  return metadata;
-}
-
-/**
- * Read the answers back off a completed session's metadata, as the RPC
- * parameters. Throws when a key holds something the checkout route never
+ * legacy-checkout-session: read the answers back off the metadata of a completed
+ * Session created before bookings, as the RPC parameters. Throws when a key holds something the checkout route never
  * writes, so the webhook answers 500 and the mismatch is seen rather than a
  * seat being written with an answer nobody gave.
  */
