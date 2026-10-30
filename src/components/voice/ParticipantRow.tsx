@@ -139,19 +139,18 @@ export interface ParticipantRowProps {
   moderationLock?: LockExplanation | null;
   /**
    * The element the speaking glow writes its inline style onto every animation
-   * frame: the avatar, or the mic in the panel layout.
+   * frame: the avatar.
    */
   glowRef?: Ref<HTMLDivElement>;
   /**
    * The rows' shape. Omitted is the room's own full-width list. `"panel"` is the
-   * redesign's: no avatar and no camera status, the glow on the mic, and a row
-   * that breaks by the list's width rather than the viewport's. See
-   * `ParticipantPanelMic` and the panel branch below.
+   * redesign's: the avatar beside a column that breaks by the list's width rather
+   * than the viewport's. See the panel branch below.
    */
   layout?: "panel";
   /**
    * The glow a room with no analyser takes from `isSpeaking`, on the element
-   * beside `glowRef`, where the analyser loop cannot wipe it. Panel layout only.
+   * around `glowRef`'s, where the analyser loop cannot wipe it. Panel layout only.
    */
   steadyGlow?: CSSProperties;
   onMute?: (track: "audio" | "video") => void;
@@ -351,6 +350,43 @@ export function ParticipantRow({
     </>
   );
 
+  const avatar = (
+    <Avatar className="h-8 w-8">
+      <Identicon id={p.userId} size={32} />
+    </Avatar>
+  );
+
+  /* Status indicators — always show both icons for stable layout. */
+  const status = (
+    <div className="flex shrink-0 items-center gap-1.5">
+      <div className="relative">
+        {p.videoOn ? (
+          <Video className="h-3.5 w-3.5 text-muted-foreground" />
+        ) : (
+          <VideoOff
+            className={cn(
+              "h-3.5 w-3.5",
+              lockState.video ? "text-destructive" : "text-muted-foreground",
+            )}
+          />
+        )}
+        {lockState.video && (
+          <Lock className="absolute -right-1 -top-1 h-2.5 w-2.5 text-destructive" />
+        )}
+      </div>
+      <div className="relative">
+        {p.audioOn ? (
+          <Mic className="h-3.5 w-3.5 text-success" />
+        ) : (
+          <MicOff className="h-3.5 w-3.5 text-destructive" />
+        )}
+        {lockState.audio && (
+          <Lock className="absolute -right-1 -top-1 h-2.5 w-2.5 text-destructive" />
+        )}
+      </div>
+    </div>
+  );
+
   if (layout === "panel") {
     // A row whose second line is already there when the overlay lands. Every
     // other row has only late marks to put on one, and a line appearing on data's
@@ -361,48 +397,58 @@ export function ParticipantRow({
     return (
       <div
         className={cn(
-          // Name and trailing controls first; the identity and its badges on a
-          // line of their own, because the panel's 286px cannot hold them beside
-          // the 96px of controls. The break reads the list's width (`people`,
-          // set on the list), never the viewport's: at the widest the panel gets,
-          // the viewport is 1440 and the row is 350. `@xl` is what one line needs
-          // with room left for a name: a 180px identity, two badges and the
-          // controls with their gaps are 480 of it, and only the phone sheet on
-          // a tablet is that wide. So `order` does the moving, as on the live row.
-          "flex flex-wrap items-center gap-x-2 gap-y-1 rounded-lg border border-border p-2 transition-colors @xl/people:flex-nowrap",
+          "flex items-center gap-2 rounded-lg border border-border p-2 transition-colors",
           p.isLocal && "bg-lifted",
         )}
       >
-        {/* `flex-1` for the same reason as the live row's name: a truncating item
-            otherwise contributes its full width to the line break. */}
-        <span className="order-1 min-w-0 flex-1 truncate text-sm font-medium @xl/people:max-w-fit">
-          {p.userName}
-        </span>
-
-        {!hasSecondLine && lateMarks(PANEL_FIRST_LINE)}
-
-        {/* One right-packed group with the note button at its left edge, so the
-            note landing late grows it into the name and moves no control. */}
-        <div className="order-2 ml-auto flex h-7 shrink-0 items-center gap-2 @xl/people:order-3">
-          {flairButton}
-          <ParticipantPanelMic
-            audioOn={p.audioOn}
-            locked={lockState.audio}
-            glowRef={glowRef}
-            steadyGlow={steadyGlow}
-          />
-          {moderation}
+        {/* The avatar spans the column's lines. The ref div is the live row's, and
+            the steady glow goes on the box around it, where the analyser cannot
+            wipe it. The box is positioned, so a neighbouring row's ground cannot
+            paint over the glow. A shadow takes no layout, and the row's border and
+            padding and the panel's padding put the scroller's edge 17px away, past
+            the glow's 14px at its loudest. */}
+        <div style={steadyGlow} className="relative shrink-0 rounded-md">
+          <div ref={glowRef} className="rounded-md">
+            {avatar}
+          </div>
         </div>
 
-        {/* A late mark lands at the end of this run, as everywhere. It wraps
-            rather than clip the account, which never truncates. */}
-        {hasSecondLine && (
-          <div className="order-3 flex w-full flex-wrap items-center gap-x-2 gap-y-1 @xl/people:order-2 @xl/people:w-auto">
-            {identity(PANEL_IDENTITY_SLOT)}
-            {parentBadge()}
-            {lateMarks()}
+        {/* Name and trailing controls first; the identity and its badges on a line
+            of their own, because the 246px beside the avatar in a 320px panel
+            cannot hold them with the 106px of controls. The break reads the list's
+            width (`people`, set on the list), never the viewport's: at the widest
+            the panel gets, the viewport is 1440 and the row is 350. `@xl` is what
+            one line needs with room left for a name: the avatar, a 180px identity,
+            two badges and the controls with their gaps are 530 of it, and only the
+            phone sheet on a tablet is that wide. So `order` does the moving, as on
+            the live row. */}
+        <div className="flex min-w-0 flex-1 flex-wrap items-center gap-x-2 gap-y-1 @xl/people:flex-nowrap">
+          {/* `flex-1` for the same reason as the live row's name: a truncating item
+              otherwise contributes its full width to the line break. */}
+          <span className="order-1 min-w-0 flex-1 truncate text-sm font-medium @xl/people:max-w-fit">
+            {p.userName}
+          </span>
+
+          {!hasSecondLine && lateMarks(PANEL_FIRST_LINE)}
+
+          {/* One right-packed group with the note button at its left edge, so the
+              note landing late grows it into the name and moves no control. */}
+          <div className="order-2 ml-auto flex h-7 shrink-0 items-center gap-2 @xl/people:order-3">
+            {flairButton}
+            {status}
+            {moderation}
           </div>
-        )}
+
+          {/* A late mark lands at the end of this run, as everywhere. It wraps
+              rather than clip the account, which never truncates. */}
+          {hasSecondLine && (
+            <div className="order-3 flex w-full flex-wrap items-center gap-x-2 gap-y-1 @xl/people:order-2 @xl/people:w-auto">
+              {identity(PANEL_IDENTITY_SLOT)}
+              {parentBadge()}
+              {lateMarks()}
+            </div>
+          )}
+        </div>
       </div>
     );
   }
@@ -422,9 +468,7 @@ export function ParticipantRow({
           and border-color onto every animation frame, so nothing may wrap it:
           wrapping would move the glow off the face. */}
       <div ref={glowRef} className="order-1 shrink-0 rounded-md">
-        <Avatar className="h-8 w-8">
-          <Identicon id={p.userId} size={32} />
-        </Avatar>
+        {avatar}
       </div>
 
       {/* The name — the one thing on this row allowed to truncate, and the
@@ -512,87 +556,9 @@ export function ParticipantRow({
       <div className="order-4 ml-auto flex shrink-0 items-center gap-2 sm:order-5">
         {flairButton}
 
-        {/* Status indicators — always show both icons for stable layout. */}
-        <div className="flex shrink-0 items-center gap-1.5">
-          <div className="relative">
-            {p.videoOn ? (
-              <Video className="h-3.5 w-3.5 text-muted-foreground" />
-            ) : (
-              <VideoOff
-                className={cn(
-                  "h-3.5 w-3.5",
-                  lockState.video
-                    ? "text-destructive"
-                    : "text-muted-foreground",
-                )}
-              />
-            )}
-            {lockState.video && (
-              <Lock className="absolute -right-1 -top-1 h-2.5 w-2.5 text-destructive" />
-            )}
-          </div>
-          <div className="relative">
-            {p.audioOn ? (
-              <Mic className="h-3.5 w-3.5 text-success" />
-            ) : (
-              <MicOff className="h-3.5 w-3.5 text-destructive" />
-            )}
-            {lockState.audio && (
-              <Lock className="absolute -right-1 -top-1 h-2.5 w-2.5 text-destructive" />
-            )}
-          </div>
-        </div>
+        {status}
 
         {moderation}
-      </div>
-    </div>
-  );
-}
-
-/**
- * The panel row's mic status, and the one place the panel's speaking glow is.
- *
- * **Two elements carry the glow, as `useParticipantGlow` says:** one takes the
- * steady glow and the other the analyser's, whose loop rewrites its element's
- * inline style every frame. Both are circles the size of the icon, under it,
- * because a shadow is drawn only outside its box: anything wider leaves a dark
- * disc around the icon with the light ringing it. They have no border, so the
- * glow's border colour draws nothing here.
- *
- * The 24px box holds its place whether or not anyone speaks, and a shadow takes no
- * layout, so a glow moves nothing. The circles sit 5px inside the box, and the
- * panel's padding and the row's border and padding add 17px to the scroller's
- * edge, past the glow's 14px at its loudest. They are positioned, so a neighbouring
- * row's ground cannot paint over them. A muted person gets neither glow: the hook
- * stops the loop and `steadyGlow` requires the mic.
- */
-function ParticipantPanelMic({
-  audioOn,
-  locked,
-  glowRef,
-  steadyGlow,
-}: {
-  audioOn: boolean;
-  locked: boolean;
-  glowRef?: Ref<HTMLDivElement>;
-  steadyGlow?: CSSProperties;
-}) {
-  return (
-    <div className="relative flex h-6 w-6 shrink-0 items-center justify-center">
-      <div
-        style={steadyGlow}
-        className="absolute inset-[5px] rounded-full transition-shadow"
-      />
-      <div ref={glowRef} className="absolute inset-[5px] rounded-full" />
-      <div className="relative">
-        {audioOn ? (
-          <Mic className="h-3.5 w-3.5 text-success" />
-        ) : (
-          <MicOff className="h-3.5 w-3.5 text-destructive" />
-        )}
-        {locked && (
-          <Lock className="absolute -right-1 -top-1 h-2.5 w-2.5 text-destructive" />
-        )}
       </div>
     </div>
   );

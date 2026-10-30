@@ -261,7 +261,10 @@ export function Header({ navRole, navSlot }: HeaderProps) {
    * The badge and its word make one lockup at every width, for every role.
    */
   const brandText = logoHref === ROUTES.home ? (
-    <SogWordmark height={15} className="text-foreground" />
+    <SogWordmark
+      height={15}
+      className={cn("text-foreground", navSlot && "hidden lg:inline")}
+    />
   ) : (
     <span
       className={cn(
@@ -408,18 +411,15 @@ export function Header({ navRole, navSlot }: HeaderProps) {
             inside its own box.
 
             **`navSlot` shares the same strip**, and below `lg` it takes the
-            signed-in lockup's word for its own room, leaving the badge. The
-            wordmark stays, because it is the brand rather than a destination.
-            Room for the slot at 360, in px, measured in a voice room, of which a
-            zone's 28px mark and 6px gap come first:
+            lockup's word for its own room, signed in or out, leaving the badge.
+            Room for the slot at 360, in px, measured signed in in a voice room,
+            of which a zone's 28px mark and 6px gap come first:
 
-              who          en     fi     sv     fr    tlh
-              signed in  134.8  141.3  134.1  136.1  128.2
-              signed out   3.8   10.3    3.1    5.2    0.0
+              en     fi     sv     fr    tlh
+              134.8  141.3  134.1  136.1  128.2
 
-            So a signed-in zone name gets 94 to 107px at 360 and truncates past
-            that, and a signed-out reader's slot is clipped to almost nothing.
-            390 adds 30px.
+            So a zone name gets 94 to 107px at 360 and truncates past that. 390
+            adds 30px.
           */}
           <div className={cn("flex items-center gap-2 lg:gap-3", navSlot && "min-w-0")}>
             {navSlot ?? (
