@@ -437,10 +437,12 @@ removing the old staging host, so until then each change can be pointed back at
      that made it so it can be re-run just before cancelling. The token it uses is
      `WEBFLOW_EXPORT_TOKEN` (read-only) in `~/work/sog-translations/.env`. Its
      `personal/` folder goes to the restricted Drive folder.
-   - Two things aren't in it: the site's custom head and footer code, which no token can
-     read (copy it by hand from Site settings → Custom code), and the "My child is a
-     gamer" guidebook PDF, which Webflow refused to serve (download it from the Assets
-     panel if Sogverse's guide store doesn't already hold it).
+   - The site's custom code and the "My child is a gamer" guidebook were added on
+     2026-10-30. No token can read the custom code, so `public/custom-code/` holds the head
+     and footer read from Site settings, the app scripts and the code pulled from the
+     static mirror; re-running the export won't refresh them. The guidebook is
+     `public/files/my-child-is-a-gamer-guidebook.pdf`, from the Google Drive link on the
+     Westgate Academy page. Webflow's own copy is an empty 0-byte asset.
    - The add-ons are the connected apps Jetboost, LiveChat and Flowbase. Revoke the
      site's API tokens with the subscription.
    - The site's form webhooks also sent submissions to Zapier, Make, phoneflow and
