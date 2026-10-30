@@ -4,13 +4,26 @@ import type { VoiceZoneView } from "@/lib/voice/zone-composition";
 import { useVoiceRoom } from "../VoiceRoomProvider";
 import type { VoiceParticipant } from "../hooks/types";
 
+/** Who a gamer looks to: a trainee's role is `gedu`, and to a gamer a trainee is a Gedu. */
+export function isGedu(p: VoiceParticipant) {
+  return p.role === "gedu" || p.role === "admin";
+}
+
+/** Gedus first, and nobody otherwise reordered. */
+export function geduFirst(people: VoiceParticipant[]) {
+  return [...people.filter(isGedu), ...people.filter((p) => !isGedu(p))];
+}
+
 export interface RoomStage {
   zoneLabel: (zone: VoiceZoneView) => string;
   /** The zone the reader is in, or `undefined` before the zones have composed. */
   currentZone: VoiceZoneView | undefined;
-  /** The current zone's name, for a sentence: never blank. */
+  /** The current zone's name: never blank. */
   currentZoneName: string;
-  /** The people on the stage: everyone in the reader's zone, the reader included. */
+  /**
+   * The people on the stage: everyone in the reader's zone, the reader included,
+   * with the Gedus first and everyone otherwise in the room's order.
+   */
   stageMembers: VoiceParticipant[];
   /** The person whose share is in view, or `null`. */
   sharer: VoiceParticipant | null;
@@ -62,7 +75,7 @@ export function useRoomStage(onLeave: () => Promise<void>): RoomStage {
     !isConfined &&
     (!zone.isLocked || isModerator);
 
-  const stageMembers = participantsByZone.get(currentZoneId) ?? [];
+  const stageMembers = geduFirst(participantsByZone.get(currentZoneId) ?? []);
 
   // A share from a private zone the reader is outside of never reaches them:
   // the SFU does not send it, so there is nothing to give the stage to.

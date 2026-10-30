@@ -1,4 +1,5 @@
 import type { VoiceParticipant } from "@/components/voice/hooks/types";
+import type { ChatTypingBurst } from "./chat-scene-store";
 
 /**
  * A pretend call for the redesigned room's preview scene: the people, what they
@@ -29,6 +30,13 @@ export interface SimulationScript {
   /** How long between one share ending and the next starting. */
   shareGapMs: MsRange;
   shareLengthMs: MsRange;
+  /** The chat beside the call: who is typing, how long, and whether it lands. */
+  chat: {
+    gapMs: MsRange;
+    typingMs: MsRange;
+    twoTypersChance: number;
+    messageChance: number;
+  };
 }
 
 export interface SimulationSetup {
@@ -75,6 +83,7 @@ export class RoomSimulation {
   private readonly listeners = new Set<() => void>();
   private readonly timers = new Set<ReturnType<typeof setTimeout>>();
   private mounted = false;
+  private chatListener: ((burst: ChatTypingBurst) => void) | null = null;
 
   constructor({ participants, bench, openZoneIds, script }: SimulationSetup) {
     this.bench = bench;
@@ -97,6 +106,14 @@ export class RoomSimulation {
   };
 
   getSnapshot = () => this.state;
+
+  /** The chat lives in its own store, so the script tells it what to do. */
+  onChatBurst(listener: (burst: ChatTypingBurst) => void) {
+    this.chatListener = listener;
+    return () => {
+      this.chatListener = null;
+    };
+  }
 
   /** Idempotent, so React's strict double effect is harmless. */
   mount() {
@@ -195,6 +212,7 @@ export class RoomSimulation {
     this.script.voices.forEach((lane) => this.runVoice(lane));
     this.runCrowd();
     this.runShare();
+    this.runChat();
   }
 
   /** Stops every timer and leaves nobody talking into a frozen room. */
@@ -210,16 +228,28 @@ export class RoomSimulation {
     this.notify();
   }
 
+  private between([min, max]: MsRange) {
+    return min + this.random() * (max - min);
+  }
+
   private after(range: MsRange, action: () => void) {
-    const [min, max] = range;
-    const timer = setTimeout(
-      () => {
-        this.timers.delete(timer);
-        action();
-      },
-      min + this.random() * (max - min),
-    );
+    const timer = setTimeout(() => {
+      this.timers.delete(timer);
+      action();
+    }, this.between(range));
     this.timers.add(timer);
+  }
+
+  private runChat() {
+    const { gapMs, typingMs, twoTypersChance, messageChance } = this.script.chat;
+    this.after(gapMs, () => {
+      this.chatListener?.({
+        typingMs: this.between(typingMs),
+        twoTypers: this.random() < twoTypersChance,
+        landsMessage: this.random() < messageChance,
+      });
+      this.runChat();
+    });
   }
 
   private runVoice(lane: VoiceLane) {

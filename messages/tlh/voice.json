@@ -177,7 +177,6 @@
   },
   "zoneSaveFailed": "Daq pollu’be’. yInID.",
   "stage": {
-    "youAreIn": "{zone} Daq SoH",
     "youAreHere": "naDev SoH",
     "tileYou": "{name} (SoH)",
     "tileMicOff": "QoymeH jan chu’Ha’lu’",

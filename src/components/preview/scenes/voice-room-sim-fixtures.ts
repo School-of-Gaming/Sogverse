@@ -71,4 +71,10 @@ export const GROUP_SESSION_SCRIPT: SimulationScript = {
   crowdGapMs: [3500, 8000],
   shareGapMs: [9000, 14000],
   shareLengthMs: [18000, 26000],
+  chat: {
+    gapMs: [8000, 18000],
+    typingMs: [2500, 6000],
+    twoTypersChance: 0.3,
+    messageChance: 0.6,
+  },
 };

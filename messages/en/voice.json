@@ -177,7 +177,6 @@
   },
   "zoneSaveFailed": "That zone didn’t save. Try again.",
   "stage": {
-    "youAreIn": "You’re in {zone}",
     "youAreHere": "You’re in this zone",
     "tileYou": "{name} (you)",
     "tileMicOff": "Microphone off",

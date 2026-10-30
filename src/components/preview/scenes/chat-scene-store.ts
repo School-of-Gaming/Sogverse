@@ -44,6 +44,12 @@ const TYPING_MS = 1100;
 /** The gap between scripted arrivals while the auto toggle is on. */
 const AUTO_INTERVAL_MS = 5000;
 
+export interface ChatTypingBurst {
+  typingMs: number;
+  twoTypers: boolean;
+  landsMessage: boolean;
+}
+
 export interface ChatSceneStore {
   messages: ChatMessage[];
   viewerId: string;
@@ -56,6 +62,8 @@ export interface ChatSceneStore {
   setAuto: (auto: boolean) => void;
   /** Fire one scripted arrival now. */
   sendScripted: () => void;
+  /** People typing for a while, which may or may not end in a message. */
+  typingBurst: (burst: ChatTypingBurst) => void;
   send: (drafts: ChatSendDraft[]) => void;
   retry: (messageId: string) => void;
   edit: (messageId: string, body: string) => void;
@@ -191,33 +199,60 @@ export function useChatSceneStore(
     [latency, settle, viewerId],
   );
 
+  const typeThen = useCallback(
+    (typers: string[], typingMs: number, then: () => void) => {
+      setTypingIds((current) => [...new Set([...current, ...typers])]);
+      later(() => {
+        setTypingIds((current) => current.filter((id) => !typers.includes(id)));
+        then();
+      }, typingMs);
+    },
+    [later],
+  );
+
+  const land = useCallback((line: (typeof CHAT_SCENE_INCOMING)[number]) => {
+    setMessages((current) => [
+      ...current,
+      {
+        id: `script-${crypto.randomUUID()}`,
+        senderId: line.senderId,
+        createdAt: new Date().toISOString(),
+        body: line.body,
+        image: null,
+        replyToId: null,
+        editedAt: null,
+        hiddenAt: null,
+        hiddenBy: null,
+        reactions: [],
+        delivery: "sent",
+      },
+    ]);
+  }, []);
+
   const sendScripted = useCallback(() => {
     const line = CHAT_SCENE_INCOMING[scriptCursor.current % CHAT_SCENE_INCOMING.length];
     scriptCursor.current += 1;
+    typeThen([line.senderId], TYPING_MS, () => land(line));
+  }, [land, typeThen]);
 
-    setTypingIds((current) =>
-      current.includes(line.senderId) ? current : [...current, line.senderId],
-    );
-    later(() => {
-      setTypingIds((current) => current.filter((id) => id !== line.senderId));
-      setMessages((current) => [
-        ...current,
-        {
-          id: `script-${crypto.randomUUID()}`,
-          senderId: line.senderId,
-          createdAt: new Date().toISOString(),
-          body: line.body,
-          image: null,
-          replyToId: null,
-          editedAt: null,
-          hiddenAt: null,
-          hiddenBy: null,
-          reactions: [],
-          delivery: "sent",
-        },
-      ]);
-    }, TYPING_MS);
-  }, [later]);
+  const typingBurst = useCallback(
+    ({ typingMs, twoTypers, landsMessage }: ChatTypingBurst) => {
+      // The viewer never types at themselves, and the next lines say who is next.
+      const lineAt = (at: number) => CHAT_SCENE_INCOMING[at % CHAT_SCENE_INCOMING.length];
+      const upcoming = CHAT_SCENE_INCOMING.map((_, offset) => scriptCursor.current + offset).filter(
+        (at) => lineAt(at).senderId !== viewerId,
+      );
+      const line = lineAt(upcoming[0]);
+      const second = upcoming.map(lineAt).find((other) => other.senderId !== line.senderId);
+      if (landsMessage) scriptCursor.current = upcoming[0] + 1;
+      const typers = [line.senderId];
+      if (twoTypers && second) typers.push(second.senderId);
+      typeThen(typers, typingMs, () => {
+        if (landsMessage) land(line);
+      });
+    },
+    [land, typeThen, viewerId],
+  );
 
   useEffect(() => {
     if (!auto) return;
@@ -236,6 +271,7 @@ export function useChatSceneStore(
     auto,
     setAuto,
     sendScripted,
+    typingBurst,
     send,
     retry: (messageId) => {
       patch(messageId, { delivery: "pending" });

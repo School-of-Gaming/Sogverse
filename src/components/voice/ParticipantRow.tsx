@@ -167,6 +167,10 @@ export interface ParticipantRowProps {
    * trailing control for a screen reader to announce.
    */
   onOpenFlair?: () => void;
+  /** Extra classes on the avatar, for a room that marks somebody on it. */
+  avatarClassName?: string;
+  /** A mark directly after the name. It is known at first paint, so it shifts nothing. */
+  nameBadge?: ReactNode;
 }
 
 export function ParticipantRow({
@@ -183,6 +187,8 @@ export function ParticipantRow({
   hasContent,
   isTrainee,
   onOpenFlair,
+  avatarClassName,
+  nameBadge,
 }: ParticipantRowProps) {
   const c = useTranslations("common");
   const tt = useTranslations("gedu.trainee");
@@ -214,7 +220,7 @@ export function ParticipantRow({
           and border-color onto every animation frame, so nothing may wrap it:
           wrapping would move the glow off the face. */}
       <div ref={avatarRef} className="order-1 shrink-0 rounded-md">
-        <Avatar className="h-8 w-8">
+        <Avatar className={cn("h-8 w-8", avatarClassName)}>
           <Identicon id={p.userId} size={32} />
         </Avatar>
       </div>
@@ -237,6 +243,7 @@ export function ParticipantRow({
       <span className="order-2 min-w-0 max-w-fit flex-1 truncate text-sm font-medium">
         {p.userName}
       </span>
+      {nameBadge}
 
       {/* The game identity — **the one item that moves between breakpoints.**
           From `sm` up it sits directly after the name, sized to its own

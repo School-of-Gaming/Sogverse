@@ -37,6 +37,13 @@ export function ZoneGlyph({ zone }: { zone: VoiceZoneView }) {
  * below stay put. Two rows are shown, and a crowd past that scrolls inside the
  * strip rather than growing it.
  *
+ * **The scroller reaches past the strip, because a scroller clips.** Its padding
+ * holds the speaking glow's 14px reach at the top and sides, so the glow is not
+ * cut at the strip's edge, and the header sits above it so its controls stay
+ * pressable. Below, it stops at the entry's border: a third row would otherwise
+ * show through out of the entry. That leaves a second row's glow its last few
+ * faint pixels short, and a crowd's scrolled rows peeking into the padding.
+ *
  * **The zone you are in is marked by its own colour's glow alone**, as the live
  * zone card does, because any second colour would fight the zone's. A
  * screen-reader line says it in words.
@@ -90,7 +97,7 @@ export function ZoneEntry({
           "cursor-pointer hover:bg-hover focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-act",
       )}
     >
-      <div className="flex items-center gap-2">
+      <div className="relative z-10 flex items-center gap-2">
         <ZoneGlyph zone={zone} />
         <span className="min-w-0 flex-1 truncate text-sm font-medium">{label}</span>
         {isCurrent && <span className="sr-only">{t("stage.youAreHere")}</span>}
@@ -134,7 +141,7 @@ export function ZoneEntry({
       </div>
 
       <div className="relative mt-1.5 h-[3.75rem]">
-        <div className="flex h-full flex-wrap content-start gap-1 overflow-y-auto [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
+        <div className="absolute -inset-x-3.5 -bottom-2 -top-3.5 flex flex-wrap content-start gap-1 overflow-y-auto px-3.5 pb-2 pt-3.5 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
           {children}
         </div>
         {outsiderOfLocked && occupied && <PrivacyScreen />}

@@ -4,6 +4,8 @@ import { useState } from "react";
 import { MapPin, MessageSquare, MoreHorizontal, Users } from "lucide-react";
 import { useTranslations } from "next-intl";
 import { Heading } from "@sog/ui";
+import { LogoBadge } from "@/components/layout/logo-badge";
+import { SENDER_NAME } from "@/lib/constants/brand";
 import {
   Sheet,
   SheetContent,
@@ -12,6 +14,7 @@ import {
 } from "@/components/ui/sheet";
 import { PanelBody, PanelTabs, type PanelTab } from "./ChatPeoplePanel";
 import { PhoneZonesSheet } from "./PhoneZonesSheet";
+import { RoomAccount } from "./RoomAccount";
 import {
   CameraControl,
   LabelledButton,
@@ -69,6 +72,9 @@ export function PhoneRoom({
       </Heading>
 
       <header className="flex shrink-0 items-center gap-2 border-b border-border px-1 py-0.5">
+        {/* Not a link: leaving for the home page would drop the call. The badge
+            alone, because at 360px the wordmark's 123px is the zone name's room. */}
+        <LogoBadge alt={SENDER_NAME} className="h-6 w-auto shrink-0" />
         <button
           type="button"
           onClick={() => setSheet("zones")}
@@ -76,11 +82,10 @@ export function PhoneRoom({
           className="flex min-h-9 min-w-0 flex-1 items-center gap-2 rounded-md px-1 text-left hover:bg-hover focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-act"
         >
           {stage.currentZone && <ZoneGlyph zone={stage.currentZone} />}
-          <span className="truncate text-sm font-medium">
-            {t("stage.youAreIn", { zone: stage.currentZoneName })}
-          </span>
+          <span className="truncate text-sm font-medium">{stage.currentZoneName}</span>
         </button>
         {titleAccessory}
+        <RoomAccount />
       </header>
 
       <main className="min-h-0 flex-1 p-2">

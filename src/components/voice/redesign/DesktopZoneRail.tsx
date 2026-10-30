@@ -1,6 +1,6 @@
 "use client";
 
-import { useId, useRef, useState } from "react";
+import { useId, useState } from "react";
 import {
   DndContext,
   DragOverlay,
@@ -14,14 +14,14 @@ import {
 } from "@dnd-kit/core";
 import { useTranslations } from "next-intl";
 import { cn } from "@/lib/cn";
-import { computeGlowStyle } from "@/lib/voice/glow";
 import type { VoiceZoneView } from "@/lib/voice/zone-composition";
-import { useSpeakingGlow } from "../hooks/use-speaking-glow";
 import type { VoiceParticipant } from "../hooks/types";
 import { VoiceAvatar } from "../VoiceAvatar";
 import { useVoiceRoom } from "../VoiceRoomProvider";
 import { readMemberDrag, readZoneDrop } from "../ZoneList";
-import type { RoomStage } from "./use-room-stage";
+import { GEDU_AVATAR_OUTLINE, GeduWord } from "./GeduMark";
+import { useParticipantGlow } from "./use-participant-glow";
+import { isGedu, type RoomStage } from "./use-room-stage";
 import { useZoneManagement } from "./use-zone-management";
 import { useRenderVideo } from "./VideoSurface";
 import { ZoneEntry } from "./ZoneEntry";
@@ -83,7 +83,6 @@ export function DesktopZoneRail({ stage }: { stage: RoomStage }) {
         aria-label={t("stage.zones")}
         className="min-h-0 flex-1 space-y-2 overflow-y-auto p-2"
       >
-        <p className="px-1 text-xs text-muted-foreground">{t("zonesDescription")}</p>
         {zones.map((zone) => (
           <RailZone
             key={zone.id}
@@ -104,7 +103,10 @@ export function DesktopZoneRail({ stage }: { stage: RoomStage }) {
       <DragOverlay dropAnimation={null}>
         {activeParticipant && (
           <div className="drag-ghost flex w-12 flex-col items-center gap-1">
-            <VoiceAvatar userId={activeParticipant.userId} className="shadow-lg" />
+            <VoiceAvatar
+              userId={activeParticipant.userId}
+              className={cn("shadow-lg", isGedu(activeParticipant) && GEDU_AVATAR_OUTLINE)}
+            />
             <span className="w-full truncate text-center text-[10px] leading-tight">
               {activeParticipant.userName}
             </span>
@@ -175,19 +177,13 @@ function RailMember({
   draggable: boolean;
   showVideo: boolean;
 }) {
-  const { getAnalyser } = useVoiceRoom();
   const renderVideo = useRenderVideo();
-  const glowRef = useRef<HTMLDivElement>(null);
-  useSpeakingGlow(glowRef, p.sessionId, p.audioOn);
+  const { glowRef, steadyGlow } = useParticipantGlow(p);
   const { attributes, listeners, setNodeRef, isDragging } = useDraggable({
     id: `member-${p.sessionId}`,
     data: { kind: "member", sessionId: p.sessionId, userId: p.userId, isLocal: p.isLocal },
     disabled: !draggable,
   });
-  const steadyGlow =
-    p.isSpeaking && p.audioOn && getAnalyser(p.sessionId) === null
-      ? computeGlowStyle(1)
-      : undefined;
 
   return (
     <div
@@ -198,16 +194,21 @@ function RailMember({
       style={steadyGlow}
       className={cn(
         "shrink-0 rounded-md",
+        // The next avatar would otherwise paint over this one's glow.
+        p.isSpeaking && "relative z-10",
         draggable && "drag-handle touch-none",
         isDragging && "opacity-50",
       )}
     >
+      {/* The role word would otherwise replace the title as the name. */}
+      <span className="sr-only">{p.userName}</span>
+      <GeduWord participant={p} />
       <VoiceAvatar
         ref={glowRef}
         userId={p.userId}
         videoOn={p.videoOn && showVideo}
         isLocal={p.isLocal}
-        className="h-7 w-7 border border-border"
+        className={cn("h-7 w-7 border border-border", isGedu(p) && GEDU_AVATAR_OUTLINE)}
       >
         {renderVideo(p, "camera")}
       </VoiceAvatar>

@@ -10,15 +10,43 @@ import {
   SheetHeader,
   SheetTitle,
 } from "@/components/ui/sheet";
+import { cn } from "@/lib/cn";
 import type { VoiceParticipant } from "../hooks/types";
 import { VoiceAvatar } from "../VoiceAvatar";
 import { useVoiceRoom } from "../VoiceRoomProvider";
-import type { RoomStage } from "./use-room-stage";
+import { GEDU_AVATAR_OUTLINE, GeduWord } from "./GeduMark";
+import { useParticipantGlow } from "./use-participant-glow";
+import { isGedu, type RoomStage } from "./use-room-stage";
 import { useZoneManagement } from "./use-zone-management";
 import { ZoneEntry } from "./ZoneEntry";
 
 /** Small enough that a zone's reserved strip shows two rows of them. */
-const SHEET_AVATAR = "h-8 w-8";
+const SHEET_AVATAR = "h-7 w-7 border border-border";
+
+/** The sheet stays mounted while closed, so `open` rests the glow's analyser loop. */
+function SheetAvatar({
+  participant: p,
+  open,
+}: {
+  participant: VoiceParticipant;
+  open: boolean;
+}) {
+  const { glowRef, steadyGlow } = useParticipantGlow(p, open);
+  return (
+    <div
+      style={steadyGlow}
+      className={cn("shrink-0 rounded-md", p.isSpeaking && "relative z-10")}
+    >
+      <GeduWord participant={p} />
+      <VoiceAvatar
+        ref={glowRef}
+        userId={p.userId}
+        isLocal={p.isLocal}
+        className={cn(SHEET_AVATAR, isGedu(p) && GEDU_AVATAR_OUTLINE)}
+      />
+    </div>
+  );
+}
 
 /**
  * The zones on a phone. Tap a zone to move in.
@@ -100,15 +128,10 @@ export function PhoneZonesSheet({
                         setMoving(p);
                       }}
                     >
-                      <VoiceAvatar userId={p.userId} className={SHEET_AVATAR} />
+                      <SheetAvatar participant={p} open={open} />
                     </button>
                   ) : (
-                    <VoiceAvatar
-                      key={p.sessionId}
-                      userId={p.userId}
-                      isLocal={p.isLocal}
-                      className={SHEET_AVATAR}
-                    />
+                    <SheetAvatar key={p.sessionId} participant={p} open={open} />
                   ),
                 )}
               </ZoneEntry>

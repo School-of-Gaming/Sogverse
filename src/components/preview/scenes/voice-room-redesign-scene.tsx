@@ -98,6 +98,8 @@ export function VoiceRoomRedesignScene({
   const renderVideo = useFakeVideo();
 
   const chat = useChatSceneStore(now, viewer.chatAccountId);
+  const { typingBurst } = chat;
+  useEffect(() => simulation.onChatBurst(typingBurst), [simulation, typingBurst]);
   const chatViewer =
     CHAT_SCENE_ACCOUNTS.find((account) => account.id === chat.viewerId) ??
     CHAT_SCENE_ACCOUNTS[0];

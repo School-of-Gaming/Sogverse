@@ -1,10 +1,13 @@
 "use client";
 
 import { useState } from "react";
-import { Mic } from "lucide-react";
 import { useTranslations } from "next-intl";
 import { Heading } from "@sog/ui";
+import { SogWordmark } from "@/components/brand/sog-wordmark";
+import { LogoBadge } from "@/components/layout/logo-badge";
+import { SENDER_NAME } from "@/lib/constants/brand";
 import { PanelBody, PanelTabs, type PanelTab } from "./ChatPeoplePanel";
+import { RoomAccount } from "./RoomAccount";
 import { DesktopZoneRail } from "./DesktopZoneRail";
 import {
   CameraControl,
@@ -15,7 +18,6 @@ import {
 import { TileStage } from "./TileStage";
 import type { VoiceRoomRedesignProps } from "./types";
 import type { RoomStage } from "./use-room-stage";
-import { ZoneGlyph } from "./ZoneEntry";
 
 const TILE_ASPECT = { min: 4 / 3, max: 16 / 9 };
 const MIN_TILE_WIDTH = 200;
@@ -42,19 +44,16 @@ export function DesktopRoom({
   return (
     <div className="flex h-dvh flex-col overflow-hidden bg-background">
       <header className="flex shrink-0 items-center gap-3 border-b border-border px-4 py-2">
+        <Heading level={1} step="card-title" srOnly>
+          {title ?? t("voiceRoom")}
+        </Heading>
+        {/* Not a link: leaving for the home page would drop the call. */}
         <div className="flex min-w-0 items-center gap-2">
-          <Mic className="h-4 w-4 shrink-0" aria-hidden />
-          <Heading level={1} step="card-title">
-            {title ?? t("voiceRoom")}
-          </Heading>
+          <LogoBadge alt={SENDER_NAME} className="h-8 w-auto shrink-0" />
+          <SogWordmark height={15} className="shrink-0 text-foreground" />
         </div>
         {titleAccessory}
-        <div className="ml-auto flex min-w-0 items-center gap-2">
-          {stage.currentZone && <ZoneGlyph zone={stage.currentZone} />}
-          <p className="truncate text-sm font-medium">
-            {t("stage.youAreIn", { zone: stage.currentZoneName })}
-          </p>
-        </div>
+        <RoomAccount className="ml-auto" />
       </header>
 
       <div className="flex min-h-0 flex-1">

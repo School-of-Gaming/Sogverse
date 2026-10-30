@@ -15,8 +15,13 @@ import { useRenderVideo } from "./VideoSurface";
 
 /** What a share's box costs a phone's stage: its own 16:9 height, then the gap. */
 const SHARE_ASPECT = 16 / 9;
-/** The scroller's `p-1`: room for a tile's ring and speaking glow, which it would clip. */
-const TILE_BLEED_PX = 4;
+/**
+ * What the tiles stay in from the stage's edge. A scroller clips, and a speaking glow
+ * reaches 16px past a tile, so the scroller runs out to the stage column's own edge
+ * (`-m-2`, the column's padding) with `p-4` inside it: the whole glow, and nothing
+ * drawn outside the column, however far a strip scrolls.
+ */
+const TILE_BLEED_PX = 8;
 
 function useElementSize(ref: RefObject<HTMLElement | null>) {
   const [size, setSize] = useState<{ width: number; height: number } | null>(null);
@@ -137,9 +142,19 @@ export function TileStage({
         />
       )}
       <div
+        // A wheel without a horizontal axis still has to reach every tile.
+        onWheel={
+          isStrip
+            ? (e) => {
+                e.currentTarget.scrollLeft += e.deltaY;
+              }
+            : undefined
+        }
         className={cn(
-          "flex min-h-0 w-full p-1",
-          isStrip ? "h-32 shrink-0 overflow-x-auto" : "flex-1 overflow-y-auto",
+          "-m-2 flex min-h-0 p-4",
+          isStrip
+            ? "h-[9.5rem] shrink-0 overflow-x-auto overflow-y-hidden [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
+            : "flex-1 overflow-y-auto",
         )}
       >
         {/* Auto margins centre it, and unlike centring on the flex parent they

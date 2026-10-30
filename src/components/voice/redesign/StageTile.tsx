@@ -1,26 +1,20 @@
 "use client";
 
-import { useRef, type CSSProperties } from "react";
+import type { CSSProperties } from "react";
 import { MicOff } from "lucide-react";
 import { useTranslations } from "next-intl";
 import { Identicon } from "@/components/ui/identicon";
 import { cn } from "@/lib/cn";
 import { AVATAR_SIZE } from "@/lib/constants/voice-zones";
-import { computeGlowStyle } from "@/lib/voice/glow";
-import { useSpeakingGlow } from "../hooks/use-speaking-glow";
-import { useVoiceRoom } from "../VoiceRoomProvider";
 import type { VoiceParticipant } from "../hooks/types";
+import { GeduMark } from "./GeduMark";
+import { useParticipantGlow } from "./use-participant-glow";
 import { useRenderVideo } from "./VideoSurface";
 
 /**
  * One person on the stage: their video, or their identicon large with the mic-off
  * mark, name, "you" marker and speaking ring over it. It keeps the size it is
  * given whatever their camera does, so a camera going off never collapses it.
- *
- * **Two speaking signals, on two elements.** A live room drives the glow frame
- * by frame from the audio analyser, which rewrites the glow layer's inline style
- * every frame, so the steady glow a room without an analyser takes from
- * `isSpeaking` sits on the tile itself where that loop cannot wipe it.
  */
 export function StageTile({
   participant: p,
@@ -32,15 +26,8 @@ export function StageTile({
   style?: CSSProperties;
 }) {
   const t = useTranslations("voice.stage");
-  const { getAnalyser } = useVoiceRoom();
   const renderVideo = useRenderVideo();
-  const glowRef = useRef<HTMLDivElement>(null);
-  useSpeakingGlow(glowRef, p.sessionId, p.audioOn);
-
-  const steadyGlow =
-    p.isSpeaking && p.audioOn && getAnalyser(p.sessionId) === null
-      ? computeGlowStyle(1)
-      : undefined;
+  const { glowRef, steadyGlow } = useParticipantGlow(p);
 
   return (
     <div
@@ -49,6 +36,8 @@ export function StageTile({
       className={cn(
         "relative shrink-0 rounded-xl border-2 border-border bg-card transition-shadow",
         p.isLocal && "ring-1 ring-act",
+        // The next tile would otherwise paint over this one's glow.
+        p.isSpeaking && "z-10",
         className,
       )}
     >
@@ -60,6 +49,7 @@ export function StageTile({
             <Identicon id={p.userId} size={AVATAR_SIZE} />
           </div>
         )}
+        <GeduMark participant={p} />
         <span className="glass absolute bottom-1.5 left-1.5 max-w-[calc(100%-0.75rem)] truncate rounded-md px-2 py-0.5 text-xs font-medium">
           {p.isLocal ? t("tileYou", { name: p.userName }) : p.userName}
         </span>

@@ -177,7 +177,6 @@
   },
   "zoneSaveFailed": "Zonen sparades inte. Försök igen.",
   "stage": {
-    "youAreIn": "Du är i {zone}",
     "youAreHere": "Du är i den här zonen",
     "tileYou": "{name} (du)",
     "tileMicOff": "Mikrofon av",

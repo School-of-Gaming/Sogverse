@@ -177,7 +177,6 @@
   },
   "zoneSaveFailed": "La zone n’a pas été enregistrée. Réessayez.",
   "stage": {
-    "youAreIn": "Vous êtes dans {zone}",
     "youAreHere": "Vous êtes dans cette zone",
     "tileYou": "{name} (vous)",
     "tileMicOff": "Micro coupé",

@@ -177,7 +177,6 @@
   },
   "zoneSaveFailed": "Alueen tallennus ei onnistunut. Yritä uudelleen.",
   "stage": {
-    "youAreIn": "Olet alueella {zone}",
     "youAreHere": "Olet tällä alueella",
     "tileYou": "{name} (sinä)",
     "tileMicOff": "Mikrofoni pois päältä",
