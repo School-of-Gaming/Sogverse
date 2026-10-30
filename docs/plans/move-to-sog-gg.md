@@ -232,6 +232,8 @@ Every write outside the repo is confirmed with the owner before it is made.
      site. If it is, re-verify it by DNS TXT before the day, or verification is lost when
      the apex moves. Also the Pixel's allowed domains, and the WhatsApp app's webhook
      callback URL.
+   - **Reddit Ads:** any domain the pixel or conversions setup is tied to, and the
+     destination URLs of live ads.
    - **Google Cloud OAuth client:** the authorised JavaScript origins, and the consent
      screen's home, privacy and terms URLs.
    - **Google Tag Manager / GA4:** any trigger or filter on the hostname.
