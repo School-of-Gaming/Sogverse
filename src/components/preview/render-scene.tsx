@@ -14,7 +14,10 @@ import { isGeduSubstitutionsScenario } from "@/components/gedu/mock-substitution
 import { isGroupWorkspaceScenario } from "@/components/group-workspace/mock-workspace-fixtures";
 import { isParentDashboardScenario } from "@/components/parent/mock-dashboard-fixtures";
 import { isSeatOfferScenario } from "@/components/seat-offer/mock-seat-offer-fixtures";
-import { isVoiceRoomScenario } from "@/components/voice/mock-room-fixtures";
+import {
+  isVoiceRoomRedesignScenario,
+  isVoiceRoomScenario,
+} from "@/components/voice/mock-room-fixtures";
 import {
   isAdminTeamProfileEditorScenario,
   isGeduTeamProfileEditorScenario,
@@ -73,6 +76,7 @@ import {
 } from "./scenes/team-profile-editor-scene";
 import { isSessionFeedbackScenario } from "./scenes/session-feedback-scenarios";
 import { ShopBrowseScene } from "./scenes/shop-browse-scene";
+import { VoiceRoomRedesignScene } from "./scenes/voice-room-redesign-scene";
 import { VoiceRoomScene } from "./scenes/voice-room-scene";
 
 /**
@@ -224,6 +228,10 @@ const SCENE_RENDERERS: Record<
   "voice-room": (scenario) => {
     if (!isVoiceRoomScenario(scenario)) notFound();
     return <VoiceRoomScene scenario={scenario} />;
+  },
+  "voice-room-redesign": (scenario) => {
+    if (!isVoiceRoomRedesignScenario(scenario)) notFound();
+    return <VoiceRoomRedesignScene scenario={scenario} />;
   },
   // Two scenarios, because the two live paths differ by the line above the
   // heading: the room closing at the window's end says so, and the reader who

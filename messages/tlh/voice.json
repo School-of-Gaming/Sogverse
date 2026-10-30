@@ -175,5 +175,33 @@
     "saveFailed": "QInlIj polbe’lu’pu’. rIn yIqIp ’ej yInIDqa’!",
     "done": "rIn"
   },
-  "zoneSaveFailed": "Daq pollu’be’. yInID."
+  "zoneSaveFailed": "Daq pollu’be’. yInID.",
+  "stage": {
+    "youAreIn": "{zone} Daq SoH",
+    "statusLine": "{zone} Daq SoH · {status}",
+    "youAreHere": "naDev SoH",
+    "hearYou": "{count, plural, =0 {naDev latlh pagh tu’lu’} one {# nuv Duqoy} other {# nuvpu’ Duqoy}}",
+    "micOffStatus": "QoylIj chu’Ha’lu’",
+    "tileYou": "{name} (SoH)",
+    "tileMicOff": "QoymeH jan chu’Ha’lu’",
+    "moved": "{zone} Daq DaghoS.",
+    "movedByModerator": "{zone} Daq Dulan DevwI’.",
+    "hearNow": "{count, plural, =0 {naDev latlh pagh tu’lu’.} one {DaH # nuv Daqoy.} other {DaH # nuvpu’ Daqoy.}}",
+    "goBack": "yIcheghqa’",
+    "chat": "jatlh",
+    "people": "nuvpu’",
+    "more": "latlh",
+    "zones": "Daqmey",
+    "controls": "ghogh SeHjan",
+    "micOn": "Qoy chu’",
+    "micOff": "Qoy chu’Ha’",
+    "cameraOn": "mIllogh chu’",
+    "cameraOff": "mIllogh chu’Ha’",
+    "share": "yIcha’",
+    "zonesHint": "Daq DaghoSmeH yI’uy. Daqlijdaq Hoch Daqoy.",
+    "zonesHintModerator": "Daq DaghoSmeH yI’uy, pagh nuv Dalan DaneHchugh mIllogh yI’uy.",
+    "moveTitle": "{name} yIvIH",
+    "moveHint": "ghoSnIS Daq yI’uy.",
+    "cancelMove": "vay’ yIvIHQo’"
+  }
 }

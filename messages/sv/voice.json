@@ -175,5 +175,33 @@
     "saveFailed": "Dina svar sparades inte. Tryck på Klart för att försöka igen.",
     "done": "Klart"
   },
-  "zoneSaveFailed": "Zonen sparades inte. Försök igen."
+  "zoneSaveFailed": "Zonen sparades inte. Försök igen.",
+  "stage": {
+    "youAreIn": "Du är i {zone}",
+    "statusLine": "Du är i {zone} · {status}",
+    "youAreHere": "Du är i den här zonen",
+    "hearYou": "{count, plural, =0 {Ingen annan är här än} one {# person kan höra dig} other {# personer kan höra dig}}",
+    "micOffStatus": "Din mikrofon är av",
+    "tileYou": "{name} (du)",
+    "tileMicOff": "Mikrofon av",
+    "moved": "Du flyttade till {zone}.",
+    "movedByModerator": "En moderator flyttade dig till {zone}.",
+    "hearNow": "{count, plural, =0 {Ingen annan är här än.} one {Nu kan du höra # person.} other {Nu kan du höra # personer.}}",
+    "goBack": "Gå tillbaka",
+    "chat": "Chatt",
+    "people": "Personer",
+    "more": "Mer",
+    "zones": "Zoner",
+    "controls": "Samtalskontroller",
+    "micOn": "Mikrofon på",
+    "micOff": "Mikrofon av",
+    "cameraOn": "Kamera på",
+    "cameraOff": "Kamera av",
+    "share": "Dela",
+    "zonesHint": "Tryck på en zon för att flytta dit. Du hör alla i samma zon.",
+    "zonesHintModerator": "Tryck på en zon för att flytta dit, eller tryck på någons bild för att flytta personen.",
+    "moveTitle": "Flytta {name}",
+    "moveHint": "Tryck på zonen personen ska till.",
+    "cancelMove": "Flytta ingen"
+  }
 }

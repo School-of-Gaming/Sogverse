@@ -175,5 +175,33 @@
     "saveFailed": "Tes réponses n’ont pas été enregistrées. Appuie sur Terminé pour réessayer.",
     "done": "Terminé"
   },
-  "zoneSaveFailed": "La zone n’a pas été enregistrée. Réessayez."
+  "zoneSaveFailed": "La zone n’a pas été enregistrée. Réessayez.",
+  "stage": {
+    "youAreIn": "Vous êtes dans {zone}",
+    "statusLine": "Vous êtes dans {zone} · {status}",
+    "youAreHere": "Vous êtes dans cette zone",
+    "hearYou": "{count, plural, =0 {Personne d’autre pour l’instant} one {# personne vous entend} other {# personnes vous entendent}}",
+    "micOffStatus": "Votre micro est coupé",
+    "tileYou": "{name} (vous)",
+    "tileMicOff": "Micro coupé",
+    "moved": "Vous voici dans {zone}.",
+    "movedByModerator": "Un modérateur vous a fait passer dans {zone}.",
+    "hearNow": "{count, plural, =0 {Personne d’autre ici pour l’instant.} one {Vous entendez maintenant # personne.} other {Vous entendez maintenant # personnes.}}",
+    "goBack": "Revenir",
+    "chat": "Discussion",
+    "people": "Personnes",
+    "more": "Plus",
+    "zones": "Zones",
+    "controls": "Commandes de l’appel",
+    "micOn": "Micro",
+    "micOff": "Micro coupé",
+    "cameraOn": "Caméra",
+    "cameraOff": "Sans caméra",
+    "share": "Partager",
+    "zonesHint": "Touchez une zone pour y entrer. Vous entendez tout le monde dans la même zone.",
+    "zonesHintModerator": "Touchez une zone pour y entrer, ou la photo de quelqu’un pour le déplacer.",
+    "moveTitle": "Déplacer {name}",
+    "moveHint": "Touchez la zone de destination.",
+    "cancelMove": "Ne déplacer personne"
+  }
 }

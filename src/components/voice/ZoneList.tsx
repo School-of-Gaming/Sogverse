@@ -46,7 +46,7 @@ interface MemberDrag {
   isLocal: boolean;
 }
 
-function readMemberDrag(value: unknown): MemberDrag | null {
+export function readMemberDrag(value: unknown): MemberDrag | null {
   if (typeof value !== "object" || value === null) return null;
   if (!("kind" in value) || value.kind !== "member") return null;
   if (!("sessionId" in value) || typeof value.sessionId !== "string") return null;
@@ -60,7 +60,7 @@ interface ZoneDrop {
   isLocked: boolean;
 }
 
-function readZoneDrop(value: unknown): ZoneDrop | null {
+export function readZoneDrop(value: unknown): ZoneDrop | null {
   if (typeof value !== "object" || value === null) return null;
   if (!("kind" in value) || value.kind !== "zone") return null;
   if (!("zoneId" in value) || typeof value.zoneId !== "string") return null;
@@ -308,7 +308,7 @@ interface ZoneCardProps {
  * as the working buttons' presses do — and a padlock per 24px button would not
  * fit beside the zone's name.
  */
-function LockedZoneManage({ explanation }: { explanation: LockExplanation }) {
+export function LockedZoneManage({ explanation }: { explanation: LockExplanation }) {
   const t = useTranslations("voice");
   const { open, isOpen, dialog } = useLockExplanation(explanation);
   const press = () => open();

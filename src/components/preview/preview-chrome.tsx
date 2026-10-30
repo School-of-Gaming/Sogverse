@@ -21,6 +21,9 @@ import type { PreviewChromeKind } from "./scenes";
  * that does not exist. The sidebar renders itself from the viewer's own profile,
  * and only `/preview/*`'s admin gate can get anybody here at all, so it is the
  * real component reading the real role rather than a mock of one.
+ *
+ * `"fullscreen"` composes nothing: the body fills the viewport and owns every
+ * pixel of it, so a scene's body can have no site links on it at all.
  */
 export function PreviewChrome({
   chrome,
@@ -32,6 +35,8 @@ export function PreviewChrome({
   navRole?: UserRole;
   children: React.ReactNode;
 }) {
+  if (chrome === "fullscreen") return children;
+
   if (chrome === "dashboard" || chrome === "admin") {
     return (
       <>

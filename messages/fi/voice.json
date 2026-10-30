@@ -175,5 +175,33 @@
     "saveFailed": "Vastauksiasi ei tallennettu. Paina Valmis ja yritä uudelleen.",
     "done": "Valmis"
   },
-  "zoneSaveFailed": "Alueen tallennus ei onnistunut. Yritä uudelleen."
+  "zoneSaveFailed": "Alueen tallennus ei onnistunut. Yritä uudelleen.",
+  "stage": {
+    "youAreIn": "Olet alueella {zone}",
+    "statusLine": "Olet alueella {zone} · {status}",
+    "youAreHere": "Olet tällä alueella",
+    "hearYou": "{count, plural, =0 {Täällä ei ole vielä muita} one {# henkilö kuulee sinut} other {# henkilöä kuulee sinut}}",
+    "micOffStatus": "Mikrofonisi on pois päältä",
+    "tileYou": "{name} (sinä)",
+    "tileMicOff": "Mikrofoni pois päältä",
+    "moved": "Siirryit alueelle {zone}.",
+    "movedByModerator": "Valvoja siirsi sinut alueelle {zone}.",
+    "hearNow": "{count, plural, =0 {Täällä ei ole vielä muita.} one {Kuulet nyt # henkilön.} other {Kuulet nyt # henkilöä.}}",
+    "goBack": "Palaa takaisin",
+    "chat": "Chat",
+    "people": "Ihmiset",
+    "more": "Lisää",
+    "zones": "Alueet",
+    "controls": "Puhelun säätimet",
+    "micOn": "Mikki päällä",
+    "micOff": "Mikki pois",
+    "cameraOn": "Kamera päällä",
+    "cameraOff": "Kamera pois",
+    "share": "Jaa",
+    "zonesHint": "Siirry alueelle napauttamalla sitä. Kuulet kaikki samalla alueella olevat.",
+    "zonesHintModerator": "Siirry alueelle napauttamalla sitä tai siirrä joku muu napauttamalla hänen kuvaansa.",
+    "moveTitle": "Siirrä: {name}",
+    "moveHint": "Napauta aluetta, jolle hänet siirretään.",
+    "cancelMove": "Älä siirrä ketään"
+  }
 }

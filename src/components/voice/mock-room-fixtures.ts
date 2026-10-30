@@ -24,6 +24,17 @@ export function isVoiceRoomScenario(value: string): value is VoiceRoomScenario {
   return (VOICE_ROOM_SCENARIOS as readonly string[]).includes(value);
 }
 
+/** Who the redesigned room's scene can be viewed as. */
+export const VOICE_ROOM_REDESIGN_SCENARIOS = ["gamer"] as const;
+export type VoiceRoomRedesignScenario =
+  (typeof VOICE_ROOM_REDESIGN_SCENARIOS)[number];
+
+export function isVoiceRoomRedesignScenario(
+  value: string,
+): value is VoiceRoomRedesignScenario {
+  return (VOICE_ROOM_REDESIGN_SCENARIOS as readonly string[]).includes(value);
+}
+
 /** The Gedu whose view the staff scenario is. */
 export const VOICE_ROOM_GEDU_ID = "4a84d001-b789-41f5-ace3-cfcffa139869";
 /**
@@ -212,6 +223,36 @@ export function buildParticipants(
       gamePlatform: undefined,
     }),
   ];
+}
+
+const QUIET_ROOM_ID = "preview-quiet-room";
+
+/**
+ * The same zones plus a private one, so the redesigned rail shows its privacy
+ * screen on an occupied zone and a locked zone a gamer cannot tap.
+ */
+export const VOICE_ROOM_REDESIGN_CUSTOM_ZONES: VoiceZone[] = [
+  ...VOICE_ROOM_CUSTOM_ZONES,
+  {
+    ...VOICE_ROOM_CUSTOM_ZONES[0],
+    id: QUIET_ROOM_ID,
+    name: "Quiet room",
+    icon: "sprout",
+    color: "3",
+    is_locked: true,
+    sort_order: 1,
+  },
+];
+
+/** The fixture room, with Hilda placed in the private zone. */
+export function buildRedesignParticipants(
+  scenario: VoiceRoomRedesignScenario,
+): VoiceParticipant[] {
+  return buildParticipants(scenario).map((p) =>
+    p.userId === SESSION_FEED_GAMER_IDS.hilda
+      ? { ...p, zoneId: QUIET_ROOM_ID }
+      : p,
+  );
 }
 
 /**
