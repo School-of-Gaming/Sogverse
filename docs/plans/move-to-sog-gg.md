@@ -152,8 +152,7 @@ Every write outside the repo is confirmed with the owner before it is made.
 
 ### 0. Before the day
 
-1. **Export Webflow to the team Drive.** *Exported locally 2026-10-26; it reaches Drive
-   with step 2.6, where the details are.*
+1. **Export Webflow to the team Drive.** *Done 2026-10-30; step 2.6 has the details.*
    - CMS collections (blog, lessons, camps, staff, categories) as CSV.
    - Form submissions.
    - Members and e-commerce orders, if the site used them. These hold personal data, so
@@ -233,6 +232,8 @@ Every write outside the repo is confirmed with the owner before it is made.
      site. If it is, re-verify it by DNS TXT before the day, or verification is lost when
      the apex moves. Also the Pixel's allowed domains, and the WhatsApp app's webhook
      callback URL.
+   - **Reddit Ads:** any domain the pixel or conversions setup is tied to, and the
+     destination URLs of live ads.
    - **Google Cloud OAuth client:** the authorised JavaScript origins, and the consent
      screen's home, privacy and terms URLs.
    - **Google Tag Manager / GA4:** any trigger or filter on the hostname.
@@ -244,6 +245,14 @@ Every write outside the repo is confirmed with the owner before it is made.
      pages and spotlights that link to `www.sog.gg` or bare `sog.gg` Webflow pages. After
      the cutover those links open this app's 404. Find them with a read-only prod query
      over the authored text columns, and fix them in the admin UI.
+
+   Checked 2026-10-30. No action needed: Meta's verification of `sog.gg` rests on no tag
+   on the Webflow site, and the Pixel's allow-list covers `sog.gg` and its subdomains; the
+   Sogverse Tag Manager container has no hostname filters; Daily.co has no domain
+   restriction; Brevo's templates link only to the bare `https://sog.gg`; prod's stored
+   text holds one old link, in a past session report, which renders with no link. The
+   Google and Klaviyo changes are in step 1.6's table. Still open: Reddit Ads, the ad
+   links in Meta Ads Manager, and the staging OAuth client.
 6. **Add `https://sog.gg/**` to Supabase Auth's redirect allow-list**, keeping
    `sogverse.sog.gg/**`. It is harmless before the cutover.
    - Every Supabase Auth change in this plan goes through the Management API:
@@ -279,8 +288,10 @@ Every write outside the repo is confirmed with the owner before it is made.
      Re-read with `vercel api "/v6/domains/<domain>/config?projectIdOrName=sogverse"
      --scope school-of-gaming` before the hour. The existing hosts point at
      `cname.vercel-dns.com`, which Vercel ranks second and still serves.
-8. **At Nordname, at least a day before the hour.** With no fixed date, do this once the
-   heads-up has gone out; it changes nothing for visitors while it waits:
+8. **At Nordname, at least a day before the hour.** *Done 2026-10-30, and Vercel has
+   verified all three domains.* It changes nothing for visitors while it waits. The zone
+   as it stood before is saved in `~/work/sog-gg-dns-before-2026-10-30.tsv`, and it's
+   edited at `andoria.nordname.net:2222`, not on the Nordname site:
    - Lower the TTL on the apex `A` and the `www` CNAME to 300 s.
    - Add the `_vercel` TXT records from step 0.7.
    - Add a `staging` CNAME to `cname.vercel-dns.com`. A new name changes nothing for
@@ -358,8 +369,8 @@ back to `sog.gg` while that is still Webflow.
    | WhatsApp | Webhook callback URL in the Meta app | Meta's verification handshake passes on save |
    | Claude connectors | Re-add with `https://sog.gg/api/mcp`, for the owner and Reksi | `whoami` answers |
    | Minecraft servers | The Minecraft server team changes the base URL in their config, as agreed in step 0.3 | A join check succeeds |
-   | Google Cloud OAuth | Consent screen URLs, and JavaScript origins if they list the old host | Saved |
-   | Anything step 0.5 found | As found | As found |
+   | Google Cloud OAuth (project `sogverse`) | Add `https://sog.gg` to the Sogverse client's JavaScript origins, and set the consent screen's home, privacy and terms URLs to `sog.gg`. `sog.gg` is already an authorised domain, and the redirect URI is Supabase's | A Google sign-in on `sog.gg` works |
+   | Klaviyo | The live flows Kesäleiri Lead Flow (FI) and New Flow - Guidebook Download (Finnish) link to Webflow camp and schedule pages (found 2026-10-30): repoint them to the shop | The flow emails link to `sog.gg` pages that exist |
 7. **Move staging to `staging.sog.gg`.** It's the same work as production's, on test
    data. Nothing here can drop real data or money, so it runs after production is
    confirmed working.
@@ -416,7 +427,8 @@ removing the old staging host, so until then each change can be pointed back at
 
 1. **About a week later, look for stragglers.** Run the step 0.4 query again over the
    days since the cutover. Every non-browser caller on `sogverse.sog.gg` is now getting
-   308s; move each one, Lynx included if they haven't switched.
+   308s; move each one, Lynx included if they haven't switched. If DNS has held, delete
+   `~/work/sog-gg-dns-before-2026-10-30.tsv`: a rollback no longer needs it.
 2. **Land `feat/move-to-sog-gg`** in the next normal release. Before merging, re-verify
    the domain → branch mapping in the `vercel-analytics` skill and change its
    "verified" date to the day of the check.
@@ -436,8 +448,8 @@ removing the old staging host, so until then each change can be pointed back at
    Bing.
 6. **Cancel the Webflow subscription and every add-on**, once the exports are confirmed
    on Drive. Then delete the `proxy-ssl.webflow.com` TXT record on the apex.
-   - The export (2026-10-26) is in `~/work/webflow-export-2026-10-26`, with the scripts
-     that made it so it can be re-run just before cancelling. The token it uses is
+   - The export (2026-10-26) is in the team Drive's Webflow folder, with the scripts that
+     made it so it can be re-run just before cancelling. The token it uses is
      `WEBFLOW_EXPORT_TOKEN` (read-only) in `~/work/sog-translations/.env`. Its
      `personal/` folder goes to the restricted Drive folder.
    - The site's custom code and the "My child is a gamer" guidebook were added on
