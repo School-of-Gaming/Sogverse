@@ -25,19 +25,20 @@ import type { TopicPrepTranslator } from "./translator";
  * than two guides. Which steps apply is
  * `resolveTopicPrep`'s answer and not this file's — an in-person product
  * renders only the account steps, because School of Gaming brings the machines,
- * a remote one gains the shared step about the voice room's mic and camera, and
- * a hybrid one takes two lists, the second under a heading for joining from home
- * (see the registry's header note).
+ * a remote one gains the shared step about the voice room's mic and camera, a
+ * hybrid one takes two lists, the second under a heading for joining from home,
+ * and a topic whose in-person machine and login are both ours takes one note
+ * under the heading, with no list and no closing (see the registry's header
+ * note).
  *
  * **Both halves take the plan rather than resolving one.** Which steps apply is
  * `resolveTopicPrep`'s answer, made **once** at the call site and handed to
  * both — the HTML body and its plain-text twin state the same document, and two
  * resolves are two chances for them to state different ones. It is also where
- * the empty answer is handled: a `null` plan is the in-person product with
- * nothing left after the filter (the topic never had steps of its own, or every
- * one of them belongs to a machine we are supplying), and the caller composes
- * no section at all rather than a section label over a closing line. A remote
- * product always has something, because the room always does.
+ * the empty answer is handled: a `null` plan is a label-only topic on an
+ * in-person product, and the caller composes no section at all rather than a
+ * section label over a closing line. A remote product always has something,
+ * because the room always does.
  *
  * The translator is scoped to `topicPrep` rather than to `email` — see
  * `translator.ts` for why the mail takes a second translator instead of a
@@ -50,7 +51,10 @@ import type { TopicPrepTranslator } from "./translator";
  * the shared voice-room step alone. Only two of the forms carry a topic the
  * catalog has an intro for.
  */
-function introOf(t: TopicPrepTranslator, plan: TopicPrepPlan): string {
+function introOf(
+  t: TopicPrepTranslator,
+  plan: Exclude<TopicPrepPlan, { form: "suppliedNote" }>,
+): string {
   if (plan.form === "hybrid") return t("hybridIntro");
   if (plan.form === "remoteOnly") return t("remoteOnlyIntro");
   return plan.form === "accountsOnly"
@@ -111,6 +115,13 @@ export function buildTopicPrepSection(
   t: TopicPrepTranslator,
   plan: TopicPrepPlan,
 ): string {
+  if (plan.form === "suppliedNote") {
+    return [
+      sectionLabel(t("heading")),
+      paragraph(t("suppliedInPersonNote")),
+    ].join("");
+  }
+
   const list = (steps: readonly TopicPrepStep[]) =>
     numberedList(steps.map((step) => stepItem(t, step)));
 
@@ -171,6 +182,10 @@ export function topicPrepText(
   t: TopicPrepTranslator,
   plan: TopicPrepPlan,
 ): string[] {
+  if (plan.form === "suppliedNote") {
+    return [t("heading"), "", t("suppliedInPersonNote")];
+  }
+
   return [
     t("heading"),
     "",

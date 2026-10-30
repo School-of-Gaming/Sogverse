@@ -10,6 +10,7 @@ import {
   VENUE_VOICE_ROOM_STEP,
   topicHasAccountsOnlyIntro,
   topicHasPrep,
+  topicIsSuppliedInPerson,
   type TopicPrepPlan,
   type TopicPrepStep,
 } from "./topics";
@@ -51,13 +52,15 @@ function resolveHybridPrep(topic: ProductTopic): TopicPrepPlan {
  * whether the sessions have a voice room (`hasVoiceRoom`, which appends the
  * shared voice-room step).
  *
- * `null` covers both ways a surface ends up with nothing to draw, because a
- * caller cannot usefully tell them apart: the topic has no guide, or every one
- * of its steps belongs to something School of Gaming is supplying — a device,
- * or a login — and there is no voice room to get ready for. The three
- * Minecraft topics in person are the second case, and it is why the answer is
- * a predicate over the *filtered* steps rather than over `prep` alone. A
- * product with a voice room never answers `null`.
+ * Where every declared step filters out and there is no voice room, the topic
+ * decides: one declaring `suppliedInPerson` — the three Minecraft topics, whose
+ * machine and login are both ours in person — takes the `suppliedNote` form.
+ * That is why the answer is a predicate over the *filtered* steps rather than
+ * over `prep` alone.
+ *
+ * `null` is the one way a surface ends up with nothing to draw: no step
+ * applies, and nothing declares a note, which is a label-only topic in person.
+ * A product with a voice room never answers `null`.
  */
 export function resolveTopicPrep(
   topic: ProductTopic,
@@ -83,7 +86,10 @@ export function resolveTopicPrep(
     ? declared
     : declared.filter((step) => step.scope === "always");
 
-  if (applicable.length === 0) return roomOnly;
+  if (applicable.length === 0) {
+    if (roomOnly !== null) return roomOnly;
+    return topicIsSuppliedInPerson(topic) ? { form: "suppliedNote" } : null;
+  }
 
   // The shared step goes last, after everything the topic itself asked for: it
   // is the one thing to do once the game is installed and signed into.

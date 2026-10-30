@@ -424,10 +424,9 @@ function resolveFirstSession(
  * buy the game and install it beside a mail saying they are in a queue is the
  * one thing this mail must not do.
  *
- * The resolver answers `null` on a topic with no guide and on an in-person
- * product whose every step belongs to a machine we are supplying — the same
- * answer from a mail's point of view, and this passes it straight on as `null`
- * so the body and its twin each have one thing to check.
+ * The resolver answers `null` on an in-person product whose topic has no guide,
+ * and this passes it straight on as `null` so the body and its twin each have
+ * one thing to check.
  */
 function resolveTopicPrepSection(
   tPrep: TopicPrepTranslator | null,

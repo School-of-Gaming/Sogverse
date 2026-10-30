@@ -36,6 +36,7 @@
   "remoteOnlyIntro": "QIchmeH pa’ lo’ ghomHommey. wa’DIch ghomHom qaSpa’ bIngDaq mIw yIta’.",
   "hybridIntro": "Daqvam ’ej Hop ghom ghomHom. Hop ghojmoH Gedu — ghojmoHwI’ pongmaj. QIchmeH pa’ wa’Daq jatlhqa’ Hoch.",
   "homeHeading": "juHDaq bIjeSDI’",
+  "suppliedInPersonNote": "Hoch poQlu’bogh ghuHlu’pu’. De’wI’lIj Dabu’nISbe’, Quj mIw DachenmoHnISbe’ je. ghom DevwI’ De’wI’mey mIwmey je wIlo’.",
   "steps": {
     "minecraftJavaAccount": {
       "title": "Minecraft ngaSbogh Microsoft pong yISuq",
@@ -133,7 +134,7 @@
     },
     "venueVoiceRoom": {
       "title": "DaqvamDaq QIchmeH pa’ yIjeS",
-      "body": "DaqDaq ghom latlhpu’. Sogverse Daq ghom QIchmeH pa’ jeS, De’wI’ DaneHbogh lo’taH. QoghDu’ poQbe’lu’. ’elmeH mIw ghaj ’e’ poQ Hoch toy’wI’: mIw ghajbe’chugh, toy’wI’ ngoQmeyDaq jIH SOGDaq chenmoHlaH vav SoS je. vav SoS ngoD yIDIlQo’!"
+      "body": "DaqDaq ghom latlhpu’. Sogverse Daq ghom QIchmeH pa’ jeS, Daqvam De’wI’ lo’taH, pagh De’wI’lIj lo’taH DaneHchugh. QoghDu’ poQbe’lu’. ’elmeH mIw ghaj ’e’ poQ Hoch toy’wI’: mIw ghajbe’chugh, toy’wI’ ngoQmeyDaq jIH SOGDaq chenmoHlaH vav SoS je. vav SoS ngoD yIDIlQo’!"
     }
   },
   "platformNotes": {

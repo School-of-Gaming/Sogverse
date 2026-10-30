@@ -36,6 +36,7 @@
   "remoteOnlyIntro": "Les séances passent par un salon vocal. Merci de suivre l’étape ci-dessous avant la première séance.",
   "hybridIntro": "Ce club réunit les participants à la fois sur place et à distance. Le Gedu, notre mot pour un animateur, anime le club à distance. Tout le monde se parle dans un salon vocal commun.",
   "homeHeading": "Participer depuis chez soi",
+  "suppliedInPersonNote": "Tout ce qu’il vous faut est prêt. Vous n’avez pas besoin d’apporter votre propre appareil ni de créer un compte de jeu à l’avance. Nous utilisons les appareils et les identifiants de l’organisateur.",
   "steps": {
     "minecraftJavaAccount": {
       "title": "Obtenir un compte Microsoft avec Minecraft dessus",
@@ -133,7 +134,7 @@
     },
     "venueVoiceRoom": {
       "title": "Rejoindre le salon vocal sur place",
-      "body": "Les participants sur place rejoignent le salon vocal du groupe dans Sogverse, sur l’appareil de leur choix. Aucun casque n’est nécessaire. Chaque participant a besoin d’un moyen de se connecter : s’il n’a pas encore de connexion à lui, un parent peut lui en créer une dans Paramètres du joueur, sur Mon SOG, pour que personne n’ait à partager les identifiants d’un parent."
+      "body": "Les participants sur place rejoignent le salon vocal du groupe dans Sogverse, sur un ordinateur sur place ou sur leur propre appareil s’ils le préfèrent. Aucun casque n’est nécessaire. Chaque participant a besoin d’un moyen de se connecter : s’il n’a pas encore de connexion à lui, un parent peut lui en créer une dans Paramètres du joueur, sur Mon SOG, pour que personne n’ait à partager les identifiants d’un parent."
     }
   },
   "platformNotes": {

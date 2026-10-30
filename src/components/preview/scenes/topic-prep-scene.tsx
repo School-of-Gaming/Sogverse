@@ -1,4 +1,4 @@
-/* eslint-disable i18next/no-literal-string -- every literal in this file is preview scaffolding on an admin-only page: the column's own title, the per-topic heading's fallback line, the label-only card's heading, and the note that a topic renders nothing in this form. The guides themselves are the translated part, and they come from <TopicPrepContent> */
+/* eslint-disable i18next/no-literal-string -- every literal in this file is preview scaffolding on an admin-only page: the column's own title, the per-topic heading's fallback line and the label-only card's heading. The guides themselves are the translated part, and they come from <TopicPrepContent> */
 import { Heading } from "@sog/ui";
 import { Card, CardContent } from "@/components/ui/card";
 import { TopicPrepContent } from "@/components/topic-prep/TopicPrepContent";
@@ -29,12 +29,8 @@ import type { DeliveryMode, ProductTopic } from "@/types";
  * The scenarios are the delivery modes, and they are scenarios rather than an
  * axis because no product is two of them: `remote` renders every step,
  * `in-person` only the steps that are still the family's to do, and `hybrid`
- * the two-section guide. A
- * topic that filters down to nothing says so in a muted line instead of
- * vanishing — the three Minecraft topics are deliberately empty in person,
- * because the login there is ours as well as the machine, and a page that
- * simply skipped them would look identical to one where the guides had gone
- * missing.
+ * the two-section guide. The three Minecraft topics show their one note in
+ * person, because the login there is ours as well as the machine.
  *
  * The columns with a room carry one card the topic registry cannot name: the
  * guide every label-only topic gets, which has nothing keyed by topic in it. It
@@ -106,20 +102,14 @@ export function TopicPrepScene({
           // The one resolve per card: the same answer decides whether there is
           // a guide here at all and what the guide is.
           const plan = resolveTopicPrep(topic, mode);
+          if (plan === null) return null;
           return (
             <Card key={topic}>
               <CardContent className="space-y-4 p-5 sm:p-6">
                 <Heading level={2} step="card-title">
                   {PRODUCT_TOPICS[topic].label}
                 </Heading>
-                {plan === null ? (
-                  <p className="text-sm italic text-muted-foreground">
-                    Nothing renders in this form &mdash; every step belongs to a
-                    machine or a login School of Gaming supplies.
-                  </p>
-                ) : (
-                  <TopicPrepContent plan={plan} />
-                )}
+                <TopicPrepContent plan={plan} />
               </CardContent>
             </Card>
           );

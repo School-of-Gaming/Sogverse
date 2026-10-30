@@ -13,11 +13,16 @@ import {
   topicHasInfoCard,
   topicHasPrep,
   type TopicMeta,
+  type TopicPrepPlan,
 } from "@/lib/products/topics";
 import { resolveTopicPrep } from "@/lib/products/topic-prep";
 import { SUPPORTED_GAME_PLATFORMS } from "@/lib/constants/game-platforms";
 
 const messages = { productDetail: enProductDetail, topicPrep: enTopicPrep };
+
+/** A plan's steps; the note form and an absent guide have none. */
+const stepsOf = (plan: TopicPrepPlan | null) =>
+  plan === null || plan.form === "suppliedNote" ? [] : plan.steps;
 
 // The topic module is where the generated enum, hand-written display data and
 // the message catalog have to agree, and the compiler only checks some of
@@ -365,8 +370,8 @@ describe("product topics", () => {
 
         const kept = meta.prep.steps.filter((s) => s.scope === "always");
         // Nothing kept is the third case and needs no intro at all: the guide
-        // does not render in person. The three Minecraft topics are that case
-        // — we supply the machines and the Minecraft logins alike.
+        // is the supplied note in person. The three Minecraft topics are that
+        // case — we supply the machines and the Minecraft logins alike.
         if (kept.length > 0 && kept.length < meta.prep.steps.length) {
           filters.push(topic);
         }
@@ -382,6 +387,26 @@ describe("product topics", () => {
       }
     });
 
+    it("pairs the supplied note with the topics left with no steps in person", () => {
+      // Both directions: a topic emptied in person with no flag would go
+      // silent on the question families ask, and a flag on a topic that keeps a
+      // step could never render.
+      const emptied: string[] = [];
+      const declares: string[] = [];
+
+      for (const topic of PRODUCT_TOPIC_VALUES) {
+        const meta: TopicMeta = PRODUCT_TOPICS[topic];
+        if (!meta.prep) continue;
+        if (meta.prep.steps.every((s) => s.scope === "ownDevice")) {
+          emptied.push(topic);
+        }
+        if (meta.prep.suppliedInPerson === true) declares.push(topic);
+      }
+
+      expect(declares.sort()).toEqual(emptied.sort());
+      expect(prep.suppliedInPersonNote.trim().length).toBeGreaterThan(0);
+    });
+
     it("drops the ownDevice steps in person and keeps the always ones", () => {
       // The rule the whole scope axis exists for: at an in-person product
       // School of Gaming brings the machines, so only the account steps are
@@ -389,21 +414,20 @@ describe("product topics", () => {
       for (const topic of PRODUCT_TOPIC_VALUES) {
         if (!topicHasPrep(topic)) continue;
 
-        const inPerson = resolveTopicPrep(topic, "in_person");
-        if (inPerson === null) continue;
+        const inPerson = stepsOf(resolveTopicPrep(topic, "in_person"));
         expect(
-          inPerson.steps.every((s) => s.scope === "always"),
+          inPerson.every((s) => s.scope === "always"),
           `${topic} renders an ownDevice step at an in-person product`,
         ).toBe(true);
         expect(
-          inPerson.steps.map((s) => s.key),
+          inPerson.map((s) => s.key),
           `${topic} carries the remote-session step at an in-person product`,
         ).not.toContain(REMOTE_SESSION_KEY);
 
         const declared: TopicMeta = PRODUCT_TOPICS[topic];
         const remote = resolveTopicPrep(topic, "online");
         expect(remote).not.toBeNull();
-        expect(remote?.steps.map((s) => s.key)).toEqual([
+        expect(stepsOf(remote).map((s) => s.key)).toEqual([
           ...(declared.prep?.steps.map((s) => s.key) ?? []),
           REMOTE_SESSION_KEY,
         ]);
@@ -419,9 +443,9 @@ describe("product topics", () => {
         const remote = resolveTopicPrep(topic, "online");
         expect(remote, `${topic} renders no guide on an online product`).not
           .toBeNull();
-        expect(remote?.steps.at(-1)?.key, topic).toBe(REMOTE_SESSION_KEY);
+        expect(stepsOf(remote).at(-1)?.key, topic).toBe(REMOTE_SESSION_KEY);
         expect(
-          remote?.steps.filter((s) => s.key === REMOTE_SESSION_KEY),
+          stepsOf(remote).filter((s) => s.key === REMOTE_SESSION_KEY),
           `${topic} appends the shared step more than once`,
         ).toHaveLength(1);
       }
@@ -466,7 +490,7 @@ describe("product topics", () => {
 
         const remote = resolveTopicPrep(topic, "online");
         expect(remote?.form, topic).toBe("remoteOnly");
-        expect(remote?.steps.map((s) => s.key), topic).toEqual([
+        expect(stepsOf(remote).map((s) => s.key), topic).toEqual([
           REMOTE_SESSION_KEY,
         ]);
       }
@@ -474,27 +498,26 @@ describe("product topics", () => {
       expect(messages.topicPrep.remoteOnlyIntro.trim().length).toBeGreaterThan(0);
     });
 
-    it("renders nothing in person for a topic with no guide, and none for any Minecraft topic", () => {
+    it("renders nothing in person for a topic with no guide, and the note for every Minecraft topic", () => {
       expect(resolveTopicPrep("programming", "in_person")).toBeNull();
       expect(resolveTopicPrep("esports", "in_person")).toBeNull();
 
-      // The case the null answer was written for, and all three Minecraft
-      // topics are in it: we supply the machines AND the logins — School of
-      // Gaming's own Minecraft accounts at our venues, School of Gaming's
-      // Minecraft Education accounts in municipality clubs — so a family has
-      // genuinely nothing to do beforehand and a guide saying so would be
-      // furniture. It is an in-person answer alone: remotely the room is
-      // always there to get ready for, and remotely the accounts are the
-      // family's own.
-      expect(resolveTopicPrep("minecraft_education", "in_person")).toBeNull();
-      expect(resolveTopicPrep("minecraft_java", "in_person")).toBeNull();
-      expect(resolveTopicPrep("minecraft_bedrock", "in_person")).toBeNull();
+      // All three Minecraft topics: we supply the machines AND the logins —
+      // School of Gaming's own Minecraft accounts at our venues, School of
+      // Gaming's Minecraft Education accounts in municipality clubs — so the
+      // guide answers the question families ask rather than listing steps. It
+      // is an in-person answer alone: remotely the room is always there to get
+      // ready for, and remotely the accounts are the family's own.
+      const supplied = { form: "suppliedNote" };
+      expect(resolveTopicPrep("minecraft_education", "in_person")).toEqual(supplied);
+      expect(resolveTopicPrep("minecraft_java", "in_person")).toEqual(supplied);
+      expect(resolveTopicPrep("minecraft_bedrock", "in_person")).toEqual(supplied);
 
       expect(
-        resolveTopicPrep("minecraft_education", "online")?.steps.map((s) => s.key),
+        stepsOf(resolveTopicPrep("minecraft_education", "online")).map((s) => s.key),
       ).toEqual(["minecraftEducationInstall", REMOTE_SESSION_KEY]);
       expect(
-        resolveTopicPrep("minecraft_java", "online")?.steps.map((s) => s.key),
+        stepsOf(resolveTopicPrep("minecraft_java", "online")).map((s) => s.key),
       ).toEqual([
         "minecraftJavaAccount",
         "minecraftJavaInstall",
@@ -503,7 +526,7 @@ describe("product topics", () => {
       ]);
       expect(resolveTopicPrep("minecraft_java", "online")?.form).toBe("full");
       expect(
-        resolveTopicPrep("minecraft_bedrock", "online")?.steps.map((s) => s.key),
+        stepsOf(resolveTopicPrep("minecraft_bedrock", "online")).map((s) => s.key),
       ).toEqual([
         "minecraftBedrockAccount",
         "minecraftBedrockInstall",
@@ -523,7 +546,7 @@ describe("product topics", () => {
       const inPerson = resolveTopicPrep("pokemon_go", "in_person");
 
       expect(inPerson?.form).toBe("full");
-      expect(inPerson?.steps.map((s) => s.key)).toEqual(
+      expect(stepsOf(inPerson).map((s) => s.key)).toEqual(
         declared?.map((s) => s.key),
       );
     });
@@ -533,7 +556,7 @@ describe("product topics", () => {
 
       const inPerson = resolveTopicPrep("roblox_studio", "in_person");
       expect(inPerson?.form).toBe("accountsOnly");
-      expect(inPerson?.steps.map((s) => s.key)).toEqual([
+      expect(stepsOf(inPerson).map((s) => s.key)).toEqual([
         "robloxStudioAccount",
       ]);
     });

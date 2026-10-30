@@ -36,6 +36,7 @@
   "remoteOnlyIntro": "Kerroilla käytetään äänihuonetta. Käy alla oleva vaihe läpi ennen ensimmäistä kertaa.",
   "hybridIntro": "Kerho kokoaa osallistujat yhteen sekä paikan päällä että etänä. Gedu, eli pelikasvattaja, ohjaa kerhoa etäyhteydellä. Kaikki juttelevat toisilleen yhteisessä äänihuoneessa.",
   "homeHeading": "Osallistuminen kotoa käsin",
+  "suppliedInPersonNote": "Kaikki tarvittava on valmiina. Sinun ei tarvitse tuoda omaa laitetta tai luoda pelitiliä etukäteen. Käyttämme järjestäjän laitteita ja tunnuksia.",
   "steps": {
     "minecraftJavaAccount": {
       "title": "Hanki Microsoft-tili, jolla on Minecraft",
@@ -133,7 +134,7 @@
     },
     "venueVoiceRoom": {
       "title": "Äänihuoneeseen liittyminen paikan päällä",
-      "body": "Paikan päällä olevat osallistujat liittyvät ryhmän äänihuoneeseen Sogversessa haluamallaan laitteella. Kuulokkeita ei tarvita. Jokainen osallistuja tarvitsee keinon kirjautua sisään: jos hänellä ei vielä ole omia tunnuksia, vanhempi voi asettaa ne Oman SOGin Pelaajan asetuksista, jotta kenenkään ei tarvitse jakaa vanhemman tunnuksia."
+      "body": "Paikan päällä olevat osallistujat liittyvät ryhmän äänihuoneeseen Sogversessa joko paikan päällä olevalla tietokoneella tai halutessaan omalla laitteellaan. Kuulokkeita ei tarvita. Jokainen osallistuja tarvitsee keinon kirjautua sisään: jos hänellä ei vielä ole omia tunnuksia, vanhempi voi asettaa ne Oman SOGin Pelaajan asetuksista, jotta kenenkään ei tarvitse jakaa vanhemman tunnuksia."
     }
   },
   "platformNotes": {

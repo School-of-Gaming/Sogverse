@@ -15,11 +15,12 @@ import enTopicPrep from "@/../messages/en/topicPrep.json";
 const messages = { topicPrep: enTopicPrep };
 
 // The mail's half of the "Before the first session" guide. What is worth
-// asserting here is the two answers a caller cannot recover for itself: that
-// there is genuinely *nothing* to state where nothing applies — a mail splices
-// the string in raw, so a section label over a closing line would be furniture
-// announcing that there is nothing to say — and that an in-person render drops
-// exactly the steps School of Gaming is supplying the machines for.
+// asserting here is the answers a caller cannot recover for itself: that there
+// is genuinely *nothing* to state where nothing applies — a mail splices the
+// string in raw, so a section label over a closing line would be furniture
+// announcing that there is nothing to say — that an in-person render drops
+// exactly the steps School of Gaming is supplying the machines for, and that a
+// topic with none left states the one note and nothing else.
 //
 // Both builders take a plan the caller resolved, which is what keeps the body
 // and its plain-text twin stating one document. So the empty answer is the
@@ -72,12 +73,25 @@ describe("topic prep email section", () => {
     expect(lines.some((line) => line.startsWith("2. "))).toBe(false);
   });
 
-  it("has nothing to compose for Minecraft Education in person", () => {
-    // Its one step is an install, and in person we supply the machines and the
-    // logins alike — so there is genuinely nothing for a family to do, and the
-    // mail says nothing rather than saying so.
-    expect(resolveTopicPrep("minecraft_education", "in_person")).toBeNull();
-    expect(section("minecraft_education", "online")).not.toBe("");
+  it("states only the heading and the note for a supplied topic in person", () => {
+    // In person we supply the machines and the logins alike, so there are no
+    // steps: no intro, no list (an empty one would draw nothing but a margin)
+    // and no closing, which presumes steps were followed.
+    const prep = messages.topicPrep;
+    const html = section("minecraft_education", "in_person");
+
+    expect(html).toContain(prep.heading);
+    expect(html).toContain(prep.suppliedInPersonNote);
+    expect(html).not.toContain("<ol");
+    expect(html).not.toContain("<table");
+    expect(html).not.toContain(prep.closing);
+    expect(html).not.toContain(prep.steps.minecraftEducationInstall.title);
+
+    expect(textLines("minecraft_education", "in_person")).toEqual([
+      prep.heading,
+      "",
+      prep.suppliedInPersonNote,
+    ]);
   });
 
   it("renders the guide as a numbered list under a section label", () => {

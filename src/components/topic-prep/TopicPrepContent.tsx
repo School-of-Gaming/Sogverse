@@ -27,9 +27,10 @@ import type { TopicPrepPlan, TopicPrepStep } from "@/lib/products/topics";
 // machine every step renders, and otherwise only the account steps, because
 // School of Gaming brings the machines; where there is a voice room the shared
 // step about its mic and camera is appended. A hybrid product takes two
-// sections, the second for joining from home. See the registry's header note
-// for that split, and for why a label-only topic has a guide wherever there is
-// a room.
+// sections, the second for joining from home, and a topic whose machine and
+// login are both ours in person takes one note instead of any steps. See the
+// registry's header note for that split, and for why a label-only topic has a
+// guide wherever there is a room.
 
 export interface TopicPrepContentProps {
   /** What to render — `resolveTopicPrep`'s answer, resolved by the surface. */
@@ -98,8 +99,17 @@ function StepList({ steps }: { steps: readonly TopicPrepStep[] }) {
 export function TopicPrepContent({ plan }: TopicPrepContentProps) {
   const t = useTranslations("topicPrep");
 
+  // No intro, no list and no closing: the closing presumes steps were followed.
+  if (plan.form === "suppliedNote") {
+    return (
+      <p className="text-sm text-muted-foreground">
+        {t("suppliedInPersonNote")}
+      </p>
+    );
+  }
+
   // One branch per form, because each reads a different key and only two of
-  // the four have a topic to key by — a label-only topic has no
+  // them have a topic to key by — a label-only topic has no
   // `topics.<topic>.intro` to ask for, which is exactly what the plan's
   // discriminant is protecting.
   const intro =
@@ -126,10 +136,11 @@ export function TopicPrepContent({ plan }: TopicPrepContentProps) {
         </>
       )}
 
-      {/* One closing for every topic and every form. A per-topic one
-          would have needed a twin apiece — "everything installed and tested"
-          is false of a guide that showed no install step — and there was
-          nothing topic-specific left to say once it had to be true of every form. */}
+      {/* One closing for every topic and every form with steps. A per-topic
+          one would have needed a twin apiece — "everything installed and
+          tested" is false of a guide that showed no install step — and there
+          was nothing topic-specific left to say once it had to be true of
+          every form. */}
       <p className="text-sm text-muted-foreground">{t("closing")}</p>
     </div>
   );

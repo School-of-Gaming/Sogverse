@@ -70,11 +70,13 @@ import type { GamePlatform } from "@/lib/constants/game-platforms";
 // well as the machine — at our own venues the gamers play on School of
 // Gaming's Minecraft accounts and may not sign in with their own on our
 // devices, and municipality clubs run on School of Gaming's Minecraft
-// Education accounts — so those account steps are `ownDevice` and all three
-// topics render no guide at all in person. The other topics with prep keep
-// `always` account steps, because those accounts are the family's own wherever
-// the sessions happen. A topic whose `always` steps come to nothing renders
-// nothing, which is what `resolveTopicPrep` returning null means.
+// Education accounts — so those account steps are `ownDevice` and in person all
+// three topics have no steps at all. Families still ask whether to bring
+// anything, so those topics declare `suppliedInPerson` and render a one-paragraph
+// note saying we supply the machine and the login. The other topics with prep
+// keep `always` account steps, because those accounts are the family's own
+// wherever the sessions happen. `resolveTopicPrep` returns null only for a topic
+// with no steps and no such note: a label-only topic in person.
 //
 // **One step belongs to no topic at all.** Getting a microphone and camera
 // ready for the voice room is a fact about a product with a voice room
@@ -186,13 +188,20 @@ export type TopicMeta = {
      * second intro under `topicPrep.accountsOnlyIntro`, and this flag is what
      * makes the pairing checkable rather than derived from a scope count the
      * catalog cannot see. A topic with one scope needs no second intro: an
-     * all-`always` topic never filters, and an all-`ownDevice` one renders
-     * nothing in person.
+     * all-`always` topic never filters, and an all-`ownDevice` one has no steps
+     * to introduce in person.
      *
      * The *closing* deliberately has no such twin — there is one, shared,
      * written to be true of either form.
      */
     readonly accountsOnlyIntro?: true;
+    /**
+     * Declared on a topic where, in person, School of Gaming supplies both the
+     * machine and the login, so no step is left for the family. The guide is
+     * then the shared `topicPrep.suppliedInPersonNote`: families ask whether to
+     * bring anything, and this answers them.
+     */
+    readonly suppliedInPerson?: true;
   };
 };
 
@@ -212,6 +221,7 @@ export const PRODUCT_TOPICS = {
       url: "https://www.minecraft.net/store/minecraft-java-bedrock-edition-pc",
     },
     prep: {
+      suppliedInPerson: true,
       steps: [
         {
           // `ownDevice`, because in person the login is ours as well as the
@@ -219,8 +229,8 @@ export const PRODUCT_TOPICS = {
           // of Gaming's Minecraft accounts and are not allowed to sign in with
           // their own on our devices, and municipality clubs run on School of
           // Gaming's Minecraft Education accounts. So an in-person Minecraft
-          // Java product renders no guide at all, exactly as Minecraft
-          // Education already does.
+          // Java product renders the supplied note instead of any step,
+          // exactly as Minecraft Education does.
           key: "minecraftJavaAccount",
           scope: "ownDevice",
           url: "https://www.minecraft.net/store/minecraft-java-bedrock-edition-pc",
@@ -237,11 +247,10 @@ export const PRODUCT_TOPICS = {
       url: "https://education.minecraft.net/",
     },
     prep: {
-      // One step, and it is an `ownDevice` one — so an in-person Minecraft
-      // Education product renders no guide at all, which is correct: School of
-      // Gaming supplies the machines AND the logins, so a family has nothing to
-      // do beforehand. A step saying "there is nothing to do" would be worse
-      // than the silence.
+      // One step, and it is an `ownDevice` one, because in person School of
+      // Gaming supplies the machines AND the logins. An in-person Minecraft
+      // Education product therefore renders the supplied note and no step.
+      suppliedInPerson: true,
       steps: [
         {
           key: "minecraftEducationInstall",
@@ -307,13 +316,14 @@ export const PRODUCT_TOPICS = {
       ],
     },
     prep: {
+      suppliedInPerson: true,
       steps: [
         {
           // `ownDevice`, for the reason the Java entry states: in person the
           // Minecraft login is ours too — School of Gaming's own accounts at
           // our venues, School of Gaming's Minecraft Education accounts in
           // municipality clubs — so nothing here is the family's to do and an
-          // in-person Bedrock product renders no guide at all.
+          // in-person Bedrock product renders the supplied note.
           key: "minecraftBedrockAccount",
           scope: "ownDevice",
         },
@@ -626,7 +636,8 @@ export type TopicPrepChecklistKey = NonNullable<
  * topic and carry the narrowest topic union that has prose; `remoteOnly` and
  * `hybrid` are keyed by nothing, because neither has a topic-specific sentence
  * to open with: each takes a generic intro of its own. `hybrid` alone has a
- * second list, under a heading of its own.
+ * second list, under a heading of its own. `suppliedNote` has no steps field at
+ * all, so a renderer cannot draw an empty list for it.
  */
 export type TopicPrepPlan =
   | {
@@ -650,6 +661,10 @@ export type TopicPrepPlan =
       form: "hybrid";
       steps: readonly TopicPrepStep[];
       homeSteps: readonly TopicPrepStep[];
+    }
+  | {
+      /** In person we supply the machine and the login: one note, no steps. */
+      form: "suppliedNote";
     };
 
 /**
@@ -681,6 +696,11 @@ export function topicHasAccountsOnlyIntro(
   topic: TopicWithPrep,
 ): topic is TopicWithAccountsOnlyIntro {
   return TOPIC_META[topic]?.prep?.accountsOnlyIntro === true;
+}
+
+/** Whether a prep-bearing topic has us supplying machine and login in person. */
+export function topicIsSuppliedInPerson(topic: TopicWithPrep): boolean {
+  return TOPIC_META[topic]?.prep?.suppliedInPerson === true;
 }
 
 // Which game identity a product's surfaces are about — the first of the

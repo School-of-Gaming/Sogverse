@@ -93,6 +93,19 @@ describe("TopicPrepDialog", () => {
     expect(order & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
   });
 
+  it("draws the supplied note alone, with no list and no closing", () => {
+    const plan = resolveTopicPrep("minecraft_java", "in_person");
+    if (!plan) throw new Error("in-person Minecraft has a note");
+    renderDialog(plan);
+
+    expect(screen.getByText("topicPrep.suppliedInPersonNote")).toBeTruthy();
+    expect(screen.queryByRole("list")).toBeNull();
+    expect(screen.queryByText("topicPrep.closing")).toBeNull();
+    // The dialog's own frame is unchanged: the two answers are still there.
+    expect(screen.getByRole("button", { name: READY })).toBeTruthy();
+    expect(screen.getByRole("button", { name: NOT_YET })).toBeTruthy();
+  });
+
   it("draws a hybrid guide as two lists under the home heading, numbering each from one", () => {
     const plan = resolveTopicPrep("roblox_studio", "hybrid");
     if (!plan) throw new Error("a hybrid product always has a guide");

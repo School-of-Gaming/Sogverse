@@ -36,6 +36,7 @@
   "remoteOnlyIntro": "The sessions use a voice room. Please complete the step below before the first session.",
   "hybridIntro": "This club brings participants together both at the venue and remotely. The Gedu, our word for a Game Educator, leads the club remotely. Everyone talks to each other in a shared voice room.",
   "homeHeading": "Joining from home",
+  "suppliedInPersonNote": "Everything you need is ready. You do not need to bring your own device or create a game account in advance. We use the organiser’s devices and logins.",
   "steps": {
     "minecraftJavaAccount": {
       "title": "Get a Microsoft account with Minecraft on it",
@@ -133,7 +134,7 @@
     },
     "venueVoiceRoom": {
       "title": "Join the voice room at the venue",
-      "body": "Participants at the venue join the group’s voice room in Sogverse, on whichever device they prefer. No headset is needed. Each participant needs a way to sign in: if there is no sign-in of their own yet, a parent can set one up under Gamer settings in My SOG, so nobody has to share a parent’s login."
+      "body": "Participants at the venue join the group’s voice room in Sogverse, on a computer at the venue or on their own device if they prefer. No headset is needed. Each participant needs a way to sign in: if there is no sign-in of their own yet, a parent can set one up under Gamer settings in My SOG, so nobody has to share a parent’s login."
     }
   },
   "platformNotes": {

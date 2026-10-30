@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import { resolveTopicPrep } from "@/lib/products/topic-prep";
-import type { TopicPrepPlan } from "@/lib/products/topics";
+import type { TopicPrepStep } from "@/lib/products/topics";
 import type { ProductTopic } from "@/types";
 
 /**
@@ -17,7 +17,7 @@ function hybridPlan(topic: ProductTopic) {
   return plan;
 }
 
-const keys = (steps: TopicPrepPlan["steps"]) => steps.map((s) => s.key);
+const keys = (steps: readonly TopicPrepStep[]) => steps.map((s) => s.key);
 
 describe("resolveTopicPrep by delivery mode", () => {
   it("sorts a topic with both scopes into the two hybrid sections", () => {
@@ -32,7 +32,6 @@ describe("resolveTopicPrep by delivery mode", () => {
 
   it("opens a hybrid Minecraft guide on the venue step alone", () => {
     // No `always` steps: the login at the venue is ours, at home the family's.
-    expect(resolveTopicPrep("minecraft_java", "in_person")).toBeNull();
     const plan = hybridPlan("minecraft_java");
     expect(keys(plan.steps)).toEqual([VENUE_STEP]);
     expect(keys(plan.homeSteps)).toEqual([
@@ -55,10 +54,10 @@ describe("resolveTopicPrep by delivery mode", () => {
     expect(keys(plan.homeSteps)).toEqual([ROOM_STEP]);
   });
 
-  it("leaves online and in person as they were", () => {
+  it("keeps online and in person as one filtered list", () => {
     const online = resolveTopicPrep("roblox_studio", "online");
-    expect(online?.form).toBe("full");
-    expect(online && keys(online.steps)).toEqual([
+    if (online?.form !== "full") throw new Error("not a full plan");
+    expect(keys(online.steps)).toEqual([
       "robloxStudioAccount",
       "robloxStudioInstall",
       "robloxStudioTest",
@@ -66,7 +65,25 @@ describe("resolveTopicPrep by delivery mode", () => {
     ]);
 
     const inPerson = resolveTopicPrep("roblox_studio", "in_person");
-    expect(inPerson?.form).toBe("accountsOnly");
-    expect(inPerson && keys(inPerson.steps)).toEqual(["robloxStudioAccount"]);
+    if (inPerson?.form !== "accountsOnly") throw new Error("not accounts-only");
+    expect(keys(inPerson.steps)).toEqual(["robloxStudioAccount"]);
+  });
+
+  it("gives the three Minecraft topics the supplied note in person alone", () => {
+    for (const topic of [
+      "minecraft_java",
+      "minecraft_education",
+      "minecraft_bedrock",
+    ] as const) {
+      expect(resolveTopicPrep(topic, "in_person"), topic).toEqual({
+        form: "suppliedNote",
+      });
+      expect(resolveTopicPrep(topic, "online")?.form, topic).toBe("full");
+      expect(resolveTopicPrep(topic, "hybrid")?.form, topic).toBe("hybrid");
+    }
+  });
+
+  it("gives a label-only topic no note in person", () => {
+    expect(resolveTopicPrep("esports", "in_person")).toBeNull();
   });
 });

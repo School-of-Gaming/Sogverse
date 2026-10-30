@@ -462,10 +462,11 @@ export function EnrollmentCard(props: EnrollmentCardProps) {
    * finished run because the first session it names is behind them.
    *
    * **And does the topic have one for this form of product**, which is
-   * `resolveTopicPrep`'s to answer and nothing else's: it knows both that the
-   * topic carries a guide and that at least one of its steps survives the
-   * in-person filter, and it answers `null` for a topic where School of Gaming
-   * supplies the machines and the logins alike.
+   * `resolveTopicPrep`'s to answer and nothing else's: it knows whether the
+   * topic carries a guide and what of it survives the in-person filter, and it
+   * answers `null` for a label-only topic in person. A topic where School of
+   * Gaming supplies the machine and the login answers with its one note, and
+   * the card offers that like any other guide.
    *
    * The dismissal comes in as a prop, so all three questions are answerable on
    * the server and this card paints its final footer on the first frame.

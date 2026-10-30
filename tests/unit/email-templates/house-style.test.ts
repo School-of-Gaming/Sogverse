@@ -374,6 +374,10 @@ const MAILS: Record<string, () => [string, string][]> = {
       topic: "roblox_studio",
       deliveryMode: "hybrid",
     }),
+    ...fromRegistry("productConfirmation", "productConfirmation (topic guide, supplied note)", {
+      topic: "minecraft_java",
+      deliveryMode: "in_person",
+    }),
   ],
   // All three mails one send produces: the family's, the child's own copy, and
   // the copy to staff, which carries a banner of its own and so has markup no

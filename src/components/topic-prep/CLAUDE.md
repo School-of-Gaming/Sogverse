@@ -62,9 +62,10 @@ The first list is the topic's `always` steps followed by the venue step; the sec
 topic's `ownDevice` steps followed by the mic-and-camera step. Each list numbers from one.
 
 **Rule: joining the room from the venue is a shared step of its own, not the mic-and-camera
-step.** A child at the venue has no headset to choose and nothing to test, and joins on
-whichever device they prefer; what they need is a way to sign in, so the step says who sets
-one up and where. It belongs to the hybrid guide alone, and its scope says `always` because
+step.** The game runs on a computer provided at the venue, and a child there has no headset
+to choose and nothing to test; they join the room on that computer, or on their own device
+if they prefer, which is optional. What they need is a way to sign in, so the step says who
+sets one up and where. It belongs to the hybrid guide alone, and its scope says `always` because
 that sign-in is the family's wherever the device came from.
 
 Both shared steps are there whatever the topic brought, so every topic has a hybrid guide:
@@ -85,8 +86,8 @@ is an account.** In person we provide the Minecraft login as well as the machine
 own venues the gamers play on School of Gaming's Minecraft accounts and are not allowed to
 sign in with their own on our devices, and municipality clubs run on School of Gaming's
 Minecraft Education accounts. So the Minecraft account steps are scoped to the device
-alongside the installs, and all three Minecraft topics have nothing to say in person: no
-heading, no intro, no closing. The other topics with prep keep account steps that survive every
+alongside the installs, and in person all three Minecraft topics have no steps left and show
+one note instead. The other topics with prep keep account steps that survive every
 filter, because those accounts are the family's own wherever the sessions happen — the
 family creates them, holds them, and brings them to an in-person session the same way they
 bring them to an online one.
@@ -111,24 +112,29 @@ a product with a voice room: the empty answer belongs to a product without one.
 out" was true of what the topic declared and false the moment a shared step joined it. The
 intros state what the guide is about and leave the numbering to the list.
 
-Two consequences the surfaces have to honour:
+Three consequences the surfaces have to honour:
 
-- **An in-person guide can filter down to nothing, and then nothing renders** — no
-  heading, no intro, no closing. That is the correct answer for a topic where we supply the
-  machines *and* the logins: there is genuinely nothing to do beforehand, and a guide
-  saying so is furniture. The registry's resolver answers this, and it is the only render
-  condition a surface should ask — never "does the topic have a block", which is now a
-  narrower question than "is there a guide".
+- **A topic where we supply the machine *and* the login says so in one note.** Families
+  ask whether to bring anything, and on such a topic in person every step filters out, so
+  the guide answers them: the shared note under the usual heading, with no intro, no list
+  and no closing. The topic declares this in the registry, so it is a stated fact rather
+  than a list in the resolver. A card offers it like any other guide.
+- **A label-only topic in person renders nothing** — no heading, no note, no closing. The
+  registry's resolver answers this, and it is the only render condition a surface should
+  ask — never "does the topic have a block", which is a narrower question than "is there a
+  guide".
 - **The intro has to be true of the form being rendered, so the plan names which intro to
   read.** A guide shortened to its account steps cannot open by promising software to
   install, so a topic with both scopes carries a second, accounts-only intro; a guide that
   is only the shared voice-room step has no topic to open about at all, so it takes one generic
   intro; a hybrid guide takes another, and is the one form with a second list of steps. Those
-  are the plan's four forms — `full`, `accountsOnly`, `remoteOnly`, `hybrid` — and the
-  discriminant exists precisely because each reads a different message key and only two of
-  them have a topic narrow enough to key by. The **closing** deliberately has no twin:
-  there is one, shared by every topic and every form, written so that it is true of all of
-  them.
+  are the plan's four forms with steps — `full`, `accountsOnly`, `remoteOnly`, `hybrid` — and
+  the discriminant exists precisely because each reads a different message key and only two
+  of them have a topic narrow enough to key by. The fifth, `suppliedNote`, is the one note
+  and carries no steps at all, so a renderer cannot draw an empty list for it. The
+  **closing** deliberately has no twin: there is one, shared by every topic and every form
+  with steps, written so that it is true of all of them. The note takes none, because the
+  closing presumes steps were followed.
 
 ## Three surfaces, two renderers, one guide
 

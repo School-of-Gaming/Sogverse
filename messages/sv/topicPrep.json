@@ -36,6 +36,7 @@
   "remoteOnlyIntro": "Tillfällena använder ett röstrum. Gå igenom steget nedan före det första tillfället.",
   "hybridIntro": "Den här klubben för samman deltagare både på plats och på distans. Gedu, vårt ord för en spelfostrare, leder klubben på distans. Alla pratar med varandra i ett gemensamt röstrum.",
   "homeHeading": "Delta hemifrån",
+  "suppliedInPersonNote": "Allt som behövs är klart. Du behöver inte ta med en egen enhet eller skapa ett spelkonto i förväg. Vi använder arrangörens enheter och inloggningar.",
   "steps": {
     "minecraftJavaAccount": {
       "title": "Skaffa ett Microsoft-konto med Minecraft på",
@@ -133,7 +134,7 @@
     },
     "venueVoiceRoom": {
       "title": "Gå med i röstrummet på plats",
-      "body": "Deltagarna på plats går med i gruppens röstrum i Sogverse på den enhet de föredrar. Inget headset behövs. Varje deltagare behöver ett sätt att logga in: om deltagaren ännu inte har någon egen inloggning kan en förälder ordna en under Spelarinställningar i Min SOG, så att ingen behöver dela en förälders inloggning."
+      "body": "Deltagarna på plats går med i gruppens röstrum i Sogverse på en dator på plats eller, om de vill, på sin egen enhet. Inget headset behövs. Varje deltagare behöver ett sätt att logga in: om deltagaren ännu inte har någon egen inloggning kan en förälder ordna en under Spelarinställningar i Min SOG, så att ingen behöver dela en förälders inloggning."
     }
   },
   "platformNotes": {
