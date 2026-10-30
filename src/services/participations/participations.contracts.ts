@@ -124,7 +124,8 @@ export const joinWaitlistBody = z.object({
   productId: z.string().uuid("productId must be a UUID"),
   participantId: z.string().uuid("participantId must be a UUID"),
   consentedDocuments,
-  ...seatAnswersBody,
+  // The answer alone: the route reads the UTM tag off the attribution cookie.
+  schoolOfGamingMarketingOptIn: seatAnswersBody.schoolOfGamingMarketingOptIn,
 });
 
 /**

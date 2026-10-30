@@ -12,8 +12,6 @@ import { Input } from "@/components/ui/input";
 import { Link } from "@/i18n/navigation";
 import { ROUTES } from "@/lib/constants/routes";
 import type { SupportedLocale } from "@/lib/constants/locales";
-import { utmRegistrationBody } from "@/lib/utm";
-import { useUtm } from "@/providers";
 import {
   LANDING_SUBSCRIBE_FIRST_NAME_MAX,
   LANDING_SUBSCRIBE_LAST_NAME_MAX,
@@ -75,7 +73,6 @@ export function LandingSubscribeForm({
   sticky?: boolean;
 }) {
   const t = useTranslations("landingSubscribe");
-  const utm = useUtm();
   const [email, setEmail] = useState("");
   const [firstName, setFirstName] = useState("");
   const [lastName, setLastName] = useState("");
@@ -113,7 +110,6 @@ export function LandingSubscribeForm({
       firstName,
       lastName,
       consent: true,
-      utm: utmRegistrationBody(utm),
     };
     try {
       const response = await fetch("/api/landing-pages/subscribe", {

@@ -13,7 +13,6 @@ import { Card, CardContent, CardDescription, CardFooter, CardHeader } from "@/co
 import { pushGtmEvent } from "@/lib/gtm";
 import { GTM_EVENTS } from "@/lib/gtm-events";
 import { ROUTES } from "@/lib/constants/routes";
-import { utmRegistrationBody, type UtmAttribution } from "@/lib/utm";
 import {
   COMPLETE_REGISTRATION_PARENT_QUERY,
   completeRegistrationQuery,
@@ -36,8 +35,6 @@ export interface CompleteRegistrationFormProps {
   /** Google's name for the account, split into its halves, or empty strings. */
   initialFirstName: string;
   initialLastName: string;
-  /** The landing link's attribution, carried here on the address. */
-  utm: UtmAttribution;
   /**
    * The product page the account set out from, to land on once registered in
    * place of the variant's own landing. It still passes the post-auth
@@ -88,23 +85,17 @@ async function refusal(
 
 /**
  * The Gedu form's line under the submit, back to the parent form, keeping the
- * attribution and the product page. It asks for the parent variant outright,
+ * product page. It asks for the parent variant outright,
  * since an address that says nothing falls back to the intent cookie, which
  * says Gedu. The parent form has no line the other way: a Gedu is registered
  * from the Gedu registration page, and a parent form is where someone who
  * started anywhere else belongs.
  */
-function VariantSwitch({
-  utm,
-  redirect,
-}: {
-  utm: UtmAttribution;
-  redirect: string | null;
-}) {
+function VariantSwitch({ redirect }: { redirect: string | null }) {
   const t = useTranslations("auth.completeRegistration");
   const query = {
     ...COMPLETE_REGISTRATION_PARENT_QUERY,
-    ...completeRegistrationQuery({ asGedu: false, utm, redirect }),
+    ...completeRegistrationQuery({ asGedu: false, redirect }),
   };
 
   return (
@@ -215,7 +206,6 @@ function ParentCompletion({
   email,
   initialFirstName,
   initialLastName,
-  utm,
   redirect,
 }: CompleteRegistrationFormProps) {
   const t = useTranslations("auth");
@@ -260,7 +250,6 @@ function ParentCompletion({
           lastName: names.data.lastName,
           ...account.requestBody,
           locale,
-          utm: utmRegistrationBody(utm),
           // The product page the sign-up started from, so the account-creation
           // report can name it. The route re-checks it.
           redirect: redirect ?? undefined,
@@ -331,7 +320,6 @@ function GeduCompletion({
   email,
   initialFirstName,
   initialLastName,
-  utm,
   redirect,
 }: CompleteRegistrationFormProps) {
   const t = useTranslations("auth");
@@ -374,7 +362,6 @@ function GeduCompletion({
           lastName: names.data.lastName,
           ...profile.requestBody,
           locale,
-          utm: utmRegistrationBody(utm),
         }),
       });
 
@@ -407,7 +394,7 @@ function GeduCompletion({
       isLoading={isLoading}
       submitLabel={t("completeRegistration.submit")}
       onSubmit={handleSubmit}
-      variantSwitch={<VariantSwitch utm={utm} redirect={redirect} />}
+      variantSwitch={<VariantSwitch redirect={redirect} />}
       alert={
         <Alert variant="info">
           <div>

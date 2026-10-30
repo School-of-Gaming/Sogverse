@@ -4,13 +4,19 @@
  * A marketing link carries up to five standard UTM parameters
  * (`/roblox?utm_source=lynx&utm_medium=email&utm_campaign=lynx-summer-a`, plus
  * `utm_content` and `utm_term` where the link's maker set them). The
- * proxy reads and sanitises them, hands them to the root layout on the `x-utm`
- * request header, and a client context provider holds them for the rest of the
- * visit so they survive browsing the whole site as client-side navigation. At
- * registration they travel in the new user's auth metadata and the
- * profile-creation trigger writes them to `profiles.utm_source`,
- * `profiles.utm_medium`, `profiles.utm_campaign`, `profiles.utm_content` and
- * `profiles.utm_term`.
+ * proxy reads and sanitises them. Under marketing consent it keeps them in the
+ * first-party `sog_attribution` cookie, which holds the latest tag this browser
+ * arrived with for 30 days, so it survives the full reload of a sign-up or
+ * sign-in and the end of the visit. Without consent yet, the proxy hands them
+ * to the root layout on the `x-utm` request header and a client context
+ * provider holds them for the document's life, for the consent banner to write
+ * the cookie if marketing is accepted. Every server route that stores
+ * attribution reads the cookie off its own request. At registration the values
+ * travel in the new user's auth metadata and the profile-creation trigger
+ * writes them to `profiles.utm_source`, `profiles.utm_medium`,
+ * `profiles.utm_campaign`, `profiles.utm_content` and `profiles.utm_term`.
+ * Those columns are first touch for the account, since they are written once;
+ * the cookie is last touch.
  *
  * Values are invented ad hoc by whoever makes the link; there is no registry of
  * valid ones, and validating against one was considered and turned down.
@@ -18,10 +24,10 @@
  * noise they never query.
  *
  * **The transport has a byte budget and drops rather than truncates.** The
- * serialised `x-utm` value is capped at `UTM_HEADER_MAX_LENGTH`; over that, the
- * proxy sets no header and the visit carries no attribution. See that constant
- * for why a per-field cap is not enough on its own and why dropping is the only
- * safe answer.
+ * serialised value is capped at `UTM_HEADER_MAX_LENGTH`; over that, the proxy
+ * sets no header and no cookie, and the visit carries no attribution. See that
+ * constant for why a per-field cap is not enough on its own and why dropping is
+ * the only safe answer.
  *
  * **The partner convention: a campaign issued to or for a partner is prefixed
  * with the partner's slug and a hyphen** — `lynx-summer-a`, `rblx-launch`. This
@@ -54,12 +60,13 @@
  *     nothing about where we keep the value answers it, and moving the read
  *     server-side does not either: the proxy reading the query string **is**
  *     the ¶51 access, and it happens on the landing request, before a banner
- *     could have been answered. So this module claims nothing about consent.
- *     What the cookie-consent banner governs is the *browser scripts* — the
- *     analytics and marketing pixels that load in the page — and that is a
- *     separate mechanism from this one.
- *  2. **The stored value is written at account creation only when the visitor's
- *     consent cookie carries marketing consent.** Counsel has answered, on both
+ *     could have been answered. So nothing here claims the read is covered by
+ *     consent. What the banner decides for this feature is what happens after
+ *     the read: whether the tag is kept on the device, and whether it is
+ *     stored (point 2).
+ *  2. **The tag is kept on the device, and stored at account creation, only
+ *     when the visitor's consent cookie carries marketing consent.** Counsel has
+ *     answered, on both
  *     sides: SOG's in August 2026 and Lynx's on 2026-09-14 both read the UTM
  *     parameters on a landing link as tracking that needs consent, and Lynx's
  *     places it under **marketing** consent rather than analytics. So a parent
@@ -69,14 +76,26 @@
  *     is the accepted cost.
  *
  *     What is gated is the **write**, not the read. The values still ride the
- *     visit in memory exactly as before, because reading them is what the
- *     banner governs and by point 1 it has already happened on the landing
- *     request, before any answer could exist; persisting them is the part
- *     consent can still decide. The gate is {@link utmMetadataForConsent},
- *     which is the only exported way to build the signup metadata, and it is
- *     applied **on the server**, from the consent cookie the request itself
- *     carried — never from a flag a client sends, since a client can send
- *     whatever it likes.
+ *     visit in memory, because by point 1 the read has already happened on the
+ *     landing request, before any answer could exist; persisting them is the
+ *     part consent can still decide. The gate on a stored value is
+ *     {@link utmMetadataForConsent}, which is the only exported way to build
+ *     the signup metadata, and it is applied **on the server**, from the
+ *     consent cookie the request itself carried — never from a flag a client
+ *     sends, since a client can send whatever it likes.
+ *
+ *     **What is stored on the device.** Under marketing consent, and only
+ *     then, the browser holds a first-party cookie, `sog_attribution`, carrying
+ *     the five values of the latest tagged link for 30 days. It is not
+ *     httpOnly, because the banner writes it from client code, so scripts in
+ *     the page can read it. The proxy writes it when a landing request already
+ *     carries the consent; the banner writes it from the in-memory tag when
+ *     marketing is accepted mid-visit. A later tagged link overwrites it, and
+ *     a link with no tag leaves it. Withdrawing marketing deletes it with the
+ *     advertising cookies, and a document where marketing is not granted
+ *     deletes it on mount. A refusal never writes it. The server gate above
+ *     still applies when it is read, so a cookie that outlived its consent
+ *     stores nothing.
  *
  *     **The same gate covers every other write of them.** A landing page's
  *     email sign-up passes them to Klaviyo as profile properties, through
@@ -93,7 +112,10 @@
  *     relationship answers "which campaign brought this family" without copying
  *     a marketing attribute onto a child's record. Gamer rows keep all five
  *     columns NULL by construction: the gamer-creation route passes only name
- *     fields in metadata.
+ *     fields in metadata. Nor does a signed-in gamer's browsing write the
+ *     attribution cookie: the proxy and the banner both skip it for a gamer, or
+ *     for a session whose role could not be read. A cookie a parent left on a
+ *     shared device stays where it is, and no route a gamer can reach reads it.
  *  4. **The values are write-once.** There is deliberately no UPDATE grant on
  *     any of the five columns, so nobody but `service_role` can alter or clear
  *     them after account creation — an admin included, since an admin is also
@@ -118,9 +140,9 @@
  *     links that get forwarded and screenshotted.
  */
 
-// Type-only, so nothing from the consent module is bundled: this file runs in
-// the proxy, which is not a Node runtime.
-import type { ConsentState } from "./consent";
+// The consent module is pure string work with no imports, so it is as safe in
+// the proxy as this file is: the proxy is not a Node runtime.
+import { cookieValueFromHeader, type ConsentState } from "./consent";
 
 /**
  * The five attribution fields in the order a campaign link spells them, for
@@ -140,7 +162,7 @@ export const UTM_QUERY_PARAMS = {
   term: "utm_term",
 } as const satisfies Record<UtmField, string>;
 
-/** The raw, unsanitised fields a registration body may carry. */
+/** The raw, unsanitised fields a consent gate may be handed. */
 export type UtmInput = Partial<Record<UtmField, string>>;
 
 /**
@@ -185,6 +207,36 @@ export const UTM_HEADER = "x-utm";
  * characters, which no real link carries.
  */
 export const UTM_HEADER_MAX_LENGTH = 2048;
+
+/**
+ * The first-party cookie that keeps the latest tag this browser arrived with.
+ * Its value is exactly what {@link serialiseUtm} produced, so it is held to the
+ * same budget, and it is read back through {@link utmFromCookieHeader}.
+ */
+export const UTM_COOKIE_NAME = "sog_attribution";
+
+/**
+ * Thirty days, in seconds. A tag older than that no longer says what brought
+ * somebody here.
+ */
+export const UTM_COOKIE_MAX_AGE_SECONDS = 30 * 24 * 60 * 60;
+
+/**
+ * Attributes for the proxy's write, matching what `setCookie` writes in the
+ * browser so the two land on one cookie. Host-only, which is what the
+ * `deleteCookie` sweep expects. Not httpOnly: the banner has to write it from
+ * client code. `secure` follows the environment, as the app's other server
+ * writes do.
+ */
+export function utmCookieOptions() {
+  return {
+    path: "/",
+    maxAge: UTM_COOKIE_MAX_AGE_SECONDS,
+    sameSite: "lax",
+    secure: process.env.NODE_ENV === "production",
+    httpOnly: false,
+  } as const;
+}
 
 /** The five fields, each present or explicitly absent. */
 export interface UtmAttribution {
@@ -328,9 +380,9 @@ export function readUtmFromSearchParams(params: URLSearchParams): UtmAttribution
 }
 
 /**
- * The `x-utm` header value for an attribution, or `null` when there is nothing
- * to send. Only the fields that survived appear, so a header that is present is
- * always a header carrying something.
+ * The `x-utm` header and `sog_attribution` cookie value for an attribution, or
+ * `null` when there is nothing to send. Only the fields that survived appear, so
+ * a value that is present is always a value carrying something.
  *
  * Returns `null` too when the encoded value would exceed
  * {@link UTM_HEADER_MAX_LENGTH} — the whole attribution is dropped rather than
@@ -354,8 +406,7 @@ export function serialiseUtm(utm: UtmAttribution): string | null {
 
 /**
  * The signup-metadata object a registration route would hand to
- * `admin.auth.admin.createUser`, built from the (unsanitised) values a
- * registration body carried.
+ * `admin.auth.admin.createUser`, built from (unsanitised) attribution values.
  *
  * **Not exported, and that is the mechanism.** Every caller goes through
  * {@link utmMetadataForConsent}, so there is no way to build this payload
@@ -414,9 +465,8 @@ export function utmMetadataForConsent(
 }
 
 /**
- * An attribution as a registration body's `utm` field: every field that is
- * present, every absent one omitted. The register forms and the finish page all
- * send this, so the body shape cannot differ between them.
+ * An attribution as {@link UtmInput}: every field that is present, every absent
+ * one omitted.
  */
 export function utmRegistrationBody(utm: UtmAttribution): UtmInput {
   const body: UtmInput = {};
@@ -428,13 +478,15 @@ export function utmRegistrationBody(utm: UtmAttribution): UtmInput {
 }
 
 /**
- * Read the header back on the server side of the layout.
+ * Read a serialised value back: the `x-utm` header on the server side of the
+ * layout, and the decoded attribution cookie.
  *
  * Re-sanitises every field rather than trusting the string it was handed. The
- * proxy deletes any incoming `x-utm` before setting its own, so a forged value
- * cannot reach here — but running the sanitiser again is what makes "the value
- * always came through our own sanitiser" a fact about this code rather than a
- * fact about the call order of two files.
+ * proxy deletes any incoming `x-utm` before setting its own, so a forged header
+ * cannot reach here, though a cookie is the browser's to edit — and running the
+ * sanitiser again is what makes "the value always came through our own
+ * sanitiser" a fact about this code rather than a fact about the call order of
+ * two files.
  *
  * `.getAll()` and a repeated key nulls that field, exactly as on the query-string
  * side. Serialising never produces a repeat, so this only ever fires on a value
@@ -455,22 +507,21 @@ export function parseUtmHeader(raw: string | null | undefined): UtmAttribution {
 }
 
 /**
- * An attribution as the query params a landing link carries, keyed by their
- * `utm_*` names — only the fields that are present.
+ * The attribution a request's `Cookie` header carries, for a server route to
+ * pass through {@link utmMetadataForConsent} with that same request's consent:
+ * a cookie outliving its consent reads as nothing there. `{}` for a header
+ * without the cookie, and for a value that is not percent-encoded text, which
+ * only a hand-edited cookie can be.
  *
- * For the one place attribution has to leave this tab and come back: the
- * Google sign-in round trip, which unloads the document and with it the
- * in-memory copy the provider holds. The register pages put these on the
- * finish page's address, the callback carries them onto its redirect, and the
- * proxy reads them off that landing exactly as it reads any other link's.
- * Nothing is persisted by this; the finish route's write is still gated on
- * marketing consent like every other.
+ * Both writers percent-encode the serialised value once more on its way into
+ * the cookie, so it is decoded here before it is parsed.
  */
-export function utmQueryParams(utm: UtmAttribution): Record<string, string> {
-  const query: Record<string, string> = {};
-  for (const field of UTM_FIELDS) {
-    const value = utm[field];
-    if (value !== null) query[UTM_QUERY_PARAMS[field]] = value;
+export function utmFromCookieHeader(cookieHeader: string | null): UtmInput {
+  const raw = cookieValueFromHeader(cookieHeader, UTM_COOKIE_NAME);
+  if (raw === undefined) return {};
+  try {
+    return utmRegistrationBody(parseUtmHeader(decodeURIComponent(raw)));
+  } catch {
+    return {};
   }
-  return query;
 }

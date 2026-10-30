@@ -450,8 +450,6 @@ export type JoinWaitlistInput = {
   /** Ticked consent document slugs — see `CreateParticipationInput`. A queue
    *  place is held to the same enrolment conditions as a seat. */
   consentedDocuments: string[];
-  /** The visit's UTM tag — see `CreateParticipationInput`. */
-  utm: UtmInput;
   /** The School of Gaming mailing answer — see `CreateParticipationInput`. */
   schoolOfGamingMarketingOptIn: boolean | null;
 };

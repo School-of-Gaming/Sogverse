@@ -11,6 +11,7 @@ import {
 import { consentRefusalError } from "@/services/participations/consent-refusal";
 import { seatAnswerArgs } from "@/services/participations/seat-answers";
 import { parseConsentCookieHeader } from "@/lib/consent";
+import { utmFromCookieHeader } from "@/lib/utm";
 import { sendProductConfirmationEmail } from "@/services/participations/product-confirmation-email.server";
 import {
   advertisedProductDetails,
@@ -52,6 +53,7 @@ export const POST = defineRoute({
     "the guarded RPC's messages are the user-facing explanation of a refused join",
 
   handler: async ({ request, supabase, user, profile, body }) => {
+    const cookieHeader = request.headers.get("cookie");
     const { data, error } = await supabase.rpc("join_product_waitlist", {
       p_product_id: body.productId,
       p_participant_id: body.participantId,
@@ -61,13 +63,13 @@ export const POST = defineRoute({
       // able to decline. Nothing is checked here; the RPC's check violation is
       // the refusal, and this route already discloses its message.
       p_consented_documents: body.consentedDocuments,
-      // The place in line records what a seat does: the visit's UTM tag,
-      // GATED ON MARKETING CONSENT read off THIS request's own cookie header,
-      // and the parent's answer to the School of Gaming box, passed through as
+      // The place in line records what a seat does: the attribution cookie's
+      // UTM tag, GATED ON MARKETING CONSENT read off THIS request's own cookie
+      // header, and the parent's answer to the School of Gaming box, passed through as
       // given (absent when the panel did not ask).
       ...seatAnswerArgs(
-        parseConsentCookieHeader(request.headers.get("cookie")),
-        body.utm,
+        parseConsentCookieHeader(cookieHeader),
+        utmFromCookieHeader(cookieHeader),
         body.schoolOfGamingMarketingOptIn,
       ),
     });

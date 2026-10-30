@@ -21,7 +21,14 @@ import {
 } from "@/lib/navigation/locale-path";
 import { PIN_COOKIE_NAME, isPinTokenValid } from "@/lib/pin-session";
 import { COMPLETE_REGISTRATION_GEDU_QUERY } from "@/lib/navigation/post-auth-redirect";
-import { UTM_HEADER, readUtmFromSearchParams, serialiseUtm } from "@/lib/utm";
+import { CONSENT_COOKIE_NAME, parseConsentCookie } from "@/lib/consent";
+import {
+  UTM_COOKIE_NAME,
+  UTM_HEADER,
+  readUtmFromSearchParams,
+  serialiseUtm,
+  utmCookieOptions,
+} from "@/lib/utm";
 
 /**
  * next-intl's rewrite, composed rather than hand-rolled.
@@ -327,8 +334,9 @@ export async function proxy(request: NextRequest) {
 
   // UTM attribution: `utm_source` / `utm_medium` / `utm_campaign` /
   // `utm_content` / `utm_term` on the landing URL, sanitised here and handed
-  // to the root layout, which seeds them into a client context provider so
-  // they survive the whole visit as client-side navigation. See
+  // to the root layout, which seeds them into a client context provider for
+  // the consent banner, and kept in the attribution cookie when this request
+  // already carries marketing consent (`keepAttribution` below). See
   // src/lib/utm.ts for the constraints this feature is built to — including
   // why reading the query string here is itself the moment ePrivacy
   // engages, whatever we do with the value afterwards.
@@ -359,6 +367,11 @@ export async function proxy(request: NextRequest) {
   if (utm !== null) {
     request.headers.set(UTM_HEADER, utm);
   }
+  const attributionToKeep =
+    utm !== null &&
+    parseConsentCookie(request.cookies.get(CONSENT_COOKIE_NAME)?.value)?.marketing === true
+      ? utm
+      : null;
 
   // The URL as the visitor typed it: locale-prefixed, with that locale's slug.
   // Only two things use it — the bare-path ladder below, and the `?redirect=`
@@ -423,6 +436,27 @@ export async function proxy(request: NextRequest) {
   const userId = claimsData?.claims.sub ?? null;
   const sessionId = claimsData?.claims.session_id ?? null;
 
+  // Resolved further down, once the ladder has run; declared here because
+  // `keepAttribution` reads it from every response.
+  let userRole: Database["public"]["Enums"]["user_role"] | null = null;
+
+  // Helper: keep the landing link's tag on the response actually being
+  // returned. `setAll` above replaces `supabaseResponse`, so it is set here, on
+  // the final response, and `redirect` and `proceed` both call this: a bounce
+  // such as the home page's or the PIN gate's drops the query, and this is the
+  // tag's only chance to be kept. The two responses that skip it serve no page.
+  //
+  // **Never for a signed-in gamer, nor for a session whose role is not known**,
+  // the same doubt the advertising gates resolve the same way. A redirect ahead
+  // of the role lookup therefore writes nothing for a signed-in visitor, which
+  // costs nothing: the bare-path and foreign-slug redirects keep the query, so
+  // the next hop writes it with the role in hand.
+  function keepAttribution(response: NextResponse) {
+    if (attributionToKeep === null) return;
+    if (userId !== null && (userRole === null || userRole === "gamer")) return;
+    response.cookies.set(UTM_COOKIE_NAME, attributionToKeep, utmCookieOptions());
+  }
+
   // Helper: create a redirect that preserves refreshed auth cookies and CSP.
   //
   // **The whole cookie, attributes included.** `set(name, value)` writes a
@@ -436,6 +470,7 @@ export async function proxy(request: NextRequest) {
     supabaseResponse.cookies.getAll().forEach((cookie) => {
       redirectResponse.cookies.set(cookie);
     });
+    keepAttribution(redirectResponse);
     redirectResponse.headers.set("Content-Security-Policy", cspHeader);
     return redirectResponse;
   }
@@ -452,6 +487,7 @@ export async function proxy(request: NextRequest) {
     supabaseResponse.cookies.getAll().forEach((cookie) => {
       intlResponse.cookies.set(cookie);
     });
+    keepAttribution(intlResponse);
     intlResponse.headers.set("Content-Security-Policy", cspHeader);
     return intlResponse;
   }
@@ -556,7 +592,6 @@ export async function proxy(request: NextRequest) {
   // customer until re-login — and we treat role changes as a thing that doesn't
   // happen mid-session. Privileged routes (`/admin`) are role-gated below
   // regardless, so this never grants access the role itself wouldn't.
-  let userRole: Database["public"]["Enums"]["user_role"] | null = null;
   if (userId) {
     const pinVerified =
       sessionId !== null &&

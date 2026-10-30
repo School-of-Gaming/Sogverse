@@ -430,8 +430,6 @@ export function SignupPanel({
         productId: product.id,
         participantId: fields.selectedParticipantId,
         consentedDocuments: consentedDocuments(),
-        // A place in line is a booking too, and records what a seat does.
-        utm: utmRegistrationBody(utm),
         schoolOfGamingMarketingOptIn: fields.schoolOfGamingMarketingOptIn,
       },
       {

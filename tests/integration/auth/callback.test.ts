@@ -270,10 +270,9 @@ describe("GET /api/auth/callback", () => {
       expect(destination(response)).toBe("/sv/complete-registration?as=gedu");
     });
 
-    // The Google round trip unloads the tab that held the landing link's
-    // attribution in memory, so the register page puts it on `next` and the
-    // callback carries it onto the finish page — sanitised, and nothing else.
-    it("carries the landing link's attribution, sanitised", async () => {
+    // A register page from before the attribution cookie may still put the tag
+    // on `next`; the cookie is what carries it now.
+    it("drops attribution and anything else unknown from the finish page's address", async () => {
       const response = await GET(
         createCallbackRequest({
           code: "valid-code",
@@ -281,12 +280,10 @@ describe("GET /api/auth/callback", () => {
         }),
       );
 
-      expect(destination(response)).toBe(
-        "/fi/complete-registration?utm_source=Lynx&utm_campaign=lynx-summer-a&utm_content=hero&utm_term=roblox",
-      );
+      expect(destination(response)).toBe("/fi/complete-registration");
     });
 
-    it("puts the Gedu variant ahead of the attribution", async () => {
+    it("keeps the Gedu variant on the address", async () => {
       const response = await GET(
         createCallbackRequest({
           code: "valid-code",
@@ -294,9 +291,7 @@ describe("GET /api/auth/callback", () => {
         }),
       );
 
-      expect(destination(response)).toBe(
-        "/complete-registration?as=gedu&utm_campaign=recruit",
-      );
+      expect(destination(response)).toBe("/complete-registration?as=gedu");
     });
 
     // The login page's Google button sends its own `?redirect=` as `next`: a
@@ -354,7 +349,7 @@ describe("GET /api/auth/callback", () => {
 
         const cookie = response.cookies.get("sog_registration_intent");
         expect(cookie?.value).toBe(
-          "as=gedu&utm_campaign=recruit&redirect=%2Fshop%2Fabc",
+          "as=gedu&redirect=%2Fshop%2Fabc",
         );
         expect(cookie?.httpOnly).toBe(true);
         expect(cookie?.sameSite).toBe("lax");

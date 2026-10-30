@@ -13,8 +13,6 @@ import type {
   LandingSectionTexts,
   LandingStickySide,
 } from "@/lib/landing-pages/sections";
-import { NO_UTM_ATTRIBUTION } from "@/lib/utm";
-import { UtmProvider } from "@/providers";
 
 vi.stubEnv("NEXT_PUBLIC_SUPABASE_URL", "https://db.test");
 afterAll(() => vi.unstubAllEnvs());
@@ -90,21 +88,19 @@ function renderBody({
 } = {}) {
   return render(
     <NextIntlClientProvider locale="en" messages={messages}>
-      <UtmProvider initialUtm={NO_UTM_ATTRIBUTION}>
-        <LandingPageBody
-          sections={structure(sides, background, stickyBackground)}
-          pictures={{}}
-          testimonials={{}}
-          guideIds={[]}
-          sectionTexts={TEXTS}
-          textLocale="en"
-          locale="en"
-          products={null}
-          pageId={id(500)}
-          preview={false}
-          breadcrumb={breadcrumb}
-        />
-      </UtmProvider>
+      <LandingPageBody
+        sections={structure(sides, background, stickyBackground)}
+        pictures={{}}
+        testimonials={{}}
+        guideIds={[]}
+        sectionTexts={TEXTS}
+        textLocale="en"
+        locale="en"
+        products={null}
+        pageId={id(500)}
+        preview={false}
+        breadcrumb={breadcrumb}
+      />
     </NextIntlClientProvider>,
   );
 }
@@ -230,30 +226,28 @@ describe("a page's sticky section", () => {
     const PICKS = id(32);
     render(
       <NextIntlClientProvider locale="en" messages={messages}>
-        <UtmProvider initialUtm={NO_UTM_ATTRIBUTION}>
-          <LandingPageBody
-            sections={[
-              { id: HERO, type: "hero" },
-              { id: FAQ, type: "faq", background: "card", items: [{ id: id(10) }] },
-              { id: QUOTES, type: "testimonials", background: "default", arrangement: "feature", testimonialIds: [id(40)] },
-              { id: PICKS, type: "products", background: "default", productIds: [id(41)] },
-              { id: FORM, type: "subscribe", background: "default", sticky: "right" },
-            ]}
-            pictures={{}}
-            testimonials={{}}
-            guideIds={[]}
-            sectionTexts={{
-              ...TEXTS,
-              [QUOTES]: { heading: "What parents say" },
-              [PICKS]: { heading: "Pick a club" },
-            }}
-            textLocale="en"
-            locale="en"
-            products={{ listing: [], counts: [] }}
-            pageId={id(500)}
-            preview={false}
-          />
-        </UtmProvider>
+        <LandingPageBody
+          sections={[
+            { id: HERO, type: "hero" },
+            { id: FAQ, type: "faq", background: "card", items: [{ id: id(10) }] },
+            { id: QUOTES, type: "testimonials", background: "default", arrangement: "feature", testimonialIds: [id(40)] },
+            { id: PICKS, type: "products", background: "default", productIds: [id(41)] },
+            { id: FORM, type: "subscribe", background: "default", sticky: "right" },
+          ]}
+          pictures={{}}
+          testimonials={{}}
+          guideIds={[]}
+          sectionTexts={{
+            ...TEXTS,
+            [QUOTES]: { heading: "What parents say" },
+            [PICKS]: { heading: "Pick a club" },
+          }}
+          textLocale="en"
+          locale="en"
+          products={{ listing: [], counts: [] }}
+          pageId={id(500)}
+          preview={false}
+        />
       </NextIntlClientProvider>,
     );
     expect(screen.queryByRole("heading", { name: "What parents say" })).toBeNull();
@@ -352,29 +346,27 @@ describe("a sticky section on each side", () => {
     const sizes = (sides: readonly LandingStickySide[]) => {
       const { unmount } = render(
         <NextIntlClientProvider locale="en" messages={messages}>
-          <UtmProvider initialUtm={NO_UTM_ATTRIBUTION}>
-            <LandingPageBody
-              sections={[
-                { id: HERO, type: "hero" },
-                { id: GALLERY, type: "image", background: "default", images: [{ id: id(52), imageId: PIC }] },
-                ...sides.map((side, n): LandingSection => ({
-                  id: n === 0 ? FORM : DATES,
-                  type: "subscribe",
-                  background: "default",
-                  sticky: side,
-                })),
-              ]}
-              pictures={{ [PIC]: { path: "a.jpg", purpose: "landing_image" } }}
-              testimonials={{}}
-              guideIds={[]}
-              sectionTexts={{ ...TEXTS, [HERO]: { headline: "Clubs", imageId: PIC, imageAlt: "Hero" }, [GALLERY]: { alts: { [id(52)]: "Gallery" } } }}
-              textLocale="en"
-              locale="en"
-              products={null}
-              pageId={id(500)}
-              preview={false}
-            />
-          </UtmProvider>
+          <LandingPageBody
+            sections={[
+              { id: HERO, type: "hero" },
+              { id: GALLERY, type: "image", background: "default", images: [{ id: id(52), imageId: PIC }] },
+              ...sides.map((side, n): LandingSection => ({
+                id: n === 0 ? FORM : DATES,
+                type: "subscribe",
+                background: "default",
+                sticky: side,
+              })),
+            ]}
+            pictures={{ [PIC]: { path: "a.jpg", purpose: "landing_image" } }}
+            testimonials={{}}
+            guideIds={[]}
+            sectionTexts={{ ...TEXTS, [HERO]: { headline: "Clubs", imageId: PIC, imageAlt: "Hero" }, [GALLERY]: { alts: { [id(52)]: "Gallery" } } }}
+            textLocale="en"
+            locale="en"
+            products={null}
+            pageId={id(500)}
+            preview={false}
+          />
         </NextIntlClientProvider>,
       );
       const found = ["Hero", "Gallery"].map((alt) => screen.getByAltText(alt).getAttribute("sizes"));
@@ -428,20 +420,18 @@ describe("a sticky call to action and a sticky guide", () => {
   function renderSticky(guideIds: readonly string[] = [GUIDE]) {
     return render(
       <NextIntlClientProvider locale="en" messages={messages}>
-        <UtmProvider initialUtm={NO_UTM_ATTRIBUTION}>
-          <LandingPageBody
-            sections={SECTIONS}
-            pictures={{ [COVER]: { path: "cover.jpg", purpose: "landing_image" } }}
-            testimonials={{}}
-            guideIds={guideIds}
-            sectionTexts={STICKY_TEXTS}
-            textLocale="en"
-            locale="en"
-            products={null}
-            pageId={id(500)}
-            preview={false}
-          />
-        </UtmProvider>
+        <LandingPageBody
+          sections={SECTIONS}
+          pictures={{ [COVER]: { path: "cover.jpg", purpose: "landing_image" } }}
+          testimonials={{}}
+          guideIds={guideIds}
+          sectionTexts={STICKY_TEXTS}
+          textLocale="en"
+          locale="en"
+          products={null}
+          pageId={id(500)}
+          preview={false}
+        />
       </NextIntlClientProvider>,
     );
   }

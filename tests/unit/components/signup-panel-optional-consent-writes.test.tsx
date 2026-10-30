@@ -442,9 +442,8 @@ describe("School of Gaming's own box", () => {
     expect(waitlistMutate).toHaveBeenCalledTimes(1);
     expect(waitlistMutate.mock.calls[0][0]).toMatchObject({
       schoolOfGamingMarketingOptIn: true,
-      // The stubbed visit carries no tag, so every field is omitted.
-      utm: {},
     });
+    expect(waitlistMutate.mock.calls[0][0]).not.toHaveProperty("utm");
     expect(setMarketingMutate).toHaveBeenCalledTimes(1);
     expect(onlyCall(setMarketingMutate)).toMatchObject({
       consentType: LYNX_MARKETING,

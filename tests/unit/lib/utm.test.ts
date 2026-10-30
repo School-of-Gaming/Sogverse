@@ -1,6 +1,9 @@
 import { describe, it, expect } from "vitest";
+import { ResponseCookies } from "next/dist/compiled/@edge-runtime/cookies";
 import {
   NO_UTM_ATTRIBUTION,
+  UTM_COOKIE_MAX_AGE_SECONDS,
+  UTM_COOKIE_NAME,
   UTM_HEADER,
   UTM_HEADER_MAX_LENGTH,
   UTM_QUERY_PARAMS,
@@ -9,11 +12,13 @@ import {
   readUtmFromSearchParams,
   sanitiseUtmValue,
   serialiseUtm,
+  utmCookieOptions,
+  utmFromCookieHeader,
   utmMetadataForConsent,
-  utmQueryParams,
   utmRegistrationBody,
 } from "@/lib/utm";
 import type { ConsentState } from "@/lib/consent";
+import { attributionCookie } from "../../mocks/attribution-cookie";
 
 /**
  * The shared UTM sanitiser. Three callers depend on it agreeing with the
@@ -401,26 +406,89 @@ describe("utm names", () => {
   });
 });
 
-describe("the attribution leaving the tab", () => {
-  const utm = {
-    source: "lynx",
-    medium: null,
-    campaign: "lynx-summer-a",
-    content: "hero",
-    term: "minecraft",
+describe("the attribution cookie", () => {
+  const CONSENTED: ConsentState = {
+    analytics: false,
+    marketing: true,
+    decidedAt: "2026-10-01T10:00:00.000Z",
   };
 
-  it("puts every present field on the Google round trip's query, by its utm_* name", () => {
-    expect(utmQueryParams(utm)).toEqual({
-      utm_source: "lynx",
-      utm_campaign: "lynx-summer-a",
-      utm_content: "hero",
-      utm_term: "minecraft",
+  /** What a browser sends back: the serialised value, encoded by the writer. */
+  function header(attribution: Parameters<typeof serialiseUtm>[0]): string {
+    return `locale=fi; ${attributionCookie(
+      Object.fromEntries(new URLSearchParams(serialiseUtm(attribution) ?? "")),
+    )}; sog_consent=x`;
+  }
+
+  it("reads back what the writers stored, accents, spaces and all", () => {
+    const utm = {
+      ...NO_UTM_ATTRIBUTION,
+      source: "lynx",
+      campaign: "Rentrée scolaire 100%",
+      term: "a&b=c",
+    };
+    expect(utmFromCookieHeader(header(utm))).toEqual({
+      source: "lynx",
+      campaign: "Rentrée scolaire 100%",
+      term: "a&b=c",
     });
   });
 
-  it("builds a registration body with every present field and no absent one", () => {
-    expect(utmRegistrationBody(utm)).toEqual({
+  it("reads back through the same whole-value encoding the proxy's response writes", () => {
+    const utm = { ...NO_UTM_ATTRIBUTION, campaign: "Rentrée scolaire" };
+    const written = new ResponseCookies(new Headers());
+    written.set(UTM_COOKIE_NAME, serialiseUtm(utm) ?? "");
+    const setCookie = written.toString().split(";")[0];
+
+    expect(utmFromCookieHeader(setCookie)).toEqual({ campaign: "Rentrée scolaire" });
+  });
+
+  it("is nothing without the cookie", () => {
+    expect(utmFromCookieHeader(null)).toEqual({});
+    expect(utmFromCookieHeader("locale=fi")).toEqual({});
+  });
+
+  it("re-sanitises what a browser could have edited", () => {
+    expect(
+      utmFromCookieHeader(
+        attributionCookie({ source: "=SUM(A1)", campaign: "lynx" }),
+      ),
+    ).toEqual({ campaign: "lynx" });
+  });
+
+  it("reads a value that will not decode as nothing", () => {
+    expect(utmFromCookieHeader(`${UTM_COOKIE_NAME}=%E0%A4%A`)).toEqual({});
+  });
+
+  it("gives a request nothing without marketing consent, even with the cookie", () => {
+    const utm = utmFromCookieHeader(attributionCookie({ campaign: "lynx" }));
+    expect(utmMetadataForConsent(CONSENTED, utm)).toEqual({ utm_campaign: "lynx" });
+    expect(utmMetadataForConsent({ ...CONSENTED, marketing: false }, utm)).toEqual({});
+    expect(utmMetadataForConsent(null, utm)).toEqual({});
+  });
+
+  it("keeps the tag for 30 days on every path, readable by the banner's own code", () => {
+    expect(UTM_COOKIE_MAX_AGE_SECONDS).toBe(30 * 24 * 60 * 60);
+    expect(utmCookieOptions()).toMatchObject({
+      path: "/",
+      maxAge: UTM_COOKIE_MAX_AGE_SECONDS,
+      sameSite: "lax",
+      httpOnly: false,
+    });
+  });
+});
+
+describe("utmRegistrationBody", () => {
+  it("keeps every present field and no absent one", () => {
+    expect(
+      utmRegistrationBody({
+        source: "lynx",
+        medium: null,
+        campaign: "lynx-summer-a",
+        content: "hero",
+        term: "minecraft",
+      }),
+    ).toEqual({
       source: "lynx",
       campaign: "lynx-summer-a",
       content: "hero",
