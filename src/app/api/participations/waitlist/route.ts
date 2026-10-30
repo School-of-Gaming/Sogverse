@@ -13,13 +13,11 @@ import { seatAnswerArgs } from "@/services/participations/seat-answers";
 import { parseConsentCookieHeader } from "@/lib/consent";
 import { sendProductConfirmationEmail } from "@/services/participations/product-confirmation-email.server";
 import {
+  advertisedProductDetails,
   isAdvertisedProduct,
-  metaProductDetails,
+  type ConversionAccount,
 } from "@/lib/marketing-events";
-import {
-  reportMetaConversion,
-  type MetaRequestingAccount,
-} from "@/lib/meta-conversions.server";
+import { reportAdConversion } from "@/lib/ad-conversions.server";
 import { ROUTES } from "@/lib/constants/routes";
 import type { AppSupabaseClient } from "@/types";
 
@@ -135,7 +133,8 @@ export const POST = defineRoute({
         }),
       );
 
-      // The same place in line, reported to Meta as a conversion — a queue place
+      // The same place in line, reported to the advertising platforms as a
+      // conversion — a queue place
       // is a family committing to a product, which is what the enrolment event
       // names. Behind the same two gates the mail is: a row this call actually
       // wrote, and (inside the helper) a request that carried marketing consent.
@@ -184,7 +183,7 @@ async function reportWaitlistConversion(
   request: Request,
   client: AppSupabaseClient,
   productId: string,
-  account: MetaRequestingAccount,
+  account: ConversionAccount,
 ): Promise<void> {
   try {
     const { data: product } = await client
@@ -196,13 +195,13 @@ async function reportWaitlistConversion(
       .maybeSingle();
     if (!product || !isAdvertisedProduct(product)) return;
 
-    await reportMetaConversion(
+    await reportAdConversion(
       request,
       {
         event: "enrolment",
         outcome: "waitlisted",
         // The report drops the price itself: a queue place carries no value.
-        product: metaProductDetails(product),
+        product: advertisedProductDetails(product),
         sourcePath: ROUTES.shopProductPath(productId),
       },
       account,

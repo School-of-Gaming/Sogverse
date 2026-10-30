@@ -45,7 +45,7 @@ export function discoverIndexEntries(
         id: page.id,
         href: landingPageHref(page, locale),
         textLocale: shown.locale,
-        pictureSrc: catalogueImageSrc("landing_image", landingLeadPicturePath(page)),
+        pictureSrc: catalogueImageSrc("landing_image", landingLeadPicturePath(shown)),
         title: shown.title,
         summary: shown.summary,
       },

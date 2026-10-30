@@ -32,7 +32,7 @@ vi.mock("@/lib/supabase/anon", () => ({
   }),
 }));
 
-import { signUpProductFor } from "@/lib/meta-sign-up-product.server";
+import { signUpProductFor } from "@/lib/sign-up-product.server";
 
 /** A product row as the read returns it. */
 function productRow(overrides: Record<string, unknown> = {}) {
@@ -61,14 +61,24 @@ afterEach(() => {
 });
 
 describe("signUpProductFor — an advertised product page", () => {
-  it("names the product in the enrolment's own fields", async () => {
+  it("names the product in the enrolment's own fields, for every platform", async () => {
     expect(await signUpProductFor(`/en/shop/${PRODUCT_ID}`)).toEqual({
-      content_ids: [PRODUCT_ID],
-      content_type: "product",
-      content_name: "Roblox Studio Club",
-      content_category: "roblox_studio",
-      value: 49,
-      currency: "EUR",
+      meta: {
+        content_ids: [PRODUCT_ID],
+        content_type: "product",
+        content_name: "Roblox Studio Club",
+        content_category: "roblox_studio",
+        value: 49,
+        currency: "EUR",
+      },
+      reddit: {
+        products: [
+          { id: PRODUCT_ID, name: "Roblox Studio Club", category: "roblox_studio" },
+        ],
+        itemCount: 1,
+        value: 49,
+        currency: "EUR",
+      },
     });
     expect(mockFrom).toHaveBeenCalledWith("products");
     expect(mockEq).toHaveBeenCalledWith("id", PRODUCT_ID);
@@ -79,7 +89,7 @@ describe("signUpProductFor — an advertised product page", () => {
   it("accepts a translated slug and ignores the query", async () => {
     const product = await signUpProductFor(`/fi/kauppa/${PRODUCT_ID}?x=1#top`);
 
-    expect(product?.content_ids).toEqual([PRODUCT_ID]);
+    expect(product?.meta.content_ids).toEqual([PRODUCT_ID]);
     expect(mockEq).toHaveBeenCalledWith("id", PRODUCT_ID);
   });
 });

@@ -62,7 +62,7 @@ const PAGE: PublishedLandingPage = {
   firstPublishedAt: "2026-09-01T08:00:00Z",
   publishedAt: "2026-10-01T08:00:00Z",
   sections: [
-    { id: HERO, type: "hero", imageId: PICTURE },
+    { id: HERO, type: "hero" },
     { id: STEPS, type: "steps", background: "default", items: [{ id: S1 }, { id: S2 }] },
     { id: FAQ, type: "faq", background: "default", items: [{ id: Q1 }, { id: Q2 }] },
   ],
@@ -74,7 +74,7 @@ const PAGE: PublishedLandingPage = {
       summary: "After-school clubs for Espoo families.",
       slug: "gaming-clubs-espoo",
       sectionTexts: {
-        [HERO]: { headline: "Clubs in Espoo", imageAlt: "Children at a club" },
+        [HERO]: { headline: "Clubs in Espoo", imageId: PICTURE, imageAlt: "Children at a club" },
         [STEPS]: {
           heading: "How to join",
           items: { [S1]: { title: "Pick a club", body: "Browse." }, [S2]: { title: "Sign up", body: "Pay." } },
@@ -96,7 +96,7 @@ const PAGE: PublishedLandingPage = {
       title: "Pelikerhot Espoossa",
       summary: "Iltapäiväkerhot.",
       slug: "pelikerhot-espoo",
-      sectionTexts: { [HERO]: { headline: "Kerhot Espoossa", imageAlt: "Lapsia" } },
+      sectionTexts: { [HERO]: { headline: "Kerhot Espoossa", imageId: PICTURE, imageAlt: "Lapsia" } },
       shareTitle: "",
       shareImageId: null,
       shareImageAlt: "",
@@ -105,6 +105,21 @@ const PAGE: PublishedLandingPage = {
 };
 
 const FINNISH_ONLY = { ...PAGE, versions: [PAGE.versions[1]] };
+
+/** PAGE with each language's hero words naming no picture. */
+function withoutHeroPicture(...locales: string[]): PublishedLandingPage {
+  return {
+    ...PAGE,
+    versions: PAGE.versions.map((version) =>
+      locales.includes(version.locale)
+        ? { ...version, sectionTexts: { ...version.sectionTexts, [HERO]: { headline: "Clubs" } } }
+        : version,
+    ),
+  };
+}
+
+/** PAGE with no hero picture in any language. */
+const NO_HERO_PICTURE: PublishedLandingPage = { ...withoutHeroPicture("en", "fi"), pictures: {} };
 
 describe("landing page addresses", () => {
   it("is the version's slug where the page is live, its id elsewhere", () => {
@@ -202,12 +217,27 @@ describe("landingPageMetadata", () => {
 
   it("takes the site card at the request locale when the hero has no picture", async () => {
     const metadata = await landingPageMetadata(
-      { ...PAGE, sections: [{ id: HERO, type: "hero" }], pictures: {} },
+      NO_HERO_PICTURE,
       "fr",
     );
 
     expect(metadata.openGraph).toMatchObject({
       images: [expect.objectContaining({ alt: "fr:metadata.og.site.alt" })],
+    });
+  });
+
+  it("takes each language's own hero picture, with no fallback to another language's", async () => {
+    // Finnish names the hero picture; English names none.
+    const page = withoutHeroPicture("en");
+
+    const fi = await landingPageMetadata(page, "fi");
+    const en = await landingPageMetadata(page, "en");
+
+    expect(fi.openGraph).toMatchObject({
+      images: [expect.objectContaining({ url: "/opengraph-images/picture/landing_image/pictures/club.jpg" })],
+    });
+    expect(en.openGraph).toMatchObject({
+      images: [expect.objectContaining({ alt: "en:metadata.og.site.alt" })],
     });
   });
 
@@ -417,7 +447,7 @@ describe("renderedLandingSeo", () => {
 
   it("serves the site card when the hero has no picture", async () => {
     const seo = await landingPageSeo(
-      { ...PAGE, sections: [{ id: HERO, type: "hero" }], pictures: {} },
+      NO_HERO_PICTURE,
       "en",
     );
 
@@ -581,7 +611,7 @@ describe("landingPageJsonLd", () => {
     const plain = landingPageJsonLd({
       siteUrl: "https://sog.test",
       canonicalPath: "/en/discover/x",
-      page: { ...SHOWN, sections: [{ id: HERO, type: "hero" }] },
+      page: { ...SHOWN, sections: [{ id: HERO, type: "hero" }], sectionTexts: {} },
     });
     expect(plain["@type"]).toBe("WebPage");
     expect(plain).not.toHaveProperty("mainEntity");

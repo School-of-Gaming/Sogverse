@@ -310,7 +310,7 @@ app.ontoolresult = (result) => {
   say("");
   hideProgress();
   if (opening.kind === "picture") {
-    fileInput.accept = "image/*";
+    fileInput.accept = "image/jpeg,image/png,image/webp,.jpg,.jpeg,.png,.webp";
     fileInput.multiple = true;
     fileCaption.textContent = "Pictures";
     fileHint.textContent = "Pick as many as you like, or drop them here.";

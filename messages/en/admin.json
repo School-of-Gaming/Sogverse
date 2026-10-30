@@ -1192,7 +1192,7 @@
       "type": "Type",
       "allTypes": "All",
       "search": "Search",
-      "searchPlaceholder": "Search by name…",
+      "searchPlaceholder": "Search by name or ID…",
       "showing": "Showing {count} of {total}",
       "clear": "Clear",
       "noMatches": "No {type, select, consumerClub {consumer clubs} municipalityClub {municipality clubs} camp {camps} other {events}} match the current search and filters.",
@@ -1325,7 +1325,7 @@
       "switchClub": {
         "title": "Switch club",
         "description": "Move {name} to another club. Nothing changes for the family today: the same card is charged on the same date, and from then on they pay the new club's price.",
-        "searchPlaceholder": "Search clubs by name",
+        "searchPlaceholder": "Search clubs by name or ID",
         "picker": {
           "empty": "There is no other club to switch to. A target has to be a club billed monthly that has not finished.",
           "noMatch": "No club matches this search. Try another name.",
@@ -1378,7 +1378,7 @@
         "noSubscription": {
           "title": "Move to another product",
           "description": "Move {name} to another product.",
-          "searchPlaceholder": "Search products by name",
+          "searchPlaceholder": "Search products by name or ID",
           "picker": {
             "empty": "There is no other product to move to. A target has to be a product that is not billed monthly and has not finished.",
             "noMatch": "No product matches this search. Try another name."

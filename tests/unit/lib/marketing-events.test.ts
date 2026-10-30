@@ -1,8 +1,14 @@
 import { describe, expect, it } from "vitest";
 import {
+  advertisedProductDetails,
   isAdvertisedProduct,
   isValidPixelId,
+  isValidRedditPixelId,
   metaProductDetails,
+  PIXEL_EVENTS,
+  REDDIT_CONVERSION_EVENTS,
+  REDDIT_PIXEL_EVENTS,
+  redditProductDetails,
 } from "@/lib/marketing-events";
 import { Constants } from "@/types";
 import type { BillingMode, ProductType } from "@/types";
@@ -214,5 +220,138 @@ describe("metaProductDetails", () => {
     const details = metaProductDetails({ ...ROBLOX_CLUB, product_prices: [] });
     expect(details).not.toHaveProperty("value");
     expect(details).not.toHaveProperty("currency");
+  });
+});
+
+/**
+ * Reddit is told the same facts about a product as Meta, in its own shape. The
+ * cases run every product through both builders and compare what they say,
+ * so the two platforms cannot drift into describing one product two ways.
+ */
+describe("redditProductDetails", () => {
+  const ROBLOX_CLUB = {
+    id: "8f0c1c55-6b0e-4a43-9d1a-2f4b8c7e9a10",
+    topic: "roblox_studio" as const,
+    billing_mode: "paid" as const,
+    product_translations: [
+      { locale: "fi", name: "Roblox Studio -kerho" },
+      { locale: "en", name: "Roblox Studio Club" },
+    ],
+    product_prices: [{ currency: "eur", price_cents: 4900 }],
+  };
+
+  it("states the product's id, English name, topic and price", () => {
+    expect(redditProductDetails(ROBLOX_CLUB)).toEqual({
+      products: [
+        {
+          id: ROBLOX_CLUB.id,
+          name: "Roblox Studio Club",
+          category: "roblox_studio",
+        },
+      ],
+      itemCount: 1,
+      value: 49,
+      currency: "EUR",
+    });
+  });
+
+  it.each([
+    ["a priced club", ROBLOX_CLUB],
+    ["a free product", { ...ROBLOX_CLUB, billing_mode: "free" as const, product_prices: [] }],
+    ["a paid product with no price in the currency", { ...ROBLOX_CLUB, product_prices: [] }],
+    [
+      "a product never written in English",
+      {
+        ...ROBLOX_CLUB,
+        product_translations: [{ locale: "sv", name: "Roblox Studio-klubb" }],
+      },
+    ],
+  ])("says what Meta is told about %s", (_label, product) => {
+    const meta = metaProductDetails(product);
+    const reddit = redditProductDetails(product);
+
+    expect(reddit.products).toEqual([
+      {
+        id: meta.content_ids[0],
+        name: meta.content_name,
+        category: meta.content_category,
+      },
+    ]);
+    expect(reddit.value).toBe(meta.value);
+    expect(reddit.currency).toBe(meta.currency);
+    expect("value" in reddit).toBe("value" in meta);
+    expect("currency" in reddit).toBe("currency" in meta);
+  });
+});
+
+/**
+ * What a server conversion carries: one product, in each platform's fields,
+ * built by each platform's own builder in the same currency.
+ */
+describe("advertisedProductDetails", () => {
+  it("is each platform's description of the same product", () => {
+    const product = {
+      id: "8f0c1c55-6b0e-4a43-9d1a-2f4b8c7e9a10",
+      topic: "roblox_studio" as const,
+      billing_mode: "paid" as const,
+      product_translations: [{ locale: "en", name: "Roblox Studio Club" }],
+      product_prices: [{ currency: "eur", price_cents: 4900 }],
+    };
+
+    expect(advertisedProductDetails(product, "eur")).toEqual({
+      meta: metaProductDetails(product, "eur"),
+      reddit: redditProductDetails(product, "eur"),
+    });
+  });
+});
+
+/**
+ * Reddit gets every event Meta has, and the pairing is a decision: each
+ * Reddit name is the closest standard event to the moment Meta's describes.
+ */
+describe("the Reddit vocabulary", () => {
+  it("names the three browser events, beside Meta's", () => {
+    expect({
+      pageView: [PIXEL_EVENTS.pageView, REDDIT_PIXEL_EVENTS.pageView],
+      productView: [PIXEL_EVENTS.productView, REDDIT_PIXEL_EVENTS.productView],
+      checkout: [PIXEL_EVENTS.checkout, REDDIT_PIXEL_EVENTS.checkout],
+    }).toEqual({
+      pageView: ["PageView", "PageVisit"],
+      productView: ["ViewContent", "ViewContent"],
+      checkout: ["InitiateCheckout", "AddToCart"],
+    });
+  });
+
+  it("names the two server conversions in the Conversions API's spelling", () => {
+    expect({
+      accountCreated: [PIXEL_EVENTS.accountCreated, REDDIT_CONVERSION_EVENTS.accountCreated],
+      enrolment: [PIXEL_EVENTS.enrolment, REDDIT_CONVERSION_EVENTS.enrolment],
+    }).toEqual({
+      accountCreated: ["Lead", "LEAD"],
+      enrolment: ["CompleteRegistration", "SIGN_UP"],
+    });
+  });
+});
+
+describe("isValidRedditPixelId", () => {
+  it("accepts an advertiser or a user account id", () => {
+    expect(isValidRedditPixelId("a2_abc123def456")).toBe(true);
+    expect(isValidRedditPixelId("t2_9xyz")).toBe(true);
+    expect(isValidRedditPixelId("A2_ABC123")).toBe(true);
+  });
+
+  it("reads an unset variable or a placeholder as off", () => {
+    expect(isValidRedditPixelId(undefined)).toBe(false);
+    expect(isValidRedditPixelId("")).toBe(false);
+    expect(isValidRedditPixelId("your-reddit-pixel-id")).toBe(false);
+  });
+
+  it("refuses Meta's digits, a bare prefix, and anything attached", () => {
+    expect(isValidRedditPixelId("1234567890")).toBe(false);
+    expect(isValidRedditPixelId("a2_")).toBe(false);
+    expect(isValidRedditPixelId(" a2_abc123")).toBe(false);
+    expect(isValidRedditPixelId("a2_abc123\n")).toBe(false);
+    expect(isValidRedditPixelId("a2_abc-123")).toBe(false);
+    expect(isValidRedditPixelId(`a2_${"a".repeat(33)}`)).toBe(false);
   });
 });

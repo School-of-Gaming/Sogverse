@@ -355,7 +355,7 @@ describe("a sticky section on each side", () => {
           <UtmProvider initialUtm={NO_UTM_ATTRIBUTION}>
             <LandingPageBody
               sections={[
-                { id: HERO, type: "hero", imageId: PIC },
+                { id: HERO, type: "hero" },
                 { id: GALLERY, type: "image", background: "default", images: [{ id: id(52), imageId: PIC }] },
                 ...sides.map((side, n): LandingSection => ({
                   id: n === 0 ? FORM : DATES,
@@ -367,7 +367,7 @@ describe("a sticky section on each side", () => {
               pictures={{ [PIC]: { path: "a.jpg", purpose: "landing_image" } }}
               testimonials={{}}
               guideIds={[]}
-              sectionTexts={{ ...TEXTS, [HERO]: { headline: "Clubs", imageAlt: "Hero" }, [GALLERY]: { alts: { [id(52)]: "Gallery" } } }}
+              sectionTexts={{ ...TEXTS, [HERO]: { headline: "Clubs", imageId: PIC, imageAlt: "Hero" }, [GALLERY]: { alts: { [id(52)]: "Gallery" } } }}
               textLocale="en"
               locale="en"
               products={null}

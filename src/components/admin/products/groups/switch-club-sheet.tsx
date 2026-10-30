@@ -21,6 +21,10 @@ import { countryDisplayName } from "@/components/public/products/region-lock/reg
 import { resolveRequiredTranslation } from "@/lib/i18n/resolve-translation";
 import { effectiveStatus } from "@/lib/products/effective-status";
 import {
+  formatProductLocation,
+  renderProductLocationLine,
+} from "@/lib/products/format-product-location";
+import {
   formatProductSchedule,
   joinScheduleGroups,
 } from "@/lib/products/format-product-schedule";
@@ -173,6 +177,9 @@ export function SwitchClubSheet({
     "admin.products.groupsPanel.switchClub.noSubscription",
   );
   const tt = useTranslations("admin.products.types");
+  // The words a family reads for a product with no place behind it, which the
+  // admin's details page states verbatim too.
+  const tFamily = useTranslations("productDetail.info");
   const c = useTranslations("common");
   const noSubscription = mode === "no_subscription";
   const uiLocale = resolveLocale(useLocale());
@@ -334,12 +341,28 @@ export function SwitchClubSheet({
     [candidates],
   );
 
+  // Where each product happens, on a line of its own under the name — in the
+  // row and again on stage two's summary, for the same reason the facts line
+  // below is one function. The location is what tells apart the clubs one
+  // organiser runs at the same hour from the same date, so it is never dropped
+  // to fit the facts line; every row carries it, "Online" and "To be confirmed"
+  // included, so the rows keep one height.
+  const locationOf = useMemo(() => {
+    return (product: ProductWithDetails): string =>
+      renderProductLocationLine({
+        location: formatProductLocation(product, uiLocale),
+        deliveryMode: product.delivery_mode,
+        online: tFamily("online"),
+        tbd: tFamily("tbd"),
+      });
+  }, [uiLocale, tFamily]);
+
   // One line of facts per row, and the same line again above the group list in
   // stage two — the club an admin picked has to be recognisable as the club
-  // they were reading a moment earlier, so the two are one function. Only the
-  // schedule and the start date: a gedu's name is not what tells two clubs
-  // apart to the admin doing this, and the schedule formatter already carries
-  // whatever the times need to be read.
+  // they were reading a moment earlier, so the two are one function. The
+  // schedule and the start date, beside the location line above them: a gedu's
+  // name is not what tells two clubs apart to the admin doing this, and the
+  // schedule formatter already carries whatever the times need to be read.
   const factsOf = useMemo(() => {
     return (product: ProductWithDetails): string => {
       const schedule = formatProductSchedule({
@@ -556,6 +579,7 @@ export function SwitchClubSheet({
               }
               locale={uiLocale}
               now={now}
+              locationOf={locationOf}
               factsOf={factsOf}
               onSelect={handleSelect}
             />
@@ -569,7 +593,13 @@ export function SwitchClubSheet({
                     </p>
                     <ProductStatusChip status={targetStatus} />
                   </div>
-                  <p className="mt-1 text-xs text-muted-foreground">
+                  <p
+                    className="mt-1 truncate text-xs text-muted-foreground"
+                    title={locationOf(target)}
+                  >
+                    {locationOf(target)}
+                  </p>
+                  <p className="text-xs text-muted-foreground">
                     {factsOf(target)}
                   </p>
                 </div>
@@ -779,10 +809,10 @@ export function SwitchClubSheet({
 }
 
 /**
- * Stage one's list: the club's name, where it stands, and the one line that
- * tells two clubs of the same name apart — when it runs and when it starts.
- * Nothing is flagged here; what is worth knowing about a club is stated on the
- * second stage, about the one club that was chosen.
+ * Stage one's list: the club's name, where it stands, and the two lines that
+ * tell two clubs of the same name apart — where it happens, then when it runs
+ * and when it starts. Nothing is flagged here; what is worth knowing about a
+ * club is stated on the second stage, about the one club that was chosen.
  *
  * The exceptions are dead ends, not flags: a club the gamer already holds a
  * place on (the unique index covers it, the commit refuses it), and — in the
@@ -802,6 +832,7 @@ function ClubList({
   empty,
   locale,
   now,
+  locationOf,
   factsOf,
   onSelect,
 }: {
@@ -812,17 +843,20 @@ function ClubList({
   empty: string;
   locale: SupportedLocale;
   now: Date;
+  locationOf: (product: ProductWithDetails) => string;
   factsOf: (product: ProductWithDetails) => string;
   onSelect: (id: string) => void;
 }) {
   const t = useTranslations("admin.products.groupsPanel.switchClub.picker");
   if (loading) {
     return (
+      // A real row's height: its padding and border, the name line, and the
+      // location and facts lines under it.
       <div className="space-y-2">
         {[0, 1, 2, 3].map((i) => (
           <div
             key={i}
-            className="h-16 animate-pulse rounded-lg border border-border bg-lifted"
+            className="h-21.5 animate-pulse rounded-lg border border-border bg-lifted"
           />
         ))}
       </div>
@@ -848,6 +882,7 @@ function ClubList({
             ? t(block)
             : null;
         const disabled = disabledReason !== null;
+        const location = locationOf(row);
         return (
           <li key={row.id}>
             <button
@@ -881,7 +916,15 @@ function ClubList({
                   )}
                 </span>
               </span>
-              <span className="mt-1 block text-xs text-muted-foreground">
+              {/* One line whatever the site is called, so a long name never
+                  grows one row past the rest; the whole of it is the title. */}
+              <span
+                className="mt-1 block truncate text-xs text-muted-foreground"
+                title={location}
+              >
+                {location}
+              </span>
+              <span className="block text-xs text-muted-foreground">
                 {factsOf(row)}
               </span>
             </button>

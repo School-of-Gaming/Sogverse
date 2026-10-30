@@ -1,10 +1,11 @@
 import "server-only";
-import { createHash } from "node:crypto";
 import { cookieValueFromHeader, parseConsentCookieHeader } from "@/lib/consent";
+import { clientIpFrom, sha256Hex } from "@/lib/conversion-request.server";
 import {
   isValidPixelId,
   PIXEL_EVENTS,
-  type MetaEnrolmentOutcome,
+  type ConversionAccount,
+  type ReportedEnrolmentOutcome,
   type MetaProductDetails,
 } from "@/lib/marketing-events";
 import { getOrigin } from "@/lib/url";
@@ -62,8 +63,9 @@ import { getOrigin } from "@/lib/url";
  * are all customer-only, so a gamer cannot reach one and no role check is needed
  * on this side.
  *
- * **It never throws and never delays anything.** Callers hand it to `after()`,
- * so the response has already gone out; and every failure — a missing variable,
+ * **It never throws and never delays anything.** It is reached through the
+ * one fan-out to every platform (`@/lib/ad-conversions.server`), which callers
+ * hand to `after()`, so the response has already gone out; and every failure — a missing variable,
  * a refusal from Meta, a network fault, a timeout — is logged and swallowed. A
  * lost conversion report under-measures a campaign, which is the safe direction
  * to fail in.
@@ -110,28 +112,10 @@ export type MetaConversion =
     }
   | {
       event: "enrolment";
-      outcome: MetaEnrolmentOutcome;
+      outcome: ReportedEnrolmentOutcome;
       product: MetaProductDetails;
       sourcePath: string;
     };
-
-/**
- * The account the request acts as — the parent it just registered, or the
- * signed-in customer — and never anyone else. Every caller is a customer-only
- * route, so this is always the parent's own address and account id, and never
- * a gamer's or a participant's. Either is `null` when the caller has none to
- * hand: the report still goes, without that field's hash.
- */
-export interface MetaRequestingAccount {
-  /** The parent's own account id — their auth user, which is their profile. */
-  id: string | null;
-  email: string | null;
-}
-
-/** SHA-256 as lowercase hex, the form Meta expects every hashed field in. */
-function sha256Hex(value: string): string {
-  return createHash("sha256").update(value).digest("hex");
-}
 
 /**
  * Meta's advanced-matching form of an email: trimmed, lowercased, SHA-256,
@@ -187,25 +171,10 @@ function customDataFor(
   return { outcome, ...product };
 }
 
-/**
- * The address the request came from, as Meta's `client_ip_address`.
- *
- * `x-forwarded-for` is a list appended to by each hop, so the first entry is the
- * client; `x-real-ip` is the single-value form some proxies send instead.
- * Absent on a request that has no proxy in front of it at all, and then the
- * field is simply omitted — a fabricated address would be worse than none.
- */
-function clientIpFrom(headers: Headers): string | undefined {
-  const forwarded = headers.get("x-forwarded-for");
-  const first = forwarded?.split(",")[0]?.trim();
-  if (first) return first;
-  return headers.get("x-real-ip")?.trim() || undefined;
-}
-
 export async function reportMetaConversion(
   request: Request,
   conversion: MetaConversion,
-  account: MetaRequestingAccount,
+  account: ConversionAccount,
 ): Promise<void> {
   try {
     const pixelId = process.env.NEXT_PUBLIC_META_PIXEL_ID;

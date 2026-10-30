@@ -28,10 +28,10 @@ import { firstChargeAnchor } from "@/lib/stripe/first-charge-anchor";
 import { stripe } from "@/lib/stripe/client";
 import { CHECKOUT_SESSION_LIFETIME_MINUTES } from "@/lib/constants/participations";
 import {
+  advertisedProductDetails,
   isAdvertisedProduct,
-  metaProductDetails,
 } from "@/lib/marketing-events";
-import { reportMetaConversion } from "@/lib/meta-conversions.server";
+import { reportAdConversion } from "@/lib/ad-conversions.server";
 import { getOrigin } from "@/lib/url";
 import { parseConsentCookieHeader } from "@/lib/consent";
 import {
@@ -287,7 +287,8 @@ export const POST = defineRoute({
         }),
       );
 
-      // The enrolment conversion, reported to Meta from here — after the
+      // The enrolment conversion, reported to the advertising platforms from
+      // here — after the
       // response, so it can neither delay the parent's answer nor fail it. Only
       // the free outcome earns one: `external_active` is a municipality
       // registration, invoiced off-platform to a council, and no ad caused it.
@@ -302,12 +303,12 @@ export const POST = defineRoute({
       // — the route is customer-only, so a gamer cannot reach it at all.
       if (rpcJson.kind === "free_active" && isAdvertisedProduct(product)) {
         after(
-          reportMetaConversion(
+          reportAdConversion(
             request,
             {
               event: "enrolment",
               outcome: "enrolled",
-              product: metaProductDetails(product, currency),
+              product: advertisedProductDetails(product, currency),
               sourcePath: ROUTES.shopProductPath(productId),
             },
             // The signed-in customer's own id and address, never the
@@ -625,7 +626,8 @@ export const POST = defineRoute({
         throw new ApiError("Stripe did not return a Checkout URL", 502);
       }
 
-      // Nothing is reported to Meta here. Its checkout start is the parent's
+      // Nothing is reported to an advertising platform here. The checkout
+      // start is the parent's
       // click on the product page, reported from the browser for free and paid
       // products alike, so a report from this handler would count every paid
       // attempt twice. The seat itself is written from the Stripe webhook, which

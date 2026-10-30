@@ -1192,7 +1192,7 @@
       "type": "Typ",
       "allTypes": "Alla",
       "search": "Sök",
-      "searchPlaceholder": "Sök på namn…",
+      "searchPlaceholder": "Sök på namn eller id…",
       "showing": "Visar {count} av {total}",
       "clear": "Rensa",
       "noMatches": "Inga {type, select, consumerClub {konsumentklubbar} municipalityClub {kommunklubbar} camp {läger} other {evenemang}} matchar sökningen och de valda filtren.",
@@ -1325,7 +1325,7 @@
       "switchClub": {
         "title": "Byt klubb",
         "description": "Flytta {name} till en annan klubb. Inget ändras för familjen i dag: samma kort dras samma datum, och därefter betalar familjen den nya klubbens pris.",
-        "searchPlaceholder": "Sök klubbar på namn",
+        "searchPlaceholder": "Sök klubbar på namn eller id",
         "picker": {
           "empty": "Det finns ingen annan klubb att byta till. Målet måste vara en klubb som faktureras varje månad och som inte har avslutats.",
           "noMatch": "Ingen klubb matchar sökningen. Pröva ett annat namn.",
@@ -1378,7 +1378,7 @@
         "noSubscription": {
           "title": "Flytta till en annan produkt",
           "description": "Flytta {name} till en annan produkt.",
-          "searchPlaceholder": "Sök produkter på namn",
+          "searchPlaceholder": "Sök produkter på namn eller id",
           "picker": {
             "empty": "Det finns ingen annan produkt att flytta till. Målet måste vara en produkt som inte faktureras månadsvis och som inte har avslutats.",
             "noMatch": "Ingen produkt matchar sökningen. Prova ett annat namn."

@@ -14,6 +14,7 @@ import {
 import type {
   LandingPicture,
   LocalizedLandingPage,
+  LocalizedLandingPageSummary,
 } from "@/services/landing-pages/landing-pages.contracts";
 import { markdownToPlainText } from "./markdown-plain-text";
 
@@ -31,8 +32,8 @@ import { markdownToPlainText } from "./markdown-plain-text";
  * One piece of a page's structured data, as a section contributes it; the
  * page's JSON-LD builder folds the pieces into its one node.
  *
- * - `image` — the picture the page leads with (the hero's), with its alt text
- *   in the version's language.
+ * - `image` — the picture the page leads with (the hero's, which each
+ *   language names in its own words), with its alt text in that language.
  * - `question` — one question and its answer, as plain text; any question
  *   makes the page a `FAQPage`.
  * - `products` — the products a section promotes, by id in its order; the
@@ -68,10 +69,10 @@ export const LANDING_SECTION_SEO: {
   [Type in LandingSectionType]: LandingSectionSeo<Type>;
 } = {
   hero: {
-    structuredData: (section, text) =>
-      section.imageId === undefined
+    structuredData: (_section, text) =>
+      text.imageId === undefined
         ? []
-        : [{ kind: "image", imageId: section.imageId, alt: written(text.imageAlt) }],
+        : [{ kind: "image", imageId: text.imageId, alt: written(text.imageAlt) }],
   },
   text: {
     structuredData: none,
@@ -158,11 +159,12 @@ export function landingCopyPicture(
 }
 
 /**
- * The picture a live page leads with — the hero's — as its stored path and
- * purpose and its alt text, or null when the hero has none. A hero's picture
- * is wide, which the database keeps true. The page's structured data names
- * this picture, and so does its link preview unless the shown version sets
- * a share picture of its own (`landingShareCard`).
+ * The picture a live page leads with in the shown version — that version's
+ * hero picture — as its stored path and purpose and its alt text, or null
+ * when the version names none. A hero's picture is wide, which the database
+ * keeps true. The page's structured data names this picture, and so does its
+ * link preview unless the shown version sets a share picture of its own
+ * (`landingShareCard`).
  */
 export function landingLeadPicture(
   page: Pick<LocalizedLandingPage, "sections" | "sectionTexts" | "pictures">,
@@ -175,12 +177,14 @@ export function landingLeadPicture(
 }
 
 /**
- * The path of the picture a live page leads with, read from its structure
- * alone — for a list, which carries no words and so no alt text. The same
- * picture `landingLeadPicture` names.
+ * The path of the picture a live page leads with in the shown version, read
+ * from that version's hero picture alone — for a list, which carries no words
+ * and so no alt text. The same picture `landingLeadPicture` names.
  */
 export function landingLeadPicturePath(
-  page: Pick<LocalizedLandingPage, "sections" | "pictures">,
+  page: Pick<LocalizedLandingPageSummary, "heroImageId" | "pictures">,
 ): string | null {
-  return landingLeadPicture({ ...page, sectionTexts: {} })?.path ?? null;
+  return page.heroImageId === null
+    ? null
+    : landingCopyPicture(page.pictures, page.heroImageId).path;
 }

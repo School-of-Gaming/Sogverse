@@ -1,20 +1,6 @@
 "use client";
 
-import {
-  useCallback,
-  useEffect,
-  useMemo,
-  useRef,
-  useSyncExternalStore,
-} from "react";
-// The RAW pathname, deliberately, and for both halves of what this does. The
-// wrapped `usePathname` answers with the internal *template*, which would make
-// every product page the same string — so a visitor walking from one product to
-// the next would report one page view between them. This is also the value the
-// normalizer is written for: it takes what is in the address bar
-// (`/fi/kauppa/abc`) and answers with the template.
-import { usePathname } from "next/navigation";
-import { isMarketingPage } from "@/lib/marketing-pages";
+import { useMemo } from "react";
 import {
   isAdvertisedProduct,
   isValidPixelId,
@@ -26,33 +12,19 @@ import {
   reportMetaEventNow,
   type BrowserPixelEvent,
 } from "@/lib/meta-pixel";
-import { normalizeExternalPath } from "@/lib/navigation/locale-path";
-import { useAuth } from "@/providers/auth-provider";
-import { useConsent } from "./consent-provider";
-
-const subscribeToNothing = () => () => {};
-
-/**
- * Whether this render is in a browser. A server render, and the hydration
- * render that has to agree with it, read false; every client render after that
- * reads true. An external store rather than a flag set in an effect, so the
- * switch is React's own post-hydration re-render.
- */
-function useIsClient(): boolean {
-  return useSyncExternalStore(
-    subscribeToNothing,
-    () => true,
-    () => false,
-  );
-}
+import {
+  useMayReachAdvertising,
+  usePixelClickReport,
+  usePixelReportPerPage,
+} from "./pixel-gates";
 
 /** One object for the life of the module, so the effect never sees a new one. */
 const PAGE_VIEW: BrowserPixelEvent = { event: PIXEL_EVENTS.pageView };
 
 /**
- * The Meta Pixel: the one script on the site that exists to serve somebody
- * other than the visitor, and therefore the one with the most gates in front of
- * it. All six must hold, and all six are decided in the browser:
+ * The Meta Pixel: a script that exists to serve somebody other than the
+ * visitor, and therefore one with the most gates in front of it — the same six
+ * the Reddit Pixel has, from the same hooks (`./pixel-gates`). All six must hold, and all six are decided in the browser:
  *
  *   1. the visitor has said yes to marketing;
  *   2. this is a client render, not the server one or the hydration one;
@@ -169,30 +141,11 @@ function productReport(
 export function useMetaCheckoutStart(
   product: ReportedProduct | null,
 ): () => void {
-  const pixelId = useMetaPixelGate();
-  const pathname = usePathname();
-  /** The page this hook has already reported a checkout start from. */
-  const reportedOn = useRef<string | null>(null);
-
-  // A different page is a new page reached, even when this hook outlives the
-  // move — so the guard is cleared on every pathname, including a return to
-  // the page it was last set for.
-  useEffect(() => {
-    reportedOn.current = null;
-  }, [pathname]);
-
   const report = useMemo(
     () => productReport(PIXEL_EVENTS.checkout, product),
     [product],
   );
-
-  return useCallback(() => {
-    if (pixelId === null || report === null) return;
-    if (reportedOn.current === pathname) return;
-    const { template } = normalizeExternalPath(pathname);
-    if (!isMarketingPage(template)) return;
-    if (reportMetaEventNow(pathname, report)) reportedOn.current = pathname;
-  }, [pixelId, report, pathname]);
+  return usePixelClickReport(useMetaPixelGate(), report, reportMetaEventNow);
 }
 
 /**
@@ -202,24 +155,9 @@ export function useMetaCheckoutStart(
  * last two, the allowlist and the address bar, belong to each report.
  */
 function useMetaPixelGate(): string | null {
-  const { consent } = useConsent();
-  const { user, profile, isLoading } = useAuth();
-  const isClient = useIsClient();
-
+  const allowed = useMayReachAdvertising();
   const rawPixelId = process.env.NEXT_PUBLIC_META_PIXEL_ID;
   const pixelId = isValidPixelId(rawPixelId) ? rawPixelId : null;
-
-  // **A signed-in visitor whose profile we could not read counts as a possible
-  // gamer.** The rule is by who is signed in rather than by URL, so a child's
-  // browsing never reaches an ad platform on any surface, whatever a parent once
-  // answered on a shared device — and the doubt is resolved in the safe
-  // direction: anonymous is fine, a known non-gamer is fine, and anything else
-  // (still loading, or signed in with no profile) is not.
-  const isNotAGamer =
-    !isLoading &&
-    (user === null || (profile !== null && profile.role !== "gamer"));
-
-  const allowed = isClient && consent?.marketing === true && isNotAGamer;
   return allowed ? pixelId : null;
 }
 
@@ -229,29 +167,5 @@ function useMetaPixelGate(): string | null {
  * the page as reached, so the report goes out once it stops being `null`.
  */
 function useMetaPixelReport(report: BrowserPixelEvent | null): void {
-  const pixelId = useMetaPixelGate();
-  const pathname = usePathname();
-  /** The last pathname this effect has seen, reported or not. */
-  const lastPathname = useRef<string | null>(null);
-
-  useEffect(() => {
-    if (pixelId === null || report === null) return;
-
-    // One report per marketing page *reached*, which is not the same as per
-    // render and not the same as per distinct page: a re-render reports nothing,
-    // and coming back to a page after another one is a second view of it. The
-    // ref is updated for every pathname the effect accepts, marketing or not,
-    // which is what makes the return trip a new view rather than a repeat.
-    if (lastPathname.current === pathname) return;
-    lastPathname.current = pathname;
-
-    const { template } = normalizeExternalPath(pathname);
-    if (!isMarketingPage(template)) return;
-
-    // Loads the library on first need, then reports — but only once the
-    // library has arrived and only if the tab is still on this page with a
-    // query that may travel (the loader re-reads the address bar at that
-    // moment). Fire and forget: it cannot throw, and nothing here waits on it.
-    void reportMetaEvent(pixelId, pathname, report);
-  }, [pathname, pixelId, report]);
+  usePixelReportPerPage(useMetaPixelGate(), report, reportMetaEvent);
 }
