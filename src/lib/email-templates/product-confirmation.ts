@@ -663,9 +663,9 @@ export function buildProductConfirmationEmail(
       // the guide the parent's does.
       //
       // Already composed HTML from the section builder, spliced whole: it is
-      // empty on a topic with no guide, on an in-person product with nothing
-      // left to do, and on every waitlist join, and an empty string costs the
-      // mail nothing — no wrapper left behind, no gap to close.
+      // empty on a label-only topic in person and on every waitlist join, and
+      // an empty string costs the mail nothing — no wrapper left behind, no gap
+      // to close.
       content.topicPrep?.html ?? ""
     }
     ${

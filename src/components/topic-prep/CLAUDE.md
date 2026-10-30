@@ -104,9 +104,8 @@ was edited. It is added by `hasVoiceRoom`, never by its scope, and its scope say
 **Consequence: a label-only topic has a guide wherever there is a voice room.** The
 topics that name subject matter rather than one piece of software (the ones without an
 `info` block) bring no steps; on an online product they render exactly one step, under a
-generic intro of its own rather than a topic's. The same form is the answer when every step a
-topic declares is filtered out but there is still a room. That makes `null` unreachable on
-a product with a voice room: the empty answer belongs to a product without one.
+generic intro of its own rather than a topic's. That makes `null` unreachable on a product
+with a voice room: the empty answer belongs to a product without one.
 
 **Consequence: an intro may not count the steps.** A guide that opened "Three things to sort
 out" was true of what the topic declared and false the moment a shared step joined it. The

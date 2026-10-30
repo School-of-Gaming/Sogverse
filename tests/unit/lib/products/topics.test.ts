@@ -387,23 +387,16 @@ describe("product topics", () => {
       }
     });
 
-    it("pairs the supplied note with the topics left with no steps in person", () => {
-      // Both directions: a topic emptied in person with no flag would go
-      // silent on the question families ask, and a flag on a topic that keeps a
-      // step could never render.
-      const emptied: string[] = [];
-      const declares: string[] = [];
-
+    it("declares the supplied note only on topics left with no steps in person", () => {
+      // A flag on a topic that keeps a step could never render. The other
+      // direction is not pinned: the note promises a login, so a topic whose
+      // login is the family's stays silent rather than inheriting that claim.
       for (const topic of PRODUCT_TOPIC_VALUES) {
         const meta: TopicMeta = PRODUCT_TOPICS[topic];
-        if (!meta.prep) continue;
-        if (meta.prep.steps.every((s) => s.scope === "ownDevice")) {
-          emptied.push(topic);
-        }
-        if (meta.prep.suppliedInPerson === true) declares.push(topic);
+        if (meta.prep?.suppliedInPerson !== true) continue;
+        expect(meta.prep.steps.every((s) => s.scope === "ownDevice")).toBe(true);
       }
 
-      expect(declares.sort()).toEqual(emptied.sort());
       expect(prep.suppliedInPersonNote.trim().length).toBeGreaterThan(0);
     });
 

@@ -72,13 +72,13 @@ export function resolveTopicPrep(
 
   const roomSteps = hasVoiceRoom(mode) ? [REMOTE_SESSION_STEP] : [];
 
-  // The topic brings nothing that applies here — no guide of its own, or only
-  // steps School of Gaming is supplying — so the guide is the voice-room step
-  // alone where there is a room, and nothing where there is not.
-  const roomOnly: TopicPrepPlan | null =
-    roomSteps.length > 0 ? { form: "remoteOnly", steps: roomSteps } : null;
-
-  if (!topicHasPrep(topic)) return roomOnly;
+  // A topic with no guide of its own: the guide is the voice-room step alone
+  // where there is a room, and nothing where there is not.
+  if (!topicHasPrep(topic)) {
+    return roomSteps.length > 0
+      ? { form: "remoteOnly", steps: roomSteps }
+      : null;
+  }
 
   // Read through the const map, as the hybrid guide does.
   const declared: readonly TopicPrepStep[] = PRODUCT_TOPICS[topic].prep.steps;
@@ -87,7 +87,6 @@ export function resolveTopicPrep(
     : declared.filter((step) => step.scope === "always");
 
   if (applicable.length === 0) {
-    if (roomOnly !== null) return roomOnly;
     return topicIsSuppliedInPerson(topic) ? { form: "suppliedNote" } : null;
   }
 
