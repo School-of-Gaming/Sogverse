@@ -551,7 +551,7 @@ describe("POST /api/discord/interactions — /sub", () => {
       productName: "Minecraft Club",
       productType: "consumer_club",
       groupName: "A",
-      isRemote: false,
+      deliveryMode: "in_person",
       siteName: "Kallio School",
     };
   }

@@ -385,7 +385,7 @@ describe("admin_move_participation", () => {
   it("refuses a seat whose subscription is cancelled — that is no live subscription", async () => {
     // The same predicate admin_remove_participation refuses ON, read from the
     // opposite side: a dunning-dead subscription is stored as `cancelled` and
-    // has no price left to swap. Such a seat leaves through the remove zone.
+    // has no price left to swap. Such a seat leaves through removal.
     const participationId = await seat(CLUB_A, TEST_IDS.GAMER);
     await subscribe(participationId, "cancelled");
 

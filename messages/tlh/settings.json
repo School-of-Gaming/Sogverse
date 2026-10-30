@@ -5,6 +5,7 @@
   "firstNamePlaceholder": "wa’DIch pong yIchel",
   "lastNamePlaceholder": "qorDu’ pong yIchel",
   "invalidPhone": "HablI’ HSDu’ nIvbe’ yIchel.",
+  "firstNameRequired": "pong wa’DIch {min} mu’tlhegh puS ghobe’.",
   "lastNameRequired": "qorDu’ pong {min} mu’tlhegh puS ghobe’.",
   "profileUpdated": "SoH De’ pollu’. Qapla’!",
   "failedToUpdateProfile": "SoH De’ pollaHbe’lu’.",
@@ -40,7 +41,10 @@
   },
   "marketing": {
     "title": "QIn chaw’mey",
-    "schoolOfGaming": "noH Quj yejHaD QIn HevmeH vIchaw’.",
+    "schoolOfGaming": "noH Quj yejHaD QIn — ghom’a’mey, raghmey, De’ chu’ je",
+    "schoolOfGamingNote": "Hoch QInmajDaq mevmeH rarwI’ lo’laH je. Qapla’!",
+    "schoolOfGamingLoadFailed": "chaw’vam wIlaDlaHbe’. ghuy’!",
+    "retry": "yInIDqa’",
     "lynxEducate": "<link>Lynx Educate</link>-vaD De’wI’ HeywI’ vInob ’e’ vIchaw’ — vaj wanI’ chu’ QIn Qujmey De’ je mungeHlaH. reH vImev’laH."
   },
   "notifications": {

@@ -232,10 +232,12 @@ with the short zone name always beside the time, like the schedule row. The time
 schedule row's own fixed 24-hour clock face, not the locale's, so one mail states one clock
 style; the date is the locale's. A waitlist join,
 a send with no plan to read and a product with nothing ahead state no such bullet. Next,
-on a remote product, comes how the sessions are joined — online in My SOG, through a
+on an online product, comes how the sessions are joined — online in My SOG, through a
 voice room that opens a stated number of minutes before each one, the number read from
 the voice room's own constant like the calendar entry's; an in-person one says where they
-are listed. The money follows, on the parent's copy alone: the deferred first charge, the
+are listed; a hybrid one says both, that the participant attends at the site and that the
+sessions are joined online through the same room. A hybrid product's calendar location is
+its site, and its notes add the voice-room line after the site's own. The money follows, on the parent's copy alone: the deferred first charge, the
 price-shape line and, on a subscription, the terms' 30-day money-back guarantee, worded no
 wider than the terms. Only a consumer club is ever bought on a subscription, which is what
 lets the mode carry the club guarantee. A fact the mail states and the page

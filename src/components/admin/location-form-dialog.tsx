@@ -41,9 +41,8 @@ export type LocationFormParent = Pick<
 >;
 
 /**
- * The one dialog for naming a location by hand. Two modes remain — rename an
- * existing row, or add a child under a parent — and in practice the child is
- * always a `site`.
+ * The one dialog for naming a location by hand: adding a child under a parent,
+ * and in practice the child is always a `site`.
  *
  * There is deliberately no "add a country" mode any more, and no free-text
  * creation above the site level. Countries, regions and municipalities are
@@ -53,67 +52,35 @@ export type LocationFormParent = Pick<
  * admin names.
  */
 interface LocationFormDialogProps {
-  open: boolean;
   onOpenChange: (open: boolean) => void;
   onSubmit: (values: LocationFormValues) => Promise<void>;
   isPending: boolean;
-  /** When set, the dialog is in "edit" mode. */
-  initialValues?: Location;
-  /** When adding a child, this is the parent location. */
-  parent?: LocationFormParent | null;
+  /** The location the new one is added under. */
+  parent: LocationFormParent;
 }
 
+/** Mounted by its caller only while open, so each opening starts from an empty name. */
 export function LocationFormDialog({
-  open,
   onOpenChange,
   onSubmit,
   isPending,
-  initialValues,
   parent,
 }: LocationFormDialogProps) {
-  // Nothing to name without either a row to rename or a parent to add under.
-  if (!open || (!initialValues && !parent)) return null;
-
-  return (
-    <LocationFormDialogInner
-      onOpenChange={onOpenChange}
-      onSubmit={onSubmit}
-      isPending={isPending}
-      initialValues={initialValues}
-      parent={parent}
-    />
-  );
-}
-
-/**
- * Inner component that mounts fresh each time the dialog opens,
- * so useState initializers run with the latest props.
- */
-function LocationFormDialogInner({
-  onOpenChange,
-  onSubmit,
-  isPending,
-  initialValues,
-  parent,
-}: Omit<LocationFormDialogProps, "open">) {
   const t = useTranslations('admin.locations');
   const c = useTranslations('common');
   const locale = useLocale();
-  const isEditing = !!initialValues;
 
-  // For "add child" mode, determine the child level from the parent
-  const childLevel = parent ? getChildLevel(parent.country_code, parent.type) : null;
+  // The level below the parent, and what the parent's country calls it.
+  const childLevel = getChildLevel(parent.country_code, parent.type);
   const childLabels = childLevel ? resolveLabels(childLevel, locale) : null;
 
-  const [name, setName] = useState(initialValues?.name ?? "");
+  const [name, setName] = useState("");
   const [error, setError] = useState<string | null>(null);
 
-  const title = isEditing
-    ? t('editName', { name: initialValues.name })
-    : t('addChildUnder', {
-        type: childLabels?.label ?? t('location'),
-        parent: parent ? localizedLocationName(parent, locale) : t('location'),
-      });
+  const title = t('addChildUnder', {
+    type: childLabels?.label ?? t('location'),
+    parent: localizedLocationName(parent, locale),
+  });
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -124,13 +91,12 @@ function LocationFormDialogInner({
       return;
     }
 
-    let values: LocationFormValues;
-    if (isEditing) {
-      values = { name: name.trim(), type: initialValues.type, parent_id: initialValues.parent_id };
-    } else {
-      if (!childLevel || !parent) return;
-      values = { name: name.trim(), type: childLevel.type, parent_id: parent.id };
-    }
+    if (!childLevel) return;
+    const values: LocationFormValues = {
+      name: name.trim(),
+      type: childLevel.type,
+      parent_id: parent.id,
+    };
 
     try {
       await onSubmit(values);
@@ -183,8 +149,8 @@ function LocationFormDialogInner({
             </Button>
             <Button type="submit" disabled={isPending}>
               {isPending
-                ? isEditing ? c('saving') : t('adding')
-                : isEditing ? c('saveChanges') : t('addType', { type: childLabels?.label ?? t('location') })}
+                ? t('adding')
+                : t('addType', { type: childLabels?.label ?? t('location') })}
             </Button>
           </DialogFooter>
         </form>

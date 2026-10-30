@@ -44,6 +44,13 @@ ALTER TABLE ONLY public.gamer_profiles
 
 
 --
+-- Name: gamer_profiles gamer_profiles_klaviyo; Type: TRIGGER; Schema: public; Owner: -
+--
+
+CREATE TRIGGER gamer_profiles_klaviyo AFTER UPDATE OF gender, birth_year ON public.gamer_profiles FOR EACH ROW WHEN (((old.gender IS DISTINCT FROM new.gender) OR (old.birth_year IS DISTINCT FROM new.birth_year))) EXECUTE FUNCTION public.klaviyo_gamer_fact_changed();
+
+
+--
 -- Name: gamer_profiles gamer_profiles_user_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: -
 --
 

@@ -128,7 +128,7 @@ const PAGE: AdminLandingPage = {
   draft: {
     id: ID,
     sections: [
-      { id: HERO, type: "hero", imageId: CASTLE, button: { kind: "internal", path: "/shop" } },
+      { id: HERO, type: "hero", button: { kind: "internal", path: "/shop" } },
       // Two related sections grouped on one band.
       { id: TEXT, type: "text", background: "card", imageSide: "start" },
       { id: FAQ, type: "faq", background: "card", items: [{ id: QUESTION }] },
@@ -141,7 +141,8 @@ const PAGE: AdminLandingPage = {
         title: "Gaming clubs in Espoo",
         summary: "After-school clubs.",
         slug: "gaming-clubs-in-espoo",
-        sectionTexts: {},
+        // Each language names its own hero picture; both name the castle.
+        sectionTexts: { [HERO]: { imageId: CASTLE } },
         shareTitle: "",
         shareImageId: null,
         shareImageAlt: "",
@@ -152,7 +153,7 @@ const PAGE: AdminLandingPage = {
         title: "Pelikerhot Espoossa",
         summary: "Kerhoja.",
         slug: "pelikerhot-espoossa",
-        sectionTexts: {},
+        sectionTexts: { [HERO]: { imageId: CASTLE } },
         shareTitle: "",
         shareImageId: null,
         shareImageAlt: "",
@@ -747,7 +748,7 @@ describe("the share card", () => {
           title: "Pelikerhot Espoossa",
           titleFrom: "the page title",
           picture: expect.objectContaining({
-            from: "the hero's picture",
+            from: "this language's hero picture",
             publicUrl: `${BUCKET}/castle.jpg`,
           }),
         }),
@@ -755,7 +756,7 @@ describe("the share card", () => {
     ]);
   });
 
-  it("states a derived card, from the hero's picture", async () => {
+  it("states a derived card, from the language's hero picture", async () => {
     const result = await tool("get_landing_page", { pageId: ID });
 
     expect(result.structuredContent?.versions).toEqual([
@@ -764,13 +765,105 @@ describe("the share card", () => {
           inUse: "derived from the page",
           titleFrom: "the page title",
           picture: expect.objectContaining({
-            from: "the hero's picture",
+            from: "this language's hero picture",
             publicUrl: `${BUCKET}/castle.jpg`,
           }),
         }),
       }),
       expect.anything(),
     ]);
+  });
+});
+
+describe("the hero picture", () => {
+  /** English's words, as a save_landing_page_text call sends them. */
+  const ENGLISH = {
+    pageId: ID,
+    locale: "en",
+    title: "Gaming clubs in Espoo",
+    summary: "After-school clubs.",
+  };
+
+  const savedWords = () => {
+    const [, version] = landing.saveVersion.mock.calls[0];
+    return version.sectionTexts;
+  };
+
+  it("is written with a language, never with the structure", async () => {
+    const result = await tool("save_landing_page_structure", {
+      pageId: ID,
+      sections: [{ id: HERO, type: "hero", imageId: FIELD }],
+    });
+
+    expect(result.isError).toBe(true);
+    expect(landing.saveStructure).not.toHaveBeenCalled();
+  });
+
+  it("keeps the language's hero picture when a text save leaves it out, even with no hero words", async () => {
+    await tool("save_landing_page_text", {
+      ...ENGLISH,
+      sectionTexts: { [HERO]: { headline: "Clubs", imageAlt: "A castle" } },
+    });
+    await tool("save_landing_page_text", { ...ENGLISH, sectionTexts: {} });
+
+    const [first, second] = landing.saveVersion.mock.calls.map(([, version]) => version.sectionTexts);
+    expect(first).toEqual({ [HERO]: { headline: "Clubs", imageAlt: "A castle", imageId: CASTLE } });
+    expect(second).toEqual({ [HERO]: { imageId: CASTLE } });
+  });
+
+  it("writes a hero picture a text save sends, lowercased", async () => {
+    await tool("save_landing_page_text", {
+      ...ENGLISH,
+      sectionTexts: { [HERO]: { headline: "Clubs", imageId: FIELD.toUpperCase(), imageAlt: "A field" } },
+    });
+
+    expect(savedWords()).toEqual({ [HERO]: { headline: "Clubs", imageId: FIELD, imageAlt: "A field" } });
+  });
+
+  it("removes the hero picture a text save sends as null", async () => {
+    await tool("save_landing_page_text", {
+      ...ENGLISH,
+      sectionTexts: { [HERO]: { headline: "Clubs", imageId: null } },
+    });
+
+    expect(savedWords()).toEqual({ [HERO]: { headline: "Clubs" } });
+  });
+
+  it("keeps nothing of another language's hero picture: a new language starts with none", async () => {
+    await tool("save_landing_page_text", {
+      ...ENGLISH,
+      locale: "sv",
+      title: "Spelklubbar",
+      sectionTexts: { [HERO]: { headline: "Klubbar" } },
+    });
+
+    expect(savedWords()).toEqual({ [HERO]: { headline: "Klubbar" } });
+  });
+
+  it("reads each language's hero picture in the page read", async () => {
+    const [en, fi] = PAGE.draft.versions;
+    landing.getAdminPage.mockResolvedValue({
+      ...PAGE,
+      draft: { ...PAGE.draft, versions: [en, { ...fi, sectionTexts: {} }] },
+    } satisfies AdminLandingPage);
+
+    const result = await tool("get_landing_page", { pageId: ID });
+
+    expect(result.structuredContent?.versions).toEqual([
+      expect.objectContaining({ locale: "en", heroImageId: CASTLE }),
+      expect.objectContaining({ locale: "fi", heroImageId: null }),
+    ]);
+  });
+
+  it("tells the AI app each language names its own, with none shared", async () => {
+    const tools = await listedTools();
+    for (const name of ["create_landing_page", "save_landing_page_structure", "set_landing_section_image"]) {
+      const description = tools.find((t) => t.name === name)?.description ?? "";
+      expect(description, name).toContain("a language without one shows none");
+      expect(description, name).toContain("when adding a language set its hero picture too");
+    }
+    const text = tools.find((t) => t.name === "save_landing_page_text")?.description ?? "";
+    expect(text).toContain("leave it out to keep the one the language has, send null to remove it");
   });
 });
 
@@ -1131,7 +1224,8 @@ describe("saving", () => {
       title: "Pelikerhot Espoossa",
       summary: "Kerhoja.",
       slug: undefined,
-      sectionTexts,
+      // The hero picture the call left out is the one Finnish has.
+      sectionTexts: { ...sectionTexts, [HERO]: { ...sectionTexts[HERO], imageId: CASTLE } },
       shareTitle: "",
       shareImageId: null,
       shareImageAlt: "",
@@ -1424,13 +1518,77 @@ describe("pictures", () => {
     expect(square.structuredContent).toMatchObject({ total: 1 });
   });
 
-  it("replaces a hero's picture, touching nothing else in the structure", async () => {
-    await tool("set_landing_section_image", { pageId: ID, sectionId: HERO, imageId: FIELD });
+  it("replaces one language's hero picture in its words, touching no other language and not the structure", async () => {
+    const [en] = PAGE.draft.versions;
+    const result = await tool("set_landing_section_image", {
+      pageId: ID,
+      sectionId: HERO,
+      locale: "en",
+      imageId: FIELD.toUpperCase(),
+    });
 
-    expect(landing.saveStructure).toHaveBeenCalledWith(ID, [
-      { ...PAGE.draft.sections[0], imageId: FIELD },
-      ...PAGE.draft.sections.slice(1),
-    ]);
+    expect(result.isError).toBeFalsy();
+    expect(landing.saveStructure).not.toHaveBeenCalled();
+    expect(landing.saveVersion).toHaveBeenCalledOnce();
+    expect(landing.saveVersion).toHaveBeenCalledWith(ID, {
+      locale: "en",
+      title: en.title,
+      summary: en.summary,
+      slug: en.slug,
+      sectionTexts: { [HERO]: { imageId: FIELD } },
+      shareTitle: en.shareTitle,
+      shareImageId: en.shareImageId,
+      shareImageAlt: en.shareImageAlt,
+    });
+    expect(result.structuredContent).toMatchObject({ locale: "en", sectionId: HERO });
+  });
+
+  it("removes one language's hero picture with null, keeping its other hero words", async () => {
+    const [en, fi] = PAGE.draft.versions;
+    landing.getAdminPage.mockResolvedValue({
+      ...PAGE,
+      draft: {
+        ...PAGE.draft,
+        versions: [
+          en,
+          { ...fi, sectionTexts: { [HERO]: { headline: "Pelikerhot", imageId: CASTLE, imageAlt: "Linna" } } },
+        ],
+      },
+    } satisfies AdminLandingPage);
+
+    await tool("set_landing_section_image", { pageId: ID, sectionId: HERO, locale: "fi", imageId: null });
+
+    expect(landing.saveVersion).toHaveBeenCalledWith(
+      ID,
+      expect.objectContaining({
+        locale: "fi",
+        sectionTexts: { [HERO]: { headline: "Pelikerhot", imageAlt: "Linna" } },
+      }),
+    );
+  });
+
+  it.each([
+    ["no language", { imageId: FIELD }, "name the language with locale"],
+    ["a language the page does not have", { imageId: FIELD, locale: "sv" }, "The page has no sv version"],
+  ])("refuses a hero picture for %s, saving nothing", async (_, args, named) => {
+    const result = await tool("set_landing_section_image", { pageId: ID, sectionId: HERO, ...args });
+
+    expect(result.isError).toBe(true);
+    expect(resultText(result)).toContain(named);
+    expect(landing.saveVersion).not.toHaveBeenCalled();
+  });
+
+  it("refuses a language for a section whose pictures every language shares", async () => {
+    const result = await tool("set_landing_section_image", {
+      pageId: ID,
+      sectionId: GALLERY,
+      locale: "en",
+      imageId: FIELD,
+    });
+
+    expect(result.isError).toBe(true);
+    expect(resultText(result)).toContain("locale is for a hero section");
+    expect(landing.saveStructure).not.toHaveBeenCalled();
   });
 
   it("adds a picture to an image section and answers its new item id", async () => {
@@ -1728,8 +1886,12 @@ describe("what a publish now would serve", () => {
         sections: [{ id: HERO, type: "hero" }],
         pictures: {},
         versions: [
-          { ...en, title: "A much longer title for the Espoo gaming clubs page than fits" },
-          { ...fi, missing: [] },
+          {
+            ...en,
+            title: "A much longer title for the Espoo gaming clubs page than fits",
+            sectionTexts: {},
+          },
+          { ...fi, sectionTexts: {}, missing: [] },
         ],
       },
       publication: null,

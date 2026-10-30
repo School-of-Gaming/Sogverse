@@ -1,10 +1,11 @@
 # Cookie consent and the advertising scripts
 
-This directory holds the consent question, the answer, and the two advertising scripts the
-answer switches on: Meta's pixel, and the Google Tag Manager container. The strip's own
-layout rules live in `src/components/layout/`; what is written here is those scripts —
-where they may run, what leaves the browser, what leaves our servers, and how a withdrawal
-takes effect. Everything below governs both unless it names one of them.
+This directory holds the consent question, the answer, and the three advertising scripts
+the answer switches on: Meta's pixel, Reddit's pixel, and the Google Tag Manager container.
+The strip's own layout rules live in `src/components/layout/`; what is written here is those
+scripts — where they may run, what leaves the browser, what leaves our servers, and how a
+withdrawal takes effect. Everything below governs all three unless it names one of them.
+The two pixels share one set of gate hooks, so a gate added for one is added for both.
 
 ## Four gates in front of an advertising script, and two more that are the page
 
@@ -12,11 +13,11 @@ A script loads only when all of these hold, and every one of them is decided in 
 browser:
 
 1. **Marketing is granted** on this device, from the consent cookie — the same purpose
-   for both scripts. A container mints a persistent client id and carries advertising
+   for every script. A container mints a persistent client id and carries advertising
    tags, so it is an advertising recipient and nothing else; `analytics` covers Vercel's
    cookieless counting alone, which is what the strip and the privacy policy describe it
-   as. A refusal, and a question still unanswered, loads neither script: no code, no
-   request to either vendor. Consent Mode is sent all the same — everything denied, then
+   as. A refusal, and a question still unanswered, loads none of them: no code, no
+   request to any vendor. Consent Mode is sent all the same — everything denied, then
    the granted state — because a Google tag that has not been told what it may store is
    not permitted to guess for EEA or UK traffic.
 2. **This is a client render**, not the server one and not the hydration one — the gate
@@ -27,13 +28,14 @@ browser:
    browsing never reaches an advertising platform on any surface, whatever a parent once
    answered on a shared device.
 4. **The vendor's id is configured**, and is an id rather than a placeholder — a run of
-   digits for the pixel, a `GTM-` id for the container. Unset means that script is off;
-   for the pixel it also means our servers report nothing, one switch for both.
+   digits for Meta's pixel, an `a2_` or `t2_` id for Reddit's, a `GTM-` id for the
+   container. Unset means that script is off; for either pixel it also means our servers
+   report nothing to that platform, one switch for both.
 
 ## Why they load only on marketing pages
 
 An advertising script reports the page it runs on: Meta's library sends the page's own URL
-and the document's referrer with every event, and a container tag reads whatever it is
+and the document's referrer with every event, Reddit's sends the URL, and a container tag reads whatever it is
 configured to read. Some of our URLs are secrets — a password reset, a PIN reset, an email
 verification and a seat offer each carry a single-use token in the query string — and
 others name a child by id. A script mounted on every page would hand all of them to an
@@ -52,10 +54,19 @@ Six knobs hold that promise, and all six are load-bearing:
 
 - **The allowlist** decides where a page view may be reported from at all.
 - **Each script's automatic page view on client navigation is turned off** in the loader,
-  so neither reports anything by itself. **A loaded script is not an inert one**, and the
-  two vendors differ in how far that goes. The pixel is one library with one job and a
+  so none reports anything by itself. **A loaded script is not an inert one**, and the
+  vendors differ in how far that goes. Meta's pixel is one library with one job and a
   flag that stops it reporting navigations, so once loaded it genuinely does nothing
-  unasked. The container is a loader for whatever somebody configured, it stays loaded for
+  unasked. Reddit's needs no such flag, but it fetches a configuration from Reddit's Events
+  Manager that can add event rules fired on URL changes and clicks, automatic matching
+  that reads email and phone values out of the page, and scraping of the page title and
+  description — and its base code has no switch for any of it. **The CSP is that switch**:
+  it leaves the configuration host and the event setup tool's host out of `connect-src`,
+  so the fetch fails and the pixel runs on the calls the app makes and nothing else. That
+  needs the library loaded **without** `?pixel_id=`, against Reddit's own base code: asked
+  for by id, Reddit serves a copy with the configuration inlined in the script, which no
+  CSP can refuse. Those two hosts stay out; adding one hands a web form nobody here reviews the power to report
+  private pages after a client navigation and to lift form fields. The container is a loader for whatever somebody configured, it stays loaded for
   the whole document, and every tag in it reads `document.location` at the moment it
   fires — so "it only loaded on a marketing page" says nothing at all about which page it
   reports. What keeps it quiet on the pages afterwards is the blocklist below and nothing
@@ -109,16 +120,23 @@ Six knobs hold that promise, and all six are load-bearing:
 
 **A page view is never queued for a script to replay.** Meta's stub queues a call made
 before its library has downloaded and replays it on arrival against the URL the tab shows
-*then*; the container's queue is read the same way. A parent can client-navigate from a
+*then*; Reddit's stub does the same, and the container's queue is read the same way. A parent can client-navigate from a
 shop page into a child's page inside that window. So a report waits for the script to
 load, then re-reads the address bar: the tab must still be on the page that authorised the
 report, and the query string must carry only campaign keys, the platforms' click ids and
 the shop's own filter state. The second check is what keeps
 `/login?redirect=/parent/gamers/<id>` — the proxy's bounce for a signed-out parent — from
 ever being reported, even though the login page itself is a marketing page — and the same
-check runs before either script is loaded at all, so such a page never has their code in
+check runs before any script is loaded at all, so such a page never has their code in
 it. A visitor who moved on gets no report for either page; a query with anything else in
 it gets none.
+
+**The query allowlist is one list for every script, so each platform's click id reaches
+all of them.** A page reached from a Reddit ad loads Meta's pixel and the container too,
+and both see `rdt_cid` in the address, exactly as Reddit sees `fbclid` and `gclid`. That
+is accepted: a click id is an opaque token naming one ad click, the visitor has allowed
+marketing for every platform at once, and a per-platform list would split one gate into
+several for no protection a reader could name.
 
 **An event other than a page view may sit in the container's queue, and the distinction is
 worth keeping straight.** What makes a page view unsafe to queue is not its payload but
@@ -129,14 +147,14 @@ own, so it is still a true statement whenever the container gets to it.
 ## What the platforms are told
 
 From the browser: one page view per marketing page *reached* — a re-render is not a view,
-and coming back to a page after another one is. The pixel is told Meta's own event name;
-the container is pushed the **internal path** — locale prefix removed and the slug
+and coming back to a page after another one is. Each pixel is told its vendor's own event
+name — Reddit's page view is `PageVisit`; the container is pushed the **internal path** — locale prefix removed and the slug
 untranslated, with the record's own id kept, so one row covers every language's slug while
 one product is still one page. Every event the browser pushes states that same field the
 same way, which is what lets a view and the enrolment that followed it meet in one funnel
 instead of forking into a template row and a concrete one.
 
-A product page also tells the pixel which product it showed, as Meta's product view, and
+A product page also tells each pixel which product it showed, as its product view, and
 only for a product we advertise — the same product-row rule the servers apply. It is not a
 second reporting path: it goes through every gate and check the page view does, once per
 product page reached, and it waits for the product to have been read rather than being
@@ -144,12 +162,13 @@ dropped when the read is slow.
 
 **The checkout start is a click, reported from the browser.** A parent on an advertised
 product's page who clicks into the sign-up flow — the create-an-account link while signed
-out, or the button that enrols while signed in — is Meta's checkout start, for a free
-product exactly as for a paid one, once per product page reached however many times they
+out, or the button that enrols while signed in — is Meta's checkout start and Reddit's
+`AddToCart` (Reddit has no checkout-start event, and stepping into the sign-up for one
+product is the nearest standard one), for a free product exactly as for a paid one, once per product page reached however many times they
 click or retry. Joining a waitlist is not one, and neither is signing in. The click usually
 navigates, so the event goes out synchronously inside the click handler, while the address
-bar still shows the product page, or not at all: when the library has not arrived yet the
-click is dropped rather than queued, because a queued event would be replayed against
+bar still shows the product page, or not at all: when a pixel's library has not arrived
+yet, that pixel's click is dropped rather than queued, because a queued event would be replayed against
 whatever URL the tab shows by then. It never loads the library and never holds up the
 parent's navigation. Same gates as the views, same address-bar check at the moment of
 sending.
@@ -165,23 +184,32 @@ nothing about who Meta looks for. Making it once per person would mean storage o
 that the withdrawal sweep then has to clear — not worth building unless someone reports
 or bids on checkout starts as a figure in itself.
 
-From our servers, through Meta's Conversions API (`src/lib/meta-conversions.server.ts`),
-each one sent after the response has gone out so it can neither delay nor fail what the
-family asked for:
+From our servers, through Meta's and Reddit's Conversions APIs, each one sent after the
+response has gone out so it can neither delay nor fail what the family asked for:
 
-- **an account was created** — reported as a lead, someone reachable who has committed to
-  nothing, and naming the product whose page the sign-up started from when that was an
-  advertised product's page;
-- **an enrolment** — a seat taken or a place in a queue accepted, carrying which of the
-  two it was.
+- **an account was created** — reported as a lead (Meta's `Lead`, Reddit's `LEAD`),
+  someone reachable who has committed to nothing, and naming the product whose page the
+  sign-up started from when that was an advertised product's page;
+- **an enrolment** — a seat taken or a place in a queue accepted (Meta's
+  `CompleteRegistration`, Reddit's `SIGN_UP`), carrying which of the two it was to Meta.
+  Reddit's event has no field for it, so Reddit tells the two apart only by the missing
+  value on a queue place.
 
-Handing a parent to Stripe is reported from neither side to Meta: its checkout start is the
-browser's click above, and a server report as well would count every paid attempt twice.
+**A route reports a conversion once, to every platform at once** (`src/lib/ad-conversions.server.ts`),
+with the product already described in each platform's fields; each platform's reporter
+applies its own switch and the consent gate and swallows its own failures, so one
+platform refusing or switched off leaves the other's report untouched. A new platform is
+added there, never at a call site.
+
+Handing a parent to Stripe is reported from neither side to either platform: its checkout
+start is the browser's click above, and a server report as well would count every paid
+attempt twice.
 (Analytics still hears it, as its own `checkout` push from the panel.)
 
 The enrolment, the lead from a product page, and the browser's product view and checkout
-start, name the product in Meta's standard product fields, built in one place so they cannot describe one product two
-ways: its id, its English name whatever the visitor's locale, its topic as the category —
+start, name the product in Meta's standard product fields, and every one of them to Reddit
+states the same facts in Reddit's, all built from one place so they cannot
+describe one product two ways: its id, its English name whatever the visitor's locale, its topic as the category —
 an enum value, stable across renames, and the axis a campaign is run per — and the price
 the family pays with its currency, zero for a free product. A paid product with no price in the currency
 states no value at all rather than a guessed one. **A queue place carries no value**: a
@@ -190,7 +218,7 @@ caller passed, because nobody has paid or committed to pay and a priced queue wo
 campaign to count a full product's waitlist as revenue. **A lead carries no value either**,
 for the same reason and by the same rule in the server report. On the browser's two product
 events these are only facts the product's public page shows anyone. On the server's
-enrolment they ride beside the parent's email and account-id hashes, so Meta learns that an
+enrolment they ride beside the parent's email and account-id hashes, so each platform learns that an
 identifiable parent signed up for that named club, camp or event — which the privacy policy
 says — and on a lead, that an identifiable parent opened an account from that product's page.
 
@@ -211,17 +239,21 @@ product row, never by the URL it was reached from**. No role check is needed on 
 the three routes are customer-only, so a gamer cannot reach one.
 
 **What identifies a person in a server report, exhaustively:** the user agent, the IP the
-request arrived from, Meta's own browser and click cookies if the browser carries them, a
-SHA-256 hash of the parent's own account email (Meta's advanced matching), and a SHA-256
-hash of the parent's own account id (Meta's `external_id`) — both hashed on our server, so
-neither the address nor the id is ever sent or logged, and never a gamer's. The address is
-sent whether or not it has been verified; that is standard practice and accepted as such.
-The id hash is the same on every report for that account, so Meta can join one parent's
-events across visits and devices. With the product fields above, that tells Meta which
-product an identifiable parent signed up for, or opened an account from. No name, and
-nothing about a child beyond that — not their name, age, account or its id, or anything
-else. The privacy policy's Meta entry says
-this in plain words; adding a field there is a privacy-policy edit.
+request arrived from, the platform's own browser and click cookies if the browser carries
+them (Meta's `_fbp` and `_fbc`, Reddit's `_rdt_uuid` and `_rdt_cid` — each platform is
+sent only its own), a SHA-256 hash of the parent's own account email, and a SHA-256 hash
+of the parent's own account id (`external_id`) — both hashed on our server, so neither the
+address nor the id is ever sent or logged, and never a gamer's. **The two platforms
+canonicalise the email differently before hashing**: Meta trims and lowercases; Reddit also
+removes every dot from the local part and drops everything from a `+` on, so one address
+hashes to two different values and neither may be "fixed" to match the other. The address
+is sent whether or not it has been verified; that is standard practice and accepted as
+such. The id hash is the same on every report for that account, so each platform can join
+one parent's events across visits and devices. With the product fields above, that tells
+the platform which product an identifiable parent signed up for, or opened an account
+from. No name, and nothing about a child beyond that — not their name, age, account or its
+id, or anything else. The privacy policy's entry for each platform says this in plain
+words; adding a field there is a privacy-policy edit.
 
 A completed purchase is reported nowhere today. When it is, it belongs on the same
 server-side path, from the payment webhook — which is the only place that knows money
@@ -236,15 +268,15 @@ each script is handed the new answer as it loads.
 script that has already installed itself on the document goes on running whatever it has
 installed, and what it has already sent has already been sent — so any withdrawal reloads.
 Withdrawing marketing also deletes the advertising scripts' own cookies and clears what
-either of them keeps in web storage first; the new document has neither script in it, and
+any of them keeps in web storage first; the new document has none of them in it, and
 starts from everything denied like any other. Withdrawing analytics alone reloads and
 clears nothing: Vercel's components leave their scripts installed when they unmount, so
 only a new document stops them, while the advertising scripts' state belongs to marketing,
 which is unchanged.
 
 **There is deliberately no way to tell a running script that the answer grew**, and it is
-worth knowing why rather than adding one back. Both advertising scripts load on marketing
-and read no other purpose, so a document with either of them running has nothing left to
+worth knowing why rather than adding one back. Every advertising script loads on marketing
+and reads no other purpose, so a document with any of them running has nothing left to
 tell them: the one change they could need to hear is marketing taken away, which is the
 paragraph above. A purpose being added was off until then, so the scripts it covers are
 not in the document yet, and the answer travels with their load.
@@ -264,9 +296,12 @@ separately, and the storage half spans both vendors rather than the pixel alone.
 id deleted from the cookie and left in storage is the same click id, and leaves the device
 re-identifiable the moment the scripts are allowed to run again — which is the whole of
 what a withdrawal is for. So this half is pinned to a browser rather than reasoned out:
-the keys are whatever the two libraries were observed to write on a granted visit arriving
-from an ad, both stores are swept because an observation cannot say the empty one will
-stay empty, and the tests pin what was seen.
+the keys are whatever Meta's and Google's libraries were observed to write on a granted
+visit arriving from an ad, both stores are swept because an observation cannot say the
+empty one will stay empty, and the tests pin what was seen. **Reddit's are the exception,
+and say so**: its cookie family and its one storage key were read off its library's source,
+not observed on a visit, so the cookies are swept by their shared prefix and the key is
+pinned as read rather than as seen — replace that with an observation once one is made.
 
 **And the clearing happens in two places, which is not belt and braces but two different
 jobs.** Deleting before the reload races a script that is still running: the analytics
@@ -314,6 +349,8 @@ and each one is load-bearing rather than tidy.
   are reported server-side; a Meta tag here would double-count every page view with no
   event id to deduplicate against, and it would move a recipient behind a surface that has
   no review.
+- **Reddit never goes in the container either**, for the same reasons — and a Reddit tag
+  there would bring back the remote configuration the CSP refuses the loaded pixel.
 - **Whole tag types and every automatic trigger are blocked, and will silently never
   fire** — so nothing may be built on one. Blocked classes: Custom HTML and Custom
   JavaScript, custom templates from the gallery, and anything that runs a script, requests

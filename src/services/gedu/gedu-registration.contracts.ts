@@ -1,6 +1,7 @@
 import { z } from "zod";
 import { Constants } from "@/types";
 import { DISPLAY_NAME_MIN, DISPLAY_NAME_MAX } from "@/lib/constants/account-limits";
+import { trimPersonName } from "@/lib/person-name-trim";
 import { minecraftUsernameValue } from "@/services/minecraft/minecraft.contracts";
 import { robloxUsernameValue } from "@/services/roblox/roblox.contracts";
 import {
@@ -24,14 +25,12 @@ export const registerGeduBody = z.object({
   password: z.string().min(8, "Password must be at least 8 characters"),
   firstName: z
     .string()
-    .trim()
-    .min(DISPLAY_NAME_MIN)
-    .max(DISPLAY_NAME_MAX),
+    .transform(trimPersonName)
+    .pipe(z.string().min(DISPLAY_NAME_MIN).max(DISPLAY_NAME_MAX)),
   lastName: z
     .string()
-    .trim()
-    .min(DISPLAY_NAME_MIN)
-    .max(DISPLAY_NAME_MAX),
+    .transform(trimPersonName)
+    .pipe(z.string().min(DISPLAY_NAME_MIN).max(DISPLAY_NAME_MAX)),
   phone: z.string().optional(),
   spokenLanguages: z
     .array(z.enum(Constants.public.Enums.spoken_language))

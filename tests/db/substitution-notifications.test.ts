@@ -208,7 +208,7 @@ describe("substitution notifications", () => {
       billing_mode: "free",
       topic: "minecraft_java",
       spoken_language_code: "en",
-      is_remote: true,
+      delivery_mode: "online",
       location_id: null,
       timezone: "UTC",
       registration_opens_at: new Date(Date.now() - 60_000).toISOString(),
@@ -656,7 +656,7 @@ describe("substitution notifications", () => {
         approved_at: null,
       });
       expect(shot.product.id).toBe(PRODUCT);
-      expect(shot.product.is_remote).toBe(true);
+      expect(shot.product.delivery_mode).toBe("online");
       expect(shot.required_qualifications).toEqual(["consumer_products"]);
       expect(shot.is_cancelled).toBe(false);
       expect(shot.product_today).toBe(utcDate(0));

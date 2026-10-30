@@ -326,8 +326,8 @@ export function ParentDashboardPageBody({
    *
    * A UI-only cap the tile strip this page absorbed used to enforce, and which
    * has to be enforced *here* now that this page owns every add affordance: the
-   * API accepts an eighth child, so a page that keeps offering the button past
-   * the limit is offering a parent an error message.
+   * API accepts a child past the cap, so a page that keeps offering the button
+   * past the limit has no cap at all.
    */
   const canAddGamer = gamers.length < MAX_GAMERS_PER_PARENT;
 
@@ -534,7 +534,7 @@ export function ParentDashboardPageBody({
 
                 Absent at the cap rather than disabled. A disabled button is a
                 promise that something would happen if the condition cleared,
-                and nothing clears this one — a parent at seven children is not
+                and nothing clears this one — a parent at the cap is not
                 waiting for a seat, they are done. Nothing survives the change
                 either way, since the count only moves when the parent
                 themselves adds a child, so removing the tile shifts only what

@@ -19,7 +19,7 @@ import {
 import { FaqAccordion } from "@/components/ui/faq-accordion";
 import { Markdown } from "@/components/ui/markdown";
 import type { SupportedLocale } from "@/lib/constants/locales";
-import { resolveTranslation } from "@/lib/i18n/resolve-translation";
+import { resolveRequiredTranslation } from "@/lib/i18n/resolve-translation";
 import {
   landingPictureSize,
   type LandingPictureShape,
@@ -288,12 +288,13 @@ function textLang(context: Pick<LandingRenderContext, "locale" | "textLocale">) 
 /**
  * The page's opening and its only H1, drawn the way the home hero is: the
  * headline in ink over one world rule that runs its measure, the line under
- * it, one act button. Centred alone; with a picture, the words and the picture
+ * it, one act button. Centred alone; with a picture — the shown language's
+ * own, from its words — the words and the picture
  * share the width from `lg`, the words first on a phone so the headline and the
  * button are what the first screen shows.
  */
 function HeroSection({ section, text, context }: LandingSectionProps<"hero">) {
-  const picture = section.imageId === undefined ? null : context.picture(section.imageId);
+  const picture = text.imageId === undefined ? null : context.picture(text.imageId);
   const eyebrow = written(text.eyebrow);
   const subline = written(text.subline);
   const buttonLabel = written(text.buttonLabel);
@@ -713,9 +714,8 @@ function TestimonialsSection({ section, text, context }: LandingSectionProps<"te
   const pick = (ids: readonly string[]): ShownTestimonial[] =>
     ids.flatMap((id) => {
       const testimonial = context.testimonial(id);
-      const version =
-        testimonial === null ? null : resolveTranslation(testimonial.versions, context.locale);
-      if (version === null) return [];
+      if (testimonial === null) return [];
+      const version = resolveRequiredTranslation(testimonial.versions, context.locale);
       return [
         {
           key: id,

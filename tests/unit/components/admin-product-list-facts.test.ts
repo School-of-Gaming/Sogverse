@@ -4,12 +4,13 @@ import {
   type ProductWhereSource,
 } from "@/components/admin/products/product-where-line";
 import {
+  filterProductsBySearch,
   matchesProductSearch,
   normalizeProductSearch,
 } from "@/components/admin/products/product-name-search";
-import type { Json, ProductType } from "@/types";
+import type { DeliveryMode, Json, ProductType } from "@/types";
 
-const ONLINE = "Online";
+const LABELS = { online: "Online", hybrid: "Hybrid" };
 
 // One embedded location node, in the two columns a name needs plus the type
 // the municipality walk keys on. `name_i18n` defaults to no overrides, which is
@@ -25,12 +26,12 @@ function node(
 
 function product(overrides: {
   productType?: ProductType;
-  isRemote?: boolean;
+  deliveryMode?: DeliveryMode;
   location?: ProductWhereSource["locations"];
 }): ProductWhereSource {
   return {
     product_type: overrides.productType ?? "consumer_club",
-    is_remote: overrides.isRemote ?? false,
+    delivery_mode: overrides.deliveryMode ?? "in_person",
     locations: overrides.location ?? null,
   };
 }
@@ -42,36 +43,36 @@ const tapiola = {
 
 describe("productWhereLine", () => {
   it("names the site and the municipality above it", () => {
-    expect(productWhereLine(product({ location: tapiola }), "en", ONLINE)).toBe(
+    expect(productWhereLine(product({ location: tapiola }), "en", LABELS)).toBe(
       "Tapiolan koulu · Espoo",
     );
   });
 
   it("names the site alone when nothing municipal sits above it", () => {
     const orphan = { ...node("site-2", "Some Hall", "site"), parent: null };
-    expect(productWhereLine(product({ location: orphan }), "en", ONLINE)).toBe(
+    expect(productWhereLine(product({ location: orphan }), "en", LABELS)).toBe(
       "Some Hall",
     );
   });
 
   it("does not repeat a location that is itself the municipality", () => {
     const bare = { ...node("muni-1", "Espoo", "municipality"), parent: null };
-    expect(productWhereLine(product({ location: bare }), "en", ONLINE)).toBe(
+    expect(productWhereLine(product({ location: bare }), "en", LABELS)).toBe(
       "Espoo",
     );
   });
 
-  it("says only 'online' for a remote product that is not a municipality club", () => {
+  it("says only 'online' for an online product that is not a municipality club", () => {
     expect(
       productWhereLine(
-        product({ isRemote: true, location: tapiola }),
+        product({ deliveryMode: "online", location: tapiola }),
         "en",
-        ONLINE,
+        LABELS,
       ),
     ).toBe("Online");
   });
 
-  it("still names the municipality for a remote municipality club", () => {
+  it("still names the municipality for an online municipality club", () => {
     const online = {
       ...node("muni-1", "Espoo", "municipality"),
       parent: null,
@@ -80,31 +81,41 @@ describe("productWhereLine", () => {
       productWhereLine(
         product({
           productType: "municipality_club",
-          isRemote: true,
+          deliveryMode: "online",
           location: online,
         }),
         "en",
-        ONLINE,
+        LABELS,
       ),
     ).toBe("Online · Espoo");
   });
 
-  it("names the municipality of a remote muni club anchored at a site", () => {
+  it("names the municipality of an online muni club anchored at a site", () => {
     expect(
       productWhereLine(
         product({
           productType: "municipality_club",
-          isRemote: true,
+          deliveryMode: "online",
           location: tapiola,
         }),
         "en",
-        ONLINE,
+        LABELS,
       ),
     ).toBe("Online · Espoo");
   });
 
+  it("names a hybrid product's site and then says it is hybrid", () => {
+    expect(
+      productWhereLine(
+        product({ deliveryMode: "hybrid", location: tapiola }),
+        "en",
+        LABELS,
+      ),
+    ).toBe("Tapiolan koulu · Espoo · Hybrid");
+  });
+
   it("has nothing to say for an in-person product with no location", () => {
-    expect(productWhereLine(product({}), "en", ONLINE)).toBeNull();
+    expect(productWhereLine(product({}), "en", LABELS)).toBeNull();
   });
 
   it("renders the viewer's name for a municipality that has one", () => {
@@ -114,10 +125,10 @@ describe("productWhereLine", () => {
         sv: "Helsingfors",
       }),
     };
-    expect(productWhereLine(product({ location: site }), "sv", ONLINE)).toBe(
+    expect(productWhereLine(product({ location: site }), "sv", LABELS)).toBe(
       "Nordsjö skola · Helsingfors",
     );
-    expect(productWhereLine(product({ location: site }), "fi", ONLINE)).toBe(
+    expect(productWhereLine(product({ location: site }), "fi", LABELS)).toBe(
       "Nordsjö skola · Helsinki",
     );
   });
@@ -161,5 +172,25 @@ describe("product name search", () => {
     expect(
       rows.filter((row) => matchesProductSearch(row, needle)).map((r) => r.id),
     ).toEqual(["a"]);
+  });
+
+  describe("by product ID", () => {
+    const ID = "8e624b5f-d4bf-45e0-84d0-0c7613cbac29";
+    const byId = [
+      { id: ID, product_translations: [{ name: "Roblox Club" }] },
+      // Named with the very ID, which must not make it a match.
+      { id: "0b7c1f0e-2a51-4d8e-9a43-5f1c2d3e4b5a", product_translations: [{ name: `Copy of ${ID}` }] },
+    ];
+
+    it("finds exactly the product with that ID, not one named with it", () => {
+      expect(filterProductsBySearch(byId, ` ${ID.toUpperCase()} `)).toEqual([
+        byId[0],
+      ]);
+    });
+
+    it("leaves name search unchanged for text that is not a whole ID", () => {
+      expect(filterProductsBySearch(byId, "roblox")).toEqual([byId[0]]);
+      expect(filterProductsBySearch(byId, ID.slice(0, 8))).toEqual([byId[1]]);
+    });
   });
 });

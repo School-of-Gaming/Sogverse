@@ -12,8 +12,12 @@ import { getEmailTranslator } from "@/lib/email-templates/translator";
 import { createEmailVerificationToken } from "@/lib/email-verification";
 import { utmMetadataForConsent } from "@/lib/utm";
 import { parseConsentCookieHeader } from "@/lib/consent";
-import { reportMetaConversion } from "@/lib/meta-conversions.server";
-import { signUpProductFor } from "@/lib/meta-sign-up-product.server";
+import { reportAdConversion } from "@/lib/ad-conversions.server";
+import { signUpProductFor } from "@/lib/sign-up-product.server";
+import {
+  resolveSignUpIntent,
+  signUpIntentColumns,
+} from "@/lib/sign-up-intent.server";
 import { getOrigin } from "@/lib/url";
 import {
   REGISTER_WEAK_PASSWORD,
@@ -97,11 +101,18 @@ export const POST = defineRoute({
       utm,
     );
 
+    // Which of our pages the parent set out to reach — a product, a
+    // municipality club, a live landing page — decided by the row and stored
+    // as its kind and id. Not gated on the marketing cookie: it is first-party,
+    // and it is not attribution from a link. Never throws; no intent is `null`.
+    const signUpIntent = await resolveSignUpIntent(redirect);
+
     const admin = createAdminClient();
 
     // The metadata shape is exactly what the browser `signUp()` sent before, and
     // it has to stay that way: `handle_new_user` reads `first_name`,
-    // `last_name` and the five `utm_*` keys out of it to build the profile row.
+    // `last_name`, the five `utm_*` keys and the two `signup_intent_*` keys out
+    // of it to build the profile row.
     // `display_name` is not read by the trigger — it is the label the Supabase
     // Auth dashboard shows for the user — and `role` is not read either, since
     // the trigger hardcodes `customer`. Both are kept because the dashboard and
@@ -126,6 +137,8 @@ export const POST = defineRoute({
           // null. The trigger re-sanitises whatever arrives, so a junk value
           // costs this registration nothing.
           ...utmMetadata,
+          // Both or neither; the trigger re-checks the shape.
+          ...signUpIntentColumns(signUpIntent),
         },
       });
 
@@ -194,20 +207,32 @@ export const POST = defineRoute({
     // Accept-Language on STRIPE'S request to English. (`register_gedu` already
     // persists the educator's locale; this is the parent half of the same
     // decision.)
-    const profileExtras: { home_location_id?: string; locale?: string } = {};
+    //
+    // THE MARKETING ANSWER RIDES ALONG. `registration_marketing_consent` is the
+    // write-once record of what the sign-up form was told about School of
+    // Gaming's own mailing list; the current answer lives in Klaviyo, which the
+    // parent sync sends this to. The column carries no Data API write grant,
+    // so only this service-role write can set it. Written even when they
+    // declined — false is "asked and said no", NULL is "never asked" — and an
+    // absent field is read as a decline for the same reason the form always
+    // sends one: see the contract. Losing it under-markets, which is the safe
+    // direction to fail in, so it shares the extras' never-fatal handling.
+    const profileExtras: {
+      home_location_id?: string;
+      locale?: string;
+      registration_marketing_consent: boolean;
+    } = { registration_marketing_consent: marketingConsent ?? false };
     if (homeLocationId) profileExtras.home_location_id = homeLocationId;
     if (requestedLocale) profileExtras.locale = requestedLocale;
-    if (Object.keys(profileExtras).length > 0) {
-      const { error: extrasError } = await admin
-        .from("profiles")
-        .update(profileExtras)
-        .eq("id", userId);
-      if (extrasError) {
-        console.error(
-          "[auth/register] could not save the profile extras",
-          extrasError,
-        );
-      }
+    const { error: extrasError } = await admin
+      .from("profiles")
+      .update(profileExtras)
+      .eq("id", userId);
+    if (extrasError) {
+      console.error(
+        "[auth/register] could not save the profile extras",
+        extrasError,
+      );
     }
 
     // Locale for the mail: what the form was being read in, else what the
@@ -250,67 +275,14 @@ export const POST = defineRoute({
       console.error("[auth/register] welcome email failed", error);
     }
 
-    // The marketing answer, and the one write in this handler that a *client*
-    // can never make: `marketing_consents` carries no Data API write grant, and
-    // `set_marketing_consent` refuses the `registration` source precisely so
-    // that this provenance can only be claimed from here, with the service-role
-    // client, on the account this request has just created (see
-    // `supabase/schema/functions/set_marketing_consent.sql`).
-    //
-    // AFTER THE MAIL, deliberately, as the first of the two consent writes that
-    // end this handler. Neither has a user-visible consequence if it fails, so
-    // both go after everything that does — nothing above them can be delayed
-    // or broken by a consent write, and the parent's account, their profile
-    // extras and their welcome link are all already settled by the time they
-    // run.
-    //
-    // WRITTEN EVEN WHEN THEY DECLINED. An absent row means "never asked", a
-    // `granted = false` row means "asked and said no", and this form asked — so
-    // recording the refusal is what makes the settings card's later read a
-    // definite answer rather than a shrug. An absent field is read as a decline
-    // for the same reason the form always sends one: see the contract.
-    //
-    // NEVER FATAL, on the same reasoning as the home-location write above and
-    // then some: losing an opt-in under-markets, which is the safe direction to
-    // fail in, and there is nothing here worth destroying a working account
-    // over.
-    //
-    // ONE RPC, AND THAT IS THE POINT. The state row and its event row are
-    // written by `record_registration_marketing_consent` in a single
-    // transaction. Two PostgREST calls — an upsert then an insert — would be
-    // two transactions: a failed second one leaves
-    // `marketing_consents` asserting an answer that `marketing_consent_events`
-    // could not corroborate, which is the exact state the event log exists to
-    // rule out. On the one consent whose whole value is provable provenance, an
-    // opt-in nobody can evidence is worse than an opt-in nobody recorded.
-    //
-    // The function is service-role-only and hardcodes both the consent type and
-    // the `registration` source, so this route cannot claim that provenance for
-    // anything but our own mailing list, and nothing a client can reach can
-    // claim it at all.
-    //
-    // WRITTEN EVEN WHEN THEY DECLINED, and the function agrees: an absent row
-    // means "never asked", a `granted = false` row means "asked and said no",
-    // and a first explicit no is a change that earns its event.
-    try {
-      const { error: consentError } = await admin.rpc(
-        "record_registration_marketing_consent",
-        { p_customer_id: userId, p_granted: marketingConsent ?? false },
-      );
-      if (consentError) throw consentError;
-    } catch (error) {
-      console.error("[auth/register] marketing consent write failed", error);
-    }
-
     // What the account was opened under: the Terms and Conditions and the
     // guardian declaration, each recorded against the version that is current
     // right now. The contract already refused the request unless the
     // box was ticked, so reaching this line means the agreement happened; this
     // write is what makes it provable, and which TEXT it was given for.
     //
-    // Beside the marketing write and after everything that must succeed, on the
-    // same reasoning: nothing above it may be delayed or broken by a consent
-    // write. It is NOT fatal for the same reason either — the account exists,
+    // After everything that must succeed: nothing above it may be delayed or
+    // broken by a consent write. It is NOT fatal for the same reason either — the account exists,
     // the parent has been mailed, and destroying a working account here would
     // cost them more than the missing row costs us.
     //
@@ -334,13 +306,13 @@ export const POST = defineRoute({
 
     const response = NextResponse.json({ userId });
 
-    // The account-creation conversion, reported from here to Meta rather than
-    // by a script on the next page the browser loads. This handler is the only
+    // The account-creation conversion, reported from here to the advertising
+    // platforms rather than by a script on the next page the browser loads. This handler is the only
     // place that knows an account was created, exactly once — the marker cookie
     // this replaced had to survive a redirect and a page load, and was lost or
     // double-counted whenever it did not.
     //
-    // AFTER the response, so a Meta round trip cannot delay or fail a
+    // AFTER the response, so a platform's round trip cannot delay or fail a
     // registration that has already succeeded. The helper decides for itself
     // whether to send anything: it refuses unless this request's own consent
     // cookie says marketing is allowed, so an un-consented registration reports
@@ -353,7 +325,7 @@ export const POST = defineRoute({
     // is an ordinary customer, and a gamer cannot reach a registration form at
     // all.
     after(async () =>
-      reportMetaConversion(
+      reportAdConversion(
         request,
         {
           event: "account_created",

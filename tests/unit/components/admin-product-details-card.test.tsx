@@ -115,6 +115,20 @@ describe("the admin product details card", () => {
     expect(valueOf("Created on").textContent).toBe("1 Dec 2025");
   });
 
+  it("names every marketing ask the product carries, School of Gaming's own included", () => {
+    renderPage({
+      ...syntheticConsumerProduct(),
+      product_marketing_consents: [
+        { consent_type: "lynx_educate" },
+        { consent_type: "school_of_gaming" },
+      ],
+    });
+
+    const value = valueOf("Marketing asks").textContent;
+    expect(value).toContain("School of Gaming");
+    expect(value).toContain("Lynx Educate");
+  });
+
   it("dates the creation in the viewer's zone, not UTC", () => {
     // 23:30 UTC on 1 December is already 2 December in Helsinki.
     renderPage({
@@ -136,8 +150,10 @@ describe("the admin product details card", () => {
   it("states the shop's four facts in the family's words", () => {
     renderPage(syntheticConsumerProduct());
 
-    // A remote product with no place behind it: "Format", and "Online".
-    expect(valueOf("Format").textContent).toBe("Online");
+    // An online product with no place behind it: the delivery row says so,
+    // and there is no "Where" row to repeat it.
+    expect(valueOf("Delivery").textContent).toBe("Online");
+    expect(screen.queryByText("Where")).toBeNull();
     // A gamers-only product: the age range alone.
     expect(valueOf("Age range").textContent).toBe("Ages 7–12");
     expect(valueOf("Spoken language").textContent).toContain("EN");

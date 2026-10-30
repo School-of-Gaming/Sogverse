@@ -1,5 +1,6 @@
 import type {
   AppSupabaseClient,
+  DeliveryMode,
   ProductType,
   ProductTopic,
   ProductTag,
@@ -12,6 +13,7 @@ import type {
 import type { QueryData } from "@supabase/supabase-js";
 import { z } from "zod";
 import { escapeLikePattern } from "@/lib/search";
+import { productIdFromSearch } from "@/lib/products/product-id-search";
 import {
   keysetPage,
   quoteFilterValue,
@@ -96,7 +98,7 @@ function buildVisibleProductsQuery<Select extends string>(
  * (`buildProductDetailQuery`) and keeps `product_translations(*)`.
  */
 const BROWSE_SELECT =
-  "id, product_type, billing_mode, topic, tag, min_age, max_age, for_gamers, for_parents, spoken_language_code, image_path, is_remote, seat_count, waitlist_enabled, registration_opens_at, start_date, end_date, timezone, product_translations(locale, name, short_description), product_prices(currency, price_cents), schedule_slots(weekday, start_time, duration_minutes), locations(id, name, name_i18n, type, parent:parent_id(id, name, name_i18n, type))";
+  "id, product_type, billing_mode, topic, tag, min_age, max_age, for_gamers, for_parents, spoken_language_code, image_path, delivery_mode, seat_count, waitlist_enabled, registration_opens_at, start_date, end_date, timezone, product_translations(locale, name, short_description), product_prices(currency, price_cents), schedule_slots(weekday, start_time, duration_minutes), locations(id, name, name_i18n, type, parent:parent_id(id, name, name_i18n, type))";
 
 /**
  * The same listing read by a caller that wants only *where* each product is:
@@ -348,10 +350,10 @@ export interface AdminProductListFilters {
   /** One product type, or null for every type. */
   type: ProductType | null;
   /**
-   * What the admin typed, trimmed; empty is "no search". Matched as a
-   * case-insensitive substring of any one of the product's names, in every
-   * locale — an admin may have typed the English name while reading the list
-   * in Finnish.
+   * What the admin typed, trimmed; empty is "no search". A whole product ID
+   * finds that product alone; anything else is matched as a case-insensitive
+   * substring of any one of the product's names, in every locale — an admin
+   * may have typed the English name while reading the list in Finnish.
    */
   search: string;
   /** A weekday the product must be scheduled on (0 = Monday), or null. */
@@ -515,12 +517,12 @@ export type CreateProductInput = {
    */
   material_url: string | null;
   location_id: string | null;
-  is_remote: boolean;
+  delivery_mode: DeliveryMode;
   /**
    * How an online product's sessions are joined: `sogverse` (the Sogverse
    * voice room), `external` (a meeting on another service at
    * `external_voice_url`), or `none` (no room; families read the join
-   * instructions each translation carries). An in-person product is always
+   * instructions each translation carries). An in-person or hybrid product is always
    * `sogverse` with no link — the CHECKs on `products` refuse anything else —
    * and the RPC refuses mode `none` without instructions in any translation,
    * or instructions under any other mode.
@@ -646,7 +648,7 @@ export type UpdateProductInput = {
    */
   material_url: string | null;
   location_id: string | null;
-  is_remote: boolean;
+  delivery_mode: DeliveryMode;
   /** How the sessions are joined — see CreateProductInput. Required on the
    *  update half too, and that is the load-bearing one: the RPC assigns both
    *  on every call, so an omission resets the product to a Sogverse room. */
@@ -727,11 +729,16 @@ export class ProductsService {
       query = query.eq("spoken_language_code", filters.spokenLanguage);
     }
 
+    // A search that is a whole product ID finds that product alone, names
+    // unconsulted; the browser picker asks the same function, so the two agree.
     // PostgREST reads `*` in an ilike pattern as a wildcard before SQL sees it,
     // and there is no escaping it — so it is dropped rather than left to match
     // every name. No product is named with one.
+    const searchedId = productIdFromSearch(filters.search);
     const needle = filters.search.replaceAll("*", "").trim();
-    if (needle !== "") {
+    if (searchedId !== null) {
+      query = query.eq("id", searchedId);
+    } else if (needle !== "") {
       query = query
         .ilike("name_match.name", `%${escapeLikePattern(needle)}%`)
         .not("name_match", "is", null);

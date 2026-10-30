@@ -1,5 +1,6 @@
 import { describe, it, expect, vi, beforeEach } from "vitest";
 import { SITE_ORIGIN } from "../../mocks/site-origin";
+import { advertisedProductDetails } from "@/lib/marketing-events";
 
 // Parent self-registration: the second-highest-value public route on the
 // surface, and the twin of the educator one. It creates an account with no
@@ -8,10 +9,9 @@ import { SITE_ORIGIN } from "../../mocks/site-origin";
 // the account it creates is never privileged, the metadata reaching the profile
 // trigger is exactly what the browser used to send, the welcome mail is bound
 // to the address Supabase actually stored, and a send that fails costs the
-// registration nothing. It also covers the one write here that no client can
-// ever make: the marketing consent stamped `source: 'registration'`, which the
-// self-service RPC refuses precisely so that this route's service-role client
-// is the whole of that provenance.
+// registration nothing. It also covers the write-once answers only this
+// route's service-role client can make: the registration's marketing answer
+// and the signup intent the parent set out from.
 
 // The verification token is an HMAC over PIN_COOKIE_SECRET, read lazily at mint
 // time — set before the route is imported.
@@ -30,7 +30,6 @@ vi.mock("@/lib/auth", () => ({
 const mockCreateUser = vi.fn();
 const mockDeleteUser = vi.fn();
 const mockProfileUpdate = vi.fn();
-const mockConsentRpc = vi.fn();
 const mockAccountConsentRpc = vi.fn();
 
 vi.mock("@/lib/supabase/admin", () => ({
@@ -41,11 +40,10 @@ vi.mock("@/lib/supabase/admin", () => ({
         deleteUser: (...args: unknown[]) => mockDeleteUser(...args),
       },
     },
-    // One table and no more: the profile, for the optional home location and
-    // the locale. The marketing-consent pair used to be reachable here too and
-    // deliberately is not — those two writes are one RPC,
-    // so a `from("marketing_consents")` reappearing is the non-atomic pair
-    // coming back and this mock fails on it.
+    // One table and no more: the profile, for the optional home location, the
+    // locale and the registration's marketing answer. School of Gaming's own
+    // consent lives in Klaviyo now, so a `from("marketing_consents")` here
+    // fails the mock.
     from: (table: string) => {
       if (table === "profiles") {
         return {
@@ -58,12 +56,9 @@ vi.mock("@/lib/supabase/admin", () => ({
       throw new Error(`Unexpected table in admin mock: ${table}`);
     },
     rpc: (fn: string, args: Record<string, unknown>) => {
-      if (fn === "record_registration_marketing_consent") {
-        return mockConsentRpc(args);
-      }
       // The account-level record of what this account was opened under.
-      // Service-role only for the same reason the marketing writer is: it names
-      // its subject in an argument because no session exists yet.
+      // Service-role only: it names its subject in an argument because no
+      // session exists yet.
       if (fn === "record_account_consents") {
         return mockAccountConsentRpc(args);
       }
@@ -82,30 +77,44 @@ vi.mock("@/lib/brevo", () => ({
 // suite is about is WHETHER the route reports and with what — the decision to
 // send, the consent gate and the request's own headers are the reporter's
 // subject, and it has a suite of its own.
-const mockReportMetaConversion = vi.fn();
-vi.mock("@/lib/meta-conversions.server", () => ({
-  reportMetaConversion: (...args: unknown[]) => mockReportMetaConversion(...args),
+const mockReportAdConversion = vi.fn();
+vi.mock("@/lib/ad-conversions.server", () => ({
+  reportAdConversion: (...args: unknown[]) => mockReportAdConversion(...args),
 }));
 
 // The product a sign-up started from is resolved by its own module, unit-tested
 // beside it; here only what the route hands it and does with its answer.
 const mockSignUpProductFor = vi.fn();
-vi.mock("@/lib/meta-sign-up-product.server", () => ({
+vi.mock("@/lib/sign-up-product.server", () => ({
   signUpProductFor: (...args: unknown[]) => mockSignUpProductFor(...args),
 }));
 
+// The signup intent is resolved by its own module, unit-tested beside it; here
+// only what the route hands it and does with its answer. The column shaping is
+// the real one.
+const mockResolveSignUpIntent = vi.fn();
+vi.mock("@/lib/sign-up-intent.server", async (importOriginal) => {
+  const actual = await importOriginal<typeof import("@/lib/sign-up-intent.server")>();
+  return {
+    ...actual,
+    resolveSignUpIntent: (...args: unknown[]) => mockResolveSignUpIntent(...args),
+  };
+});
+
+const LANDING_PAGE_ID = "3d2c1b0a-9f8e-4d7c-8b6a-5f4e3d2c1b0a";
+
 /** The advertised product a sign-up started from, as the resolver answers it. */
-const SIGN_UP_PRODUCT = {
-  content_ids: ["0f8b6c1e-3c2a-4d5e-9f60-7a8b9c0d1e2f"],
-  content_type: "product",
-  content_name: "Roblox Studio Club",
-  content_category: "roblox_studio",
-  value: 49,
-  currency: "EUR",
-};
+const SIGN_UP_PRODUCT_ID = "0f8b6c1e-3c2a-4d5e-9f60-7a8b9c0d1e2f";
+const SIGN_UP_PRODUCT = advertisedProductDetails({
+  id: SIGN_UP_PRODUCT_ID,
+  topic: "roblox_studio",
+  billing_mode: "paid",
+  product_translations: [{ locale: "en", name: "Roblox Studio Club" }],
+  product_prices: [{ currency: "eur", price_cents: 4900 }],
+});
 
 // The report is handed to the platform's post-response hook, so the parent's
-// registration never waits on Meta. Capture the deferred work instead of letting
+// registration never waits on an ad platform. Capture the deferred work instead of letting
 // the hook run it — outside a request scope there is nothing to keep alive.
 const deferred: unknown[] = [];
 vi.mock("next/server", async (importOriginal) => {
@@ -214,7 +223,7 @@ describe("POST /api/auth/register", () => {
       error: null,
     });
     mockProfileUpdate.mockResolvedValue({ error: null });
-    mockConsentRpc.mockResolvedValue({ error: null });
+    mockResolveSignUpIntent.mockResolvedValue(null);
     mockAccountConsentRpc.mockResolvedValue({ data: 2, error: null });
     mockSendTransactionalEmail.mockResolvedValue({ messageId: "msg-1" });
   });
@@ -321,12 +330,12 @@ describe("POST /api/auth/register", () => {
     expect(response.status).toBe(200);
     // Handed to the post-response hook, not awaited inside the answer.
     expect(deferred).toHaveLength(1);
-    expect(mockReportMetaConversion).not.toHaveBeenCalled();
+    expect(mockReportAdConversion).not.toHaveBeenCalled();
     expect(mockSignUpProductFor).not.toHaveBeenCalled();
     await runDeferred();
-    expect(mockReportMetaConversion).toHaveBeenCalledTimes(1);
+    expect(mockReportAdConversion).toHaveBeenCalledTimes(1);
     const [request, conversion, account] =
-      mockReportMetaConversion.mock.calls[0];
+      mockReportAdConversion.mock.calls[0];
     expect(request).toBeInstanceOf(Request);
     // The id and address of the account this request just created, the address
     // as GoTrue stored it.
@@ -349,7 +358,7 @@ describe("POST /api/auth/register", () => {
   // and reports whatever product it answers; the reporter drops the price.
   it("names the product page the sign-up started from", async () => {
     mockSignUpProductFor.mockResolvedValue(SIGN_UP_PRODUCT);
-    const redirect = `/fi/kauppa/${SIGN_UP_PRODUCT.content_ids[0]}`;
+    const redirect = `/fi/kauppa/${SIGN_UP_PRODUCT_ID}`;
 
     const response = await POST(
       registerRequestWithConsent(
@@ -361,7 +370,7 @@ describe("POST /api/auth/register", () => {
 
     expect(response.status).toBe(200);
     expect(mockSignUpProductFor).toHaveBeenCalledWith(redirect);
-    const [, conversion] = mockReportMetaConversion.mock.calls[0];
+    const [, conversion] = mockReportAdConversion.mock.calls[0];
     expect(conversion).toEqual({
       event: "account_created",
       product: SIGN_UP_PRODUCT,
@@ -410,7 +419,7 @@ describe("POST /api/auth/register", () => {
     );
 
     expect(response.status).toBe(409);
-    expect(mockReportMetaConversion).not.toHaveBeenCalled();
+    expect(mockReportAdConversion).not.toHaveBeenCalled();
     expect(deferred).toHaveLength(0);
   });
 
@@ -459,7 +468,11 @@ describe("POST /api/auth/register", () => {
 
     expect(response.status).toBe(200);
     expect(mockProfileUpdate).toHaveBeenCalledWith({
-      row: { home_location_id: LOCATION_ID, locale: "en" },
+      row: {
+        home_location_id: LOCATION_ID,
+        locale: "en",
+        registration_marketing_consent: false,
+      },
       column: "id",
       value: NEW_USER_ID,
     });
@@ -626,71 +639,41 @@ describe("POST /api/auth/register", () => {
     expect(metadata).not.toHaveProperty("utm_term");
   });
 
-  // -- Marketing consent --
+  // -- The registration's marketing answer --
   //
-  // The registration checkbox is the one place `source: 'registration'` can be
-  // written from: the RPC every signed-in surface uses refuses that value, so
-  // the service-role call below is the whole of its provenance.
+  // School of Gaming's own mailing-list consent lives in Klaviyo; what Sogverse
+  // keeps is the write-once record of what this form was told, on the profile,
+  // written by this route's service-role client alone.
 
-  it("records a ticked opt-in through the one RPC that carries the registration provenance", async () => {
+  it("records a ticked opt-in on the new profile", async () => {
     const response = await POST(
       registerRequest({ ...validBody, marketingConsent: true }),
     );
 
     expect(response.status).toBe(200);
-    expect(mockConsentRpc).toHaveBeenCalledTimes(1);
-    // The route names the customer and the answer, and nothing else. Neither
-    // the consent type nor the `registration` source is a parameter — the RPC
-    // hardcodes both, so this route cannot stamp that provenance onto the
-    // partner's list and nothing a client can reach can claim it at all.
-    expect(mockConsentRpc).toHaveBeenCalledWith({
-      p_customer_id: NEW_USER_ID,
-      p_granted: true,
+    expect(mockProfileUpdate).toHaveBeenCalledTimes(1);
+    expect(mockProfileUpdate.mock.calls[0][0]).toEqual({
+      row: { locale: "en", registration_marketing_consent: true },
+      column: "id",
+      value: NEW_USER_ID,
     });
   });
 
-  // **The state row and its event row are one transaction now.** They used to
-  // be two PostgREST calls, and two calls are two transactions: a failed second
-  // one left `marketing_consents` asserting an answer `marketing_consent_events`
-  // could not corroborate. The admin mock throws on any `from("marketing_*")`,
-  // so a regression back to the pair fails loudly rather than by an assertion
-  // count — but pin the single call here too, because that is the property.
-  it("makes exactly one write for the pair, never two", async () => {
-    await POST(registerRequest({ ...validBody, marketingConsent: true }));
-
-    expect(mockConsentRpc).toHaveBeenCalledTimes(1);
-  });
-
-  // The write is last on purpose — it is the least important thing this route
-  // does and the only one with no user-visible consequence if it fails, so
-  // nothing above it can be delayed or broken by it. Pinned here because the
-  // ordering is a decision rather than an accident of where the code was typed.
-  it("writes the consent only after the welcome mail has gone out", async () => {
-    await POST(registerRequest({ ...validBody, marketingConsent: true }));
-
-    expect(mockConsentRpc.mock.invocationCallOrder[0]).toBeGreaterThan(
-      mockSendTransactionalEmail.mock.invocationCallOrder[0],
-    );
-  });
-
-  // An absent row would mean "never asked"; this form asked, so a parent who
-  // left the box alone gets a recorded `false` — which is what makes their
-  // settings page show a definite answer rather than a shrug.
+  // NULL would mean "never asked"; this form asked, so a parent who left the
+  // box alone gets a recorded `false`.
   it("records a decline when the body carries no answer at all", async () => {
     const response = await POST(registerRequest(validBody));
 
     expect(response.status).toBe(200);
-    expect(mockConsentRpc).toHaveBeenCalledWith({
-      p_customer_id: NEW_USER_ID,
-      p_granted: false,
+    expect(mockProfileUpdate.mock.calls[0][0].row).toMatchObject({
+      registration_marketing_consent: false,
     });
   });
 
   // Losing an opt-in under-markets, which is the safe direction to fail in.
-  // Destroying a working account over one is not. There is no half-written
-  // state to check for any more: the RPC either committed both rows or neither.
-  it("still registers when the consent write is refused", async () => {
-    mockConsentRpc.mockResolvedValue({
+  // Destroying a working account over one is not.
+  it("still registers when the profile write is refused", async () => {
+    mockProfileUpdate.mockResolvedValue({
       error: { code: "42501", message: "permission denied" },
     });
     const spy = vi.spyOn(console, "error").mockImplementation(() => undefined);
@@ -704,6 +687,57 @@ describe("POST /api/auth/register", () => {
     expect(mockDeleteUser).not.toHaveBeenCalled();
     expect(mockSendTransactionalEmail).toHaveBeenCalledTimes(1);
     spy.mockRestore();
+  });
+
+  // -- The signup intent --
+  //
+  // Which of our pages the parent set out to reach, as the resolver decides it
+  // from the row — handed to `handle_new_user` in the metadata, exactly as the
+  // utm_* keys are, so the column is written once at creation.
+
+  it("hands the redirect to the resolver and its answer to the profile trigger", async () => {
+    mockResolveSignUpIntent.mockResolvedValue({
+      kind: "landing_page",
+      id: LANDING_PAGE_ID,
+    });
+    const redirect = "/fi/tutustu/minecraft-kerho";
+
+    const response = await POST(registerRequest({ ...validBody, redirect }));
+
+    expect(response.status).toBe(200);
+    expect(mockResolveSignUpIntent).toHaveBeenCalledWith(redirect);
+    expect(signupMetadata()).toMatchObject({
+      signup_intent_kind: "landing_page",
+      signup_intent_id: LANDING_PAGE_ID,
+    });
+  });
+
+  // First-party, so unlike the utm_* keys it is not gated on the marketing
+  // cookie: a visitor who refused marketing still has an intent recorded.
+  it("records the intent whatever the consent cookie says", async () => {
+    mockResolveSignUpIntent.mockResolvedValue({
+      kind: "product",
+      id: SIGN_UP_PRODUCT_ID,
+    });
+
+    await POST(
+      registerRequestWithConsent(
+        { analytics: false, marketing: false },
+        { ...validBody, redirect: `/en/shop/${SIGN_UP_PRODUCT_ID}` },
+      ),
+    );
+
+    expect(signupMetadata()).toMatchObject({
+      signup_intent_kind: "product",
+      signup_intent_id: SIGN_UP_PRODUCT_ID,
+    });
+  });
+
+  it("sends neither intent key when the resolver names nothing", async () => {
+    await POST(registerRequest({ ...validBody, redirect: "/en/somewhere" }));
+
+    expect(signupMetadata()).not.toHaveProperty("signup_intent_kind");
+    expect(signupMetadata()).not.toHaveProperty("signup_intent_id");
   });
 
   // -- The acknowledgement the account is opened under --
@@ -754,18 +788,19 @@ describe("POST /api/auth/register", () => {
     });
   });
 
-  // After everything that must succeed, exactly as the marketing write is:
-  // nothing above it may be delayed or broken by a consent write. Pinned here
-  // because the ordering is a decision rather than an accident of where the
-  // code was typed.
-  it("writes the acknowledgement after the welcome mail and after the marketing answer", async () => {
+  // After everything that must succeed: nothing above it may be delayed or
+  // broken by a consent write. It is also what files the new parent for the
+  // Klaviyo sync, so the profile it reads already carries the extras. Pinned
+  // here because the ordering is a decision rather than an accident of where
+  // the code was typed.
+  it("writes the acknowledgement after the welcome mail and after the profile extras", async () => {
     await POST(registerRequest(validBody));
 
     expect(mockAccountConsentRpc.mock.invocationCallOrder[0]).toBeGreaterThan(
       mockSendTransactionalEmail.mock.invocationCallOrder[0],
     );
     expect(mockAccountConsentRpc.mock.invocationCallOrder[0]).toBeGreaterThan(
-      mockConsentRpc.mock.invocationCallOrder[0],
+      mockProfileUpdate.mock.invocationCallOrder[0],
     );
   });
 
@@ -869,18 +904,22 @@ describe("POST /api/auth/register", () => {
 
     expect(response.status).toBe(200);
     expect(mockProfileUpdate).toHaveBeenCalledWith({
-      row: { locale: "fi" },
+      row: { locale: "fi", registration_marketing_consent: false },
       column: "id",
       value: NEW_USER_ID,
     });
   });
 
-  it("writes no profile extras when neither locale nor location was sent", async () => {
+  it("writes only the marketing answer when neither locale nor location was sent", async () => {
     const { locale: _omitted, ...noLocale } = validBody;
     const response = await POST(registerRequest(noLocale));
 
     expect(response.status).toBe(200);
-    expect(mockProfileUpdate).not.toHaveBeenCalled();
+    expect(mockProfileUpdate).toHaveBeenCalledWith({
+      row: { registration_marketing_consent: false },
+      column: "id",
+      value: NEW_USER_ID,
+    });
   });
 
   it("renders the mail in the locale the form was being read in", async () => {

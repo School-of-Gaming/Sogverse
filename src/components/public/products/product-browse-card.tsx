@@ -3,7 +3,7 @@
 import { useLocale, useTranslations } from "next-intl";
 import { useNow, useTimezone } from "@/providers";
 import { resolveLocale } from "@/lib/constants/locales";
-import { resolveTranslation } from "@/lib/i18n/resolve-translation";
+import { resolveRequiredTranslation } from "@/lib/i18n/resolve-translation";
 import { useTopicLabel } from "@/lib/products/use-topic-label";
 import { catalogueImageSrc } from "@/lib/images/catalogue-image-url";
 import { DEFAULT_CURRENCY } from "@/lib/constants/currency";
@@ -107,7 +107,7 @@ export function useBrowseCardViewProps(
   const topicLabel = useTopicLabel();
   const currency = DEFAULT_CURRENCY;
 
-  const tr = resolveTranslation(
+  const tr = resolveRequiredTranslation(
     product.product_translations,
     uiLocale,
   );
@@ -179,8 +179,8 @@ export function useBrowseCardViewProps(
   );
 
   return {
-    name: tr?.name ?? "",
-    description: tr?.short_description ?? null,
+    name: tr.name,
+    description: tr.short_description,
     // The shared row-level resolution owns the empty-string-means-no-image
     // rule; null paints the wordmark banner.
     imageSrc: catalogueImageSrc("product", product.image_path),
@@ -206,9 +206,9 @@ export function useBrowseCardViewProps(
   };
 }
 
-// Card stays compact: site name only (no parent) for in-person, city
-// name for online municipality clubs, and a generic "Online" label for
-// online non-muni products. The online row shows even though it's
+// Card stays compact: site name only (no parent) for in-person, the site
+// name and "Online" beside it for hybrid, city name for online municipality
+// clubs, and a generic "Online" label for online non-muni products. The online row shows even though it's
 // content-light — the parallel structure keeps every card visually
 // stable across formats so the eye lands on the same meta line.
 //
@@ -224,7 +224,9 @@ function resolveLocationLine(
   const loc = formatProductLocation(product, locale);
   if (!loc) return { kind: "online", label: onlineLabel };
   if (loc.kind === "site") {
-    return { kind: "in_person", label: loc.site };
+    return product.delivery_mode === "hybrid"
+      ? { kind: "hybrid", label: loc.site, onlineLabel }
+      : { kind: "in_person", label: loc.site };
   }
   if (municipalityScoped) return { kind: "online", label: onlineLabel };
   return { kind: "online_muni", label: loc.name };

@@ -43,7 +43,7 @@ export function buildTraineeWorkspaceFixture(now: Date): {
     return {
       participant_id: member.participant_id,
       first_name: member.first_name,
-      signed_up_at: member.group_joined_at ?? data.product.start_date ?? "",
+      signed_up_at: member.group_joined_at,
       group_joined_at: member.group_joined_at,
       age: birth === null ? null : computeAge(birth, timeZone),
       gender: member.gender,
@@ -128,7 +128,7 @@ export function buildTraineeWorkspaceFixture(now: Date): {
       timezone: data.product.timezone,
       start_date: data.product.start_date,
       end_date: data.product.end_date,
-      is_remote: data.product.is_remote,
+      delivery_mode: data.product.delivery_mode,
       voice_room_mode: data.product.voice_room_mode,
       external_voice_url: data.product.external_voice_url,
       material_url: club.materialUrl,

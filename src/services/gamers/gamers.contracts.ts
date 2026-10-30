@@ -1,6 +1,7 @@
 import { z } from "zod";
 import { Constants } from "@/types";
 import { DISPLAY_NAME_MIN, DISPLAY_NAME_MAX } from "@/lib/constants/account-limits";
+import { trimPersonName } from "@/lib/person-name-trim";
 import {
   GAMER_USERNAME_PATTERN,
   normalizeGamerUsername,
@@ -20,14 +21,18 @@ import { robloxUsernameValue } from "@/services/roblox/roblox.contracts";
 
 const firstName = z
   .string()
-  .trim()
-  .min(
-    DISPLAY_NAME_MIN,
-    `First name must be between ${DISPLAY_NAME_MIN} and ${DISPLAY_NAME_MAX} characters`,
-  )
-  .max(
-    DISPLAY_NAME_MAX,
-    `First name must be between ${DISPLAY_NAME_MIN} and ${DISPLAY_NAME_MAX} characters`,
+  .transform(trimPersonName)
+  .pipe(
+    z
+      .string()
+      .min(
+        DISPLAY_NAME_MIN,
+        `First name must be between ${DISPLAY_NAME_MIN} and ${DISPLAY_NAME_MAX} characters`,
+      )
+      .max(
+        DISPLAY_NAME_MAX,
+        `First name must be between ${DISPLAY_NAME_MIN} and ${DISPLAY_NAME_MAX} characters`,
+      ),
   );
 
 /**

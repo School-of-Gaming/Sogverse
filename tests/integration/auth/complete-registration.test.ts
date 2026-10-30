@@ -1,5 +1,6 @@
 import { describe, it, expect, vi, beforeEach } from "vitest";
 import { SITE_ORIGIN } from "../../mocks/site-origin";
+import { advertisedProductDetails } from "@/lib/marketing-events";
 import { NextResponse } from "next/server";
 
 // Finishing a parent registration that began with Google. The account exists
@@ -29,7 +30,6 @@ const mockProfileUpdate = vi.fn();
 /** The registration stamp: a conditional update that returns the rows it changed. */
 const mockStamp = vi.fn();
 const mockAccountConsentRpc = vi.fn();
-const mockMarketingConsentRpc = vi.fn();
 
 vi.mock("@/lib/supabase/admin", () => ({
   createAdminClient: () => ({
@@ -63,9 +63,6 @@ vi.mock("@/lib/supabase/admin", () => ({
     rpc: (fn: string, args: Record<string, unknown>) => {
       writes.push(fn);
       if (fn === "record_account_consents") return mockAccountConsentRpc(args);
-      if (fn === "record_registration_marketing_consent") {
-        return mockMarketingConsentRpc(args);
-      }
       throw new Error(`Unexpected rpc in admin mock: ${fn}`);
     },
   }),
@@ -77,27 +74,38 @@ vi.mock("@/lib/brevo", () => ({
     mockSendTransactionalEmail(...args),
 }));
 
-const mockReportMetaConversion = vi.fn();
-vi.mock("@/lib/meta-conversions.server", () => ({
-  reportMetaConversion: (...args: unknown[]) => mockReportMetaConversion(...args),
+const mockReportAdConversion = vi.fn();
+vi.mock("@/lib/ad-conversions.server", () => ({
+  reportAdConversion: (...args: unknown[]) => mockReportAdConversion(...args),
 }));
 
 // The product a sign-up started from is resolved by its own module, unit-tested
 // beside it; here only what the route hands it and does with its answer.
 const mockSignUpProductFor = vi.fn();
-vi.mock("@/lib/meta-sign-up-product.server", () => ({
+vi.mock("@/lib/sign-up-product.server", () => ({
   signUpProductFor: (...args: unknown[]) => mockSignUpProductFor(...args),
 }));
 
+// The signup intent is resolved by its own module, unit-tested beside it; here
+// only what the route hands it and writes from its answer.
+const mockResolveSignUpIntent = vi.fn();
+vi.mock("@/lib/sign-up-intent.server", async (importOriginal) => {
+  const actual = await importOriginal<typeof import("@/lib/sign-up-intent.server")>();
+  return {
+    ...actual,
+    resolveSignUpIntent: (...args: unknown[]) => mockResolveSignUpIntent(...args),
+  };
+});
+
 /** The advertised product a sign-up started from, as the resolver answers it. */
-const SIGN_UP_PRODUCT = {
-  content_ids: ["0f8b6c1e-3c2a-4d5e-9f60-7a8b9c0d1e2f"],
-  content_type: "product",
-  content_name: "Roblox Studio Club",
-  content_category: "roblox_studio",
-  value: 49,
-  currency: "EUR",
-};
+const SIGN_UP_PRODUCT_ID = "0f8b6c1e-3c2a-4d5e-9f60-7a8b9c0d1e2f";
+const SIGN_UP_PRODUCT = advertisedProductDetails({
+  id: SIGN_UP_PRODUCT_ID,
+  topic: "roblox_studio",
+  billing_mode: "paid",
+  product_translations: [{ locale: "en", name: "Roblox Studio Club" }],
+  product_prices: [{ currency: "eur", price_cents: 4900 }],
+});
 
 // The conversion is handed to the post-response hook; capture it instead.
 const deferred: unknown[] = [];
@@ -227,7 +235,7 @@ describe("POST /api/auth/complete-registration", () => {
     mockProfileUpdate.mockResolvedValue({ error: null });
     mockStamp.mockResolvedValue({ data: [{ id: USER_ID }], error: null });
     mockAccountConsentRpc.mockResolvedValue({ data: 1, error: null });
-    mockMarketingConsentRpc.mockResolvedValue({ error: null });
+    mockResolveSignUpIntent.mockResolvedValue(null);
     mockSendTransactionalEmail.mockResolvedValue({ messageId: "msg-1" });
   });
 
@@ -326,6 +334,7 @@ describe("POST /api/auth/complete-registration", () => {
       utm_campaign: "lynx-summer-a",
       utm_content: "hero",
       utm_term: "roblox club",
+      registration_marketing_consent: true,
     });
     expect(row).not.toHaveProperty("registration_completed_at");
 
@@ -340,29 +349,46 @@ describe("POST /api/auth/complete-registration", () => {
 
     // The consents are recorded before the stamp, and the stamp is the last
     // write the route makes.
-    expect(writes).toEqual([
-      "profile",
-      "record_account_consents",
-      "record_registration_marketing_consent",
-      "stamp",
-    ]);
+    expect(writes).toEqual(["profile", "record_account_consents", "stamp"]);
     expect(mockAccountConsentRpc).toHaveBeenCalledWith({
       p_customer_id: USER_ID,
       p_document_slugs: [...REGISTRATION_CONSENT_DOCUMENTS],
-    });
-    expect(mockMarketingConsentRpc).toHaveBeenCalledWith({
-      p_customer_id: USER_ID,
-      p_granted: true,
     });
   });
 
   it("records a marketing refusal when the box was left unticked", async () => {
     await POST(request({ ...validBody, marketingConsent: false }));
 
-    expect(mockMarketingConsentRpc).toHaveBeenCalledWith({
-      p_customer_id: USER_ID,
-      p_granted: false,
+    expect(profileRow()).toMatchObject({ registration_marketing_consent: false });
+  });
+
+  // -- The signup intent --
+  //
+  // A Google round trip carries no signup metadata, so the finish route writes
+  // the intent as columns, from the finish page's own redirect — and, being
+  // first-party, without asking the marketing cookie.
+
+  it("writes the intent the resolver names, whatever the consent cookie says", async () => {
+    mockResolveSignUpIntent.mockResolvedValue({
+      kind: "municipality_club",
+      id: SIGN_UP_PRODUCT_ID,
     });
+    const redirect = `/fi/koulut/helsinki/${SIGN_UP_PRODUCT_ID}`;
+
+    await POST(request({ ...validBody, redirect }, { marketing: false }));
+
+    expect(mockResolveSignUpIntent).toHaveBeenCalledWith(redirect);
+    expect(profileRow()).toMatchObject({
+      signup_intent_kind: "municipality_club",
+      signup_intent_id: SIGN_UP_PRODUCT_ID,
+    });
+  });
+
+  it("writes neither intent column when the resolver names nothing", async () => {
+    await POST(request(validBody));
+
+    expect(profileRow()).not.toHaveProperty("signup_intent_kind");
+    expect(profileRow()).not.toHaveProperty("signup_intent_id");
   });
 
   it("omits every attribution column without a marketing grant in the cookie", async () => {
@@ -446,17 +472,6 @@ describe("POST /api/auth/complete-registration", () => {
     expect(writes).toEqual(["profile"]);
   });
 
-  it("still completes when the marketing write fails", async () => {
-    mockMarketingConsentRpc.mockResolvedValue({
-      error: { code: "XX000", message: "boom" },
-    });
-
-    const response = await POST(request(validBody));
-
-    expect(response.status).toBe(200);
-    expect(stampCall()).toBeDefined();
-  });
-
   it("still completes when the welcome mail fails", async () => {
     mockSendTransactionalEmail.mockRejectedValue(new Error("Brevo down"));
 
@@ -490,7 +505,7 @@ describe("POST /api/auth/complete-registration", () => {
     expect((await response.json()).code).toBe(REGISTRATION_ALREADY_COMPLETE);
     expect(mockSendTransactionalEmail).not.toHaveBeenCalled();
     expect(deferred).toHaveLength(0);
-    expect(mockReportMetaConversion).not.toHaveBeenCalled();
+    expect(mockReportAdConversion).not.toHaveBeenCalled();
   });
 
   // -- Mail and conversion --
@@ -508,10 +523,10 @@ describe("POST /api/auth/complete-registration", () => {
     await POST(request(validBody, { marketing: true }));
 
     expect(deferred).toHaveLength(1);
-    expect(mockReportMetaConversion).not.toHaveBeenCalled();
+    expect(mockReportAdConversion).not.toHaveBeenCalled();
     await runDeferred();
-    expect(mockReportMetaConversion).toHaveBeenCalledTimes(1);
-    const [, conversion, account] = mockReportMetaConversion.mock.calls[0];
+    expect(mockReportAdConversion).toHaveBeenCalledTimes(1);
+    const [, conversion, account] = mockReportAdConversion.mock.calls[0];
     expect(conversion).toEqual({
       event: "account_created",
       product: undefined,
@@ -525,13 +540,13 @@ describe("POST /api/auth/complete-registration", () => {
   // and the conversion names that product exactly as the password path does.
   it("names the product page the sign-up started from", async () => {
     mockSignUpProductFor.mockResolvedValue(SIGN_UP_PRODUCT);
-    const redirect = `/en/shop/${SIGN_UP_PRODUCT.content_ids[0]}`;
+    const redirect = `/en/shop/${SIGN_UP_PRODUCT_ID}`;
 
     await POST(request({ ...validBody, redirect }, { marketing: true }));
     await runDeferred();
 
     expect(mockSignUpProductFor).toHaveBeenCalledWith(redirect);
-    const [, conversion] = mockReportMetaConversion.mock.calls[0];
+    const [, conversion] = mockReportAdConversion.mock.calls[0];
     expect(conversion).toEqual({
       event: "account_created",
       product: SIGN_UP_PRODUCT,

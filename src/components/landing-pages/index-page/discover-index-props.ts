@@ -38,21 +38,18 @@ export function discoverIndexEntries(
   live: readonly PublishedLandingPageSummary[],
   locale: SupportedLocale,
 ): DiscoverIndexEntry[] {
-  return live.flatMap((page) => {
+  return live.map((page) => {
     const shown = localizeLandingPageSummary(page, locale);
-    if (shown === null) return [];
-    return [
-      {
-        card: {
-          id: page.id,
-          href: landingPageHref(page, locale),
-          textLocale: shown.locale,
-          pictureSrc: catalogueImageSrc("landing_image", landingLeadPicturePath(page)),
-          title: shown.title,
-          summary: shown.summary,
-        },
-        canonicalPath: landingPageCanonicalPath(page, locale),
+    return {
+      card: {
+        id: page.id,
+        href: landingPageHref(page, locale),
+        textLocale: shown.locale,
+        pictureSrc: catalogueImageSrc("landing_image", landingLeadPicturePath(shown)),
+        title: shown.title,
+        summary: shown.summary,
       },
-    ];
+      canonicalPath: landingPageCanonicalPath(page, locale),
+    };
   });
 }

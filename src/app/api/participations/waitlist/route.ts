@@ -9,15 +9,15 @@ import {
   leaveWaitlistRpcResult,
 } from "@/services/participations/participations.contracts";
 import { consentRefusalError } from "@/services/participations/consent-refusal";
+import { seatAnswerArgs } from "@/services/participations/seat-answers";
+import { parseConsentCookieHeader } from "@/lib/consent";
 import { sendProductConfirmationEmail } from "@/services/participations/product-confirmation-email.server";
 import {
+  advertisedProductDetails,
   isAdvertisedProduct,
-  metaProductDetails,
+  type ConversionAccount,
 } from "@/lib/marketing-events";
-import {
-  reportMetaConversion,
-  type MetaRequestingAccount,
-} from "@/lib/meta-conversions.server";
+import { reportAdConversion } from "@/lib/ad-conversions.server";
 import { ROUTES } from "@/lib/constants/routes";
 import type { AppSupabaseClient } from "@/types";
 
@@ -61,6 +61,15 @@ export const POST = defineRoute({
       // able to decline. Nothing is checked here; the RPC's check violation is
       // the refusal, and this route already discloses its message.
       p_consented_documents: body.consentedDocuments,
+      // The place in line records what a seat does: the visit's UTM tag,
+      // GATED ON MARKETING CONSENT read off THIS request's own cookie header,
+      // and the parent's answer to the School of Gaming box, passed through as
+      // given (absent when the panel did not ask).
+      ...seatAnswerArgs(
+        parseConsentCookieHeader(request.headers.get("cookie")),
+        body.utm,
+        body.schoolOfGamingMarketingOptIn,
+      ),
     });
 
     // Same one exception the signup door makes, for the same reason: the
@@ -124,7 +133,8 @@ export const POST = defineRoute({
         }),
       );
 
-      // The same place in line, reported to Meta as a conversion — a queue place
+      // The same place in line, reported to the advertising platforms as a
+      // conversion — a queue place
       // is a family committing to a product, which is what the enrolment event
       // names. Behind the same two gates the mail is: a row this call actually
       // wrote, and (inside the helper) a request that carried marketing consent.
@@ -173,7 +183,7 @@ async function reportWaitlistConversion(
   request: Request,
   client: AppSupabaseClient,
   productId: string,
-  account: MetaRequestingAccount,
+  account: ConversionAccount,
 ): Promise<void> {
   try {
     const { data: product } = await client
@@ -185,13 +195,13 @@ async function reportWaitlistConversion(
       .maybeSingle();
     if (!product || !isAdvertisedProduct(product)) return;
 
-    await reportMetaConversion(
+    await reportAdConversion(
       request,
       {
         event: "enrolment",
         outcome: "waitlisted",
         // The report drops the price itself: a queue place carries no value.
-        product: metaProductDetails(product),
+        product: advertisedProductDetails(product),
         sourcePath: ROUTES.shopProductPath(productId),
       },
       account,

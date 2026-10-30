@@ -2,7 +2,7 @@ import { createHash } from "node:crypto";
 import { PICKS } from "@sog/ui";
 import { DARK_THEME } from "@/lib/constants/colors";
 import type { SupportedLocale } from "@/lib/constants/locales";
-import { resolveTranslation } from "@/lib/i18n/resolve-translation";
+import { resolveRequiredTranslation } from "@/lib/i18n/resolve-translation";
 import type { TeamProfile } from "@/services/team-profiles/team-profiles.types";
 import { OG_CARD_ENCODING_VERSION } from "./cards";
 
@@ -37,7 +37,7 @@ export function teamCardVersion(
   person: TeamProfile,
   locale: SupportedLocale,
 ): string {
-  const written = resolveTranslation(person.translations, locale);
+  const written = resolveRequiredTranslation(person.translations, locale);
   const shown = [
     OG_CARD_ENCODING_VERSION,
     person.kind,
@@ -47,8 +47,8 @@ export function teamCardVersion(
     person.kind === "admin" ? person.title : null,
     person.pick,
     person.photo?.src ?? null,
-    written?.locale ?? null,
-    written?.shortDescription ?? null,
+    written.locale,
+    written.shortDescription,
   ];
   return createHash("sha256")
     .update(JSON.stringify(shown))

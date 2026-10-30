@@ -91,8 +91,8 @@ BEGIN
   -- anything but `cancelled`. The predicate is deliberately the same one, read
   -- from the opposite side — those two refuse BECAUSE a subscription is live,
   -- and this one refuses because none is. A seat with nothing to bill is not
-  -- this function's business: an admin moves one with the panel's remove zone
-  -- and a comp-enrolment on the other club, and there is no price to swap.
+  -- this function's business: admin_move_unsubscribed_participation moves
+  -- one, and there is no price to swap.
   SELECT stripe_subscription_id, stripe_price_id
     INTO v_live_sub, v_live_price
     FROM public.family_subscriptions
@@ -138,10 +138,12 @@ BEGIN
     -- it. Read under the target's lock taken above, so the group list cannot
     -- change between this check and the write. A group of the SOURCE is the
     -- mistake this refuses in practice — the dialog is opened from the source
-    -- club's panel — and writing it would leave the seat pointing at a group of
-    -- a product it is not on: a state no UI can produce, which every
-    -- group-scoped read (rosters, attendance, the feed) would then answer
-    -- wrongly about rather than fail on.
+    -- club's panel. trg_validate_participations_group would refuse the write
+    -- below as well (check_violation for another product's group,
+    -- foreign_key_violation for one that does not exist); this check comes
+    -- first so both cases are refused with the one message the switch route
+    -- recognises, which matters because by then the route has already moved
+    -- the Stripe subscription.
     PERFORM 1
        FROM public.product_groups
       WHERE id = p_group_id

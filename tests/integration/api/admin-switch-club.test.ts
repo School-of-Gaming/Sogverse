@@ -375,6 +375,7 @@ describe("GET …/participations/[participationId]/switch — the check", () => 
 
     expect(response.status).toBe(200);
     expect(body).toEqual({
+      kind: "subscription",
       currency: "eur",
       // The item's own amount, not the source club's authored price: a
       // subscriber keeps what they signed up at.
@@ -529,14 +530,24 @@ describe("GET …/participations/[participationId]/switch — the check", () => 
     expect(body.refusals).toEqual(["target_not_paid_subscription_club"]);
   });
 
-  it("refuses a seat with no live subscription without calling Stripe at all", async () => {
+  it("answers a seat with no live subscription as the no-subscription move, without calling Stripe", async () => {
     mockAuthenticatedAdmin();
     reads.family_subscriptions = { data: null, error: null };
+    reads.profiles = { data: { role: "gamer" }, error: null };
+    reads.products = paidClub(TARGET_PRODUCT_ID, {
+      for_gamers: true,
+      for_parents: false,
+    });
 
     const response = await GET(checkRequest(), { params });
     const body = await response.json();
 
-    expect(body.refusals).toEqual(["no_live_subscription"]);
+    // The kind is the seat's, whatever the sheet thought: a paid switch target
+    // is then refused as the subscription club it is, never switched.
+    expect(body).toEqual({
+      kind: "no_subscription",
+      refusals: ["target_is_subscription_club"],
+    });
     expect(mockSubscriptionRetrieve).not.toHaveBeenCalled();
   });
 
@@ -651,6 +662,7 @@ describe("POST …/participations/[participationId]/switch — the commit", () =
     expect(response.status).toBe(200);
     expect(switchClubCommitResponse.safeParse(body).success).toBe(true);
     expect(body).toEqual({
+      kind: "subscription",
       participationId: PARTICIPATION_ID,
       sourceProductId: PRODUCT_ID,
       targetProductId: TARGET_PRODUCT_ID,
@@ -1077,5 +1089,347 @@ describe("POST …/participations/[participationId]/switch — the commit", () =
 
     expect(response.status).toBe(400);
     expect(mockSubscriptionUpdate).not.toHaveBeenCalled();
+  });
+});
+
+/**
+ * The same path for a seat no live subscription stands behind. The route reads
+ * that from the seat — the `family_subscriptions` read comes back empty — and
+ * answers the no-subscription move, which calls no Stripe at all.
+ */
+describe("the no-subscription move", () => {
+  function product(overrides: Record<string, unknown> = {}) {
+    return {
+      data: {
+        id: TARGET_PRODUCT_ID,
+        product_type: "municipality_club",
+        billing_mode: "external_contract",
+        for_gamers: true,
+        for_parents: false,
+        ...overrides,
+      },
+      error: null,
+    };
+  }
+
+  const MOVE_RESULT = {
+    participation_id: PARTICIPATION_ID,
+    source_product_id: PRODUCT_ID,
+    target_product_id: TARGET_PRODUCT_ID,
+    group_id: TARGET_GROUP_ID,
+    customer_id: CUSTOMER_ID,
+    participant_id: GAMER_ID,
+  };
+
+  beforeEach(() => {
+    reads.family_subscriptions = { data: null, error: null };
+    reads.products = product();
+    // The seat holder's role, which decides the audience as the RPC decides it.
+    reads.profiles = { data: { role: "gamer" }, error: null };
+    mockRpc.mockResolvedValue({ data: MOVE_RESULT, error: null });
+  });
+
+  function expectNothingTouched() {
+    expect(mockSubscriptionRetrieve).not.toHaveBeenCalled();
+    expect(mockSubscriptionUpdate).not.toHaveBeenCalled();
+    expect(mockGetOrCreateSubscriptionPrice).not.toHaveBeenCalled();
+  }
+
+  describe("GET — the check", () => {
+    it("answers the no_subscription kind with no refusals for a movable seat", async () => {
+      mockAuthenticatedAdmin();
+
+      const response = await GET(checkRequest(), { params });
+
+      expect(response.status).toBe(200);
+      expect(await response.json()).toEqual({
+        kind: "no_subscription",
+        refusals: [],
+      });
+      expectNothingTouched();
+    });
+
+    it.each([
+      [
+        "a club billed monthly",
+        () => {
+          reads.products = product({
+            product_type: "consumer_club",
+            billing_mode: "paid",
+          });
+        },
+        ["target_is_subscription_club"],
+      ],
+      [
+        "a child's seat and a product not open to gamers",
+        () => {
+          reads.products = product({ for_gamers: false, for_parents: true });
+        },
+        ["target_not_open_to_gamers"],
+      ],
+      [
+        "a parent's own seat and a product not open to parents",
+        () => {
+          reads.profiles = { data: { role: "customer" }, error: null };
+        },
+        ["target_not_open_to_parents"],
+      ],
+      [
+        "a seat that is not active",
+        () => {
+          reads.participations = [
+            activeSeat({ status: "waitlisted" }),
+            { data: null, error: null },
+          ];
+        },
+        ["participation_not_active"],
+      ],
+      [
+        "a participant already on the target",
+        () => {
+          reads.participations = [
+            activeSeat(),
+            { data: { id: OTHER_PARTICIPATION_ID }, error: null },
+          ];
+        },
+        ["already_on_target"],
+      ],
+    ])("refuses %s", async (_name, arrange, refusals) => {
+      arrange();
+      mockAuthenticatedAdmin();
+
+      const response = await GET(checkRequest(), { params });
+      const body = await response.json();
+
+      expect(response.status).toBe(200);
+      expect(body).toEqual({ kind: "no_subscription", refusals });
+      expectNothingTouched();
+    });
+
+    it("lets a parent's own seat move onto a product open to parents", async () => {
+      reads.profiles = { data: { role: "customer" }, error: null };
+      reads.products = product({
+        product_type: "event",
+        billing_mode: "paid",
+        for_gamers: false,
+        for_parents: true,
+      });
+      mockAuthenticatedAdmin();
+
+      const body = await (await GET(checkRequest(), { params })).json();
+
+      expect(body.refusals).toEqual([]);
+    });
+
+    it("refuses the product the seat is already on", async () => {
+      mockAuthenticatedAdmin();
+
+      const body = await (
+        await GET(checkRequest(PRODUCT_ID), { params })
+      ).json();
+
+      expect(body.refusals).toEqual(["same_product"]);
+    });
+
+    it("404s a participation that is not on this product", async () => {
+      reads.participations = [
+        activeSeat({ product_id: TARGET_PRODUCT_ID }),
+        { data: null, error: null },
+      ];
+      mockAuthenticatedAdmin();
+
+      const response = await GET(checkRequest(), { params });
+
+      expect(response.status).toBe(404);
+    });
+  });
+
+  describe("POST — the commit", () => {
+    const moveBody = { ...commitBody, groupId: TARGET_GROUP_ID };
+
+    it("moves the seat through the RPC, mails the family, and logs the move — with no Stripe call", async () => {
+      mockAuthenticatedAdmin();
+
+      const response = await POST(commitRequest(moveBody), { params });
+      const body = await response.json();
+
+      expect(response.status).toBe(200);
+      expect(switchClubCommitResponse.safeParse(body).success).toBe(true);
+      expect(body).toEqual({
+        kind: "no_subscription",
+        participationId: PARTICIPATION_ID,
+        sourceProductId: PRODUCT_ID,
+        targetProductId: TARGET_PRODUCT_ID,
+        groupId: TARGET_GROUP_ID,
+      });
+
+      expect(mockRpc).toHaveBeenCalledTimes(1);
+      expect(mockRpc).toHaveBeenCalledWith(
+        "admin_move_unsubscribed_participation",
+        {
+          p_participation_id: PARTICIPATION_ID,
+          p_target_product_id: TARGET_PRODUCT_ID,
+          p_expected_source_product_id: PRODUCT_ID,
+          p_group_id: TARGET_GROUP_ID,
+        },
+      );
+      expectNothingTouched();
+
+      expect(mockSendProductConfirmationEmail).toHaveBeenCalledTimes(1);
+      expect(mockSendProductConfirmationEmail).toHaveBeenCalledWith(
+        expect.objectContaining({
+          productId: TARGET_PRODUCT_ID,
+          participationId: PARTICIPATION_ID,
+          customerId: CUSTOMER_ID,
+          participantId: GAMER_ID,
+          mode: "external",
+        }),
+      );
+      expect(
+        mockSendProductConfirmationEmail.mock.invocationCallOrder[0],
+      ).toBeGreaterThan(mockRpc.mock.invocationCallOrder[0]);
+
+      const audit = vi
+        .mocked(console.info)
+        .mock.calls.map((call) => asString(call[0]))
+        .find((line) => line.includes('"event":"admin_move_seat"'));
+      expect(JSON.parse(audit ?? "{}")).toMatchObject({
+        event: "admin_move_seat",
+        admin_id: "admin-user-id",
+        participation_id: PARTICIPATION_ID,
+        source_product_id: PRODUCT_ID,
+        target_product_id: TARGET_PRODUCT_ID,
+        group_id: TARGET_GROUP_ID,
+        request_id: REQUEST_ID,
+      });
+    });
+
+    it("leaves an unplaced seat to the RPC's placement rule by omitting the group", async () => {
+      mockAuthenticatedAdmin();
+
+      await POST(commitRequest(commitBody), { params });
+
+      expect(JSON.stringify(mockRpc.mock.calls[0][1])).not.toContain(
+        "p_group_id",
+      );
+    });
+
+    it.each([
+      ["free", { product_type: "consumer_club", billing_mode: "free" }, "free"],
+      [
+        "external_contract",
+        { product_type: "municipality_club", billing_mode: "external_contract" },
+        "external",
+      ],
+      ["paid", { product_type: "camp", billing_mode: "paid" }, "upfront"],
+    ])(
+      "mails a %s target the confirmation its own signup sends",
+      async (_mode, target, mode) => {
+        reads.products = product(target);
+        mockAuthenticatedAdmin();
+
+        const response = await POST(commitRequest(moveBody), { params });
+
+        expect(response.status).toBe(200);
+        expect(mockSendProductConfirmationEmail).toHaveBeenCalledWith(
+          expect.objectContaining({ mode, currency: "eur" }),
+        );
+      },
+    );
+
+    it("answers 400 with the refusals, and neither moves nor mails", async () => {
+      reads.products = product({ for_gamers: false, for_parents: true });
+      mockAuthenticatedAdmin();
+
+      const response = await POST(commitRequest(moveBody), { params });
+      const body = await response.json();
+
+      expect(response.status).toBe(400);
+      expect(body.refusals).toEqual(["target_not_open_to_gamers"]);
+      expect(body.stripeUpdated).toBeUndefined();
+      expect(mockRpc).not.toHaveBeenCalled();
+      expect(mockSendProductConfirmationEmail).not.toHaveBeenCalled();
+      expectNothingTouched();
+    });
+
+    it("answers 400 for a group that is not the target's, before the RPC", async () => {
+      reads.product_groups = { data: null, error: null };
+      mockAuthenticatedAdmin();
+
+      const response = await POST(
+        commitRequest({ ...commitBody, groupId: FOREIGN_GROUP_ID }),
+        { params },
+      );
+      const body = await response.json();
+
+      expect(response.status).toBe(400);
+      expect(body.refusals).toBeUndefined();
+      expect(mockRpc).not.toHaveBeenCalled();
+    });
+
+    it.each([
+      ["P0002", "participation x does not exist", 404, undefined],
+      [
+        "23514",
+        "participation x is already on product y — a move needs a different target (same product)",
+        400,
+        ["same_product"],
+      ],
+      [
+        "23514",
+        "participation x is on product y, not the z the move was checked against — the seat has moved",
+        409,
+        undefined,
+      ],
+      [
+        "23514",
+        "participation x is waitlisted and not active — only an active seat can be moved",
+        400,
+        ["participation_not_active"],
+      ],
+      [
+        "55000",
+        "participation x has the live subscription sub_1 — it moves through the club switch",
+        409,
+        undefined,
+      ],
+      [
+        "23514",
+        "product y is a subscription club — a seat there needs a subscription this move cannot create",
+        400,
+        ["target_is_subscription_club"],
+      ],
+      ["23514", "product y is not open to parents", 400, ["target_not_open_to_parents"]],
+      ["23514", "product y is not open to gamers", 400, ["target_not_open_to_gamers"]],
+      [
+        "23514",
+        "group g is not a group of the target product y — a moved seat can only land in a group of the product it moves to",
+        400,
+        undefined,
+      ],
+      [
+        "23505",
+        'duplicate key value violates unique constraint "participations_product_participant_key"',
+        409,
+        ["already_on_target"],
+      ],
+      ["08006", "connection failure", 500, undefined],
+    ])(
+      "maps an RPC %s (%s) to %i",
+      async (code, message, status, refusals) => {
+        mockRpc.mockResolvedValue({ data: null, error: { code, message } });
+        mockAuthenticatedAdmin();
+
+        const response = await POST(commitRequest(moveBody), { params });
+        const body = await response.json();
+
+        expect(response.status).toBe(status);
+        expect(body.refusals).toEqual(refusals);
+        // Nothing moved anywhere, so there is no money to report on.
+        expect(body.stripeUpdated).toBeUndefined();
+        expect(mockSendProductConfirmationEmail).not.toHaveBeenCalled();
+        expectNothingTouched();
+      },
+    );
   });
 });

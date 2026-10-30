@@ -36,7 +36,6 @@
       "title": "Gedu patlh",
       "justNow": "DaH patlh nobta’: {count}",
       "empty": "patlh ghaj Hoch Gedupu’.",
-      "unnamed": "pong Hutlh Gedu",
       "registered": "ghItlhta’ {when}",
       "certify": "patlh yInob",
       "certifying": "patlh noblI’…",
@@ -504,8 +503,7 @@
           "pair": "cha’ jatlh retlhDaq",
           "row": "wej jatlh tlhegh",
           "showcase": "wa’ jatlh tIn, cha’ retlhDaq, wej tlhegh"
-        },
-        "missing": "jatlh polbe’lu’choH"
+        }
       }
     },
     "status": {
@@ -666,6 +664,7 @@
       "ageRange": "{min}–{max} DIS",
       "seats": "{count} pa’",
       "online": "HeHDaq",
+      "hybrid": "rurmey Daq je",
       "unlisted": "tetlhDaq pagh",
       "untitled": "(pong pagh)",
       "missingGeduFee": "Gedu Huch Hutlh",
@@ -728,7 +727,7 @@
         "visibility": "leghlu",
         "gamerPhotoConsents": "mIllogh tlhobmey",
         "marketingConsents": "QIn tlhobmey",
-        "format": "rurmeH",
+        "deliveryMode": "qaSmoHmeH mIw",
         "ageRange": "qan SaH",
         "publicLink": "Hoch rap Dorgh",
         "createdBy": "chenmoHpu’wI’",
@@ -819,6 +818,7 @@
       "spokenLanguage": "Hol jatlhlu’bogh",
       "online": "rurmey",
       "inPerson": "Daq",
+      "hybrid": "rurmey Daq je",
       "municipality": "Doch veng",
       "site": "Daq",
       "startDate": "jaj tagh",
@@ -913,6 +913,11 @@
       "none": "ghogh pa’ tu’lu’be’",
       "noneDescription": "Hol Hoch ghItlhbogh muv ra’ghom’e’ legh qorDu’pu’."
     },
+    "deliveryModes": {
+      "online": "rurmey",
+      "in_person": "Daq",
+      "hybrid": "rurmey Daq je"
+    },
     "endDateModes": {
       "ongoing": "jaj van Hutlh",
       "ongoingDescription": "ghom taH; bImevqang ’e’ DawIvDI’ mev.",
@@ -939,6 +944,10 @@
         "lynxEducate": {
           "label": "Lynx Educate",
           "description": "DawIvchugh, ghItlhDaq ra’be’lu’bogh tlhob chel: Lynx Educate-vaD De’wI’ HeywI’ lunob ’e’ luchaw’ ’e’ tlhoblu’ vavpu’. jangbe’laH vav, ’ej quSDaj chIlbe’."
+        },
+        "schoolOfGaming": {
+          "label": "noH Quj yejHaD",
+          "description": "DawIvchugh, ghItlhDaq ra’be’lu’bogh tlhob chel: noH Quj yejHaD QIn luneH’a’ vavpu’? jangbe’laH vav, ’ej quSDaj chIlbe’."
         }
       }
     },
@@ -958,6 +967,7 @@
       "externalVoiceUrlHint": "Hoch laD laH: ’el’be’bogh ghotpu’ je.",
       "municipalityHint": "ghomHom veng Sub veng — Huch nob veng. veng vavmey neH lulegh.",
       "siteHint": "qaStaHvIS Daq mab.",
+      "hybridHint": "Daq ghoS QujwI'pu'. Sogverse ghogh pa' muv Gedu, Daq ghoSlaHbe'bogh QujwI'pu' je.",
       "eventSingleDay": "Qu’mey wa’ jaj qaS.",
       "timezoneEntry": "poH Sepvamdaq ghItlhlu’ bIng poHmey. vavpu’ Daq poHchaj choHlu’.",
       "timezoneChangeMoves": "poH Sepvamdaq ghItlhlu’ bIng poHmey. poH Sep DachoHchugh, vIH Hoch qep pIq: poH rap, Sep chu’. ’ach qepmey ghItlhlu’pu’bogh — ja’chuq ghojwI’pu’ ghap — poHchaj tIQ luSaH: not choHlu’ qun.",
@@ -1182,7 +1192,7 @@
       "type": "Segh",
       "allTypes": "Hoch",
       "search": "nej",
-      "searchPlaceholder": "pong nej…",
+      "searchPlaceholder": "pong qoj ngoq nej…",
       "showing": "cha’lu’ {count}/{total}",
       "clear": "yIteq",
       "noMatches": "pagh {type, select, consumerClub {ghomHom tlhIngan} municipalityClub {ghomHom veng} camp {pa’ Qugh} other {Qu’mey}} DaSamlaH. yInej 'ej yIwIv latlh!",
@@ -1212,8 +1222,6 @@
       "searchHint": "cha’ mu’ pIm yIghItlh, vaj yInej.",
       "noParents": "vav pagh tu’lu’.",
       "noSearchResults": "vav qoj SuvwI’ tu’be’lu’.",
-      "unnamedParent": "vav pongHa’",
-      "unnamedGamer": "SuvwI’ pongHa’",
       "add": "chel",
       "adding": "chellu’taH…",
       "added": "chellu’pu’",
@@ -1238,8 +1246,7 @@
         "title": "ngu’be’pu’",
         "subtitle": "ghomDaq pagh chaH. ghomvaD yIngeH ngu’meH.",
         "empty": "Hoch ghom ghaj.",
-        "addParticipant": "ghom yIchel",
-        "removeParticipant": "ghom yIteq"
+        "addParticipant": "ghom yIchel"
       },
       "empty": {
         "title": "ghommey pagh",
@@ -1313,22 +1320,19 @@
           "title": "taHtaH Huch nge’ghach",
           "description": "loSwI’pu’ tetlhDaq {name} DalanDI’, taHtaH Huch nge’ghach: pa’ Hutlh qorDu’, ’ach Huch nge’taH. quvHa’ghach ’oH!",
           "nextStep": "jIH SOG yaHDaj Huch ngoptlhIn poSmoH qorDu’; vaj Hubbogh Stripe Huch pa’Daq nge’ghach chIl. chIlDI’, tlhab pa’."
-        },
-        "removeSubscribed": {
-          "title": "taHtaH Huch nge’ghach",
-          "description": "{name} Dateqchugh, ngab pa’ ’ach taHtaH Huch nge’ghach: pa’ Hutlhbogh qorDu’vo’ Huch nge’taH. quvHa’ghach ’oH!",
-          "nextStep": "jIH SOG yaHDaj Huch ngoptlhIn poSmoH qorDu’; vaj Hubbogh Stripe Huch pa’Daq nge’ghach chIl. chIlDI’, tlhab pa’."
         }
       },
       "switchClub": {
-        "dropZone": "ghom’a’ yIchIj",
         "title": "ghom’a’ yIchIj",
         "description": "latlh ghom’a’Daq {name} vIH. DaHjaj qorDu’vaD pagh choH: rap nav, rap jaj je; ghIq ghom’a’ chu’ Huch DIl qorDu’.",
-        "searchPlaceholder": "pongDaq ghom’a’ yISam",
+        "searchPlaceholder": "pongDaq qoj ngoqDaq ghom’a’ yISam",
         "picker": {
           "empty": "latlh ghom’a’ tu’lu’be’. jarmey Huch poQnIS ghom’a’, ’ej rInbe’nIS.",
           "noMatch": "ghom’a’ tu’lu’be’ QulmeHvam. latlh pong yInID.",
-          "alreadyHolds": "quS ghaj"
+          "alreadyHolds": "quS ghaj",
+          "needsSubscription": "jarmey Huch poQ",
+          "gamersOnly": "QujwI’pu’ neH",
+          "parentsOnly": "vavpu’ SoSpu’ je neH"
         },
         "facts": {
           "ageRange": "{ends, select, both {DIS {min}–{max}} from {DIS {min} pagh nIvbogh} other {DIS {max} pagh puSbogh}}",
@@ -1360,18 +1364,51 @@
           "noLiveSubscription": "pa’vam DungDaq taHbogh Huch nge’ghach tu’lu’be’, vaj jan lughbe’ ’oH: pa’ yIteq, ’ej latlh ghom’a’Daq SuvwI’ yIngu’.",
           "targetNotPaidSubscriptionClub": "jarmey Huch poQbogh ghom’a’ ’oHbe’ ngoptlhInvam’e’, vaj pa’ tlha’laHbe’ Huch nge’ghach.",
           "sameProduct": "ghom’a’vamDaq ghaHtaH SuvwI’’e’.",
-          "alreadyOnTarget": "ghom’a’vamDaq pa’ ghaj SuvwI’."
+          "alreadyOnTarget": "ngoptlhInvamDaq pa’ ghaj {name}.",
+          "targetIsSubscriptionClub": "jarmey Huch poQ ghom’a’vam. jarmey Huch chenmoHlaHbe’ vIHghachvam.",
+          "targetNotOpenToParents": "vavpu’ SoSpu’ je lajbe’ ngoptlhInvam. pa’vetlh yIvIHQo’!",
+          "targetNotOpenToGamers": "QujwI’pu’ lajbe’ ngoptlhInvam. pa’vetlh yIvIHQo’!"
         },
         "commit": {
           "stripeUpdated": "ghom’a’ chu’ HuchDaq ’oHtaH Huch nge’ghach’e’, ’ach vIHbe’ pa’. rInmeH ghom’a’ yIchIj yI’uy’qa’ — cha’logh qorDu’ nge’lu’be’.",
           "stripeUpdatedStuck": "ghom’a’ chu’ HuchDaq ’oHtaH Huch nge’ghach’e’, ’ach vIHlaHbe’ pa’: ghom’a’Daq pa’ ghajbe’bogh SuvwI’vaD DIl qorDu’. StripeDaq nom yIQIj.",
           "failed": "rInbe’ chIjghach. ghom’a’ yIchIj yI’uy’qa’ — rap tlhobHa’ghach, vaj not cha’logh DIl qorDu’."
         },
-        "confirm": "ghom’a’ yIchIj"
+        "confirm": "ghom’a’ yIchIj",
+        "noSubscription": {
+          "title": "latlh ngoptlhInDaq yIvIH",
+          "description": "latlh ngoptlhInDaq {name} yIvIH.",
+          "searchPlaceholder": "pongDaq qoj ngoqDaq ngoptlhIn yISam",
+          "picker": {
+            "empty": "latlh ngoptlhIn tu’lu’be’. jar Hoch DIlbe’lu’nIS ngoptlhIn, ’ej rInbe’nIS.",
+            "noMatch": "Sambogh ngoptlhIn tu’lu’be’. latlh pong yInId."
+          },
+          "family": {
+            "label": "qorDu’vaD",
+            "money": "vIHghachvam Huch tlhaplu’be’, Huch nobHa’lu’be’.",
+            "priceDifference": "cha’ DIlmey rap’be’chugh, StripeDaq yIrapmoH.",
+            "email": "ngoptlhIn chu’ QIn Hev qorDu’, ’ej ngoptlhIn chu’Daq vIH DIS jaj ghItlh.",
+            "consents": "chaq chaw’ poQ ngoptlhIn chu’; qorDu’ rIllu’, vaj qorDu’ tlhoblu’be’."
+          },
+          "notStarted": "{date} tagh.",
+          "confirm": "yIvIH",
+          "commitFailed": "rInbe’ vIHghach. yIvIH yI’uy’qa’.",
+          "commitConflict": "vIHtaHvIS pa’ choH, vaj pagh vIHlu’. yISoQmoH ’ej pa’ HIDjolev yIpoSmoHqa’."
+        }
       },
       "requirementGaps": {
         "title": "ghomvaD yIchu’ ’e’ DaHech’a’?",
         "action": "yIchu’ ’e’ yIruch"
+      },
+      "seatMenu": {
+        "label": "{name} ta’mey",
+        "goToUser": "{name} ghot De’ yIjaH!",
+        "switchClub": "ghom’a’ yIchIj…",
+        "move": "latlh ngoptlhInDaq yIvIH…",
+        "remove": "ngoptlhInvamvo’ yIteq…",
+        "disabled": {
+          "subscriptionLive": "jIH SOGDaq Huch nge’ghach chIl qorDu’; rInDI’, pa’ rIn je."
+        }
       }
     },
     "seatLimitModes": {
@@ -1475,14 +1512,11 @@
     "unknown": "Sovbe’lu’",
     "linkedGamers": "toy’wI’pu’ jonlu’",
     "linkedParents": "vav/SoSmey jonlu’",
-    "unnamedGamer": "pong Hutlh toy’wI’",
-    "unnamedUser": "pong Hutlh lo’wI’",
     "noConnectedGamers": "toy’wI’pu’ jonbe’lu’",
     "assignedProducts": "Dochmey nobbogh",
     "noAssignedProducts": "Dochmey noblu’pu’be’",
     "unassignedGroup": "ghom Sambe’",
     "needsGroup": "ghom poQlu’",
-    "untitledProduct": "Doch pong Hutlh",
     "gamerDetails": {
       "title": "QujwI’ De’",
       "edit": "De’ yIchoH!",
@@ -1524,7 +1558,6 @@
       "title": "ghum",
       "attribution": "He",
       "preferences": "chaw’mey",
-      "schoolOfGaming": "noH Quj yejHaD",
       "lynxEducate": "Lynx Educate",
       "granted": "chaw’lu’",
       "notGranted": "chaw’be’lu’",
@@ -1564,7 +1597,6 @@
     "slackNotLinked": "rarlu'be'"
   },
   "locations": {
-    "editName": "{name} yIchoH",
     "addChildUnder": "{type} {parent}Daq yIchel",
     "location": "Dap",
     "nameRequired": "pong nIS",
@@ -1669,7 +1701,6 @@
     "justNow": "{count, plural, one {DaH # lIw lajlu’} other {DaH # lIwmey lajlu’}}",
     "offersLabel": "lIwmeH tlhobbogh Gedupu’",
     "away": "pawbe’:",
-    "unnamed": "pong Hutlh Gedu",
     "reason": {
       "sick": "rop",
       "other": "latlh"

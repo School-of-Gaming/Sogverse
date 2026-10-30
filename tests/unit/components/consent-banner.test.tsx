@@ -102,6 +102,7 @@ let reload: ReturnType<typeof vi.fn>;
 beforeEach(() => {
   clearCookies();
   window.localStorage.clear();
+  window.sessionStorage.clear();
   reload = vi.fn();
   Object.defineProperty(window, "location", {
     configurable: true,
@@ -313,6 +314,10 @@ describe("ConsentBanner", () => {
     // Google keeps a storage twin of the click id it also writes to `_gcl_aw`.
     window.localStorage.setItem("_gcl_ls", '{"schema":"gcl"}');
     window.localStorage.setItem("lastExternalReferrer", "empty");
+    // Reddit's names were read off its library, not observed, so they are
+    // swept on their prefix — a key nobody named, in either store.
+    window.localStorage.setItem("_rdt_something", "1");
+    window.sessionStorage.setItem("_rdt_something", "1");
     window.localStorage.setItem("sog-theme", "dark");
 
     render(<Harness initial={GRANTED_BOTH} />);
@@ -329,6 +334,8 @@ describe("ConsentBanner", () => {
     expect(window.localStorage.getItem("pixel_mutex:123")).toBeNull();
     expect(window.localStorage.getItem("_gcl_ls")).toBeNull();
     expect(window.localStorage.getItem("lastExternalReferrer")).toBeNull();
+    expect(window.localStorage.getItem("_rdt_something")).toBeNull();
+    expect(window.sessionStorage.getItem("_rdt_something")).toBeNull();
     // Ours is left alone: a withdrawal clears the advertiser's state, not the
     // reader's own preferences.
     expect(window.localStorage.getItem("sog-theme")).toBe("dark");

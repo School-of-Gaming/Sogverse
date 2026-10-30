@@ -34,6 +34,7 @@ import {
 } from "@/lib/i18n/locale-tabs";
 import { resolveWebUrl } from "@/lib/navigation/web-url";
 import { decimalToCents } from "@/lib/money";
+import { gamersAttendSite } from "@/lib/products/delivery-mode";
 import type {
   CreateProductInput,
   ProductAdminDetailRow,
@@ -49,6 +50,7 @@ import {
   isCompleteTranslation,
   locationPickerMode,
   offersUncapped,
+  offersVoiceRoomChoice,
   type FormState,
   type RegistrationOpensMode,
   type TranslationDraft,
@@ -178,16 +180,18 @@ export function validate(
   if (!state.spokenLanguageCode) return err("spokenLanguageRequired");
 
   const showLocationPicker =
-    locationPickerMode(config, state.isRemote) !== null;
+    locationPickerMode(config, state.deliveryMode) !== null;
   if (showLocationPicker && !state.locationId) {
-    return err(state.isRemote ? "municipalityRequired" : "siteRequired");
+    return err(
+      gamersAttendSite(state.deliveryMode) ? "siteRequired" : "municipalityRequired",
+    );
   }
 
   // The voice room choice is asked only of an online product, and each mode's
   // value only of that mode: whatever the hidden fields still hold is not sent,
   // so it is not judged either. A blank field gets its own sentence, as the
   // seat count's does — nothing was typed, so nothing is wrong with it.
-  if (state.isRemote && state.voiceRoomMode === "external") {
+  if (offersVoiceRoomChoice(state.deliveryMode) && state.voiceRoomMode === "external") {
     if (state.externalVoiceUrl.trim() === "") {
       return err("externalVoiceUrlRequired");
     }
@@ -393,8 +397,8 @@ function resolveRegistrationOpensAt(state: FormState): string {
 }
 
 /**
- * The voice room pair as the CHECKs on `products` require it: an in-person
- * product is always `sogverse`, and the link travels only with the external
+ * The voice room pair as the CHECKs on `products` require it: an in-person or
+ * hybrid product is always `sogverse`, and the link travels only with the external
  * mode — null otherwise, whatever the hidden field still holds. Both are sent
  * on every save, because the RPC assigns them on every call. (The join
  * instructions ride on the translations; see `draftsForMode`.)
@@ -407,7 +411,7 @@ function resolveRegistrationOpensAt(state: FormState): string {
 function voiceRoomFields(
   state: FormState,
 ): Pick<UpdateProductInput, "voice_room_mode" | "external_voice_url"> {
-  const mode = state.isRemote ? state.voiceRoomMode : "sogverse";
+  const mode = offersVoiceRoomChoice(state.deliveryMode) ? state.voiceRoomMode : "sogverse";
   let externalVoiceUrl: string | null = null;
   if (mode === "external") {
     externalVoiceUrl = resolveWebUrl(state.externalVoiceUrl);
@@ -595,7 +599,7 @@ function buildSharedFields(
     image_id: state.imageId,
     material_url: state.materialUrl.trim() || null,
     location_id: state.locationId,
-    is_remote: state.isRemote,
+    delivery_mode: state.deliveryMode,
     ...voice,
     start_date: state.startDate,
     end_date:
@@ -909,7 +913,7 @@ export function existingFormState(
     // empty state between them to translate.
     requiresGamerCreations: product.requires_gamer_creations,
     spokenLanguageCode: product.spoken_language_code,
-    isRemote: product.is_remote,
+    deliveryMode: product.delivery_mode,
     locationId: product.location_id,
     // Straight through, with an absent link as the empty field it is: the
     // CHECK guarantees it is present exactly when the mode is external.

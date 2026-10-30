@@ -6,7 +6,6 @@
     "camp": "{gamer} is signed up for {product}.",
     "event": "{gamer} is joining {product}."
   },
-  "fallbackGamer": "Your child",
   "self": {
     "subheading": {
       "consumer_club": "You’re enrolled in {product}.",

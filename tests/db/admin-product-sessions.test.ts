@@ -162,7 +162,7 @@ describe("admin product sessions", () => {
     // building to be authorized against.
     await admin
       .from("products")
-      .update({ is_remote: false, location_id: SITE })
+      .update({ delivery_mode: "in_person", location_id: SITE })
       .eq("id", PRODUCT);
 
     await admin.from("product_groups").insert([
@@ -231,7 +231,7 @@ describe("admin product sessions", () => {
 
       expect(document.product.id).toBe(PRODUCT);
       expect(document.product.timezone).toBe("UTC");
-      expect(document.product.is_remote).toBe(false);
+      expect(document.product.delivery_mode).toBe("in_person");
       expect(document.product.schedule_slots).toHaveLength(7);
     });
 

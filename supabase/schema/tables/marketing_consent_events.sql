@@ -17,7 +17,7 @@ CREATE TABLE public.marketing_consent_events (
 -- Name: TABLE marketing_consent_events; Type: COMMENT; Schema: public; Owner: -
 --
 
-COMMENT ON TABLE public.marketing_consent_events IS 'APPEND-ONLY history: one row per CHANGE to a marketing consent, and the evidence behind whatever marketing_consents currently says. Nothing updates or deletes a row here — no Data API role holds any write grant at all, and the only writers are set_marketing_consent and the register route''s service-role client — because an event is a statement that something happened at an instant, and editing one would destroy the only thing the table is for. A repeat submission that changes nothing appends nothing: a log of "changes" that recorded non-changes would answer "how often did this parent change their mind" with a number made of page loads. Rows carry NO unique constraint — granting, revoking and granting again is the ordinary life of a revocable consent, and those three rows are history rather than duplicates.';
+COMMENT ON TABLE public.marketing_consent_events IS 'APPEND-ONLY history: one row per CHANGE to a marketing consent, and the evidence behind whatever marketing_consents currently says. Nothing updates or deletes a row here — no Data API role holds any write grant at all, and the only writer is set_marketing_consent — because an event is a statement that something happened at an instant, and editing one would destroy the only thing the table is for. A repeat submission that changes nothing appends nothing: a log of "changes" that recorded non-changes would answer "how often did this parent change their mind" with a number made of page loads. Rows carry NO unique constraint — granting, revoking and granting again is the ordinary life of a revocable consent, and those three rows are history rather than duplicates. Its school_of_gaming rows, the registration-sourced ones among them, predate the move of that list to Klaviyo and are kept unread.';
 
 
 --
@@ -31,7 +31,7 @@ COMMENT ON COLUMN public.marketing_consent_events.granted IS 'The state that was
 -- Name: COLUMN marketing_consent_events.source; Type: COMMENT; Schema: public; Owner: -
 --
 
-COMMENT ON COLUMN public.marketing_consent_events.source IS 'Which surface the answer came from: `registration` (the checkbox on the parent sign-up form), `settings` (the toggle on their own account page), or `enrolment` (the ask inside a product signup panel). This is the one field on an event that no other field can corroborate, which is why set_marketing_consent REFUSES `registration`: that source is written only by the register route through the service-role client, before the account has a session at all, so a value a client could send would be a provenance claim nothing checks. A CHECK rather than an enum because the set is a list of our own surfaces, which move with the product rather than with the data model.';
+COMMENT ON COLUMN public.marketing_consent_events.source IS 'Which surface the answer came from: `settings` (the toggle on their own account page) or `enrolment` (the ask inside a product signup panel), the two set_marketing_consent accepts. `registration` (the checkbox on the parent sign-up form) is kept for the school_of_gaming rows written before that list moved to Klaviyo; nothing writes it now. This is the one field on an event that no other field can corroborate. A CHECK rather than an enum because the set is a list of our own surfaces, which move with the product rather than with the data model.';
 
 
 --

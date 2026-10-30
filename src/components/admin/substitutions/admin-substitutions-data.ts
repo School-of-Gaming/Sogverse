@@ -36,8 +36,7 @@ export interface SubstitutionOffer {
    * hashed out of its hex bytes.
    */
   geduId: string;
-  /** `null` where the account carries no name; the row words the stand-in. */
-  name: string | null;
+  name: string;
 }
 
 /**
@@ -47,8 +46,7 @@ export interface SubstitutionOffer {
  */
 export interface SubstitutionDecline {
   geduId: string;
-  /** `null` where the account carries no name; the row words the stand-in. */
-  name: string | null;
+  name: string;
 }
 
 /**
@@ -111,8 +109,7 @@ export interface SubstitutionSession {
   reasonNote: string | null;
   /** The absent gedu's account id — the identicon's input, so a real UUID. */
   requesterId: string;
-  /** `null` where the account carries no name; the row words the stand-in. */
-  requesterName: string | null;
+  requesterName: string;
   /**
    * The group's own admin page — where the whole session's staffing is in
    * view, and where a seated substitute is changed or cleared.
@@ -166,8 +163,7 @@ export interface SeatSubstituteDraft {
 export interface SubstitutedSession extends SubstitutionSession {
   /** The substitute's account id — the identicon's input, so a real UUID. */
   substituteId: string;
-  /** `null` where the account carries no name; the card words the stand-in. */
-  substituteName: string | null;
+  substituteName: string;
   /** When the approval landed — said as a relative phrase on the card. */
   approvedAt: Date;
   /** The approving admin's first name, which a profile always carries. */

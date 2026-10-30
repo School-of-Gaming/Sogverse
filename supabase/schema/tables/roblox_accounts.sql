@@ -39,6 +39,20 @@ ALTER TABLE ONLY public.roblox_accounts
 
 
 --
+-- Name: roblox_accounts roblox_accounts_klaviyo_renamed; Type: TRIGGER; Schema: public; Owner: -
+--
+
+CREATE TRIGGER roblox_accounts_klaviyo_renamed AFTER UPDATE OF roblox_username ON public.roblox_accounts FOR EACH ROW WHEN (((old.roblox_username IS NULL) IS DISTINCT FROM (new.roblox_username IS NULL))) EXECUTE FUNCTION public.klaviyo_gamer_fact_changed();
+
+
+--
+-- Name: roblox_accounts roblox_accounts_klaviyo_written; Type: TRIGGER; Schema: public; Owner: -
+--
+
+CREATE TRIGGER roblox_accounts_klaviyo_written AFTER INSERT OR DELETE ON public.roblox_accounts FOR EACH ROW EXECUTE FUNCTION public.klaviyo_gamer_fact_changed();
+
+
+--
 -- Name: roblox_accounts roblox_accounts_user_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: -
 --
 

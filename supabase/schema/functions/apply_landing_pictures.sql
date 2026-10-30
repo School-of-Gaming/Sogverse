@@ -18,17 +18,18 @@ DECLARE
   v_words    text;
   v_beside   text;
   v_pictures jsonb := '{}'::jsonb;
-  v_share    uuid;
-  v_shares   uuid[];
+  v_hero     text;
+  v_named    jsonb;
+  v_name     jsonb;
 BEGIN
   IF jsonb_typeof(NEW.sections) = 'array' THEN
     FOR v_section, v_n IN
       SELECT s.e, s.n FROM jsonb_array_elements(NEW.sections) WITH ORDINALITY AS s(e, n) ORDER BY s.n
     LOOP
       -- The shapes this section's type takes. Held equal to the section
-      -- registry's declaration by a DB test.
+      -- registry's declaration by a DB test. The hero takes its picture in
+      -- each version's words, read below.
       v_takes := CASE v_section->>'type'
-        WHEN 'hero' THEN ARRAY['landing_image']::public.catalogue_image_purpose[]
         WHEN 'guide' THEN ARRAY['landing_image']::public.catalogue_image_purpose[]
         ELSE ARRAY['landing_image', 'landing_square_image', 'landing_portrait_image']::public.catalogue_image_purpose[]
       END;
@@ -92,10 +93,8 @@ BEGIN
             WHEN 'landing_portrait_image' THEN v_words := 'portrait 4:5';
             ELSE RAISE EXCEPTION 'No words for the picture purpose %', v_purpose;
           END CASE;
-          RAISE EXCEPTION 'A % section''s picture must be wide 16:9%, and the picture % is %',
-            v_section->>'type',
-            CASE v_section->>'type' WHEN 'hero' THEN ', because it is the page''s link preview' ELSE '' END,
-            v_ref, v_words
+          RAISE EXCEPTION 'A % section''s picture must be wide 16:9, and the picture % is %',
+            v_section->>'type', v_ref, v_words
             USING ERRCODE = 'check_violation';
         END IF;
 
@@ -127,31 +126,60 @@ BEGIN
     END LOOP;
   END IF;
 
-  -- The copy's versions' share pictures: the working versions for the working
-  -- copy, the live ones for the published copy. Each is wide, as the hero's
-  -- picture is, because the link preview it stands for is drawn at 16:9.
-  -- Read per table, since only the published copy's row has a page_id.
+  -- The pictures the copy's versions name, each in its own words: the working
+  -- versions for the working copy, the live ones for the published copy. A
+  -- version names a share picture and a hero picture, the hero's in the hero
+  -- section's words; the hero is the structure's first section. Both are
+  -- wide, because each is a link preview, drawn at 16:9. Read per table,
+  -- since only the published copy's row has a page_id.
+  v_hero := CASE WHEN jsonb_typeof(NEW.sections) = 'array'
+                  AND NEW.sections->0->>'type' = 'hero'
+                 THEN NEW.sections->0->>'id' END;
+
   IF TG_TABLE_NAME = 'landing_pages' THEN
-    SELECT array_agg(DISTINCT share_image_id) INTO v_shares
-      FROM public.landing_page_translations
-     WHERE page_id = NEW.id AND share_image_id IS NOT NULL;
+    SELECT COALESCE(jsonb_agg(named.n ORDER BY named.n->>'locale', named.n->>'kind'), '[]'::jsonb) INTO v_named
+      FROM (
+        SELECT jsonb_build_object('locale', t.locale, 'kind', 'hero', 'ref', t.section_texts->v_hero->'imageId') AS n
+          FROM public.landing_page_translations t
+         WHERE t.page_id = NEW.id AND t.section_texts->v_hero ? 'imageId'
+        UNION ALL
+        SELECT jsonb_build_object('locale', t.locale, 'kind', 'share', 'ref', to_jsonb(t.share_image_id::text))
+          FROM public.landing_page_translations t
+         WHERE t.page_id = NEW.id AND t.share_image_id IS NOT NULL
+      ) AS named;
   ELSE
-    SELECT array_agg(DISTINCT share_image_id) INTO v_shares
-      FROM public.landing_page_publication_translations
-     WHERE page_id = NEW.page_id AND share_image_id IS NOT NULL;
+    SELECT COALESCE(jsonb_agg(named.n ORDER BY named.n->>'locale', named.n->>'kind'), '[]'::jsonb) INTO v_named
+      FROM (
+        SELECT jsonb_build_object('locale', t.locale, 'kind', 'hero', 'ref', t.section_texts->v_hero->'imageId') AS n
+          FROM public.landing_page_publication_translations t
+         WHERE t.page_id = NEW.page_id AND t.section_texts->v_hero ? 'imageId'
+        UNION ALL
+        SELECT jsonb_build_object('locale', t.locale, 'kind', 'share', 'ref', to_jsonb(t.share_image_id::text))
+          FROM public.landing_page_publication_translations t
+         WHERE t.page_id = NEW.page_id AND t.share_image_id IS NOT NULL
+      ) AS named;
   END IF;
 
-  FOREACH v_share IN ARRAY COALESCE(v_shares, '{}'::uuid[])
+  FOR v_name IN SELECT e FROM jsonb_array_elements(v_named) AS t(e)
   LOOP
+    -- A share picture is a uuid column; a hero picture is in the words, which
+    -- hold any JSON, so its form is checked here.
+    IF jsonb_typeof(v_name->'ref') IS DISTINCT FROM 'string' OR v_name->>'ref' !~ c_uuid THEN
+      RAISE EXCEPTION 'The hero picture of the % version must be a catalogue entry''s lowercase uuid',
+        v_name->>'locale'
+        USING ERRCODE = 'check_violation';
+    END IF;
+    v_ref := v_name->>'ref';
+
     v_path := NULL;
     -- Locked for the same reason as a section's picture.
     SELECT path, purpose INTO v_path, v_purpose
       FROM public.catalogue_images
-     WHERE id = v_share
+     WHERE id = v_ref::uuid
        FOR KEY SHARE;
 
     IF v_path IS NULL THEN
-      RAISE EXCEPTION 'No picture in the catalogue has the id %', v_share
+      RAISE EXCEPTION 'No picture in the catalogue has the id %', v_ref
         USING ERRCODE = 'foreign_key_violation';
     END IF;
 
@@ -163,7 +191,7 @@ BEGIN
         ELSE RAISE EXCEPTION 'No words for the picture purpose %', v_purpose;
       END CASE;
       RAISE EXCEPTION 'The picture % is %, and a landing page shows only landing pictures',
-        v_share, v_words
+        v_ref, v_words
         USING ERRCODE = 'check_violation';
     END IF;
 
@@ -173,13 +201,18 @@ BEGIN
         WHEN 'landing_portrait_image' THEN v_words := 'portrait 4:5';
         ELSE RAISE EXCEPTION 'No words for the picture purpose %', v_purpose;
       END CASE;
+      IF v_name->>'kind' = 'hero' THEN
+        RAISE EXCEPTION 'A hero section''s picture must be wide 16:9, because it is the page''s link preview, and the picture % is %',
+          v_ref, v_words
+          USING ERRCODE = 'check_violation';
+      END IF;
       RAISE EXCEPTION 'A share picture must be wide 16:9, because it is the page''s link preview, and the picture % is %',
-        v_share, v_words
+        v_ref, v_words
         USING ERRCODE = 'check_violation';
     END IF;
 
     v_pictures := v_pictures
-      || jsonb_build_object(v_share::text, jsonb_build_object('path', v_path, 'purpose', v_purpose));
+      || jsonb_build_object(v_ref, jsonb_build_object('path', v_path, 'purpose', v_purpose));
   END LOOP;
 
   NEW.pictures := v_pictures;
@@ -192,7 +225,7 @@ $_$;
 -- Name: FUNCTION apply_landing_pictures(); Type: COMMENT; Schema: public; Owner: -
 --
 
-COMMENT ON FUNCTION public.apply_landing_pictures() IS 'BEFORE INSERT OR UPDATE on landing_pages and landing_page_publications: pictures is derived from every catalogue entry the copy names (a hero, text or guide section''s imageId, an image section''s images[].imageId, and the share_image_id of each of the copy''s versions), as {entry id: {path, purpose}} — the purpose is the picture''s shape and names its bucket. No branch keeps a statement-supplied value and the triggers carry no column list, so this is the column''s only writer; refresh_landing_pictures re-runs it when a version''s share picture changes. Each entry is locked FOR KEY SHARE, so a racing removal waits and then unlinks what this write stored. Refuses an entry that is gone (23503); one that is not a landing picture (landing_image, landing_square_image or landing_portrait_image); a hero picture or a share picture that is not wide (landing_image), since each is the page''s link preview; a guide section''s picture that is not wide; and a section whose pictures are not all one purpose, naming the section by its number from one (each 23514). Each refusal names the picture by its catalogue id, the id the writer sent.';
+COMMENT ON FUNCTION public.apply_landing_pictures() IS 'BEFORE INSERT OR UPDATE on landing_pages and landing_page_publications: pictures is derived from every catalogue entry the copy names (a text or guide section''s imageId, an image section''s images[].imageId, and of each of the copy''s versions its share_image_id and its hero picture — the imageId in its words for the structure''s first section, the hero), as {entry id: {path, purpose}} — the purpose is the picture''s shape and names its bucket. No branch keeps a statement-supplied value and the triggers carry no column list, so this is the column''s only writer; refresh_landing_pictures re-runs it when a version''s share picture or hero picture changes. Each entry is locked FOR KEY SHARE, so a racing removal waits and then unlinks what this write stored. Refuses a version''s hero picture that is not a lowercase uuid string, naming the version''s locale (23514); an entry that is gone (23503); one that is not a landing picture (landing_image, landing_square_image or landing_portrait_image); a hero picture or a share picture that is not wide (landing_image), since each is a link preview; a guide section''s picture that is not wide; and a section whose pictures are not all one purpose, naming the section by its number from one (each 23514). Each refusal of an entry names it by its catalogue id, the id the writer sent.';
 
 
 --

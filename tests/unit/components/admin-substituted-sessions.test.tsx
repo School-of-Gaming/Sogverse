@@ -65,7 +65,7 @@ const SUBSTITUTED: SubstitutedSession = {
     sessionDate: "2026-08-18",
     startsAt: new Date("2026-08-18T16:00:00+03:00"),
     endsAt: new Date("2026-08-18T17:30:00+03:00"),
-    isRemote: true,
+    deliveryMode: "online",
     siteName: null,
   }),
   viewerTimeZone: "Europe/Helsinki",

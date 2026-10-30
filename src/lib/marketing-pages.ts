@@ -1,5 +1,5 @@
 /**
- * The pages the Meta Pixel is allowed to load on, as route templates.
+ * The pages the advertising scripts are allowed to load on, as route templates.
  *
  * **An allowlist, and deliberately nothing else.** There is no list of
  * forbidden pages and no completeness check asserting that every route appears
@@ -62,8 +62,8 @@ export function isMarketingPage(
 /**
  * The query keys a marketing page may carry and still be reported.
  *
- * The allowlist above is matched against the pathname, but Meta's library
- * reports the whole URL, query string included — and the proxy puts a private
+ * The allowlist above is matched against the pathname, but the pixels'
+ * libraries report the whole URL, query string included — and the proxy puts a private
  * path into the query of two marketing pages: a signed-out parent reaching a
  * child's page is bounced to `/login?redirect=/parent/gamers/<id>`. So a page
  * view is reported only when every key in the query is one of these: the
@@ -80,6 +80,7 @@ const REPORTABLE_QUERY_KEYS: ReadonlySet<string> = new Set([
   "utm_content",
   "fbclid",
   "gclid",
+  "rdt_cid",
   CATEGORY_PARAM,
   TOPIC_PARAM,
   FORMAT_PARAM,
@@ -92,10 +93,26 @@ const REPORTABLE_QUERY_KEYS: ReadonlySet<string> = new Set([
   FROM_PARAM,
 ]);
 
-/** Whether a page's query string (`location.search`) may travel to Meta. */
+/** Whether a page's query string (`location.search`) may travel to an ad platform. */
 export function isReportableQuery(search: string): boolean {
   for (const key of new URLSearchParams(search).keys()) {
     if (!REPORTABLE_QUERY_KEYS.has(key)) return false;
   }
   return true;
+}
+
+/**
+ * Whether the address bar still shows `pathname` with a query that may travel
+ * — the check every pixel makes at the moment of sending, because the URL a
+ * pixel's library attaches to an event is the one the tab shows *then*, not
+ * the one that authorised the report.
+ *
+ * Both sides are resolved through the URL parser, so a slug with a non-ASCII
+ * character compares the same whether the router hands it over encoded or not.
+ * Browser-only: it reads `window.location`.
+ */
+export function addressBarStillShows(pathname: string): boolean {
+  const authorised = new URL(pathname, window.location.origin).pathname;
+  if (window.location.pathname !== authorised) return false;
+  return isReportableQuery(window.location.search);
 }

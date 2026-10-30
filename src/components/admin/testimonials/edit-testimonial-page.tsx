@@ -9,7 +9,7 @@ import { Link } from "@/i18n/navigation";
 import { ROUTES } from "@/lib/constants/routes";
 import { resolveLocale } from "@/lib/constants/locales";
 import { formatDate } from "@/lib/date-format";
-import { resolveTranslation } from "@/lib/i18n/resolve-translation";
+import { resolveRequiredTranslation } from "@/lib/i18n/resolve-translation";
 import { useTimezone } from "@/providers";
 import type {
   AdminTestimonial,
@@ -103,7 +103,7 @@ export function TestimonialUsageCard({ usages }: { usages: readonly TestimonialU
           className="text-act underline-offset-4 hover:underline"
         >
           {t("usage.landingPage", {
-            title: resolveTranslation(usage.titles, uiLocale)?.title ?? "",
+            title: resolveRequiredTranslation(usage.titles, uiLocale).title,
           })}
         </Link>
         <p className="text-muted-foreground">{t(`usage.landingPageState.${state}`)}</p>

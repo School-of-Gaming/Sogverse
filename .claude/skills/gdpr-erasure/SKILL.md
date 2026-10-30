@@ -39,6 +39,22 @@ change the plan:
   `gamer_consent_acceptances` go with the gamer (step 3 deletes the gamers first), so
   only an acceptance made for someone who survives the delete blocks.
 - **`customer_profiles.stripe_customer_id`** set means a Stripe customer exists (step 5).
+- **A `lynx_educate` row in `marketing_consents`** means Lynx Educate holds the family for
+  its own marketing, and has had their programme data through the partner API. Deleting
+  the account stops the API serving them but erases nothing on Lynx's side (step 5).
+
+**Then Klaviyo, read-only.** Every parent account has a Klaviyo profile, kept by the
+account sync whether or not they agreed to marketing. Search the address in the Klaviyo
+dashboard (Audience → Profiles) and note every profile it finds. The account's own
+profile carries the Sogverse profile id as its external ID. Klaviyo keeps one profile per
+address, so a newsletter sign-up made with the account's current address is that same
+profile, and the delete in step 3 takes it with the rest. A separate newsletter-only
+profile, with no external ID, exists only under a **different** address — typically one
+the parent used before changing their email in Sogverse, or another they signed up with:
+the sync never created it and does not know it exists, so step 3 leaves it standing. So
+search the parent's old address(es) too, where known — the request itself, earlier
+support mail, an address correction — and note any profile found. A gamer has no Klaviyo
+profile; the sync covers parent accounts only.
 
 **Then scan every column for the ids and the address**, which catches anything that
 references the account without an FK: ids in jsonb or text, the address copied into a
@@ -78,7 +94,8 @@ row the delete will cascade to; one that isn't must be handled first. `storage` 
 the scan because uploaded objects outlive their row in `public` unless removed.
 
 Put the inventory in front of the owner — who the family is, what they hold, anything
-outside the database — and wait for an explicit go-ahead.
+outside the database (the Klaviyo profiles found, Lynx consent, Stripe) — and wait for an
+explicit go-ahead.
 
 ## 3. Delete
 
@@ -131,10 +148,23 @@ COMMIT;
   families; erasing staff also touches employment records, which is the owner's call
   before anything here runs.
 
+- **Deleting the parent enqueues them for the Klaviyo sync**, which deletes their Klaviyo
+  profile on its next run, looked up by external ID = the Sogverse profile id. Nothing is
+  done in Klaviyo by hand for the account's own profile; step 4 checks it went.
+
 ## 4. Verify
 
 Re-run the scan from step 2. Zero `HIT` lines is the result. `grep` exits 1 on no match,
-which here means success.
+which here means success. The one hit allowed is the parent's id in the Klaviyo sync's
+queue, until the sync has processed it: that row is the instruction to delete the
+profile, and it goes once the deletion is done.
+
+Then search the address in Klaviyo again. The account's profile must be gone; if it is
+still there once the queue row has cleared, the sync failed for it, so find out why before
+deleting it by hand, or the next erasure fails the same way. A newsletter-only profile from
+step 2, under an old or other address, is deleted now, by hand: the profile's **Delete profile** action, or a deletion
+request under Klaviyo's data privacy settings. Either removes the profile and its history,
+which is what the request asks for; suppressing or unsubscribing it would keep the data.
 
 ## 5. Outside the Sogverse database
 
@@ -144,6 +174,11 @@ which here means success.
   retention question.
 - **Brevo.** Transactional only; the app never adds anyone to a contact list. Send logs
   expire on Brevo's side.
+- **Lynx Educate.** Only if step 2 found a `lynx_educate` marketing consent. Lynx keeps
+  its own copy of what the partner API served it, and nothing reaches them when the
+  account goes, so they are told separately: the erasure request and the address, for
+  them to act on. Say so when reporting the erasure done, and whether they have
+  confirmed.
 - **The old platform's copies (the SOGGA archive / Chargebee).** A family that predates
   Sogverse may still be held in the SOGGA archive on the owner's Google Drive (the old
   platform's whole database, kept after its shutdown) and in Chargebee until that account

@@ -6,7 +6,6 @@
     "camp": "L’inscription de {gamer} à {product} est confirmée.",
     "event": "L’inscription de {gamer} à {product} est confirmée."
   },
-  "fallbackGamer": "Votre enfant",
   "self": {
     "subheading": {
       "consumer_club": "Votre inscription à {product} est confirmée.",

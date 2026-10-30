@@ -24,7 +24,7 @@ export function browseRow(
     for_parents: false,
     spoken_language_code: "en",
     image_path: null,
-    is_remote: true,
+    delivery_mode: "online",
     seat_count: 10,
     waitlist_enabled: true,
     registration_opens_at: "2026-01-01T00:00:00Z",

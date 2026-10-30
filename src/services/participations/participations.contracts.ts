@@ -2,6 +2,7 @@ import { z } from "zod";
 import { SUPPORTED_CURRENCIES } from "@/lib/constants/currency";
 import { Constants, type PurchaseShape } from "@/types";
 import { plannedSessionRow } from "@/lib/planned-sessions";
+import { registrationUtmBody } from "@/services/users/parent-registration.contracts";
 
 /**
  * Response of POST /api/checkout/products/create — the signup outcomes: paid
@@ -45,6 +46,27 @@ export type CreateParticipationResponse = z.infer<
 const consentedDocuments = z.array(z.string()).optional();
 
 /**
+ * What both enrolment doors carry for the row they create beyond who and what,
+ * because a place in a queue is a booking too.
+ */
+const seatAnswersBody = {
+  /**
+   * The UTM tag this visit arrived with, as the browser holds it. Stored on the
+   * row only when the request's own consent cookie grants marketing — the
+   * route decides that, never the body (`src/lib/utm.ts`). Plain strings, for
+   * the reason `registrationUtmBody` gives: a malformed value becomes NULL,
+   * never a refused booking.
+   */
+  utm: registrationUtmBody.optional(),
+  /**
+   * The parent's answer to the product's School of Gaming mailing box: present
+   * exactly when the panel showed it, `false` for a box left unticked. Absent
+   * means the box was not asked, which the row stores as NULL.
+   */
+  schoolOfGamingMarketingOptIn: z.boolean().optional(),
+};
+
+/**
  * Request body of POST /api/checkout/products/create. The purchase shape and
  * currency are enums rather than free strings so the route never has to ask
  * "is this one of the four we support?" after the fact — and the coherence
@@ -65,7 +87,29 @@ export const createCheckoutBody = z.object({
   ] as const satisfies readonly PurchaseShape[]),
   currency: z.enum(SUPPORTED_CURRENCIES),
   consentedDocuments,
+  ...seatAnswersBody,
 });
+
+/**
+ * What a paid booking's Checkout Session carries for the seat beyond who and
+ * what: the UTM tag the route let through its consent gate, and the School of
+ * Gaming mailing answer. Written by the checkout route, read back by the Stripe
+ * webhook into `confirm_paid_participation`. Every key is optional — a key is
+ * written only when it holds a value — and the answer is spelled as a string
+ * because Stripe metadata holds nothing else.
+ */
+export const seatAnswersSessionMetadata = z.object({
+  utmSource: z.string().optional(),
+  utmMedium: z.string().optional(),
+  utmCampaign: z.string().optional(),
+  utmContent: z.string().optional(),
+  utmTerm: z.string().optional(),
+  schoolOfGamingMarketingOptIn: z.enum(["true", "false"]).optional(),
+});
+
+export type SeatAnswersSessionMetadata = z.infer<
+  typeof seatAnswersSessionMetadata
+>;
 
 /**
  * Request body of POST /api/participations/waitlist.
@@ -80,6 +124,7 @@ export const joinWaitlistBody = z.object({
   productId: z.string().uuid("productId must be a UUID"),
   participantId: z.string().uuid("participantId must be a UUID"),
   consentedDocuments,
+  ...seatAnswersBody,
 });
 
 /**
@@ -359,8 +404,9 @@ export const adminRemoveParticipationRpcResult = z.discriminatedUnion("kind", [
 /**
  * `admin_move_participation` RPC result — the ids the club-switch commit route
  * logs. There is no `kind`: the function either moves the seat or raises, so
- * every success has one shape. `group_id` is the shared placement rule's answer
- * for the target, which for the paid target this RPC insists on is always null;
+ * every success has one shape. `group_id` is the admin's chosen group on the
+ * target, or null when none was named — the shared placement rule then leaves
+ * a seat on the paid target this RPC insists on in the unassigned inbox;
  * `stripe_subscription_id` is the live subscription the seat carried in, echoed
  * back so the audit line names it without a second read.
  */
@@ -370,4 +416,21 @@ export const adminMoveParticipationRpcResult = z.object({
   target_product_id: z.string(),
   group_id: z.string().nullable(),
   stripe_subscription_id: z.string(),
+});
+
+/**
+ * `admin_move_unsubscribed_participation` RPC result — the move for a seat with
+ * nothing to bill. Like the club switch it either moves the seat or raises, so
+ * every success has one shape. `group_id` is the admin's placement, or the
+ * shared placement rule's answer for the target (null when the seat lands in
+ * the unassigned inbox); `customer_id` and `participant_id` are the seat's own,
+ * which the route needs to name whose consents were recorded on the target.
+ */
+export const adminMoveUnsubscribedParticipationRpcResult = z.object({
+  participation_id: z.string(),
+  source_product_id: z.string(),
+  target_product_id: z.string(),
+  group_id: z.string().nullable(),
+  customer_id: z.string(),
+  participant_id: z.string(),
 });

@@ -82,48 +82,34 @@ export function productScheduleDisplayLines({
  *   - Family: both, composed by one message ("For families, ages 8–12") rather
  *     than concatenated — a comma is grammar, and grammar is the translator's.
  *
- * `null` only for a row carrying neither an audience label nor an age range,
- * which the schema's CHECKs make unreachable; the caller drops the fact rather
- * than rendering an empty cell.
+ * Every product has one of the three: `chk_products_has_an_audience` sets at
+ * least one flag, and `chk_products_ages_iff_for_gamers` gives a product for
+ * gamers an age range and a parents-only product none.
  */
 export type ProductWhoItsFor =
   | { label: "ageRange"; value: { kind: "ages"; min: number; max: number } }
   | { label: "audience"; value: { kind: "parents" } }
-  | {
-      label: "audience";
-      value:
-        | { kind: "families" }
-        | { kind: "familiesWithAges"; min: number; max: number };
-    };
+  | { label: "audience"; value: { kind: "familiesWithAges"; min: number; max: number } };
 
 export function productWhoItsFor(product: {
   for_gamers: boolean;
   for_parents: boolean;
   min_age: number | null;
   max_age: number | null;
-}): ProductWhoItsFor | null {
-  const ages =
-    product.min_age !== null && product.max_age !== null
-      ? { min: product.min_age, max: product.max_age }
-      : null;
+}): ProductWhoItsFor {
+  const ages = () => {
+    if (product.min_age === null || product.max_age === null) {
+      throw new Error("A product for gamers arrived without its age range");
+    }
+    return { min: product.min_age, max: product.max_age };
+  };
 
   switch (audienceLabelKey(product)) {
     case null:
-      return ages === null
-        ? null
-        : { label: "ageRange", value: { kind: "ages", ...ages } };
+      return { label: "ageRange", value: { kind: "ages", ...ages() } };
     case "parents":
       return { label: "audience", value: { kind: "parents" } };
     case "families":
-      return {
-        label: "audience",
-        // The CHECK ties a range to the gamer audience, so a family product
-        // always has one; the ageless branch is the shape of the data, not a
-        // case anyone should meet.
-        value:
-          ages === null
-            ? { kind: "families" }
-            : { kind: "familiesWithAges", ...ages },
-      };
+      return { label: "audience", value: { kind: "familiesWithAges", ...ages() } };
   }
 }

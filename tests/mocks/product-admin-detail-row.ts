@@ -28,7 +28,7 @@ export function syntheticConsumerProduct(): ProductAdminDetailRow {
     // on the product. `null` is the ordinary case: no row means no lesson link.
     product_staff_details: null,
     location_id: null,
-    is_remote: true,
+    delivery_mode: "online",
     start_date: "2026-09-01",
     end_date: null,
     timezone: "Europe/Helsinki",

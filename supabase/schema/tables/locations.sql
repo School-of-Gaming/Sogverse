@@ -113,10 +113,31 @@ CREATE UNIQUE INDEX uq_locations_geonames_id ON public.locations USING btree (ge
 
 
 --
+-- Name: locations locations_klaviyo; Type: TRIGGER; Schema: public; Owner: -
+--
+
+CREATE TRIGGER locations_klaviyo AFTER UPDATE OF name, country_code ON public.locations FOR EACH ROW WHEN (((old.name IS DISTINCT FROM new.name) OR (old.country_code IS DISTINCT FROM new.country_code))) EXECUTE FUNCTION public.klaviyo_location_changed();
+
+
+--
 -- Name: locations locations_updated_at; Type: TRIGGER; Schema: public; Owner: -
 --
 
 CREATE TRIGGER locations_updated_at BEFORE UPDATE ON public.locations FOR EACH ROW EXECUTE FUNCTION public.update_updated_at_column();
+
+
+--
+-- Name: locations trg_locations_refuse_loop; Type: TRIGGER; Schema: public; Owner: -
+--
+
+CREATE TRIGGER trg_locations_refuse_loop BEFORE INSERT OR UPDATE OF parent_id ON public.locations FOR EACH ROW EXECUTE FUNCTION public.refuse_location_loop();
+
+
+--
+-- Name: TRIGGER trg_locations_refuse_loop ON locations; Type: COMMENT; Schema: public; Owner: -
+--
+
+COMMENT ON TRIGGER trg_locations_refuse_loop ON public.locations IS 'Keeps the location tree free of loops: a place may not be put under itself or under anything below it. locations_no_self_parent is the one-step case of the same rule; this is every other length. The readers rely on it: location_lineage climbs with no loop check because this leaves no loop to meet.';
 
 
 --

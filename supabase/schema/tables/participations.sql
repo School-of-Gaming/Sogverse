@@ -17,6 +17,13 @@ CREATE TABLE public.participations (
     group_joined_at timestamp with time zone,
     seat_offer_sent_at timestamp with time zone,
     seat_offer_expiry_notified_at timestamp with time zone,
+    utm_source text,
+    utm_medium text,
+    utm_campaign text,
+    utm_content text,
+    utm_term text,
+    school_of_gaming_marketing_opt_in boolean,
+    CONSTRAINT chk_participations_group_joined_at_iff_group CHECK (((group_id IS NULL) = (group_joined_at IS NULL))),
     CONSTRAINT chk_participations_offer_notice_needs_offer CHECK (((seat_offer_expiry_notified_at IS NULL) OR (seat_offer_sent_at IS NOT NULL))),
     CONSTRAINT chk_participations_offer_only_when_waitlisted CHECK (((seat_offer_sent_at IS NULL) OR (status = 'waitlisted'::public.participation_status))),
     CONSTRAINT chk_participations_waitlisted_has_timestamp CHECK (((status <> 'waitlisted'::public.participation_status) OR (waitlisted_at IS NOT NULL)))
@@ -27,7 +34,7 @@ CREATE TABLE public.participations (
 -- Name: TABLE participations; Type: COMMENT; Schema: public; Owner: -
 --
 
-COMMENT ON TABLE public.participations IS 'One row per seat on a product: who holds it, who pays for it, which group they sit in and what state the seat is in. Some of its columns are settled by triggers rather than by any caller, and are therefore invisible at the call site: updated_at is touched on every write, product_id is reconciled against the group''s product by trg_validate_participations_group, and group_joined_at is stamped by trg_participations_stamp_group_joined_at whenever group_id is set, changed or cleared — group_id has at least five writers, including the ON DELETE SET NULL cascade from product_groups, which is why the stamp lives in a trigger and not in an RPC. Do not set group_joined_at by hand.';
+COMMENT ON TABLE public.participations IS 'One row per seat on a product: who holds it, who pays for it, which group they sit in and what state the seat is in. Some of its columns are settled by triggers rather than by any caller, and are therefore invisible at the call site: updated_at is touched on every write, a group_id naming a group of another product is rejected by trg_validate_participations_group, and group_joined_at is stamped by trg_participations_stamp_group_joined_at whenever group_id is set, changed or cleared — group_id has at least five writers, including the ON DELETE SET NULL cascade from product_groups, which is why the stamp lives in a trigger and not in an RPC. Do not set group_joined_at by hand: chk_participations_group_joined_at_iff_group refuses a stamp out of step with group_id.';
 
 
 --
@@ -48,7 +55,7 @@ COMMENT ON COLUMN public.participations.stripe_checkout_session_id IS 'Stripe Ch
 -- Name: COLUMN participations.group_joined_at; Type: COMMENT; Schema: public; Owner: -
 --
 
-COMMENT ON COLUMN public.participations.group_joined_at IS 'When this seat entered its CURRENT group. NULL when the seat holds no group, and only then: rows older than the column carry a value derived from their own signed_up_at, so "unknown" and "derived from signup" are not distinguishable on an old row. That cost is accepted because signup is a provable lower bound on the true join — a seat cannot enter a group of a product it does not hold — so a derived value can only ever understate how new a member is, and the newcomer badge is the column''s only consumer. A move between two groups of one product RESETS the stamp: the member is new to THAT group, which is the whole claim the newcomer badge makes, and it is also the floor the session register measures its expectations from. Stamped only by trg_participations_stamp_group_joined_at, which is the column''s only ongoing writer — no RPC and no policy-driven UPDATE sets it, because group_id has at least five writers (including the ON DELETE SET NULL cascade from product_groups) and a trigger is the only point that sees all of them.';
+COMMENT ON COLUMN public.participations.group_joined_at IS 'When this seat entered its CURRENT group, and NULL exactly when the seat holds no group — chk_participations_group_joined_at_iff_group holds the two together. Rows older than the column carry a value derived from their own signed_up_at, so "unknown" and "derived from signup" are not distinguishable on an old row. That cost is accepted because signup is a provable lower bound on the true join — a seat cannot enter a group of a product it does not hold — so a derived value can only ever understate how new a member is: the newcomer badge then shows less often, and the session register expects the member on more sessions, never fewer. A move between two groups of one product RESETS the stamp: the member is new to THAT group, which is the whole claim the newcomer badge makes, and it is also the floor the session register measures its expectations from. Stamped only by trg_participations_stamp_group_joined_at, which is the column''s only ongoing writer — no RPC and no policy-driven UPDATE sets it, because group_id has at least five writers (including the ON DELETE SET NULL cascade from product_groups) and a trigger is the only point that sees all of them.';
 
 
 --
@@ -63,6 +70,48 @@ COMMENT ON COLUMN public.participations.seat_offer_sent_at IS 'When a seat offer
 --
 
 COMMENT ON COLUMN public.participations.seat_offer_expiry_notified_at IS 'When staff were emailed that this offer ran out with no answer. Orthogonal to whether the offer is live or expired: it records that a notification happened, not the offer''s standing. Claimed atomically by claim_expired_seat_offer_notifications, whose UPDATE ... WHERE seat_offer_expiry_notified_at IS NULL is what makes the mail exactly-once under concurrency with no lock held across the send. Cleared whenever a fresh offer is stamped, so a re-offer that expires again notifies again.';
+
+
+--
+-- Name: COLUMN participations.utm_source; Type: COMMENT; Schema: public; Owner: -
+--
+
+COMMENT ON COLUMN public.participations.utm_source IS 'The utm_source of the visit that led to this booking, or NULL. Written once, when the seat or place in line is created, by create_participation, confirm_paid_participation or join_waitlist, and only when the booking request carried marketing cookie consent — the same server-side gate the account''s own UTM columns are written under. The participation create and waitlist routes read the values from the request and clean them with the UTM module''s sanitiser (src/lib/utm.ts) under that marketing-cookie gate; a paid seat''s values travel through the Stripe Checkout Session metadata to the webhook, which hands them to confirm_paid_participation. Case preserved. Read by the Klaviyo enrolled and waitlisted events; a label that grants nothing.';
+
+
+--
+-- Name: COLUMN participations.utm_medium; Type: COMMENT; Schema: public; Owner: -
+--
+
+COMMENT ON COLUMN public.participations.utm_medium IS 'The utm_medium of the visit that led to this booking, or NULL. Same rules as utm_source.';
+
+
+--
+-- Name: COLUMN participations.utm_campaign; Type: COMMENT; Schema: public; Owner: -
+--
+
+COMMENT ON COLUMN public.participations.utm_campaign IS 'The utm_campaign of the visit that led to this booking, or NULL. Same rules as utm_source.';
+
+
+--
+-- Name: COLUMN participations.utm_content; Type: COMMENT; Schema: public; Owner: -
+--
+
+COMMENT ON COLUMN public.participations.utm_content IS 'The utm_content of the visit that led to this booking, or NULL. Same rules as utm_source.';
+
+
+--
+-- Name: COLUMN participations.utm_term; Type: COMMENT; Schema: public; Owner: -
+--
+
+COMMENT ON COLUMN public.participations.utm_term IS 'The utm_term of the visit that led to this booking, or NULL. Same rules as utm_source.';
+
+
+--
+-- Name: COLUMN participations.school_of_gaming_marketing_opt_in; Type: COMMENT; Schema: public; Owner: -
+--
+
+COMMENT ON COLUMN public.participations.school_of_gaming_marketing_opt_in IS 'The parent''s answer to the product''s "I want emails from School of Gaming" box when they booked this seat: true or false when the product asked (a school_of_gaming row in product_marketing_consents), NULL when it did not. Written once with the seat or place in line, by create_participation, confirm_paid_participation or join_waitlist. A yes subscribes the parent to School of Gaming''s Klaviyo list once, when the event the booking''s own insert files is sent — enrolled for a seat taken at once, waitlisted for a waitlist join; a later promotion or demotion of the row does not carry it again, and the answer itself is never an event property. It is never written to marketing_consents, because Klaviyo owns School of Gaming''s mailing consent.';
 
 
 --
@@ -127,6 +176,20 @@ CREATE UNIQUE INDEX uq_participations_active_or_waitlisted ON public.participati
 --
 
 CREATE UNIQUE INDEX uq_participations_checkout_session ON public.participations USING btree (stripe_checkout_session_id) WHERE (stripe_checkout_session_id IS NOT NULL);
+
+
+--
+-- Name: participations participations_klaviyo_changed; Type: TRIGGER; Schema: public; Owner: -
+--
+
+CREATE TRIGGER participations_klaviyo_changed AFTER UPDATE OF status, product_id, seat_offer_sent_at ON public.participations FOR EACH ROW WHEN ((((old.status IS DISTINCT FROM new.status) OR (old.product_id IS DISTINCT FROM new.product_id)) OR (old.seat_offer_sent_at IS DISTINCT FROM new.seat_offer_sent_at))) EXECUTE FUNCTION public.klaviyo_participation_changed();
+
+
+--
+-- Name: participations participations_klaviyo_written; Type: TRIGGER; Schema: public; Owner: -
+--
+
+CREATE TRIGGER participations_klaviyo_written AFTER INSERT OR DELETE ON public.participations FOR EACH ROW EXECUTE FUNCTION public.klaviyo_participation_changed();
 
 
 --

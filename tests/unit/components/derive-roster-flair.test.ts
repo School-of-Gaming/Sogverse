@@ -27,13 +27,15 @@ import {
 const IDS = {
   /** A note and a fresh stamp: the row wearing both marks. */
   siiri: "c4a9f0e2-8d31-4b7a-9f21-3e6d5c4b8a70",
-  /** Neither mark, and still on the roster — most of a real group. */
+  /** No note and an old stamp, and still on the roster — most of a real group. */
   oskar: "2e7b6a54-3c1d-4f89-b0a2-7d8e9f0a1b2c",
   /** A stamp and no note. */
   emil: "8c5d4e3f-2a1b-4c9d-8e7f-6a5b4c3d2e1f",
 } as const;
 
 const JOINED_RECENTLY = "2026-03-06T12:00:00.000Z";
+/** Every seat in a group carries a stamp; this one is long past the badge. */
+const JOINED_LONG_AGO = "2020-01-01T00:00:00.000Z";
 const STORED_NOTE = "Quiet in big groups — pair her rather than letting her pick.";
 
 /** One roster row; the defaults are the common case, all absent. */
@@ -43,7 +45,7 @@ function member(
 ): RosterFlairSource {
   return {
     participant_id: participantId,
-    group_joined_at: null,
+    group_joined_at: JOINED_LONG_AGO,
     note: null,
     note_updated_by_first_name: null,
     // Never null on the wire: a list has a real empty value where a note does
@@ -82,6 +84,7 @@ describe("deriveRosterFlairMaps — the clubs-only badge gate", () => {
 
     expect(maps.newcomers).toEqual({
       [IDS.siiri]: JOINED_RECENTLY,
+      [IDS.oskar]: JOINED_LONG_AGO,
       [IDS.emil]: JOINED_RECENTLY,
     });
   });
@@ -105,7 +108,7 @@ describe("deriveRosterFlairMaps — absence is how none is spelled", () => {
     // against the key lists: a null written in as a value would pass the shape
     // assertions above and break every consumer, which reads a missing key as
     // the answer.
-    expect(Object.keys(maps.newcomers)).toEqual([IDS.siiri, IDS.emil]);
+    expect(Object.keys(maps.newcomers)).toEqual([IDS.siiri, IDS.oskar, IDS.emil]);
     expect(Object.keys(maps.notes)).toEqual([IDS.siiri]);
     expect(Object.keys(maps.noteEditors)).toEqual([IDS.siiri]);
     expect(Object.keys(maps.creations)).toEqual([IDS.oskar]);

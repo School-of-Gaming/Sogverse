@@ -227,15 +227,15 @@ function buildCspHeader(nonce: string): string {
   return [
     "default-src 'self'",
     // Production needs no vendor host here: `strict-dynamic` trusts a script
-    // element created by code that was itself trusted, and both advertising
-    // scripts — the Meta Pixel and the Tag Manager container — are inserted by
-    // the app's own bundle rather than by an inline snippet. It also covers what
-    // those two load in turn, which is what keeps a container's own tags off
-    // this line. Development has no nonce and no `strict-dynamic`, so the hosts
-    // that serve fbevents.js and gtm.js have to be named.
+    // element created by code that was itself trusted, and every advertising
+    // script — the Meta and Reddit pixels and the Tag Manager container — is
+    // inserted by the app's own bundle rather than by an inline snippet. It
+    // also covers what those load in turn, which is what keeps a container's
+    // own tags off this line. Development has no nonce and no `strict-dynamic`,
+    // so the hosts that serve fbevents.js, pixel.js and gtm.js have to be named.
     isProd
       ? `script-src 'self' 'nonce-${nonce}' 'strict-dynamic'`
-      : "script-src 'self' 'unsafe-inline' 'unsafe-eval' https://va.vercel-scripts.com https://c.daily.co https://connect.facebook.net https://www.googletagmanager.com",
+      : "script-src 'self' 'unsafe-inline' 'unsafe-eval' https://va.vercel-scripts.com https://c.daily.co https://connect.facebook.net https://www.redditstatic.com https://www.googletagmanager.com",
     "style-src 'self' 'unsafe-inline'",
     // mc-heads.net renders the Minecraft skin body, which the shared game-account
     // row derives straight from a username — so it loads anywhere an identity is
@@ -267,7 +267,10 @@ function buildCspHeader(nonce: string): string {
     // block costs is an advertising audience sync, never an analytics event or
     // a conversion, and CSP allows no wildcard on the TLD, so the alternative
     // is a list of every Google country domain that rots quietly.
-    `img-src 'self' data: blob: ${SUPABASE_HOST} https://mc-heads.net https://tr.rbxcdn.com https://www.facebook.com https://www.googletagmanager.com https://*.google-analytics.com https://*.analytics.google.com https://www.googleadservices.com https://googleads.g.doubleclick.net https://td.doubleclick.net https://stats.g.doubleclick.net https://www.google.com`,
+    // alb.reddit.com is the Reddit Pixel's transport, which reports by
+    // requesting /rp.gif as an image — needed in production for the same
+    // reason as Meta's host above.
+    `img-src 'self' data: blob: ${SUPABASE_HOST} https://mc-heads.net https://tr.rbxcdn.com https://www.facebook.com https://alb.reddit.com https://www.googletagmanager.com https://*.google-analytics.com https://*.analytics.google.com https://www.googleadservices.com https://googleads.g.doubleclick.net https://td.doubleclick.net https://stats.g.doubleclick.net https://www.google.com`,
     "font-src 'self'",
     // wss: Supabase Realtime, Daily.co signaling; sentry: Daily.co's bundled error reporting.
     // www.facebook.com is where the Meta Pixel sends events once its library has
@@ -275,6 +278,18 @@ function buildCspHeader(nonce: string): string {
     // covered by `strict-dynamic`, so both branches need it. Our own
     // server-side reports go to graph.facebook.com and are named nowhere here:
     // they leave a route handler, not the document.
+    // alb.reddit.com is where the Reddit Pixel posts events by fetch, beside
+    // its image beacon above. **Two other Reddit hosts are left out on
+    // purpose, and this line is the only thing that keeps them out.**
+    // pixel-config.reddit.com serves the configuration set in Reddit's Events
+    // Manager, which can add event rules fired on URL changes and clicks, turn
+    // on automatic matching that reads email and phone values out of the page,
+    // and scrape the page title and description; ads.reddit.com is where
+    // Reddit's point-and-click event setup tool loads itself from. Both are a
+    // web form nobody here reviews, able to make the pixel report private pages
+    // after a client navigation or lift form fields — and unlike Meta's
+    // `autoConfig` the base code has no switch for it, so refusing the fetch is
+    // the switch. The pixel runs on the calls the app makes and nothing else.
     // The Google side is the same story, host for host:
     // www.googletagmanager.com is where the container fetches its own
     // configuration; *.google-analytics.com and *.analytics.google.com are
@@ -285,7 +300,7 @@ function buildCspHeader(nonce: string): string {
     // and stats.g.doubleclick.net and td.doubleclick.net take the analytics
     // property's remarketing beacon and the conversion linker's. Nothing here
     // is reached by `strict-dynamic` either.
-    `connect-src 'self' ${SUPABASE_HOST} ${SUPABASE_WS_HOST} https://*.supabase.co wss://*.supabase.co https://*.daily.co wss://*.daily.co https://*.ingest.sentry.io https://www.facebook.com https://www.googletagmanager.com https://*.google-analytics.com https://*.analytics.google.com https://www.googleadservices.com https://googleads.g.doubleclick.net https://td.doubleclick.net https://stats.g.doubleclick.net https://www.google.com`,
+    `connect-src 'self' ${SUPABASE_HOST} ${SUPABASE_WS_HOST} https://*.supabase.co wss://*.supabase.co https://*.daily.co wss://*.daily.co https://*.ingest.sentry.io https://www.facebook.com https://alb.reddit.com https://www.googletagmanager.com https://*.google-analytics.com https://*.analytics.google.com https://www.googleadservices.com https://googleads.g.doubleclick.net https://td.doubleclick.net https://stats.g.doubleclick.net https://www.google.com`,
     // The Google hosts here are the third directive `strict-dynamic` does not
     // reach, and the one easiest to forget because nothing in the app's own
     // markup is a frame: a conversion linker writes its cookie from a hidden

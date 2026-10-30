@@ -28,34 +28,45 @@ export interface MarketingConsentAsk {
    * keeping the two apart means the enum could be renamed by migration without
    * touching five locale files.
    */
-  sentenceKey: "lynxEducate";
+  sentenceKey: "lynxEducate" | "schoolOfGaming";
   /**
    * Where the `<link>` chunk in that sentence goes. Opened in a NEW TAB, the
    * same way a required consent's documents are and for the same reason: the
    * panel behind it is holding a chosen child and a half-answered form that has
-   * to survive the reading.
+   * to survive the reading. `null` for our own list, whose sentence names no
+   * one the reader has to go and look up, and carries no link.
    */
-  href: string;
+  href: string | null;
+  /**
+   * Where the parent's answer is recorded, which decides how it travels.
+   *
+   * - `account` — a partner's list: one standing answer on the account, written
+   *   through `set_marketing_consent` from the panel, whichever door the parent
+   *   took.
+   * - `seat` — School of Gaming's own list: Klaviyo owns that consent, so the
+   *   answer is never written to the account (`set_marketing_consent` refuses
+   *   it). It is stored on the row the booking creates — the seat, or the
+   *   place in line — and reaches Klaviyo with the event that row's creation
+   *   files, so it travels in the booking request itself, whichever door the
+   *   parent took.
+   */
+  recordedOn: "account" | "seat";
 }
 
 /**
  * **The marketing consents a product may be made to ask for, in the order a
  * form offers them.**
  *
- * `school_of_gaming` is deliberately absent, and its absence is the whole point
- * of this list being written out rather than derived from the enum. Our own
- * mailing list is asked for once, at parent registration, on the account that
- * holds it — attaching it to a *product* would put the same account-level
- * question in front of a parent a second time with nothing new to say, which is
- * the dark pattern the account-level key exists to prevent. Only a consent
- * whose ask genuinely belongs to a particular product (a partner's, on the
- * products that partnership covers) goes here.
+ * A partner's list, on the products that partnership covers, and School of
+ * Gaming's own — whose answer is recorded on the seat rather than the account
+ * (see `recordedOn`).
  *
  * A tuple rather than the map's key order, because the order is a decision: it
  * is the order an admin reads the picker in and the order a parent meets the
  * boxes in, and neither should depend on how an object literal was typed.
  */
 export const ATTACHABLE_MARKETING_CONSENT_TYPES = [
+  "school_of_gaming",
   "lynx_educate",
 ] as const satisfies readonly MarketingConsentType[];
 
@@ -66,7 +77,16 @@ export type AttachableMarketingConsentType =
 export const MARKETING_CONSENT_ASKS: Readonly<
   Record<AttachableMarketingConsentType, MarketingConsentAsk>
 > = {
-  lynx_educate: { sentenceKey: "lynxEducate", href: LYNX_EDUCATE_URL },
+  school_of_gaming: {
+    sentenceKey: "schoolOfGaming",
+    href: null,
+    recordedOn: "seat",
+  },
+  lynx_educate: {
+    sentenceKey: "lynxEducate",
+    href: LYNX_EDUCATE_URL,
+    recordedOn: "account",
+  },
 };
 
 /**

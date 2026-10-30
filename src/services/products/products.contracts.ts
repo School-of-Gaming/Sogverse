@@ -138,7 +138,7 @@ const productDataBase = z.object({
   // holds. Null (or blank) means no row.
   material_url: z.string().nullable(),
   location_id: z.string().nullable(),
-  is_remote: z.boolean(),
+  delivery_mode: z.enum(Constants.public.Enums.delivery_mode),
   // How an online product's sessions are joined: the Sogverse voice room, a
   // meeting on another service at `external_voice_url`, or no room and the
   // join instructions each translation carries. Both are required, and the
@@ -148,7 +148,7 @@ const productDataBase = z.object({
   // back on a Sogverse room without anybody asking.
   //
   // Only shape is checked here. That the link belongs to the external mode and
-  // is http(s), that an in-person product stays on `sogverse`, and that the
+  // is http(s), that an in-person or hybrid product stays on `sogverse`, and that the
   // instructions go with mode `none`, are the database's rules — CHECKs on
   // `products` and the RPC's own refusal — not rules restated at the boundary.
   voice_room_mode: z.enum(Constants.public.Enums.voice_room_mode),
@@ -209,11 +209,9 @@ const productDataBase = z.object({
   // Unlike the slugs, this one is narrowed here rather than left to a foreign
   // key: the values are a Postgres ENUM, so an unknown one is a type error
   // rather than a missing row, and the enum is exactly what codegen gives us to
-  // check against. Note that the schema admits `school_of_gaming` while the
-  // admin form deliberately never offers it (see
-  // `ATTACHABLE_MARKETING_CONSENT_TYPES`): what a product may *store* is a
-  // database question, and what a form *offers* is a product decision — the
-  // wire is not the place to re-litigate the second.
+  // check against. What a product may *store* is a database question, and
+  // what a form *offers* (`ATTACHABLE_MARKETING_CONSENT_TYPES`) is a product
+  // decision — the wire is not the place to re-litigate the second.
   marketing_consent_types: z.array(
     z.enum(Constants.public.Enums.marketing_consent_type),
   ),

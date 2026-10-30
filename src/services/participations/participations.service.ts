@@ -1,5 +1,6 @@
 import type {
   AppSupabaseClient,
+  DeliveryMode,
   Json,
   ParticipationStatus,
   ParticipationSubscriptionState,
@@ -10,6 +11,8 @@ import type {
   SessionAudience,
 } from "@/types";
 import type { SupportedCurrency } from "@/lib/constants/currency";
+import type { UtmInput } from "@/lib/utm";
+import { gamersAttendSite } from "@/lib/products/delivery-mode";
 import type { QueryData } from "@supabase/supabase-js";
 import {
   parseJsonResponse,
@@ -105,17 +108,17 @@ export interface MyUpcomingSessionRow {
      */
     endDate: string | null;
     /**
-     * `false` for in-person products. The dashboard uses this together with
-     * `groupId` to gate whether the Join Voice link gets a real
-     * destination — in-person products have no voice room, so the button
+     * How the product is delivered. The dashboard asks `hasVoiceRoom` of it,
+     * together with `groupId`, to gate whether the Join Voice link gets a real
+     * destination — an in-person product has no voice room, so the button
      * stays inert.
      */
-    isRemote: boolean;
+    deliveryMode: DeliveryMode;
     /**
-     * The site an **in-person** product runs at, `null` on a remote one.
+     * The site an in-person or hybrid product runs at, `null` on an online one.
      *
-     * Gated on `is_remote` rather than on whether the join found a row: a
-     * remote municipality club carries a `location_id` too (the municipality
+     * Gated on `gamersAttendSite` rather than on whether the join found a row:
+     * an online municipality club carries a `location_id` too (the municipality
      * that commissioned it), and that is an administrative fact, not a
      * building anybody travels to. Answering "where is this happening" with a
      * municipality name on a card whose sessions are in a voice room would be
@@ -255,15 +258,15 @@ export interface MyWaitlistRow {
     /** Inclusive end date in the product's local calendar, null when open-ended. */
     endDate: string | null;
     /**
-     * `false` for in-person products. No Join is ever drawn on a waitlisted
+     * How the product is delivered. No Join is ever drawn on a waitlisted
      * card — there is no seat behind it — but the summary this row becomes says
-     * whether the product *has* a room, and inventing `false` for every
+     * whether the product *has* a room, and inventing "no room" for every
      * waitlist place would be stating something untrue about the product.
      */
-    isRemote: boolean;
+    deliveryMode: DeliveryMode;
     /**
      * How the product's sessions are joined. Nothing is joined from a
-     * waitlisted card; it is carried for the same reason `isRemote` is.
+     * waitlisted card; it is carried for the same reason `deliveryMode` is.
      */
     voiceRoom: ProductVoiceRoom;
     /**
@@ -387,6 +390,17 @@ export type CreateParticipationInput = {
    * is what keeps a new signup surface from forgetting the question exists.
    */
   consentedDocuments: string[];
+  /**
+   * The visit's UTM tag, as the browser holds it. Whether any of it is stored
+   * is the route's decision, from the request's own consent cookie.
+   */
+  utm: UtmInput;
+  /**
+   * The answer to the product's School of Gaming mailing box, or `null` when
+   * the product does not ask. Required for the same reason the documents are:
+   * a caller has to state it.
+   */
+  schoolOfGamingMarketingOptIn: boolean | null;
 };
 
 /**
@@ -409,12 +423,8 @@ export interface ParticipationConfirmation {
    * names that address only when the payer is the one reading.
    */
   customerId: string;
-  /**
-   * The participant's first name — a child's, or the buyer's own on a self
-   * seat. Null → the page falls back to "Your child" / "You" depending on
-   * `isSelfSeat`.
-   */
-  participantName: string | null;
+  /** The participant's first name — a child's, or the buyer's own on a self seat. */
+  participantName: string;
   /**
    * Whether the seat is the buyer's own, i.e. `participant_id = customer_id`.
    *
@@ -440,7 +450,27 @@ export type JoinWaitlistInput = {
   /** Ticked consent document slugs — see `CreateParticipationInput`. A queue
    *  place is held to the same enrolment conditions as a seat. */
   consentedDocuments: string[];
+  /** The visit's UTM tag — see `CreateParticipationInput`. */
+  utm: UtmInput;
+  /** The School of Gaming mailing answer — see `CreateParticipationInput`. */
+  schoolOfGamingMarketingOptIn: boolean | null;
 };
+
+/**
+ * A booking's JSON body with an unasked School of Gaming box left off the wire
+ * rather than sent as null: absent is the one spelling the routes read as "not
+ * asked".
+ */
+function bookingBody<T extends { schoolOfGamingMarketingOptIn: boolean | null }>(
+  input: T,
+): string {
+  const { schoolOfGamingMarketingOptIn, ...rest } = input;
+  return JSON.stringify(
+    schoolOfGamingMarketingOptIn === null
+      ? rest
+      : { ...rest, schoolOfGamingMarketingOptIn },
+  );
+}
 
 export type LeaveWaitlistInput = {
   participationId: string;
@@ -754,7 +784,7 @@ export class ParticipationsService {
       status: data.status,
       productId: data.product_id,
       customerId: data.customer_id,
-      participantName: data.participant.first_name || null,
+      participantName: data.participant.first_name,
       isSelfSeat: data.participant_id === data.customer_id,
     };
   }
@@ -797,7 +827,7 @@ export class ParticipationsService {
       status: data.status,
       productId: data.product_id,
       customerId: data.customer_id,
-      participantName: data.participant.first_name || null,
+      participantName: data.participant.first_name,
       isSelfSeat: data.participant_id === data.customer_id,
     };
   }
@@ -866,7 +896,7 @@ export class ParticipationsService {
     const response = await fetch("/api/checkout/products/create", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(input),
+      body: bookingBody(input),
     });
     if (!response.ok) {
       // An `ApiError` rather than a bare `Error`: the panel branches on the
@@ -881,7 +911,7 @@ export class ParticipationsService {
     const response = await fetch("/api/participations/waitlist", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(input),
+      body: bookingBody(input),
     });
     if (!response.ok) {
       // Same shape as the signup door above, and for the same reason: this
@@ -1000,7 +1030,7 @@ function buildMyUpcomingSessionsQuery(
         signed_up_at,
         group_joined_at,
         product:products!inner(
-          id, product_type, topic, timezone, start_date, end_date, is_remote,
+          id, product_type, topic, timezone, start_date, end_date, delivery_mode,
           voice_room_mode, external_voice_url,
           product_translations(*),
           schedule_slots(weekday, start_time, duration_minutes),
@@ -1054,7 +1084,7 @@ function buildMyWaitlistQuery(
         participant_id,
         seat_offer_sent_at,
         product:products!inner(
-          product_type, topic, timezone, start_date, end_date, is_remote,
+          product_type, topic, timezone, start_date, end_date, delivery_mode,
           voice_room_mode, external_voice_url,
           product_translations(*),
           schedule_slots(weekday, start_time, duration_minutes)
@@ -1080,13 +1110,9 @@ function toMyUpcomingSessionRow(
 ): MyUpcomingSessionRow {
   // Both non-null via the `!inner` joins in buildMyUpcomingSessionsQuery.
   const { product, participant } = row;
-  // Mirror the purchased-card fallback chain so a missing first_name still
-  // renders something readable. The seed comes from `participant_id` regardless,
-  // so the identicon stays stable across name edits.
-  const firstName = participant.first_name || row.participant_id.slice(0, 8);
   return {
     participationId: row.id,
-    participant: { id: row.participant_id, firstName },
+    participant: { id: row.participant_id, firstName: participant.first_name },
     product: {
       id: product.id,
       type: product.product_type,
@@ -1094,11 +1120,11 @@ function toMyUpcomingSessionRow(
       timezone: product.timezone,
       startDate: product.start_date,
       endDate: product.end_date,
-      isRemote: product.is_remote,
+      deliveryMode: product.delivery_mode,
       // The join is gated here rather than in the select, because the select
-      // cannot express it: a remote municipality club has a `location_id` and
+      // cannot express it: an online municipality club has a `location_id` and
       // no site. See `MyUpcomingSessionRow.product.site`.
-      site: product.is_remote ? null : product.location,
+      site: gamersAttendSite(product.delivery_mode) ? product.location : null,
       voiceRoom: productVoiceRoom(product, product.product_translations),
       translations: product.product_translations,
     },
@@ -1123,23 +1149,18 @@ function toMyWaitlistRow(
   row: RawMyWaitlistRow,
   position: number,
 ): MyWaitlistRow {
-  // Both non-null via the `!inner` joins in buildMyWaitlistQuery. Same
-  // first-name fallback as the sessions adapter, so a participant with no name
-  // set reads identically on a waitlist card and a session card.
+  // Both non-null via the `!inner` joins in buildMyWaitlistQuery.
   const { product, participant } = row;
   return {
     participationId: row.id,
-    participant: {
-      id: row.participant_id,
-      firstName: participant.first_name || row.participant_id.slice(0, 8),
-    },
+    participant: { id: row.participant_id, firstName: participant.first_name },
     product: {
       type: product.product_type,
       topic: product.topic,
       timezone: product.timezone,
       startDate: product.start_date,
       endDate: product.end_date,
-      isRemote: product.is_remote,
+      deliveryMode: product.delivery_mode,
       voiceRoom: productVoiceRoom(product, product.product_translations),
       translations: product.product_translations,
     },

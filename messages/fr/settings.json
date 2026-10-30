@@ -5,6 +5,7 @@
   "firstNamePlaceholder": "Saisissez votre prénom",
   "lastNamePlaceholder": "Saisissez votre nom",
   "invalidPhone": "Veuillez saisir un numéro de téléphone valide.",
+  "firstNameRequired": "Le prénom doit contenir au moins {min} caractères.",
   "lastNameRequired": "Le nom doit contenir au moins {min} caractères.",
   "profileUpdated": "Informations personnelles enregistrées.",
   "failedToUpdateProfile": "Impossible d’enregistrer vos informations personnelles.",
@@ -40,7 +41,10 @@
   },
   "marketing": {
     "title": "Préférences marketing",
-    "schoolOfGaming": "School of Gaming peut m’envoyer des actualités et des offres par e-mail.",
+    "schoolOfGaming": "Les e-mails de School of Gaming sur nos clubs, nos camps et nos actualités",
+    "schoolOfGamingNote": "Le lien de désabonnement présent dans chacun de nos e-mails fonctionne aussi.",
+    "schoolOfGamingLoadFailed": "Impossible de charger ce réglage.",
+    "retry": "Réessayer",
     "lynxEducate": "Partager mon adresse e-mail avec <link>Lynx Educate</link> afin qu’ils puissent m’envoyer des actualités sur les événements à venir et des ressources sur le jeu vidéo. Je peux me désabonner à tout moment."
   },
   "notifications": {

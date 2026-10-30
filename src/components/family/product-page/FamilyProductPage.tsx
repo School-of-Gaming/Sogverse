@@ -6,7 +6,7 @@ import { SwitchProfileDialog } from "@/components/family/SwitchProfileDialog";
 import { ROUTES } from "@/lib/constants/routes";
 import { resolveLocale } from "@/lib/constants/locales";
 import { buildFamilySessionFeed } from "@/lib/family-session-feed";
-import { resolveTranslation } from "@/lib/i18n/resolve-translation";
+import { resolveRequiredTranslation } from "@/lib/i18n/resolve-translation";
 import {
   joinSwitchLanding,
   productVoiceRoom,
@@ -201,7 +201,7 @@ export function FamilyProductPage({
   /** Whether the Join has an account switch behind it — a child's seat only. */
   const switchesAccount = audience === "customer" && !isSelfSeat;
   const productName =
-    resolveTranslation(feed.product.translations, locale)?.name ?? "";
+    resolveRequiredTranslation(feed.product.translations, locale).name;
   const voiceHref = ROUTES.voice.groupSession(feed.group.id);
   const voiceRoom = productVoiceRoom(feed.product, feed.product.translations);
 
@@ -218,7 +218,7 @@ export function FamilyProductPage({
           schedule_slots: feed.product.schedule_slots,
         }}
         plannedSessions={feed.planned_sessions}
-        isRemote={feed.product.is_remote}
+        deliveryMode={feed.product.delivery_mode}
         voiceRoom={voiceRoom}
         participant={participant}
         groupName={feed.group.name}

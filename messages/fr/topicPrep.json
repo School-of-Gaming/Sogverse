@@ -33,7 +33,7 @@
     "rocket_league": "Nous apportons les machines à la séance, avec Rocket League déjà installé. Chaque participant a tout de même besoin de son propre compte Epic Games. Merci de suivre l’étape ci-dessous avant la séance.",
     "roblox_studio": "Nous apportons les ordinateurs à la séance, avec Roblox Studio déjà installé. Chaque participant a tout de même besoin de son propre compte Roblox. Merci de suivre l’étape ci-dessous avant la séance."
   },
-  "remoteOnlyIntro": "Les séances se déroulent en ligne, dans un salon vocal. Merci de suivre l’étape ci-dessous avant la première séance.",
+  "remoteOnlyIntro": "Les séances passent par un salon vocal. Merci de suivre l’étape ci-dessous avant la première séance.",
   "steps": {
     "minecraftJavaAccount": {
       "title": "Obtenir un compte Microsoft avec Minecraft dessus",

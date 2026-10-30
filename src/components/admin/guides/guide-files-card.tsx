@@ -17,7 +17,7 @@ import {
   type SupportedLocale,
 } from "@/lib/constants/locales";
 import { formatDate } from "@/lib/date-format";
-import { resolveTranslation } from "@/lib/i18n/resolve-translation";
+import { resolveRequiredTranslation } from "@/lib/i18n/resolve-translation";
 import { useTimezone } from "@/providers";
 import {
   guideWriteFailure,
@@ -63,7 +63,7 @@ export function GuideFilesCard({ guide, upload, remove }: GuideFilesCardProps) {
   const fileInput = useRef<HTMLInputElement>(null);
 
   // The tab a reader in the admin's locale would be given.
-  const opening = resolveTranslation(guide.files, uiLocale)?.locale ?? uiLocale;
+  const opening = resolveRequiredTranslation(guide.files, uiLocale).locale;
   const [active, setActive] = useState<SupportedLocale>(opening);
   const [added, setAdded] = useState<SupportedLocale | null>(null);
   const [uploading, setUploading] = useState(false);

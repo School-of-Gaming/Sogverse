@@ -7,6 +7,11 @@ process.env.NEXT_PUBLIC_SITE_URL = SITE_ORIGIN;
 
 import { DELETE, POST } from "@/app/api/participations/waitlist/route";
 import { NextResponse } from "next/server";
+import {
+  CONSENT_COOKIE_NAME,
+  consentForPurposes,
+  serialiseConsent,
+} from "@/lib/consent";
 
 // --- Mocks ---
 
@@ -24,9 +29,9 @@ vi.mock("@/lib/brevo", () => ({
 // A place in a queue is a family committing to a product, so it is reported as
 // an enrolment. Mocked at its own module boundary: whether anything is actually
 // sent is decided inside the reporter, from the request's consent cookie.
-const mockReportMetaConversion = vi.fn();
-vi.mock("@/lib/meta-conversions.server", () => ({
-  reportMetaConversion: (...args: unknown[]) => mockReportMetaConversion(...args),
+const mockReportAdConversion = vi.fn();
+vi.mock("@/lib/ad-conversions.server", () => ({
+  reportAdConversion: (...args: unknown[]) => mockReportAdConversion(...args),
 }));
 
 // The spot is committed before the mail is even attempted, so the send is
@@ -204,7 +209,7 @@ function mockReadsForConfirmationEmail(
                         timezone: "Europe/Helsinki",
                         start_date: null,
                         end_date: null,
-                        is_remote: true,
+                        delivery_mode: "online",
                         min_age: 8,
                         max_age: 12,
                         for_gamers: true,
@@ -892,26 +897,37 @@ describe("POST /api/participations/waitlist", () => {
 
       expect(res.status).toBe(200);
       await settleDeferred();
-      expect(mockReportMetaConversion).toHaveBeenCalledTimes(1);
+      expect(mockReportAdConversion).toHaveBeenCalledTimes(1);
       const [request, conversion, account] =
-        mockReportMetaConversion.mock.calls[0];
+        mockReportAdConversion.mock.calls[0];
       expect(request).toBeInstanceOf(Request);
       // The signed-in customer's own id and address, never the participant's.
       expect(account).toEqual({ id: CUSTOMER_ID, email: "parent@example.test" });
       // And which product the place in line is for, as the shared builder
-      // describes it. The price it carries never reaches Meta: the report
-      // itself drops value and currency from every waitlisted enrolment
-      // (asserted in the meta-conversions unit tests).
+      // describes it to each platform. The price it carries never reaches
+      // either: each report itself drops value and currency from every
+      // waitlisted enrolment (asserted in the meta- and reddit-conversions
+      // unit tests).
       expect(conversion).toEqual({
         event: "enrolment",
         outcome: "waitlisted",
         product: {
-          content_ids: [PRODUCT_ID],
-          content_type: "product",
-          content_name: "Roblox Studio Club",
-          content_category: "roblox_studio",
-          value: 49,
-          currency: "EUR",
+          meta: {
+            content_ids: [PRODUCT_ID],
+            content_type: "product",
+            content_name: "Roblox Studio Club",
+            content_category: "roblox_studio",
+            value: 49,
+            currency: "EUR",
+          },
+          reddit: {
+            products: [
+              { id: PRODUCT_ID, name: "Roblox Studio Club", category: "roblox_studio" },
+            ],
+            itemCount: 1,
+            value: 49,
+            currency: "EUR",
+          },
         },
         sourcePath: `/shop/${PRODUCT_ID}`,
       });
@@ -933,7 +949,7 @@ describe("POST /api/participations/waitlist", () => {
 
       expect(res.status).toBe(200);
       await settleDeferred();
-      expect(mockReportMetaConversion).not.toHaveBeenCalled();
+      expect(mockReportAdConversion).not.toHaveBeenCalled();
     });
 
     // A product that vanished between the join and the read, or a read the
@@ -949,7 +965,7 @@ describe("POST /api/participations/waitlist", () => {
 
       expect(res.status).toBe(200);
       await settleDeferred();
-      expect(mockReportMetaConversion).not.toHaveBeenCalled();
+      expect(mockReportAdConversion).not.toHaveBeenCalled();
     });
 
     it("reports nothing on a replay of a join that already happened", async () => {
@@ -970,7 +986,110 @@ describe("POST /api/participations/waitlist", () => {
 
       expect(res.status).toBe(200);
       expect(deferred).toHaveLength(0);
-      expect(mockReportMetaConversion).not.toHaveBeenCalled();
+      expect(mockReportAdConversion).not.toHaveBeenCalled();
+    });
+  });
+
+  // -- What the place in line records, as a seat does --
+  //
+  // The visit's UTM tag is written only under marketing cookie consent read
+  // off THIS request (src/lib/utm.ts); the School of Gaming box is the
+  // parent's own answer and passes through as given.
+  describe("the place in line's tag and answer", () => {
+    const TAG = {
+      source: "lynx",
+      medium: "email",
+      campaign: "lynx-summer-a",
+      content: "hero",
+      term: "minecraft",
+    };
+    const UTM_ARGS = [
+      "p_utm_source",
+      "p_utm_medium",
+      "p_utm_campaign",
+      "p_utm_content",
+      "p_utm_term",
+    ];
+    const BODY = { productId: PRODUCT_ID, participantId: GAMER_ID };
+
+    function consentCookie(purposes: { analytics: boolean; marketing: boolean }): string {
+      const value = serialiseConsent(
+        consentForPurposes(purposes, new Date("2026-10-01T10:00:00Z")),
+      );
+      return `${CONSENT_COOKIE_NAME}=${encodeURIComponent(value)}`;
+    }
+
+    function requestWith(body: unknown, cookie?: string): Request {
+      return new Request("http://localhost:3000/api/participations/waitlist", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          ...(cookie ? { cookie } : {}),
+        },
+        body: JSON.stringify(body),
+      });
+    }
+
+    function rpcArgs(): Record<string, unknown> {
+      const call = mockRpc.mock.calls.find(([name]) => name === "join_product_waitlist");
+      if (call === undefined) throw new Error("join_product_waitlist was not called");
+      return call[1];
+    }
+
+    beforeEach(() => {
+      mockAuthenticatedCustomer();
+      mockRpc.mockResolvedValue({
+        data: {
+          participation_id: PARTICIPATION_ID,
+          waitlist_position: 1,
+          status: "waitlisted",
+          idempotent: true,
+        },
+        error: null,
+      });
+    });
+
+    it("stores the tag when the request's cookie grants marketing", async () => {
+      await POST(
+        requestWith({ ...BODY, utm: TAG }, consentCookie({ analytics: false, marketing: true })),
+      );
+      expect(rpcArgs()).toMatchObject({
+        p_utm_source: "lynx",
+        p_utm_medium: "email",
+        p_utm_campaign: "lynx-summer-a",
+        p_utm_content: "hero",
+        p_utm_term: "minecraft",
+      });
+    });
+
+    it("stores no tag without a consent cookie, or under analytics-only consent", async () => {
+      await POST(requestWith({ ...BODY, utm: TAG }));
+      for (const key of UTM_ARGS) expect(rpcArgs()).not.toHaveProperty(key);
+
+      mockRpc.mockClear();
+      await POST(
+        requestWith({ ...BODY, utm: TAG }, consentCookie({ analytics: true, marketing: false })),
+      );
+      for (const key of UTM_ARGS) expect(rpcArgs()).not.toHaveProperty(key);
+    });
+
+    it("passes the School of Gaming answer through as given, needing no marketing cookie", async () => {
+      await POST(
+        requestWith(
+          { ...BODY, schoolOfGamingMarketingOptIn: true },
+          consentCookie({ analytics: false, marketing: false }),
+        ),
+      );
+      expect(rpcArgs().p_school_of_gaming_marketing_opt_in).toBe(true);
+
+      mockRpc.mockClear();
+      await POST(requestWith({ ...BODY, schoolOfGamingMarketingOptIn: false }));
+      expect(rpcArgs().p_school_of_gaming_marketing_opt_in).toBe(false);
+    });
+
+    it("sends no answer when the box was not asked", async () => {
+      await POST(requestWith(BODY));
+      expect(rpcArgs()).not.toHaveProperty("p_school_of_gaming_marketing_opt_in");
     });
   });
 });

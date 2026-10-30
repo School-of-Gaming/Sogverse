@@ -12,7 +12,7 @@ import {
 import { DEFAULT_LOCALE, resolveLocale } from "@/lib/constants/locales";
 import { ROUTES } from "@/lib/constants/routes";
 import { getOrigin } from "@/lib/url";
-import { resolveTranslation } from "@/lib/i18n/resolve-translation";
+import { resolveRequiredTranslation } from "@/lib/i18n/resolve-translation";
 import { stripe } from "@/lib/stripe/client";
 import { currentPeriodEndOf } from "@/lib/stripe/subscription-period";
 import {
@@ -29,7 +29,7 @@ import type {
 import { adminMoveParticipationRpcResult } from "@/services/participations/participations.contracts";
 import { sendProductConfirmationEmail } from "@/services/participations/product-confirmation-email.server";
 import type {
-  SwitchClubCheckResponse,
+  SwitchClubSubscriptionCheck,
   SwitchClubRefusal,
   SwitchClubSettlement,
 } from "@/services/participations/switch-club.contracts";
@@ -55,14 +55,6 @@ const OCCUPIED_STATUSES = ["active", "waitlisted", "completed"] as const;
 /** The target product columns every step of the switch needs. */
 const TARGET_PRODUCT_COLUMNS =
   "id, product_type, billing_mode, spoken_language_code, start_date, end_date, product_translations(locale, name)";
-
-/**
- * The last resort of both name resolves below. It reaches Stripe — a receipt,
- * the hosted portal — never `messages/`, so no locale sweep will translate it,
- * and the brand name is the right shape for a string in that position. The same
- * string the checkout route falls back to, for the same reason.
- */
-const FALLBACK_PRODUCT_NAME = "School of Gaming product";
 
 /**
  * Stripe's own ceilings on the two free-text fields the rewrite composes: 500
@@ -161,7 +153,8 @@ function settlementOf(
   return invoice.amount_paid > 0 ? "prorate" : null;
 }
 
-export interface SwitchClubCheck extends SwitchClubCheckResponse {
+export interface SwitchClubCheck
+  extends Omit<SwitchClubSubscriptionCheck, "kind"> {
   /** Non-null exactly when `refusals` is empty. */
   commitFacts: SwitchClubCommitFacts | null;
   /**
@@ -721,8 +714,7 @@ function rewrittenSubscriptionMetadata(
   // alert is the worst place for a spoofed origin.
   const origin = getOrigin(request);
   const defaultLocaleName =
-    resolveTranslation(target.product_translations, DEFAULT_LOCALE)?.name ??
-    FALLBACK_PRODUCT_NAME;
+    resolveRequiredTranslation(target.product_translations, DEFAULT_LOCALE).name;
 
   // Cut to Stripe's ceiling here, at the one place these values are composed,
   // rather than at each key: `productName` is an authored translation and is
@@ -737,7 +729,7 @@ function rewrittenSubscriptionMetadata(
       adminProductUrl: `${origin}${ROUTES.admin.productPath(target.product_type, target.id)}`,
       shopProductUrl: `${origin}${ROUTES.shopProductPath(target.id)}`,
       spoken_language_code: target.spoken_language_code,
-      delivery_start: target.start_date ?? "",
+      delivery_start: target.start_date,
       delivery_end: target.end_date ?? "",
     }).map(([key, value]) => [
       key,
@@ -766,16 +758,16 @@ async function rewrittenSubscriptionDescription(
 
   const participant = data.find((row) => row.id === facts.participantId);
   const customer = data.find((row) => row.id === facts.customerId);
-  const isSelfSeat = facts.participantId === facts.customerId;
+  if (!participant) {
+    throw new Error(`switch-club: participant ${facts.participantId} has no profile`);
+  }
 
   const name =
-    resolveTranslation(
+    resolveRequiredTranslation(
       facts.targetProduct.product_translations,
       resolveLocale(customer?.locale ?? null),
-    )?.name ?? FALLBACK_PRODUCT_NAME;
-  // The same audience-aware fallback checkout uses: a parent buying for a child
-  // reads "your child", a parent holding the seat themselves reads "you".
-  const who = participant?.first_name || (isSelfSeat ? "you" : "your child");
+    ).name;
+  const who = participant.first_name;
 
   // Both halves are user-authored — a product translation and a profile's first
   // name — so the composed string is cut to Stripe's ceiling here rather than

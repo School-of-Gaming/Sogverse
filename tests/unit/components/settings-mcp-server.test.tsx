@@ -8,6 +8,7 @@ import {
   homeLocationFieldModule,
   locationsServiceModule,
   notificationPreferencesCardModule,
+  emailMarketingServiceModule,
   marketingConsentsServiceModule,
   minecraftServiceModule,
   providersModule,
@@ -44,6 +45,9 @@ vi.mock("@/components/settings/notification-preferences-card", () =>
 );
 vi.mock("@/services/marketing-consents/marketing-consents.queries", () =>
   marketingConsentsServiceModule(),
+);
+vi.mock("@/services/email-marketing/email-marketing.queries", () =>
+  emailMarketingServiceModule(),
 );
 vi.mock("@/components/game-account", () => gameAccountModule());
 vi.mock("@/components/gedu/gedu-coverage-editor", () =>

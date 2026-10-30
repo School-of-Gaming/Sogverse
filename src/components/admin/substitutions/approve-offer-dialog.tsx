@@ -43,8 +43,8 @@ export function ApproveOfferDialog({
 }) {
   const t = useTranslations("admin.substitutions");
 
-  const name = offer.name ?? t("unnamed");
-  const absent = request.requesterName ?? t("unnamed");
+  const name = offer.name;
+  const absent = request.requesterName;
 
   return (
     <ConfirmDialog

@@ -36,7 +36,11 @@ round a step-up loop no scope can end.
 PostgREST checks only the JWT, so an access token from a revoked grant keeps working until
 it expires — up to one access-token lifetime, an hour. Only the role read is live: a
 demoted admin is refused on their next request. Nothing in Sogverse lists or revokes grants
-yet; that is done from the Supabase dashboard.
+yet; that is done from the Supabase dashboard. A grant is an ordinary session of the
+admin's, so a password change ends every grant they hold, and so does a sign-out of any
+`scope` other than `local`; that is why the app's own sign-outs use `local` scope, except
+the Google callback's claim of an unproven address, which ends every other session and
+grant on purpose.
 
 **Deleting an AI app's OAuth client cuts it off no faster than revoking a grant.** Supabase
 only marks the client deleted and leaves every grant and session it had in place, but its
@@ -89,6 +93,16 @@ the description is built from it rather than restated, so the two cannot drift. 
 value a tool reports about what the public site serves — a landing page's rendered title
 or share card — is computed by the page's own code, run over the copy in question, and
 never by rules restated in the tool.
+
+**Rule: a tool reports raw facts, and anything derived as the app's own function returns
+it — never a value the tool works out itself, and never a reshaping of the function's
+answer.** Raw facts go out under plain field names, grouped where that reads better; what
+is derived is the function's answer, explained in the description, because a second shape
+around it is a second format to keep in step. A tool earns a shape of its own only where
+the AI app cannot see what the page relies on: copy the page fills in from its
+translations (said in the description instead), the viewer's timezone (passed as an
+argument), or paging (a cursor). Logic the app does not have yet belongs in the area it
+serves, never in the tool.
 
 **Rule: authored markdown written through a tool is checked against the field's use case
 and refused outside it** (`src/lib/authored-markdown-subset.ts`), naming each construct and

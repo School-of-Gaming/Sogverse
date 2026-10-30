@@ -1,5 +1,6 @@
 import { CONSENT_DOCUMENT_BUNDLES } from "@/lib/constants/consent-documents";
 import type { EffectiveProductStatus } from "@/lib/products/effective-status";
+import type { DeliveryMode } from "@/types";
 import type {
   LocationChainNode,
   LocationWithChain,
@@ -114,11 +115,19 @@ export function toUtcIso(value: string): string {
 }
 
 /**
- * How a product is delivered, in the API's two words: a remote product is
- * `online`, every other one `in_person`.
+ * How a product is delivered, in the API's words. Each delivery mode is named
+ * by the word the database stores; the switch is what makes a new mode a
+ * compile error here rather than a value the published contract never named.
  */
-export function productDelivery(isRemote: boolean): PartnerDelivery {
-  return isRemote ? "online" : "in_person";
+export function productDelivery(mode: DeliveryMode): PartnerDelivery {
+  switch (mode) {
+    case "online":
+      return "online";
+    case "in_person":
+      return "in_person";
+    case "hybrid":
+      return "hybrid";
+  }
 }
 
 /**

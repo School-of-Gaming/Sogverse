@@ -10,7 +10,7 @@ import {
   resolveLocale,
   stripeLocaleOrAuto,
 } from "@/lib/constants/locales";
-import { resolveTranslation } from "@/lib/i18n/resolve-translation";
+import { resolveRequiredTranslation } from "@/lib/i18n/resolve-translation";
 import {
   createCheckoutBody,
   createParticipationResponse,
@@ -28,11 +28,16 @@ import { firstChargeAnchor } from "@/lib/stripe/first-charge-anchor";
 import { stripe } from "@/lib/stripe/client";
 import { CHECKOUT_SESSION_LIFETIME_MINUTES } from "@/lib/constants/participations";
 import {
+  advertisedProductDetails,
   isAdvertisedProduct,
-  metaProductDetails,
 } from "@/lib/marketing-events";
-import { reportMetaConversion } from "@/lib/meta-conversions.server";
+import { reportAdConversion } from "@/lib/ad-conversions.server";
 import { getOrigin } from "@/lib/url";
+import { parseConsentCookieHeader } from "@/lib/consent";
+import {
+  seatAnswerArgs,
+  seatAnswersToSessionMetadata,
+} from "@/services/participations/seat-answers";
 
 /**
  * POST /api/checkout/products/create
@@ -105,14 +110,6 @@ export const POST = defineRoute({
 
     const locale = resolveLocale(profile.locale);
 
-    // The last resort of both name resolves below, named once so that "the two
-    // chains end in the same string" is structural rather than a claim a reader
-    // has to verify by comparing two literals ten lines apart. It reaches Stripe
-    // — a receipt, the hosted portal, an internal Slack message — never
-    // `messages/`, so no locale sweep will ever translate it, and the brand name
-    // is the right shape for a string in that position.
-    const fallbackProductName = "School of Gaming product";
-
     // The same field resolved twice, for two audiences that want different
     // answers. Both names come out of the one `product_translations` array
     // already read above — two resolves, no second query. The variables are
@@ -125,8 +122,7 @@ export const POST = defineRoute({
     // items now name the shared Stripe Product, whose name is resolved at the
     // default locale and shared across every locale.
     const parentLocaleProductName =
-      resolveTranslation(product.product_translations, locale)?.name ??
-      fallbackProductName;
+      resolveRequiredTranslation(product.product_translations, locale).name;
     // The default-locale name, for the session metadata a Stripe Workflow turns
     // into an internal Slack notification. Its audience is staff in one channel,
     // where one stable name per product is the whole point — resolving it in the
@@ -134,8 +130,7 @@ export const POST = defineRoute({
     // depending on who happened to buy it. It is the same pick the shared Stripe
     // Product is named with, so the two never disagree.
     const defaultLocaleProductName =
-      resolveTranslation(product.product_translations, DEFAULT_LOCALE)?.name ??
-      fallbackProductName;
+      resolveRequiredTranslation(product.product_translations, DEFAULT_LOCALE).name;
 
     // Shape x billing_mode must agree. Each billing mode has exactly one valid
     // shape family: free→'free', external_contract→'external', paid→
@@ -192,6 +187,18 @@ export const POST = defineRoute({
       );
     }
 
+    // What the seat records beyond who and what: the visit's UTM tag and the
+    // parent's answer to the product's School of Gaming mailing box. The tag
+    // is GATED ON MARKETING CONSENT, read off THIS request's own cookie header
+    // — never a body field — exactly as account creation gates the profile's
+    // copy (`src/lib/utm.ts`). The box's answer is the parent's own and passes
+    // through as given: absent when the panel did not ask, which stores NULL.
+    const seatAnswers = seatAnswerArgs(
+      parseConsentCookieHeader(request.headers.get("cookie")),
+      body.utm,
+      body.schoolOfGamingMarketingOptIn,
+    );
+
     // For a paid shape this call only *validates* — it runs every signup rule
     // (parent-of, lifecycle, registration window, currency, already-enrolled,
     // seat cap) under the product gate lock and writes nothing. The row is
@@ -214,6 +221,10 @@ export const POST = defineRoute({
         // would put a second copy of the rule outside the lock, where it could
         // read a requirement set that changed a moment later.
         p_consented_documents: body.consentedDocuments,
+        // Written onto the seat for the two no-charge shapes; ignored by the
+        // paid ones, which carry the same values through the Checkout Session
+        // to the webhook instead.
+        ...seatAnswers,
       },
     );
 
@@ -276,7 +287,8 @@ export const POST = defineRoute({
         }),
       );
 
-      // The enrolment conversion, reported to Meta from here — after the
+      // The enrolment conversion, reported to the advertising platforms from
+      // here — after the
       // response, so it can neither delay the parent's answer nor fail it. Only
       // the free outcome earns one: `external_active` is a municipality
       // registration, invoiced off-platform to a council, and no ad caused it.
@@ -291,12 +303,12 @@ export const POST = defineRoute({
       // — the route is customer-only, so a gamer cannot reach it at all.
       if (rpcJson.kind === "free_active" && isAdvertisedProduct(product)) {
         after(
-          reportMetaConversion(
+          reportAdConversion(
             request,
             {
               event: "enrolment",
               outcome: "enrolled",
-              product: metaProductDetails(product, currency),
+              product: advertisedProductDetails(product, currency),
               sourcePath: ROUTES.shopProductPath(productId),
             },
             // The signed-in customer's own id and address, never the
@@ -478,7 +490,13 @@ export const POST = defineRoute({
         automatic_tax: { enabled: true },
         customer_update: { address: "auto" },
         expires_at: expiresAt,
-        metadata: sessionMetadata,
+        // The seat answers ride the session alone: the webhook writes them onto
+        // the seat it creates, and no other Stripe object has a use for them —
+        // so they stay out of the subscription's copy below.
+        metadata: {
+          ...sessionMetadata,
+          ...seatAnswersToSessionMetadata(seatAnswers),
+        },
         success_url: successUrl,
         cancel_url: cancelUrl,
         line_items: [],
@@ -570,7 +588,6 @@ export const POST = defineRoute({
           description: `${parentLocaleProductName} — ${await pickParticipantName(
             admin,
             participantId,
-            participantId === user.id,
           )}`,
         };
 
@@ -609,7 +626,8 @@ export const POST = defineRoute({
         throw new ApiError("Stripe did not return a Checkout URL", 502);
       }
 
-      // Nothing is reported to Meta here. Its checkout start is the parent's
+      // Nothing is reported to an advertising platform here. The checkout
+      // start is the parent's
       // click on the product page, reported from the browser for free and paid
       // products alike, so a report from this handler would count every paid
       // attempt twice. The seat itself is written from the Stripe webhook, which
@@ -627,30 +645,16 @@ export const POST = defineRoute({
   },
 });
 
-/**
- * A short display name for whoever occupies the seat, for the Stripe
- * subscription description (what the parent reads in the billing portal).
- *
- * The fallback is deliberately audience-aware. It lands in Stripe receipts and
- * the hosted portal — outside `messages/`, so no locale sweep will ever reach
- * it — and "Parents' Evening — your child" would be a plainly wrong label on a
- * seat the payer holds themselves. A self seat therefore falls back to "you",
- * which answers the same "who is this for" question the child names answer, in
- * the same register as the child fallback beside it.
- *
- * `isSelfSeat` is passed in rather than re-derived here: the caller holds the
- * session user, and the participant-equals-customer test is the same one the
- * database's audience gate makes.
- */
+/** The seat holder's first name, for the subscription description the parent reads in the billing portal. */
 async function pickParticipantName(
   admin: ReturnType<typeof createAdminClient>,
   participantId: string,
-  isSelfSeat: boolean,
 ): Promise<string> {
-  const { data } = await admin
+  const { data, error } = await admin
     .from("profiles")
     .select("first_name")
     .eq("id", participantId)
-    .maybeSingle();
-  return data?.first_name || (isSelfSeat ? "you" : "your child");
+    .single();
+  if (error) throw error;
+  return data.first_name;
 }

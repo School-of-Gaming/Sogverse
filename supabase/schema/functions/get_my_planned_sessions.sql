@@ -16,10 +16,11 @@ CREATE FUNCTION public.get_my_planned_sessions() RETURNS TABLE(participation_id 
     JOIN public.products pr ON pr.id = p.product_id
          -- The product-local today, and the product-local date the seat became
          -- the family's: the later of signing up and being placed, which is
-         -- the moment the prep window counts its sessions from.
+         -- the moment the prep window counts its sessions from. GREATEST
+         -- skips a NULL, so an unplaced seat's day is its signup's.
    CROSS JOIN LATERAL (
          SELECT (now() AT TIME ZONE pr.timezone)::date AS today,
-                (GREATEST(p.signed_up_at, COALESCE(p.group_joined_at, p.signed_up_at))
+                (GREATEST(p.signed_up_at, p.group_joined_at)
                    AT TIME ZONE pr.timezone)::date      AS seat_day
          ) AS local
          -- A cancelled membership's paid-through date: the product-local date

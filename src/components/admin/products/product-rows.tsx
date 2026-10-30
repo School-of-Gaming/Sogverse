@@ -16,7 +16,7 @@ import { NavChevron } from "@/components/ui/nav-chevron";
 import { ProductBanner } from "@/components/ui/product-banner";
 import { catalogueImageSrc } from "@/lib/images/catalogue-image-url";
 import { resolveLocale } from "@/lib/constants/locales";
-import { resolveTranslation } from "@/lib/i18n/resolve-translation";
+import { resolveRequiredTranslation } from "@/lib/i18n/resolve-translation";
 import { formatDate, formatDateOnly, formatDateRange } from "@/lib/date-format";
 import { effectiveStatus, pendingHintKey } from "@/lib/products/effective-status";
 import { formatProductWeeks } from "@/lib/products/format-product-term-dates";
@@ -116,7 +116,7 @@ export function ProductRows({ products, showType }: ProductRowsProps) {
   return (
     <div className="space-y-2">
       {products.map((p) => {
-        const tr = resolveTranslation(p.product_translations, uiLocale);
+        const tr = resolveRequiredTranslation(p.product_translations, uiLocale);
         const status = effectiveStatus(p, now);
         const hint =
           status === "pending"
@@ -132,7 +132,10 @@ export function ProductRows({ products, showType }: ProductRowsProps) {
         // Where it happens — the school hall and its town, or the voice room.
         // Two clubs can be identical but for the school they meet in, so this
         // sits beside the cadence rather than waiting on the detail page.
-        const whereLine = productWhereLine(p, uiLocale, t("list.online"));
+        const whereLine = productWhereLine(p, uiLocale, {
+          online: t("list.online"),
+          hybrid: t("list.hybrid"),
+        });
         // Nudge the admin to fill in fees they may not have known at creation.
         // A null primary gedu fee is "unknown" (0 would be volunteer — set);
         // the municipality fee only applies to muni clubs. The assistant fee
@@ -189,7 +192,7 @@ export function ProductRows({ products, showType }: ProductRowsProps) {
                 <div className="flex items-center gap-2">
                   {showType && <TypeGlyph productType={p.product_type} />}
                   <span className="truncate font-medium">
-                    {tr?.name ?? t("list.untitled")}
+                    {tr.name}
                   </span>
                   <ProductStatusChip status={status} />
                   {!p.is_visible && (
@@ -199,7 +202,7 @@ export function ProductRows({ products, showType }: ProductRowsProps) {
                   )}
                 </div>
                 <p className="truncate text-sm text-muted-foreground">
-                  {tr?.short_description ?? ""}
+                  {tr.short_description}
                 </p>
                 <div className="mt-1 flex flex-wrap gap-3 text-xs text-muted-foreground">
                   {/* A product with no gamer audience carries no age range;

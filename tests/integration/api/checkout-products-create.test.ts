@@ -10,7 +10,12 @@ process.env.NEXT_PUBLIC_SITE_URL = SITE_ORIGIN;
 
 import { POST } from "@/app/api/checkout/products/create/route";
 import { NextResponse } from "next/server";
-import type { ProductTopic } from "@/types";
+import type { DeliveryMode, ProductTopic } from "@/types";
+import {
+  CONSENT_COOKIE_NAME,
+  consentForPurposes,
+  serialiseConsent,
+} from "@/lib/consent";
 
 // The route builds every absolute URL it emits — the Stripe redirects, the
 // metadata links a Stripe Workflow drops into Slack, and the confirmation
@@ -40,9 +45,9 @@ vi.mock("@/lib/brevo", () => ({
 // decided inside the reporter, from the request's consent cookie, and that is
 // its own suite's subject. What belongs here is which outcome reports what, and
 // which outcomes report nothing at all.
-const mockReportMetaConversion = vi.fn();
-vi.mock("@/lib/meta-conversions.server", () => ({
-  reportMetaConversion: (...args: unknown[]) => mockReportMetaConversion(...args),
+const mockReportAdConversion = vi.fn();
+vi.mock("@/lib/ad-conversions.server", () => ({
+  reportAdConversion: (...args: unknown[]) => mockReportAdConversion(...args),
 }));
 
 // --- The post-response hook ---
@@ -171,6 +176,9 @@ type ProductFixture = {
   // session" guide it states: the column is NOT NULL, so a fixture without one
   // is a row the route can never be handed.
   topic: ProductTopic;
+  // Read by the same mail, for the "Where" line and the guide's install steps.
+  // NOT NULL, like the topic.
+  delivery_mode: DeliveryMode;
   seat_count: number | null;
   timezone: string;
   spoken_language_code: string;
@@ -187,6 +195,7 @@ const PAID_CLUB: ProductFixture = {
   product_type: "consumer_club",
   billing_mode: "paid",
   topic: "minecraft_java",
+  delivery_mode: "online",
   seat_count: 10,
   timezone: "Europe/Helsinki",
   spoken_language_code: "en",
@@ -308,7 +317,7 @@ function mockAdmin(opts: AdminMockOptions = {}): void {
           // Subscription branch looks up the gamer's name for the Stripe sub
           // description (what the parent sees in the billing portal).
           eq: () => ({
-            maybeSingle: () => Promise.resolve({ data: gamer, error: null }),
+            single: () => Promise.resolve({ data: gamer, error: null }),
           }),
           // The confirmation mail reads the payer and the participant in one
           // query — on a self seat they are the same row.
@@ -1495,9 +1504,9 @@ describe("POST /api/checkout/products/create", () => {
 
       expect(res.status).toBe(200);
       await settleDeferred();
-      expect(mockReportMetaConversion).toHaveBeenCalledTimes(1);
+      expect(mockReportAdConversion).toHaveBeenCalledTimes(1);
       const [request, conversion, account] =
-        mockReportMetaConversion.mock.calls[0];
+        mockReportAdConversion.mock.calls[0];
       expect(request).toBeInstanceOf(Request);
       // The signed-in customer's own id and address, never the participant's.
       expect(account).toEqual({ id: CUSTOMER_ID, email: CUSTOMER_EMAIL });
@@ -1508,12 +1517,22 @@ describe("POST /api/checkout/products/create", () => {
         event: "enrolment",
         outcome: "enrolled",
         product: {
-          content_ids: [PRODUCT_ID],
-          content_type: "product",
-          content_name: "Test Club",
-          content_category: "minecraft_java",
-          value: 0,
-          currency: "EUR",
+          meta: {
+            content_ids: [PRODUCT_ID],
+            content_type: "product",
+            content_name: "Test Club",
+            content_category: "minecraft_java",
+            value: 0,
+            currency: "EUR",
+          },
+          reddit: {
+            products: [
+              { id: PRODUCT_ID, name: "Test Club", category: "minecraft_java" },
+            ],
+            itemCount: 1,
+            value: 0,
+            currency: "EUR",
+          },
         },
         sourcePath: `/shop/${PRODUCT_ID}`,
       });
@@ -1522,7 +1541,7 @@ describe("POST /api/checkout/products/create", () => {
     // The checkout start is the browser's click on the product page, for free
     // and paid products alike; a report from here as well would count every
     // paid attempt twice.
-    it("reports nothing to Meta when handing the parent to Stripe", async () => {
+    it("reports nothing to the platforms when handing the parent to Stripe", async () => {
       mockAuthenticatedCustomer();
       mockAdmin({ product: PAID_CLUB });
       mockAdminRpc.mockResolvedValueOnce({
@@ -1538,7 +1557,7 @@ describe("POST /api/checkout/products/create", () => {
         checkoutUrl: "https://checkout.stripe.com/c/test_sub",
       });
       await settleDeferred();
-      expect(mockReportMetaConversion).not.toHaveBeenCalled();
+      expect(mockReportAdConversion).not.toHaveBeenCalled();
     });
 
     it("reports nothing for a municipality registration", async () => {
@@ -1560,7 +1579,7 @@ describe("POST /api/checkout/products/create", () => {
 
       expect(res.status).toBe(200);
       await settleDeferred();
-      expect(mockReportMetaConversion).not.toHaveBeenCalled();
+      expect(mockReportAdConversion).not.toHaveBeenCalled();
     });
 
     // Refused by the product row rather than by which door it came through:
@@ -1579,7 +1598,7 @@ describe("POST /api/checkout/products/create", () => {
       expect(res.status).toBe(200);
       expect(await res.json()).toMatchObject({ status: "free_confirmed" });
       await settleDeferred();
-      expect(mockReportMetaConversion).not.toHaveBeenCalled();
+      expect(mockReportAdConversion).not.toHaveBeenCalled();
     });
 
     it("reports nothing when the seat was already gone", async () => {
@@ -1593,7 +1612,7 @@ describe("POST /api/checkout/products/create", () => {
       const res = await POST(freeSignup());
 
       expect(await res.json()).toEqual({ status: "full" });
-      expect(mockReportMetaConversion).not.toHaveBeenCalled();
+      expect(mockReportAdConversion).not.toHaveBeenCalled();
     });
   });
 
@@ -1902,41 +1921,6 @@ describe("POST /api/checkout/products/create", () => {
 
       const params = mockStripeSessionCreate.mock.calls[0][0];
       expect(params.subscription_data.description).toBe("Test Club — Marja");
-    });
-
-    it("falls back to an audience-aware label when the profile has no name", async () => {
-      // The fallback lives outside `messages/` — it lands in Stripe receipts —
-      // so no locale sweep would ever catch it saying "your child" on a seat
-      // the payer holds. A self seat says "you"; a child's still says "your
-      // child".
-      const cases: [participantId: string, expected: string][] = [
-        [CUSTOMER_ID, "Test Club — you"],
-        [GAMER_ID, "Test Club — your child"],
-      ];
-      for (const [participantId, expected] of cases) {
-        vi.clearAllMocks();
-        mockGetOrCreateStripeCustomer.mockResolvedValue(STRIPE_CUSTOMER_ID);
-        mockAuthenticatedCustomer();
-        mockAdmin({ product: PAID_CLUB, gamer: { first_name: "" } });
-        mockAdminRpc.mockResolvedValueOnce({
-          data: { kind: "validated" },
-          error: null,
-        });
-        mockGetOrCreateSubscriptionPrice.mockResolvedValue({
-          product_id: PRODUCT_ID,
-          currency: "eur",
-          stripe_price_id: STRIPE_PRICE_ID,
-          unit_amount_cents: 3900,
-        });
-        mockStripeSessionCreate.mockResolvedValue({
-          url: "https://checkout.stripe.com/c/test_fallback",
-        });
-
-        await POST(createRequest({ ...VALID_BODY, participantId }));
-
-        const params = mockStripeSessionCreate.mock.calls[0][0];
-        expect(params.subscription_data.description).toBe(expected);
-      }
     });
   });
 
@@ -2266,6 +2250,267 @@ describe("POST /api/checkout/products/create", () => {
       // than rejecting — which is what makes it safe to hand to `after()` at all.
       await expect(settleDeferred()).resolves.toBeUndefined();
       spy.mockRestore();
+    });
+  });
+});
+
+// ── What the seat records beyond who and what ───────────────────────
+//
+// Two answers ride the booking onto the seat: the visit's UTM tag, written only
+// under marketing cookie consent read off THIS request (src/lib/utm.ts), and
+// the parent's answer to the product's School of Gaming mailing box — true,
+// false, or absent when the panel did not ask. A free or external seat takes
+// them straight into create_participation; a paid one carries them on the
+// Checkout Session for the webhook.
+
+describe("POST /api/checkout/products/create — the seat answers", () => {
+  const TAG = {
+    source: "lynx",
+    medium: "email",
+    campaign: "lynx-summer-a",
+    content: "hero",
+    term: "minecraft",
+  };
+
+  const UTM_ARGS = [
+    "p_utm_source",
+    "p_utm_medium",
+    "p_utm_campaign",
+    "p_utm_content",
+    "p_utm_term",
+  ];
+
+  function consentCookie(purposes: { analytics: boolean; marketing: boolean }): string {
+    const value = serialiseConsent(
+      consentForPurposes(purposes, new Date("2026-10-01T10:00:00Z")),
+    );
+    return `${CONSENT_COOKIE_NAME}=${encodeURIComponent(value)}`;
+  }
+
+  function requestWith(body: unknown, cookie?: string): Request {
+    return new Request("http://localhost:3000/api/checkout/products/create", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        origin: "http://localhost:3000",
+        host: "localhost:3000",
+        ...(cookie ? { cookie } : {}),
+      },
+      body: JSON.stringify(body),
+    });
+  }
+
+  const FREE_BODY = {
+    productId: PRODUCT_ID,
+    participantId: GAMER_ID,
+    purchaseShape: "free",
+    currency: "eur",
+  };
+
+  function rpcArgs(): Record<string, unknown> {
+    const call = mockAdminRpc.mock.calls.find(
+      ([name]) => name === "create_participation",
+    );
+    if (!call) throw new Error("create_participation was not called");
+    const args: Record<string, unknown> = call[1];
+    return args;
+  }
+
+  beforeEach(() => {
+    vi.clearAllMocks();
+    deferred.length = 0;
+    mockGetOrCreateStripeCustomer.mockResolvedValue(STRIPE_CUSTOMER_ID);
+    mockEnsureStripeProductForProduct.mockResolvedValue(STRIPE_PRODUCT_ID);
+    mockSendTransactionalEmail.mockResolvedValue({ messageId: "msg-1" });
+    mockPlannedSessions.mockResolvedValue({ data: [], error: null });
+    mockAuthenticatedCustomer();
+  });
+
+  afterEach(settleDeferred);
+
+  function freeSeat(): void {
+    mockAdmin({ product: FREE_EVENT });
+    mockAdminRpc.mockResolvedValueOnce({
+      data: { kind: "free_active", participation_id: PARTICIPATION_ID },
+      error: null,
+    });
+  }
+
+  describe("the School of Gaming box", () => {
+    it("stores a ticked box as true", async () => {
+      freeSeat();
+      const res = await POST(
+        requestWith({ ...FREE_BODY, schoolOfGamingMarketingOptIn: true }),
+      );
+      expect(res.status).toBe(200);
+      expect(rpcArgs().p_school_of_gaming_marketing_opt_in).toBe(true);
+    });
+
+    it("stores a box shown and left unticked as false", async () => {
+      freeSeat();
+      await POST(
+        requestWith({ ...FREE_BODY, schoolOfGamingMarketingOptIn: false }),
+      );
+      expect(rpcArgs().p_school_of_gaming_marketing_opt_in).toBe(false);
+    });
+
+    it("leaves the argument out when the product did not ask, so the seat stores NULL", async () => {
+      freeSeat();
+      await POST(requestWith(FREE_BODY));
+      expect(rpcArgs()).not.toHaveProperty("p_school_of_gaming_marketing_opt_in");
+    });
+
+    it("needs no marketing cookie: the box is the parent's own answer", async () => {
+      freeSeat();
+      await POST(
+        requestWith(
+          { ...FREE_BODY, schoolOfGamingMarketingOptIn: true },
+          consentCookie({ analytics: false, marketing: false }),
+        ),
+      );
+      expect(rpcArgs().p_school_of_gaming_marketing_opt_in).toBe(true);
+    });
+
+    it("stores it on a municipality registration too", async () => {
+      mockAdmin({ product: MUNI_CLUB });
+      mockAdminRpc.mockResolvedValueOnce({
+        data: { kind: "external_active", participation_id: PARTICIPATION_ID },
+        error: null,
+      });
+      await POST(
+        requestWith({
+          ...FREE_BODY,
+          purchaseShape: "external",
+          schoolOfGamingMarketingOptIn: true,
+        }),
+      );
+      expect(rpcArgs().p_school_of_gaming_marketing_opt_in).toBe(true);
+    });
+
+    it("refuses a value that is not a boolean", async () => {
+      // No RPC answer queued: the body is refused before the RPC is reached,
+      // and a queued answer would leak into the next case.
+      mockAdmin({ product: FREE_EVENT });
+      const res = await POST(
+        requestWith({ ...FREE_BODY, schoolOfGamingMarketingOptIn: "yes" }),
+      );
+      expect(res.status).toBe(400);
+      expect(mockAdminRpc).not.toHaveBeenCalled();
+    });
+  });
+
+  describe("the UTM tag, gated on marketing cookie consent", () => {
+    it("stores the tag when the request's cookie grants marketing", async () => {
+      freeSeat();
+      await POST(
+        requestWith(
+          { ...FREE_BODY, utm: TAG },
+          consentCookie({ analytics: false, marketing: true }),
+        ),
+      );
+      expect(rpcArgs()).toMatchObject({
+        p_utm_source: "lynx",
+        p_utm_medium: "email",
+        p_utm_campaign: "lynx-summer-a",
+        p_utm_content: "hero",
+        p_utm_term: "minecraft",
+      });
+    });
+
+    it("stores nothing when there is no consent cookie at all", async () => {
+      freeSeat();
+      await POST(requestWith({ ...FREE_BODY, utm: TAG }));
+      for (const key of UTM_ARGS) expect(rpcArgs()).not.toHaveProperty(key);
+    });
+
+    it("stores nothing under analytics-only consent", async () => {
+      freeSeat();
+      await POST(
+        requestWith(
+          { ...FREE_BODY, utm: TAG },
+          consentCookie({ analytics: true, marketing: false }),
+        ),
+      );
+      for (const key of UTM_ARGS) expect(rpcArgs()).not.toHaveProperty(key);
+    });
+
+    it("drops a field the sanitiser refuses and keeps the rest", async () => {
+      freeSeat();
+      await POST(
+        requestWith(
+          { ...FREE_BODY, utm: { source: "=HYPERLINK()", campaign: "lynx-summer-a" } },
+          consentCookie({ analytics: false, marketing: true }),
+        ),
+      );
+      expect(rpcArgs()).not.toHaveProperty("p_utm_source");
+      expect(rpcArgs().p_utm_campaign).toBe("lynx-summer-a");
+    });
+  });
+
+  describe("a paid seat carries them on the Checkout Session", () => {
+    function paidClub(): void {
+      mockAdmin({ product: PAID_CLUB });
+      mockAdminRpc.mockResolvedValueOnce({
+        data: { kind: "validated" },
+        error: null,
+      });
+      mockGetOrCreateSubscriptionPrice.mockResolvedValue({
+        product_id: PRODUCT_ID,
+        currency: "eur",
+        stripe_price_id: STRIPE_PRICE_ID,
+        unit_amount_cents: 5000,
+      });
+      mockStripeSessionCreate.mockResolvedValue({
+        url: "https://checkout.stripe.com/c/test_sub",
+      });
+    }
+
+    it("writes the tag and the answer onto the session's metadata, and nowhere else", async () => {
+      paidClub();
+      const res = await POST(
+        requestWith(
+          { ...VALID_BODY, utm: TAG, schoolOfGamingMarketingOptIn: false },
+          consentCookie({ analytics: false, marketing: true }),
+        ),
+      );
+      expect(res.status).toBe(200);
+
+      const params = mockStripeSessionCreate.mock.calls[0][0];
+      expect(params.metadata).toMatchObject({
+        utmSource: "lynx",
+        utmMedium: "email",
+        utmCampaign: "lynx-summer-a",
+        utmContent: "hero",
+        utmTerm: "minecraft",
+        schoolOfGamingMarketingOptIn: "false",
+      });
+      // The subscription has no use for them.
+      expect(params.subscription_data.metadata).not.toHaveProperty("utmSource");
+      expect(params.subscription_data.metadata).not.toHaveProperty(
+        "schoolOfGamingMarketingOptIn",
+      );
+    });
+
+    it("writes no tag without marketing consent, and no answer when the box was not asked", async () => {
+      paidClub();
+      await POST(
+        requestWith(
+          { ...VALID_BODY, utm: TAG },
+          consentCookie({ analytics: true, marketing: false }),
+        ),
+      );
+      expect(mockStripeSessionCreate).toHaveBeenCalledTimes(1);
+      const params = mockStripeSessionCreate.mock.calls[0][0];
+      for (const key of [
+        "utmSource",
+        "utmMedium",
+        "utmCampaign",
+        "utmContent",
+        "utmTerm",
+        "schoolOfGamingMarketingOptIn",
+      ]) {
+        expect(params.metadata).not.toHaveProperty(key);
+      }
     });
   });
 });

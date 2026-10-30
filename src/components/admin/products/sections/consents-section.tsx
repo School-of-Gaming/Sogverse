@@ -80,11 +80,11 @@ import type { FormState } from "../product-form-state";
  * bundled documents are named in the row's caption, because "which documents am
  * I attaching" is exactly the question a one-line label would stop answering.
  *
- * **`school_of_gaming` is deliberately not among the marketing rows**, which is
- * why they come from `ATTACHABLE_MARKETING_CONSENT_TYPES` rather than from the
- * enum. Our own mailing list is asked for at registration, on the account that
- * holds the answer; attaching it to a product would ask an account-level
- * question a second time with nothing new to say.
+ * **The marketing rows come from `ATTACHABLE_MARKETING_CONSENT_TYPES`** rather
+ * than from the enum, because the order is a decision: our own list, then the
+ * partner's. Our own list's answer is stored on the seat rather than the
+ * account, so a parent joining the waitlist is not asked it — the caption says
+ * so.
  *
  * **The rows do not wait on the network.** Registry rows arrive by migration and
  * `CONSENT_DOCUMENTS` ships in the same deploy, so the slug, the name and the

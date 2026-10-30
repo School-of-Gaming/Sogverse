@@ -335,7 +335,7 @@ function mockAdmin(opts: AdminMockOptions = {}) {
                         timezone: "Europe/Helsinki",
                         start_date: null,
                         end_date: null,
-                        is_remote: true,
+                        delivery_mode: "online",
                         // The "Good to know" facts the mail mirrors from the
                         // confirmation page.
                         min_age: 8,
@@ -1694,5 +1694,108 @@ describe("POST /api/webhooks/stripe/products", () => {
       expect(inserts.payments).toHaveLength(1);
       spy.mockRestore();
     });
+  });
+});
+
+// ── The seat answers the checkout route put on the session ──────────
+//
+// The UTM tag (already through the route's marketing consent gate) and the
+// School of Gaming mailing answer travel on the Checkout Session and land on
+// the seat confirm_paid_participation writes. A key the route wrote nothing
+// under stays out of the call, so the seat stores NULL.
+
+describe("POST /api/webhooks/stripe/products — the seat answers", () => {
+  beforeEach(() => {
+    vi.clearAllMocks();
+    mockSendTransactionalEmail.mockResolvedValue({ messageId: "msg-1" });
+  });
+
+  function completedWith(extra: Record<string, string>) {
+    const event = createCompletedEvent();
+    const metadata = (event.data.object as { metadata: Record<string, string> })
+      .metadata;
+    Object.assign(metadata, extra);
+    mockConstructEvent.mockReturnValue(event);
+    const inserts = mockAdmin();
+    mockAdminRpc.mockResolvedValue({
+      data: {
+        kind: "confirmed",
+        participation_id: PARTICIPATION_ID,
+        idempotent: false,
+      },
+      error: null,
+    });
+    return inserts;
+  }
+
+  function confirmArgs(): Record<string, unknown> {
+    const call = mockAdminRpc.mock.calls.find(
+      ([name]) => name === "confirm_paid_participation",
+    );
+    if (!call) throw new Error("confirm_paid_participation was not called");
+    const args: Record<string, unknown> = call[1];
+    return args;
+  }
+
+  it("hands the tag and a ticked box to the RPC", async () => {
+    completedWith({
+      utmSource: "lynx",
+      utmMedium: "email",
+      utmCampaign: "lynx-summer-a",
+      utmContent: "hero",
+      utmTerm: "minecraft",
+      schoolOfGamingMarketingOptIn: "true",
+    });
+
+    const res = await POST(createWebhookRequest());
+    expect(res.status).toBe(200);
+    expect(confirmArgs()).toEqual({
+      p_product_id: PRODUCT_ID,
+      p_participant_id: GAMER_ID,
+      p_customer_id: CUSTOMER_ID,
+      p_checkout_session_id: SESSION_ID,
+      p_utm_source: "lynx",
+      p_utm_medium: "email",
+      p_utm_campaign: "lynx-summer-a",
+      p_utm_content: "hero",
+      p_utm_term: "minecraft",
+      p_school_of_gaming_marketing_opt_in: true,
+    });
+  });
+
+  it("hands an unticked box over as false", async () => {
+    completedWith({ schoolOfGamingMarketingOptIn: "false" });
+    await POST(createWebhookRequest());
+    expect(confirmArgs().p_school_of_gaming_marketing_opt_in).toBe(false);
+  });
+
+  it("leaves out every answer the session does not carry", async () => {
+    completedWith({ utmCampaign: "lynx-summer-a" });
+    await POST(createWebhookRequest());
+    const args = confirmArgs();
+    expect(args.p_utm_campaign).toBe("lynx-summer-a");
+    for (const key of [
+      "p_utm_source",
+      "p_utm_medium",
+      "p_utm_content",
+      "p_utm_term",
+      "p_school_of_gaming_marketing_opt_in",
+    ]) {
+      expect(args).not.toHaveProperty(key);
+    }
+  });
+
+  it("answers 500 and writes nothing when the answer is not one the route writes", async () => {
+    const inserts = completedWith({ schoolOfGamingMarketingOptIn: "yes" });
+    const errorSpy = vi.spyOn(console, "error").mockImplementation(() => {});
+
+    const res = await POST(createWebhookRequest());
+    expect(res.status).toBe(500);
+    expect(mockAdminRpc).not.toHaveBeenCalledWith(
+      "confirm_paid_participation",
+      expect.anything(),
+    );
+    expect(inserts.payments).toHaveLength(0);
+    errorSpy.mockRestore();
   });
 });

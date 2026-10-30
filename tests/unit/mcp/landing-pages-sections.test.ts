@@ -40,7 +40,9 @@ const email = { kind: "email", to: "hello@sog.gg" };
 const STRUCTURES: Record<LandingSectionType, unknown[]> = {
   hero: [
     { id: ID, type: "hero" },
-    { id: ` ${ID.toUpperCase()} `, type: "hero", imageId: ID2, button: internal },
+    { id: ` ${ID.toUpperCase()} `, type: "hero", button: internal },
+    // Each language names its own hero picture, in its words.
+    { id: ID, type: "hero", imageId: ID2 },
     { id: ID, type: "hero", button: external },
     { id: ID, type: "hero", button: email },
     { id: ID, type: "hero", button: { kind: "email", to: " Hello.There@mail.sog.gg " } },
@@ -171,6 +173,8 @@ const TEXTS: Record<LandingSectionType, unknown[]> = {
     {},
     { eyebrow: " New ", headline: "Hi", subline: "There", buttonLabel: "Go", imageAlt: "A castle" },
     { headline: "Hi", buttonLabel: "Email us", emailSubject: " A question " },
+    { headline: "Hi", imageId: ` ${ID2.toUpperCase()} `, imageAlt: "A castle" },
+    { imageId: "nope" },
     { emailSubject: 3 },
     { headline: 3 },
     { heading: "Not a hero field" },
@@ -270,6 +274,13 @@ describe.each(LANDING_SECTION_TYPES)("the %s section", (type) => {
       expect(verdicts).toContain(true);
       expect(verdicts).toContain(false);
     }
+  });
+});
+
+describe("the hero's picture in a language's words", () => {
+  it("takes null, which the registry never sees: the tool reads it as a removal first", () => {
+    expect(MCP_LANDING_SECTIONS.hero.text.safeParse({ imageId: null }).success).toBe(true);
+    expect(LANDING_SECTIONS.hero.text.safeParse({ imageId: null }).success).toBe(false);
   });
 });
 

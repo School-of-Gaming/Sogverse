@@ -65,7 +65,7 @@ const SCHEDULE: ProductConfirmationInvitationInput = {
     timezone: "Europe/Helsinki",
     ...invitationPlanWindow({ now: NOW, timezone: "Europe/Helsinki", endDate: null }),
   }),
-  isRemote: true,
+  deliveryMode: "online",
   siteName: null,
   siteAddress: null,
   siteNote: null,
@@ -81,7 +81,7 @@ const OVERVIEW: ProductConfirmationOverviewInput = {
   startDate: "2027-01-04",
   endDate: "2027-05-31",
   slots: [{ weekday: 0, start_time: "16:00", duration_minutes: 60 }],
-  isRemote: true,
+  deliveryMode: "online",
   location: null,
   minAge: 8,
   maxAge: 12,
@@ -100,7 +100,7 @@ const base: ProductConfirmationEmailOptions = {
   // actually receives for this fixture, rather than one with the section
   // silently missing.
   topic: "minecraft_java",
-  isRemote: true,
+  deliveryMode: "online",
   mode: "subscription",
   priceAmount: "€40.00",
   firstChargeDate: null,
@@ -146,7 +146,7 @@ describe("buildProductConfirmationEmail", () => {
    * guide then lists the setup still to do; the waitlist keeps its own.
    */
   it("opens an enrolled mail with “You’re in!” and a waitlist join with its own heading", () => {
-    for (const overrides of [{}, { gamerCopy: true }, { isRemote: false }, { mode: "free" as const }]) {
+    for (const overrides of [{}, { gamerCopy: true }, { deliveryMode: "in_person" as const }, { mode: "free" as const }]) {
       const html = render(overrides);
       expect(html).toContain("You’re in!");
       expect(html).not.toContain("all set");
@@ -428,7 +428,7 @@ describe("buildProductConfirmationEmail", () => {
       const html = render({
         overview: {
           ...OVERVIEW,
-          isRemote: false,
+          deliveryMode: "in_person",
           location: { kind: "site", site: "Kallion kirjasto", parent: "Helsinki" },
         },
       });
@@ -571,11 +571,21 @@ describe("buildProductConfirmationEmail", () => {
       expect(render({ gamerCopy: true, priceAmount: null })).toContain(self);
     });
 
+    it("tells a hybrid seat both where it attends and how the room is joined", () => {
+      const html = render({ deliveryMode: "hybrid" });
+      expect(html).toContain(
+        `${styledName("Aino")} attends the sessions in person at the site. The sessions are also joined online through the voice room in My SOG, which opens ${minutes} minutes before each session starts.`,
+      );
+      expect(render({ deliveryMode: "hybrid", isSelfSeat: true })).toContain(
+        `You attend the sessions in person at the site. The sessions are also joined online through the voice room in My SOG, which opens ${minutes} minutes before each session starts.`,
+      );
+    });
+
     it("keeps the in-person bullet where the product is not remote", () => {
-      const html = render({ isRemote: false });
+      const html = render({ deliveryMode: "in_person" });
       expect(html).toContain(`You’ll find ${styledName("Aino")}’s sessions under My SOG.`);
       expect(html).not.toContain("voice room");
-      expect(render({ isRemote: false, isSelfSeat: true })).toContain(
+      expect(render({ deliveryMode: "in_person", isSelfSeat: true })).toContain(
         "You’ll find your sessions under My SOG.",
       );
     });
@@ -1184,7 +1194,7 @@ describe("the “Before the first session” guide", () => {
   it("states none for a label-only topic on an in-person product", () => {
     // Nothing to install, nothing to sign into, and no voice room either — so
     // the mail is exactly the mail it was before the guide existed.
-    const html = render({ topic: "esports", isRemote: false });
+    const html = render({ topic: "esports", deliveryMode: "in_person" });
     expect(html).not.toContain(HEADING);
     expect(html).not.toContain(ACCOUNT_STEP);
   });
@@ -1204,7 +1214,7 @@ describe("the “Before the first session” guide", () => {
    * that form, because the ordinary one promises software to install.
    */
   it("states the accounts-only form for an in-person product", () => {
-    const html = render({ topic: "roblox_studio", isRemote: false });
+    const html = render({ topic: "roblox_studio", deliveryMode: "in_person" });
     expect(html).toContain(HEADING);
     expect(html).toContain(ROBLOX_ACCOUNT_STEP);
     expect(html).not.toContain(ROBLOX_INSTALL_STEP);
@@ -1212,7 +1222,7 @@ describe("the “Before the first session” guide", () => {
   });
 
   it("states no guide for an in-person Minecraft product, whose login is ours", () => {
-    expect(render({ isRemote: false })).not.toContain(HEADING);
+    expect(render({ deliveryMode: "in_person" })).not.toContain(HEADING);
   });
 
   /**
@@ -1258,11 +1268,11 @@ describe("the “Before the first session” guide", () => {
     });
 
     it("shortens with the HTML rather than separately", () => {
-      const inPerson = text({ topic: "roblox_studio", isRemote: false });
+      const inPerson = text({ topic: "roblox_studio", deliveryMode: "in_person" });
       expect(inPerson).toContain(ROBLOX_ACCOUNT_STEP);
       expect(inPerson).not.toContain(ROBLOX_INSTALL_STEP);
       expect(inPerson).not.toContain(REMOTE_STEP);
-      expect(text({ topic: "esports", isRemote: false })).not.toContain(HEADING);
+      expect(text({ topic: "esports", deliveryMode: "in_person" })).not.toContain(HEADING);
     });
   });
 

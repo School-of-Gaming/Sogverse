@@ -124,7 +124,7 @@ describe("ProductsService.getAdminListPage", () => {
         id: CLUB_MON_WED,
         product_type: "consumer_club",
         spoken_language_code: "en",
-        is_remote: true,
+        delivery_mode: "online" as const,
         created_at: "2099-06-05T00:00:00Z",
       },
       {
@@ -132,7 +132,7 @@ describe("ProductsService.getAdminListPage", () => {
         id: CLUB_WED_SV,
         product_type: "consumer_club",
         spoken_language_code: "sv",
-        is_remote: true,
+        delivery_mode: "online" as const,
         created_at: "2099-06-04T00:00:00Z",
       },
       {
@@ -140,7 +140,7 @@ describe("ProductsService.getAdminListPage", () => {
         id: CAMP_AT_SITE,
         product_type: "camp",
         spoken_language_code: "fi",
-        is_remote: false,
+        delivery_mode: "in_person" as const,
         location_id: TEST_IDS.LOCATION_SITE,
         end_date: "2099-06-05",
         created_at: "2099-06-03T00:00:00Z",
@@ -150,7 +150,7 @@ describe("ProductsService.getAdminListPage", () => {
         id: MUNI_AT_MUNI,
         product_type: "municipality_club",
         spoken_language_code: "fi",
-        is_remote: true,
+        delivery_mode: "online" as const,
         location_id: TEST_IDS.LOCATION_MUNICIPALITY,
         end_date: "2099-12-31",
         created_at: "2099-06-02T00:00:00Z",
@@ -160,7 +160,7 @@ describe("ProductsService.getAdminListPage", () => {
         id: MUNI_AT_REGION,
         product_type: "municipality_club",
         spoken_language_code: "en",
-        is_remote: true,
+        delivery_mode: "online" as const,
         location_id: TEST_IDS.LOCATION_REGION,
         end_date: "2099-12-31",
         created_at: "2099-06-01T00:00:00Z",
@@ -170,7 +170,7 @@ describe("ProductsService.getAdminListPage", () => {
         id,
         product_type: "consumer_club" as const,
         spoken_language_code: "en" as const,
-        is_remote: true,
+        delivery_mode: "online" as const,
         created_at: `2099-01-01T00:00:0${Math.floor(i / 9) + 1}Z`,
       })),
     ]);
@@ -241,6 +241,21 @@ describe("ProductsService.getAdminListPage", () => {
     it("searches case-insensitively beyond ASCII", async () => {
       expect(await fixturesMatching({ search: "ÄÄNIMAAILMA" })).toEqual([CLUB_MON_WED]);
       expect(await fixturesMatching({ search: "bRAVO" })).toEqual([CLUB_WED_SV]);
+    });
+
+    // The gedu filter also narrows `id`, so this pins that the two compose.
+    it("finds a product by its whole ID, ANDed with the other filters", async () => {
+      expect(await fixturesMatching({ search: CLUB_WED_SV.toUpperCase() })).toEqual([
+        CLUB_WED_SV,
+      ]);
+      expect(
+        await fixturesMatching({ search: CLUB_WED_SV, geduId: TEST_IDS.GEDU }),
+      ).toEqual([CLUB_WED_SV]);
+      // A product the gedu is not on: only the gedu filter can empty this.
+      expect(
+        await fixturesMatching({ search: MUNI_AT_MUNI, geduId: TEST_IDS.GEDU }),
+      ).toEqual([]);
+      expect(await fixturesMatching({ search: CLUB_WED_SV, weekday: 0 })).toEqual([]);
     });
 
     it("keeps the products scheduled on the weekday", async () => {

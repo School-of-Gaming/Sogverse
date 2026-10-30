@@ -10,7 +10,7 @@ import {
 } from "@/components/team/team-name";
 import { ogFonts, OG_FONT_FAMILY } from "@/components/og/fonts";
 import { ogCardResponse } from "@/lib/og/card-response.server";
-import { resolveTranslation } from "@/lib/i18n/resolve-translation";
+import { resolveRequiredTranslation } from "@/lib/i18n/resolve-translation";
 import { IMAGE_PURPOSES } from "@/lib/images/image-purposes";
 import { MAX_INPUT_PIXELS } from "@/lib/images/reencode-jpeg.server";
 import { cardLocaleOf, OG_CARD_SIZE } from "@/lib/og/cards";
@@ -105,7 +105,7 @@ export async function GET(
   const photoSrc =
     portrait === null ? null : `data:image/jpeg;base64,${portrait.toString("base64")}`;
 
-  const written = resolveTranslation(person.translations, locale);
+  const written = resolveRequiredTranslation(person.translations, locale);
 
   const subline = teamMemberSubline(person, t);
 
@@ -237,19 +237,17 @@ export async function GET(
             {subline}
           </div>
 
-          {written !== null && (
-            <div
-              style={{
-                display: "block",
-                marginTop: "14px",
-                fontSize: "30px",
-                lineHeight: 1.3,
-                lineClamp: 3,
-              }}
-            >
-              {written.shortDescription}
-            </div>
-          )}
+          <div
+            style={{
+              display: "block",
+              marginTop: "14px",
+              fontSize: "30px",
+              lineHeight: 1.3,
+              lineClamp: 3,
+            }}
+          >
+            {written.shortDescription}
+          </div>
         </div>
       </div>
     ),

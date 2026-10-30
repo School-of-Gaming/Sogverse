@@ -42,7 +42,7 @@ BEGIN
     'timezone',   p.timezone,
     'start_date', p.start_date,
     'end_date',   p.end_date,
-    'is_remote',  p.is_remote,
+    'delivery_mode', p.delivery_mode,
     'schedule_slots', COALESCE((
       SELECT jsonb_agg(jsonb_build_object(
                'weekday',          ss.weekday,
@@ -56,8 +56,8 @@ BEGIN
   FROM public.products p
   WHERE p.id = p_product_id;
 
-  -- The venue, on in-person products only — the same test
-  -- `get_gedu_group_feed` makes, and for the same reason: a remote municipality
+  -- The venue, on in-person and hybrid products — the same test
+  -- `get_gedu_group_feed` makes, and for the same reason: an online municipality
   -- club carries a location_id (a municipality, by CHECK), so "has a location"
   -- would put a door code and a caretaker's name on a club with no building.
   SELECT jsonb_build_object(
@@ -73,7 +73,7 @@ BEGIN
   LEFT JOIN public.site_details sd        ON sd.location_id  = l.id
   LEFT JOIN public.site_staff_details ssd ON ssd.location_id = l.id
   WHERE p.id = p_product_id
-    AND p.is_remote = false;
+    AND p.delivery_mode <> 'online';
 
   -- Ordered by (created_at, id), which is the order the groups panel on the
   -- same page lists them in. The group selector sits directly above that panel;
@@ -241,7 +241,7 @@ $$;
 -- Name: FUNCTION get_admin_product_sessions(p_product_id uuid); Type: COMMENT; Schema: public; Owner: -
 --
 
-COMMENT ON FUNCTION public.get_admin_product_sessions(p_product_id uuid) IS 'One round trip behind the admin product page''s Sessions panel: the product''s schedule parameters, its venue and site notes on an in-person product, and every group on it with its standing notes, its register roster and every stored session row with a sparse attendance map and its photos. Admin-only, guard-first on assert_admin. Product-keyed rather than group-keyed because the page shows one product and puts a group selector in front of the feed; asking per group would send the product shell and the site over the wire once per group. Carries the product''s planned sessions beside its schedule parameters, as the gedu feed does: a top-level `planned_sessions` — the plan from start_date to the furthest of the groups'' session_plan_horizon (the product''s own when it has no groups), so every group''s next running session is inside (planned_sessions_document), plain {session_date, starts_at, ends_at} rows with no cancellation folded in, once for every group because the plan is the product''s — a top-level `holiday_breaks`, holiday_breaks_document over the same span (each break of a calendar the product follows, with its name in every locale and the plan rows it withdrew), and on each group its `final_session_date` (group_final_session_date), since each group''s cancellations can move it. A stored session row on a holiday date does not travel, and no group lists a cancellation on one: that date carries its break and nothing else. The SESSION shape is get_gedu_group_feed''s verbatim, because one card component renders both and the two must not disagree about what a session is — which is why `images` ({id, width, height} per photo, ordered by (created_at, id), never the uploader) arrives here in the same shape and needs no versioned name: this document''s reader shares the gedu session''s tolerant schema, and only the strict family one needed get_my_family_product_feed_v2. The ROSTER deliberately is not the gedu feed''s — it carries participant_id and first_name alone, since the only thing this surface does with it is take the register, and the groups panel on the same page already answers who these people are. Each group additionally carries `gedus` ({id, first_name, role}) and `substitutions` (every non-withdrawn substitution request on the group), both byte for byte get_gedu_group_feed''s — one card component renders the session cards of both documents, and the staffing line and the Set-a-sub / Clear-sub / Withdraw-request editor are drawn from exactly these two arrays. `reason` and `reason_note` DO travel here: this document is admin-only end to end, and the reason is what the editor shows beside the request.';
+COMMENT ON FUNCTION public.get_admin_product_sessions(p_product_id uuid) IS 'One round trip behind the admin product page''s Sessions panel: the product''s schedule parameters, its venue and site notes on an in-person or hybrid product, and every group on it with its standing notes, its register roster and every stored session row with a sparse attendance map and its photos. Admin-only, guard-first on assert_admin. Product-keyed rather than group-keyed because the page shows one product and puts a group selector in front of the feed; asking per group would send the product shell and the site over the wire once per group. Carries the product''s planned sessions beside its schedule parameters, as the gedu feed does: a top-level `planned_sessions` — the plan from start_date to the furthest of the groups'' session_plan_horizon (the product''s own when it has no groups), so every group''s next running session is inside (planned_sessions_document), plain {session_date, starts_at, ends_at} rows with no cancellation folded in, once for every group because the plan is the product''s — a top-level `holiday_breaks`, holiday_breaks_document over the same span (each break of a calendar the product follows, with its name in every locale and the plan rows it withdrew), and on each group its `final_session_date` (group_final_session_date), since each group''s cancellations can move it. A stored session row on a holiday date does not travel, and no group lists a cancellation on one: that date carries its break and nothing else. The SESSION shape is get_gedu_group_feed''s verbatim, because one card component renders both and the two must not disagree about what a session is — which is why `images` ({id, width, height} per photo, ordered by (created_at, id), never the uploader) arrives here in the same shape and needs no versioned name: this document''s reader shares the gedu session''s tolerant schema, and only the strict family one needed get_my_family_product_feed_v2. The ROSTER deliberately is not the gedu feed''s — it carries participant_id and first_name alone, since the only thing this surface does with it is take the register, and the groups panel on the same page already answers who these people are. Each group additionally carries `gedus` ({id, first_name, role}) and `substitutions` (every non-withdrawn substitution request on the group), both byte for byte get_gedu_group_feed''s — one card component renders the session cards of both documents, and the staffing line and the Set-a-sub / Clear-sub / Withdraw-request editor are drawn from exactly these two arrays. `reason` and `reason_note` DO travel here: this document is admin-only end to end, and the reason is what the editor shows beside the request.';
 
 
 --

@@ -6,7 +6,7 @@ import {
 } from "@/lib/api/json-response";
 import { ApiError } from "@/lib/api/api-error";
 import { DEFAULT_LOCALE } from "@/lib/constants/locales";
-import { resolveTranslation } from "@/lib/i18n/resolve-translation";
+import { resolveRequiredTranslation } from "@/lib/i18n/resolve-translation";
 import type {
   AppSupabaseClient,
   CatalogueImage,
@@ -160,14 +160,14 @@ export class CatalogueImagesService {
     const usage: CatalogueImageUsage = {};
     for (const row of productRows) {
       if (!row.image_id) continue;
-      const translation = resolveTranslation(
+      const translation = resolveRequiredTranslation(
         row.product_translations,
         DEFAULT_LOCALE,
       );
       (usage[row.image_id] ??= []).push({
         kind: "product",
         id: row.id,
-        name: translation?.name.trim() ?? "",
+        name: translation.name.trim(),
         product_type: row.product_type,
         is_visible: row.is_visible,
       });
@@ -181,11 +181,10 @@ export class CatalogueImagesService {
         (usage[entryId] ??= []).push({
           kind: "library-article",
           id: row.id,
-          title:
-            resolveTranslation(
-              row.library_article_translations,
-              DEFAULT_LOCALE,
-            )?.title ?? "",
+          title: resolveRequiredTranslation(
+            row.library_article_translations,
+            DEFAULT_LOCALE,
+          ).title,
           is_live: entryId === liveId,
         });
       }
@@ -194,9 +193,10 @@ export class CatalogueImagesService {
     for (const row of landingRows) {
       const liveIds = new Set(entryIdsOf(row.publication?.pictures));
       const entryIds = new Set([...entryIdsOf(row.pictures), ...liveIds]);
-      const title =
-        resolveTranslation(row.landing_page_translations, DEFAULT_LOCALE)
-          ?.title ?? "";
+      const title = resolveRequiredTranslation(
+        row.landing_page_translations,
+        DEFAULT_LOCALE,
+      ).title;
       for (const entryId of entryIds) {
         (usage[entryId] ??= []).push({
           kind: "landing-page",
@@ -212,9 +212,8 @@ export class CatalogueImagesService {
       (usage[row.image_id] ??= []).push({
         kind: "spotlight",
         id: row.id,
-        title:
-          resolveTranslation(row.spotlight_translations, DEFAULT_LOCALE)?.title ??
-          "",
+        title: resolveRequiredTranslation(row.spotlight_translations, DEFAULT_LOCALE)
+          .title,
         is_live: row.enabled,
       });
     }

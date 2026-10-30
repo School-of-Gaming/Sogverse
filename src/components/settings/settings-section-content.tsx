@@ -31,6 +31,7 @@ import { HomeLocationField } from "@/components/locations/home-location-field";
 import {
   MarketingPreferencesFields,
   MARKETING_CONSENT_ORDER,
+  type SchoolOfGamingEmailState,
 } from "@/components/settings/marketing-preferences-fields";
 import { GamerPhotoConsentNotice } from "@/components/settings/gamer-photo-consent-notice";
 import { McpServerCard } from "@/components/settings/mcp-server-card";
@@ -59,7 +60,12 @@ import {
   useMyMarketingConsents,
   useSetMarketingConsent,
 } from "@/services/marketing-consents/marketing-consents.queries";
+import {
+  useMyEmailMarketing,
+  useSetMyEmailMarketing,
+} from "@/services/email-marketing/email-marketing.queries";
 import { hasRealEmail, gamerUsernameFromEmail } from "@/lib/gamer-sign-in";
+import { trimPersonName } from "@/lib/person-name-trim";
 import {
   isGamerProfile,
   type GamerSignIn,
@@ -79,7 +85,11 @@ import {
 const NO_MARKETING_CONSENTS: readonly MarketingConsent[] = [];
 
 /** Which sentence a refused personal-information save shows: a `settings` key. */
-type ProfileSaveError = "invalidPhone" | "lastNameRequired" | "failedToUpdateProfile";
+type ProfileSaveError =
+  | "invalidPhone"
+  | "firstNameRequired"
+  | "lastNameRequired"
+  | "failedToUpdateProfile";
 
 /**
  * The read-only username row's id. A named constant rather than a literal in
@@ -401,11 +411,17 @@ export function SettingsSectionContent({
     ? NO_MARKETING_CONSENTS
     : marketingConsentRows;
 
-  /** What the baseline says is granted. A consent with no row at all is a no. */
+  /**
+   * What the baseline says is granted. A consent with no row at all is a no.
+   * Keyed rather than compared with `===`: the enum has one member today, so a
+   * comparison between two of its values is always true and the linter refuses
+   * it; a lookup keyed at the enum asks the question honestly when a second
+   * joins.
+   */
   const savedMarketingGranted = (consentType: MarketingConsentType) =>
-    marketingConsents?.some(
-      (row) => row.consent_type === consentType && row.granted,
-    ) ?? false;
+    new Map<MarketingConsentType, boolean>(
+      (marketingConsents ?? []).map((row) => [row.consent_type, row.granted]),
+    ).get(consentType) ?? false;
 
   /**
    * Edits made on top of the saved answers, keyed by consent.
@@ -422,6 +438,23 @@ export function SettingsSectionContent({
   const marketingGranted = (consentType: MarketingConsentType) =>
     marketingEdits[consentType] ?? savedMarketingGranted(consentType);
 
+  // School of Gaming's own email marketing lives in Klaviyo and is read and
+  // written there live; Sogverse stores none of it. Parents only, like the
+  // consents above. Edited like every other field here and committed by the
+  // Save button — `null` is "not touched", so a save writes it only when the
+  // parent actually moved the box.
+  const emailMarketing = useMyEmailMarketing({ enabled: isParent });
+  const setEmailMarketing = useSetMyEmailMarketing();
+  const [emailMarketingEdit, setEmailMarketingEdit] = useState<boolean | null>(null);
+  const savedEmailMarketing = emailMarketing.data?.subscribed;
+  // A retry after a failure flies with the error still set: it is loading again.
+  const schoolOfGamingEmail: SchoolOfGamingEmailState =
+    savedEmailMarketing !== undefined
+      ? { subscribed: emailMarketingEdit ?? savedEmailMarketing }
+      : emailMarketing.isError && !emailMarketing.isFetching
+        ? "failed"
+        : "loading";
+
   const handleSaveProfile = async () => {
     if (!user) return;
 
@@ -436,10 +469,18 @@ export function SettingsSectionContent({
         return;
       }
 
+      // The profiles CHECK holds a first name to at least two characters once
+      // trimmed; saying so here keeps a refusal from reading as a failed save.
+      if (trimPersonName(firstName).length < DISPLAY_NAME_MIN) {
+        setSaveError("firstNameRequired");
+        setIsSaving(false);
+        return;
+      }
+
       // Last name is required for non-gamers (gamers don't render the field and
       // keep their inherited name). This also gradually backfills legacy rows
       // that hold an empty last name from before it was required.
-      if (!isGamer && lastName.trim().length < DISPLAY_NAME_MIN) {
+      if (!isGamer && trimPersonName(lastName).length < DISPLAY_NAME_MIN) {
         setSaveError("lastNameRequired");
         setIsSaving(false);
         return;
@@ -449,8 +490,8 @@ export function SettingsSectionContent({
       // from the browser — no route, no contract — so nothing downstream will
       // strip whitespace the field picked up.
       const updates: ProfileUpdate = {
-        first_name: firstName.trim(),
-        last_name: lastName.trim(),
+        first_name: trimPersonName(firstName),
+        last_name: trimPersonName(lastName),
         spoken_languages: spokenLanguages,
       };
 
@@ -504,6 +545,18 @@ export function SettingsSectionContent({
             source: "settings",
           });
         }
+      }
+
+      // Klaviyo last, and only when the box was moved off what Klaviyo
+      // answered — an unanswered read leaves the box unclickable, so there is
+      // no edit to send. A refusal throws into the catch like the consents.
+      if (
+        isParent &&
+        savedEmailMarketing !== undefined &&
+        emailMarketingEdit !== null &&
+        emailMarketingEdit !== savedEmailMarketing
+      ) {
+        await setEmailMarketing.mutateAsync(emailMarketingEdit);
       }
 
       setSuccessMessage(t('profileUpdated'));
@@ -571,8 +624,8 @@ export function SettingsSectionContent({
           {saveError && (
             <Alert variant="destructive">
               <AlertDescription>
-                {saveError === "lastNameRequired"
-                  ? t("lastNameRequired", { min: DISPLAY_NAME_MIN })
+                {saveError === "firstNameRequired" || saveError === "lastNameRequired"
+                  ? t(saveError, { min: DISPLAY_NAME_MIN })
                   : t(saveError)}
               </AlertDescription>
             </Alert>
@@ -624,6 +677,9 @@ export function SettingsSectionContent({
               that say who they are. Parents only — see the block above. */}
           {isParent && (
             <MarketingPreferencesFields
+              schoolOfGaming={schoolOfGamingEmail}
+              onSchoolOfGamingChange={setEmailMarketingEdit}
+              onSchoolOfGamingRetry={() => void emailMarketing.refetch()}
               granted={marketingGranted}
               onChange={(consentType, next) =>
                 setMarketingEdits((current) => ({

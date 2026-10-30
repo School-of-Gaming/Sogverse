@@ -3,6 +3,7 @@ import { describe, it, expect, beforeEach, afterEach, vi } from "vitest";
 import { GET } from "@/app/api/partner/v1/products/route";
 import { encodeCursor } from "@/lib/api/partner-cursor.server";
 import { partnerProductsResponse } from "@/services/partner/partner.contracts";
+import type { DeliveryMode } from "@/types";
 import type { FetchMock } from "../../mocks/postgrest-fetch";
 import {
   PARTNER_TEST_KEY,
@@ -72,7 +73,7 @@ const GROUP_B = "50000000-0000-4000-8000-000000000002";
 type ProductRow = {
   id: string;
   product_type: string;
-  is_remote: boolean;
+  delivery_mode: DeliveryMode;
   for_gamers: boolean;
   for_parents: boolean;
   location_id: string | null;
@@ -88,7 +89,7 @@ function product(id: string, overrides: Partial<ProductRow> = {}): ProductRow {
   return {
     id,
     product_type: "camp",
-    is_remote: false,
+    delivery_mode: "in_person",
     for_gamers: true,
     for_parents: false,
     location_id: "l-site",
@@ -106,7 +107,7 @@ const CATALOGUE: ProductRow[] = [
   product(RUNNING),
   product(PENDING, {
     product_type: "consumer_club",
-    is_remote: true,
+    delivery_mode: "online",
     for_gamers: false,
     for_parents: true,
     location_id: null,
@@ -116,8 +117,12 @@ const CATALOGUE: ProductRow[] = [
     max_age: null,
   }),
   product(COMPLETED, { start_date: "2026-06-01", end_date: "2026-08-01" }),
-  product(PENDING_2, { start_date: "2026-11-01", end_date: "2026-11-30" }),
-  product(RUNNING_2, { location_id: null, is_remote: true, end_date: "2026-12-01" }),
+  product(PENDING_2, {
+    delivery_mode: "hybrid",
+    start_date: "2026-11-01",
+    end_date: "2026-11-30",
+  }),
+  product(RUNNING_2, { location_id: null, delivery_mode: "online", end_date: "2026-12-01" }),
 ];
 
 const chainNode = (id: string, type: string, name: string, parent: unknown = null) => ({
@@ -248,6 +253,14 @@ describe("GET /api/partner/v1/products", () => {
       groups: [],
       created_at: "2026-08-20T09:12:44.500Z",
     });
+    // Each delivery mode is reported by the word the database stores.
+    expect(body.data.map((record) => [record.id, record.delivery])).toEqual([
+      [RUNNING, "in_person"],
+      [PENDING, "online"],
+      [COMPLETED, "in_person"],
+      [PENDING_2, "hybrid"],
+      [RUNNING_2, "online"],
+    ]);
     expect(body.data.map((record) => [record.id, record.status])).toEqual([
       [RUNNING, "running"],
       [PENDING, "pending"],

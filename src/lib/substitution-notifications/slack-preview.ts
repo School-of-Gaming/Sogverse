@@ -145,7 +145,7 @@ function sampleSnapshot(
       topic: "minecraft_java",
       spoken_language_code: "fi",
       timezone: DEFAULT_TIMEZONE,
-      is_remote: false,
+      delivery_mode: "in_person",
       voice_room_mode: "sogverse",
       external_voice_url: null,
       start_date: null,

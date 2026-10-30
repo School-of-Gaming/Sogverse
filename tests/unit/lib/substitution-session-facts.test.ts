@@ -3,6 +3,7 @@ import {
   buildSessionFacts,
   sessionClockFace,
   sessionFactsProduct,
+  sessionWhere,
   sessionWindowOf,
 } from "@/lib/substitution-session-facts";
 import type {
@@ -13,8 +14,8 @@ import type {
  * The one derivation every substitution surface describes a session through.
  *
  * 1. **Online or where has three answers, not two.** Remote; in person at a
- *    named site; and in person with no site recorded, which must stay in person
- *    — `siteName: null` alone never means online.
+ *    named site; and hybrid, taught online with the gamers' site named. A
+ *    session that attends a site but carries none is refused, never online.
  * 2. **A remote product never carries a building**, whatever the row says.
  * 3. **An orphaned date keeps its date and has no instants** — the read
  *    carries none for a date the plan no longer has — so every surface still
@@ -49,7 +50,7 @@ function document(
     topic: "minecraft_java",
     spoken_language_code: "fi",
     timezone: "Europe/Helsinki",
-    is_remote: false,
+    delivery_mode: "in_person",
     voice_room_mode: "sogverse",
     external_voice_url: null,
     start_date: null,
@@ -87,26 +88,44 @@ describe("buildSessionFacts", () => {
       productType: "consumer_club",
       topic: "minecraft_java",
       spokenLanguageCode: "fi",
-      isRemote: false,
+      deliveryMode: "in_person",
       siteName: "Sellon kirjasto, Espoo",
     });
     expect(result.startsAt?.toISOString()).toBe("2026-08-17T14:00:00.000Z");
     expect(result.endsAt?.toISOString()).toBe("2026-08-17T15:30:00.000Z");
   });
 
-  it("states a remote session as remote, never at a building", () => {
-    // A remote municipality club can carry a location; it still has no venue.
-    const result = facts({ is_remote: true, site_name: "Vantaan kaupungintalo" });
+  it("states an online session as online, never at a building", () => {
+    // An online municipality club can carry a location; it still has no venue.
+    const result = facts({ delivery_mode: "online", site_name: "Vantaan kaupungintalo" });
 
-    expect(result.isRemote).toBe(true);
+    expect(result.deliveryMode).toBe("online");
     expect(result.siteName).toBeNull();
+    expect(sessionWhere(result)).toEqual({ kind: "online" });
   });
 
-  it("keeps an in-person session with no site in person", () => {
-    const result = facts({ is_remote: false, site_name: null });
+  it("refuses a session that attends a site but carries none", () => {
+    // The schema requires a site on every product that is not online, so a
+    // missing one is a broken invariant, never "online".
+    expect(() =>
+      sessionWhere(facts({ delivery_mode: "in_person", site_name: null })),
+    ).toThrow();
+    expect(() =>
+      sessionWhere(facts({ delivery_mode: "hybrid", site_name: null })),
+    ).toThrow();
+  });
 
-    expect(result.isRemote).toBe(false);
-    expect(result.siteName).toBeNull();
+  it("states a hybrid session as taught online, naming the gamers' site", () => {
+    // The gedu joins a hybrid session through the voice room, so a sub is not
+    // sent to the building — but the gamers are there, so it is still named.
+    const result = facts({ delivery_mode: "hybrid", site_name: "Kallion ala-aste" });
+
+    expect(result.deliveryMode).toBe("hybrid");
+    expect(result.siteName).toBe("Kallion ala-aste");
+    expect(sessionWhere(result)).toEqual({
+      kind: "hybrid",
+      siteName: "Kallion ala-aste",
+    });
   });
 
   it("keeps an orphaned date's date and gives it no instants", () => {

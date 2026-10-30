@@ -27,7 +27,7 @@ function row(
     start_date: "2026-01-12",
     end_date: null,
     image_path: null,
-    is_remote: true,
+    delivery_mode: "online",
     for_gamers: true,
     for_parents: false,
     min_age: 7,
@@ -132,24 +132,10 @@ describe("ShopItemListJsonLd", () => {
     });
   });
 
-  it("skips a row whose name resolves to nothing", () => {
-    // A `ListItem` with an empty `name` is an invalid one — better absent than
-    // present and nameless.
-    const list = emitted([
-      row("a", []),
-      row("b", [{ locale: "en", name: "Roblox camp" }]),
-    ]);
-
-    expect(list).toMatchObject({
-      itemListElement: [{ "@type": "ListItem", position: 1, name: "Roblox camp" }],
-    });
-  });
-
   it("renders nothing at all when there is no product to list", () => {
     // The shop page's prefetch catches its own failure and hands the grid `[]`
     // while the client refetches; an empty `ItemList` would assert "nothing is
     // on offer" over a grid showing dozens.
     expect(ShopItemListJsonLd({ products: [], locale: "en" })).toBeNull();
-    expect(emitted([row("a", [])])).toBeNull();
   });
 });

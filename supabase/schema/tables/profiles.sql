@@ -22,9 +22,14 @@ CREATE TABLE public.profiles (
     registration_completed_at timestamp with time zone,
     utm_content text,
     utm_term text,
-    CONSTRAINT profiles_first_name_len CHECK (((char_length(first_name) >= 2) AND (char_length(first_name) <= 32))),
-    CONSTRAINT profiles_last_name_len CHECK ((char_length(last_name) <= 32)),
+    registration_marketing_consent boolean,
+    signup_intent_kind text,
+    signup_intent_id uuid,
+    CONSTRAINT profiles_first_name_shape CHECK ((((char_length(first_name) >= 2) AND (char_length(first_name) <= 32)) AND (first_name !~ '^[[:space:]\u00A0\u200B\uFEFF]|[[:space:]\u00A0\u200B\uFEFF]$'::text) AND (first_name ~ '[^[:space:]\u00A0\u200B\uFEFF]'::text))),
+    CONSTRAINT profiles_last_name_shape CHECK (((char_length(last_name) <= 32) AND (last_name !~ '^[[:space:]\u00A0\u200B\uFEFF]|[[:space:]\u00A0\u200B\uFEFF]$'::text))),
     CONSTRAINT profiles_phone_e164 CHECK ((phone ~ '^\d{7,15}$'::text)),
+    CONSTRAINT profiles_signup_intent_kind_known CHECK (((signup_intent_kind IS NULL) OR (signup_intent_kind = ANY (ARRAY['product'::text, 'municipality_club'::text, 'landing_page'::text])))),
+    CONSTRAINT profiles_signup_intent_whole CHECK (((signup_intent_kind IS NULL) = (signup_intent_id IS NULL))),
     CONSTRAINT profiles_utm_campaign_format CHECK (((utm_campaign IS NULL) OR ((btrim(utm_campaign) <> ''::text) AND (char_length(btrim(utm_campaign)) <= 200) AND (utm_campaign !~ '[[:cntrl:]]'::text) AND ("left"(btrim(utm_campaign), 1) <> ALL (ARRAY['='::text, '+'::text, '-'::text, '@'::text, chr(9), chr(13)]))))),
     CONSTRAINT profiles_utm_content_format CHECK (((utm_content IS NULL) OR ((btrim(utm_content) <> ''::text) AND (char_length(btrim(utm_content)) <= 200) AND (utm_content !~ '[[:cntrl:]]'::text) AND ("left"(btrim(utm_content), 1) <> ALL (ARRAY['='::text, '+'::text, '-'::text, '@'::text, chr(9), chr(13)]))))),
     CONSTRAINT profiles_utm_medium_format CHECK (((utm_medium IS NULL) OR ((btrim(utm_medium) <> ''::text) AND (char_length(btrim(utm_medium)) <= 200) AND (utm_medium !~ '[[:cntrl:]]'::text) AND ("left"(btrim(utm_medium), 1) <> ALL (ARRAY['='::text, '+'::text, '-'::text, '@'::text, chr(9), chr(13)]))))),
@@ -111,6 +116,41 @@ COMMENT ON COLUMN public.profiles.utm_term IS 'Optional marketing provenance: th
 
 
 --
+-- Name: COLUMN profiles.registration_marketing_consent; Type: COMMENT; Schema: public; Owner: -
+--
+
+COMMENT ON COLUMN public.profiles.registration_marketing_consent IS 'The answer this parent gave at registration to "may School of Gaming send me news and offers by email": true, false, or NULL when they were never asked — every gamer and gedu row, and a parent whose registration recorded no answer. A record of what the form was told, not the current permission: the current answer to our own mailing list lives in Klaviyo, which the parent sync sends this to. Written once, by the registration routes through the service role; there is deliberately no UPDATE grant at any level for authenticated or anon.';
+
+
+--
+-- Name: COLUMN profiles.signup_intent_kind; Type: COMMENT; Schema: public; Owner: -
+--
+
+COMMENT ON COLUMN public.profiles.signup_intent_kind IS 'What this parent was trying to reach when they registered, by its meaning: `product` (a shop product page), `municipality_club` (a municipality club page) or `landing_page` (a live landing page). NULL when the registration started from none of them. Set together with signup_intent_id or not at all. Decided by the row existing and being public when the account was made, never by the URL alone, and the URL is never stored. Written once and never updatable, as the utm_* columns are: by handle_new_user() from the signup metadata, or by the registration-completion route for an account created by an identity provider (Google). No UPDATE grant for any role but service_role; gamer and gedu rows hold NULL. Not gated on the marketing cookie: it is first-party — which of our own pages the parent was trying to reach.';
+
+
+--
+-- Name: COLUMN profiles.signup_intent_id; Type: COMMENT; Schema: public; Owner: -
+--
+
+COMMENT ON COLUMN public.profiles.signup_intent_id IS 'The id of the row signup_intent_kind names: a products id for `product` and `municipality_club`, a landing_pages id for `landing_page`. No foreign key on purpose: the row may be deleted later and the fact of where the parent set out from stays true. Same write rules as signup_intent_kind.';
+
+
+--
+-- Name: CONSTRAINT profiles_first_name_shape ON profiles; Type: COMMENT; Schema: public; Owner: -
+--
+
+COMMENT ON CONSTRAINT profiles_first_name_shape ON public.profiles IS 'A first name is 2 to 32 characters long, neither begins nor ends with whitespace — any character of the [[:space:]] class, or U+00A0, U+200B or U+FEFF — and holds at least one character that is none of those. Held here rather than only in the forms because a person may update their own first_name straight through the Data API. Every reader may therefore use it as it is: it is never empty, never blank and never padded.';
+
+
+--
+-- Name: CONSTRAINT profiles_last_name_shape ON profiles; Type: COMMENT; Schema: public; Owner: -
+--
+
+COMMENT ON CONSTRAINT profiles_last_name_shape ON public.profiles IS 'A last name is at most 32 characters long and neither begins nor ends with whitespace — any character of the [[:space:]] class, or U+00A0, U+200B or U+FEFF. It may be empty: a gamer inherits the parent''s, and older parent accounts predate the requirement the registration forms now make.';
+
+
+--
 -- Name: profiles profiles_pkey; Type: CONSTRAINT; Schema: public; Owner: -
 --
 
@@ -151,6 +191,20 @@ CREATE INDEX idx_profiles_home_location_id ON public.profiles USING btree (home_
 --
 
 CREATE INDEX idx_profiles_role ON public.profiles USING btree (role);
+
+
+--
+-- Name: profiles profiles_klaviyo_parent_changed; Type: TRIGGER; Schema: public; Owner: -
+--
+
+CREATE TRIGGER profiles_klaviyo_parent_changed AFTER UPDATE ON public.profiles FOR EACH ROW WHEN ((((old.role = 'customer'::public.user_role) OR (new.role = 'customer'::public.user_role)) AND (((((((((((((((((((old.email IS DISTINCT FROM new.email) OR (old.first_name IS DISTINCT FROM new.first_name)) OR (old.last_name IS DISTINCT FROM new.last_name)) OR (old.phone IS DISTINCT FROM new.phone)) OR (old.locale IS DISTINCT FROM new.locale)) OR (old.spoken_languages IS DISTINCT FROM new.spoken_languages)) OR (old.home_location_id IS DISTINCT FROM new.home_location_id)) OR (old.currency IS DISTINCT FROM new.currency)) OR (old.email_verified_at IS DISTINCT FROM new.email_verified_at)) OR (old.role IS DISTINCT FROM new.role)) OR (old.registration_completed_at IS DISTINCT FROM new.registration_completed_at)) OR (old.utm_source IS DISTINCT FROM new.utm_source)) OR (old.utm_medium IS DISTINCT FROM new.utm_medium)) OR (old.utm_campaign IS DISTINCT FROM new.utm_campaign)) OR (old.utm_content IS DISTINCT FROM new.utm_content)) OR (old.utm_term IS DISTINCT FROM new.utm_term)) OR (old.signup_intent_kind IS DISTINCT FROM new.signup_intent_kind)) OR (old.signup_intent_id IS DISTINCT FROM new.signup_intent_id)) OR (old.registration_marketing_consent IS DISTINCT FROM new.registration_marketing_consent)))) EXECUTE FUNCTION public.klaviyo_parent_profile_changed();
+
+
+--
+-- Name: profiles profiles_klaviyo_parent_deleted; Type: TRIGGER; Schema: public; Owner: -
+--
+
+CREATE TRIGGER profiles_klaviyo_parent_deleted AFTER DELETE ON public.profiles FOR EACH ROW WHEN ((old.role = 'customer'::public.user_role)) EXECUTE FUNCTION public.klaviyo_parent_profile_deleted();
 
 
 --

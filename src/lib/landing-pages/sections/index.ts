@@ -121,6 +121,21 @@ export type LandingSectionText = {
 /** One language's words for every section, by section id. */
 export type LandingSectionTexts = Record<string, LandingSectionText>;
 
+/**
+ * The hero picture one language version names, a catalogue entry's id, or null
+ * when it names none. It is in that version's hero words, not the structure:
+ * each language has its own, and one without shows none.
+ */
+export function landingHeroImageId(
+  sections: readonly LandingSection[],
+  texts: LandingSectionTexts,
+): string | null {
+  const hero = sections.find((section) => section.type === "hero");
+  if (hero === undefined || !Object.hasOwn(texts, hero.id)) return null;
+  const words = texts[hero.id];
+  return "imageId" in words && words.imageId !== undefined ? words.imageId : null;
+}
+
 /** The types a page's sticky sections may be, in registry order. */
 export const LANDING_STICKY_TYPES: readonly LandingSectionType[] = LANDING_SECTION_TYPES.filter(
   (type) => LANDING_SECTIONS[type].sticky,

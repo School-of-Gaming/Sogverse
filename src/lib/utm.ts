@@ -81,7 +81,9 @@
  *     **The same gate covers every other write of them.** A landing page's
  *     email sign-up passes them to Klaviyo as profile properties, through
  *     {@link utmMetadataForConsent} and the request's own consent cookie,
- *     exactly as a registration stores them.
+ *     exactly as a registration stores them. The Klaviyo account sync copies
+ *     only what is stored on the parent's profile, so it carries a value
+ *     exactly when this gate let one be written, and never reads the visit.
  *
  *     **Rows written before this change are untouched.** Nothing is
  *     re-examined, cleared or backfilled; the ruling decides what is written
@@ -97,9 +99,19 @@
  *     them after account creation — an admin included, since an admin is also
  *     the `authenticated` DB role. That is what lets us refuse a client-side
  *     write path.
- *  5. **They are never used for profiling, or to decide what anyone is shown,
- *     offered or charged.**
- *  6. **They are never combined with behavioural, device or journey data.**
+ *  5. **A stored value may be used to segment parents and tailor the
+ *     marketing sent to them.** The Klaviyo account sync sends it alongside the
+ *     parent's family, purchases and the page they set out from at signup, and
+ *     the privacy policy says so: the tag is collected to tailor the emails we
+ *     send, and it reaches Klaviyo with the rest of the account's profile. That
+ *     disclosure and point 2's gate are what the use rests on, so a value
+ *     written without marketing consent is never one this use can reach.
+ *  6. **It never decides what anyone is offered or charged inside Sogverse.**
+ *     Tailoring is choosing which marketing a parent receives; a price, a
+ *     seat, an eligibility or a page's content that varied with the tag would
+ *     be a different use, undisclosed, and point 7's problem besides. Device
+ *     and browsing data never join it: the sync sends what a parent did in
+ *     their account, not how they moved through the site.
  *  7. **Labels, not credentials.** The moment a campaign value confers access, a
  *     discount or priority, it stops being a label and becomes a credential — a
  *     different thing legally, and a worse thing to have travelling in public

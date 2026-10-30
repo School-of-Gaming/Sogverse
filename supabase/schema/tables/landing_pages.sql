@@ -68,7 +68,7 @@ COMMENT ON COLUMN public.landing_pages.last_saved_via IS 'The OAuth client — a
 -- Name: COLUMN landing_pages.pictures; Type: COMMENT; Schema: public; Owner: -
 --
 
-COMMENT ON COLUMN public.landing_pages.pictures IS 'Each catalogue entry the sections and every version''s share picture show, as {entry id: {"path": object name in its purpose''s bucket, "purpose": landing_image (wide 16:9), landing_square_image (square 1:1) or landing_portrait_image (portrait 4:5)}}, derived by apply_landing_pictures and never written by anything else.';
+COMMENT ON COLUMN public.landing_pages.pictures IS 'Each catalogue entry the sections and every version''s hero picture and share picture show, as {entry id: {"path": object name in its purpose''s bucket, "purpose": landing_image (wide 16:9), landing_square_image (square 1:1) or landing_portrait_image (portrait 4:5)}}, derived by apply_landing_pictures and never written by anything else.';
 
 
 --

@@ -43,7 +43,6 @@ const SECTIONS: LandingSection[] = [
   {
     id: HERO,
     type: "hero",
-    imageId: PIC_A,
     button: { kind: "internal", path: "/shop" },
   },
   { id: TEXT, type: "text", background: "default", imageId: PIC_B, imageSide: "start" },
@@ -78,6 +77,7 @@ const TEXTS: LandingSectionTexts = {
     headline: "Gaming clubs in Espoo",
     subline: "After school, every week.",
     buttonLabel: "Find a club",
+    imageId: PIC_A,
     imageAlt: "Children playing together",
   },
   [TEXT]: { heading: "What happens in a club", body: "We **build** things. See [the shop](/shop)." },
@@ -400,7 +400,7 @@ describe("the landing page renderers", () => {
   it("leaves out what a version still being written lacks", () => {
     renderBody({
       sections: [SECTIONS[0], SECTIONS[6]],
-      texts: { [HERO]: { headline: "Draft" } },
+      texts: { [HERO]: { headline: "Draft", imageId: PIC_A } },
     });
     expect(screen.queryByRole("link")).toBeNull();
     expect(screen.getByRole("heading", { level: 1 }).textContent).toContain("Draft");

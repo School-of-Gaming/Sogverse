@@ -16,7 +16,7 @@ import { Identicon } from "@/components/ui/identicon";
 import { cn } from "@/lib/cn";
 import { formatTime } from "@/lib/date-format";
 import { deriveChatMessageCapabilities } from "./capabilities";
-import { groupChatMessages } from "./chat-grouping";
+import { groupChatMessages, type ChatImageMessage } from "./chat-grouping";
 import { ChatDeliveryNote } from "./ChatDeliveryNote";
 import { ChatImageRun } from "./ChatImageRun";
 import { ChatMessageActions } from "./ChatMessageActions";
@@ -543,7 +543,7 @@ function ChatImageRunItem({
   jumpTo,
   handlers,
 }: {
-  messages: readonly ChatMessage[];
+  messages: readonly ChatImageMessage[];
   byId: ReadonlyMap<string, ChatMessage>;
   accounts: ReadonlyMap<string, ChatAccount>;
   viewer: ChatAccount;
@@ -602,19 +602,7 @@ function ChatImageRunItem({
       )}
 
       <ChatImageRun
-        images={messages.map((message) => {
-          // The grouping only puts image-bearing messages in a run, so this is
-          // total — the fallback exists so a future grouping change fails
-          // visibly rather than throwing inside a render.
-          return (
-            message.image ?? {
-              id: message.id,
-              src: "",
-              width: 1,
-              height: 1,
-            }
-          );
-        })}
+        images={messages.map((message) => message.image)}
         deliveries={messages.map((message) => message.delivery)}
         revealedIndex={revealedIndex}
         onRevealIndex={(index) => onReveal(messages[index].id)}

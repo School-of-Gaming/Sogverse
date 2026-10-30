@@ -12,14 +12,14 @@ CREATE TABLE public.product_marketing_consents (
 -- Name: TABLE product_marketing_consents; Type: COMMENT; Schema: public; Owner: -
 --
 
-COMMENT ON TABLE public.product_marketing_consents IS 'The admin-picked set: which marketing consents a product''s signup panel ASKS a parent about. Empty for almost every product — the Lynx Educate partnership is what this exists for. A row here is an ask and never a requirement: declining is a complete answer and the seat is unaffected, which is the whole line between this table and product_required_consents. Written only by admin_set_product_marketing_consents; no Data API role holds a write grant, so the join table has exactly one writer. Readable through the product''s own read predicate, exactly as product_prices, schedule_slots and product_required_consents are, because the shop has to tell a stranger what signing up would ask them. ON DELETE CASCADE from products: an ask is a property of a product and means nothing without it.';
+COMMENT ON TABLE public.product_marketing_consents IS 'The admin-picked set: which marketing consents a product''s signup panel ASKS a parent about. Empty for most products. A row here is an ask and never a requirement: declining is a complete answer and the seat is unaffected, which is the whole line between this table and product_required_consents. A lynx_educate answer is recorded account-wide by set_marketing_consent; a school_of_gaming answer is recorded on the seat it was given with (participations.school_of_gaming_marketing_opt_in) and goes to Klaviyo, which owns School of Gaming''s mailing consent. Written only by admin_set_product_marketing_consents; no Data API role holds a write grant, so the join table has exactly one writer. Readable through the product''s own read predicate, exactly as product_prices, schedule_slots and product_required_consents are, because the shop has to tell a stranger what signing up would ask them. ON DELETE CASCADE from products: an ask is a property of a product and means nothing without it.';
 
 
 --
 -- Name: COLUMN product_marketing_consents.consent_type; Type: COMMENT; Schema: public; Owner: -
 --
 
-COMMENT ON COLUMN public.product_marketing_consents.consent_type IS 'Which permission the panel asks for. The consent itself is account-level, so a parent who already answered on another product is asked once and their existing answer stands — this column decides whether the question is PUT, never where the answer is stored.';
+COMMENT ON COLUMN public.product_marketing_consents.consent_type IS 'Which permission the panel asks for. This column decides whether the question is PUT, never where the answer is stored: a lynx_educate consent is account-level, so a parent who already answered on another product is asked once and their existing answer stands; a school_of_gaming answer is asked with every booking and stored on that seat.';
 
 
 --

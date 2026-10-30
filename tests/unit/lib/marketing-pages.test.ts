@@ -69,6 +69,10 @@ describe("the reportable-query allowlist", () => {
         "?utm_source=lynx&utm_medium=email&utm_campaign=lynx-summer-a&fbclid=IwAR0abc",
       ),
     ).toBe(true);
+    // Reddit's click id, which its library reads off the landing URL.
+    expect(isReportableQuery("?utm_source=reddit&rdt_cid=1234567890")).toBe(
+      true,
+    );
   });
 
   it("admits the shop's own filter state", () => {

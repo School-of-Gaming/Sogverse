@@ -13,7 +13,6 @@ vi.mock("@/lib/auth", () => ({
 const mockCreateUser = vi.fn();
 const mockDeleteUser = vi.fn();
 const mockRpc = vi.fn();
-const mockAdminFrom = vi.fn();
 vi.mock("@/lib/supabase/admin", () => ({
   createAdminClient: vi.fn(() => ({
     auth: {
@@ -22,7 +21,6 @@ vi.mock("@/lib/supabase/admin", () => ({
         deleteUser: (...args: unknown[]) => mockDeleteUser(...args),
       },
     },
-    from: (...args: unknown[]) => mockAdminFrom(...args),
     rpc: (...args: unknown[]) => mockRpc(...args),
   })),
 }));
@@ -34,10 +32,11 @@ vi.mock("@/lib/gamer-welcome.server", () => ({
 
 // --- Helpers ---
 
-function mockAuthenticated(userId = "customer-123") {
+/** The parent's own profile, whose last name the new gamer inherits. */
+function mockAuthenticated(lastName = "Parentson") {
   mockRequireRole.mockResolvedValue({
-    user: { id: userId },
-    profile: { role: "customer" },
+    user: { id: "customer-123" },
+    profile: { role: "customer", last_name: lastName },
     supabase: {},
   });
 }
@@ -60,43 +59,6 @@ const validBody = {
   // work around.
   guardianAttested: true,
 };
-
-/**
- * Configure admin.from() chain mocks for the pre-createUser phase.
- * Only needs to handle "profiles" (synthetic-email uniqueness check) — tests
- * that use this helper stop before the post-createUser DB operations.
- */
-function mockPreCreateChecks(config: {
-  emailExists?: boolean;
-  parentLastName?: string | null;
-}) {
-  mockAdminFrom.mockImplementation((table: string) => {
-    if (table === "profiles") {
-      // Two distinct chains hit profiles in this phase:
-      //   1. email-uniqueness: .select("id").eq().maybeSingle()
-      //   2. parent last_name snapshot: .select("last_name").eq().single()
-      // Branch on the column passed to .select() so each test can configure
-      // whether the email is taken AND what last_name to inherit.
-      return {
-        select: (col: string) => ({
-          eq: () => ({
-            maybeSingle: () => Promise.resolve({
-              data: config.emailExists ? { id: "existing-id" } : null,
-              error: null,
-            }),
-            single: () => Promise.resolve({
-              data: col.includes("last_name")
-                ? { last_name: config.parentLastName ?? "" }
-                : null,
-              error: null,
-            }),
-          }),
-        }),
-      };
-    }
-    return {};
-  });
-}
 
 // --- Tests ---
 
@@ -185,7 +147,6 @@ describe("POST /api/gamers/create — v1 minimal body (auto-generated email, pas
 
   it("accepts a body with only firstName + birth month and creates a passwordless auth user", async () => {
     mockAuthenticated();
-    mockPreCreateChecks({ emailExists: false });
     // Stop the flow at createUser so we can inspect what got passed.
     mockCreateUser.mockResolvedValue({
       data: null,
@@ -232,7 +193,6 @@ describe("POST /api/gamers/create — v1 minimal body (auto-generated email, pas
 
   it("accepts a missing/null gender (no longer required)", async () => {
     mockAuthenticated();
-    mockPreCreateChecks({ emailExists: false });
     mockCreateUser.mockResolvedValue({
       data: null,
       error: { message: "mock-stop" },
@@ -256,7 +216,6 @@ describe("POST /api/gamers/create — atomic create_gamer RPC", () => {
   beforeEach(() => {
     vi.clearAllMocks();
     mockAuthenticated();
-    mockPreCreateChecks({ emailExists: false, parentLastName: "Parentson" });
     mockCreateUser.mockResolvedValue({
       data: { user: { id: "new-gamer-id" } },
       error: null,
@@ -336,7 +295,6 @@ describe("POST /api/gamers/create — the guardian declaration", () => {
   beforeEach(() => {
     vi.clearAllMocks();
     mockAuthenticated();
-    mockPreCreateChecks({ emailExists: false, parentLastName: "Parentson" });
     mockCreateUser.mockResolvedValue({
       data: { user: { id: "new-gamer-id" } },
       error: null,
@@ -383,7 +341,6 @@ describe("POST /api/gamers/create — the sign-in modes", () => {
   beforeEach(() => {
     vi.clearAllMocks();
     mockAuthenticated();
-    mockPreCreateChecks({ emailExists: false, parentLastName: "Parentson" });
     mockCreateUser.mockResolvedValue({
       data: { user: { id: "new-gamer-id" } },
       error: null,

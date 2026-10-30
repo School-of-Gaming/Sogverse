@@ -190,7 +190,7 @@ const PARAMS: Record<string, Record<string, string | boolean | null>> = {
     productName: "Minecraft 101",
     productType: "camp",
     // A topic that carries a guide, so the section's blocks are swept at all.
-    // This fixture is in-person (`isRemote: "no"`, for the site the calendar
+    // This fixture is in-person (`deliveryMode: "in_person"`, for the site the calendar
     // states), which shortens the guide to its account steps — the remote form,
     // with the per-platform notes and the checklist only it renders, is swept
     // as a variant below.
@@ -212,7 +212,7 @@ const PARAMS: Record<string, Record<string, string | boolean | null>> = {
     startDate: calendarInvitationStartDate(),
     endDate: calendarInvitationUntilDate(),
     slots: "mon 16:00 60\nwed 16:00 60",
-    isRemote: "no",
+    deliveryMode: "in_person",
     siteName: "Kallion kirjasto",
     siteAddress: "Viides linja 11, 00530 Helsinki",
     siteNote: "The door on the north side. Ring the bell.",
@@ -369,7 +369,7 @@ const MAILS: Record<string, () => [string, string][]> = {
     // reaches them.
     ...fromRegistry("productConfirmation", "productConfirmation (topic guide, remote)", {
       topic: "roblox_studio",
-      isRemote: "yes",
+      deliveryMode: "online",
     }),
   ],
   // All three mails one send produces: the family's, the child's own copy, and

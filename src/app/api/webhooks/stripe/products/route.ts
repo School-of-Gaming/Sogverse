@@ -5,6 +5,7 @@ import { currentPeriodEndOf } from "@/lib/stripe/subscription-period";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { confirmPaidParticipationRpcResult } from "@/services/participations/participations.contracts";
 import { sendProductConfirmationEmail } from "@/services/participations/product-confirmation-email.server";
+import { seatAnswerArgsFromSessionMetadata } from "@/services/participations/seat-answers";
 import { isSupportedCurrency } from "@/lib/constants/currency";
 import type { Json, PaymentPurpose } from "@/types";
 
@@ -153,6 +154,11 @@ async function handleCheckoutCompleted(
       p_participant_id: participantId,
       p_customer_id: customerId,
       p_checkout_session_id: session.id,
+      // The visit's UTM tag (already through the checkout route's marketing
+      // consent gate) and the School of Gaming mailing answer, each written
+      // onto the session only when it held a value. A session from before they
+      // travelled carries neither, and the seat stores NULL.
+      ...seatAnswerArgsFromSessionMetadata(session.metadata),
     },
   );
   if (confirmErr) {

@@ -36,7 +36,6 @@
       "title": "Gedu-certifiering",
       "justNow": "{count} certifierade nyss",
       "empty": "Ingen Gedu väntar på certifiering.",
-      "unnamed": "Namnlös Gedu",
       "registered": "registrerades {when}",
       "certify": "Certifiera",
       "certifying": "Certifierar…",
@@ -504,8 +503,7 @@
           "pair": "två bredvid varandra",
           "row": "tre i rad",
           "showcase": "ett stort citat, två bredvid varandra och sedan tre i rad"
-        },
-        "missing": "Ett omdöme som inte längre finns kvar"
+        }
       }
     },
     "status": {
@@ -666,6 +664,7 @@
       "ageRange": "{min}–{max} år",
       "seats": "{count} platser",
       "online": "På distans",
+      "hybrid": "Hybrid",
       "unlisted": "olistad",
       "untitled": "(utan titel)",
       "missingGeduFee": "Gedu-arvode saknas",
@@ -728,7 +727,7 @@
         "visibility": "Synlighet",
         "gamerPhotoConsents": "Fotofrågor",
         "marketingConsents": "Marknadsföringsfrågor",
-        "format": "Format",
+        "deliveryMode": "Genomförande",
         "ageRange": "Åldersintervall",
         "publicLink": "Offentlig länk",
         "createdBy": "Skapad av",
@@ -819,6 +818,7 @@
       "spokenLanguage": "Talat språk",
       "online": "Online",
       "inPerson": "På plats",
+      "hybrid": "Hybrid",
       "municipality": "Vilken kommun detta är för",
       "site": "Lokal",
       "startDate": "Startdatum",
@@ -913,6 +913,11 @@
       "none": "Inget röstrum",
       "noneDescription": "Familjerna får i stället se de anslutningsinstruktioner du skriver för varje språk."
     },
+    "deliveryModes": {
+      "online": "Online",
+      "in_person": "På plats",
+      "hybrid": "Hybrid"
+    },
     "endDateModes": {
       "ongoing": "Inget slutdatum",
       "ongoingDescription": "Klubben pågår tills vidare tills du bestämmer dig för att avsluta den.",
@@ -939,6 +944,10 @@
         "lynxEducate": {
           "label": "Lynx Educate",
           "description": "Att kryssa i detta lägger till en valfri fråga vid anmälan till den här produkten: föräldrar tillfrågas om de vill dela sin e-postadress med Lynx Educate. En förälder kan tacka nej, och platsen påverkas inte."
+        },
+        "schoolOfGaming": {
+          "label": "School of Gaming",
+          "description": "Att kryssa i detta lägger till en valfri fråga vid anmälan till den här produkten: föräldrar tillfrågas om de vill få e-post från School of Gaming om våra klubbar, läger och nyheter. En förälder kan tacka nej, och platsen påverkas inte."
         }
       }
     },
@@ -958,6 +967,7 @@
       "externalVoiceUrlHint": "Offentlig: vem som helst kan läsa länken, även besökare som inte är inloggade.",
       "municipalityHint": "Kommunklubbar är alltid kopplade till en specifik finländsk kommun — den som betalar. Föräldrar från den kommunen ser den när de bläddrar.",
       "siteHint": "Var tillfällena fysiskt äger rum.",
+      "hybridHint": "Gamers kommer till platsen. Gedun, och de gamers som inte kan komma dit, ansluter via Sogverse-röstrummet.",
       "eventSingleDay": "Evenemang äger rum ett enda datum.",
       "timezoneEntry": "Tiderna för tillfällena nedan anges i den här tidszonen. Föräldrar ser dem omräknade till sin egen tidszon automatiskt.",
       "timezoneChangeMoves": "Tiderna för tillfällena nedan anges i den här tidszonen. Byter du zon flyttas varje kommande tillfälle till samma klockslag i den nya zonen, medan tillfällen som redan har en rapport eller närvaro registrerad behåller de tider de hölls på.",
@@ -1182,7 +1192,7 @@
       "type": "Typ",
       "allTypes": "Alla",
       "search": "Sök",
-      "searchPlaceholder": "Sök på namn…",
+      "searchPlaceholder": "Sök på namn eller id…",
       "showing": "Visar {count} av {total}",
       "clear": "Rensa",
       "noMatches": "Inga {type, select, consumerClub {konsumentklubbar} municipalityClub {kommunklubbar} camp {läger} other {evenemang}} matchar sökningen och de valda filtren.",
@@ -1212,8 +1222,6 @@
       "searchHint": "Skriv minst 2 tecken för att söka.",
       "noParents": "Inga föräldrar ännu.",
       "noSearchResults": "Inga föräldrar eller spelare matchar din sökning.",
-      "unnamedParent": "Namnlös förälder",
-      "unnamedGamer": "Namnlös spelare",
       "add": "Lägg till",
       "adding": "Lägger till…",
       "added": "Tillagd",
@@ -1238,8 +1246,7 @@
         "title": "Otilldelade",
         "subtitle": "Personer som ännu inte är i en grupp. Dra dem in i en för att placera dem.",
         "empty": "Alla har en grupp.",
-        "addParticipant": "Lägg till deltagare",
-        "removeParticipant": "Ta bort deltagare"
+        "addParticipant": "Lägg till deltagare"
       },
       "empty": {
         "title": "Inga grupper än",
@@ -1313,22 +1320,19 @@
           "title": "Prenumerationen är fortfarande aktiv",
           "description": "Om {name} flyttas till väntelistan blir prenumerationen kvar och familjen fortsätter att faktureras för en plats den inte längre har.",
           "nextStep": "Familjen öppnar faktureringskortet på Min SOG, som tar dem vidare till Stripes säkra faktureringsportal för att säga upp. Platsen frigörs så snart prenumerationen upphör."
-        },
-        "removeSubscribed": {
-          "title": "Prenumerationen är fortfarande aktiv",
-          "description": "Att ta bort {name} skulle lämna familjens prenumeration kvar och fortsätta fakturera för en plats som inte längre finns.",
-          "nextStep": "Familjen öppnar faktureringskortet på Min SOG, som tar dem vidare till Stripes säkra faktureringsportal för att säga upp. Platsen frigörs så snart prenumerationen upphör."
         }
       },
       "switchClub": {
-        "dropZone": "Byt klubb",
         "title": "Byt klubb",
         "description": "Flytta {name} till en annan klubb. Inget ändras för familjen i dag: samma kort dras samma datum, och därefter betalar familjen den nya klubbens pris.",
-        "searchPlaceholder": "Sök klubbar på namn",
+        "searchPlaceholder": "Sök klubbar på namn eller id",
         "picker": {
           "empty": "Det finns ingen annan klubb att byta till. Målet måste vara en klubb som faktureras varje månad och som inte har avslutats.",
           "noMatch": "Ingen klubb matchar sökningen. Pröva ett annat namn.",
-          "alreadyHolds": "Har redan plats"
+          "alreadyHolds": "Har redan plats",
+          "needsSubscription": "Kräver prenumeration",
+          "gamersOnly": "Endast för spelare",
+          "parentsOnly": "Endast för föräldrar"
         },
         "facts": {
           "ageRange": "{ends, select, both {Åldrar {min}–{max}} from {Från {min} år} other {Upp till {max} år}}",
@@ -1360,18 +1364,51 @@
           "noLiveSubscription": "Ingen aktiv prenumeration står bakom den här platsen, så det här är fel verktyg: ta bort platsen och skriv in spelaren på den andra klubben i stället.",
           "targetNotPaidSubscriptionClub": "Den produkten är ingen klubb som faktureras varje månad, så en prenumeration kan inte följa med platsen dit.",
           "sameProduct": "Det är klubben spelaren redan går i.",
-          "alreadyOnTarget": "Spelaren har redan en plats i den klubben."
+          "alreadyOnTarget": "{name} har redan en plats i den produkten.",
+          "targetIsSubscriptionClub": "Den klubben faktureras varje månad, så en plats där kräver en prenumeration som den här flytten inte kan skapa.",
+          "targetNotOpenToParents": "Den produkten är inte öppen för föräldrar, så en förälders egen plats kan inte flyttas dit.",
+          "targetNotOpenToGamers": "Den produkten är inte öppen för spelare, så den här spelarens plats kan inte flyttas dit."
         },
         "commit": {
           "stripeUpdated": "Prenumerationen ligger redan på den nya klubbens pris, men platsen flyttades inte. Tryck på Byt klubb igen för att slutföra — ett nytt tryck debiterar inte familjen två gånger.",
           "stripeUpdatedStuck": "Prenumerationen ligger redan på den nya klubbens pris trots att platsen inte kunde flyttas, så familjen faktureras för en klubb där spelaren inte har någon plats. Red ut det i Stripe först.",
           "failed": "Bytet slutfördes inte. Tryck på Byt klubb igen — ett nytt tryck upprepar samma begäran, så familjen debiteras aldrig två gånger."
         },
-        "confirm": "Byt klubb"
+        "confirm": "Byt klubb",
+        "noSubscription": {
+          "title": "Flytta till en annan produkt",
+          "description": "Flytta {name} till en annan produkt.",
+          "searchPlaceholder": "Sök produkter på namn eller id",
+          "picker": {
+            "empty": "Det finns ingen annan produkt att flytta till. Målet måste vara en produkt som inte faktureras månadsvis och som inte har avslutats.",
+            "noMatch": "Ingen produkt matchar sökningen. Prova ett annat namn."
+          },
+          "family": {
+            "label": "För familjen",
+            "money": "Flytten debiterar eller återbetalar ingenting.",
+            "priceDifference": "Om priserna skiljer sig åt, reglera mellanskillnaden i Stripe.",
+            "email": "Familjen får den nya produktens bekräftelsemejl, och kalenderposten flyttas dit.",
+            "consents": "Om den nya produkten kräver samtycken ges de för familjens räkning, så familjen behöver inte svara på dem."
+          },
+          "notStarted": "Startar {date}.",
+          "confirm": "Flytta",
+          "commitFailed": "Flytten slutfördes inte. Tryck på Flytta igen.",
+          "commitConflict": "Platsen ändrades medan den flyttades, så ingenting flyttades. Stäng det här och öppna platsens meny igen."
+        }
       },
       "requirementGaps": {
         "title": "Tilldela ändå?",
         "action": "Tilldela ändå"
+      },
+      "seatMenu": {
+        "label": "Åtgärder för {name}",
+        "goToUser": "Gå till användarsidan för {name}",
+        "switchClub": "Byt klubb…",
+        "move": "Flytta till en annan produkt…",
+        "remove": "Ta bort från den här produkten…",
+        "disabled": {
+          "subscriptionLive": "Familjen säger upp prenumerationen på Min SOG, och platsen upphör med den."
+        }
       }
     },
     "seatLimitModes": {
@@ -1475,14 +1512,11 @@
     "unknown": "Okänd",
     "linkedGamers": "Kopplade spelare",
     "linkedParents": "Kopplade föräldrar",
-    "unnamedGamer": "Namnlös spelare",
-    "unnamedUser": "Namnlös användare",
     "noConnectedGamers": "Inga kopplade spelare",
     "assignedProducts": "Kopplade produkter",
     "noAssignedProducts": "Inga kopplade produkter",
     "unassignedGroup": "Ingen grupp tilldelad",
     "needsGroup": "Behöver en grupp",
-    "untitledProduct": "Namnlös produkt",
     "gamerDetails": {
       "title": "Personuppgifter",
       "edit": "Redigera personuppgifter",
@@ -1524,7 +1558,6 @@
       "title": "Marknadsföring",
       "attribution": "Ursprung",
       "preferences": "Inställningar",
-      "schoolOfGaming": "School of Gaming",
       "lynxEducate": "Lynx Educate",
       "granted": "Godkänt",
       "notGranted": "Inte godkänt",
@@ -1564,7 +1597,6 @@
     "slackNotLinked": "Inte kopplat"
   },
   "locations": {
-    "editName": "Redigera {name}",
     "addChildUnder": "Lägg till {type} under {parent}",
     "location": "Plats",
     "nameRequired": "Namn krävs",
@@ -1669,7 +1701,6 @@
     "justNow": "{count, plural, one {# vikarie godkänd nyss} other {# vikarier godkända nyss}}",
     "offersLabel": "Geduer som erbjuder sig att vikariera",
     "away": "Borta:",
-    "unnamed": "Namnlös Gedu",
     "reason": {
       "sick": "Sjuk",
       "other": "Annat"

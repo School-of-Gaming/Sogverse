@@ -47,10 +47,11 @@ const routeParams = z.object({
  *
  * The live-subscription refusal is an ORDINARY OUTCOME of this route, not a
  * broken invariant, and the status it answers with says so (400, exactly as the
- * PATCH handler's identically-coded demote refusal does). Any admin can reach
- * it by dragging a subscribed member onto the panel's remove zone, on any
+ * PATCH handler's identically-coded demote refusal does). It can be met on any
  * product — including a club that was flipped from paid to free, whose members
- * keep their subscriptions. The panel's dialog normally stops the drag first.
+ * keep their subscriptions. The panel's seat menu normally draws removal
+ * disabled for a subscribed seat; a snapshot older than the subscription (a
+ * webhook landing after the panel drew) is what still reaches it.
  *
  * No refund is issued: nothing here calls Stripe.
  */
@@ -182,8 +183,8 @@ export const PATCH = defineRoute({
   // refusal — the same ERRCODE `admin_remove_participation` raises, now with
   // the same 400 on both handlers. One condition, one code, one status,
   // wherever it is met: an admin dragging a paying member onto the waitlist (or
-  // onto the remove zone) is making a request the database declines, not
-  // tripping a fault. Exactly the status the consumer-club refusal it replaces
+  // removing one from the seat menu) is making a request the database declines,
+  // not tripping a fault. Exactly the status the consumer-club refusal it replaces
   // answered with. Normally unreachable — the groups panel's dialog stops the
   // drag first. The handler returns the admin-facing copy itself; this pins the
   // status.

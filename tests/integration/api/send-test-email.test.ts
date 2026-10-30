@@ -292,7 +292,7 @@ describe("POST /api/admin/send-test-email", () => {
       startDate: "2027-01-04",
       endDate: "",
       slots: "",
-      isRemote: "no",
+      deliveryMode: "in_person",
       siteName: "",
       siteAddress: "",
       siteNote: "",

@@ -54,6 +54,13 @@ ALTER TABLE ONLY public.account_consent_acceptances
 
 
 --
+-- Name: account_consent_acceptances account_consent_acceptances_klaviyo; Type: TRIGGER; Schema: public; Owner: -
+--
+
+CREATE TRIGGER account_consent_acceptances_klaviyo AFTER INSERT ON public.account_consent_acceptances FOR EACH ROW EXECUTE FUNCTION public.klaviyo_account_consent_accepted();
+
+
+--
 -- Name: account_consent_acceptances account_consent_acceptances_customer_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: -
 --
 

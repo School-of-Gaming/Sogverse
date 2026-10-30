@@ -47,6 +47,24 @@ COMMENT ON TYPE public.chat_channel_type IS 'What a chat channel IS, and therefo
 
 
 --
+-- Name: delivery_mode; Type: TYPE; Schema: public; Owner: -
+--
+
+CREATE TYPE public.delivery_mode AS ENUM (
+    'online',
+    'in_person',
+    'hybrid'
+);
+
+
+--
+-- Name: TYPE delivery_mode; Type: COMMENT; Schema: public; Owner: -
+--
+
+COMMENT ON TYPE public.delivery_mode IS 'How a product is delivered. online: everybody joins through a voice room and there is no site — an online municipality club still carries a location, the municipality it serves, but no building. in_person: gamers and the gedu meet at a site, and there is no voice room. hybrid: gamers attend a site in person, and the gedu, with perhaps a few gamers, joins through the Sogverse voice room; everybody on the product, gamer, parent and gedu alike, is shown both the room and the site. A reader asks one of three questions of it: is there a voice room (online or hybrid), do gamers attend a site (in_person or hybrid, the two that require a site location), or does the gedu attend a site (in_person alone, which is why gedu_covers_product_site asks no coverage of a hybrid product).';
+
+
+--
 -- Name: effective_product_status; Type: TYPE; Schema: public; Owner: -
 --
 
@@ -148,6 +166,27 @@ COMMENT ON TYPE public.invoice_billing_cadence IS 'How often an invoice customer
 
 
 --
+-- Name: klaviyo_event_kind; Type: TYPE; Schema: public; Owner: -
+--
+
+CREATE TYPE public.klaviyo_event_kind AS ENUM (
+    'account_created',
+    'enrolled',
+    'waitlisted',
+    'seat_offered',
+    'subscription_cancelled',
+    'session'
+);
+
+
+--
+-- Name: TYPE klaviyo_event_kind; Type: COMMENT; Schema: public; Owner: -
+--
+
+COMMENT ON TYPE public.klaviyo_event_kind IS 'What happened to a parent, as a Klaviyo event: account_created (they accepted the terms for the first time, which only a parent''s registration does), enrolled (a participation on a product of any billing mode became active), waitlisted (a participation joined a waitlist), seat_offered (a waitlisted participation was offered a seat), subscription_cancelled (a family subscription moved to canceling or cancelled) and session (an attendance mark was written, or its status changed). The sync sends each with the unique id stored on its outbox row, so a retry, or the same transition happening twice, is never counted twice.';
+
+
+--
 -- Name: library_article_category; Type: TYPE; Schema: public; Owner: -
 --
 
@@ -194,7 +233,7 @@ CREATE TYPE public.marketing_consent_type AS ENUM (
 -- Name: TYPE marketing_consent_type; Type: COMMENT; Schema: public; Owner: -
 --
 
-COMMENT ON TYPE public.marketing_consent_type IS 'The marketing permissions a parent can hold. school_of_gaming is our own mailing list, asked for at parent registration. lynx_educate is our partner''s, asked for only on products an admin has attached it to — see product_marketing_consents. An enum rather than a whitelist table because a marketing consent, unlike a consent DOCUMENT, has no text to version and no republication for a stored row to outlive: it is a standing permission to mail, and the party it names is the whole of it.';
+COMMENT ON TYPE public.marketing_consent_type IS 'The marketing permissions a parent can hold in Sogverse. lynx_educate is our partner''s list, asked for only on products an admin has attached it to — see product_marketing_consents. school_of_gaming is our own mailing list, which is now answered in Klaviyo: nothing writes it, and the rows written before it moved are kept unread until a later change removes them. Sogverse keeps only what the parent answered at registration (profiles.registration_marketing_consent). An enum rather than a whitelist table because a marketing consent, unlike a consent DOCUMENT, has no text to version and no republication for a stored row to outlive: it is a standing permission to mail, and the party it names is the whole of it.';
 
 
 --
@@ -415,6 +454,6 @@ CREATE TYPE public.voice_room_mode AS ENUM (
 -- Name: TYPE voice_room_mode; Type: COMMENT; Schema: public; Owner: -
 --
 
-COMMENT ON TYPE public.voice_room_mode IS 'How an online product''s sessions are joined. sogverse: the Sogverse voice room, opened during each session''s window — the default, and the only value an in-person product may hold. external: a meeting held on another service, at products.external_voice_url. none: no room of any kind; a family is shown the product''s join instructions instead, written per locale in product_translations.voice_join_instructions. external and none are a STOPGAP for audiences larger than a Sogverse room holds (50 people), to be removed once Sogverse rooms can hold more — see docs/investigations/voice-room-scale.md.';
+COMMENT ON TYPE public.voice_room_mode IS 'How an online product''s sessions are joined. sogverse: the Sogverse voice room, opened during each session''s window — the default, and the only value an in-person or a hybrid product may hold. external: a meeting held on another service, at products.external_voice_url. none: no room of any kind; a family is shown the product''s join instructions instead, written per locale in product_translations.voice_join_instructions. external and none are a STOPGAP for audiences larger than a Sogverse room holds (50 people), to be removed once Sogverse rooms can hold more — see docs/investigations/voice-room-scale.md.';
 
 

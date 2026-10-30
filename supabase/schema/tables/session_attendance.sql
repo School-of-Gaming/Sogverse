@@ -58,6 +58,20 @@ CREATE INDEX session_attendance_session_idx ON public.session_attendance USING b
 
 
 --
+-- Name: session_attendance session_attendance_klaviyo_changed; Type: TRIGGER; Schema: public; Owner: -
+--
+
+CREATE TRIGGER session_attendance_klaviyo_changed AFTER UPDATE OF status ON public.session_attendance FOR EACH ROW WHEN ((old.status IS DISTINCT FROM new.status)) EXECUTE FUNCTION public.klaviyo_attendance_marked();
+
+
+--
+-- Name: session_attendance session_attendance_klaviyo_written; Type: TRIGGER; Schema: public; Owner: -
+--
+
+CREATE TRIGGER session_attendance_klaviyo_written AFTER INSERT ON public.session_attendance FOR EACH ROW EXECUTE FUNCTION public.klaviyo_attendance_marked();
+
+
+--
 -- Name: session_attendance session_attendance_participant_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: -
 --
 

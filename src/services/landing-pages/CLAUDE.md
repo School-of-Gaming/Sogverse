@@ -32,7 +32,11 @@ ids of the rows it places (testimonials, products, a guide) and the ids and orde
 items — and it is the same in every language. Each language version holds the title, the
 summary, the slug, the share card and the words of every section, keyed by section id.
 Anything a translator would change is a word; anything that must be the same in every
-language is structure. An item inside a section (a point, a step, a question, a picture of
+language is structure. **The hero's picture is the one picture that is a word**: each
+language names its own in its hero words, beside its alt text, because a hero picture can
+carry words baked into the art and is that language's link preview. There is no shared
+value and no fallback — a language that names none shows none — and the structure refuses
+one on the hero. An item inside a section (a point, a step, a question, a picture of
 an image section) has an id of its own and its words are keyed by it, so reordering or
 removing items never misaligns another language's words. **Every refusal about the
 structure names a section by its number from one, never its id**, which an AI app that
@@ -52,8 +56,8 @@ writer passes either, and publishing moves neither.
 
 **A clone is a create whose content the database copies in one call**, so no word passes
 through the application or the AI app. Everything in the source's working copy is copied
-verbatim — the structure with its pictures, and each language's summary, words and share
-card — with two departures.
+verbatim — the structure with its pictures, and each language's summary, words (its hero
+picture among them) and share card — with two departures.
 Every section and every item gets a new id, and each language's words are re-keyed by the
 same map, so they stay on what they were written for and the clone shares no id with its
 source. And each language's title is the source's followed by a copy marker in that
@@ -120,9 +124,9 @@ address only in its own.**
 ## Pictures
 
 **Pictures are entries of the shared image catalogue, referenced by id — from a section of
-the structure, or from a language version as its share picture — in three shapes: wide
-16:9, square 1:1 and portrait 4:5, each its own catalogue purpose.** The shape is the
-purpose's, never a claim in the structure. The page reserves each picture's box before it
+the structure, or from a language version as its hero picture (in its hero words) or its
+share picture — in three shapes: wide 16:9, square 1:1 and portrait 4:5, each its own
+catalogue purpose.** The shape is the purpose's, never a claim in the structure. The page reserves each picture's box before it
 loads, so each copy carries the path *and the purpose* of every picture its structure or
 any of its versions names, derived by the database on every write of either — public
 pages paint a picture at its shape without reading the admin-only catalogue, and a picture
@@ -130,7 +134,7 @@ only one language names is in use exactly as long as that language names it. An 
 purpose never changes and a replace keeps it, so a shape cannot drift under a page.
 
 **Which shapes a section takes is its type's declaration in the section registry, and the
-database refuses anything else.** A hero's picture is wide only, since it is the page's
+database refuses anything else.** A hero's picture is wide only, since it is its language's
 link preview and the picture its structured data leads with; a share picture is wide only
 for the same reason; a guide section's picture is wide only too; a text section's picture
 and an image section's pictures may be any shape; and a section's pictures are all one
@@ -144,10 +148,11 @@ table.
 No foreign key can reach into the structure, so the catalogue's two rules are kept another
 way, with the same outcome as for a Library cover: a **replace** moves every picture in
 both copies at once, a live page's included, without a republish; a **removal** unlinks
-the picture from both copies at once — a hero, text or guide section loses its picture, an
-image section loses that picture, an image section left with none is dropped with its
-words, and a language's share picture is unset — done by a trigger on the catalogue's own
-delete, so it needs nothing from the remover. Either moves the working copy's "last
+the picture from both copies at once — a language's hero picture is unset and its alt text
+kept, a text or guide section loses its picture, an image section loses that picture, an
+image section left with none is dropped with its words, and a language's share picture is
+unset — done by a trigger on the catalogue's own delete, so it needs nothing from the
+remover. Either moves the working copy's "last
 saved" time and saver, as a cover removal does.
 
 ## Things placed by id
@@ -174,7 +179,7 @@ of the page version shown. The section's only words are an optional header, and 
 contributes no structured data — review markup a site writes about itself earns nothing.
 
 **A guide is placed by id the same way** (`src/services/guides/`): a guide section names
-one guide and an optional cover picture, which the picture triggers handle like a hero's.
+one guide and an optional cover picture, which the picture triggers handle like a text section's.
 Neither copy carries a guide's files: the live page asks the public read only which of the
 guides it places exist, and the download is the guide store's, gated on a signed-in reader.
 The MCP page read names each guide section's guide by its label.
@@ -273,23 +278,24 @@ this directory). Every rule about those values goes into that function, never be
 so what an AI app is told the next publish serves is what it serves.
 
 **A page's link preview is derived from the page, per language, unless the admin overrides
-it.** Derived, it carries the shown version's title and summary and the hero's picture —
-the one its structured data names as the picture the page leads with — with that version's
-alt text; a hero without one shares the site-wide card. Each language may override part of
+it.** Derived, it carries the shown version's title and summary and that version's hero
+picture — the one its structured data names as the picture the page leads with — with its
+alt text; a version without one shares the site-wide card. Each language may override part of
 its own card: a **share title**, capped at a share card's length, and a **share picture**
 with its alt text — wide, like the hero's, since the preview is drawn wide. The picture is
 per language, not structure, because a share picture often carries words of its own, as
 the app's own drawn cards do per locale. The description is always the summary. None of it
-counts toward completeness. The share card is written with the language's words, but a
-share field changes only when the call sends it, an empty value clearing it, so a call
-that rewrites the words cannot drop a card it did not mention. An override does not follow
-later edits to the title or the hero, so the status page and the MCP page read each show
+counts toward completeness. The share card is written with the language's words, but in the
+MCP tools a share field — and the hero picture — changes only when the call sends it, an
+empty value clearing it, so a call that rewrites the words cannot drop a card or a hero
+picture it did not mention; the database itself stores a language's words whole. An
+override does not follow later edits to the title or the hero picture, so the status page and the MCP page read each show
 the card a language uses, derived or custom. Whichever picture the card shows is placed in
 every chat and feed the page is shared to, so a partner's mark in a hero picture or a
 share picture needs that partner's sign-off (`src/CLAUDE.md`).
 
 **`/discover` lists every live page, newest first**, each card in the reader's version at
-the index's own locale, with the picture its hero leads with where it has one; there is
+the index's own locale, with that version's hero picture where it has one; there is
 no opting out, because the index is what keeps the pages from being orphans to a crawler.
 The footer links it from every page, and the header and the tab bar deliberately do not:
 people reach landing pages from advertising, not by browsing. **Each page carries a
@@ -311,11 +317,19 @@ made from the production deployment alone and never fails the publish
 **The email sign-up section (`subscribe`) is a one-way send to Klaviyo, and Sogverse
 stores nothing about the person.** The form takes an address, an optional first and last
 name and the consent box, and posts to `/api/landing-pages/subscribe`, which writes the
-profile to Klaviyo and subscribes it to the newsletter list; nothing is ever read back.
-The list is single opt-in, so the reader is on it as soon as the route answers. A sign-up
-is not an account and never touches an account's marketing consent. The profile carries
+profile to Klaviyo and subscribes it to the marketing-consent list (`SV Marketing consent`
+in production, `SV Staging` elsewhere), the one a registration's tick joins too; nothing is
+ever read back.
+The list is single opt-in, so the reader is on it as soon as the route answers. Klaviyo
+holds an account's marketing consent on the account's own profile, so a sign-up under an
+account's address subscribes that same profile, exactly as ticking the box in Settings
+would. The profile carries
 the address, the names given, the page's locale, the landing page's id, and the visit's
-UTM values only under marketing consent — nothing else. The section has no shared field
+UTM values only under marketing consent — nothing else. The two custom ones are named in
+the Klaviyo contract (`src/lib/klaviyo-sync/`): `sog_newsletter_page` and
+`sog_newsletter_utm_source` … `_term`, never the account sync's `sog_utm_…` names,
+because a subscriber who later opens an account is one Klaviyo profile carrying
+both. The section has no shared field
 but its background and its sticky side; its form copy, consent sentence included, is fixed
 copy in `landingSubscribe`, and the page writes only the ask. The route refuses a body
 without the ticked consent and a page whose published copy no longer holds the section,

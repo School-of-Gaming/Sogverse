@@ -41,7 +41,7 @@ function validConsumerState(): FormState {
   };
   s.topic = "minecraft_java";
   s.spokenLanguageCode = "en";
-  s.isRemote = true;
+  s.deliveryMode = "online";
   s.locationId = null;
   s.startDate = "2026-09-01";
   s.endDate = "";
@@ -68,7 +68,7 @@ function validMuniState(): FormState {
   };
   s.topic = "minecraft_java";
   s.spokenLanguageCode = "en";
-  s.isRemote = true;
+  s.deliveryMode = "online";
   s.locationId = "00000000-0000-0000-0000-0000000000aa";
   s.startDate = "2026-09-01";
   s.endDate = "2026-12-01";
@@ -87,7 +87,7 @@ function validCampState(): FormState {
   };
   s.topic = "minecraft_java";
   s.spokenLanguageCode = "en";
-  s.isRemote = true;
+  s.deliveryMode = "online";
   s.startDate = "2026-09-01";
   s.endDate = "2026-09-05";
   s.scheduleSlots = [
@@ -107,7 +107,7 @@ function validEventState(): FormState {
   };
   s.topic = "minecraft_java";
   s.spokenLanguageCode = "en";
-  s.isRemote = true;
+  s.deliveryMode = "online";
   s.startDate = "2026-09-01";
   s.scheduleSlots = [{ weekday: 0, start_time: "18:00", duration_minutes: 90 }];
   s.seatCount = "30";
@@ -363,7 +363,7 @@ describe("validate", () => {
   describe("location", () => {
     it("requires a site for in-person consumer clubs", () => {
       const s = validConsumerState();
-      s.isRemote = false;
+      s.deliveryMode = "in_person";
       s.locationId = null;
       expect(validate(s, consumerConfig)).toEqual({
         messageKey: "siteRequired",
@@ -372,16 +372,24 @@ describe("validate", () => {
 
     it("requires a municipality for online municipality clubs", () => {
       const s = validConsumerState();
-      s.isRemote = true;
+      s.deliveryMode = "online";
       s.locationId = null;
       expect(validate(s, muniConfig)).toEqual({
         messageKey: "municipalityRequired",
       });
     });
 
+    it("requires a site for a hybrid product, even a municipality club", () => {
+      const s = validConsumerState();
+      s.deliveryMode = "hybrid";
+      s.locationId = null;
+      expect(validate(s, consumerConfig)).toEqual({ messageKey: "siteRequired" });
+      expect(validate(s, muniConfig)).toEqual({ messageKey: "siteRequired" });
+    });
+
     it("does not require a location for online consumer clubs", () => {
       const s = validConsumerState();
-      s.isRemote = true;
+      s.deliveryMode = "online";
       s.locationId = null;
       expect(validate(s, consumerConfig)).toBeNull();
     });
@@ -1661,7 +1669,7 @@ function mockDetailRow(
     product_type: "consumer_club",
     billing_mode: "paid",
     is_visible: true,
-    is_remote: true,
+    delivery_mode: "online",
     location_id: null,
     topic: "minecraft_java",
     for_gamers: true,
@@ -1944,23 +1952,6 @@ describe("marketing consent types", () => {
       buildUpdateInput(state, consumerConfig).marketing_consent_types,
     ).toEqual(["lynx_educate"]);
   });
-
-  it("drops a stored type the form cannot offer", () => {
-    // `school_of_gaming` is asked at registration and belongs to no product, so
-    // no screen can show or clear it. This is the deliberate opposite of the
-    // requirement set, where a slug the deploy cannot name is KEPT ticked:
-    // there a drop would take a legal condition off a product, and here there
-    // is no condition — the question simply goes unasked, and the parent can
-    // still answer it in their own settings.
-    const state = existingFormState(
-      mockDetailRow({
-        product_marketing_consents: [{ consent_type: "school_of_gaming" }],
-      }),
-      consumerConfig,
-      "en",
-    );
-    expect(state.marketingConsentTypes).toEqual(new Set());
-  });
 });
 
 describe("the voice room on the wire", () => {
@@ -2069,13 +2060,39 @@ describe("the voice room on the wire", () => {
     const s = validConsumerState();
     s.voiceRoomMode = "external";
     s.externalVoiceUrl = "not a link";
-    s.isRemote = false;
+    s.deliveryMode = "in_person";
     s.locationId = "site-1";
     // The choice is not asked of an in-person product, so it is not judged.
     expect(validate(s, consumerConfig)).toBeNull();
     const out = buildUpdateInput(s, consumerConfig);
     expect(out.voice_room_mode).toBe("sogverse");
     expect(out.external_voice_url).toBeNull();
+  });
+
+  it("builds a hybrid product at its site on a Sogverse room whatever the hidden choice holds", () => {
+    const s = validConsumerState();
+    s.voiceRoomMode = "none";
+    s.externalVoiceUrl = "https://meet.example.com/abc";
+    s.deliveryMode = "hybrid";
+    s.locationId = "site-1";
+    // Only an online product is asked how it is joined, so the hidden choice
+    // is neither judged nor sent.
+    expect(validate(s, consumerConfig)).toBeNull();
+    const out = buildCreateInput(s, "consumer_club", consumerConfig);
+    expect(out.delivery_mode).toBe("hybrid");
+    expect(out.location_id).toBe("site-1");
+    expect(out.voice_room_mode).toBe("sogverse");
+    expect(out.external_voice_url).toBeNull();
+  });
+
+  it("loads a stored hybrid product back into the form as hybrid", () => {
+    const form = existingFormState(
+      mockDetailRow({ delivery_mode: "hybrid", location_id: "site-1" }),
+      consumerConfig,
+      "en",
+    );
+    expect(form.deliveryMode).toBe("hybrid");
+    expect(buildUpdateInput(form, consumerConfig).delivery_mode).toBe("hybrid");
   });
 
   it("round-trips a stored choice through the edit form", () => {
