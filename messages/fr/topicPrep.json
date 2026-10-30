@@ -127,7 +127,7 @@
     },
     "remoteSession": {
       "title": "Configurer le microphone et la caméra",
-      "body": "Il vous faut un microphone pour parler avec le Gedu, notre mot pour un animateur, et le reste du groupe. Un casque avec micro fonctionne le mieux : il coupe les bruits de fond et empêche le son de votre jeu de revenir en écho dans les écouteurs des autres. La séance se déroule dans un salon vocal qui fonctionne dans un navigateur web. Vous pouvez vous connecter depuis l’ordinateur sur lequel vous jouez, ou par exemple depuis un téléphone ou une tablette. À la connexion, votre navigateur demande l’autorisation d’utiliser le microphone. Acceptez, pour que les autres vous entendent. La caméra n’est pas obligatoire, mais vous pouvez l’utiliser si vous le souhaitez. L’allumer aide le Gedu à vérifier que chaque personne dans le salon est bien celle qu’elle dit être. Trouvez un endroit calme, et connectez-vous quelques minutes en avance la première fois."
+      "body": "Il vous faut un microphone pour parler avec le reste du groupe et le Gedu, notre mot pour un animateur. Un casque avec micro fonctionne le mieux : il réduit les bruits de fond et empêche le son de votre jeu de revenir en écho dans les écouteurs des autres. La séance se déroule dans un salon vocal qui fonctionne dans un navigateur web. Vous pouvez vous connecter depuis l’ordinateur sur lequel vous jouez, ou depuis un autre appareil, comme un téléphone ou une tablette. À la connexion, votre navigateur demande l’autorisation d’utiliser le microphone. Acceptez, pour que les autres vous entendent. La caméra n’est pas obligatoire, mais vous pouvez l’utiliser si vous le souhaitez."
     }
   },
   "platformNotes": {
