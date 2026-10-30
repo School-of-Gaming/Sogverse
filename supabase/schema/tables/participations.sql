@@ -13,6 +13,7 @@ CREATE TABLE public.participations (
     created_at timestamp with time zone DEFAULT now() NOT NULL,
     updated_at timestamp with time zone DEFAULT now() NOT NULL,
     waitlisted_at timestamp with time zone,
+    stripe_checkout_session_id text,
     group_joined_at timestamp with time zone,
     seat_offer_sent_at timestamp with time zone,
     seat_offer_expiry_notified_at timestamp with time zone,
@@ -36,6 +37,13 @@ COMMENT ON TABLE public.participations IS 'One row per seat on a product: who ho
 --
 
 COMMENT ON COLUMN public.participations.participant_id IS 'The profile occupying this seat: a gamer enrolled by their parent, or — on a product whose audience admits adults — the paying customer themselves (participant_id = customer_id is what a self seat looks like). The column is named for what it means rather than for any one role that fills it.';
+
+
+--
+-- Name: COLUMN participations.stripe_checkout_session_id; Type: COMMENT; Schema: public; Owner: -
+--
+
+COMMENT ON COLUMN public.participations.stripe_checkout_session_id IS 'legacy-checkout-session: written only by confirm_paid_participation, for the deployment window, because the confirmation page from before bookings finds a paid seat by it; the follow-up drops it. Rows from before bookings keep their value. The Checkout Session of a seat is on its booking, bookings.stripe_checkout_session_id.';
 
 
 --
@@ -129,6 +137,13 @@ CREATE INDEX idx_participations_waitlisted ON public.participations USING btree 
 --
 
 CREATE UNIQUE INDEX uq_participations_active_or_waitlisted ON public.participations USING btree (product_id, participant_id) WHERE (status = ANY (ARRAY['active'::public.participation_status, 'waitlisted'::public.participation_status, 'completed'::public.participation_status]));
+
+
+--
+-- Name: uq_participations_checkout_session; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE UNIQUE INDEX uq_participations_checkout_session ON public.participations USING btree (stripe_checkout_session_id) WHERE (stripe_checkout_session_id IS NOT NULL);
 
 
 --

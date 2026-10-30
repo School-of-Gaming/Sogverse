@@ -2479,6 +2479,7 @@ export type Database = {
           seat_offer_sent_at: string | null
           signed_up_at: string
           status: Database["public"]["Enums"]["participation_status"]
+          stripe_checkout_session_id: string | null
           updated_at: string
           waitlisted_at: string | null
         }
@@ -2495,6 +2496,7 @@ export type Database = {
           seat_offer_sent_at?: string | null
           signed_up_at?: string
           status: Database["public"]["Enums"]["participation_status"]
+          stripe_checkout_session_id?: string | null
           updated_at?: string
           waitlisted_at?: string | null
         }
@@ -2511,6 +2513,7 @@ export type Database = {
           seat_offer_sent_at?: string | null
           signed_up_at?: string
           status?: Database["public"]["Enums"]["participation_status"]
+          stripe_checkout_session_id?: string | null
           updated_at?: string
           waitlisted_at?: string | null
         }
@@ -4684,11 +4687,9 @@ export type Database = {
       confirm_paid_participation: {
         Args: {
           p_checkout_session_id: string
-          p_currency?: string
           p_customer_id: string
           p_participant_id: string
           p_product_id: string
-          p_purchase_shape?: string
           p_school_of_gaming_marketing_opt_in?: boolean
           p_utm_campaign?: string
           p_utm_content?: string
@@ -4772,6 +4773,23 @@ export type Database = {
           p_versions: Json
         }
         Returns: string
+      }
+      create_participation: {
+        Args: {
+          p_consented_documents?: string[]
+          p_currency: string
+          p_customer_id: string
+          p_participant_id: string
+          p_product_id: string
+          p_purchase_shape: string
+          p_school_of_gaming_marketing_opt_in?: boolean
+          p_utm_campaign?: string
+          p_utm_content?: string
+          p_utm_medium?: string
+          p_utm_source?: string
+          p_utm_term?: string
+        }
+        Returns: Json
       }
       create_product: {
         Args: {

@@ -5,17 +5,25 @@
 -- 1. `public.bookings` holds a family's request: who, what, purchase shape,
 --    currency, the UTM tag and the School of Gaming answer. A pending booking
 --    holds no seat, so it blocks nothing and nothing ever has to clean one up.
--- 2. `participations.booking_id` replaces `participations.stripe_checkout_session_id`,
---    which moves to the booking, and the six seat-answer columns move off the
---    seat: a table-level grant and a gamer policy let a signed-in child read
---    their parent's answers there. The parent alone reads a booking.
--- 3. `create_booking` replaces `create_participation`, and `confirm_booking` is
---    the one function that turns a booking into a seat. `confirm_paid_participation`
---    stays only for Checkout Sessions created before this ships.
+-- 2. `participations.booking_id` points a seat at its booking, the Checkout
+--    Session id moves there, and the six seat-answer columns move off the seat:
+--    a table-level grant and a gamer policy let a signed-in child read their
+--    parent's answers there. The parent alone reads a booking.
+-- 3. `create_booking` does what `create_participation` did, and `confirm_booking`
+--    is the one function that turns a booking into a seat.
 -- 4. A waitlist join writes a booking too, with no shape and no currency because
 --    no money is involved.
 -- 5. Klaviyo reads the answers through `booking_id`, and a seat's payment marker
 --    becomes "its booking is a paid shape".
+--
+-- THE DEPLOYMENT WINDOW
+--
+-- Migrations reach production before the app does, so the app from before
+-- bookings runs on this schema for a while. Three things stay for it, each
+-- tagged legacy-checkout-session, and a follow-up removes them: the
+-- `create_participation` and `confirm_paid_participation` signatures, as wrappers
+-- over the booking functions, and `participations.stripe_checkout_session_id`,
+-- which that app's confirmation page reads.
 
 -- ---------------------------------------------------------------------------
 -- 1. The table
@@ -309,10 +317,8 @@ REVOKE ALL ON FUNCTION public.confirm_booking(uuid, text) FROM PUBLIC;
 GRANT ALL ON FUNCTION public.confirm_booking(uuid, text) TO service_role;
 
 -- ---------------------------------------------------------------------------
--- 4. create_booking replaces create_participation
+-- 4. create_booking, and create_participation as a wrapper over it
 -- ---------------------------------------------------------------------------
-
-DROP FUNCTION public.create_participation(uuid, uuid, uuid, text, text, text[], text, text, text, text, text, boolean);
 
 CREATE FUNCTION public.create_booking(
   p_product_id uuid,
@@ -505,13 +511,52 @@ COMMENT ON FUNCTION public.create_booking(uuid, uuid, uuid, text, text, text[], 
 REVOKE ALL ON FUNCTION public.create_booking(uuid, uuid, uuid, text, text, text[], text, text, text, text, text, boolean) FROM PUBLIC;
 GRANT ALL ON FUNCTION public.create_booking(uuid, uuid, uuid, text, text, text[], text, text, text, text, text, boolean) TO service_role;
 
+-- legacy-checkout-session: the old checkout route's call. Same signature and
+-- grant as before bookings, so the grant carries over. A paid signup leaves a
+-- pending booking that no Session ever joins: the old route never learns its id,
+-- so it reads as abandoned.
+CREATE OR REPLACE FUNCTION public.create_participation(
+  p_product_id uuid,
+  p_participant_id uuid,
+  p_customer_id uuid,
+  p_purchase_shape text,
+  p_currency text,
+  p_consented_documents text[] DEFAULT NULL,
+  p_utm_source text DEFAULT NULL,
+  p_utm_medium text DEFAULT NULL,
+  p_utm_campaign text DEFAULT NULL,
+  p_utm_content text DEFAULT NULL,
+  p_utm_term text DEFAULT NULL,
+  p_school_of_gaming_marketing_opt_in boolean DEFAULT NULL
+) RETURNS jsonb
+    LANGUAGE plpgsql SECURITY DEFINER
+    SET search_path TO ''
+    AS $$
+DECLARE
+  v_result JSONB;
+BEGIN
+  -- legacy-checkout-session: kept for the deployment window.
+  v_result := public.create_booking(
+    p_product_id, p_participant_id, p_customer_id, p_purchase_shape, p_currency,
+    p_consented_documents, p_utm_source, p_utm_medium, p_utm_campaign,
+    p_utm_content, p_utm_term, p_school_of_gaming_marketing_opt_in
+  );
+
+  IF v_result->>'kind' = 'pending' THEN
+    RETURN jsonb_build_object('kind', 'validated');
+  END IF;
+
+  RETURN v_result;
+END;
+$$;
+
+COMMENT ON FUNCTION public.create_participation(uuid, uuid, uuid, text, text, text[], text, text, text, text, text, boolean) IS 'legacy-checkout-session: kept for the deployment window, for the checkout route from before bookings, and removed by the follow-up. Calls create_booking and returns its answer, with a paid shape''s kind=pending reported as kind=validated, the answer that route expects: kind=free_active or kind=external_active with participation_id, kind=full, or kind=validated. service_role only, on the footing create_booking states.';
+
 -- ---------------------------------------------------------------------------
 -- 5. legacy-checkout-session: confirm_paid_participation goes through a booking
 -- ---------------------------------------------------------------------------
 
-DROP FUNCTION public.confirm_paid_participation(uuid, uuid, uuid, text, text, text, text, text, text, boolean);
-
-CREATE FUNCTION public.confirm_paid_participation(
+CREATE OR REPLACE FUNCTION public.confirm_paid_participation(
   p_product_id uuid,
   p_participant_id uuid,
   p_customer_id uuid,
@@ -521,20 +566,24 @@ CREATE FUNCTION public.confirm_paid_participation(
   p_utm_campaign text DEFAULT NULL,
   p_utm_content text DEFAULT NULL,
   p_utm_term text DEFAULT NULL,
-  p_school_of_gaming_marketing_opt_in boolean DEFAULT NULL,
-  p_purchase_shape text DEFAULT NULL,
-  p_currency text DEFAULT NULL
+  p_school_of_gaming_marketing_opt_in boolean DEFAULT NULL
 ) RETURNS jsonb
     LANGUAGE plpgsql SECURITY DEFINER
     SET search_path TO ''
     AS $$
 DECLARE
-  v_booking_id UUID;
+  v_purchase_shape TEXT;
+  v_booking_id     UUID;
+  v_result         JSONB;
 BEGIN
-  -- legacy-checkout-session: a Session created before bookings has none, so one
-  -- is made here from its metadata, and the seat takes the one confirm path. A
-  -- redelivery finds the booking this call or the backfill wrote.
-  PERFORM 1 FROM public.products WHERE id = p_product_id FOR UPDATE;
+  -- legacy-checkout-session: a Session created without a booking has none, so
+  -- one is made here from its metadata, and the seat takes the one confirm path.
+  -- A redelivery finds the booking this call or the backfill wrote. The shape
+  -- comes from the product and the currency is eur, the old route's only one.
+  SELECT CASE WHEN product_type = 'consumer_club'
+              THEN 'subscription_monthly' ELSE 'single_payment' END
+    INTO v_purchase_shape
+    FROM public.products WHERE id = p_product_id FOR UPDATE;
   IF NOT FOUND THEN
     RAISE EXCEPTION 'product % does not exist', p_product_id
       USING ERRCODE = 'no_data_found';
@@ -545,7 +594,7 @@ BEGIN
     utm_source, utm_medium, utm_campaign, utm_content, utm_term,
     school_of_gaming_marketing_opt_in, stripe_checkout_session_id
   ) VALUES (
-    p_product_id, p_participant_id, p_customer_id, p_purchase_shape, p_currency,
+    p_product_id, p_participant_id, p_customer_id, v_purchase_shape, 'eur',
     p_utm_source, p_utm_medium, p_utm_campaign, p_utm_content, p_utm_term,
     p_school_of_gaming_marketing_opt_in, p_checkout_session_id
   )
@@ -555,15 +604,43 @@ BEGIN
     FROM public.bookings
     WHERE stripe_checkout_session_id = p_checkout_session_id;
 
-  RETURN public.confirm_booking(v_booking_id, p_checkout_session_id);
+  v_result := public.confirm_booking(v_booking_id, p_checkout_session_id);
+
+  -- The old webhook requires a seat id on both answers, and a redelivery whose
+  -- seat has since gone has none to give. Refusing keeps a cancelled seat
+  -- cancelled and stops that webhook before it writes a subscription for a seat
+  -- that is not there: it answers 500, and Stripe's retries leave the failure
+  -- in the logs.
+  IF COALESCE(v_result->>'participation_id', v_result->>'existing_participation_id') IS NULL THEN
+    RAISE EXCEPTION 'checkout session % has no seat to confirm: it has since been cancelled', p_checkout_session_id
+      USING ERRCODE = 'check_violation';
+  END IF;
+
+  IF v_result->>'kind' = 'settled' THEN
+    -- The old confirmation page finds a paid seat by this column, and without it
+    -- reads a parent's fresh purchase as a duplicate payment.
+    IF NOT (v_result->>'idempotent')::boolean THEN
+      UPDATE public.participations
+         SET stripe_checkout_session_id = p_checkout_session_id
+       WHERE id = (v_result->>'participation_id')::uuid;
+    END IF;
+
+    RETURN jsonb_build_object(
+      'kind', 'confirmed',
+      'participation_id', v_result->'participation_id',
+      'idempotent', v_result->'idempotent'
+    );
+  END IF;
+
+  RETURN jsonb_build_object(
+    'kind', 'duplicate_payment',
+    'existing_participation_id', v_result->'existing_participation_id',
+    'existing_status', v_result->'existing_status'
+  );
 END;
 $$;
 
-COMMENT ON FUNCTION public.confirm_paid_participation(uuid, uuid, uuid, text, text, text, text, text, text, boolean, text, text) IS 'legacy-checkout-session: exists only until no Checkout Session created before bookings can still be redelivered. service_role only: the arguments come from that Session''s metadata. Writes a booking from them, or reuses the one holding this session id, and returns what confirm_booking returns.';
-
--- legacy-checkout-session
-REVOKE ALL ON FUNCTION public.confirm_paid_participation(uuid, uuid, uuid, text, text, text, text, text, text, boolean, text, text) FROM PUBLIC;
-GRANT ALL ON FUNCTION public.confirm_paid_participation(uuid, uuid, uuid, text, text, text, text, text, text, boolean, text, text) TO service_role;
+COMMENT ON FUNCTION public.confirm_paid_participation(uuid, uuid, uuid, text, text, text, text, text, text, boolean) IS 'legacy-checkout-session: kept for the deployment window and for redeliveries of Checkout Sessions created before bookings, and removed by the follow-up. service_role only: the arguments come from that Session''s metadata. Writes a booking from them, or reuses the one holding this session id, with subscription_monthly on a consumer_club and single_payment on anything else, in eur, so the seat counts as paid. Confirms it through confirm_booking, writes the session id onto a fresh seat because the old confirmation page finds the seat by it, and returns the shapes the old webhook expects: kind=confirmed with participation_id and idempotent, or kind=duplicate_payment with existing_participation_id and existing_status. A redelivery whose seat has since been cancelled raises check_violation instead: that webhook requires a seat id, and the seat must not come back.';
 
 -- ---------------------------------------------------------------------------
 -- 6. A waitlist join writes a booking
@@ -1197,16 +1274,15 @@ $$;
 DROP FUNCTION pg_temp.reworded(text, text, text);
 
 -- ---------------------------------------------------------------------------
--- 9. Nothing reads the seat's old columns any more
+-- 9. Nothing reads the seat's answers any more
 -- ---------------------------------------------------------------------------
 
--- Dropping the session column drops uq_participations_checkout_session with it.
--- The same uniqueness now sits on bookings.
 ALTER TABLE public.participations
-  DROP COLUMN stripe_checkout_session_id,
   DROP COLUMN utm_source,
   DROP COLUMN utm_medium,
   DROP COLUMN utm_campaign,
   DROP COLUMN utm_content,
   DROP COLUMN utm_term,
   DROP COLUMN school_of_gaming_marketing_opt_in;
+
+COMMENT ON COLUMN public.participations.stripe_checkout_session_id IS 'legacy-checkout-session: written only by confirm_paid_participation, for the deployment window, because the confirmation page from before bookings finds a paid seat by it; the follow-up drops it. Rows from before bookings keep their value. The Checkout Session of a seat is on its booking, bookings.stripe_checkout_session_id.';

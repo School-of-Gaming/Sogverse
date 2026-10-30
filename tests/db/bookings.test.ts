@@ -3,6 +3,10 @@ import type { SupabaseClient } from "@supabase/supabase-js";
 import { z } from "zod";
 import type { Database } from "@/types/database.types";
 import { productGroupsSnapshot } from "@/services/groups/groups.contracts";
+import {
+  confirmPaidParticipationRpcResult,
+  createParticipationRpcResult,
+} from "@/services/participations/participations.contracts";
 import { createAdminTestClient, createAuthenticatedClient } from "./helpers";
 import { TEST_IDS, TEST_CREDENTIALS } from "./constants";
 import {
@@ -374,44 +378,178 @@ describe("bookings", () => {
     });
   });
 
-  // legacy-checkout-session: goes with confirm_paid_participation.
-  describe("confirm_paid_participation", () => {
-    const legacy = (session: string) =>
-      admin.rpc("confirm_paid_participation", {
-        p_product_id: PAID_CLUB,
-        p_participant_id: TEST_IDS.GAMER,
-        p_customer_id: TEST_IDS.CUSTOMER,
-        p_checkout_session_id: session,
-        p_utm_source: "lynx",
-        p_purchase_shape: "subscription_monthly",
-        p_currency: "gbp",
+  // legacy-checkout-session: the old app's view of the new schema, which the
+  // follow-up removes with the functions and the column.
+  describe("legacy-checkout-session: the app from before bookings", () => {
+    describe("create_participation", () => {
+      function oldSignup(productId: string, shape: string) {
+        return admin.rpc("create_participation", {
+          p_product_id: productId,
+          p_participant_id: TEST_IDS.GAMER,
+          p_customer_id: TEST_IDS.CUSTOMER,
+          p_purchase_shape: shape,
+          p_currency: "eur",
+        });
+      }
+
+      it.each(["subscription_monthly", "single_payment"])(
+        "answers a paid %s signup with validated and no seat",
+        async (shape) => {
+          const { data, error } = await oldSignup(PAID_CLUB, shape);
+          expect(error).toBeNull();
+          expect(createParticipationRpcResult.parse(data)).toEqual({
+            kind: "validated",
+          });
+          expect(data).toEqual({ kind: "validated" });
+          expect(await seatsOn(PAID_CLUB)).toEqual([]);
+        },
+      );
+
+      it.each([
+        [FREE_CLUB, "free", "free_active"],
+        [MUNI_CLUB, "external", "external_active"],
+      ])("seats a no-charge signup on the spot (%s)", async (productId, shape, kind) => {
+        const { data, error } = await oldSignup(productId, shape);
+        expect(error).toBeNull();
+        expect(createParticipationRpcResult.parse(data).kind).toBe(kind);
+
+        const [seat] = await seatsOn(productId);
+        expect(data).toEqual({ kind, participation_id: seat.id });
       });
 
-    it("books from its arguments and takes the one confirm path", async () => {
-      const { data, error } = await legacy("cs_booking_legacy");
-      expect(error).toBeNull();
-      expect(data).toMatchObject({ kind: "settled", idempotent: false });
+      it("answers full on a product with no seat left", async () => {
+        const { error: seatError } = await admin.from("participations").insert({
+          product_id: WAITLIST_CLUB,
+          participant_id: TEST_IDS.GAMER_2,
+          customer_id: TEST_IDS.CUSTOMER,
+          status: "active",
+        });
+        expect(seatError).toBeNull();
 
-      const [seat] = await seatsOn(PAID_CLUB);
-      expect(await readBooking(seat.booking_id!)).toMatchObject({
-        status: "settled",
-        purchase_shape: "subscription_monthly",
-        currency: "gbp",
-        utm_source: "lynx",
-        stripe_checkout_session_id: "cs_booking_legacy",
+        const { data, error } = await oldSignup(WAITLIST_CLUB, "single_payment");
+        expect(error).toBeNull();
+        expect(data).toEqual({ kind: "full" });
       });
     });
 
-    it("reuses the booking on a redelivery", async () => {
-      await legacy("cs_booking_legacy_replay");
-      const { data } = await legacy("cs_booking_legacy_replay");
-      expect(data).toMatchObject({ kind: "settled", idempotent: true });
+    describe("confirm_paid_participation", () => {
+      const oldConfirm = (session: string, productId = PAID_CLUB) =>
+        admin.rpc("confirm_paid_participation", {
+          p_product_id: productId,
+          p_participant_id: TEST_IDS.GAMER,
+          p_customer_id: TEST_IDS.CUSTOMER,
+          p_checkout_session_id: session,
+          p_utm_source: "lynx",
+        });
 
-      const { data: bookings } = await admin
-        .from("bookings")
-        .select("id")
-        .eq("stripe_checkout_session_id", "cs_booking_legacy_replay");
-      expect(bookings).toHaveLength(1);
+      it("confirms the seat and books it from the arguments and the product", async () => {
+        const { data, error } = await oldConfirm("cs_booking_legacy");
+        expect(error).toBeNull();
+
+        const [seat] = await seatsOn(PAID_CLUB);
+        expect(confirmPaidParticipationRpcResult.parse(data).kind).toBe("confirmed");
+        expect(data).toEqual({
+          kind: "confirmed",
+          participation_id: seat.id,
+          idempotent: false,
+        });
+        expect(await readBooking(seat.booking_id!)).toMatchObject({
+          status: "settled",
+          purchase_shape: "subscription_monthly",
+          currency: "eur",
+          utm_source: "lynx",
+          stripe_checkout_session_id: "cs_booking_legacy",
+        });
+      });
+
+      it("books anything but a consumer club as a single payment", async () => {
+        await oldConfirm("cs_booking_legacy_camp", PAID_CAMP);
+        const [seat] = await seatsOn(PAID_CAMP);
+        expect(await readBooking(seat.booking_id!)).toMatchObject({
+          purchase_shape: "single_payment",
+          currency: "eur",
+        });
+      });
+
+      it("answers a redelivery with the same seat and one booking", async () => {
+        const first = await oldConfirm("cs_booking_legacy_replay");
+        const { data } = await oldConfirm("cs_booking_legacy_replay");
+
+        expect(confirmPaidParticipationRpcResult.parse(data)).toEqual({
+          kind: "confirmed",
+          participation_id: seatResult.parse(first.data).participation_id,
+          idempotent: true,
+        });
+        expect(await seatsOn(PAID_CLUB)).toHaveLength(1);
+
+        const { data: bookings } = await admin
+          .from("bookings")
+          .select("id")
+          .eq("stripe_checkout_session_id", "cs_booking_legacy_replay");
+        expect(bookings).toHaveLength(1);
+      });
+
+      it("reports a second payment as a duplicate of the first seat", async () => {
+        await oldConfirm("cs_booking_legacy_first");
+        const [seat] = await seatsOn(PAID_CLUB);
+
+        const { data, error } = await oldConfirm("cs_booking_legacy_second");
+        expect(error).toBeNull();
+        expect(confirmPaidParticipationRpcResult.parse(data).kind).toBe(
+          "duplicate_payment",
+        );
+        expect(data).toEqual({
+          kind: "duplicate_payment",
+          existing_participation_id: seat.id,
+          existing_status: "active",
+        });
+      });
+
+      it("refuses a redelivery after the seat was cancelled, and leaves it cancelled", async () => {
+        await oldConfirm("cs_booking_legacy_cancelled");
+        await admin.from("participations").delete().eq("product_id", PAID_CLUB);
+
+        const { error } = await oldConfirm("cs_booking_legacy_cancelled");
+        expect(error?.code).toBe("23514");
+        expect(await seatsOn(PAID_CLUB)).toEqual([]);
+      });
+
+      it("leaves the seat findable by its session, as the old confirmation page looks", async () => {
+        const first = await oldConfirm("cs_booking_legacy_lookup");
+        const { data, error } = await admin
+          .from("participations")
+          .select("id")
+          .eq("stripe_checkout_session_id", "cs_booking_legacy_lookup")
+          .maybeSingle();
+        expect(error).toBeNull();
+        expect(data?.id).toBe(seatResult.parse(first.data).participation_id);
+      });
+
+      it("seats count as paid", async () => {
+        await oldConfirm("cs_booking_legacy_marker");
+        const [seat] = await seatsOn(PAID_CLUB);
+        expect(await paymentMarkers(PAID_CLUB)).toMatchObject([
+          { id: seat.id, has_payment_marker: true },
+        ]);
+      });
+
+      it("raises for a product that does not exist", async () => {
+        const { error } = await admin.rpc("confirm_paid_participation", {
+          p_product_id: "00000000-0000-0000-0000-000000000fff",
+          p_participant_id: TEST_IDS.GAMER,
+          p_customer_id: TEST_IDS.CUSTOMER,
+          p_checkout_session_id: "cs_no_product",
+        });
+        expect(error?.code).toBe("P0002");
+      });
+    });
+
+    it("participations still has stripe_checkout_session_id", async () => {
+      const { error } = await admin
+        .from("participations")
+        .select("stripe_checkout_session_id")
+        .limit(1);
+      expect(error).toBeNull();
     });
   });
 
@@ -589,7 +727,6 @@ describe("bookings", () => {
 
   describe("the seat", () => {
     it.each([
-      "stripe_checkout_session_id",
       "utm_source",
       "utm_medium",
       "utm_campaign",
