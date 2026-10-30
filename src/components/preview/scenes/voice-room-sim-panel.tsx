@@ -17,12 +17,16 @@ import { ROOM_SIZES, type RoomSimulation, type SimulationState } from "./voice-r
 export function VoiceRoomSimPanel({
   simulation,
   state,
+  readerModerates,
 }: {
   simulation: RoomSimulation;
   state: SimulationState;
+  readerModerates: boolean;
 }) {
   const [open, setOpen] = useState(false);
   const sharers = state.participants.filter((p) => p.screenShareOn);
+  const reader = state.participants.find((p) => p.isLocal);
+  const readerShareLocked = reader !== undefined && state.shareLocks.has(reader.sessionId);
 
   return (
     <div
@@ -41,7 +45,7 @@ export function VoiceRoomSimPanel({
             {state.paused ? "Resume simulation" : "Pause simulation"}
           </Button>
           <p className="text-muted-foreground">People in your zone</p>
-          <div className="grid grid-cols-4 gap-1">
+          <div className="grid grid-cols-5 gap-1">
             {ROOM_SIZES.map((size) => (
               <Button
                 key={size}
@@ -56,6 +60,19 @@ export function VoiceRoomSimPanel({
             ))}
           </div>
           <p className="text-muted-foreground">Make it happen</p>
+          <Button
+            variant={state.presenting ? "default" : "outline"}
+            size="sm"
+            aria-pressed={state.presenting}
+            onClick={() => simulation.setPresenting(!state.presenting)}
+          >
+            Moderator presents
+          </Button>
+          {state.presenting && (
+            <Button variant="outline" size="sm" onClick={() => simulation.moderatorShares()}>
+              Moderator shares
+            </Button>
+          )}
           <Button variant="outline" size="sm" onClick={() => simulation.startShare()}>
             Add a share
           </Button>
@@ -84,6 +101,26 @@ export function VoiceRoomSimPanel({
           >
             Moderator moves you
           </Button>
+          {!readerModerates && reader !== undefined && (
+            <>
+              <Button
+                variant={state.readerCanShare ? "default" : "outline"}
+                size="sm"
+                aria-pressed={state.readerCanShare}
+                onClick={() => simulation.setReaderCanShare(!state.readerCanShare)}
+              >
+                You can share
+              </Button>
+              <Button
+                variant={readerShareLocked ? "default" : "outline"}
+                size="sm"
+                aria-pressed={readerShareLocked}
+                onClick={() => simulation.lockShare(reader.sessionId, !readerShareLocked)}
+              >
+                Your share locked
+              </Button>
+            </>
+          )}
         </div>
       )}
       <button

@@ -1,4 +1,4 @@
-import type { VoiceParticipant } from "@/components/voice/hooks/types";
+import type { LockState, VoiceParticipant } from "@/components/voice/hooks/types";
 import type { ChatTypingBurst } from "./chat-scene-store";
 
 /**
@@ -54,9 +54,17 @@ export interface SimulationState {
   paused: boolean;
   /** How many people the crowd drifts towards in the reader's zone. */
   roomSize: number;
+  /** The moderator's mic and camera locks, by session. */
+  lockStates: ReadonlyMap<string, LockState>;
+  /** Whom a moderator has locked out of screen sharing, by session. */
+  shareLocks: ReadonlySet<string>;
+  /** Whether the moderator running the session is presenting to the whole room. */
+  presenting: boolean;
+  /** A reader who does not moderate has no Share button until the panel gives them one. */
+  readerCanShare: boolean;
 }
 
-export const ROOM_SIZES = [3, 6, 12, 25] as const;
+export const ROOM_SIZES = [3, 6, 12, 25, 50] as const;
 
 /** The most likely of the crowd's moves when the zone is off its target size. */
 const TOWARDS_TARGET_CHANCE = 0.75;
@@ -76,7 +84,7 @@ function seededRandom(seed: number): () => number {
 export class RoomSimulation {
   private state: SimulationState;
   private bench: VoiceParticipant[];
-  private readonly openZoneIds: readonly string[];
+  private openZoneIds: readonly string[];
   private readonly script: SimulationScript;
   private readonly random = seededRandom(SEED);
   private readonly listeners = new Set<() => void>();
@@ -95,6 +103,10 @@ export class RoomSimulation {
       participants,
       paused: false,
       roomSize: participants.filter((p) => p.zoneId === local?.zoneId).length,
+      lockStates: new Map(),
+      shareLocks: new Set(),
+      presenting: false,
+      readerCanShare: false,
     };
   }
 
@@ -164,7 +176,9 @@ export class RoomSimulation {
    * yet, a member of staff if there is one. Says who, or nothing if nobody is left.
    */
   startShare(sessionId?: string) {
-    const others = this.peopleHere().filter((p) => !p.isLocal && !p.screenShareOn);
+    const others = this.peopleHere().filter(
+      (p) => !p.isLocal && !p.screenShareOn && !this.state.shareLocks.has(p.sessionId),
+    );
     const sharer =
       sessionId ?? (others.find((p) => p.role === "gedu") ?? this.pick(others))?.sessionId;
     if (sharer !== undefined) this.patch(sharer, { screenShareOn: true });
@@ -173,6 +187,58 @@ export class RoomSimulation {
 
   stopShare(sessionId: string) {
     this.patch(sessionId, { screenShareOn: false });
+  }
+
+  /** One-shot, like a live mute: they can turn it back on. */
+  muteParticipant(sessionId: string, track: keyof LockState) {
+    this.patch(sessionId, track === "audio" ? { audioOn: false } : { videoOn: false });
+  }
+
+  /** A lock takes the track away as well as keeping it off. */
+  lockParticipant(sessionId: string, track: keyof LockState, locked: boolean) {
+    const current = this.state.lockStates.get(sessionId) ?? { audio: false, video: false };
+    this.update({
+      lockStates: new Map(this.state.lockStates).set(sessionId, { ...current, [track]: locked }),
+    });
+    if (locked) this.muteParticipant(sessionId, track);
+  }
+
+  /** A lock ends the share they have running, as a mic lock ends what it was sending. */
+  lockShare(sessionId: string, locked: boolean) {
+    const shareLocks = new Set(this.state.shareLocks);
+    if (locked) shareLocks.add(sessionId);
+    else shareLocks.delete(sessionId);
+    this.update({ shareLocks });
+    if (locked) this.stopShare(sessionId);
+  }
+
+  setPresenting(presenting: boolean) {
+    this.update({ presenting });
+  }
+
+  /** The moderator running the session shares. */
+  moderatorShares() {
+    const moderator = this.state.participants.find((p) => p.isOwner);
+    if (moderator) this.startShare(moderator.sessionId);
+  }
+
+  setReaderCanShare(readerCanShare: boolean) {
+    this.update({ readerCanShare });
+  }
+
+  /** A new open zone joins the places the crowd wanders; a private one stays out of it. */
+  zoneAdded(zoneId: string, isLocked: boolean) {
+    if (!isLocked) this.openZoneIds = [...this.openZoneIds, zoneId];
+  }
+
+  /** Deleting a zone sends its occupants to the lobby. */
+  zoneRemoved(zoneId: string) {
+    this.openZoneIds = this.openZoneIds.filter((id) => id !== zoneId);
+    this.update({
+      participants: this.state.participants.map((p) =>
+        p.zoneId === zoneId ? { ...p, zoneId: "lobby" } : p,
+      ),
+    });
   }
 
   /** Someone new arrives in the reader's zone. */
@@ -292,10 +358,19 @@ export class RoomSimulation {
     if (!person) return;
     const roll = this.random();
     if (roll < 0.35) this.patch(person.sessionId, { zoneId: this.anotherOpenZone(person.zoneId) });
-    else if (roll < 0.55) this.patch(person.sessionId, { videoOn: !person.videoOn });
-    else if (roll < 0.7) this.patch(person.sessionId, { audioOn: !person.audioOn });
+    else if (roll < 0.55) this.flipTrack(person, "video");
+    else if (roll < 0.7) this.flipTrack(person, "audio");
     else if (roll < 0.85) this.leave(person);
     else this.join(this.anotherOpenZone(here));
+  }
+
+  /** A locked track stays as the moderator left it. */
+  private flipTrack(person: VoiceParticipant, track: keyof LockState) {
+    if (this.state.lockStates.get(person.sessionId)?.[track]) return;
+    this.patch(
+      person.sessionId,
+      track === "audio" ? { audioOn: !person.audioOn } : { videoOn: !person.videoOn },
+    );
   }
 
   /** Half of those going from the reader's zone stay in the call, in another zone. */
@@ -330,10 +405,14 @@ export class RoomSimulation {
     return this.state.participants.filter((p) => p.zoneId === here);
   }
 
-  /** A sharer stays put, so a share never ends by its owner wandering off. */
+  /**
+   * A sharer stays put, so a share never ends by its owner wandering off, and so
+   * does the moderator running the session, so there is always somebody to present.
+   */
   private isMovable(p: VoiceParticipant) {
     return (
       !p.isLocal &&
+      !p.isOwner &&
       !p.screenShareOn &&
       this.openZoneIds.includes(p.zoneId)
     );

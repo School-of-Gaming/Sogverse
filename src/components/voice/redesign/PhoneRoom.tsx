@@ -55,6 +55,8 @@ export function PhoneRoom({
   titleAccessory,
   chat,
   participantChatControls,
+  participantShareControls,
+  shareLocked,
   leaveLabel,
 }: VoiceRoomRedesignProps & { stage: RoomStage }) {
   const t = useTranslations("voice");
@@ -91,6 +93,7 @@ export function PhoneRoom({
       <main className="min-h-0 flex-1 p-2">
         <TileStage
           members={stage.stageMembers}
+          presenter={stage.presenter}
           bigShare={stage.bigShare}
           otherShares={stage.otherShares}
           onShowShare={stage.showShare}
@@ -164,6 +167,7 @@ export function PhoneRoom({
             tab={tab}
             chat={chat}
             participantChatControls={participantChatControls}
+            participantShareControls={participantShareControls}
             className="h-[70dvh]"
           />
         </SheetContent>
@@ -176,7 +180,7 @@ export function PhoneRoom({
               <SheetTitle>{t("stage.more")}</SheetTitle>
             </SheetHeader>
             <div className="grid grid-cols-3 gap-2 p-4">
-              <ModeratorControls />
+              <ModeratorControls shareLocked={shareLocked} />
             </div>
           </SheetContent>
         </Sheet>

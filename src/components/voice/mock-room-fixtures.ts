@@ -25,7 +25,7 @@ export function isVoiceRoomScenario(value: string): value is VoiceRoomScenario {
 }
 
 /** Who the redesigned room's scene can be viewed as. */
-export const VOICE_ROOM_REDESIGN_SCENARIOS = ["gamer"] as const;
+export const VOICE_ROOM_REDESIGN_SCENARIOS = ["gamer", "gedu"] as const;
 export type VoiceRoomRedesignScenario =
   (typeof VOICE_ROOM_REDESIGN_SCENARIOS)[number];
 

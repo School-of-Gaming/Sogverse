@@ -84,13 +84,6 @@ export function PhoneZonesSheet({
           </SheetTitle>
         </SheetHeader>
         <SheetBody className="max-h-[70dvh] space-y-2 px-4">
-          <p className="text-xs text-muted-foreground">
-            {moving !== null
-              ? t("moveHint")
-              : isModerator
-                ? t("zonesHintModerator")
-                : t("zonesHint")}
-          </p>
           {zones.map((zone) => {
             const members = participantsByZone.get(zone.id) ?? [];
             const onEnter =

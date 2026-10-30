@@ -24,6 +24,9 @@
   "cameraLockedByModerator": "Camera locked by moderator",
   "shareScreen": "Share screen",
   "stopScreenShare": "Stop screen share",
+  "lockScreenShare": "Lock screen share",
+  "unlockScreenShare": "Unlock screen share",
+  "screenShareLockedByModerator": "Screen share locked by moderator",
   "broadcast": "Broadcast",
   "stopBroadcast": "Stop broadcasting",
   "deafen": "Deafen",
@@ -190,10 +193,7 @@
     "cameraOn": "Camera on",
     "cameraOff": "Camera off",
     "share": "Share",
-    "zonesHint": "Tap a zone to move in. You hear everyone in the same zone.",
-    "zonesHintModerator": "Tap a zone to move in, or tap someone’s picture to move them.",
     "moveTitle": "Move {name}",
-    "moveHint": "Tap the zone they should go to.",
     "cancelMove": "Don’t move anyone"
   }
 }

@@ -37,6 +37,8 @@ export function DesktopRoom({
   titleAccessory,
   chat,
   participantChatControls,
+  participantShareControls,
+  shareLocked,
   leaveLabel,
 }: VoiceRoomRedesignProps & { stage: RoomStage }) {
   const t = useTranslations("voice");
@@ -59,11 +61,12 @@ export function DesktopRoom({
       <div className="flex min-h-0 flex-1">
         <div className="flex w-80 shrink-0 flex-col border-r border-border xl:w-96">
           <DesktopZoneRail stage={stage} />
-          <RailControls stage={stage} leaveLabel={leaveLabel} />
+          <RailControls stage={stage} shareLocked={shareLocked} leaveLabel={leaveLabel} />
         </div>
         <main className="min-w-0 flex-1 p-2">
           <TileStage
             members={stage.stageMembers}
+            presenter={stage.presenter}
             bigShare={stage.bigShare}
             otherShares={stage.otherShares}
             onShowShare={stage.showShare}
@@ -72,7 +75,11 @@ export function DesktopRoom({
             minTileWidth={MIN_TILE_WIDTH}
           />
         </main>
-        <SidePanel chat={chat} participantChatControls={participantChatControls} />
+        <SidePanel
+          chat={chat}
+          participantChatControls={participantChatControls}
+          participantShareControls={participantShareControls}
+        />
       </div>
     </div>
   );
@@ -86,17 +93,17 @@ export function DesktopRoom({
  * and Leave is in the same corner for every viewer. The two start classes hold
  * that when a row is short: a viewer with Share alone, or a room with no camera.
  *
- * The column is 240px at the narrowest, which leaves 69px a cell inside the
- * padding and gaps, and 63px for a label. That holds French's longest labels on
- * two lines, and the longest single words in any locale ("vaimennus", at about
- * 61px) whole. Anything added to this grid does that arithmetic again.
+ * The column is 320px at the narrowest, which leaves 96px a cell inside the
+ * padding and gaps, and 92px for a label. That holds French's longest labels on
+ * two lines, and the longest single words in any locale whole. Anything added to
+ * this grid does that arithmetic again.
  */
 function RailControls({
   stage,
+  shareLocked,
   leaveLabel,
-}: {
+}: Pick<VoiceRoomRedesignProps, "shareLocked" | "leaveLabel"> & {
   stage: RoomStage;
-  leaveLabel: VoiceRoomRedesignProps["leaveLabel"];
 }) {
   const t = useTranslations("voice.stage");
   return (
@@ -104,7 +111,7 @@ function RailControls({
       aria-label={t("controls")}
       className="grid shrink-0 grid-cols-3 gap-x-2 gap-y-1 border-t border-border p-2"
     >
-      <ModeratorControls />
+      <ModeratorControls shareLocked={shareLocked} />
       <MicCell cellClassName="col-start-1" />
       <CameraControl />
       <LeaveControl
@@ -120,7 +127,11 @@ function RailControls({
 function SidePanel({
   chat,
   participantChatControls,
-}: Pick<VoiceRoomRedesignProps, "chat" | "participantChatControls">) {
+  participantShareControls,
+}: Pick<
+  VoiceRoomRedesignProps,
+  "chat" | "participantChatControls" | "participantShareControls"
+>) {
   const [tab, setTab] = useState<PanelTab>("chat");
 
   return (
@@ -134,6 +145,7 @@ function SidePanel({
         tab={tab}
         chat={chat}
         participantChatControls={participantChatControls}
+        participantShareControls={participantShareControls}
         className="min-h-0 flex-1"
       />
     </aside>

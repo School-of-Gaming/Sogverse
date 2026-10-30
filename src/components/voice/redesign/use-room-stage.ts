@@ -49,9 +49,12 @@ export interface RoomStage {
   currentZoneName: string;
   /**
    * The people on the stage: everyone in the reader's zone, the reader included,
-   * with the Gedus first and everyone otherwise in the room's order.
+   * with the Gedus first and everyone otherwise in the room's order. A presenter
+   * is not among them, because the stage is theirs.
    */
   stageMembers: VoiceParticipant[];
+  /** Who has the whole room's stage, wherever they stand, or `null`. */
+  presenter: VoiceParticipant | null;
   /** The share on the stage, or `null` when nobody in view is sharing. */
   bigShare: VoiceParticipant | null;
   /** Every other share in view, earliest first. */
@@ -73,7 +76,10 @@ export interface RoomStage {
  * It lives above the layouts so that crossing the breakpoint, by rotating a
  * tablet or resizing a window, keeps a leave in flight.
  */
-export function useRoomStage(onLeave: () => Promise<void>): RoomStage {
+export function useRoomStage(
+  onLeave: () => Promise<void>,
+  presenterSessionId: string | null,
+): RoomStage {
   const t = useTranslations();
   const {
     zones,
@@ -105,7 +111,10 @@ export function useRoomStage(onLeave: () => Promise<void>): RoomStage {
     !isConfined &&
     (!zone.isLocked || isModerator);
 
-  const stageMembers = geduFirst(participantsByZone.get(currentZoneId) ?? []);
+  const presenter = participants.find((p) => p.sessionId === presenterSessionId) ?? null;
+  const stageMembers = geduFirst(participantsByZone.get(currentZoneId) ?? []).filter(
+    (p) => p.sessionId !== presenterSessionId,
+  );
 
   // A share from a private zone the reader is outside of never reaches them:
   // the SFU does not send it, so there is nothing to give the stage to.
@@ -115,7 +124,11 @@ export function useRoomStage(onLeave: () => Promise<void>): RoomStage {
       .flatMap((zone) => participantsByZone.get(zone.id) ?? [])
       .map((p) => p.sessionId),
   );
-  const shares = participants.filter((p) => p.screenShareOn && !outOfView.has(p.sessionId));
+  // A presenter's share is the only one on anybody's stage while they present.
+  const shares =
+    presenter !== null
+      ? [presenter].filter((p) => p.screenShareOn)
+      : participants.filter((p) => p.screenShareOn && !outOfView.has(p.sessionId));
 
   const [storedShareView, setShareView] = useState<ShareView>({ order: [], bigId: null });
   const shareView = reconcileShares(
@@ -146,6 +159,7 @@ export function useRoomStage(onLeave: () => Promise<void>): RoomStage {
     currentZone,
     currentZoneName: zoneName(currentZone),
     stageMembers,
+    presenter,
     bigShare,
     otherShares,
     showShare,

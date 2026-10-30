@@ -88,9 +88,14 @@ function StageShare({
  * playing. The available space is worked out from the stage rather than measured
  * off the tile area, because the tile area's own size lags a frame behind a share
  * starting or stopping and would size every tile against the old layout.
+ *
+ * **A presenter takes the stage from everyone else**: their tile fills it, or sits
+ * beside their share, and the people in the reader's zone drop to a small strip
+ * at either width.
  */
 export function TileStage({
   members,
+  presenter,
   bigShare,
   otherShares,
   onShowShare,
@@ -99,6 +104,7 @@ export function TileStage({
   minTileWidth,
 }: {
   members: VoiceParticipant[];
+  presenter: VoiceParticipant | null;
   bigShare: VoiceParticipant | null;
   otherShares: VoiceParticipant[];
   onShowShare: (sessionId: string) => void;
@@ -115,7 +121,8 @@ export function TileStage({
   const tilesRef = useRef<HTMLDivElement>(null);
   const stage = useElementSize(stageRef);
 
-  const isStrip = bigShare !== null && shareLayout === "strip";
+  const isStrip = presenter !== null || (bigShare !== null && shareLayout === "strip");
+  const beside = shareLayout === "strip";
   const grid =
     stage === null || isStrip
       ? null
@@ -137,18 +144,37 @@ export function TileStage({
 
   useTileFlip(
     tilesRef,
-    `${isStrip ? "strip" : "grid"}|${bigShare !== null}|${[...otherShares, ...members]
+    `${isStrip ? "strip" : "grid"}|${presenter?.sessionId}|${bigShare !== null}|${[...otherShares, ...members]
       .map((p) => p.sessionId)
       .join(",")}|${otherShares.length}`,
   );
 
   return (
     <div ref={stageRef} className="flex h-full min-h-0 w-full flex-col gap-2">
-      {bigShare !== null && (
-        <StageShare
-          sharer={bigShare}
-          className={shareLayout === "strip" ? "flex-1" : "aspect-video shrink-0"}
-        />
+      {presenter !== null ? (
+        <div className={cn("flex min-h-0 flex-1 gap-2", !beside && "flex-col")}>
+          {bigShare !== null && (
+            <StageShare
+              sharer={bigShare}
+              className={beside ? "min-w-0 flex-1" : "aspect-video shrink-0"}
+            />
+          )}
+          <StageTile
+            participant={presenter}
+            className={
+              bigShare !== null && beside
+                ? "aspect-video w-1/4 self-center"
+                : "min-h-0 min-w-0 grow basis-0"
+            }
+          />
+        </div>
+      ) : (
+        bigShare !== null && (
+          <StageShare
+            sharer={bigShare}
+            className={beside ? "flex-1" : "aspect-video shrink-0"}
+          />
+        )
       )}
       <div
         // A wheel without a horizontal axis still has to reach every tile.
@@ -162,8 +188,10 @@ export function TileStage({
         className={cn(
           "-m-2 flex min-h-0 p-4",
           isStrip
-            ? "h-[9.5rem] shrink-0 overflow-x-auto overflow-y-hidden [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
+            ? "shrink-0 overflow-x-auto overflow-y-hidden [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
             : "flex-1 overflow-y-auto",
+          isStrip && (presenter !== null ? "h-28" : "h-[9.5rem]"),
+          presenter !== null && members.length === 0 && "hidden",
         )}
       >
         {/* Auto margins centre it, and unlike centring on the flex parent they

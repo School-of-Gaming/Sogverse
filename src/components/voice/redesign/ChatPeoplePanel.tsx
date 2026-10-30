@@ -73,8 +73,12 @@ export function PanelBody({
   tab,
   chat,
   participantChatControls,
+  participantShareControls,
   className,
-}: Pick<VoiceRoomRedesignProps, "chat" | "participantChatControls"> & {
+}: Pick<
+  VoiceRoomRedesignProps,
+  "chat" | "participantChatControls" | "participantShareControls"
+> & {
   tab: PanelTab;
   className: string;
 }) {
@@ -89,6 +93,7 @@ export function PanelBody({
       <div className={cn("absolute inset-0 overflow-y-auto p-2", showChat && "hidden")}>
         <ParticipantList
           participantChatControls={participantChatControls}
+          participantShareControls={participantShareControls}
           order={geduFirst}
         />
       </div>

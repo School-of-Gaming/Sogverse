@@ -16,6 +16,8 @@ import { ParticipantRow } from "./ParticipantRow";
 import type {
   ParticipantChatControl,
   ParticipantChatControls,
+  ParticipantShareControl,
+  ParticipantShareControls,
 } from "./ParticipantRow";
 import type { VoiceParticipant, LockState } from "./hooks/types";
 import type { VoiceMemberFlair } from "./VoiceMemberFlairProvider";
@@ -41,6 +43,7 @@ function gameAvatarUrlFor(
 
 export function ParticipantList({
   participantChatControls,
+  participantShareControls,
   order,
 }: {
   /**
@@ -54,6 +57,8 @@ export function ParticipantList({
    * is handed what to draw and asks for nothing.
    */
   participantChatControls?: ParticipantChatControls;
+  /** Screen-share moderation against each person, where the room offers it. */
+  participantShareControls?: ParticipantShareControls;
   /** The order the rows are drawn in, where it is not the room's own. */
   order?: (participants: VoiceParticipant[]) => VoiceParticipant[];
 }) {
@@ -126,6 +131,7 @@ export function ParticipantList({
           moderationLock={moderationLock}
           flair={flair}
           chatControl={participantChatControls?.(p.userId) ?? null}
+          shareControl={participantShareControls?.(p) ?? null}
           onMute={(track) => muteParticipant(p.sessionId, track)}
           onLock={(track, locked) =>
             lockParticipant(p.sessionId, track, locked)
@@ -151,6 +157,7 @@ function ParticipantRowWithGlow({
   moderationLock,
   flair,
   chatControl,
+  shareControl,
   onMute,
   onLock,
 }: {
@@ -164,6 +171,7 @@ function ParticipantRowWithGlow({
   flair: VoiceMemberFlair | null;
   /** This person's chat lock, already decided. `null` where none is offered. */
   chatControl: ParticipantChatControl | null;
+  shareControl: ParticipantShareControl | null;
   onMute: (track: "audio" | "video") => void;
   onLock: (track: "audio" | "video", locked: boolean) => void;
 }) {
@@ -206,6 +214,7 @@ function ParticipantRowWithGlow({
       onMute={onMute}
       onLock={onLock}
       chatControl={chatControl}
+      shareControl={shareControl}
     />
   );
 }

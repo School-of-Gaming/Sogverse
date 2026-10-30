@@ -167,7 +167,14 @@ export function useHasModeratorControls(): boolean {
  * explaining itself for a viewer the page handed locks, and nothing for anyone
  * else. Both layouts draw the same set.
  */
-export function ModeratorControls({ cellClassName }: { cellClassName?: string }) {
+export function ModeratorControls({
+  cellClassName,
+  shareLocked = false,
+}: {
+  cellClassName?: string;
+  /** A moderator has locked this viewer out of sharing: Share stays, padlocked. */
+  shareLocked?: boolean;
+}) {
   const t = useTranslations("voice");
   const {
     canScreenShare,
@@ -215,7 +222,9 @@ export function ModeratorControls({ cellClassName }: { cellClassName?: string })
           label={isScreenSharing ? t("stopSharing") : t("stage.share")}
           variant={isScreenSharing ? "default" : "outline"}
           onClick={isScreenSharing ? stopScreenShare : startScreenShare}
-          disabled={joining}
+          disabled={joining || shareLocked}
+          moderatorLocked={shareLocked}
+          title={shareLocked ? t("screenShareLockedByModerator") : undefined}
           cellClassName={cellClassName}
         />
       )}

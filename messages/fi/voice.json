@@ -24,6 +24,9 @@
   "cameraLockedByModerator": "Kamera lukittu moderaattorin toimesta",
   "shareScreen": "Jaa näyttö",
   "stopScreenShare": "Lopeta näytön jakaminen",
+  "lockScreenShare": "Lukitse näytön jako",
+  "unlockScreenShare": "Vapauta näytön jako",
+  "screenShareLockedByModerator": "Näytön jako lukittu moderaattorin toimesta",
   "broadcast": "Kuulutus",
   "stopBroadcast": "Lopeta kuulutus",
   "deafen": "Vaimenna kaikki",
@@ -190,10 +193,7 @@
     "cameraOn": "Kamera päällä",
     "cameraOff": "Kamera pois",
     "share": "Jaa",
-    "zonesHint": "Siirry alueelle napauttamalla sitä. Kuulet kaikki samalla alueella olevat.",
-    "zonesHintModerator": "Siirry alueelle napauttamalla sitä tai siirrä joku muu napauttamalla hänen kuvaansa.",
     "moveTitle": "Siirrä: {name}",
-    "moveHint": "Napauta aluetta, jolle hänet siirretään.",
     "cancelMove": "Älä siirrä ketään"
   }
 }

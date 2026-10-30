@@ -20,7 +20,7 @@ import { useIsDesktopStage } from "./use-stage-layout";
  * {@link useRoomStage}.
  */
 export function VoiceRoomRedesign(props: VoiceRoomRedesignProps) {
-  const stage = useRoomStage(props.onLeave);
+  const stage = useRoomStage(props.onLeave, props.presenterSessionId ?? null);
   const isDesktop = useIsDesktopStage();
 
   if (isDesktop === null) return <div className="h-dvh bg-background" />;

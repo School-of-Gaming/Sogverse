@@ -24,6 +24,9 @@
   "cameraLockedByModerator": "Caméra verrouillée par un modérateur",
   "shareScreen": "Partager l’écran",
   "stopScreenShare": "Arrêter le partage d’écran",
+  "lockScreenShare": "Verrouiller le partage",
+  "unlockScreenShare": "Déverrouiller le partage",
+  "screenShareLockedByModerator": "Partage d’écran verrouillé par un modérateur",
   "broadcast": "Diffuser",
   "stopBroadcast": "Arrêter la diffusion",
   "deafen": "Couper le son",
@@ -190,10 +193,7 @@
     "cameraOn": "Caméra",
     "cameraOff": "Sans caméra",
     "share": "Partager",
-    "zonesHint": "Touchez une zone pour y entrer. Vous entendez tout le monde dans la même zone.",
-    "zonesHintModerator": "Touchez une zone pour y entrer, ou la photo de quelqu’un pour le déplacer.",
     "moveTitle": "Déplacer {name}",
-    "moveHint": "Touchez la zone de destination.",
     "cancelMove": "Ne déplacer personne"
   }
 }

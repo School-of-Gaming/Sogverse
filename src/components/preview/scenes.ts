@@ -521,7 +521,10 @@ export const PREVIEW_SCENES = [
     description:
       "The zone you are in is the stage: two native layouts over one fixture context, desktop from `lg` and phone below it, with no site chrome.",
     chrome: "fullscreen",
-    scenarios: [{ slug: "gamer", label: "Gamer" }],
+    scenarios: [
+      { slug: "gamer", label: "Gamer" },
+      { slug: "gedu", label: "Gedu" },
+    ],
   },
   {
     surface: "voice-feedback",

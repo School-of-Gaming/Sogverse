@@ -24,6 +24,9 @@
   "cameraLockedByModerator": "mIlQeD jonlu’ — QaD",
   "shareScreen": "Daq yIngeH",
   "stopScreenShare": "Daq ngeH yImev",
+  "lockScreenShare": "Daq ngeH yIjon",
+  "unlockScreenShare": "Daq ngeH yInoD",
+  "screenShareLockedByModerator": "Daq ngeH jonlu’ — QaD",
   "broadcast": "Hoch ngeH",
   "stopBroadcast": "ngeH yImev",
   "deafen": "yIQoybe’",
@@ -190,10 +193,7 @@
     "cameraOn": "mIllogh chu’",
     "cameraOff": "mIllogh chu’Ha’",
     "share": "yIcha’",
-    "zonesHint": "Daq DaghoSmeH yI’uy. Daqlijdaq Hoch Daqoy.",
-    "zonesHintModerator": "Daq DaghoSmeH yI’uy, pagh nuv Dalan DaneHchugh mIllogh yI’uy.",
     "moveTitle": "{name} yIvIH",
-    "moveHint": "ghoSnIS Daq yI’uy.",
     "cancelMove": "vay’ yIvIHQo’"
   }
 }

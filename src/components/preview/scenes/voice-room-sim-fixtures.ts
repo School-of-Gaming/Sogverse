@@ -1,7 +1,7 @@
 import type { VoiceParticipant } from "@/components/voice/hooks/types";
 import type { SimulationScript } from "./voice-room-simulation";
 
-/** Everyone who can arrive mid-session, enough to fill a zone to 25. */
+/** Everyone who can arrive mid-session, enough to fill a zone to 50 with people left over for the other zones. */
 const BENCH_PEOPLE = [
   ["Leevi", "84b49abd-52ac-469c-b6e4-b2045b537f28"],
   ["Ella", "67c2f97d-62e4-4513-82d6-2ad82895d705"],
@@ -27,6 +27,30 @@ const BENCH_PEOPLE = [
   ["Saga", "e39c5a4a-cade-4938-9be3-7de88c490ff9"],
   ["Mikael", "aa631c77-69d9-4d8d-b90b-1adf0be8db86"],
   ["Stella", "5ecb096e-1719-4dfa-98e4-c36b88f5832a"],
+  ["Aleksi", "62d7e5e2-1401-4918-99a3-548f081b5854"],
+  ["Anni", "047e43e7-df53-4784-bf84-88bf30252fc2"],
+  ["Eetu", "9003a714-c74c-43b4-82aa-2866bc8d730f"],
+  ["Emma", "1c5fdd46-686d-47f1-8c59-51dc4ffe4adf"],
+  ["Hugo", "1e465dd9-ecd7-4b0a-a810-fab0eecee9ff"],
+  ["Inka", "81e1c8ad-d510-47ba-a321-32533f828859"],
+  ["Joona", "61056f6f-c293-4cf8-9537-cd28a0bc0103"],
+  ["Kaisla", "728b127e-0626-48d6-a47e-d56b001270e0"],
+  ["Leo", "65c01afd-697a-4628-bdaa-4c2068d929fd"],
+  ["Lotta", "f652a7a3-5ccf-49a2-a844-dc281903c9a1"],
+  ["Matias", "e1ad19be-e46c-4991-80a3-48c9b2fe10e8"],
+  ["Minea", "b81d0ce6-e5ed-452c-9463-48d974a029af"],
+  ["Nooa", "e55f84fb-809e-445f-a421-2e571e8fd83e"],
+  ["Oona", "bf6ab371-f1ee-473d-9573-8f634a6e4b2e"],
+  ["Paavo", "fce9e569-dd58-4de3-a526-7526d115bd23"],
+  ["Peppi", "2a9abe4a-72a2-4256-8be2-f0c7fe3c77fb"],
+  ["Roope", "03ff5d98-a142-42e6-9ae7-d5b2c157147d"],
+  ["Senja", "50972b3a-bd5b-4e79-bfd7-5305e11d94c7"],
+  ["Santeri", "4986ea09-f5a8-44ae-af7f-336f6d6ba1d0"],
+  ["Tilda", "4bda1870-2897-4f4b-9d59-53f1f8a6396e"],
+  ["Urho", "c913af3a-f0a7-4e09-9a15-f158a0d01b8c"],
+  ["Vilma", "d286b6f2-b8a3-4b81-abbb-b97b8a26cc25"],
+  ["Veeti", "3eb4f2ba-a4f3-481f-8643-4305888ef040"],
+  ["Aurora", "d3ea3f49-cdee-4949-9b47-a882c2257ccc"],
 ] as const;
 
 /** The camera habit of a crowd: two in three on, in a fixed pattern. */

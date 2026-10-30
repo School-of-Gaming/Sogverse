@@ -1,6 +1,14 @@
 "use client";
 
-import { type Ref, type ReactNode, useEffect, useRef, useState } from "react";
+import {
+  type Ref,
+  type ReactNode,
+  useEffect,
+  useLayoutEffect,
+  useRef,
+  useState,
+} from "react";
+import { createPortal } from "react-dom";
 import {
   Mic,
   MicOff,
@@ -9,6 +17,7 @@ import {
   Lock,
   LockOpen,
   MoreVertical,
+  ScreenShareOff,
 } from "lucide-react";
 import { useTranslations } from "next-intl";
 import { Button } from "@/components/ui/button";
@@ -27,7 +36,7 @@ import {
 } from "@/components/ui/locked-control";
 import { ROLE_BADGE_STYLES, ROLE_LABEL_KEYS } from "@/lib/constants/roles";
 import { cn } from "@/lib/cn";
-import type { VoiceRole } from "./hooks/types";
+import type { VoiceParticipant, VoiceRole } from "./hooks/types";
 
 export interface ParticipantRowData {
   userId: string;
@@ -92,6 +101,22 @@ export type ParticipantChatControls = (
   userId: string,
 ) => ParticipantChatControl | null;
 
+/**
+ * The screen-share moderation offered against one person, handed to the row ready
+ * to render. Absent on a live row: the live context has no such actions yet.
+ */
+export interface ParticipantShareControl {
+  /** Whether they are sharing now, which is what offers the one-shot stop. */
+  sharing: boolean;
+  locked: boolean;
+  onStop: () => void;
+  onSetLock: (locked: boolean) => void;
+}
+
+export type ParticipantShareControls = (
+  participant: VoiceParticipant,
+) => ParticipantShareControl;
+
 export interface ParticipantRowProps {
   participant: ParticipantRowData;
   lockState: { audio: boolean; video: boolean };
@@ -116,6 +141,8 @@ export interface ParticipantRowProps {
    * nothing.
    */
   chatControl?: ParticipantChatControl | null;
+  /** Stopping and locking this person's screen share, or `null`/omitted for none. */
+  shareControl?: ParticipantShareControl | null;
 
   /* ---- Staff-only overlay ------------------------------------------------
      The member flair below is *not* participant identity, which is why it sits
@@ -178,6 +205,7 @@ export function ParticipantRow({
   onMute,
   onLock,
   chatControl,
+  shareControl,
   newcomerJoinedAt,
   flairNow,
   hasContent,
@@ -403,6 +431,7 @@ export function ParticipantRow({
             onMute={onMute}
             onLock={onLock}
             chatControl={chatControl}
+            shareControl={shareControl}
           />
         )}
         {lockedModMenu !== null && (
@@ -446,19 +475,29 @@ function LockedModMenuTrigger({
  * Escape to close.
  *
  * **The lock group is one group, and the chat lock is the last of it.** Mic,
- * camera and chat are the three things that can be taken away from a person
- * here, so they read as a set under one divider — and the chat lock goes last
- * because it is the only one of the three that can be absent, so its presence
- * or absence never reorders the two above it.
+ * camera, screen share and chat are the things that can be taken away from a
+ * person here, so they read as a set under one divider — and the chat lock goes
+ * last because whether it appears differs row by row, so its presence or absence
+ * never reorders those above it.
  *
  * **The menu grows upward from the trigger, so nothing may be added to it while
- * it is open**: a fourth item appearing would push the three already on screen
- * up, under a hand that is reaching for one of them. Nothing does — a menu
- * opening is a user action, and what it holds at that moment is settled long
- * before, because the chat panel above the rail resolved its history when the
- * room did. Anything added here later has to keep that true rather than rely on
- * where in the list it sits.
+ * it is open**: an item appearing would push those already on screen up, under
+ * a hand that is reaching for one of them. Nothing does — a menu opening is a
+ * user action, and what it holds at that moment is settled long before, because
+ * the chat panel above the rail resolved its history when the room did. The stop
+ * for a screen share is the one item a live event could add, so whether it is
+ * offered is latched as the menu opens: a share ending while it is open disables
+ * the item, and one starting waits for the next opening.
+ *
+ * **It is portalled to the body and placed against the viewport**, because the
+ * list can sit in a scroller or a sheet that would clip it. It stays on its
+ * trigger through every scroll and re-render, and it opens downward only where
+ * the space above cannot hold it, which is the top rows of a panel; growing
+ * downward moves nothing, so the rule above still stands there.
  */
+/** The space between the menu and its trigger, and the least it keeps from the screen's edge. */
+const MENU_GAP_PX = 4;
+
 function ParticipantModMenu({
   className,
   name,
@@ -468,6 +507,7 @@ function ParticipantModMenu({
   onMute,
   onLock,
   chatControl,
+  shareControl,
 }: {
   /** Where the menu sits in the row's wrapping order. */
   className?: string;
@@ -479,6 +519,7 @@ function ParticipantModMenu({
   onLock?: (track: "audio" | "video", locked: boolean) => void;
   /** The chat lock, already decided by the chat surface. See the row's props. */
   chatControl?: ParticipantChatControl | null;
+  shareControl?: ParticipantShareControl | null;
 }) {
   const t = useTranslations("voice");
   // Chat's own namespace for chat's own act, rather than a copy under `voice.*`
@@ -488,7 +529,34 @@ function ParticipantModMenu({
   // no header and so names the person in the sentence.
   const m = useTranslations("chat.moderation");
   const [open, setOpen] = useState(false);
+  const [offerShareStop, setOfferShareStop] = useState(false);
   const ref = useRef<HTMLDivElement>(null);
+  const menuRef = useRef<HTMLDivElement>(null);
+
+  // No dependencies: anything that re-renders this row may have moved it.
+  useLayoutEffect(() => {
+    if (!open) return;
+    const place = () => {
+      const trigger = ref.current?.getBoundingClientRect();
+      const menu = menuRef.current;
+      if (!trigger || !menu) return;
+      const height = menu.offsetHeight;
+      const above = trigger.top - height - MENU_GAP_PX;
+      const below = Math.min(
+        trigger.bottom + MENU_GAP_PX,
+        window.innerHeight - height - MENU_GAP_PX,
+      );
+      menu.style.top = `${above >= MENU_GAP_PX ? above : below}px`;
+      menu.style.right = `${document.documentElement.clientWidth - trigger.right}px`;
+    };
+    place();
+    window.addEventListener("scroll", place, true);
+    window.addEventListener("resize", place);
+    return () => {
+      window.removeEventListener("scroll", place, true);
+      window.removeEventListener("resize", place);
+    };
+  });
 
   useEffect(() => {
     if (!open) return;
@@ -496,7 +564,8 @@ function ParticipantModMenu({
       if (
         ref.current &&
         e.target instanceof Node &&
-        !ref.current.contains(e.target)
+        !ref.current.contains(e.target) &&
+        !menuRef.current?.contains(e.target)
       ) {
         setOpen(false);
       }
@@ -523,7 +592,10 @@ function ParticipantModMenu({
         variant="ghost"
         size="icon"
         className="h-7 w-7"
-        onClick={() => setOpen((v) => !v)}
+        onClick={() => {
+          setOfferShareStop(shareControl?.sharing === true);
+          setOpen((v) => !v);
+        }}
         title={t("moderate")}
         aria-label={t("moderate")}
         aria-expanded={open}
@@ -531,11 +603,19 @@ function ParticipantModMenu({
         <MoreVertical className="h-4 w-4" />
       </Button>
 
-      {/* Opens upward (bottom-full) so that on mobile — where the participant
+      {/* Opens upward where it can, so that on mobile — where the participant
           list sits at the bottom of the page — the menu never extends past the
-          viewport and forces extra scroll height. */}
-      {open && (
-        <div className="absolute right-0 bottom-full z-50 mb-1 w-52 overflow-hidden rounded-lg border border-border bg-card py-1 shadow-lg">
+          viewport and forces extra scroll height. Later in the body than any
+          open sheet, so z-50 lands it above one. */}
+      {open && createPortal(
+        <div
+          ref={menuRef}
+          className={cn(
+            "fixed z-50 overflow-hidden rounded-lg border border-border bg-card py-1 shadow-lg",
+            // Wider for the share items, whose French and Finnish labels are the longest here.
+            shareControl != null ? "w-60" : "w-52",
+          )}
+        >
           <p className="truncate px-3 py-1.5 text-xs font-medium text-muted-foreground">
             {name}
           </p>
@@ -551,6 +631,14 @@ function ParticipantModMenu({
             disabled={!videoOn}
             onClick={() => run(() => onMute?.("video"))}
           />
+          {shareControl != null && offerShareStop && (
+            <MenuItem
+              icon={<ScreenShareOff className="h-4 w-4" />}
+              label={t("stopScreenShare")}
+              disabled={!shareControl.sharing}
+              onClick={() => run(shareControl.onStop)}
+            />
+          )}
           <div className="my-1 h-px bg-border" />
           <MenuItem
             icon={
@@ -578,6 +666,26 @@ function ParticipantModMenu({
             active={lockState.video}
             onClick={() => run(() => onLock?.("video", !lockState.video))}
           />
+          {shareControl != null && (
+            <MenuItem
+              icon={
+                shareControl.locked ? (
+                  <LockOpen className="h-4 w-4" />
+                ) : (
+                  <Lock className="h-4 w-4" />
+                )
+              }
+              label={
+                shareControl.locked
+                  ? t("unlockScreenShare")
+                  : t("lockScreenShare")
+              }
+              active={shareControl.locked}
+              onClick={() =>
+                run(() => shareControl.onSetLock(!shareControl.locked))
+              }
+            />
+          )}
           {chatControl != null && (
             <MenuItem
               icon={
@@ -602,7 +710,8 @@ function ParticipantModMenu({
               }
             />
           )}
-        </div>
+        </div>,
+        document.body,
       )}
     </div>
   );

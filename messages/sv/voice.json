@@ -24,6 +24,9 @@
   "cameraLockedByModerator": "Kamera låst av moderator",
   "shareScreen": "Dela skärm",
   "stopScreenShare": "Sluta dela skärm",
+  "lockScreenShare": "Lås skärmdelning",
+  "unlockScreenShare": "Lås upp skärmdelning",
+  "screenShareLockedByModerator": "Skärmdelning låst av moderator",
   "broadcast": "Sändning",
   "stopBroadcast": "Stoppa sändning",
   "deafen": "Tysta allt",
@@ -190,10 +193,7 @@
     "cameraOn": "Kamera på",
     "cameraOff": "Kamera av",
     "share": "Dela",
-    "zonesHint": "Tryck på en zon för att flytta dit. Du hör alla i samma zon.",
-    "zonesHintModerator": "Tryck på en zon för att flytta dit, eller tryck på någons bild för att flytta personen.",
     "moveTitle": "Flytta {name}",
-    "moveHint": "Tryck på zonen personen ska till.",
     "cancelMove": "Flytta ingen"
   }
 }
