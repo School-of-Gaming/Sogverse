@@ -27,6 +27,7 @@ import {
   UTM_HEADER,
   readUtmFromSearchParams,
   serialiseUtm,
+  serialiseUtmCookie,
   utmCookieOptions,
 } from "@/lib/utm";
 
@@ -357,20 +358,22 @@ export async function proxy(request: NextRequest) {
   // The point of enforcing it at all is that a header a stranger controls
   // through the query string must not be able to push a request past a hop's
   // own per-header ceiling: that turns into a 502 nobody chose, where dropping
-  // the attribution costs one visit's marketing data.
+  // the attribution costs one visit's marketing data. The cookie has a budget of
+  // its own, which `serialiseUtmCookie` answers null past in the same way, and
+  // a null leaves any cookie already there as it is.
   //
   // This runs above every branch and early return, like the two sets above, so
   // no path bypasses it. The repeated-param rule and the sanitiser both live in
   // the module, so this file holds no copy of either.
   request.headers.delete(UTM_HEADER);
-  const utm = serialiseUtm(readUtmFromSearchParams(request.nextUrl.searchParams));
+  const landingUtm = readUtmFromSearchParams(request.nextUrl.searchParams);
+  const utm = serialiseUtm(landingUtm);
   if (utm !== null) {
     request.headers.set(UTM_HEADER, utm);
   }
   const attributionToKeep =
-    utm !== null &&
     parseConsentCookie(request.cookies.get(CONSENT_COOKIE_NAME)?.value)?.marketing === true
-      ? utm
+      ? serialiseUtmCookie(landingUtm)
       : null;
 
   // The URL as the visitor typed it: locale-prefixed, with that locale's slug.

@@ -1071,6 +1071,19 @@ describe("proxy", () => {
       expect(keptBy(response)).toBeUndefined();
     });
 
+    it("leaves the earlier cookie as it is when a new tag is over the cookie's budget", async () => {
+      mockNoUser();
+      const source = encodeURIComponent("é".repeat(100));
+      const campaign = encodeURIComponent("é".repeat(200));
+      const response = await proxy(
+        createNextRequest(
+          `/shop?utm_source=${source}&utm_campaign=${campaign}`,
+          `${GRANTED}; ${UTM_COOKIE_NAME}=campaign%3Dearlier`,
+        ),
+      );
+      expect(keptBy(response)).toBeUndefined();
+    });
+
     it("is not written on a request that is not a page", async () => {
       mockNoUser();
       const response = await proxy(

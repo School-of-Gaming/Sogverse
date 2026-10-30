@@ -25,9 +25,10 @@
  *
  * **The transport has a byte budget and drops rather than truncates.** The
  * serialised value is capped at `UTM_HEADER_MAX_LENGTH`; over that, the proxy
- * sets no header and no cookie, and the visit carries no attribution. See that
- * constant for why a per-field cap is not enough on its own and why dropping is
- * the only safe answer.
+ * sets no header and no cookie, and the visit carries no attribution. The cookie
+ * has a cap of its own, `UTM_COOKIE_MAX_LENGTH`, measured as it is written. See
+ * those constants for why a per-field cap is not enough on its own and why
+ * dropping is the only safe answer.
  *
  * **The partner convention: a campaign issued to or for a partner is prefixed
  * with the partner's slug and a hyphen** — `lynx-summer-a`, `rblx-launch`. This
@@ -115,7 +116,10 @@
  *     fields in metadata. Nor does a signed-in gamer's browsing write the
  *     attribution cookie: the proxy and the banner both skip it for a gamer, or
  *     for a session whose role could not be read. A cookie a parent left on a
- *     shared device stays where it is, and no route a gamer can reach reads it.
+ *     shared device stays where it is. The booking and waitlist routes that
+ *     read it are role-gated; the public newsletter sign-up has no session to
+ *     check, so a gamer on a shared device could send a parent's tag with the
+ *     address typed there.
  *  4. **The values are write-once.** There is deliberately no UPDATE grant on
  *     any of the five columns, so nobody but `service_role` can alter or clear
  *     them after account creation — an admin included, since an admin is also
@@ -210,10 +214,22 @@ export const UTM_HEADER_MAX_LENGTH = 2048;
 
 /**
  * The first-party cookie that keeps the latest tag this browser arrived with.
- * Its value is exactly what {@link serialiseUtm} produced, so it is held to the
- * same budget, and it is read back through {@link utmFromCookieHeader}.
+ * Built by {@link serialiseUtmCookie}, and read back through
+ * {@link utmFromCookieHeader}.
  */
 export const UTM_COOKIE_NAME = "sog_attribution";
+
+/**
+ * The most bytes the cookie's value may run to as it goes on the wire.
+ *
+ * {@link UTM_HEADER_MAX_LENGTH} does not cover it: both writers percent-encode
+ * the serialised value once more, so a value inside that budget can reach about
+ * 4 KB. The cookie then rides every request for 30 days beside the session's own
+ * chunks, and a stranger's crafted link could hold that browser past a header
+ * limit for a month. Over this budget the tag is dropped rather than truncated,
+ * for the reason the header's is, and a cookie already there stands.
+ */
+export const UTM_COOKIE_MAX_LENGTH = 2048;
 
 /**
  * Thirty days, in seconds. A tag older than that no longer says what brought
@@ -405,6 +421,17 @@ export function serialiseUtm(utm: UtmAttribution): string | null {
 }
 
 /**
+ * The value to hand a cookie writer for an attribution, or `null` when no cookie
+ * should be written: nothing to keep, or a value past
+ * {@link UTM_COOKIE_MAX_LENGTH} once the writer has encoded it.
+ */
+export function serialiseUtmCookie(utm: UtmAttribution): string | null {
+  const serialised = serialiseUtm(utm);
+  if (serialised === null) return null;
+  return encodeURIComponent(serialised).length > UTM_COOKIE_MAX_LENGTH ? null : serialised;
+}
+
+/**
  * The signup-metadata object a registration route would hand to
  * `admin.auth.admin.createUser`, built from (unsanitised) attribution values.
  *
@@ -465,16 +492,16 @@ export function utmMetadataForConsent(
 }
 
 /**
- * An attribution as {@link UtmInput}: every field that is present, every absent
- * one omitted.
+ * A parsed attribution as the {@link UtmInput} a consent gate takes: every field
+ * that is present, every absent one omitted.
  */
-export function utmRegistrationBody(utm: UtmAttribution): UtmInput {
-  const body: UtmInput = {};
+export function utmInputFromAttribution(utm: UtmAttribution): UtmInput {
+  const input: UtmInput = {};
   for (const field of UTM_FIELDS) {
     const value = utm[field];
-    if (value !== null) body[field] = value;
+    if (value !== null) input[field] = value;
   }
-  return body;
+  return input;
 }
 
 /**
@@ -520,7 +547,7 @@ export function utmFromCookieHeader(cookieHeader: string | null): UtmInput {
   const raw = cookieValueFromHeader(cookieHeader, UTM_COOKIE_NAME);
   if (raw === undefined) return {};
   try {
-    return utmRegistrationBody(parseUtmHeader(decodeURIComponent(raw)));
+    return utmInputFromAttribution(parseUtmHeader(decodeURIComponent(raw)));
   } catch {
     return {};
   }

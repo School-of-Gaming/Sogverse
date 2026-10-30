@@ -346,6 +346,21 @@ describe("ConsentBanner", () => {
       expect(getCookie(UTM_COOKIE_NAME)).toBeUndefined();
     });
 
+    it("leaves an earlier tag standing when the visit's tag is over the cookie's budget", () => {
+      mockUtm = {
+        ...NO_UTM_ATTRIBUTION,
+        source: "é".repeat(100),
+        campaign: "é".repeat(200),
+      };
+      // Written after mount: the unanswered document clears it on the way in.
+      render(<Harness initial={null} />);
+      document.cookie = `${UTM_COOKIE_NAME}=campaign%3Dearlier;path=/`;
+
+      press(messages.consent.acceptAll);
+
+      expect(getCookie(UTM_COOKIE_NAME)).toBe("campaign=earlier");
+    });
+
     it("leaves an earlier tag standing when an accept has no tag of its own", () => {
       // Written after mount: the unanswered document clears it on the way in.
       render(<Harness initial={null} />);

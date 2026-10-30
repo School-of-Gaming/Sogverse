@@ -3,6 +3,7 @@ import { ResponseCookies } from "next/dist/compiled/@edge-runtime/cookies";
 import {
   NO_UTM_ATTRIBUTION,
   UTM_COOKIE_MAX_AGE_SECONDS,
+  UTM_COOKIE_MAX_LENGTH,
   UTM_COOKIE_NAME,
   UTM_HEADER,
   UTM_HEADER_MAX_LENGTH,
@@ -12,10 +13,11 @@ import {
   readUtmFromSearchParams,
   sanitiseUtmValue,
   serialiseUtm,
+  serialiseUtmCookie,
   utmCookieOptions,
   utmFromCookieHeader,
+  utmInputFromAttribution,
   utmMetadataForConsent,
-  utmRegistrationBody,
 } from "@/lib/utm";
 import type { ConsentState } from "@/lib/consent";
 import { attributionCookie } from "../../mocks/attribution-cookie";
@@ -478,10 +480,40 @@ describe("the attribution cookie", () => {
   });
 });
 
-describe("utmRegistrationBody", () => {
+describe("serialiseUtmCookie", () => {
+  it("writes no cookie for a value inside the header's budget but over its own", () => {
+    // Each character is six bytes in the header and ten once the writer encodes
+    // the value again.
+    const utm = {
+      ...NO_UTM_ATTRIBUTION,
+      source: "é".repeat(100),
+      campaign: "é".repeat(200),
+    };
+
+    const serialised = serialiseUtm(utm);
+    expect(serialised).not.toBeNull();
+    expect(serialised!.length).toBeLessThanOrEqual(UTM_HEADER_MAX_LENGTH);
+    expect(encodeURIComponent(serialised!).length).toBeGreaterThan(UTM_COOKIE_MAX_LENGTH);
+    expect(serialiseUtmCookie(utm)).toBeNull();
+  });
+
+  it("writes one for all five fields at their full plain-ASCII length", () => {
+    const full = "a".repeat(200);
+    const utm = { source: full, medium: full, campaign: full, content: full, term: full };
+
+    expect(serialiseUtmCookie(utm)).not.toBeNull();
+    expect(serialiseUtmCookie(utm)).toBe(serialiseUtm(utm));
+  });
+
+  it("has nothing to write for no attribution", () => {
+    expect(serialiseUtmCookie(NO_UTM_ATTRIBUTION)).toBeNull();
+  });
+});
+
+describe("utmInputFromAttribution", () => {
   it("keeps every present field and no absent one", () => {
     expect(
-      utmRegistrationBody({
+      utmInputFromAttribution({
         source: "lynx",
         medium: null,
         campaign: "lynx-summer-a",
@@ -494,6 +526,6 @@ describe("utmRegistrationBody", () => {
       content: "hero",
       term: "minecraft",
     });
-    expect(utmRegistrationBody(NO_UTM_ATTRIBUTION)).toEqual({});
+    expect(utmInputFromAttribution(NO_UTM_ATTRIBUTION)).toEqual({});
   });
 });

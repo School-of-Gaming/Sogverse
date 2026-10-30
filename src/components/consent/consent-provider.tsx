@@ -22,7 +22,7 @@ import {
   type ConsentState,
 } from "@/lib/consent";
 import {
-  serialiseUtm,
+  serialiseUtmCookie,
   UTM_COOKIE_MAX_AGE_SECONDS,
   UTM_COOKIE_NAME,
 } from "@/lib/utm";
@@ -123,10 +123,10 @@ export function ConsentProvider({ initial, children }: ConsentProviderProps) {
       // Marketing granted just now: the proxy could not keep the tag this visit
       // landed with, because the landing request carried no such answer, so it
       // is kept here. Ahead of the reload below, which an answer that also
-      // takes analytics away goes through. No tag writes nothing, so a tag kept
-      // from an earlier visit stands.
+      // takes analytics away goes through. No tag, or one over the cookie's
+      // budget, writes nothing, so a tag kept from an earlier visit stands.
       if (consent?.marketing !== true && next.marketing && isNotAGamer) {
-        const serialised = serialiseUtm(utm);
+        const serialised = serialiseUtmCookie(utm);
         if (serialised !== null) {
           setCookie(UTM_COOKIE_NAME, serialised, {
             maxAge: UTM_COOKIE_MAX_AGE_SECONDS,
