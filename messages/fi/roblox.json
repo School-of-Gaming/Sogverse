@@ -48,7 +48,7 @@
   "how": {
     "eyebrow": "Näin se toimii",
     "heading": "Aloita neljässä helpossa vaiheessa",
-    "subheading": "Valitse sopiva muoto: paikan päällä tai verkossa, yhdestä tunnista yhdeksään viikkoon.",
+    "subheading": "Tapahtumia järjestetään paikan päällä ja verkossa, ja ne kestävät yhdestä tunnista yhdeksään viikkoon.",
     "step1": {
       "title": "Valitse tapahtuma",
       "description": "Poimi sopiva alta – lisäämme uusia tapahtumia usein, joten käy katsomassa uudelleen."
@@ -69,7 +69,7 @@
   "events": {
     "heading": "Tulevat tapahtumat",
     "subheading": "Lisäämme uusia tapahtumia usein – käy katsomassa, mitä on tulossa.",
-    "empty": "Ensimmäisiä tapahtumia vahvistetaan parhaillaan. Käy pian katsomassa, mitä on tulossa.",
+    "empty": "Uusia tapahtumia vahvistetaan parhaillaan. Käy pian katsomassa, mitä on tulossa.",
     "previous": "Edelliset tapahtumat",
     "next": "Seuraavat tapahtumat",
     "browseShop": "Selaa kauppaa"
