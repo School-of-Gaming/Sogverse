@@ -60,6 +60,8 @@ export interface SimulationState {
   shareLocks: ReadonlySet<string>;
   /** Whether the moderator running the session is presenting to the whole room. */
   presenting: boolean;
+  /** Whether the script starts shares of its own. Shares added by hand ignore it. */
+  autoShares: boolean;
   /** A reader who does not moderate has no Share button until the panel gives them one. */
 }
 
@@ -105,6 +107,7 @@ export class RoomSimulation {
       lockStates: new Map(),
       shareLocks: new Set(),
       presenting: false,
+      autoShares: true,
     };
   }
 
@@ -183,8 +186,19 @@ export class RoomSimulation {
     return sharer;
   }
 
+  /** Ending the script's share ends its claim, so a later manual share by them stays. */
   stopShare(sessionId: string) {
+    if (this.scriptedSharer === sessionId) this.scriptedSharer = null;
     this.patch(sessionId, { screenShareOn: false });
+  }
+
+  /**
+   * Off ends the script's own share and has it start no more; its timers run on
+   * and find nothing to do, so on picks up at the next gap.
+   */
+  setAutoShares(autoShares: boolean) {
+    this.update({ autoShares });
+    if (!autoShares && this.scriptedSharer !== null) this.stopShare(this.scriptedSharer);
   }
 
   /** One-shot, like a live mute: they can turn it back on. */
@@ -217,7 +231,10 @@ export class RoomSimulation {
   /** The moderator running the session shares. */
   moderatorShares() {
     const moderator = this.state.participants.find((p) => p.isOwner);
-    if (moderator) this.startShare(moderator.sessionId);
+    if (!moderator) return;
+    // Pressed on a share the script started, it makes that share a manual one.
+    if (this.scriptedSharer === moderator.sessionId) this.scriptedSharer = null;
+    this.startShare(moderator.sessionId);
   }
 
   /** A new open zone joins the places the crowd wanders; a private one stays out of it. */
@@ -375,7 +392,7 @@ export class RoomSimulation {
 
   private runShare() {
     this.after(this.script.shareGapMs, () => {
-      this.scriptedSharer ??= this.startShare() ?? null;
+      if (this.state.autoShares) this.scriptedSharer ??= this.startShare() ?? null;
       this.after(this.script.shareLengthMs, () => {
         if (this.scriptedSharer !== null) this.stopShare(this.scriptedSharer);
         this.scriptedSharer = null;

@@ -1377,7 +1377,7 @@ function ParticipantCardDemo() {
               participant={p}
               lockState={lockState}
               isModView
-              avatarRef={avatarRefs[i]}
+              glowRef={avatarRefs[i]}
               onLock={(track, locked) =>
                 setLocks((prev) => ({
                   ...prev,

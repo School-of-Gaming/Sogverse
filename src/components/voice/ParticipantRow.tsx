@@ -1,6 +1,7 @@
 "use client";
 
 import {
+  type CSSProperties,
   type Ref,
   type ReactNode,
   useEffect,
@@ -37,6 +38,14 @@ import {
 import { ROLE_BADGE_STYLES, ROLE_LABEL_KEYS } from "@/lib/constants/roles";
 import { cn } from "@/lib/cn";
 import type { VoiceParticipant, VoiceRole } from "./hooks/types";
+
+/** The live row's identity slot, whose placement ./CLAUDE.md explains. */
+const LIVE_IDENTITY_SLOT =
+  "order-7 w-full shrink-0 pl-11 sm:order-3 sm:w-auto sm:pl-0";
+const LIVE_BADGE_ORDER = "order-3 sm:order-4";
+const PANEL_IDENTITY_SLOT = "shrink-0";
+/** A late mark on the panel row's first line, after the name. */
+const PANEL_FIRST_LINE = "order-1";
 
 export interface ParticipantRowData {
   userId: string;
@@ -128,7 +137,23 @@ export interface ParticipantRowProps {
    * pressed instead of opening. Ignored for a moderator.
    */
   moderationLock?: LockExplanation | null;
-  avatarRef?: Ref<HTMLDivElement>;
+  /**
+   * The element the speaking glow writes its inline style onto every animation
+   * frame: the avatar, or the mic in the panel layout.
+   */
+  glowRef?: Ref<HTMLDivElement>;
+  /**
+   * The rows' shape. Omitted is the room's own full-width list. `"panel"` is the
+   * redesign's: no avatar and no camera status, the glow on the mic, and a row
+   * that breaks by the list's width rather than the viewport's. See
+   * `ParticipantPanelMic` and the panel branch below.
+   */
+  layout?: "panel";
+  /**
+   * The glow a room with no analyser takes from `isSpeaking`, on the element
+   * beside `glowRef`, where the analyser loop cannot wipe it. Panel layout only.
+   */
+  steadyGlow?: CSSProperties;
   onMute?: (track: "audio" | "video") => void;
   onLock?: (track: "audio" | "video", locked: boolean) => void;
   /**
@@ -201,7 +226,9 @@ export function ParticipantRow({
   lockState,
   isModView,
   moderationLock,
-  avatarRef,
+  glowRef,
+  layout,
+  steadyGlow,
   onMute,
   onLock,
   chatControl,
@@ -227,6 +254,159 @@ export function ParticipantRow({
   const gamePlatform: GamePlatform | undefined =
     p.role === "gamer" || p.role === "gedu" ? p.gamePlatform : undefined;
 
+  const identity = (className: string) =>
+    gamePlatform && (
+      <GameUsernameRow
+        platform={gamePlatform}
+        username={p.gameUsername ?? null}
+        externalId={p.gameExternalId ?? null}
+        avatarUrl={p.gameAvatarUrl}
+        // The compact figure. A participant list is dense by nature and the
+        // full body made every row half again as tall while outweighing the
+        // identicon beside it — the face carries the same identity at the
+        // identicon's own size. It is also square on both platforms, so the
+        // slot's geometry does not move when the room's platform changes.
+        figure="head"
+        // Nothing on this row is ever checked — the identity arrives on the
+        // Daily token and cannot change while the room is open — so the
+        // trailing status square would be an empty box held open between the
+        // username and the newcomer badge for a spinner that can never run.
+        statusSlot="collapsed"
+        className={className}
+      />
+    );
+
+  const parentBadge = (className?: string) =>
+    p.role === "customer" && (
+      /* The same badge and word the roster row and admin chips draw for a
+         customer, read off the shared role constants. Rendered inside a
+         flex div — a Badge is a div, and this exact badge inside a <p>
+         was a hydration failure once already. */
+      <Badge
+        variant="outline"
+        className={cn(
+          ROLE_BADGE_STYLES.customer,
+          "shrink-0 px-1.5 py-0 text-[10px] font-normal",
+          className,
+        )}
+      >
+        {c(ROLE_LABEL_KEYS.customer)}
+      </Badge>
+    );
+
+  const lateMarks = (className?: string) => (
+    <>
+      {newcomerJoinedAt !== undefined && flairNow !== undefined && (
+        <NewcomerBadge
+          joinedAt={newcomerJoinedAt}
+          now={flairNow}
+          className={className}
+        />
+      )}
+      {/* The trainee tag — staff and trainee sight, arriving with the chat roster after the
+          room has painted, so it is the last of the run for the same reason
+          the newcomer badge follows the Parent badge. */}
+      {isTrainee === true && (
+        <Badge
+          variant="outline"
+          className={cn(
+            "shrink-0 px-1.5 py-0 text-[10px] font-normal",
+            className,
+          )}
+        >
+          {tt("badge")}
+        </Badge>
+      )}
+    </>
+  );
+
+  const flairButton = onOpenFlair && (
+    <GamerFlairButton
+      name={p.userName}
+      hasContent={hasContent === true}
+      onOpen={onOpenFlair}
+    />
+  );
+
+  /* All moderator actions collapse into one overflow menu — a single icon
+     at the row's end, so the row layout is identical for every
+     participant and nothing spills into the name on mobile. */
+  const moderation = (
+    <>
+      {showModMenu && (
+        <ParticipantModMenu
+          name={p.userName}
+          audioOn={p.audioOn}
+          videoOn={p.videoOn}
+          lockState={lockState}
+          onMute={onMute}
+          onLock={onLock}
+          chatControl={chatControl}
+          shareControl={shareControl}
+        />
+      )}
+      {lockedModMenu !== null && (
+        <LockedModMenuTrigger explanation={lockedModMenu} />
+      )}
+    </>
+  );
+
+  if (layout === "panel") {
+    // A row whose second line is already there when the overlay lands. Every
+    // other row has only late marks to put on one, and a line appearing on data's
+    // own schedule would move every row beneath it, so those marks go on the
+    // first line, at the end of the name's run, and the name gives way.
+    const hasSecondLine = gamePlatform !== undefined || p.role === "customer";
+
+    return (
+      <div
+        className={cn(
+          // Name and trailing controls first; the identity and its badges on a
+          // line of their own, because the panel's 286px cannot hold them beside
+          // the 96px of controls. The break reads the list's width (`people`,
+          // set on the list), never the viewport's: at the widest the panel gets,
+          // the viewport is 1440 and the row is 350. `@xl` is what one line needs
+          // with room left for a name: a 180px identity, two badges and the
+          // controls with their gaps are 480 of it, and only the phone sheet on
+          // a tablet is that wide. So `order` does the moving, as on the live row.
+          "flex flex-wrap items-center gap-x-2 gap-y-1 rounded-lg border border-border p-2 transition-colors @xl/people:flex-nowrap",
+          p.isLocal && "bg-lifted",
+        )}
+      >
+        {/* `flex-1` for the same reason as the live row's name: a truncating item
+            otherwise contributes its full width to the line break. */}
+        <span className="order-1 min-w-0 flex-1 truncate text-sm font-medium @xl/people:max-w-fit">
+          {p.userName}
+        </span>
+
+        {!hasSecondLine && lateMarks(PANEL_FIRST_LINE)}
+
+        {/* One right-packed group with the note button at its left edge, so the
+            note landing late grows it into the name and moves no control. */}
+        <div className="order-2 ml-auto flex h-7 shrink-0 items-center gap-2 @xl/people:order-3">
+          {flairButton}
+          <ParticipantPanelMic
+            audioOn={p.audioOn}
+            locked={lockState.audio}
+            glowRef={glowRef}
+            steadyGlow={steadyGlow}
+          />
+          {moderation}
+        </div>
+
+        {/* A late mark lands at the end of this run, as everywhere. It wraps
+            rather than clip the account, which never truncates. */}
+        {hasSecondLine && (
+          <div className="order-3 flex w-full flex-wrap items-center gap-x-2 gap-y-1 @xl/people:order-2 @xl/people:w-auto">
+            {identity(PANEL_IDENTITY_SLOT)}
+            {parentBadge()}
+            {lateMarks()}
+          </div>
+        )}
+      </div>
+    );
+  }
+
   return (
     <div
       className={cn(
@@ -241,7 +421,7 @@ export function ParticipantRow({
       {/* Avatar — the ref div is the element the speaking glow writes box-shadow
           and border-color onto every animation frame, so nothing may wrap it:
           wrapping would move the glow off the face. */}
-      <div ref={avatarRef} className="order-1 shrink-0 rounded-md">
+      <div ref={glowRef} className="order-1 shrink-0 rounded-md">
         <Avatar className="h-8 w-8">
           <Identicon id={p.userId} size={32} />
         </Avatar>
@@ -280,26 +460,7 @@ export function ParticipantRow({
           full-width identity is the last item and wraps below, while the name
           and its badges stay together on the first line. The 360px arithmetic
           this answers is in ./CLAUDE.md. */}
-      {gamePlatform && (
-        <GameUsernameRow
-          platform={gamePlatform}
-          username={p.gameUsername ?? null}
-          externalId={p.gameExternalId ?? null}
-          avatarUrl={p.gameAvatarUrl}
-          // The compact figure. A participant list is dense by nature and the
-          // full body made every row half again as tall while outweighing the
-          // identicon beside it — the face carries the same identity at the
-          // identicon's own size. It is also square on both platforms, so the
-          // slot's geometry does not move when the room's platform changes.
-          figure="head"
-          // Nothing on this row is ever checked — the identity arrives on the
-          // Daily token and cannot change while the room is open — so the
-          // trailing status square would be an empty box held open between the
-          // username and the newcomer badge for a spinner that can never run.
-          statusSlot="collapsed"
-          className="order-7 w-full shrink-0 pl-11 sm:order-3 sm:w-auto sm:pl-0"
-        />
-      )}
+      {identity(LIVE_IDENTITY_SLOT)}
 
       {/* The Parent badge, then the newcomer badge — in that order, and the
           order is what makes the row safe rather than merely tidy.
@@ -326,39 +487,8 @@ export function ParticipantRow({
           renders `null` is simply not a flex item and costs nothing; a group
           would have cost a gap on either side of itself for a stamp that had
           quietly expired. */}
-      {p.role === "customer" && (
-        /* The same badge and word the roster row and admin chips draw for a
-           customer, read off the shared role constants. Rendered inside a
-           flex div — a Badge is a div, and this exact badge inside a <p>
-           was a hydration failure once already. */
-        <Badge
-          variant="outline"
-          className={cn(
-            ROLE_BADGE_STYLES.customer,
-            "order-3 shrink-0 px-1.5 py-0 text-[10px] font-normal sm:order-4",
-          )}
-        >
-          {c(ROLE_LABEL_KEYS.customer)}
-        </Badge>
-      )}
-      {newcomerJoinedAt !== undefined && flairNow !== undefined && (
-        <NewcomerBadge
-          joinedAt={newcomerJoinedAt}
-          now={flairNow}
-          className="order-3 sm:order-4"
-        />
-      )}
-      {/* The trainee tag — staff and trainee sight, arriving with the chat roster after the
-          room has painted, so it is the last of the run for the same reason
-          the newcomer badge follows the Parent badge. */}
-      {isTrainee === true && (
-        <Badge
-          variant="outline"
-          className="order-3 shrink-0 px-1.5 py-0 text-[10px] font-normal sm:order-4"
-        >
-          {tt("badge")}
-        </Badge>
-      )}
+      {parentBadge(LIVE_BADGE_ORDER)}
+      {lateMarks(LIVE_BADGE_ORDER)}
 
       {/* The row's trailing controls, as **one right-packed group**, and both
           halves of that are load-bearing.
@@ -380,13 +510,7 @@ export function ParticipantRow({
           one fixed place: parking it on a conditional control would mean the
           row had no sink at all on the rows that lack it. */}
       <div className="order-4 ml-auto flex shrink-0 items-center gap-2 sm:order-5">
-        {onOpenFlair && (
-          <GamerFlairButton
-            name={p.userName}
-            hasContent={hasContent === true}
-            onOpen={onOpenFlair}
-          />
-        )}
+        {flairButton}
 
         {/* Status indicators — always show both icons for stable layout. */}
         <div className="flex shrink-0 items-center gap-1.5">
@@ -419,23 +543,55 @@ export function ParticipantRow({
           </div>
         </div>
 
-        {/* All moderator actions collapse into one overflow menu — a single icon
-            at the row's end, so the row layout is identical for every
-            participant and nothing spills into the name on mobile. */}
-        {showModMenu && (
-          <ParticipantModMenu
-            name={p.userName}
-            audioOn={p.audioOn}
-            videoOn={p.videoOn}
-            lockState={lockState}
-            onMute={onMute}
-            onLock={onLock}
-            chatControl={chatControl}
-            shareControl={shareControl}
-          />
+        {moderation}
+      </div>
+    </div>
+  );
+}
+
+/**
+ * The panel row's mic status, and the one place the panel's speaking glow is.
+ *
+ * **Two elements carry the glow, as `useParticipantGlow` says:** one takes the
+ * steady glow and the other the analyser's, whose loop rewrites its element's
+ * inline style every frame. Both are circles the size of the icon, under it,
+ * because a shadow is drawn only outside its box: anything wider leaves a dark
+ * disc around the icon with the light ringing it. They have no border, so the
+ * glow's border colour draws nothing here.
+ *
+ * The 24px box holds its place whether or not anyone speaks, and a shadow takes no
+ * layout, so a glow moves nothing. The circles sit 5px inside the box, and the
+ * panel's padding and the row's border and padding add 17px to the scroller's
+ * edge, past the glow's 14px at its loudest. They are positioned, so a neighbouring
+ * row's ground cannot paint over them. A muted person gets neither glow: the hook
+ * stops the loop and `steadyGlow` requires the mic.
+ */
+function ParticipantPanelMic({
+  audioOn,
+  locked,
+  glowRef,
+  steadyGlow,
+}: {
+  audioOn: boolean;
+  locked: boolean;
+  glowRef?: Ref<HTMLDivElement>;
+  steadyGlow?: CSSProperties;
+}) {
+  return (
+    <div className="relative flex h-6 w-6 shrink-0 items-center justify-center">
+      <div
+        style={steadyGlow}
+        className="absolute inset-[5px] rounded-full transition-shadow"
+      />
+      <div ref={glowRef} className="absolute inset-[5px] rounded-full" />
+      <div className="relative">
+        {audioOn ? (
+          <Mic className="h-3.5 w-3.5 text-success" />
+        ) : (
+          <MicOff className="h-3.5 w-3.5 text-destructive" />
         )}
-        {lockedModMenu !== null && (
-          <LockedModMenuTrigger explanation={lockedModMenu} />
+        {locked && (
+          <Lock className="absolute -right-1 -top-1 h-2.5 w-2.5 text-destructive" />
         )}
       </div>
     </div>

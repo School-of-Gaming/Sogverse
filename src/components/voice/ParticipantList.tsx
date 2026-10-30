@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo, useRef } from "react";
+import { useMemo } from "react";
 import { Users } from "lucide-react";
 import { useTranslations } from "next-intl";
 import { Heading } from "@sog/ui";
@@ -11,8 +11,8 @@ import { useVoiceRoom } from "./VoiceRoomProvider";
 import { useVoiceMemberFlair } from "./VoiceMemberFlairProvider";
 import { useVoiceModeratorLocks } from "./VoiceModeratorLocks";
 import type { LockExplanation } from "@/components/ui/locked-control";
-import { useSpeakingGlow } from "./hooks/use-speaking-glow";
 import { ParticipantRow } from "./ParticipantRow";
+import { useParticipantGlow } from "./redesign/use-participant-glow";
 import type {
   ParticipantChatControl,
   ParticipantChatControls,
@@ -21,6 +21,7 @@ import type {
 } from "./ParticipantRow";
 import type { VoiceParticipant, LockState } from "./hooks/types";
 import type { VoiceMemberFlair } from "./VoiceMemberFlairProvider";
+import { cn } from "@/lib/cn";
 
 /**
  * The figure URL for one participant, with the row's three meanings intact.
@@ -45,6 +46,7 @@ export function ParticipantList({
   participantChatControls,
   participantShareControls,
   order,
+  layout,
 }: {
   /**
    * The chat lock offered against each person, from whoever supplied the room's
@@ -61,6 +63,12 @@ export function ParticipantList({
   participantShareControls?: ParticipantShareControls;
   /** The order the rows are drawn in, where it is not the room's own. */
   order?: (participants: VoiceParticipant[]) => VoiceParticipant[];
+  /**
+   * The redesign's panel: panel rows, and no heading, because the tab above the
+   * list already says what it is. The list keeps that name for assistive tech.
+   * It is also the container the rows read their width from.
+   */
+  layout?: "panel";
 }) {
   const {
     participants,
@@ -111,18 +119,24 @@ export function ParticipantList({
   // them in another card was card-in-card (two borders, doubled padding). Flush
   // section under a plain heading, matching the voice-room section in VoiceRoom.
   return (
-    <section className="space-y-2">
-      <div className="flex items-center gap-2">
-        <Users className="h-4 w-4" aria-hidden />
-        <Heading level={2} step="label">
-          {t("participants")}
-        </Heading>
-      </div>
+    <section
+      className={cn("space-y-2", layout === "panel" && "@container/people")}
+      aria-label={layout === "panel" ? t("participants") : undefined}
+    >
+      {layout !== "panel" && (
+        <div className="flex items-center gap-2">
+          <Users className="h-4 w-4" aria-hidden />
+          <Heading level={2} step="label">
+            {t("participants")}
+          </Heading>
+        </div>
+      )}
 
       {(order?.(participants) ?? participants).map((p) => (
         <ParticipantRowWithGlow
           key={p.sessionId}
           participant={p}
+          layout={layout}
           gameAvatarUrl={gameAvatarUrlFor(p, robloxRenders)}
           lockState={
             lockStates.get(p.sessionId) ?? { audio: false, video: false }
@@ -151,6 +165,7 @@ export function ParticipantList({
 /** Wraps ParticipantRow with the speaking-glow hook (needs sessionId for audio analysis). */
 function ParticipantRowWithGlow({
   participant,
+  layout,
   gameAvatarUrl,
   lockState,
   isLocalOwner,
@@ -162,6 +177,7 @@ function ParticipantRowWithGlow({
   onLock,
 }: {
   participant: VoiceParticipant;
+  layout: "panel" | undefined;
   /** Resolved by the list, never by the row. See `gameAvatarUrlFor`. */
   gameAvatarUrl: string | null | undefined;
   lockState: LockState;
@@ -175,8 +191,7 @@ function ParticipantRowWithGlow({
   onMute: (track: "audio" | "video") => void;
   onLock: (track: "audio" | "video", locked: boolean) => void;
 }) {
-  const avatarRef = useRef<HTMLDivElement>(null);
-  useSpeakingGlow(avatarRef, participant.sessionId, participant.audioOn);
+  const { glowRef, steadyGlow } = useParticipantGlow(participant);
   // A note belongs to a seat in this group, so the staff who are *running* the
   // session are not targets for one — a Gedu cannot take a note about
   // themselves, about the Gedu covering with them, or about a visiting admin.
@@ -195,7 +210,9 @@ function ParticipantRowWithGlow({
       lockState={lockState}
       isModView={isLocalOwner}
       moderationLock={moderationLock}
-      avatarRef={avatarRef}
+      layout={layout}
+      glowRef={glowRef}
+      steadyGlow={steadyGlow}
       newcomerJoinedAt={flair?.newcomers[participant.userId]}
       flairNow={flair?.now}
       // The same test the workspace roster makes: a note, a creation, or both.

@@ -95,6 +95,7 @@ export function PanelBody({
           participantChatControls={participantChatControls}
           participantShareControls={participantShareControls}
           order={geduFirst}
+          layout="panel"
         />
       </div>
     </div>

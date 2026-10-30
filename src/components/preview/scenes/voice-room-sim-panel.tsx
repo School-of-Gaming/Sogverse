@@ -73,6 +73,14 @@ export function VoiceRoomSimPanel({
               Moderator shares
             </Button>
           )}
+          <Button
+            variant={state.autoShares ? "default" : "outline"}
+            size="sm"
+            aria-pressed={state.autoShares}
+            onClick={() => simulation.setAutoShares(!state.autoShares)}
+          >
+            Automatic shares
+          </Button>
           <Button variant="outline" size="sm" onClick={() => simulation.startShare()}>
             Add a share
           </Button>
