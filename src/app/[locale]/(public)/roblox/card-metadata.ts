@@ -49,3 +49,32 @@ export async function robloxCardMetadata(): Promise<Metadata> {
     },
   };
 }
+
+/** The whole of a programme page's metadata, shared by its three addresses. */
+export async function programmePageMetadata(): Promise<Metadata> {
+  const t = await getTranslations("metadata.pages");
+  const card = await robloxCardMetadata();
+  return {
+    // The tab title follows the viewer's locale like every other page. So does
+    // the card now: the programme's copy was French for every locale while the
+    // URL could not carry one, and `/fr/roblox` pins French for whoever it is
+    // sent to — so `openGraph` and `twitter` read the catalog like everything
+    // else, with today's French wording as the `fr` values.
+    title: t("roblox"),
+    // The card's description, its `openGraph` and its `twitter` block, all at
+    // this URL's locale — see `robloxCardMetadata` above, which the three
+    // sub-pages share.
+    ...card,
+    // Copy is still pending SOG and Roblox signoff, so the page is shared by URL
+    // rather than published. This tag is what actually keeps it out of search
+    // results; the route is deliberately absent from sitemap.ts and has no nav
+    // link anywhere.
+    //
+    // Note it is NOT disallowed in robots.txt, which would be the intuitive move
+    // and is the wrong one: a disallowed URL is never fetched, so the crawler
+    // never reads this tag, and the URL can still be indexed bare off an
+    // external link. Disallow also publishes the path to anyone who reads
+    // robots.txt. Allowing the crawl and serving noindex is what deindexes.
+    robots: { index: false, follow: false },
+  };
+}

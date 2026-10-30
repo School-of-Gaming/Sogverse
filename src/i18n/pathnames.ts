@@ -184,6 +184,8 @@ export const PATHNAMES = {
   "/docs/minecraft-api": "/docs/minecraft-api",
   "/docs/lynx-api": "/docs/lynx-api",
   "/roblox": "/roblox",
+  "/roblox-all": "/roblox-all",
+  "/roblox-online": "/roblox-online",
   "/roblox/privacy": "/roblox/privacy",
   "/roblox/safeguarding": "/roblox/safeguarding",
   "/roblox/terms": "/roblox/terms",

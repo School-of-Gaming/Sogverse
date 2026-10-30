@@ -50,8 +50,12 @@ type SourceMediumEntry = TrafficPage["by_source_medium"][number];
 type ContentEntry = TrafficPage["by_content"][number];
 type TermEntry = TrafficPage["by_term"][number];
 
-/** The Vercel `route` of the Roblox landing page and of the shop, every locale on one row. */
-const LANDING_ROUTE = "/roblox";
+/**
+ * The Vercel `route` of the Roblox landing page and of the shop, every locale
+ * on one row. The landing page is one page at three addresses, one per format,
+ * and Lynx is told about it as one page.
+ */
+const LANDING_ROUTES = ["/roblox", "/roblox-online", "/roblox-all"];
 const SHOP_ROUTE = "/shop";
 
 /**
@@ -394,7 +398,7 @@ export async function computePartnerTraffic(
   const range = { from: key.from, to: key.to };
   const wants = (page: TrafficPageKind) => key.page === null || key.page === page;
 
-  const landingFilter = `${PRODUCTION} and route eq ${odataString(LANDING_ROUTE)}`;
+  const landingFilter = `${PRODUCTION} and route in (${LANDING_ROUTES.map(odataString).join(", ")})`;
   const shopFilter = `${PRODUCTION} and route eq ${odataString(SHOP_ROUTE)}`;
 
   const readProducts = async (): Promise<TrafficPage[]> => {

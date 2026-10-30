@@ -3,7 +3,7 @@
 import type { ProductRailSeed } from "@/components/public/products/product-rail-selection";
 import { SHOP_PRODUCT_TYPES } from "@/components/public/products/shop-categories";
 import { useProductRail } from "@/components/public/products/use-product-rail";
-import { PROGRAMME_RAIL_SELECTION } from "./programme-filters";
+import { PROGRAMME_RAIL_SELECTIONS, type ProgrammeFormat } from "./programme-filters";
 import { UpcomingEvents } from "./upcoming-events";
 
 /**
@@ -18,7 +18,17 @@ import { UpcomingEvents } from "./upcoming-events";
  * from its empty state to cards when the mount fetch lands, the shift the
  * pipeline accepts on that path alone.
  */
-export function UpcomingEventsBrowse({ seed }: { seed: ProductRailSeed }) {
-  const { products, counts } = useProductRail(SHOP_PRODUCT_TYPES, PROGRAMME_RAIL_SELECTION, seed);
-  return <UpcomingEvents products={products} counts={counts} />;
+export function UpcomingEventsBrowse({
+  format,
+  seed,
+}: {
+  format: ProgrammeFormat;
+  seed: ProductRailSeed;
+}) {
+  const { products, counts } = useProductRail(
+    SHOP_PRODUCT_TYPES,
+    PROGRAMME_RAIL_SELECTIONS[format],
+    seed,
+  );
+  return <UpcomingEvents format={format} products={products} counts={counts} />;
 }

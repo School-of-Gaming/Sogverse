@@ -5,6 +5,7 @@ import { ArrowRight } from "lucide-react";
 import { buttonVariants } from "@/components/ui/button";
 import { ROUTES } from "@/lib/constants/routes";
 import { PartnerLockup } from "@/components/roblox/partner-lockup";
+import type { ProgrammeFormat } from "./programme-filters";
 
 /**
  * The /roblox hero: the programme name, its three-beat tagline, CTA, partner
@@ -37,7 +38,7 @@ import { PartnerLockup } from "@/components/roblox/partner-lockup";
  * the column from `lg`, and between `md` and `lg`, where the column is at its
  * narrowest, it wraps at its space rather than shrinking every locale to fit.
  */
-export function RobloxHero() {
+export function RobloxHero({ format }: { format: ProgrammeFormat }) {
   const t = useTranslations("roblox");
 
   return (
@@ -91,7 +92,7 @@ export function RobloxHero() {
                 offered a different destination for the same promise. */}
             <div className="mt-10 flex justify-center md:justify-start">
               <Link
-                href={ROUTES.robloxShop}
+                href={ROUTES.robloxShop[format]}
                 className={buttonVariants({ size: "lg", className: "gap-2" })}
               >
                 {t("hero.cta")}

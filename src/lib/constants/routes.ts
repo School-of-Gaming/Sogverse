@@ -577,26 +577,42 @@ export const ROUTES = {
    * never be read and the bare URL could still be indexed off an external
    * link (the page's own metadata comment explains the same). Flip the nav,
    * sitemap and noindex together when the content is ready to be found.
+   *
+   * `/roblox` shows the in-person events; the two pages below are the same page
+   * for the online events and for every event, sharing this posture exactly.
    */
   roblox: "/roblox",
+  robloxOnline: "/roblox-online",
+  robloxAll: "/roblox-all",
   /**
-   * The Programme's own slice of the storefront: free Roblox Studio products.
-   * This is where every "register" / "get started" CTA on `/roblox` lands —
-   * the programme has no storefront of its own, so the shop filtered down to it
-   * *is* its catalogue, and the same URL is shared by the hero, the closing CTA
-   * and the link under the events rail so all three promise the same page —
-   * the slice the rail itself shows (`programme-filters.ts`).
+   * The Programme's own slice of the storefront, one per programme page: free
+   * Roblox Studio products, in that page's format. This is where every
+   * "register" / "get started" CTA on a programme page lands — the programme has
+   * no storefront of its own, so the shop filtered down to it *is* its
+   * catalogue, and one URL is shared by a page's hero, its closing CTA and the
+   * link under its events rail so all three promise the same page — the slice
+   * the rail itself shows (`programme-filters.ts`).
    *
-   * The `topic` and `price` param names, and their grammar, are the
+   * The `topic`, `price` and `format` param names, and their grammar, are the
    * browse-filter hook's (`use-browse-filters.ts`); the values are the
-   * `product_topic` enum's own and the price row's. Keep the two in sync — same
-   * arrangement as `shopBrowse` and the `category` param above. An
+   * `product_topic` enum's own and the price and format rows'. Keep the two in
+   * sync — same arrangement as `shopBrowse` and the `category` param above. An
    * unrecognised value there reads as no selection rather than an empty grid,
    * so a stale link degrades to a wider shop rather than to nothing.
    */
   robloxShop: {
-    pathname: "/shop",
-    query: { topic: "roblox_studio", price: "free" },
+    in_person: {
+      pathname: "/shop",
+      query: { topic: "roblox_studio", price: "free", format: "in_person" },
+    },
+    online: {
+      pathname: "/shop",
+      query: { topic: "roblox_studio", price: "free", format: "online" },
+    },
+    all: {
+      pathname: "/shop",
+      query: { topic: "roblox_studio", price: "free" },
+    },
   },
   /**
    * The parent-facing half of the same slice — free products whose audience is

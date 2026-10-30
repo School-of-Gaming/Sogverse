@@ -8,7 +8,9 @@ import {
 } from "@/components/public/products/shop-categories";
 import {
   PROGRAMME_PRICE,
+  PROGRAMME_RAIL_SELECTIONS,
   PROGRAMME_TOPIC,
+  type ProgrammeFormat,
 } from "@/components/roblox/programme-filters";
 import { isAudienceFilterValue } from "@/lib/products/product-audience";
 import { PRODUCT_TOPIC_VALUES } from "@/lib/products/topics";
@@ -95,16 +97,23 @@ describe("the /roblox programme's shop hrefs", () => {
   // way the shop reads it, so a renamed param, a retired enum value, or a typo'd
   // href fails here instead of silently degrading to an unfiltered shop.
 
-  it("robloxShop filters to the programme's topic and price, and nothing else", () => {
-    const params = new URLSearchParams(queryOf(ROUTES.robloxShop));
+  const formats: ProgrammeFormat[] = ["in_person", "online", "all"];
+
+  it.each(formats)("robloxShop's %s link carries the rail's own slice", (format) => {
+    const params = new URLSearchParams(queryOf(ROUTES.robloxShop[format]));
     // Topic values are matched as lowercase strings against the product's
     // `topic` enum column (see use-browse-filters/filter-products); membership
     // in the enum's own value list is what "recognised" means.
     expect(params.get("topic")).toBe(PROGRAMME_TOPIC);
     expect(PRODUCT_TOPIC_VALUES).toContain(params.get("topic"));
     expect(params.get("price")).toBe(PROGRAMME_PRICE);
-    // The rail narrows to online on top of this; the CTAs deliberately do not.
-    expect([...params.keys()].sort()).toEqual(["price", "topic"]);
+
+    const selection = PROGRAMME_RAIL_SELECTIONS[format];
+    if (selection.kind !== "filters") throw new Error("the programme's rail is a filter");
+    expect(params.get("format")).toBe(selection.filters.format);
+    expect([...params.keys()].sort()).toEqual(
+      format === "all" ? ["price", "topic"] : ["format", "price", "topic"],
+    );
   });
 
   it("robloxParentSessions filters to free products for parents, and nothing else", () => {

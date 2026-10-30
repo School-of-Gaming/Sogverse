@@ -10,8 +10,11 @@ import type {
 import type { ProductBrowseRow } from "@/types";
 import { ProductRail } from "@/components/public/products/product-rail";
 import { Heading } from "@sog/ui";
+import type { ProgrammeFormat } from "./programme-filters";
 
 interface UpcomingEventsProps {
+  /** The page's format, which the shop link under the rail carries. */
+  format: ProgrammeFormat;
   /**
    * The programme's products, already narrowed to the programme's slice by the
    * shell above. Empty renders the empty state, which stays a real state: the
@@ -64,6 +67,7 @@ interface UpcomingEventsProps {
  * sit centred in the row rather than against its left edge.
  */
 export function UpcomingEvents({
+  format,
   products = [],
   counts = [],
 }: UpcomingEventsProps) {
@@ -102,7 +106,7 @@ export function UpcomingEvents({
               moves. */}
           <div className="mt-10 text-center">
             <Link
-              href={ROUTES.robloxShop}
+              href={ROUTES.robloxShop[format]}
               className={buttonVariants({
                 variant: "outline",
                 size: "lg",
