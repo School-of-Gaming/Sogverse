@@ -164,6 +164,56 @@ describe("topic prep email section", () => {
     expect(lines.at(-1)).toBe(prep.closing);
   });
 
+  it("states a hybrid guide as two lists around the home heading", () => {
+    const prep = messages.topicPrep;
+    const html = section("roblox_studio", "hybrid");
+
+    expect(html).toContain(prep.hybridIntro);
+    expect(html).not.toContain(prep.topics.roblox_studio.intro);
+
+    // In reading order: the first list, the heading, the second list, the end.
+    const order = [
+      prep.steps.robloxStudioAccount.title,
+      prep.steps.venueVoiceRoom.title,
+      prep.homeHeading,
+      prep.steps.robloxStudioInstall.title,
+      prep.steps.remoteSession.title,
+      prep.closing,
+    ].map((text) => html.indexOf(text));
+    expect(order).not.toContain(-1);
+    expect(order).toEqual([...order].sort((a, b) => a - b));
+  });
+
+  it("restarts the numbering after the home heading in the text twin", () => {
+    const prep = messages.topicPrep;
+    const lines = textLines("roblox_studio", "hybrid");
+    const home = lines.indexOf(prep.homeHeading);
+
+    expect(lines).toContain(prep.hybridIntro);
+    expect(lines.indexOf(`1. ${prep.steps.robloxStudioAccount.title}`)).toBeLessThan(home);
+    expect(lines.indexOf(`2. ${prep.steps.venueVoiceRoom.title}`)).toBeLessThan(home);
+    expect(lines.indexOf(`1. ${prep.steps.robloxStudioInstall.title}`)).toBeGreaterThan(home);
+    expect(lines.indexOf(`3. ${prep.steps.remoteSession.title}`)).toBeGreaterThan(home);
+    expect(lines.at(-1)).toBe(prep.closing);
+  });
+
+  it("gives a label-only topic the two shared steps on a hybrid product", () => {
+    const prep = messages.topicPrep;
+    const html = section("programming", "hybrid");
+
+    expect(html).toContain(prep.steps.venueVoiceRoom.title);
+    expect(html).toContain(prep.homeHeading);
+    expect(html).toContain(prep.steps.remoteSession.title);
+  });
+
+  it("states no home heading off a hybrid product", () => {
+    const prep = messages.topicPrep;
+    for (const mode of ["online", "in_person"] as const) {
+      expect(section("roblox_studio", mode)).not.toContain(prep.homeHeading);
+      expect(textLines("roblox_studio", mode)).not.toContain(prep.homeHeading);
+    }
+  });
+
   it("keeps every Pokémon GO step in person", () => {
     // The phone is the family's wherever the session happens, so nothing
     // filters out and the guide takes its ordinary intro.

@@ -41,14 +41,14 @@ function remoteOnlyPlan(): TopicPrepPlan {
   return plan;
 }
 
-function renderDialog() {
+function renderDialog(plan: TopicPrepPlan = remoteOnlyPlan()) {
   const onReady = vi.fn();
   const onOpenChange = vi.fn();
   render(
     <TopicPrepDialog
       open
       onOpenChange={onOpenChange}
-      plan={remoteOnlyPlan()}
+      plan={plan}
       onReady={onReady}
     />,
   );
@@ -91,5 +91,30 @@ describe("TopicPrepDialog", () => {
     );
 
     expect(order & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
+  });
+
+  it("draws a hybrid guide as two lists under the home heading, numbering each from one", () => {
+    const plan = resolveTopicPrep("roblox_studio", "hybrid");
+    if (!plan) throw new Error("a hybrid product always has a guide");
+    renderDialog(plan);
+
+    expect(screen.getByText("topicPrep.hybridIntro")).toBeTruthy();
+    const heading = screen.getByRole("heading", {
+      name: "topicPrep.homeHeading",
+      level: 3,
+    });
+    const lists = screen.getAllByRole("list").filter((el) => el.tagName === "OL");
+    expect(lists).toHaveLength(2);
+
+    const [first, second] = lists;
+    expect(
+      first.compareDocumentPosition(heading) & Node.DOCUMENT_POSITION_FOLLOWING,
+    ).toBeTruthy();
+    expect(
+      heading.compareDocumentPosition(second) & Node.DOCUMENT_POSITION_FOLLOWING,
+    ).toBeTruthy();
+    expect(first.textContent).toContain("topicPrep.steps.venueVoiceRoom.title");
+    expect(second.textContent).toContain("topicPrep.steps.remoteSession.title");
+    expect(second.textContent).not.toContain("topicPrep.steps.venueVoiceRoom.title");
   });
 });

@@ -8,6 +8,7 @@ import {
   PRODUCT_TOPICS,
   PRODUCT_TOPIC_VALUES,
   TOPIC_FILTER_CHIPS,
+  VENUE_VOICE_ROOM_STEP,
   platformForTopic,
   topicHasInfoCard,
   topicHasPrep,
@@ -269,6 +270,9 @@ describe("product topics", () => {
           expect(step.key, "a topic declares the shared step's key").not.toBe(
             REMOTE_SESSION_KEY,
           );
+          expect(step.key, "a topic declares the venue step's key").not.toBe(
+            VENUE_VOICE_ROOM_STEP.key,
+          );
 
           expect(["always", "ownDevice"]).toContain(step.scope);
           if (step.url !== undefined) {
@@ -411,20 +415,45 @@ describe("product topics", () => {
       // assertion is over every topic at once: remote guides all end on it,
       // in-person guides never mention it, and it is declared once — which is
       // what the global-uniqueness check above is worth here.
-      // A hybrid product has the room too, so it ends on the step whatever
-      // the install-and-test half of its guide holds.
-      for (const mode of ["online", "hybrid"] as const) {
-        for (const topic of PRODUCT_TOPIC_VALUES) {
-          const remote = resolveTopicPrep(topic, mode);
-          expect(remote, `${topic} renders no guide on a ${mode} product`).not
-            .toBeNull();
-          expect(remote?.steps.at(-1)?.key, topic).toBe(REMOTE_SESSION_KEY);
-          expect(
-            remote?.steps.filter((s) => s.key === REMOTE_SESSION_KEY),
-            `${topic} appends the shared step more than once`,
-          ).toHaveLength(1);
-        }
+      for (const topic of PRODUCT_TOPIC_VALUES) {
+        const remote = resolveTopicPrep(topic, "online");
+        expect(remote, `${topic} renders no guide on an online product`).not
+          .toBeNull();
+        expect(remote?.steps.at(-1)?.key, topic).toBe(REMOTE_SESSION_KEY);
+        expect(
+          remote?.steps.filter((s) => s.key === REMOTE_SESSION_KEY),
+          `${topic} appends the shared step more than once`,
+        ).toHaveLength(1);
       }
+    });
+
+    it("gives every topic a hybrid guide, sorted by scope around the two shared steps", () => {
+      // A hybrid product has the room too, so the mic step closes the home
+      // section; the venue step closes the first. Every declared step lands in
+      // exactly one section, and a step about the family's own machine never
+      // lands in the one a child at the venue reads.
+      for (const topic of PRODUCT_TOPIC_VALUES) {
+        const plan = resolveTopicPrep(topic, "hybrid");
+        if (plan?.form !== "hybrid") throw new Error(`${topic}: not hybrid`);
+
+        const meta: TopicMeta = PRODUCT_TOPICS[topic];
+        const declared = meta.prep?.steps ?? [];
+        expect(plan.steps.map((s) => s.key), topic).toEqual([
+          ...declared.filter((s) => s.scope === "always").map((s) => s.key),
+          VENUE_VOICE_ROOM_STEP.key,
+        ]);
+        expect(plan.homeSteps.map((s) => s.key), topic).toEqual([
+          ...declared.filter((s) => s.scope === "ownDevice").map((s) => s.key),
+          REMOTE_SESSION_KEY,
+        ]);
+      }
+
+      const steps: Record<string, { title?: string; body?: string } | undefined> =
+        prep.steps;
+      expect(steps[VENUE_VOICE_ROOM_STEP.key]?.title?.trim()).toBeTruthy();
+      expect(steps[VENUE_VOICE_ROOM_STEP.key]?.body?.trim()).toBeTruthy();
+      expect(prep.hybridIntro.trim()).toBeTruthy();
+      expect(prep.homeHeading.trim()).toBeTruthy();
     });
 
     it("gives a label-only topic a one-step guide remotely and none in person", () => {

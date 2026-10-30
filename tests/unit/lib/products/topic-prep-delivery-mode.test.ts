@@ -1,55 +1,72 @@
-import { describe, expect, it, vi } from "vitest";
-import type { DeliveryMode } from "@/types";
+import { describe, expect, it } from "vitest";
+import { resolveTopicPrep } from "@/lib/products/topic-prep";
+import type { TopicPrepPlan } from "@/lib/products/topics";
+import type { ProductTopic } from "@/types";
 
 /**
- * The "Before the first session" guide asks a product's delivery mode two
- * separate questions, each through its own helper: whether the family brings
- * their own machine (the install-and-test steps) and whether there is a voice
- * room (the shared mic-and-camera step).
- *
- * This file pins that they are two inputs and not one. It answers the first
- * question the other way for hybrid — what changing that helper's answer would
- * do — and checks that only the install-and-test half of a hybrid guide moves,
- * with the voice-room step staying exactly where the room puts it.
+ * The "Before the first session" guide by delivery mode. Online and in person
+ * are one list, filtered; a hybrid product, with gamers at a site and everyone
+ * in the voice room, is two sections, the second for joining from home.
  */
-vi.mock("@/lib/products/delivery-mode", async (importOriginal) => {
-  const actual =
-    await importOriginal<typeof import("@/lib/products/delivery-mode")>();
-  return {
-    ...actual,
-    familyBringsOwnMachine: (mode: DeliveryMode) => mode === "online",
-  };
-});
-
-const { resolveTopicPrep } = await import("@/lib/products/topic-prep");
-
 const ROOM_STEP = "remoteSession";
+const VENUE_STEP = "venueVoiceRoom";
 
-describe("resolveTopicPrep's two inputs", () => {
-  it("keeps the room step on hybrid when the family does not bring a machine", () => {
-    // Accounts only, as in person, then the room — the room comes from
-    // `hasVoiceRoom`, not from the machine question.
-    const plan = resolveTopicPrep("roblox_studio", "hybrid");
-    expect(plan?.form).toBe("accountsOnly");
-    expect(plan?.steps.map((s) => s.key)).toEqual([
-      "robloxStudioAccount",
+function hybridPlan(topic: ProductTopic) {
+  const plan = resolveTopicPrep(topic, "hybrid");
+  if (plan?.form !== "hybrid") throw new Error(`${topic}: not a hybrid plan`);
+  return plan;
+}
+
+const keys = (steps: TopicPrepPlan["steps"]) => steps.map((s) => s.key);
+
+describe("resolveTopicPrep by delivery mode", () => {
+  it("sorts a topic with both scopes into the two hybrid sections", () => {
+    const plan = hybridPlan("roblox_studio");
+    expect(keys(plan.steps)).toEqual(["robloxStudioAccount", VENUE_STEP]);
+    expect(keys(plan.homeSteps)).toEqual([
+      "robloxStudioInstall",
+      "robloxStudioTest",
       ROOM_STEP,
     ]);
   });
 
-  it("gives a topic whose every step is filtered out the room step alone", () => {
-    // In person the Minecraft topics have nothing to say; with a room there is
-    // still the room to get ready for, under the generic intro.
+  it("opens a hybrid Minecraft guide on the venue step alone", () => {
+    // No `always` steps: the login at the venue is ours, at home the family's.
     expect(resolveTopicPrep("minecraft_java", "in_person")).toBeNull();
-    const plan = resolveTopicPrep("minecraft_java", "hybrid");
-    expect(plan?.form).toBe("remoteOnly");
-    expect(plan?.steps.map((s) => s.key)).toEqual([ROOM_STEP]);
+    const plan = hybridPlan("minecraft_java");
+    expect(keys(plan.steps)).toEqual([VENUE_STEP]);
+    expect(keys(plan.homeSteps)).toEqual([
+      "minecraftJavaAccount",
+      "minecraftJavaInstall",
+      "minecraftJavaLaunch",
+      ROOM_STEP,
+    ]);
+  });
+
+  it("gives a label-only topic the two shared steps on hybrid", () => {
+    const plan = hybridPlan("esports");
+    expect(keys(plan.steps)).toEqual([VENUE_STEP]);
+    expect(keys(plan.homeSteps)).toEqual([ROOM_STEP]);
+  });
+
+  it("keeps a topic with only `always` steps in the first section", () => {
+    const plan = hybridPlan("pokemon_go");
+    expect(keys(plan.steps).at(-1)).toBe(VENUE_STEP);
+    expect(keys(plan.homeSteps)).toEqual([ROOM_STEP]);
   });
 
   it("leaves online and in person as they were", () => {
-    expect(resolveTopicPrep("roblox_studio", "online")?.form).toBe("full");
-    expect(resolveTopicPrep("roblox_studio", "in_person")?.steps.map((s) => s.key)).toEqual([
+    const online = resolveTopicPrep("roblox_studio", "online");
+    expect(online?.form).toBe("full");
+    expect(online && keys(online.steps)).toEqual([
       "robloxStudioAccount",
+      "robloxStudioInstall",
+      "robloxStudioTest",
+      ROOM_STEP,
     ]);
+
+    const inPerson = resolveTopicPrep("roblox_studio", "in_person");
+    expect(inPerson?.form).toBe("accountsOnly");
+    expect(inPerson && keys(inPerson.steps)).toEqual(["robloxStudioAccount"]);
   });
 });

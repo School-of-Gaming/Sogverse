@@ -34,6 +34,8 @@
     "roblox_studio": "Vi tar med datorerna till tillfället, med Roblox Studio redan installerat. Varje deltagare behöver ändå ett eget Roblox-konto. Gå igenom steget nedan före tillfället."
   },
   "remoteOnlyIntro": "Tillfällena använder ett röstrum. Gå igenom steget nedan före det första tillfället.",
+  "hybridIntro": "Den här klubben för samman deltagare både på plats och på distans. Gedu, vårt ord för en spelfostrare, leder klubben på distans. Alla pratar med varandra i ett gemensamt röstrum.",
+  "homeHeading": "Delta hemifrån",
   "steps": {
     "minecraftJavaAccount": {
       "title": "Skaffa ett Microsoft-konto med Minecraft på",
@@ -128,6 +130,10 @@
     "remoteSession": {
       "title": "Ställ in mikrofonen och kameran",
       "body": "Du behöver en mikrofon för att kunna prata med din Gedu, vårt ord för en spelfostrare, och resten av gruppen. Ett headset med mikrofon fungerar bäst: det dämpar bakgrundsljud och hindrar spelets ljud från att eka tillbaka i de andras hörlurar. Tillfället hålls i ett röstrum som körs i en webbläsare. Du kan gå med på datorn du spelar på, eller till exempel på en telefon eller surfplatta. När du går med frågar webbläsaren om lov att använda mikrofonen. Tillåt det, så att de andra hör dig. Du behöver inte ha kameran på, men du får gärna använda den om du vill."
+    },
+    "venueVoiceRoom": {
+      "title": "Gå med i röstrummet på plats",
+      "body": "Deltagarna på plats går med i gruppens röstrum i Sogverse på den enhet de föredrar. Inget headset behövs. Varje deltagare behöver ett sätt att logga in: om deltagaren ännu inte har någon egen inloggning kan en förälder ordna en under Spelarinställningar i Min SOG, så att ingen behöver dela en förälders inloggning."
     }
   },
   "platformNotes": {

@@ -34,6 +34,8 @@
     "roblox_studio": "Tuomme tietokoneet kerralle, ja Roblox Studio on niissä valmiina. Jokainen osallistuja tarvitsee silti oman Roblox-tilin. Käy alla oleva vaihe läpi ennen kertaa."
   },
   "remoteOnlyIntro": "Kerroilla käytetään äänihuonetta. Käy alla oleva vaihe läpi ennen ensimmäistä kertaa.",
+  "hybridIntro": "Kerho kokoaa osallistujat yhteen sekä paikan päällä että etänä. Gedu, eli pelikasvattaja, ohjaa kerhoa etäyhteydellä. Kaikki juttelevat toisilleen yhteisessä äänipuhelussa.",
+  "homeHeading": "Osallistuminen kotoa käsin",
   "steps": {
     "minecraftJavaAccount": {
       "title": "Hanki Microsoft-tili, jolla on Minecraft",
@@ -128,6 +130,10 @@
     "remoteSession": {
       "title": "Laita mikrofoni ja kamera kuntoon",
       "body": "Tarvitset mikrofonin, jotta voit keskustella Gedun eli pelikasvattajan ja muiden ryhmäläisten kanssa. Kuulokkeet, joissa on mikrofoni, toimivat parhaiten, sillä ne vähentävät taustahälyä ja estävät pelisi ääniä kiertämästä takaisin muiden osallistujien kuulokkeisiin. Kerta pidetään äänihuoneessa, joka toimii nettiselaimessa. Voit liittyä tietokoneella, jolla pelaat, tai esimerkiksi puhelimella tai tabletilla. Kun liityt, nettiselaimesi pyytää lupaa käyttää mikrofonia. Salli käyttö, jotta muut kuulevat sinut. Sinun ei ole pakko pitää kameraa päällä, mutta saat käyttää sitä, jos haluat."
+    },
+    "venueVoiceRoom": {
+      "title": "Äänihuoneeseen liittyminen paikan päällä",
+      "body": "Paikan päällä olevat osallistujat liittyvät ryhmän äänihuoneeseen Sogversessa haluamallaan laitteella. Kuulokkeita ei tarvita. Jokainen osallistuja tarvitsee keinon kirjautua sisään: jos hänellä ei vielä ole omia tunnuksia, huoltaja voi asettaa ne Oman SOGin Pelaajan asetuksista, jotta kenenkään ei tarvitse jakaa huoltajan tunnuksia."
     }
   },
   "platformNotes": {

@@ -62,7 +62,8 @@ import type { GamePlatform } from "@/lib/constants/game-platforms";
 // everything already installed, so a step is the family's to do only where the
 // thing it is about is theirs: `"always"` steps render on every product,
 // `"ownDevice"` steps only where the family sets up a machine of their own
-// (`familyBringsOwnMachine` of the product's delivery mode).
+// (`familyBringsOwnMachine` of the product's delivery mode), which on a hybrid
+// product is the guide's home section.
 //
 // **An account step is scoped by where the login comes from, not by the fact
 // that it is an account.** For the three Minecraft topics the login is ours as
@@ -80,16 +81,26 @@ import type { GamePlatform } from "@/lib/constants/game-platforms";
 // (`hasVoiceRoom` of its delivery mode) — the session happens in a browser
 // room, and in person there is no room — so it is declared once, outside every
 // topic's `steps`, and `resolveTopicPrep` appends it as the last step of every
-// guide for a product with a room. Written into every topic's block it would
-// be one paragraph copied per topic, drifting apart the first time one of them
-// was edited. It is also why the label-only topics render a guide on such a
-// product: there is exactly one thing to do beforehand, and it is this.
+// guide for a product with a room (in a hybrid guide, the last step of the home
+// section). Written into every topic's block it would be one paragraph copied
+// per topic, drifting apart the first time one of them was edited. It is also
+// why the label-only topics render a guide on such a product: there is exactly
+// one thing to do beforehand, and it is this.
 //
 // **The two are separate inputs on purpose.** Whether the install-and-test
 // steps apply and whether the voice-room step applies are different questions
 // of the delivery mode, and the resolver asks each through its own helper, so
 // changing what one helper answers for a mode changes that half of the guide
 // and nothing else.
+//
+// **A hybrid guide is two sections, because its gamers are in two places.**
+// One reader's child sits at the venue on a machine we brought and another's
+// joins from home, and the mail and the card cannot tell which. So the first
+// section holds what applies wherever the child is — the topic's `always` steps
+// and joining the room from the venue, which is its own shared step because
+// nothing about it is the mic-and-camera step's setup — and a second section,
+// for joining from home, holds the topic's `ownDevice` steps and the
+// mic-and-camera step.
 //
 // **Every message-shaped thing stays out of this registry.** It holds structure
 // and literals (a step's key, its scope, its URL) and the catalog holds the
@@ -535,8 +546,9 @@ export function topicHasInfoCard(
  * is a fact about a product with a voice room and not about any topic — the
  * same paragraph would otherwise be written once per topic and be that many
  * paragraphs to keep in agreement. `resolveTopicPrep` appends it, last, to
- * every guide for a product with a room, and a label-only topic's guide there
- * is this step and nothing else.
+ * every guide for a product with a room (in a hybrid guide, to the home
+ * section), and an online label-only topic's guide is this step and nothing
+ * else.
  *
  * Its scope is `ownDevice` because the room runs in a browser on a machine of
  * the family's. The resolver never *filters* it by scope — it is added exactly
@@ -546,6 +558,18 @@ export function topicHasInfoCard(
 export const REMOTE_SESSION_STEP = {
   key: "remoteSession",
   scope: "ownDevice",
+} as const satisfies TopicPrepStepShape;
+
+/**
+ * The hybrid guide's own shared step: a gamer at the venue joining the group's
+ * voice room. It is a separate step rather than the mic-and-camera one because
+ * a venue reader has no headset to choose and no home machine to set up; what
+ * they need is a sign-in of their own. Its scope is `always` because that
+ * sign-in is the family's wherever the machine came from.
+ */
+export const VENUE_VOICE_ROOM_STEP = {
+  key: "venueVoiceRoom",
+  scope: "always",
 } as const satisfies TopicPrepStepShape;
 
 // The topics that carry a prep block, derived from the map the same way
@@ -577,7 +601,8 @@ export type TopicWithAccountsOnlyIntro = {
 // map, it is a union of exactly the keys that exist.
 export type TopicPrepStep =
   | (typeof PRODUCT_TOPICS)[TopicWithPrep]["prep"]["steps"][number]
-  | typeof REMOTE_SESSION_STEP;
+  | typeof REMOTE_SESSION_STEP
+  | typeof VENUE_VOICE_ROOM_STEP;
 
 /** Every step key the catalog must hold prose for. */
 export type TopicPrepStepKey = TopicPrepStep["key"];
@@ -599,9 +624,10 @@ export type TopicPrepChecklistKey = NonNullable<
  * The form is a discriminant rather than a boolean because each branch reads a
  * *different message key*, and the type is what stops a renderer asking the
  * catalog for one that does not exist. `full` and `accountsOnly` are keyed by
- * topic and carry the narrowest topic union that has prose; `remoteOnly` is
- * keyed by nothing, because a guide that is only the shared voice-room step
- * has no topic-specific sentence to open with and takes the one generic intro.
+ * topic and carry the narrowest topic union that has prose; `remoteOnly` and
+ * `hybrid` are keyed by nothing, because neither has a topic-specific sentence
+ * to open with: each takes a generic intro of its own. `hybrid` alone has a
+ * second list, under a heading of its own.
  */
 export type TopicPrepPlan =
   | {
@@ -618,6 +644,13 @@ export type TopicPrepPlan =
       /** Nothing of the topic's applies, but there is a voice room: the shared step, alone. */
       form: "remoteOnly";
       steps: readonly TopicPrepStep[];
+    }
+  | {
+      /** Gamers at a site and everyone in the room: what applies wherever the
+       *  child is, then what joining from home adds. */
+      form: "hybrid";
+      steps: readonly TopicPrepStep[];
+      homeSteps: readonly TopicPrepStep[];
     };
 
 /**

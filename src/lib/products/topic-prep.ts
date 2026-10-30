@@ -1,11 +1,13 @@
 import type { DeliveryMode, ProductTopic } from "@/types";
 import {
   familyBringsOwnMachine,
+  gamersAttendSite,
   hasVoiceRoom,
 } from "@/lib/products/delivery-mode";
 import {
   PRODUCT_TOPICS,
   REMOTE_SESSION_STEP,
+  VENUE_VOICE_ROOM_STEP,
   topicHasAccountsOnlyIntro,
   topicHasPrep,
   type TopicPrepPlan,
@@ -13,11 +15,38 @@ import {
 } from "./topics";
 
 /**
+ * The hybrid guide: everything that applies wherever the child is, then what
+ * joining from home adds. It works for every topic, because the two shared
+ * steps are there whatever the topic brought — a label-only topic's sections
+ * hold them alone, and a topic with no `always` steps opens on the venue step.
+ */
+function resolveHybridPrep(topic: ProductTopic): TopicPrepPlan {
+  // Read through the const map rather than the declared shape, so the step
+  // keys stay the literals the message catalog is checked against.
+  const declared: readonly TopicPrepStep[] = topicHasPrep(topic)
+    ? PRODUCT_TOPICS[topic].prep.steps
+    : [];
+
+  return {
+    form: "hybrid",
+    steps: [
+      ...declared.filter((step) => step.scope === "always"),
+      VENUE_VOICE_ROOM_STEP,
+    ],
+    homeSteps: [
+      ...declared.filter((step) => step.scope === "ownDevice"),
+      REMOTE_SESSION_STEP,
+    ],
+  };
+}
+
+/**
  * The whole render decision for one product: which steps apply, which intro
  * they take, and — as `null` — whether anything applies at all.
  *
- * The delivery mode is asked two separate questions, each through its own
- * helper: whether the family sets up a machine of their own
+ * A product with gamers at a site and a voice room takes the two-section hybrid
+ * guide. For any other, the delivery mode is asked two separate questions, each
+ * through its own helper: whether the family sets up a machine of their own
  * (`familyBringsOwnMachine`, which keeps the topic's `ownDevice` steps), and
  * whether the sessions have a voice room (`hasVoiceRoom`, which appends the
  * shared voice-room step).
@@ -34,6 +63,10 @@ export function resolveTopicPrep(
   topic: ProductTopic,
   mode: DeliveryMode,
 ): TopicPrepPlan | null {
+  if (hasVoiceRoom(mode) && gamersAttendSite(mode)) {
+    return resolveHybridPrep(topic);
+  }
+
   const roomSteps = hasVoiceRoom(mode) ? [REMOTE_SESSION_STEP] : [];
 
   // The topic brings nothing that applies here — no guide of its own, or only
@@ -44,8 +77,7 @@ export function resolveTopicPrep(
 
   if (!topicHasPrep(topic)) return roomOnly;
 
-  // Read through the const map rather than the declared shape, so the step
-  // keys stay the literals the message catalog is checked against.
+  // Read through the const map, as the hybrid guide does.
   const declared: readonly TopicPrepStep[] = PRODUCT_TOPICS[topic].prep.steps;
   const applicable = familyBringsOwnMachine(mode)
     ? declared

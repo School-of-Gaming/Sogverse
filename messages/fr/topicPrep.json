@@ -34,6 +34,8 @@
     "roblox_studio": "Nous apportons les ordinateurs à la séance, avec Roblox Studio déjà installé. Chaque participant a tout de même besoin de son propre compte Roblox. Merci de suivre l’étape ci-dessous avant la séance."
   },
   "remoteOnlyIntro": "Les séances passent par un salon vocal. Merci de suivre l’étape ci-dessous avant la première séance.",
+  "hybridIntro": "Ce club réunit les participants à la fois sur place et à distance. Le Gedu, notre mot pour un animateur, anime le club à distance. Tout le monde se parle dans un salon vocal commun.",
+  "homeHeading": "Participer depuis chez soi",
   "steps": {
     "minecraftJavaAccount": {
       "title": "Obtenir un compte Microsoft avec Minecraft dessus",
@@ -128,6 +130,10 @@
     "remoteSession": {
       "title": "Configurer le microphone et la caméra",
       "body": "Il vous faut un microphone pour parler avec le reste du groupe et le Gedu, notre mot pour un animateur. Un casque avec micro fonctionne le mieux : il réduit les bruits de fond et empêche le son de votre jeu de revenir en écho dans les écouteurs des autres. La séance se déroule dans un salon vocal qui fonctionne dans un navigateur web. Vous pouvez vous connecter depuis l’ordinateur sur lequel vous jouez, ou depuis un autre appareil, comme un téléphone ou une tablette. À la connexion, votre navigateur demande l’autorisation d’utiliser le microphone. Acceptez, pour que les autres vous entendent. La caméra n’est pas obligatoire, mais vous pouvez l’utiliser si vous le souhaitez."
+    },
+    "venueVoiceRoom": {
+      "title": "Rejoindre le salon vocal sur place",
+      "body": "Les participants sur place rejoignent le salon vocal du groupe dans Sogverse, sur l’appareil de leur choix. Aucun casque n’est nécessaire. Chaque participant a besoin d’un moyen de se connecter : s’il n’a pas encore de connexion à lui, un parent peut lui en créer une dans Paramètres du joueur, sur Mon SOG, pour que personne n’ait à partager les identifiants d’un parent."
     }
   },
   "platformNotes": {

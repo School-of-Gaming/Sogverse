@@ -1824,11 +1824,11 @@ describe("the preview topic axis", () => {
 
 /**
  * The topic-prep scene is the one scene with no product fixture behind it: it
- * enumerates the topic registry itself, and its two scenarios are the two forms
- * a guide filters into rather than two products.
+ * enumerates the topic registry itself, and its scenarios are the delivery
+ * modes a guide takes a form from rather than products.
  */
 describe("the topic prep scene", () => {
-  it("registers exactly the two filtered forms", () => {
+  it("registers exactly one scenario per delivery mode", () => {
     expect(slugsFor("topic-prep")).toEqual([...TOPIC_PREP_SCENARIOS]);
     for (const slug of TOPIC_PREP_SCENARIOS) {
       expect(isTopicPrepScenario(slug)).toBe(true);
