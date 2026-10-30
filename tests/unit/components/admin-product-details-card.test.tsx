@@ -115,6 +115,20 @@ describe("the admin product details card", () => {
     expect(valueOf("Created on").textContent).toBe("1 Dec 2025");
   });
 
+  it("names every marketing ask the product carries, School of Gaming's own included", () => {
+    renderPage({
+      ...syntheticConsumerProduct(),
+      product_marketing_consents: [
+        { consent_type: "lynx_educate" },
+        { consent_type: "school_of_gaming" },
+      ],
+    });
+
+    const value = valueOf("Marketing asks").textContent;
+    expect(value).toContain("School of Gaming");
+    expect(value).toContain("Lynx Educate");
+  });
+
   it("dates the creation in the viewer's zone, not UTC", () => {
     // 23:30 UTC on 1 December is already 2 December in Helsinki.
     renderPage({

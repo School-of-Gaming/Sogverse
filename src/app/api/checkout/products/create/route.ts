@@ -33,6 +33,11 @@ import {
 } from "@/lib/marketing-events";
 import { reportAdConversion } from "@/lib/ad-conversions.server";
 import { getOrigin } from "@/lib/url";
+import { parseConsentCookieHeader } from "@/lib/consent";
+import {
+  seatAnswerArgs,
+  seatAnswersToSessionMetadata,
+} from "@/services/participations/seat-answers";
 
 /**
  * POST /api/checkout/products/create
@@ -182,6 +187,18 @@ export const POST = defineRoute({
       );
     }
 
+    // What the seat records beyond who and what: the visit's UTM tag and the
+    // parent's answer to the product's School of Gaming mailing box. The tag
+    // is GATED ON MARKETING CONSENT, read off THIS request's own cookie header
+    // — never a body field — exactly as account creation gates the profile's
+    // copy (`src/lib/utm.ts`). The box's answer is the parent's own and passes
+    // through as given: absent when the panel did not ask, which stores NULL.
+    const seatAnswers = seatAnswerArgs(
+      parseConsentCookieHeader(request.headers.get("cookie")),
+      body.utm,
+      body.schoolOfGamingMarketingOptIn,
+    );
+
     // For a paid shape this call only *validates* — it runs every signup rule
     // (parent-of, lifecycle, registration window, currency, already-enrolled,
     // seat cap) under the product gate lock and writes nothing. The row is
@@ -204,6 +221,10 @@ export const POST = defineRoute({
         // would put a second copy of the rule outside the lock, where it could
         // read a requirement set that changed a moment later.
         p_consented_documents: body.consentedDocuments,
+        // Written onto the seat for the two no-charge shapes; ignored by the
+        // paid ones, which carry the same values through the Checkout Session
+        // to the webhook instead.
+        ...seatAnswers,
       },
     );
 
@@ -469,7 +490,13 @@ export const POST = defineRoute({
         automatic_tax: { enabled: true },
         customer_update: { address: "auto" },
         expires_at: expiresAt,
-        metadata: sessionMetadata,
+        // The seat answers ride the session alone: the webhook writes them onto
+        // the seat it creates, and no other Stripe object has a use for them —
+        // so they stay out of the subscription's copy below.
+        metadata: {
+          ...sessionMetadata,
+          ...seatAnswersToSessionMetadata(seatAnswers),
+        },
         success_url: successUrl,
         cancel_url: cancelUrl,
         line_items: [],

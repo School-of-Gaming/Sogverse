@@ -944,6 +944,10 @@
         "lynxEducate": {
           "label": "Lynx Educate",
           "description": "Att kryssa i detta lägger till en valfri fråga vid anmälan till den här produkten: föräldrar tillfrågas om de vill dela sin e-postadress med Lynx Educate. En förälder kan tacka nej, och platsen påverkas inte."
+        },
+        "schoolOfGaming": {
+          "label": "School of Gaming",
+          "description": "Att kryssa i detta lägger till en valfri fråga vid anmälan till den här produkten: föräldrar tillfrågas om de vill få e-post från School of Gaming om våra klubbar, läger och nyheter. En förälder kan tacka nej, och platsen påverkas inte."
         }
       }
     },

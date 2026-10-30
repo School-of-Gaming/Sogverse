@@ -10,11 +10,10 @@ import {
 } from "@/lib/klaviyo";
 import { createAdminClient } from "@/lib/supabase/admin";
 import {
-  ACCOUNT_REGISTRATION_CUSTOM_SOURCE,
   klaviyoEventFor,
   klaviyoListsFor,
   klaviyoProfileFor,
-  subscribesOnSend,
+  subscriptionSourceOnSend,
 } from "./contract";
 import { listIdsFor, marketingConsentListId } from "./lists.server";
 import {
@@ -244,9 +243,11 @@ async function drainEventBatch(
 
 /**
  * Send one event, and — for an account created with the registration form's
- * box ticked — the one subscription Sogverse ever sends, into the marketing
- * consent list. After the event, so a failed subscription retries both, and
- * the event's unique id keeps Klaviyo from recording it twice.
+ * box ticked, or a seat enrolled with a yes to the product's School of Gaming
+ * mailing ask — a subscription into the marketing consent list, under the
+ * source the contract names. After the event, so a failed subscription
+ * retries both, and the event's unique id, the outbox row's own, keeps
+ * Klaviyo from recording it twice.
  */
 async function sendEvent(
   row: unknown,
@@ -257,17 +258,13 @@ async function sendEvent(
   if (!parsed.success) throw new Error("The event row did not parse");
   const event = parsed.data;
 
+  const customSource = subscriptionSourceOnSend(event, snapshot);
   // Read before any write, so a list nobody configured fails the row first.
-  const subscribeListId = subscribesOnSend(event, snapshot) ? marketingConsentListId() : null;
+  const subscription =
+    customSource === null ? null : { listId: marketingConsentListId(), customSource };
   const { email, id } = snapshot.profile;
   await createKlaviyoEvent({ email, externalId: id }, klaviyoEventFor(event, snapshot));
-  if (subscribeListId !== null) {
-    await subscribeKlaviyoProfile({
-      email,
-      listId: subscribeListId,
-      customSource: ACCOUNT_REGISTRATION_CUSTOM_SOURCE,
-    });
-  }
+  if (subscription !== null) await subscribeKlaviyoProfile({ email, ...subscription });
 }
 
 /** An error as one line for the outbox row: labels, never an address or a name. */

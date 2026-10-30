@@ -19,6 +19,13 @@ CREATE FUNCTION public.klaviyo_product_document(p_product_id uuid) RETURNS jsonb
            'topic',        p.topic,
            'product_type', p.product_type,
            'billing_mode', p.billing_mode,
+           'delivery_mode', p.delivery_mode,
+           'spoken_language_code', p.spoken_language_code,
+           'location_name', (
+                             SELECT l.name
+                               FROM public.locations l
+                              WHERE l.id = p.location_id
+                           ),
            'start_date',   p.start_date,
            'end_date',     p.end_date,
            'timezone',     p.timezone
@@ -32,7 +39,7 @@ $$;
 -- Name: FUNCTION klaviyo_product_document(p_product_id uuid); Type: COMMENT; Schema: public; Owner: -
 --
 
-COMMENT ON FUNCTION public.klaviyo_product_document(p_product_id uuid) IS 'One product as Klaviyo is told about it: id, every name with its locale (the app picks the reader''s through resolveTranslation, never SQL), topic, product_type, billing_mode, start_date, end_date and timezone. NULL for a product that does not exist. Granted to nobody.';
+COMMENT ON FUNCTION public.klaviyo_product_document(p_product_id uuid) IS 'One product as Klaviyo is told about it: id, every name with its locale (the app picks the reader''s through resolveTranslation, never SQL), topic, product_type, billing_mode, delivery_mode, spoken_language_code, location_name (the location''s canonical name, null when the product has none), start_date, end_date and timezone. NULL for a product that does not exist. Granted to nobody.';
 
 
 --

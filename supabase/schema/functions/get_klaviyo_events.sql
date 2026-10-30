@@ -8,7 +8,7 @@ CREATE FUNCTION public.get_klaviyo_events(p_event_ids uuid[]) RETURNS TABLE(even
     AS $$
   SELECT e.id,
          e.kind,
-         e.kind::text || ':' || e.source_id::text,
+         e.unique_id,
          e.customer_id,
          e.occurred_at,
          e.facts || jsonb_build_object(
@@ -29,7 +29,7 @@ $$;
 -- Name: FUNCTION get_klaviyo_events(p_event_ids uuid[]); Type: COMMENT; Schema: public; Owner: -
 --
 
-COMMENT ON FUNCTION public.get_klaviyo_events(p_event_ids uuid[]) IS 'The named Klaviyo events, ready to send: event_id, kind, unique_id (`<kind>:<source id>`, which Klaviyo deduplicates on), the parent, occurred_at (the source row''s own moment) and properties — the facts recorded when the event was filed (first_purchase for a purchase; status and current_period_end for a cancellation) plus source_id and product (klaviyo_product_document, null when the event names none or the product is gone). An event whose parent is no longer a parent is left out, and the sync finishes it unsent. Service role only.';
+COMMENT ON FUNCTION public.get_klaviyo_events(p_event_ids uuid[]) IS 'The named Klaviyo events, ready to send: event_id, kind, unique_id (the outbox row''s, which Klaviyo deduplicates on), the parent, occurred_at (the source row''s own moment) and properties — the facts recorded when the event was filed (klaviyo_event_outbox.facts says which, per kind) plus source_id and product (klaviyo_product_document, null when the event names none or the product is gone). An event whose parent is no longer a parent is left out, and the sync finishes it unsent. Service role only.';
 
 
 --

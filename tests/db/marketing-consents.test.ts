@@ -594,7 +594,7 @@ describe("marketing consents", () => {
       expect(await asksFor(PRODUCT_PUBLISHED)).toEqual([LYNX]);
     });
 
-    it("refuses School of Gaming's own list on a product, leaving the set as it was", async () => {
+    it("asks School of Gaming's own question on a product, replacing the set", async () => {
       expect(
         (
           await adminAuth.rpc("admin_set_product_marketing_consents", {
@@ -607,8 +607,16 @@ describe("marketing consents", () => {
         p_product_id: PRODUCT_PUBLISHED,
         p_consent_types: [SOG],
       });
-      expect(res.error?.code).toBe(CHECK_VIOLATION);
-      expect(await asksFor(PRODUCT_PUBLISHED)).toEqual([LYNX]);
+      expect(res.error).toBeNull();
+      expect(await asksFor(PRODUCT_PUBLISHED)).toEqual([SOG]);
+      expect(
+        (
+          await adminAuth.rpc("admin_set_product_marketing_consents", {
+            p_product_id: PRODUCT_PUBLISHED,
+            p_consent_types: [LYNX],
+          })
+        ).error,
+      ).toBeNull();
     });
 
     it("refuses a product that does not exist, even on a call that clears", async () => {

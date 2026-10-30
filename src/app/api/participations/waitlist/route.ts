@@ -9,6 +9,8 @@ import {
   leaveWaitlistRpcResult,
 } from "@/services/participations/participations.contracts";
 import { consentRefusalError } from "@/services/participations/consent-refusal";
+import { seatAnswerArgs } from "@/services/participations/seat-answers";
+import { parseConsentCookieHeader } from "@/lib/consent";
 import { sendProductConfirmationEmail } from "@/services/participations/product-confirmation-email.server";
 import {
   advertisedProductDetails,
@@ -59,6 +61,15 @@ export const POST = defineRoute({
       // able to decline. Nothing is checked here; the RPC's check violation is
       // the refusal, and this route already discloses its message.
       p_consented_documents: body.consentedDocuments,
+      // The place in line records what a seat does: the visit's UTM tag,
+      // GATED ON MARKETING CONSENT read off THIS request's own cookie header,
+      // and the parent's answer to the School of Gaming box, passed through as
+      // given (absent when the panel did not ask).
+      ...seatAnswerArgs(
+        parseConsentCookieHeader(request.headers.get("cookie")),
+        body.utm,
+        body.schoolOfGamingMarketingOptIn,
+      ),
     });
 
     // Same one exception the signup door makes, for the same reason: the

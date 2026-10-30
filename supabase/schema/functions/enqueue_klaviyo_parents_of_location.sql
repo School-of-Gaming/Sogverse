@@ -11,6 +11,11 @@ CREATE FUNCTION public.enqueue_klaviyo_parents_of_location(p_location_id uuid) R
       FROM public.profiles p
      WHERE p.home_location_id = p_location_id
        AND p.registration_completed_at IS NOT NULL
+    UNION
+    SELECT part.customer_id
+      FROM public.products pr
+      JOIN public.participations part ON part.product_id = pr.id
+     WHERE pr.location_id = p_location_id
   ));
 $$;
 
@@ -19,7 +24,7 @@ $$;
 -- Name: FUNCTION enqueue_klaviyo_parents_of_location(p_location_id uuid); Type: COMMENT; Schema: public; Owner: -
 --
 
-COMMENT ON FUNCTION public.enqueue_klaviyo_parents_of_location(p_location_id uuid) IS 'Files every registered parent whose home location this is in the Klaviyo profile outbox, because a parent''s Klaviyo profile carries their home location''s name and country. A fan-out over one location''s parents. Granted to nobody.';
+COMMENT ON FUNCTION public.enqueue_klaviyo_parents_of_location(p_location_id uuid) IS 'Files in the Klaviyo profile outbox every registered parent whose home location this is, because a parent''s Klaviyo profile carries their home location''s name and country, and every parent holding a participation in a product at this location, because a product document carries its location''s name. A fan-out over one location''s parents and seats. Granted to nobody.';
 
 
 --

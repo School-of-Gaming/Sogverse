@@ -944,6 +944,10 @@
         "lynxEducate": {
           "label": "Lynx Educate",
           "description": "Tämän valitseminen lisää tuotteen ilmoittautumiseen vapaaehtoisen kysymyksen: vanhemmilta kysytään, saako heidän sähköpostiosoitteensa jakaa Lynx Educaten kanssa. Vanhempi voi kieltäytyä, eikä se vaikuta paikkaan."
+        },
+        "schoolOfGaming": {
+          "label": "School of Gaming",
+          "description": "Tämän valitseminen lisää tuotteen ilmoittautumiseen vapaaehtoisen kysymyksen: vanhemmilta kysytään, haluavatko he School of Gamingilta sähköpostia kerhoistamme, leireistämme ja uutisistamme. Vanhempi voi kieltäytyä, eikä se vaikuta paikkaan."
         }
       }
     },

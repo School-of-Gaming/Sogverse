@@ -7,12 +7,14 @@ import { klaviyoEnvironment, type KlaviyoList } from "./contract";
  * deploy.
  *
  * - `KLAVIYO_MARKETING_CONSENT_LIST_ID` — the list a subscription joins: a
- *   registration with the box ticked, and a landing page's newsletter form.
+ *   registration with the box ticked, a product sign-up that said yes to
+ *   School of Gaming's mailing ask, and a landing page's newsletter form.
  *   Production's is `SV Marketing consent`; everywhere else it is
  *   `SV Staging`.
  * - `KLAVIYO_ACCOUNT_LIST_ID`, `KLAVIYO_CLUB_LIST_ID`, `KLAVIYO_CAMP_LIST_ID`,
- *   `KLAVIYO_MUNICIPAL_CLUB_LIST_ID` — production's history lists, set on the
- *   production deployment alone. Staging writes no list but `SV Staging`.
+ *   `KLAVIYO_EVENT_LIST_ID`, `KLAVIYO_MUNICIPAL_CLUB_LIST_ID` — production's
+ *   history lists, set on the production deployment alone. Staging writes no
+ *   list but `SV Staging`.
  *
  * An unset id is a failure, never a skip: the row records which variable is
  * missing and retries, so a list nobody configured cannot quietly stay empty.
@@ -24,6 +26,7 @@ const HISTORY_LIST_VARS = {
   account: "KLAVIYO_ACCOUNT_LIST_ID",
   club: "KLAVIYO_CLUB_LIST_ID",
   camp: "KLAVIYO_CAMP_LIST_ID",
+  event: "KLAVIYO_EVENT_LIST_ID",
   municipalClub: "KLAVIYO_MUNICIPAL_CLUB_LIST_ID",
 } as const satisfies Record<KlaviyoList, string>;
 

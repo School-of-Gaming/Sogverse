@@ -55,6 +55,8 @@ vi.mock("next-intl", async () => {
 vi.mock("@/providers", () => ({
   useNow: () => new Date("2026-01-05T12:00:00Z"),
   useTimezone: () => "Europe/Helsinki",
+  // The visit arrived with no campaign tag; the panel sends what it holds.
+  useUtm: () => ({ source: null, medium: null, campaign: null, content: null, term: null }),
 }));
 
 vi.mock("@/providers/auth-provider", () => ({
@@ -155,15 +157,17 @@ const OPEN = {
 function panel({
   state = OPEN,
   authState = AUTH,
+  marketingConsentTypes = [LYNX_MARKETING],
 }: {
   state?: React.ComponentProps<typeof SignupPanel>["state"];
   authState?: AuthState;
+  marketingConsentTypes?: MarketingConsentType[];
 } = {}) {
   return (
     <SignupPanel
       product={PRODUCT}
       requiredConsentSlugs={[]}
-      marketingConsentTypes={[LYNX_MARKETING]}
+      marketingConsentTypes={marketingConsentTypes}
       gamerPhotoConsentTypes={[LYNX_PHOTO]}
       state={state}
       authState={authState}
@@ -367,5 +371,83 @@ describe("the writes never get in the enrolment's way", () => {
     expect(logged).toHaveBeenCalledTimes(2);
     expect(container.querySelector('[role="alert"]')).toBeNull();
     logged.mockRestore();
+  });
+});
+
+/**
+ * **School of Gaming's own box travels with the enrolment, never through the
+ * consent writer.** Klaviyo owns that consent and `set_marketing_consent`
+ * refuses it; the answer is stored on the row the booking writes, so it rides
+ * the booking request — the create request, or the waitlist join.
+ */
+describe("School of Gaming's own box", () => {
+  const SOG: MarketingConsentType = "school_of_gaming";
+  /** Rules, photo, ours, Lynx's — the order a parent meets them. */
+  const sogBox = (c: HTMLElement) => boxes(c)[2];
+  const createInput = () => createMutate.mock.calls[0][0];
+
+  it("sends a ticked box with the enrolment, and writes only the partner's answer to the account", () => {
+    const { container } = render(
+      panel({ marketingConsentTypes: [LYNX_MARKETING, SOG] }),
+    );
+
+    fireEvent.click(sogBox(container));
+    agreeToTheRules(container);
+    fireEvent.click(cta(container));
+
+    expect(createInput()).toMatchObject({ schoolOfGamingMarketingOptIn: true });
+    expect(setMarketingMutate).toHaveBeenCalledTimes(1);
+    expect(onlyCall(setMarketingMutate)).toMatchObject({
+      consentType: LYNX_MARKETING,
+    });
+  });
+
+  it("sends an untouched box as the no it looks like", () => {
+    const { container } = render(panel({ marketingConsentTypes: [SOG] }));
+
+    agreeToTheRules(container);
+    fireEvent.click(cta(container));
+
+    expect(createInput()).toMatchObject({ schoolOfGamingMarketingOptIn: false });
+    expect(setMarketingMutate).not.toHaveBeenCalled();
+  });
+
+  it("sends null when the product does not ask, beside the visit's tag", () => {
+    const { container } = render(panel());
+
+    agreeToTheRules(container);
+    fireEvent.click(cta(container));
+
+    expect(createInput()).toMatchObject({
+      schoolOfGamingMarketingOptIn: null,
+      // The stubbed visit carries no tag, so every field is omitted.
+      utm: {},
+    });
+  });
+
+  it("is asked and sent on the waitlist door exactly as on a booking", () => {
+    const { container } = render(
+      panel({
+        state: { kind: "full_waitlist", seatCount: 8 },
+        marketingConsentTypes: [LYNX_MARKETING, SOG],
+      }),
+    );
+
+    // Rules, photo, ours, Lynx's — the same boxes a booking shows.
+    expect(boxes(container)).toHaveLength(4);
+    fireEvent.click(sogBox(container));
+    agreeToTheRules(container);
+    fireEvent.click(cta(container));
+
+    expect(waitlistMutate).toHaveBeenCalledTimes(1);
+    expect(waitlistMutate.mock.calls[0][0]).toMatchObject({
+      schoolOfGamingMarketingOptIn: true,
+      // The stubbed visit carries no tag, so every field is omitted.
+      utm: {},
+    });
+    expect(setMarketingMutate).toHaveBeenCalledTimes(1);
+    expect(onlyCall(setMarketingMutate)).toMatchObject({
+      consentType: LYNX_MARKETING,
+    });
   });
 });

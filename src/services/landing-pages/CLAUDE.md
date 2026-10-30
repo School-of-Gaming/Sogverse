@@ -327,7 +327,7 @@ would. The profile carries
 the address, the names given, the page's locale, the landing page's id, and the visit's
 UTM values only under marketing consent — nothing else. The two custom ones are named in
 the Klaviyo contract (`src/lib/klaviyo-sync/`): `sog_newsletter_page` and
-`sog_newsletter_utm_source` … `_term`, never the account sync's `sog_first_utm_…` names,
+`sog_newsletter_utm_source` … `_term`, never the account sync's `sog_utm_…` names,
 because a subscriber who later opens an account is one Klaviyo profile carrying
 both. The section has no shared field
 but its background and its sticky side; its form copy, consent sentence included, is fixed

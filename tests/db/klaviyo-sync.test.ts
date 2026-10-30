@@ -29,15 +29,42 @@ import { createTestProduct, deleteTestProducts } from "./product-helpers";
  * the outbox rows it is about before it acts, and claims only the parents it
  * names.
  *
- * Products 930-932 (see the product-helpers allocation registry): CLUB, a club
- * starting tomorrow, ENDED, one that ended long ago, and FREE, a free club.
+ * Products 930-933 (see the product-helpers allocation registry): CLUB, a club
+ * starting tomorrow, ENDED, one that ended long ago,
+ * FREE, a free club, and MUNI, a municipality club on an external contract.
  */
 
 const CLUB = "00000000-0000-0000-0000-000000000930";
 const ENDED = "00000000-0000-0000-0000-000000000931";
 const FREE = "00000000-0000-0000-0000-000000000932";
+const MUNI = "00000000-0000-0000-0000-000000000933";
+const PRODUCTS = [CLUB, ENDED, FREE, MUNI];
 
 const FORBIDDEN = "42501";
+const CHECK_VIOLATION = "23514";
+
+/** What every enrolled event of the seeded gamer's seat says about who holds it, with no booking tag. */
+const GAMER_SEAT_UNTAGGED = {
+  seat_holder: "gamer",
+  gamer_birth_year: SEED.GAMER_BIRTH.birth_year,
+  gamer_gender: "boy",
+  utm_source: null,
+  utm_medium: null,
+  utm_campaign: null,
+  utm_content: null,
+  utm_term: null,
+  marketing_opt_in: null,
+};
+
+/** What a waitlisted event with no booking tag and no answer says, and all it says. */
+const WAITLISTED_UNTAGGED = {
+  utm_source: null,
+  utm_medium: null,
+  utm_campaign: null,
+  utm_content: null,
+  utm_term: null,
+  marketing_opt_in: null,
+};
 
 type ProfileOutbox = Database["public"]["Tables"]["klaviyo_profile_outbox"]["Row"];
 type EventOutbox = Database["public"]["Tables"]["klaviyo_event_outbox"]["Row"];
@@ -112,9 +139,18 @@ describe("the Klaviyo sync", () => {
       TEST_CREDENTIALS.CUSTOMER.email,
       TEST_CREDENTIALS.CUSTOMER.password,
     );
-    await deleteTestProducts(admin, [CLUB, ENDED, FREE]);
+    await deleteTestProducts(admin, PRODUCTS);
     await createTestProduct(admin, { id: CLUB, seatCount: null, topic: "roblox_studio" });
     await createTestProduct(admin, { id: FREE, seatCount: null, billingMode: "free" });
+    await createTestProduct(admin, {
+      id: MUNI,
+      seatCount: null,
+      productType: "municipality_club",
+      billingMode: "external_contract",
+      locationId: TEST_IDS.LOCATION_MUNICIPALITY,
+      endDate: "2099-06-01",
+      startDate: "2099-01-01",
+    });
     await createTestProduct(admin, {
       id: ENDED,
       seatCount: null,
@@ -130,7 +166,7 @@ describe("the Klaviyo sync", () => {
   });
 
   afterAll(async () => {
-    await deleteTestProducts(admin, [CLUB, ENDED, FREE]);
+    await deleteTestProducts(admin, PRODUCTS);
     if (paymentIds.length > 0) await admin.from("payments").delete().in("id", paymentIds);
     await admin.from("gamer_profiles").update({ gender: "boy" }).eq("user_id", TEST_IDS.GAMER);
     await admin.from("minecraft_accounts").delete().eq("user_id", TEST_IDS.GAMER);
@@ -239,6 +275,25 @@ describe("the Klaviyo sync", () => {
 
       await admin.from("participations").delete().eq("id", participationId);
       expect((await profileRow(TEST_IDS.CUSTOMER))?.seq).toBe(5);
+    });
+
+    it("files every parent with a seat in a product whose language or location's name changes", async () => {
+      const clubSeat = await seat(CLUB, "active");
+      const muniSeat = await seat(MUNI, "active");
+      await clearProfiles([TEST_IDS.CUSTOMER]);
+
+      await admin.from("products").update({ spoken_language_code: "fi" }).eq("id", CLUB);
+      expect((await profileRow(TEST_IDS.CUSTOMER))?.seq).toBe(1);
+      await admin.from("products").update({ spoken_language_code: "en" }).eq("id", CLUB);
+
+      // The municipality club is at the seeded municipality.
+      const { data: location } = await admin.from("locations").select("name").eq("id", TEST_IDS.LOCATION_MUNICIPALITY).single();
+      await admin.from("locations").update({ name: "Klaviyo Helsinki" }).eq("id", TEST_IDS.LOCATION_MUNICIPALITY);
+      expect((await profileRow(TEST_IDS.CUSTOMER))?.seq).toBe(3);
+      await admin.from("locations").update({ name: location?.name ?? "" }).eq("id", TEST_IDS.LOCATION_MUNICIPALITY);
+
+      await admin.from("participations").delete().in("id", [clubSeat, muniSeat]);
+      await clearProfiles([TEST_IDS.CUSTOMER]);
     });
   });
 
@@ -431,43 +486,322 @@ describe("the Klaviyo sync", () => {
       await clearProfiles([userId]);
     });
 
-    it("files a purchase, a waitlist joined and a seat offered, once each", async () => {
+    it("files an enrolment, a waitlist joined and a seat offered, once each", async () => {
       await clearEvents([TEST_IDS.CUSTOMER]);
-      // Whatever paid seats the seed gives this parent decide whether this is their first.
-      const { data: held, error } = await admin
-        .from("participations")
-        .select("id, products!inner(billing_mode)")
-        .eq("customer_id", TEST_IDS.CUSTOMER)
-        .in("status", ["active", "completed"])
-        .eq("products.billing_mode", "paid");
-      expect(error).toBeNull();
       const active = await seat(CLUB, "active");
-      expect(await eventRow("purchase", active)).toMatchObject({
+      const enrolled = await eventRow("enrolled", active);
+      expect(enrolled).toMatchObject({
         product_id: CLUB,
-        facts: { first_purchase: (held ?? []).length === 0 },
+        unique_id: `enrolled:${active}`,
+        facts: GAMER_SEAT_UNTAGGED,
       });
 
       const waiting = await seat(ENDED, "waitlisted");
-      expect(await eventRow("waitlisted", waiting)).toMatchObject({ product_id: ENDED, facts: {} });
-      expect(await eventRow("purchase", waiting)).toBeNull();
+      const waitlisted = await eventRow("waitlisted", waiting);
+      expect(waitlisted?.product_id).toBe(ENDED);
+      expect(waitlisted?.facts).toEqual(WAITLISTED_UNTAGGED);
+      expect(await eventRow("enrolled", waiting)).toBeNull();
 
       const offeredAt = new Date().toISOString();
       await admin.from("participations").update({ seat_offer_sent_at: offeredAt }).eq("id", waiting);
       const offered = await eventRow("seat_offered", waiting);
       expect(new Date(offered?.occurred_at ?? "").getTime()).toBe(new Date(offeredAt).getTime());
 
-      // Off the waitlist into the seat: that is a purchase too, and not the first.
+      // Off the waitlist into the seat: that is an enrolment too.
       await admin.from("participations").update({ status: "active", seat_offer_sent_at: null }).eq("id", waiting);
-      expect(await eventRow("purchase", waiting)).toMatchObject({ facts: { first_purchase: false } });
+      expect(await eventRow("enrolled", waiting)).toMatchObject({ product_id: ENDED, facts: GAMER_SEAT_UNTAGGED });
 
       await admin.from("participations").delete().in("id", [active, waiting]);
     });
 
-    it("files no purchase for a seat on a free product", async () => {
+    it("files an enrolment for a seat on a free product and on a municipality's contract", async () => {
       await clearEvents([TEST_IDS.CUSTOMER]);
       const free = await seat(FREE, "active");
-      expect(await eventRow("purchase", free)).toBeNull();
-      await admin.from("participations").delete().eq("id", free);
+      const muni = await seat(MUNI, "active");
+      expect(await eventRow("enrolled", free)).toMatchObject({ product_id: FREE, facts: GAMER_SEAT_UNTAGGED });
+      expect(await eventRow("enrolled", muni)).toMatchObject({ product_id: MUNI, facts: GAMER_SEAT_UNTAGGED });
+      await admin.from("participations").delete().in("id", [free, muni]);
+    });
+
+    it("records the booking's UTM tag and School of Gaming answer the seat writer was handed", async () => {
+      await clearEvents([TEST_IDS.CUSTOMER]);
+      const { data, error } = await admin.rpc("create_participation", {
+        p_product_id: FREE,
+        p_participant_id: TEST_IDS.GAMER,
+        p_customer_id: TEST_IDS.CUSTOMER,
+        p_purchase_shape: "free",
+        p_currency: "eur",
+        p_utm_source: "lynx",
+        p_utm_medium: "email",
+        p_utm_campaign: "lynx-autumn",
+        p_school_of_gaming_marketing_opt_in: true,
+      });
+      expect(error).toBeNull();
+      const participationId = z.object({ participation_id: z.string() }).parse(data).participation_id;
+
+      const { data: written } = await admin
+        .from("participations")
+        .select("utm_source, utm_medium, utm_campaign, utm_content, utm_term, school_of_gaming_marketing_opt_in")
+        .eq("id", participationId)
+        .single();
+      expect(written).toEqual({
+        utm_source: "lynx",
+        utm_medium: "email",
+        utm_campaign: "lynx-autumn",
+        utm_content: null,
+        utm_term: null,
+        school_of_gaming_marketing_opt_in: true,
+      });
+      expect(await eventRow("enrolled", participationId)).toMatchObject({
+        facts: {
+          ...GAMER_SEAT_UNTAGGED,
+          utm_source: "lynx",
+          utm_medium: "email",
+          utm_campaign: "lynx-autumn",
+          marketing_opt_in: true,
+        },
+      });
+
+      await admin.from("participations").delete().eq("id", participationId);
+    });
+
+    it("carries the School of Gaming answer only with the booking, never with a later re-activation", async () => {
+      await clearEvents([TEST_IDS.CUSTOMER]);
+      const adminUser = await createAuthenticatedClient(
+        TEST_CREDENTIALS.ADMIN.email,
+        TEST_CREDENTIALS.ADMIN.password,
+      );
+      const { data, error } = await admin.rpc("create_participation", {
+        p_product_id: FREE,
+        p_participant_id: TEST_IDS.GAMER,
+        p_customer_id: TEST_IDS.CUSTOMER,
+        p_purchase_shape: "free",
+        p_currency: "eur",
+        p_utm_source: "lynx",
+        p_school_of_gaming_marketing_opt_in: true,
+      });
+      expect(error).toBeNull();
+      const participationId = z.object({ participation_id: z.string() }).parse(data).participation_id;
+      expect(await eventRow("enrolled", participationId)).toMatchObject({
+        facts: { utm_source: "lynx", marketing_opt_in: true },
+      });
+
+      // The booking's event has been sent, so the next activation files anew.
+      await clearEvents([TEST_IDS.CUSTOMER]);
+      const demoted = await adminUser.rpc("demote_to_waitlist", { p_participation_id: participationId });
+      expect(demoted.error).toBeNull();
+      const promoted = await adminUser.rpc("promote_from_waitlist", { p_participation_id: participationId });
+      expect(promoted.error).toBeNull();
+
+      // The seat still holds the parent's answer; the re-activation does not repeat it.
+      expect(await eventRow("enrolled", participationId)).toMatchObject({
+        facts: { ...GAMER_SEAT_UNTAGGED, utm_source: "lynx", marketing_opt_in: null },
+      });
+
+      await admin.from("participations").delete().eq("id", participationId);
+    });
+
+    it("carries a waitlist join's campaign tag on every waitlisted event, and its School of Gaming answer only on the join", async () => {
+      await clearEvents([TEST_IDS.CUSTOMER]);
+      const adminUser = await createAuthenticatedClient(
+        TEST_CREDENTIALS.ADMIN.email,
+        TEST_CREDENTIALS.ADMIN.password,
+      );
+      const { data, error } = await customer.rpc("join_product_waitlist", {
+        p_product_id: FREE,
+        p_participant_id: TEST_IDS.GAMER,
+        p_utm_source: "lynx",
+        p_utm_campaign: "lynx-autumn",
+        p_school_of_gaming_marketing_opt_in: true,
+      });
+      expect(error).toBeNull();
+      const participationId = z.object({ participation_id: z.string() }).parse(data).participation_id;
+
+      const { data: written } = await admin
+        .from("participations")
+        .select("utm_source, utm_campaign, school_of_gaming_marketing_opt_in")
+        .eq("id", participationId)
+        .single();
+      expect(written).toEqual({
+        utm_source: "lynx",
+        utm_campaign: "lynx-autumn",
+        school_of_gaming_marketing_opt_in: true,
+      });
+      expect((await eventRow("waitlisted", participationId))?.facts).toEqual({
+        ...WAITLISTED_UNTAGGED,
+        utm_source: "lynx",
+        utm_campaign: "lynx-autumn",
+        marketing_opt_in: true,
+      });
+
+      // Promoted into the seat: the enrolment keeps the tag but not the answer.
+      const promoted = await adminUser.rpc("promote_from_waitlist", { p_participation_id: participationId });
+      expect(promoted.error).toBeNull();
+      expect(await eventRow("enrolled", participationId)).toMatchObject({
+        facts: {
+          ...GAMER_SEAT_UNTAGGED,
+          utm_source: "lynx",
+          utm_campaign: "lynx-autumn",
+          marketing_opt_in: null,
+        },
+      });
+
+      // Demoted back onto the waitlist: that waitlisted event keeps the tag of
+      // the visit that made the row, but carries no answer.
+      await clearEvents([TEST_IDS.CUSTOMER]);
+      const demoted = await adminUser.rpc("demote_to_waitlist", { p_participation_id: participationId });
+      expect(demoted.error).toBeNull();
+      expect((await eventRow("waitlisted", participationId))?.facts).toEqual({
+        ...WAITLISTED_UNTAGGED,
+        utm_source: "lynx",
+        utm_campaign: "lynx-autumn",
+      });
+
+      await admin.from("participations").delete().eq("id", participationId);
+    });
+
+    it("tells a parent's own seat apart from their gamer's", async () => {
+      await clearEvents([TEST_IDS.CUSTOMER]);
+      const { data, error } = await admin
+        .from("participations")
+        .insert({ product_id: FREE, participant_id: TEST_IDS.CUSTOMER, customer_id: TEST_IDS.CUSTOMER, status: "active" })
+        .select("id")
+        .single();
+      expect(error).toBeNull();
+      const own = data?.id ?? "";
+      expect(await eventRow("enrolled", own)).toMatchObject({
+        facts: { ...GAMER_SEAT_UNTAGGED, seat_holder: "parent", gamer_birth_year: null, gamer_gender: null },
+      });
+      await admin.from("participations").delete().eq("id", own);
+    });
+
+    describe("attendance", () => {
+      const GROUP = "00000000-0000-0000-0000-000000000934";
+      let sessionId = "";
+      let groupSeat = "";
+
+      async function sessionEvents(): Promise<EventOutbox[]> {
+        const { data, error } = await admin
+          .from("klaviyo_event_outbox")
+          .select("*")
+          .eq("kind", "session")
+          .eq("customer_id", TEST_IDS.CUSTOMER)
+          .order("enqueued_at");
+        expect(error).toBeNull();
+        return data ?? [];
+      }
+
+      beforeAll(async () => {
+        expect((await admin.from("product_groups").insert({ id: GROUP, product_id: CLUB, name: "Klaviyo crew" })).error).toBeNull();
+        const placed = await admin
+          .from("participations")
+          .insert({ product_id: CLUB, participant_id: TEST_IDS.GAMER, customer_id: TEST_IDS.CUSTOMER, status: "active", group_id: GROUP })
+          .select("id")
+          .single();
+        expect(placed.error).toBeNull();
+        groupSeat = placed.data?.id ?? "";
+        const session = await admin
+          .from("group_sessions")
+          .insert({
+            group_id: GROUP,
+            session_date: "2026-10-28",
+            starts_at: "2026-10-28T15:30:00Z",
+            ends_at: "2026-10-28T16:30:00Z",
+          })
+          .select("id")
+          .single();
+        expect(session.error).toBeNull();
+        sessionId = session.data?.id ?? "";
+      });
+
+      afterAll(async () => {
+        await admin.from("participations").delete().eq("id", groupSeat);
+        await admin.from("product_groups").delete().eq("id", GROUP);
+      });
+
+      it("files one session event per mark and per status it is corrected to, and nothing for a deleted mark", async () => {
+        await clearEvents([TEST_IDS.CUSTOMER]);
+        const marked = await admin
+          .from("session_attendance")
+          .insert({ session_id: sessionId, participant_id: TEST_IDS.GAMER, status: "present" })
+          .select("id, recorded_at")
+          .single();
+        expect(marked.error).toBeNull();
+        const markId = marked.data?.id ?? "";
+
+        const [present] = await sessionEvents();
+        expect(present).toMatchObject({
+          source_id: markId,
+          product_id: CLUB,
+          unique_id: `session:${sessionId}:${TEST_IDS.GAMER}:present`,
+          facts: {
+            seat_holder: "gamer",
+            gamer_birth_year: SEED.GAMER_BIRTH.birth_year,
+            gamer_gender: "boy",
+            attended: true,
+            session_date: "2026-10-28",
+          },
+        });
+        expect(new Date(present.occurred_at).getTime()).toBe(new Date(marked.data?.recorded_at ?? "").getTime());
+
+        // The same status again is no new mark.
+        await admin.from("session_attendance").update({ status: "present" }).eq("id", markId);
+        expect(await sessionEvents()).toHaveLength(1);
+
+        await admin.from("session_attendance").update({ status: "absent" }).eq("id", markId);
+        const events = await sessionEvents();
+        expect(events).toHaveLength(2);
+        expect(events[1]).toMatchObject({
+          unique_id: `session:${sessionId}:${TEST_IDS.GAMER}:absent`,
+          facts: { attended: false },
+        });
+
+        const { data, error } = await admin.rpc("get_klaviyo_events", { p_event_ids: events.map((e) => e.id) });
+        expect(error).toBeNull();
+        const rows = (data ?? []).map((row) => klaviyoEventRow.parse(row));
+        expect(new Set(rows.map((row) => row.unique_id)).size).toBe(2);
+        const absent = rows.find((row) => row.unique_id.endsWith(":absent"));
+        expect(absent?.kind === "session" && absent.properties.session_starts_at).toBeTruthy();
+
+        await admin.from("session_attendance").delete().eq("id", markId);
+        expect(await sessionEvents()).toHaveLength(2);
+        await clearEvents([TEST_IDS.CUSTOMER]);
+      });
+
+      it("files nothing for a mark nobody holds a seat for", async () => {
+        await clearEvents([TEST_IDS.CUSTOMER_2]);
+        const marked = await admin
+          .from("session_attendance")
+          .insert({ session_id: sessionId, participant_id: TEST_IDS.GAMER_2, status: "present" })
+          .select("id")
+          .single();
+        expect(marked.error).toBeNull();
+        const { data } = await admin.from("klaviyo_event_outbox").select("id").eq("source_id", marked.data?.id ?? "");
+        expect(data).toEqual([]);
+        await admin.from("session_attendance").delete().eq("id", marked.data?.id ?? "");
+      });
+    });
+
+    describe("the School of Gaming ask", () => {
+      it("may be put on a product's signup panel, while set_marketing_consent still refuses the answer", async () => {
+        const staff = await createAuthenticatedClient(TEST_CREDENTIALS.ADMIN.email, TEST_CREDENTIALS.ADMIN.password);
+        const asked = await staff.rpc("admin_set_product_marketing_consents", {
+          p_product_id: FREE,
+          p_consent_types: ["school_of_gaming", "lynx_educate"],
+        });
+        expect(asked.error).toBeNull();
+        const { data } = await admin.from("product_marketing_consents").select("consent_type").eq("product_id", FREE);
+        expect((data ?? []).map((row) => row.consent_type).sort()).toEqual(["lynx_educate", "school_of_gaming"]);
+
+        const answered = await customer.rpc("set_marketing_consent", {
+          p_consent_type: "school_of_gaming",
+          p_granted: true,
+          p_source: "enrolment",
+        });
+        expect(answered.error?.code).toBe(CHECK_VIOLATION);
+
+        expect((await staff.rpc("admin_set_product_marketing_consents", { p_product_id: FREE, p_consent_types: [] })).error).toBeNull();
+      });
     });
 
     it("files the parent for a payment, and no event", async () => {
@@ -586,14 +920,14 @@ describe("the Klaviyo sync", () => {
       expect(claimed.error).toBeNull();
       expect(claimed.data).toHaveLength(1);
       const eventId = claimed.data?.[0]?.event_id ?? "";
-      expect(claimed.data?.[0]).toMatchObject({ kind: "purchase", customer_id: TEST_IDS.CUSTOMER });
+      expect(claimed.data?.[0]).toMatchObject({ kind: "enrolled", customer_id: TEST_IDS.CUSTOMER });
 
       const failed = await admin.rpc("finish_klaviyo_event_job", { p_event_id: eventId, p_error: "boom" });
       expect(failed.error).toBeNull();
-      expect(await eventRow("purchase", participationId)).toMatchObject({ attempts: 1, last_error: "boom" });
+      expect(await eventRow("enrolled", participationId)).toMatchObject({ attempts: 1, last_error: "boom" });
 
       await admin.rpc("finish_klaviyo_event_job", { p_event_id: eventId });
-      expect(await eventRow("purchase", participationId)).toBeNull();
+      expect(await eventRow("enrolled", participationId)).toBeNull();
       await admin.from("participations").delete().eq("id", participationId);
     });
   });
@@ -606,6 +940,7 @@ describe("the Klaviyo sync", () => {
     it("snapshots an existing parent through the contract, and nobody else", async () => {
       const active = await seat(CLUB, "active");
       const past = await seat(ENDED, "active");
+      const muni = await seat(MUNI, "active");
       await admin.from("minecraft_accounts").delete().eq("user_id", TEST_IDS.GAMER);
       await admin.from("roblox_accounts").delete().eq("user_id", TEST_IDS.GAMER);
       const minecraft = await admin
@@ -637,32 +972,38 @@ describe("the Klaviyo sync", () => {
       });
 
       const byId = new Map(snapshot.participations.map((p) => [p.id, p]));
-      expect(byId.get(active)?.product).toMatchObject({ billing_mode: "paid", product_type: "consumer_club" });
+      expect(byId.get(active)?.product).toMatchObject({
+        billing_mode: "paid",
+        product_type: "consumer_club",
+        delivery_mode: "online",
+        spoken_language_code: "en",
+        location_name: null,
+      });
       expect(byId.get(past)?.product).toMatchObject({ product_type: "camp", end_date: "2020-01-05" });
+      expect(byId.get(muni)?.product).toMatchObject({ billing_mode: "external_contract", location_name: "Helsinki" });
       expect(byId.get(active)?.product.names).toEqual(
         expect.arrayContaining([expect.objectContaining({ locale: "fi", name: "Klaviyo-kerho" })]),
       );
 
-      await admin.from("participations").delete().in("id", [active, past]);
+      await admin.from("participations").delete().in("id", [active, past, muni]);
       await admin.from("minecraft_accounts").delete().eq("user_id", TEST_IDS.GAMER);
     });
 
     it("reads a claimed event through the contract, with its unique id and product", async () => {
       await clearEvents([TEST_IDS.CUSTOMER]);
       const participationId = await seat(CLUB, "active");
-      const event = await eventRow("purchase", participationId);
+      const event = await eventRow("enrolled", participationId);
 
       const { data, error } = await admin.rpc("get_klaviyo_events", { p_event_ids: [event?.id ?? ""] });
       expect(error).toBeNull();
       const rows = (data ?? []).map((row) => klaviyoEventRow.parse(row));
       expect(rows).toHaveLength(1);
       expect(rows[0]).toMatchObject({
-        kind: "purchase",
-        unique_id: `purchase:${participationId}`,
+        kind: "enrolled",
+        unique_id: `enrolled:${participationId}`,
         customer_id: TEST_IDS.CUSTOMER,
-        properties: { source_id: participationId },
+        properties: { source_id: participationId, ...GAMER_SEAT_UNTAGGED },
       });
-      expect(rows[0].properties).toHaveProperty("first_purchase");
       expect(rows[0].properties.product?.id).toBe(CLUB);
 
       await admin.from("participations").delete().eq("id", participationId);

@@ -17,7 +17,7 @@ $$;
 -- Name: FUNCTION klaviyo_location_changed(); Type: COMMENT; Schema: public; Owner: -
 --
 
-COMMENT ON FUNCTION public.klaviyo_location_changed() IS 'Trigger on locations, after its name or country_code changes: files every registered parent whose home location it is in the Klaviyo profile outbox. Granted to nobody.';
+COMMENT ON FUNCTION public.klaviyo_location_changed() IS 'Trigger on locations, after its name or country_code changes: files every registered parent whose home location it is, and every parent with a seat in a product there, in the Klaviyo profile outbox. Granted to nobody.';
 
 
 --

@@ -11,6 +11,7 @@ import type {
   SessionAudience,
 } from "@/types";
 import type { SupportedCurrency } from "@/lib/constants/currency";
+import type { UtmInput } from "@/lib/utm";
 import { gamersAttendSite } from "@/lib/products/delivery-mode";
 import type { QueryData } from "@supabase/supabase-js";
 import {
@@ -389,6 +390,17 @@ export type CreateParticipationInput = {
    * is what keeps a new signup surface from forgetting the question exists.
    */
   consentedDocuments: string[];
+  /**
+   * The visit's UTM tag, as the browser holds it. Whether any of it is stored
+   * is the route's decision, from the request's own consent cookie.
+   */
+  utm: UtmInput;
+  /**
+   * The answer to the product's School of Gaming mailing box, or `null` when
+   * the product does not ask. Required for the same reason the documents are:
+   * a caller has to state it.
+   */
+  schoolOfGamingMarketingOptIn: boolean | null;
 };
 
 /**
@@ -438,7 +450,27 @@ export type JoinWaitlistInput = {
   /** Ticked consent document slugs — see `CreateParticipationInput`. A queue
    *  place is held to the same enrolment conditions as a seat. */
   consentedDocuments: string[];
+  /** The visit's UTM tag — see `CreateParticipationInput`. */
+  utm: UtmInput;
+  /** The School of Gaming mailing answer — see `CreateParticipationInput`. */
+  schoolOfGamingMarketingOptIn: boolean | null;
 };
+
+/**
+ * A booking's JSON body with an unasked School of Gaming box left off the wire
+ * rather than sent as null: absent is the one spelling the routes read as "not
+ * asked".
+ */
+function bookingBody<T extends { schoolOfGamingMarketingOptIn: boolean | null }>(
+  input: T,
+): string {
+  const { schoolOfGamingMarketingOptIn, ...rest } = input;
+  return JSON.stringify(
+    schoolOfGamingMarketingOptIn === null
+      ? rest
+      : { ...rest, schoolOfGamingMarketingOptIn },
+  );
+}
 
 export type LeaveWaitlistInput = {
   participationId: string;
@@ -864,7 +896,7 @@ export class ParticipationsService {
     const response = await fetch("/api/checkout/products/create", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(input),
+      body: bookingBody(input),
     });
     if (!response.ok) {
       // An `ApiError` rather than a bare `Error`: the panel branches on the
@@ -879,7 +911,7 @@ export class ParticipationsService {
     const response = await fetch("/api/participations/waitlist", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(input),
+      body: bookingBody(input),
     });
     if (!response.ok) {
       // Same shape as the signup door above, and for the same reason: this

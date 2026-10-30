@@ -130,6 +130,8 @@
       "marketing": {
         "lynxEducate": "Share my email address with <link>Lynx Educate</link> so they can send me news about future events and gaming resources. I can unsubscribe at any time.",
         "lynxEducateTitle": "News from Lynx Educate",
+        "schoolOfGaming": "I want emails from School of Gaming about its clubs, camps and news. I can unsubscribe at any time.",
+        "schoolOfGamingTitle": "News from School of Gaming",
         "hint": "Optional — you can change this anytime in your settings."
       }
     },

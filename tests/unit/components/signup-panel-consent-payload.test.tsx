@@ -47,6 +47,8 @@ vi.mock("next-intl", async () => {
 vi.mock("@/providers", () => ({
   useNow: () => new Date("2026-01-05T12:00:00Z"),
   useTimezone: () => "Europe/Helsinki",
+  // The visit arrived with no campaign tag; the panel sends what it holds.
+  useUtm: () => ({ source: null, medium: null, campaign: null, content: null, term: null }),
 }));
 
 vi.mock("@/providers/auth-provider", () => ({

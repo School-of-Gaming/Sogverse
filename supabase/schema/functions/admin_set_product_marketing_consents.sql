@@ -23,17 +23,6 @@ BEGIN
       USING ERRCODE = 'check_violation';
   END IF;
 
-  -- School of Gaming's own list is answered in Klaviyo, never asked for here.
-  IF EXISTS (
-    SELECT 1
-      FROM unnest(p_consent_types) AS c
-     WHERE c <> 'lynx_educate'::public.marketing_consent_type
-  ) THEN
-    RAISE EXCEPTION
-      'a product signup panel asks only for lynx_educate; our own list is answered in Klaviyo'
-      USING ERRCODE = 'check_violation';
-  END IF;
-
   -- The product must exist. Unlike the required-consents writer, whose foreign
   -- key into the document whitelist does its validating for it, this one's only
   -- FK is the product itself — and on a call that clears the set there is no
@@ -70,7 +59,7 @@ $$;
 -- Name: FUNCTION admin_set_product_marketing_consents(p_product_id uuid, p_consent_types public.marketing_consent_type[]); Type: COMMENT; Schema: public; Owner: -
 --
 
-COMMENT ON FUNCTION public.admin_set_product_marketing_consents(p_product_id uuid, p_consent_types public.marketing_consent_type[]) IS 'Replace the set of marketing consents a product''s signup panel asks about, admin-only and guard-first on assert_admin. The only writer of product_marketing_consents: that table carries no write grant for any Data API role, and an inline INSERT from the admin product form would need one, because the form reaches this as the admin''s own session role. NULL and an empty array both mean "asks nothing", which is how a set is cleared. A NULL ELEMENT is refused before the replacing DELETE runs, for the reason one system over refuses one: `NOT (col = ANY (array))` is three-valued, so a NULL inside the array would match nothing and turn the wipe-and-replace into a merge. Only lynx_educate may be asked for: School of Gaming''s own list is answered in Klaviyo. An unknown product is refused explicitly rather than by a foreign key, because a call that CLEARS the set performs no insert for an FK to fire on and would otherwise report success for a product that does not exist.';
+COMMENT ON FUNCTION public.admin_set_product_marketing_consents(p_product_id uuid, p_consent_types public.marketing_consent_type[]) IS 'Replace the set of marketing consents a product''s signup panel asks about, admin-only and guard-first on assert_admin. The only writer of product_marketing_consents: that table carries no write grant for any Data API role, and an inline INSERT from the admin product form would need one, because the form reaches this as the admin''s own session role. NULL and an empty array both mean "asks nothing", which is how a set is cleared. A NULL ELEMENT is refused before the replacing DELETE runs, for the reason one system over refuses one: `NOT (col = ANY (array))` is three-valued, so a NULL inside the array would match nothing and turn the wipe-and-replace into a merge. Either consent may be asked: lynx_educate, whose answer set_marketing_consent records, and school_of_gaming, whose answer is stored on the seat (participations.school_of_gaming_marketing_opt_in) and goes to Klaviyo. An unknown product is refused explicitly rather than by a foreign key, because a call that CLEARS the set performs no insert for an FK to fire on and would otherwise report success for a product that does not exist.';
 
 
 --

@@ -1,9 +1,10 @@
 # Klaviyo parent sync
 
-Every parent account has a Klaviyo profile that says who they are, their gamers, what they
-have bought and what they have paid; Klaviyo lists that record what kinds of seat they have
-ever held; and Klaviyo hears of what happens to them — an account opened, a purchase, a
-waitlist joined, a seat offered, a subscription cancelled — as events. One way only:
+Every parent account has a Klaviyo profile that says who they are, their gamers, what
+seats they hold and what they have paid; Klaviyo lists that record what kinds of seat they
+have ever held; and Klaviyo hears of what happens to them — an account opened, a seat
+taken, a session attended or missed, a waitlist joined, a seat offered, a subscription
+cancelled — as events. One way only:
 nothing Klaviyo holds is ever read back except the profile's own Klaviyo id. The newsletter
 form on landing pages writes to the same Klaviyo account (`src/services/landing-pages/`),
 through the same client. Klaviyo is the source of truth for School of Gaming's own mailing
@@ -49,8 +50,8 @@ snapshot field and that one predicate in the drain, nothing more.
 ## The contract is public
 
 `contract.ts` is the only place a name Klaviyo sees is written: every profile property,
-the gamer objects' keys, every metric and every event property, the newsletter form's
-properties, and which lists a parent belongs to. **A name there is a dependency marketing
+every metric and every event property, the newsletter form's properties, and which lists a
+parent belongs to. **A name there is a dependency marketing
 has built on in Klaviyo**, where this repo cannot see it, so a rename is a breaking change:
 add the new name, send both, tell marketing, and drop the old only once nothing uses it.
 The unit test pins every name and its value type and fails on any change, so the change is
@@ -64,16 +65,28 @@ always deliberate.
   the languages their children may be placed in: two things, never called "language".
 - Dates are ISO strings Klaviyo segments on as dates, never a countdown, which would be
   wrong the day after it was sent. An absent value is sent as `null`, which clears it.
-- **A purchase is a seat held on a product whose billing mode is `paid`.** A free seat and
-  a municipality's contracted seat are no purchase. `sog_purchased_product_types`,
-  `sog_purchased_topics` and `sog_active_until` read paid seats alone — the last is the
-  latest date any of them runs to: a club's subscription paid period end, as a date in the
-  club's zone, and a camp's or event's last day. A cancelled seat is deleted from the
-  database, so these describe the seats held now; the lists are what keep history.
-- `SV Purchase` is one event per seat on a paid product, with no money value: renewals
-  reach Klaviyo through Stripe's own integration, and payments are profile totals
-  (`sog_first_payment_at`, `sog_last_payment_at`, `sog_total_paid_eur`), never events.
-  Its `first_purchase` is whether the parent held no other paid seat when it was bought.
+- **A seat is a seat, whatever its billing mode.** `sog_product_types`,
+  `sog_product_topics`, the type lists and `SV Enrolled` count every held seat — paid,
+  free or a municipality's contract — and the event carries `billing_mode`, so a segment
+  that wants paying families asks for it. Only `sog_paid_until` reads paid seats alone:
+  the latest date any of them runs to, a club's subscription paid period end as a date in
+  the club's zone, and a camp's or event's last day. A cancelled seat is deleted from the
+  database, so the profile describes the seats held now; the lists and the events are
+  what keep history.
+- `SV Enrolled` is one event per held seat, with no money value: renewals reach Klaviyo
+  through Stripe's own integration, and payments are profile totals
+  (`sog_first_payment_at`, `sog_last_payment_at`, `sog_total_paid_eur`), never events. It
+  says who holds the seat and, on a gamer's, the child's birth year and gender, and it
+  carries the UTM tag of the visit that led to the booking — stored on the seat when it is
+  made, and only under marketing cookie consent, the same gate as the account's own tag.
+  `SV Waitlisted` carries the waitlist join's tag under the same five names.
+- `SV Session` is one event per attendance mark a gedu writes, present or absent. A mark
+  changed to the other status is a new event, keyed by session, gamer and status, so a
+  mark set back to what it was is the earlier event again and Klaviyo does not count it
+  twice; a deleted mark sends nothing.
+- A gamer is `sog_gamer_birth_years` — one string per gamer, so twins appear twice and a
+  segment asks whether the list contains `2016` — and `sog_gamer_genders`, the distinct
+  genders given. Never an age, which would be stale a year after it was sent.
 - `sog_env` is `production` on the production deployment and `staging` everywhere else,
   preview and local included: one Klaviyo account holds both, and every segment and flow
   has to filter on it.
@@ -83,30 +96,54 @@ always deliberate.
   staging registration with the mailing-list box ticked subscribes that real address.
   Staging accounts therefore use addresses that exist nowhere in production — a
   plus-address of a mailbox the tester owns (`name+staging-1@…`) is the usual one.
-- The account's `sog_first_utm_…` properties and the newsletter's `sog_newsletter_…` ones
-  are separate on purpose: a subscriber who later opens an account is one profile.
+- The account's `sog_utm_…` properties — the visit the account was created on — and the
+  newsletter's `sog_newsletter_…` ones are separate on purpose: a subscriber who later
+  opens an account is one profile.
+
+## Sogverse sends facts; Klaviyo derives
+
+**Rule: the contract sends what happened and what is so, and leaves to Klaviyo anything its
+own segment and flow filters can work out from those.** A derived property is a second
+copy of a fact that can only lag it, and every one is another public name to keep. So there
+is no youngest or oldest child (a segment filters the birth years), no first purchase (a
+new customer is `sog_first_payment_at` within the last day, and a first booking of a kind
+is a filter over `SV Enrolled`), and no last-attended date (a filter over `SV Session`).
+A new property earns its place only when Klaviyo cannot reach the answer from what is
+already sent.
 
 ## Lists are history
 
 **Lists are only ever added to.** Every profile sync in production adds the parent to
-`SV Account`, and to `SV Club` for a paid consumer club seat, `SV Camp` for a paid camp
-seat and `SV Municipal club` for any municipality club seat. Klaviyo's add is a no-op for a
+`SV Account`, and for every seat held, whatever its billing mode, to its type's list:
+`SV Club` for a consumer club, `SV Camp`, `SV Event` and `SV Municipal club`. Klaviyo's add is a no-op for a
 member, so repeating it every sync costs nothing, and nothing ever removes anyone: a list
 answers "ever had", which the snapshot alone cannot once a seat is deleted. **Staging adds
 to `SV Staging` and to no other list**, so staging traffic never lands in a production
 list. The ids are deployment configuration (`lists.server.ts`), and an unset id fails the
 row, naming the variable, before anything is written.
 
-## Consent is sent once
+## Consent rides on the event that recorded it
 
-**Klaviyo owns marketing consent; the sync sends it exactly once.** When the account's
-creation event goes out for a parent who ticked the registration form's mailing-list box,
-the sync subscribes them to email marketing into the marketing-consent list —
-`SV Marketing consent` in production, `SV Staging` elsewhere, the same list the
-newsletter form subscribes into — under the custom source `Sogverse account registration`.
+**Klaviyo owns marketing consent; the sync sends a yes once, with the event of the moment
+it was given, and never sends a no.** Two moments give one:
+
+- **Registration.** When the account's creation event goes out for a parent who ticked
+  the registration form's mailing-list box, the sync subscribes them under the custom
+  source `Sogverse account registration`. The answer, yes or no, is also the
+  `sog_registration_marketing_answer` property.
+- **A product sign-up that asked.** A product may ask "I want emails from School of
+  Gaming", unticked, with every booking, a waitlist join included. The answer is stored
+  on the participation, never in `marketing_consents`, and a yes subscribes the parent,
+  under the custom source `Sogverse product sign-up`, when the event the booking's own
+  insert files goes out: `SV Enrolled` for a seat taken at once, `SV Waitlisted` for a
+  waitlist join. A later promotion or demotion never carries it, so a parent who has
+  unsubscribed since is not subscribed again. The answer is never an event property.
+
+Both subscribe to email marketing into the marketing-consent list — `SV Marketing consent`
+in production, `SV Staging` elsewhere, the same list the newsletter form subscribes into.
 The profile sync never sends a subscription status, and an unticked or never-asked answer
-is only the `sog_registration_marketing_answer` property. An unsubscribe in Klaviyo is
-therefore never undone by the sync.
+sends nothing, so an unsubscribe in Klaviyo is undone only by a fresh yes the parent gives
+later.
 
 ## The outboxes and the drain
 
@@ -155,12 +192,15 @@ owner or with the owner's say — never by a session on its own initiative.
 - **The lists**, all single opt-in, their ids from Lists & segments → the list → Settings:
   `KLAVIYO_MARKETING_CONSENT_LIST_ID` on Preview (`SV Staging`) and Production
   (`SV Marketing consent`, from `…_PRODUCTION`), and `KLAVIYO_ACCOUNT_LIST_ID`,
-  `KLAVIYO_CLUB_LIST_ID`, `KLAVIYO_CAMP_LIST_ID` and `KLAVIYO_MUNICIPAL_CLUB_LIST_ID` on
-  Production alone. The code reads only the unsuffixed names.
+  `KLAVIYO_CLUB_LIST_ID`, `KLAVIYO_CAMP_LIST_ID`, `KLAVIYO_EVENT_LIST_ID` and
+  `KLAVIYO_MUNICIPAL_CLUB_LIST_ID` on Production alone (each from its `…_PRODUCTION`). The code reads only the unsuffixed names.
   `KLAVIYO_MARKETING_CONSENT_LIST_ID` replaces `KLAVIYO_NEWSLETTER_LIST_ID`, and has to be
   on Vercel Preview and Production before this code deploys — the sign-up and the
   registration tick fail without it. It is already set on both. Once this is released,
   `KLAVIYO_NEWSLETTER_LIST_ID` is deleted from Vercel and from `.env.local`.
+  `KLAVIYO_EVENT_LIST_ID` has to be on Vercel Production before this code reaches
+  production — without it every parent holding a seat on an event fails their profile row
+  until it is set.
 - **The secret.** `KLAVIYO_SYNC_SECRET`, one random value per environment, on Vercel
   Preview (the unsuffixed value) and Production (`KLAVIYO_SYNC_SECRET_PRODUCTION`),
   sensitive, then a redeploy. An unset secret refuses every call to the sync route.
