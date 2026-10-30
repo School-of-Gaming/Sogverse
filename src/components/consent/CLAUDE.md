@@ -339,6 +339,10 @@ above removes it from any document where marketing is not granted.
 is usable only while the request storing it still carries marketing consent, so a cookie
 that outlived its consent stores nothing, even before a document has mounted to remove it.
 
+**It did not change the question (owner's ruling, 2026-10-30).** Marketing consent already
+governed storing the tag, so the cookie is a change in how that is kept: the banner names
+no cookie, the privacy policy describes it, and the consent version stayed where it was.
+
 ## What a new recipient does and does not cost
 
 The privacy policy names the platforms and what each receives; the strip names none of
