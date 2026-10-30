@@ -62,8 +62,10 @@ Six knobs hold that promise, and all six are load-bearing:
   that reads email and phone values out of the page, and scraping of the page title and
   description — and its base code has no switch for any of it. **The CSP is that switch**:
   it leaves the configuration host and the event setup tool's host out of `connect-src`,
-  so the fetch fails and the pixel runs on the calls the app makes and nothing else. Those
-  two hosts stay out; adding one hands a web form nobody here reviews the power to report
+  so the fetch fails and the pixel runs on the calls the app makes and nothing else. That
+  needs the library loaded **without** `?pixel_id=`, against Reddit's own base code: asked
+  for by id, Reddit serves a copy with the configuration inlined in the script, which no
+  CSP can refuse. Those two hosts stay out; adding one hands a web form nobody here reviews the power to report
   private pages after a client navigation and to lift form fields. The container is a loader for whatever somebody configured, it stays loaded for
   the whole document, and every tag in it reads `document.location` at the moment it
   fires — so "it only loaded on a marketing page" says nothing at all about which page it
