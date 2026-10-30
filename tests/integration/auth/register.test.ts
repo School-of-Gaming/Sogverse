@@ -1,4 +1,5 @@
 import { describe, it, expect, vi, beforeEach } from "vitest";
+import { advertisedProductDetails } from "@/lib/marketing-events";
 
 // Parent self-registration: the second-highest-value public route on the
 // surface, and the twin of the educator one. It creates an account with no
@@ -75,15 +76,15 @@ vi.mock("@/lib/brevo", () => ({
 // suite is about is WHETHER the route reports and with what — the decision to
 // send, the consent gate and the request's own headers are the reporter's
 // subject, and it has a suite of its own.
-const mockReportMetaConversion = vi.fn();
-vi.mock("@/lib/meta-conversions.server", () => ({
-  reportMetaConversion: (...args: unknown[]) => mockReportMetaConversion(...args),
+const mockReportAdConversion = vi.fn();
+vi.mock("@/lib/ad-conversions.server", () => ({
+  reportAdConversion: (...args: unknown[]) => mockReportAdConversion(...args),
 }));
 
 // The product a sign-up started from is resolved by its own module, unit-tested
 // beside it; here only what the route hands it and does with its answer.
 const mockSignUpProductFor = vi.fn();
-vi.mock("@/lib/meta-sign-up-product.server", () => ({
+vi.mock("@/lib/sign-up-product.server", () => ({
   signUpProductFor: (...args: unknown[]) => mockSignUpProductFor(...args),
 }));
 
@@ -102,17 +103,17 @@ vi.mock("@/lib/sign-up-intent.server", async (importOriginal) => {
 const LANDING_PAGE_ID = "3d2c1b0a-9f8e-4d7c-8b6a-5f4e3d2c1b0a";
 
 /** The advertised product a sign-up started from, as the resolver answers it. */
-const SIGN_UP_PRODUCT = {
-  content_ids: ["0f8b6c1e-3c2a-4d5e-9f60-7a8b9c0d1e2f"],
-  content_type: "product",
-  content_name: "Roblox Studio Club",
-  content_category: "roblox_studio",
-  value: 49,
-  currency: "EUR",
-};
+const SIGN_UP_PRODUCT_ID = "0f8b6c1e-3c2a-4d5e-9f60-7a8b9c0d1e2f";
+const SIGN_UP_PRODUCT = advertisedProductDetails({
+  id: SIGN_UP_PRODUCT_ID,
+  topic: "roblox_studio",
+  billing_mode: "paid",
+  product_translations: [{ locale: "en", name: "Roblox Studio Club" }],
+  product_prices: [{ currency: "eur", price_cents: 4900 }],
+});
 
 // The report is handed to the platform's post-response hook, so the parent's
-// registration never waits on Meta. Capture the deferred work instead of letting
+// registration never waits on an ad platform. Capture the deferred work instead of letting
 // the hook run it — outside a request scope there is nothing to keep alive.
 const deferred: unknown[] = [];
 vi.mock("next/server", async (importOriginal) => {
@@ -328,12 +329,12 @@ describe("POST /api/auth/register", () => {
     expect(response.status).toBe(200);
     // Handed to the post-response hook, not awaited inside the answer.
     expect(deferred).toHaveLength(1);
-    expect(mockReportMetaConversion).not.toHaveBeenCalled();
+    expect(mockReportAdConversion).not.toHaveBeenCalled();
     expect(mockSignUpProductFor).not.toHaveBeenCalled();
     await runDeferred();
-    expect(mockReportMetaConversion).toHaveBeenCalledTimes(1);
+    expect(mockReportAdConversion).toHaveBeenCalledTimes(1);
     const [request, conversion, account] =
-      mockReportMetaConversion.mock.calls[0];
+      mockReportAdConversion.mock.calls[0];
     expect(request).toBeInstanceOf(Request);
     // The id and address of the account this request just created, the address
     // as GoTrue stored it.
@@ -356,7 +357,7 @@ describe("POST /api/auth/register", () => {
   // and reports whatever product it answers; the reporter drops the price.
   it("names the product page the sign-up started from", async () => {
     mockSignUpProductFor.mockResolvedValue(SIGN_UP_PRODUCT);
-    const redirect = `/fi/kauppa/${SIGN_UP_PRODUCT.content_ids[0]}`;
+    const redirect = `/fi/kauppa/${SIGN_UP_PRODUCT_ID}`;
 
     const response = await POST(
       registerRequestWithConsent(
@@ -368,7 +369,7 @@ describe("POST /api/auth/register", () => {
 
     expect(response.status).toBe(200);
     expect(mockSignUpProductFor).toHaveBeenCalledWith(redirect);
-    const [, conversion] = mockReportMetaConversion.mock.calls[0];
+    const [, conversion] = mockReportAdConversion.mock.calls[0];
     expect(conversion).toEqual({
       event: "account_created",
       product: SIGN_UP_PRODUCT,
@@ -417,7 +418,7 @@ describe("POST /api/auth/register", () => {
     );
 
     expect(response.status).toBe(409);
-    expect(mockReportMetaConversion).not.toHaveBeenCalled();
+    expect(mockReportAdConversion).not.toHaveBeenCalled();
     expect(deferred).toHaveLength(0);
   });
 
@@ -715,19 +716,19 @@ describe("POST /api/auth/register", () => {
   it("records the intent whatever the consent cookie says", async () => {
     mockResolveSignUpIntent.mockResolvedValue({
       kind: "product",
-      id: SIGN_UP_PRODUCT.content_ids[0],
+      id: SIGN_UP_PRODUCT_ID,
     });
 
     await POST(
       registerRequestWithConsent(
         { analytics: false, marketing: false },
-        { ...validBody, redirect: `/en/shop/${SIGN_UP_PRODUCT.content_ids[0]}` },
+        { ...validBody, redirect: `/en/shop/${SIGN_UP_PRODUCT_ID}` },
       ),
     );
 
     expect(signupMetadata()).toMatchObject({
       signup_intent_kind: "product",
-      signup_intent_id: SIGN_UP_PRODUCT.content_ids[0],
+      signup_intent_id: SIGN_UP_PRODUCT_ID,
     });
   });
 

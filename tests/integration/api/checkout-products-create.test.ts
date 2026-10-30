@@ -39,9 +39,9 @@ vi.mock("@/lib/brevo", () => ({
 // decided inside the reporter, from the request's consent cookie, and that is
 // its own suite's subject. What belongs here is which outcome reports what, and
 // which outcomes report nothing at all.
-const mockReportMetaConversion = vi.fn();
-vi.mock("@/lib/meta-conversions.server", () => ({
-  reportMetaConversion: (...args: unknown[]) => mockReportMetaConversion(...args),
+const mockReportAdConversion = vi.fn();
+vi.mock("@/lib/ad-conversions.server", () => ({
+  reportAdConversion: (...args: unknown[]) => mockReportAdConversion(...args),
 }));
 
 // --- The post-response hook ---
@@ -1498,9 +1498,9 @@ describe("POST /api/checkout/products/create", () => {
 
       expect(res.status).toBe(200);
       await settleDeferred();
-      expect(mockReportMetaConversion).toHaveBeenCalledTimes(1);
+      expect(mockReportAdConversion).toHaveBeenCalledTimes(1);
       const [request, conversion, account] =
-        mockReportMetaConversion.mock.calls[0];
+        mockReportAdConversion.mock.calls[0];
       expect(request).toBeInstanceOf(Request);
       // The signed-in customer's own id and address, never the participant's.
       expect(account).toEqual({ id: CUSTOMER_ID, email: CUSTOMER_EMAIL });
@@ -1511,12 +1511,22 @@ describe("POST /api/checkout/products/create", () => {
         event: "enrolment",
         outcome: "enrolled",
         product: {
-          content_ids: [PRODUCT_ID],
-          content_type: "product",
-          content_name: "Test Club",
-          content_category: "minecraft_java",
-          value: 0,
-          currency: "EUR",
+          meta: {
+            content_ids: [PRODUCT_ID],
+            content_type: "product",
+            content_name: "Test Club",
+            content_category: "minecraft_java",
+            value: 0,
+            currency: "EUR",
+          },
+          reddit: {
+            products: [
+              { id: PRODUCT_ID, name: "Test Club", category: "minecraft_java" },
+            ],
+            itemCount: 1,
+            value: 0,
+            currency: "EUR",
+          },
         },
         sourcePath: `/shop/${PRODUCT_ID}`,
       });
@@ -1525,7 +1535,7 @@ describe("POST /api/checkout/products/create", () => {
     // The checkout start is the browser's click on the product page, for free
     // and paid products alike; a report from here as well would count every
     // paid attempt twice.
-    it("reports nothing to Meta when handing the parent to Stripe", async () => {
+    it("reports nothing to the platforms when handing the parent to Stripe", async () => {
       mockAuthenticatedCustomer();
       mockAdmin({ product: PAID_CLUB });
       mockAdminRpc.mockResolvedValueOnce({
@@ -1541,7 +1551,7 @@ describe("POST /api/checkout/products/create", () => {
         checkoutUrl: "https://checkout.stripe.com/c/test_sub",
       });
       await settleDeferred();
-      expect(mockReportMetaConversion).not.toHaveBeenCalled();
+      expect(mockReportAdConversion).not.toHaveBeenCalled();
     });
 
     it("reports nothing for a municipality registration", async () => {
@@ -1563,7 +1573,7 @@ describe("POST /api/checkout/products/create", () => {
 
       expect(res.status).toBe(200);
       await settleDeferred();
-      expect(mockReportMetaConversion).not.toHaveBeenCalled();
+      expect(mockReportAdConversion).not.toHaveBeenCalled();
     });
 
     // Refused by the product row rather than by which door it came through:
@@ -1582,7 +1592,7 @@ describe("POST /api/checkout/products/create", () => {
       expect(res.status).toBe(200);
       expect(await res.json()).toMatchObject({ status: "free_confirmed" });
       await settleDeferred();
-      expect(mockReportMetaConversion).not.toHaveBeenCalled();
+      expect(mockReportAdConversion).not.toHaveBeenCalled();
     });
 
     it("reports nothing when the seat was already gone", async () => {
@@ -1596,7 +1606,7 @@ describe("POST /api/checkout/products/create", () => {
       const res = await POST(freeSignup());
 
       expect(await res.json()).toEqual({ status: "full" });
-      expect(mockReportMetaConversion).not.toHaveBeenCalled();
+      expect(mockReportAdConversion).not.toHaveBeenCalled();
     });
   });
 

@@ -9,8 +9,8 @@ import { detectLocaleFromHeader, resolveLocale } from "@/lib/constants/locales";
 import { buildWelcomeParentEmail } from "@/lib/email-templates/welcome";
 import { getEmailTranslator } from "@/lib/email-templates/translator";
 import { createEmailVerificationToken } from "@/lib/email-verification";
-import { reportMetaConversion } from "@/lib/meta-conversions.server";
-import { signUpProductFor } from "@/lib/meta-sign-up-product.server";
+import { reportAdConversion } from "@/lib/ad-conversions.server";
+import { signUpProductFor } from "@/lib/sign-up-product.server";
 import { registrationCompletedResponse } from "@/lib/registration-intent-cookie";
 import {
   resolveSignUpIntent,
@@ -236,7 +236,7 @@ export const POST = defineRoute({
     // The product is the advertised product page the sign-up started from, if
     // it did, read off the finish page's `redirect` after the response as well.
     after(async () =>
-      reportMetaConversion(
+      reportAdConversion(
         request,
         {
           event: "account_created",

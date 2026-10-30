@@ -24,6 +24,7 @@ import {
   ConsentBanner,
   GoogleTagManager,
   MetaPixel,
+  RedditPixel,
 } from "@/components/consent";
 import "../globals.css";
 
@@ -264,6 +265,7 @@ export default async function LocaleLayout({
           <ConsentBanner />
           <AnalyticsScripts />
           <MetaPixel />
+          <RedditPixel />
           <GoogleTagManager />
         </Providers>
       </body>
