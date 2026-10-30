@@ -444,8 +444,9 @@ removing the old staging host, so until then each change can be pointed back at
      `public/files/my-child-is-a-gamer-guidebook.pdf`, from the Google Drive link on the
      Westgate Academy page. Webflow's own copy is an empty 0-byte asset. The stylesheet,
      scripts and images the mirror's pages reference are in `public/mirror-assets/`, with
-     `url-map.json` mapping each original address to its file. Webflow's own code export
-     needs a paid plan, so take it from the Designer before cancelling.
+     `url-map.json` mapping each original address to its file. Webflow's own Export code
+     wasn't taken: it needs a paid Workspace plan, which this site's workspace doesn't
+     have (2026-10-30).
    - The add-ons are the connected apps Jetboost, LiveChat and Flowbase. Revoke the
      site's API tokens with the subscription.
    - The site's form webhooks also sent submissions to Zapier, Make, phoneflow and
