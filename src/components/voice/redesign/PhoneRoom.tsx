@@ -26,10 +26,11 @@ import {
 import { TileStage } from "./TileStage";
 import type { VoiceRoomRedesignProps } from "./types";
 import type { RoomStage } from "./use-room-stage";
+import { ZoneGlyph } from "./ZoneEntry";
 import { ZoneMoveNoticeHost } from "./ZoneMoveNotice";
 
-/** Near-square, so the 360px floor's two columns still fill a tall stage. */
-const TILE_ASPECT = 1;
+/** Taller than wide at the most, so the 360px floor's two columns fill a tall stage. */
+const TILE_ASPECT = { min: 2 / 3, max: 4 / 3 };
 const MIN_TILE_WIDTH = 150;
 /** The whole chat surface's height inside its sheet: one height, granted here. */
 const CHAT_HEIGHT = "h-[65dvh]";
@@ -72,15 +73,19 @@ export function PhoneRoom({
           type="button"
           onClick={() => setSheet("zones")}
           aria-haspopup="dialog"
-          className="flex min-h-11 min-w-0 flex-1 flex-col justify-center rounded-md px-2 text-left hover:bg-hover focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-act"
+          className="flex min-h-11 min-w-0 flex-1 items-center gap-2 rounded-md px-2 text-left hover:bg-hover focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-act"
         >
-          <span className="flex min-w-0 items-center gap-1 text-sm font-medium">
-            <span className="truncate">
+          {stage.currentZone && <ZoneGlyph zone={stage.currentZone} />}
+          <span className="flex min-w-0 flex-1 flex-col">
+            <span className="truncate text-sm font-medium">
               {t("stage.youAreIn", { zone: stage.currentZoneName })}
             </span>
-            <ChevronDown className="h-4 w-4 shrink-0" aria-hidden />
+            <span className="truncate text-xs text-muted-foreground">{hearStatus}</span>
           </span>
-          <span className="truncate text-xs text-muted-foreground">{hearStatus}</span>
+          <span className="flex shrink-0 items-center gap-0.5 text-xs font-medium">
+            {t("stage.zones")}
+            <ChevronDown className="h-4 w-4" aria-hidden />
+          </span>
         </button>
         {titleAccessory}
       </header>

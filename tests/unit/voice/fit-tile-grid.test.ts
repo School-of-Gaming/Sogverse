@@ -1,7 +1,12 @@
 import { describe, expect, it } from "vitest";
 import { fitTileGrid, TILE_GAP_PX } from "@/components/voice/redesign/fit-tile-grid";
 
-const desktop = { width: 1400, height: 760, aspect: 16 / 9, minTileWidth: 200 };
+const desktop = {
+  width: 1400,
+  height: 760,
+  aspect: { min: 4 / 3, max: 16 / 9 },
+  minTileWidth: 200,
+};
 
 describe("fitTileGrid", () => {
   it.each([
@@ -19,7 +24,7 @@ describe("fitTileGrid", () => {
       count: 2,
       width: 344,
       height: 560,
-      aspect: 1,
+      aspect: { min: 2 / 3, max: 4 / 3 },
       minTileWidth: 150,
     });
     expect(grid.columns).toBe(1);
@@ -32,6 +37,19 @@ describe("fitTileGrid", () => {
         desktop.width,
       );
     }
+  });
+
+  it("fills the stage with a tile shape inside the range", () => {
+    const grid = fitTileGrid({
+      count: 6,
+      width: 344,
+      height: 640,
+      aspect: { min: 2 / 3, max: 4 / 3 },
+      minTileWidth: 150,
+    });
+    expect(grid).toMatchObject({ columns: 2, scrolls: false });
+    expect(grid.tileHeight).toBeGreaterThan(grid.tileWidth);
+    expect(3 * grid.tileHeight + 2 * TILE_GAP_PX).toBeGreaterThan(630);
   });
 
   it("stops shrinking at the floor and scrolls instead", () => {

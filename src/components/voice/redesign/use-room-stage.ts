@@ -16,6 +16,8 @@ export interface ZoneMoveNotice {
 
 export interface RoomStage {
   zoneLabel: (zone: VoiceZoneView) => string;
+  /** The zone the reader is in, or `undefined` before the zones have composed. */
+  currentZone: VoiceZoneView | undefined;
   /** The current zone's name, for a sentence: never blank. */
   currentZoneName: string;
   /** The people on the stage: everyone in the reader's zone, the reader included. */
@@ -138,6 +140,7 @@ export function useRoomStage(onLeave: () => Promise<void>): RoomStage {
 
   return {
     zoneLabel,
+    currentZone,
     currentZoneName: zoneName(currentZone),
     stageMembers,
     sharer,

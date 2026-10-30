@@ -18,9 +18,10 @@ import {
 import { TileStage } from "./TileStage";
 import type { VoiceRoomRedesignProps } from "./types";
 import type { RoomStage } from "./use-room-stage";
+import { ZoneGlyph } from "./ZoneEntry";
 import { ZoneMoveNoticeHost } from "./ZoneMoveNotice";
 
-const TILE_ASPECT = 16 / 9;
+const TILE_ASPECT = { min: 4 / 3, max: 16 / 9 };
 const MIN_TILE_WIDTH = 200;
 const CELL = "min-w-[4.75rem]";
 /** Fills the panel's box, which is what the room grants the chat here. */
@@ -53,9 +54,12 @@ export function DesktopRoom({
           </Heading>
         </div>
         {titleAccessory}
-        <p className="ml-auto truncate text-sm text-muted-foreground">
-          {t("stage.statusLine", { zone: stage.currentZoneName, status: hearStatus })}
-        </p>
+        <div className="ml-auto flex min-w-0 items-center gap-2">
+          {stage.currentZone && <ZoneGlyph zone={stage.currentZone} />}
+          <p className="truncate text-sm font-medium">
+            {t("stage.statusLine", { zone: stage.currentZoneName, status: hearStatus })}
+          </p>
+        </div>
       </header>
 
       <div className="flex min-h-0 flex-1">
@@ -98,7 +102,7 @@ export function DesktopRoom({
  * the log's scroll position and the live subscription all survive a look at the
  * people. It sits in an absolutely filled box so `h-full` has a definite height
  * to take, and that box's bottom padding is the line the chat's typing indicator
- * draws into.
+ * draws into. The chat's root has no height of its own, so the box hands it one.
  */
 function SidePanel({
   chat,
@@ -122,7 +126,7 @@ function SidePanel({
       )}
       <div className="relative min-h-0 flex-1">
         {chat !== undefined && (
-          <div className={cn("absolute inset-0 px-2 pb-6 pt-2", !showChat && "hidden")}>
+          <div className={cn("absolute inset-0 px-2 pb-6 pt-2 [&>*]:h-full", !showChat && "hidden")}>
             {chat(CHAT_HEIGHT)}
           </div>
         )}

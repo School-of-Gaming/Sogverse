@@ -17,6 +17,9 @@ import type { RoomStage } from "./use-room-stage";
 import { useZoneManagement } from "./use-zone-management";
 import { ZoneEntry } from "./ZoneEntry";
 
+/** Small enough that a zone's reserved strip shows two rows of them. */
+const SHEET_AVATAR = "h-8 w-8";
+
 /**
  * The zones on a phone. Tap a zone to move in.
  *
@@ -97,10 +100,15 @@ export function PhoneZonesSheet({
                         setMoving(p);
                       }}
                     >
-                      <VoiceAvatar userId={p.userId} />
+                      <VoiceAvatar userId={p.userId} className={SHEET_AVATAR} />
                     </button>
                   ) : (
-                    <VoiceAvatar key={p.sessionId} userId={p.userId} isLocal={p.isLocal} />
+                    <VoiceAvatar
+                      key={p.sessionId}
+                      userId={p.userId}
+                      isLocal={p.isLocal}
+                      className={SHEET_AVATAR}
+                    />
                   ),
                 )}
               </ZoneEntry>

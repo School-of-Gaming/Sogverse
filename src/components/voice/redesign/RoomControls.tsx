@@ -25,7 +25,18 @@ import { useVoiceModeratorLocks } from "../VoiceModeratorLocks";
 import { useVoiceRoom } from "../VoiceRoomProvider";
 
 /** An icon over its word, the shape of every control in the dock and the bar. */
-const LABELLED = "h-14 flex-col gap-1 px-1 text-xs";
+const LABELLED =
+  "h-16 flex-col gap-0.5 whitespace-normal px-0.5 text-xs leading-tight";
+
+/**
+ * Wraps rather than truncates, and every control is tall enough for two lines,
+ * because the phone bar's narrowest cell is where "Camera off" has to stay whole.
+ */
+function LabelWord({ children }: { children: string }) {
+  return (
+    <span className="max-w-full text-center [overflow-wrap:anywhere]">{children}</span>
+  );
+}
 
 /**
  * A labelled control: the word is on the button because a first-timer cannot be
@@ -50,7 +61,7 @@ export function LabelledButton({
     <div className={cn("relative", cellClassName)}>
       <Button type="button" className={cn(LABELLED, "w-full", className)} {...props}>
         {icon}
-        <span className="max-w-full truncate">{label}</span>
+        <LabelWord>{label}</LabelWord>
       </Button>
       {moderatorLocked && (
         <Lock className="absolute -right-1 -top-1 h-3 w-3 text-destructive" aria-hidden />
@@ -175,7 +186,7 @@ export function ModeratorControls({ cellClassName }: { cellClassName?: string })
           className={cn(LABELLED, "w-full gap-0.5")}
         >
           {icon}
-          <span className="max-w-full truncate">{label}</span>
+          <LabelWord>{label}</LabelWord>
         </LockedButton>
       </div>
     ));

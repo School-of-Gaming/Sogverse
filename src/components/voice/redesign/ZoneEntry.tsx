@@ -1,7 +1,7 @@
 "use client";
 
 import type { ReactNode, Ref } from "react";
-import { Lock, Pencil, Trash2 } from "lucide-react";
+import { Lock, MapPin, Pencil, Trash2 } from "lucide-react";
 import { useTranslations } from "next-intl";
 import { Button } from "@/components/ui/button";
 import type { Locked } from "@/components/ui/locked-control";
@@ -13,6 +13,21 @@ import { LockedZoneManage } from "../ZoneList";
 /** A custom zone's edit and delete controls, working or locked. */
 export type ZoneManage = { onEdit: () => void; onDelete: () => void } | Locked;
 
+/** A zone's icon on its tile, the mark that stands for the zone wherever it is named. */
+export function ZoneGlyph({ zone }: { zone: VoiceZoneView }) {
+  const Icon = zone.icon;
+  return (
+    <span
+      className={cn(
+        "flex h-7 w-7 shrink-0 items-center justify-center rounded-lg border bg-lifted",
+        zone.color.edge,
+      )}
+    >
+      <Icon className={cn("h-4 w-4", zone.color.glyph)} aria-hidden />
+    </span>
+  );
+}
+
 /**
  * One zone in the list both layouts show: its icon, name, how many people are
  * in it, and its members in a strip.
@@ -21,6 +36,10 @@ export type ZoneManage = { onEdit: () => void; onDelete: () => void } | Locked;
  * people moving between zones never changes an entry's height and the entries
  * below stay put. Two rows are shown, and a crowd past that scrolls inside the
  * strip rather than growing it.
+ *
+ * **The zone you are in says so in words and in a heavy act edge**, for a reader
+ * who cannot yet match a glow to a sentence. Both sit in space the entry already
+ * has, so moving between zones changes no entry's height.
  */
 export function ZoneEntry({
   zone,
@@ -45,7 +64,6 @@ export function ZoneEntry({
   children: ReactNode;
 }) {
   const t = useTranslations("voice");
-  const Icon = zone.icon;
   const accessibleLabel = label || t("unnamedZone");
   const outsiderOfLocked = zone.isLocked && !isCurrent;
 
@@ -65,22 +83,15 @@ export function ZoneEntry({
       aria-label={onEnter ? t("joinZone", { zone: accessibleLabel }) : undefined}
       aria-current={isCurrent ? "true" : undefined}
       className={cn(
-        "rounded-xl border border-border p-2 transition-colors",
-        isCurrent && zone.color.glow,
+        "rounded-xl border-2 border-border p-2 transition-colors",
+        isCurrent && cn("border-act", zone.color.glow),
         isDropTarget && "ring-2 ring-act bg-lifted",
         onEnter &&
           "cursor-pointer hover:bg-hover focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-act",
       )}
     >
       <div className="flex items-center gap-2">
-        <span
-          className={cn(
-            "flex h-7 w-7 shrink-0 items-center justify-center rounded-lg border bg-lifted",
-            zone.color.edge,
-          )}
-        >
-          <Icon className={cn("h-4 w-4", zone.color.glyph)} aria-hidden />
-        </span>
+        <ZoneGlyph zone={zone} />
         <span className="min-w-0 flex-1 truncate text-sm font-medium">{label}</span>
         <span className="shrink-0 text-xs tabular-nums text-muted-foreground">{count}</span>
         {zone.isLocked && (
@@ -122,12 +133,14 @@ export function ZoneEntry({
         )}
       </div>
 
-      {isCurrent && (
-        <p className="sr-only">{t("stage.youAreHere")}</p>
-      )}
-
       <div className="relative mt-1.5 h-[3.75rem]">
         <div className="flex h-full flex-wrap content-start gap-1 overflow-y-auto [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
+          {isCurrent && (
+            <p className="flex w-full items-center gap-1 text-xs font-medium text-act">
+              <MapPin className="h-3.5 w-3.5 shrink-0" aria-hidden />
+              <span className="truncate">{t("stage.youAreHere")}</span>
+            </p>
+          )}
           {children}
         </div>
         {outsiderOfLocked && count > 0 && <PrivacyScreen />}

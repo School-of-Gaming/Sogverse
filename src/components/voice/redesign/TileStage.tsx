@@ -8,13 +8,15 @@ import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/cn";
 import { useVoiceRoom } from "../VoiceRoomProvider";
 import type { VoiceParticipant } from "../hooks/types";
-import { fitTileGrid, TILE_GAP_PX } from "./fit-tile-grid";
+import { fitTileGrid, TILE_GAP_PX, type TileAspectRange } from "./fit-tile-grid";
 import { StageTile } from "./StageTile";
 import { useTileFlip } from "./use-tile-flip";
 import { useRenderVideo } from "./VideoSurface";
 
 /** What a share's box costs a phone's stage: its own 16:9 height, then the gap. */
 const SHARE_ASPECT = 16 / 9;
+/** The scroller's `p-1`: room for a tile's ring and speaking glow, which it would clip. */
+const TILE_BLEED_PX = 4;
 
 function useElementSize(ref: RefObject<HTMLElement | null>) {
   const [size, setSize] = useState<{ width: number; height: number } | null>(null);
@@ -96,7 +98,7 @@ export function TileStage({
    * tall one.
    */
   shareLayout: "strip" | "below";
-  tileAspect: number;
+  tileAspect: TileAspectRange;
   minTileWidth: number;
 }) {
   const stageRef = useRef<HTMLDivElement>(null);
@@ -109,11 +111,12 @@ export function TileStage({
       ? null
       : fitTileGrid({
           count: members.length,
-          width: stage.width,
+          width: stage.width - 2 * TILE_BLEED_PX,
           height:
-            sharer === null
+            (sharer === null
               ? stage.height
-              : stage.height - stage.width / SHARE_ASPECT - TILE_GAP_PX,
+              : stage.height - stage.width / SHARE_ASPECT - TILE_GAP_PX) -
+            2 * TILE_BLEED_PX,
           aspect: tileAspect,
           minTileWidth,
         });
@@ -135,8 +138,8 @@ export function TileStage({
       )}
       <div
         className={cn(
-          "flex min-h-0 w-full",
-          isStrip ? "h-28 shrink-0 overflow-x-auto" : "flex-1 overflow-y-auto",
+          "flex min-h-0 w-full p-1",
+          isStrip ? "h-32 shrink-0 overflow-x-auto" : "flex-1 overflow-y-auto",
         )}
       >
         {/* Auto margins centre it, and unlike centring on the flex parent they

@@ -1,7 +1,6 @@
 "use client";
 
-import { useState } from "react";
-import { Video } from "lucide-react";
+import { useEffect, useState, useSyncExternalStore } from "react";
 import {
   ChatView,
   deriveChatLockControl,
@@ -20,14 +19,19 @@ import {
   type VoiceRoomRedesignScenario,
 } from "@/components/voice/mock-room-fixtures";
 import type { ParticipantChatControls } from "@/components/voice/ParticipantRow";
-import {
-  VideoSurfaceProvider,
-  type RenderVideo,
-} from "@/components/voice/redesign/VideoSurface";
+import { VideoSurfaceProvider } from "@/components/voice/redesign/VideoSurface";
 import { VoiceRoomRedesign } from "@/components/voice/redesign/VoiceRoomRedesign";
 import { VoiceRoomContext } from "@/components/voice/VoiceRoomProvider";
 import { composeZones } from "@/lib/voice/zone-composition";
 import { useChatSceneStore } from "./chat-scene-store";
+import {
+  buildBench,
+  GROUP_SESSION_SCRIPT,
+  withLiveCameras,
+} from "./voice-room-sim-fixtures";
+import { VoiceRoomSimPanel } from "./voice-room-sim-panel";
+import { useFakeVideo } from "./voice-room-sim-video";
+import { RoomSimulation, type SimulationScript } from "./voice-room-simulation";
 
 const GROUP_ID = "preview-group";
 const noop = () => {};
@@ -35,8 +39,9 @@ const asyncNoop = async () => {};
 const noAnalyser = () => null;
 
 /**
- * Who each scenario is. One line per viewer, which is what keeps a further
- * scenario to a fixture entry rather than a branch through the scene.
+ * Who each scenario is and what happens in their room. One line per viewer,
+ * which is what keeps a further scenario to a fixture entry and a script rather
+ * than a branch through the scene.
  */
 const SCENARIO_VIEWERS: Record<
   VoiceRoomRedesignScenario,
@@ -45,6 +50,7 @@ const SCENARIO_VIEWERS: Record<
     chatStanding: ChatStanding;
     localRole: VoiceRoomContextValue["localRole"];
     isModerator: boolean;
+    script: SimulationScript;
   }
 > = {
   gamer: {
@@ -52,21 +58,16 @@ const SCENARIO_VIEWERS: Record<
     chatStanding: { kind: "participant" },
     localRole: "gamer",
     isModerator: false,
+    script: GROUP_SESSION_SCRIPT,
   },
 };
 
-/** There is no call to attach to, so a live camera or share is a plain stand-in. */
-const renderPlaceholderVideo: RenderVideo = () => (
-  <div className="flex h-full w-full items-center justify-center bg-lifted">
-    <Video className="h-8 w-8 text-muted-foreground" aria-hidden />
-  </div>
-);
-
 /**
- * The redesigned room, as a draft body over a fixture context, driven entirely
- * by context values: who speaks comes from `isSpeaking`, and video from whatever
- * the scene hands the video surface. Moving between zones, sheets, tabs, mic and
- * camera work against local state; everything that would reach a backend is inert.
+ * The redesigned room, as a draft body over a fixture context kept moving by a
+ * simulated call: who speaks comes from `isSpeaking`, and video from the moving
+ * canvases the scene hands the video surface. Moving between zones, sheets,
+ * tabs, mic and camera act on the simulation; everything that would reach a
+ * backend is inert.
  */
 export function VoiceRoomRedesignScene({
   scenario,
@@ -75,12 +76,26 @@ export function VoiceRoomRedesignScene({
 }) {
   const viewer = SCENARIO_VIEWERS[scenario];
   const [now] = useState(() => new Date());
-  const [fixtureParticipants] = useState(() => buildRedesignParticipants(scenario));
-  const [currentZoneId, setCurrentZoneId] = useState(
-    () => fixtureParticipants.find((p) => p.isLocal)?.zoneId ?? "lobby",
+  const [zones] = useState(() => composeZones(VOICE_ROOM_REDESIGN_CUSTOM_ZONES, GROUP_ID));
+  const [simulation] = useState(
+    () =>
+      new RoomSimulation({
+        participants: withLiveCameras(buildRedesignParticipants(scenario)),
+        bench: buildBench(),
+        openZoneIds: zones.filter((zone) => !zone.isLocked).map((zone) => zone.id),
+        script: viewer.script,
+      }),
   );
-  const [micOn, setMicOn] = useState(true);
-  const [cameraOn, setCameraOn] = useState(false);
+  const room = useSyncExternalStore(
+    simulation.subscribe,
+    simulation.getSnapshot,
+    simulation.getSnapshot,
+  );
+  useEffect(() => {
+    simulation.mount();
+    return () => simulation.unmount();
+  }, [simulation]);
+  const renderVideo = useFakeVideo();
 
   const chat = useChatSceneStore(now, viewer.chatAccountId);
   const chatViewer =
@@ -98,48 +113,42 @@ export function VoiceRoomRedesignScene({
     return { direction, onSetLock: (locked) => chat.setLock(userId, locked) };
   };
 
-  const participants = fixtureParticipants.map((p) =>
-    p.isLocal
-      ? { ...p, zoneId: currentZoneId, audioOn: micOn, videoOn: cameraOn }
-      : p,
-  );
-  const zones = composeZones(VOICE_ROOM_REDESIGN_CUSTOM_ZONES, GROUP_ID);
+  const { participants, sharerSessionId } = room;
   const participantsByZone = new Map(
     zones.map((zone) => [zone.id, participants.filter((p) => p.zoneId === zone.id)]),
   );
   const local = participants.find((p) => p.isLocal);
+  const localSessionId = local?.sessionId ?? null;
 
   const value: VoiceRoomContextValue = {
     joined: true,
     joining: false,
     callObject: null,
-    localSessionId: local?.sessionId ?? null,
+    localSessionId,
     localRole: viewer.localRole,
     isModerator: viewer.isModerator,
     groupId: GROUP_ID,
     participants,
     zones,
     customZones: VOICE_ROOM_REDESIGN_CUSTOM_ZONES,
-    currentZoneId,
+    currentZoneId: local?.zoneId ?? "lobby",
     participantsByZone,
-    moveSelfToZone: (zoneId) => {
-      const zone = zones.find((z) => z.id === zoneId);
-      if (zone && (!zone.isLocked || viewer.isModerator)) setCurrentZoneId(zoneId);
-    },
-    moveParticipantToZone: noop,
+    moveSelfToZone: (zoneId) => simulation.moveSelf(zoneId),
+    moveParticipantToZone: (sessionId, _userId, zoneId) =>
+      simulation.moveParticipant(sessionId, zoneId),
     createZone: asyncNoop,
     updateZone: asyncNoop,
     deleteZone: asyncNoop,
-    micOn,
-    cameraOn,
+    micOn: local?.audioOn ?? false,
+    cameraOn: local?.videoOn ?? false,
     cameraAllowed: true,
-    toggleMic: () => setMicOn((on) => !on),
-    toggleCamera: () => setCameraOn((on) => !on),
-    screenSharerSessionId: null,
+    toggleMic: () => simulation.toggleMic(),
+    toggleCamera: () => simulation.toggleCamera(),
+    screenSharerSessionId: sharerSessionId,
     canScreenShare: viewer.isModerator,
-    isScreenSharing: false,
-    startScreenShare: asyncNoop,
-    stopScreenShare: noop,
+    isScreenSharing: sharerSessionId !== null && sharerSessionId === localSessionId,
+    startScreenShare: async () => simulation.startShare(localSessionId ?? undefined),
+    stopScreenShare: () => simulation.stopShare(),
     isBroadcasting: false,
     toggleBroadcast: noop,
     isDeafened: false,
@@ -159,7 +168,7 @@ export function VoiceRoomRedesignScene({
 
   return (
     <VoiceRoomContext.Provider value={value}>
-      <VideoSurfaceProvider value={renderPlaceholderVideo}>
+      <VideoSurfaceProvider value={renderVideo}>
         <VoiceRoomRedesign
           onLeave={asyncNoop}
           participantChatControls={participantChatControls}
@@ -187,6 +196,7 @@ export function VoiceRoomRedesignScene({
           )}
         />
       </VideoSurfaceProvider>
+      <VoiceRoomSimPanel simulation={simulation} state={room} />
     </VoiceRoomContext.Provider>
   );
 }
