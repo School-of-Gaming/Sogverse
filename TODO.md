@@ -2,7 +2,8 @@
 
 ## Cleanup
 
-- [ ] **School of Gaming's old marketing consent is still in the database, unused.** Klaviyo is the source of truth for it, and nothing in Sogverse reads or writes the `school_of_gaming` rows of the marketing consent tables any more. Carry the granted answers into Klaviyo with a one-off script (subscribed with their original consent time, skipping anyone Klaviyo shows as unsubscribed or suppressed), then remove the rows and the enum value in a change of their own.
+- [ ] **School of Gaming's old marketing consent is still in the database, unused.** Klaviyo is the source of truth for it, and nothing in Sogverse reads or writes the `school_of_gaming` rows of `marketing_consents` any more. Carry the granted answers into Klaviyo with a one-off script (subscribed with their original consent time, skipping anyone Klaviyo shows as unsubscribed or suppressed), then remove those rows in a change of their own. The enum value stays: a product's School of Gaming question is `product_marketing_consents` rows of that type.
+- [ ] **`KLAVIYO_NEWSLETTER_LIST_ID` outlives the code that read it.** `KLAVIYO_MARKETING_CONSENT_LIST_ID` replaced it. Once the Klaviyo sync is released to production, delete it from Vercel and from `.env.local`.
 
 - [ ] **The substitution notifications drain still stops itself after 45 seconds.** Its outbox drain (`src/lib/substitution-notifications/`) keeps a time budget of its own inside a 60-second `maxDuration`, and whatever is left waits for the next write anywhere. The Klaviyo sync dropped the same pattern on 2026-10-27: a drain the platform stops mid-batch loses nothing (leased rows are retaken once the lease runs out, and every call repeats harmlessly), so the budget only made a backlog wait longer. Check that the same holds for its sends (a Discord DM or Slack message repeated on retry is not harmless the way a Klaviyo upsert is) before removing its budget and the route's `maxDuration` the same way.
 

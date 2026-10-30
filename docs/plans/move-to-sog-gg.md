@@ -183,9 +183,10 @@ Every write outside the repo is confirmed with the owner before it is made.
    `npm run gates` passes.
    Until this branch is released, `supabase/config.toml` documents the old values.
    That's accepted, since the file is never pushed to prod.
-3. **Message the two external API users: Lynx and the Minecraft server team.** Draft each
-   with `/slack-msg` or `/whatsapp-msg`. Each message gives the date and the hour, and
-   says:
+3. **Message the two external API users: Lynx and the Minecraft server team.** The cutover
+   has no fixed date: it runs at a quiet hour the owner calls (decided 2026-10-30). So send
+   a heads-up naming the week, then a second message at the start of the hour. Draft each
+   with `/slack-msg` or `/whatsapp-msg`. The heads-up says:
    - their base URL moves from `https://sogverse.sog.gg` to `https://sog.gg`, and Lynx's
      staging one from `https://sogverse-staging.sog.gg` to `https://staging.sog.gg`
      (Lynx calls both);
@@ -193,7 +194,8 @@ Every write outside the repo is confirmed with the owner before it is made.
    - their calls fail from the cutover until they switch.
 
    For the Minecraft servers, a failing join check keeps players out, so their change has
-   to land within the hour. Agree with them who makes it, at that time.
+   to land within the hour. Agree with them who makes it and how they're reached at short
+   notice, and start the hour only once that person has answered.
 4. **Re-pull the machine-caller list**, and add anything new to step 1.6:
 
    ```bash
@@ -277,7 +279,8 @@ Every write outside the repo is confirmed with the owner before it is made.
      Re-read with `vercel api "/v6/domains/<domain>/config?projectIdOrName=sogverse"
      --scope school-of-gaming` before the hour. The existing hosts point at
      `cname.vercel-dns.com`, which Vercel ranks second and still serves.
-8. **The day before, at Nordname:**
+8. **At Nordname, at least a day before the hour.** With no fixed date, do this once the
+   heads-up has gone out; it changes nothing for visitors while it waits:
    - Lower the TTL on the apex `A` and the `www` CNAME to 300 s.
    - Add the `_vercel` TXT records from step 0.7.
    - Add a `staging` CNAME to `cname.vercel-dns.com`. A new name changes nothing for
@@ -437,10 +440,16 @@ removing the old staging host, so until then each change can be pointed back at
      that made it so it can be re-run just before cancelling. The token it uses is
      `WEBFLOW_EXPORT_TOKEN` (read-only) in `~/work/sog-translations/.env`. Its
      `personal/` folder goes to the restricted Drive folder.
-   - Two things aren't in it: the site's custom head and footer code, which no token can
-     read (copy it by hand from Site settings → Custom code), and the "My child is a
-     gamer" guidebook PDF, which Webflow refused to serve (download it from the Assets
-     panel if Sogverse's guide store doesn't already hold it).
+   - The site's custom code and the "My child is a gamer" guidebook were added on
+     2026-10-30. No token can read the custom code, so `public/custom-code/` holds the head
+     and footer read from Site settings, the app scripts and the code pulled from the
+     static mirror; re-running the export won't refresh them. The guidebook is
+     `public/files/my-child-is-a-gamer-guidebook.pdf`, from the Google Drive link on the
+     Westgate Academy page. Webflow's own copy is an empty 0-byte asset. The stylesheet,
+     scripts and images the mirror's pages reference are in `public/mirror-assets/`, with
+     `url-map.json` mapping each original address to its file. Webflow's own Export code
+     wasn't taken: it needs a paid Workspace plan, which this site's workspace doesn't
+     have (2026-10-30).
    - The add-ons are the connected apps Jetboost, LiveChat and Flowbase. Revoke the
      site's API tokens with the subscription.
    - The site's form webhooks also sent submissions to Zapier, Make, phoneflow and

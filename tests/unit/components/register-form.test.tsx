@@ -49,13 +49,6 @@ vi.mock("@/providers", () => ({
     freezeUntilNavigation: mockFreezeUntilNavigation,
     unfreezeAuthState: mockUnfreezeAuthState,
   }),
-  useUtm: () => ({
-    source: "Lynx",
-    medium: null,
-    campaign: "lynx-summer-a",
-    content: null,
-    term: "minecraft",
-  }),
 }));
 
 // The navigation itself is the hook's job and jsdom cannot perform it; what
@@ -169,7 +162,7 @@ describe("RegisterForm", () => {
     expect(mockSupabaseClient.auth.signUp).not.toHaveBeenCalled();
   });
 
-  it("sends the names, the UI locale and the utm values it was given", async () => {
+  it("sends the names and the UI locale, and no attribution", async () => {
     const form = renderForm();
 
     await form.submit();
@@ -182,9 +175,8 @@ describe("RegisterForm", () => {
       // request — so the locale the form is being read in is the best answer
       // anyone has for the welcome mail.
       locale: "fi",
-      // Only the fields that survived are sent; an absent one is omitted.
-      utm: { source: "Lynx", campaign: "lynx-summer-a", term: "minecraft" },
     });
+    expect(postedBody()).not.toHaveProperty("utm");
   });
 
   it("omits the home location when none was picked", async () => {
@@ -450,11 +442,6 @@ describe("the parent register page's Google button", () => {
     const nextUrl = new URL(next, "https://internal.invalid");
     expect(nextUrl.pathname).toBe(ROUTES.completeRegistration);
     expect(nextUrl.searchParams.has("as")).toBe(false);
-    expect(nextUrl.searchParams.get("utm_source")).toBe("Lynx");
-    expect(nextUrl.searchParams.get("utm_campaign")).toBe("lynx-summer-a");
-    expect(nextUrl.searchParams.get("utm_term")).toBe("minecraft");
-    expect(nextUrl.searchParams.has("utm_medium")).toBe(false);
-    expect(nextUrl.searchParams.has("utm_content")).toBe(false);
     expect(nextUrl.searchParams.has("redirect")).toBe(false);
   });
 

@@ -11,6 +11,7 @@ import {
   consentForPurposes,
   serialiseConsent,
 } from "@/lib/consent";
+import { attributionCookie } from "../../mocks/attribution-cookie";
 
 // --- Mocks ---
 
@@ -991,17 +992,17 @@ describe("POST /api/participations/waitlist", () => {
 
   // -- What the place in line records, as a seat does --
   //
-  // The visit's UTM tag is written only under marketing cookie consent read
-  // off THIS request (src/lib/utm.ts); the School of Gaming box is the
+  // The attribution cookie's UTM tag is written only under marketing consent
+  // read off THIS request (src/lib/utm.ts); the School of Gaming box is the
   // parent's own answer and passes through as given.
   describe("the place in line's tag and answer", () => {
-    const TAG = {
+    const TAG = attributionCookie({
       source: "lynx",
       medium: "email",
       campaign: "lynx-summer-a",
       content: "hero",
       term: "minecraft",
-    };
+    });
     const UTM_ARGS = [
       "p_utm_source",
       "p_utm_medium",
@@ -1048,9 +1049,12 @@ describe("POST /api/participations/waitlist", () => {
       });
     });
 
-    it("stores the tag when the request's cookie grants marketing", async () => {
+    // The case the cookie exists for: a parent lands from a campaign, signs in
+    // on a full reload that loses everything held in memory, and joins the
+    // queue. Nothing about the tag is in the body.
+    it("stores the tag the landing left in the cookie, after the sign-in reload", async () => {
       await POST(
-        requestWith({ ...BODY, utm: TAG }, consentCookie({ analytics: false, marketing: true })),
+        requestWith(BODY, `${consentCookie({ analytics: false, marketing: true })}; ${TAG}`),
       );
       expect(rpcArgs()).toMatchObject({
         p_utm_source: "lynx",
@@ -1062,13 +1066,24 @@ describe("POST /api/participations/waitlist", () => {
     });
 
     it("stores no tag without a consent cookie, or under analytics-only consent", async () => {
-      await POST(requestWith({ ...BODY, utm: TAG }));
+      await POST(requestWith(BODY, TAG));
       for (const key of UTM_ARGS) expect(rpcArgs()).not.toHaveProperty(key);
 
       mockRpc.mockClear();
       await POST(
-        requestWith({ ...BODY, utm: TAG }, consentCookie({ analytics: true, marketing: false })),
+        requestWith(BODY, `${consentCookie({ analytics: true, marketing: false })}; ${TAG}`),
       );
+      for (const key of UTM_ARGS) expect(rpcArgs()).not.toHaveProperty(key);
+    });
+
+    it("ignores a utm field an old bundle still posts", async () => {
+      const response = await POST(
+        requestWith(
+          { ...BODY, utm: { campaign: "from-an-old-bundle" } },
+          consentCookie({ analytics: false, marketing: true }),
+        ),
+      );
+      expect(response.status).toBe(200);
       for (const key of UTM_ARGS) expect(rpcArgs()).not.toHaveProperty(key);
     });
 

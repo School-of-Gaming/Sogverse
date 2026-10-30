@@ -15,6 +15,12 @@ process.env.PIN_COOKIE_SECRET = "test-pin-cookie-secret";
 import { config, proxy } from "@/proxy";
 import { PIN_COOKIE_NAME, pinTokenFor } from "@/lib/pin-session";
 import {
+  CONSENT_COOKIE_NAME,
+  consentForPurposes,
+  serialiseConsent,
+} from "@/lib/consent";
+import { UTM_COOKIE_MAX_AGE_SECONDS, UTM_COOKIE_NAME } from "@/lib/utm";
+import {
   decodeExternalPathname,
   localizeInternalPath,
   normalizeExternalPath,
@@ -993,6 +999,170 @@ describe("proxy", () => {
       const response = await proxy(request);
       expect(response.status).toBe(307);
       expect(utmHeaderAfter(request)).toBe("campaign=lynx-summer-a");
+    });
+  });
+
+  // --- The attribution cookie ---
+  //
+  // Written only when the request's own consent cookie grants marketing, on
+  // whichever response goes back, because a bounce is the tag's last chance.
+  describe("the attribution cookie", () => {
+    function consent(purposes: { analytics: boolean; marketing: boolean }): string {
+      const value = serialiseConsent(consentForPurposes(purposes));
+      return `${CONSENT_COOKIE_NAME}=${encodeURIComponent(value)}`;
+    }
+    const GRANTED = consent({ analytics: false, marketing: true });
+    const TAGGED = "/shop?utm_source=lynx&utm_campaign=lynx-summer-a";
+
+    function keptBy(response: { cookies: { get(name: string): unknown } }) {
+      return response.cookies.get(UTM_COOKIE_NAME);
+    }
+
+    it("is written under marketing consent, with its attributes whole", async () => {
+      mockNoUser();
+      const response = await proxy(createNextRequest(TAGGED, GRANTED));
+      expect(keptBy(response)).toMatchObject({
+        value: "source=lynx&campaign=lynx-summer-a",
+        path: "/",
+        maxAge: UTM_COOKIE_MAX_AGE_SECONDS,
+        sameSite: "lax",
+      });
+      expect(keptBy(response)).not.toMatchObject({ httpOnly: true });
+    });
+
+    it.each([
+      ["unanswered", undefined],
+      ["refused", consent({ analytics: false, marketing: false })],
+      ["analytics only", consent({ analytics: true, marketing: false })],
+    ])("is not written when the answer is %s", async (_, cookie) => {
+      mockNoUser();
+      const response = await proxy(createNextRequest(TAGGED, cookie));
+      expect(keptBy(response)).toBeUndefined();
+    });
+
+    it("is overwritten by a later tag, which is what last touch means", async () => {
+      mockNoUser();
+      const response = await proxy(
+        createNextRequest(
+          "/shop?utm_campaign=later",
+          `${GRANTED}; ${UTM_COOKIE_NAME}=campaign%3Dearlier`,
+        ),
+      );
+      expect(keptBy(response)).toMatchObject({ value: "campaign=later" });
+    });
+
+    it("leaves the cookie alone on a request with no tag", async () => {
+      mockNoUser();
+      const response = await proxy(
+        createNextRequest("/shop", `${GRANTED}; ${UTM_COOKIE_NAME}=campaign%3Dearlier`),
+      );
+      expect(keptBy(response)).toBeUndefined();
+    });
+
+    it("drops a tag over the byte budget rather than cutting it", async () => {
+      mockNoUser();
+      const wide = encodeURIComponent("𝕎".repeat(200));
+      const response = await proxy(
+        createNextRequest(
+          `/shop?utm_source=${wide}&utm_medium=${wide}&utm_campaign=${wide}`,
+          GRANTED,
+        ),
+      );
+      expect(keptBy(response)).toBeUndefined();
+    });
+
+    it("leaves the earlier cookie as it is when a new tag is over the cookie's budget", async () => {
+      mockNoUser();
+      const source = encodeURIComponent("é".repeat(100));
+      const campaign = encodeURIComponent("é".repeat(200));
+      const response = await proxy(
+        createNextRequest(
+          `/shop?utm_source=${source}&utm_campaign=${campaign}`,
+          `${GRANTED}; ${UTM_COOKIE_NAME}=campaign%3Dearlier`,
+        ),
+      );
+      expect(keptBy(response)).toBeUndefined();
+    });
+
+    it("is not written on a request that is not a page", async () => {
+      mockNoUser();
+      const response = await proxy(
+        createBareRequest("/api/health?utm_campaign=a", GRANTED),
+      );
+      expect(keptBy(response)).toBeUndefined();
+    });
+
+    it("rides the locale redirect of a signed-out bare path", async () => {
+      mockNoUser();
+      const response = await proxy(createBareRequest(TAGGED, GRANTED));
+      expect(response.status).toBe(307);
+      expect(getRedirectUrl(response).search).toContain("utm_campaign");
+      expect(keptBy(response)).toMatchObject({
+        value: "source=lynx&campaign=lynx-summer-a",
+        path: "/",
+      });
+    });
+
+    it("rides a bounce that drops the query", async () => {
+      // A signed-in admin on the home page goes to their dashboard, and the
+      // landing link's query does not go with them.
+      mockUser("admin");
+      const response = await proxy(
+        createNextRequest("/?utm_campaign=lynx-summer-a", GRANTED),
+      );
+      expect(response.status).toBe(307);
+      expect(getRedirectUrl(response).search).toBe("");
+      expect(keptBy(response)).toMatchObject({ value: "campaign=lynx-summer-a" });
+    });
+
+    it("rides the login bounce off a protected page", async () => {
+      mockNoUser();
+      const response = await proxy(
+        createNextRequest("/parent?utm_campaign=lynx-summer-a", GRANTED),
+      );
+      expect(response.status).toBe(307);
+      expect(keptBy(response)).toMatchObject({ value: "campaign=lynx-summer-a" });
+    });
+
+    it("survives a session refresh recreating the response", async () => {
+      mockGetClaims.mockImplementation(async () => {
+        capturedCookieHandlers?.setAll([
+          { name: "sb-token", value: "refreshed", options: { path: "/" } },
+        ]);
+        return { data: null, error: null };
+      });
+      const response = await proxy(createNextRequest(TAGGED, GRANTED));
+      expect(response.cookies.get("sb-token")?.value).toBe("refreshed");
+      expect(keptBy(response)).toMatchObject({
+        value: "source=lynx&campaign=lynx-summer-a",
+      });
+    });
+
+    it("is not written for a signed-in gamer", async () => {
+      mockUser("gamer");
+      const response = await proxy(createNextRequest(TAGGED, GRANTED));
+      expect(response.status).toBe(200);
+      expect(keptBy(response)).toBeUndefined();
+    });
+
+    it("is not written for a session whose role could not be read", async () => {
+      mockGetClaims.mockResolvedValue({
+        data: { claims: { sub: TEST_USER_ID, session_id: TEST_SESSION_ID } },
+        error: null,
+      });
+      mockProfileQuery.mockResolvedValue({ data: null, error: { message: "down" } });
+      const response = await proxy(createNextRequest(TAGGED, GRANTED));
+      expect(keptBy(response)).toBeUndefined();
+    });
+
+    it("waits for the next hop when the role is not known yet", async () => {
+      // The locale redirect runs ahead of the role lookup. It keeps the query,
+      // so the localized hop writes the cookie with the role in hand.
+      mockUser("customer");
+      const response = await proxy(createBareRequest(TAGGED, GRANTED));
+      expect(response.status).toBe(307);
+      expect(getRedirectUrl(response).search).toContain("utm_campaign");
+      expect(keptBy(response)).toBeUndefined();
     });
   });
 

@@ -39,6 +39,11 @@ const mockAuth = vi.hoisted(() => ({
   profile: null as { role: string } | null,
   isLoading: false,
 }));
+vi.mock("@/providers/utm-provider", () => {
+  const none = { source: null, medium: null, campaign: null, content: null, term: null };
+  return { useUtm: () => none };
+});
+
 vi.mock("@/providers/auth-provider", () => ({
   useAuth: () => mockAuth,
 }));

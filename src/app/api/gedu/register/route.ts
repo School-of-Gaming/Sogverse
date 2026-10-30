@@ -8,7 +8,7 @@ import {
   promoteToGedu,
   resolveGeduGameHandles,
 } from "@/services/gedu/gedu-registration.server";
-import { utmMetadataForConsent } from "@/lib/utm";
+import { utmFromCookieHeader, utmMetadataForConsent } from "@/lib/utm";
 import { parseConsentCookieHeader } from "@/lib/consent";
 import { sendTransactionalEmail } from "@/lib/brevo";
 import { SENDER_EMAIL, SENDER_NAME, SUPPORT_EMAIL } from "@/lib/constants/brand";
@@ -48,16 +48,14 @@ export const POST = defineRoute({
       locationIds,
       minecraftUsername,
       robloxUsername,
-      utm,
     } = body;
 
     const locale = resolveLocale(requestedLocale);
 
-    // The body schema takes these as plain strings and leaves the format rule to
-    // here, deliberately: the educator never typed the UTM values and cannot see
-    // them, so a malformed one must not become a 400 that blocks their
-    // registration. A bad value degrades to null and the account is created
-    // without that field — the same outcome as arriving with no link at all.
+    // The attribution cookie, re-sanitised on the way out of it: the educator
+    // never typed the UTM values and cannot see them, so a bad one degrades to
+    // null and the account is created without that field — the same outcome as
+    // arriving with no link at all.
     //
     // GATED ON MARKETING CONSENT, read off this request's own `Cookie` header,
     // exactly as the parent route does it: counsel reads the UTM parameters on
@@ -66,9 +64,10 @@ export const POST = defineRoute({
     // answer granted it. An educator who refused the banner, chose
     // analytics-only or never answered creates an account with all three NULL.
     // `src/lib/utm.ts` has the ruling.
+    const cookieHeader = request.headers.get("cookie");
     const utmMetadata = utmMetadataForConsent(
-      parseConsentCookieHeader(request.headers.get("cookie")),
-      utm,
+      parseConsentCookieHeader(cookieHeader),
+      utmFromCookieHeader(cookieHeader),
     );
 
     // Phone → digits to match the profiles.phone CHECK. Empty or absent stays

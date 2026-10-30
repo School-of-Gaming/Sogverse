@@ -34,6 +34,7 @@ import {
 import { reportAdConversion } from "@/lib/ad-conversions.server";
 import { getOrigin } from "@/lib/url";
 import { parseConsentCookieHeader } from "@/lib/consent";
+import { utmFromCookieHeader } from "@/lib/utm";
 import {
   seatAnswerArgs,
   seatAnswersToSessionMetadata,
@@ -187,15 +188,17 @@ export const POST = defineRoute({
       );
     }
 
-    // What the seat records beyond who and what: the visit's UTM tag and the
-    // parent's answer to the product's School of Gaming mailing box. The tag
-    // is GATED ON MARKETING CONSENT, read off THIS request's own cookie header
-    // — never a body field — exactly as account creation gates the profile's
-    // copy (`src/lib/utm.ts`). The box's answer is the parent's own and passes
-    // through as given: absent when the panel did not ask, which stores NULL.
+    // What the seat records beyond who and what: the attribution cookie's UTM
+    // tag and the parent's answer to the product's School of Gaming mailing
+    // box. The tag is GATED ON MARKETING CONSENT, and both it and the consent
+    // are read off THIS request's own cookie header, exactly as account
+    // creation gates the profile's copy (`src/lib/utm.ts`). The box's answer is
+    // the parent's own and passes through as given: absent when the panel did
+    // not ask, which stores NULL.
+    const cookieHeader = request.headers.get("cookie");
     const seatAnswers = seatAnswerArgs(
-      parseConsentCookieHeader(request.headers.get("cookie")),
-      body.utm,
+      parseConsentCookieHeader(cookieHeader),
+      utmFromCookieHeader(cookieHeader),
       body.schoolOfGamingMarketingOptIn,
     );
 

@@ -132,6 +132,7 @@ import {
 } from "@/services/users/parent-registration.contracts";
 import { REGISTRATION_CONSENT_DOCUMENTS } from "@/lib/constants/consent-documents";
 import { CONSENT_COOKIE_NAME } from "@/lib/consent";
+import { attributionCookie } from "../../mocks/attribution-cookie";
 import { ROUTES } from "@/lib/constants/routes";
 
 const USER_ID = "77777777-7777-4777-8777-777777777777";
@@ -142,22 +143,27 @@ const validBody = {
   firstName: "Marja",
   lastName: "Virtanen",
   locale: "fi",
-  utm: {
-    source: "Lynx",
-    medium: "email",
-    campaign: "lynx-summer-a",
-    content: "hero",
-    term: "roblox club",
-  },
   marketingConsent: true,
   acceptedTerms: true,
 };
+
+/** Every case's browser holds a tag; what it may do with it is the consent's. */
+const ATTRIBUTION = attributionCookie({
+  source: "Lynx",
+  medium: "email",
+  campaign: "lynx-summer-a",
+  content: "hero",
+  term: "roblox club",
+});
 
 function request(
   body: unknown,
   { marketing }: { marketing?: boolean } = {},
 ): Request {
-  const headers: Record<string, string> = { "Content-Type": "application/json" };
+  const headers: Record<string, string> = {
+    "Content-Type": "application/json",
+    cookie: ATTRIBUTION,
+  };
   if (marketing !== undefined) {
     const value = encodeURIComponent(
       JSON.stringify({
@@ -167,7 +173,7 @@ function request(
         marketing,
       }),
     );
-    headers.cookie = `${CONSENT_COOKIE_NAME}=${value}`;
+    headers.cookie = `${CONSENT_COOKIE_NAME}=${value}; ${ATTRIBUTION}`;
   }
   return new Request("http://localhost:3000/api/auth/complete-registration", {
     method: "POST",
