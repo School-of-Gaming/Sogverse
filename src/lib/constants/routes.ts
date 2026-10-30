@@ -580,6 +580,7 @@ export const ROUTES = {
    *
    * `/roblox` shows the in-person events; the two pages below are the same page
    * for the online events and for every event, sharing this posture exactly.
+   * Those two carry translated slugs; these are their internal paths.
    */
   roblox: "/roblox",
   robloxOnline: "/roblox-online",
