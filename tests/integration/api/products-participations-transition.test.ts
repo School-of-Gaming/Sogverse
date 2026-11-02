@@ -1,11 +1,12 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
+import { SITE_ORIGIN } from "../../mocks/site-origin";
 
 // The seat-offer mail signs its link with this secret and builds its origin
 // from getOrigin(), which falls back to NEXT_PUBLIC_SITE_URL when the request
 // carries no trusted Host. Both are read lazily, but set them before the
 // imports so nothing can capture an unset value.
 process.env.PIN_COOKIE_SECRET = "integration-test-pin-secret";
-process.env.NEXT_PUBLIC_SITE_URL = "https://test.sogverse.local";
+process.env.NEXT_PUBLIC_SITE_URL = SITE_ORIGIN;
 
 import { NextResponse } from "next/server";
 import { PATCH } from "@/app/api/admin/products/[id]/participations/[participationId]/route";
@@ -503,7 +504,7 @@ describe("PATCH /api/admin/products/[id]/participations/[participationId]", () =
     // The link carries the token and points at the public landing page, on the
     // trusted origin rather than the request's Host.
     expect(sent.htmlContent).toContain(
-      "https://test.sogverse.local/seat-offer?token=",
+      `${SITE_ORIGIN}/seat-offer?token=`,
     );
   });
 
@@ -530,7 +531,7 @@ describe("PATCH /api/admin/products/[id]/participations/[participationId]", () =
     // The child's: their own address, their own root, and nothing that answers.
     expect(child.toEmail).toBe("aino@example.test");
     expect(child.subject).toContain("Minecraft 101");
-    expect(child.htmlContent).toContain("https://test.sogverse.local/gamer");
+    expect(child.htmlContent).toContain(`${SITE_ORIGIN}/gamer`);
     expect(child.htmlContent).not.toContain("token=");
     expect(child.htmlContent).not.toContain("/seat-offer");
     expect(child.htmlContent).not.toContain("/parent");

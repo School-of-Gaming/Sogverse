@@ -1,4 +1,5 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
+import { SITE_ORIGIN } from "../../../mocks/site-origin";
 import type {
   LocalizedLibraryArticle,
   PublishedLibraryArticle,
@@ -243,7 +244,7 @@ describe("a Library article's metadata", () => {
 });
 
 describe("a Library article's structured data", () => {
-  const SITE = "https://sogverse.example";
+  const SITE = SITE_ORIGIN;
 
   it("is an Article published by School of Gaming, at its canonical address", () => {
     expect(

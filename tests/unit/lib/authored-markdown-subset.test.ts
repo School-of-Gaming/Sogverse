@@ -1,4 +1,5 @@
 import { describe, expect, it } from "vitest";
+import { SITE_HOST } from "../../mocks/site-origin";
 import { MARKDOWN_USE_CASES, type MarkdownUseCase } from "@/lib/authored-markdown";
 import {
   MARKDOWN_ELEMENT_NAMES,
@@ -25,7 +26,7 @@ describe("markdownOutsideSubset", () => {
       "### Third",
       "",
       "A paragraph with **bold**, *italic* and a [link](https://example.com).\\",
-      "After a hard break, a [relative one](/library) and [mail](mailto:hi@sog.gg).",
+      `After a hard break, a [relative one](/library) and [mail](mailto:hi@${SITE_HOST}).`,
       "",
       "- a bullet",
       "  1. a nested number",

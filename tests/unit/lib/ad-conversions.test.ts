@@ -1,4 +1,5 @@
 import { afterEach, beforeEach, describe, expect, it, vi, type Mock } from "vitest";
+import { SITE_ORIGIN } from "../../mocks/site-origin";
 import {
   CONSENT_COOKIE_NAME,
   serialiseConsent,
@@ -40,7 +41,7 @@ function request(): Request {
       decidedAt: "2026-09-03T10:15:00.000Z",
     }),
   );
-  return new Request("https://test.sogverse.local/api/x", {
+  return new Request(`${SITE_ORIGIN}/api/x`, {
     method: "POST",
     headers: { cookie: `${CONSENT_COOKIE_NAME}=${consent}` },
   });
@@ -66,7 +67,7 @@ beforeEach(() => {
   vi.stubEnv("NEXT_PUBLIC_REDDIT_PIXEL_ID", "a2_abc123");
   vi.stubEnv("REDDIT_CONVERSIONS_API_ACCESS_TOKEN", "reddit-token");
   vi.stubEnv("REDDIT_CONVERSIONS_API_TEST_ID", undefined);
-  vi.stubEnv("NEXT_PUBLIC_SITE_URL", "https://test.sogverse.local");
+  vi.stubEnv("NEXT_PUBLIC_SITE_URL", SITE_ORIGIN);
   fetchMock = vi
     .fn<FetchCall>()
     .mockResolvedValue(new Response("{}", { status: 200 }));

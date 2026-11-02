@@ -1,4 +1,5 @@
 import { describe, it, expect, vi, beforeEach } from "vitest";
+import { SITE_ORIGIN } from "../../mocks/site-origin";
 import { advertisedProductDetails } from "@/lib/marketing-events";
 
 // Parent self-registration: the second-highest-value public route on the
@@ -19,7 +20,7 @@ process.env.PIN_COOKIE_SECRET = "route-test-parent-register-secret";
 // NEXT_PUBLIC_SITE_URL when the request carries no trusted Host (these mock
 // requests don't). A fake value keeps the suite hermetic and exercises the
 // production-representative path.
-process.env.NEXT_PUBLIC_SITE_URL = "https://test.sogverse.local";
+process.env.NEXT_PUBLIC_SITE_URL = SITE_ORIGIN;
 
 const mockRequireRole = vi.fn();
 vi.mock("@/lib/auth", () => ({
@@ -921,9 +922,9 @@ describe("POST /api/auth/register", () => {
     await POST(registerRequest(validBody));
 
     const { htmlContent } = mockSendTransactionalEmail.mock.calls[0][0];
-    expect(htmlContent).toContain("https://test.sogverse.local/shop");
-    expect(htmlContent).toContain("https://test.sogverse.local/parent");
-    expect(htmlContent).toContain("https://test.sogverse.local/settings");
+    expect(htmlContent).toContain(`${SITE_ORIGIN}/shop`);
+    expect(htmlContent).toContain(`${SITE_ORIGIN}/parent`);
+    expect(htmlContent).toContain(`${SITE_ORIGIN}/settings`);
   });
 
   // The persisted locale is what a browserless sender consults later: without
@@ -991,7 +992,7 @@ describe("POST /api/auth/register", () => {
     );
 
     const { htmlContent } = mockSendTransactionalEmail.mock.calls[0][0];
-    expect(htmlContent).toContain("https://test.sogverse.local/verify-email?token=");
+    expect(htmlContent).toContain(`${SITE_ORIGIN}/verify-email?token=`);
     expect(htmlContent).not.toContain("evil.com");
   });
 

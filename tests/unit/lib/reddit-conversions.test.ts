@@ -1,4 +1,5 @@
 import { afterEach, beforeEach, describe, expect, it, vi, type Mock } from "vitest";
+import { SITE_HOST, SITE_ORIGIN } from "../../mocks/site-origin";
 import {
   CONSENT_COOKIE_NAME,
   serialiseConsent,
@@ -78,10 +79,10 @@ function request({
   cookie?: string | null;
   headers?: Record<string, string>;
 } = {}): Request {
-  return new Request("https://test.sogverse.local/api/auth/register", {
+  return new Request(`${SITE_ORIGIN}/api/auth/register`, {
     method: "POST",
     headers: {
-      host: "test.sogverse.local",
+      host: SITE_HOST,
       "user-agent": "Mozilla/5.0 (test)",
       ...(cookie === null ? {} : { cookie }),
       ...headers,
@@ -108,7 +109,7 @@ beforeEach(() => {
   vi.stubEnv("NEXT_PUBLIC_REDDIT_PIXEL_ID", PIXEL_ID);
   vi.stubEnv("REDDIT_CONVERSIONS_API_ACCESS_TOKEN", ACCESS_TOKEN);
   vi.stubEnv("REDDIT_CONVERSIONS_API_TEST_ID", undefined);
-  vi.stubEnv("NEXT_PUBLIC_SITE_URL", "https://test.sogverse.local");
+  vi.stubEnv("NEXT_PUBLIC_SITE_URL", SITE_ORIGIN);
   fetchMock = vi
     .fn<FetchCall>()
     .mockResolvedValue(new Response("{}", { status: 200 }));
@@ -192,7 +193,7 @@ describe("reportRedditConversion — the request", () => {
     const event = sentEvent();
     expect(event.type).toEqual({ tracking_type: "LEAD" });
     expect(event.action_source).toBe("WEBSITE");
-    expect(event.event_source_url).toBe("https://test.sogverse.local/register");
+    expect(event.event_source_url).toBe(`${SITE_ORIGIN}/register`);
     // Milliseconds, not Meta's seconds.
     expect(event.event_at).toBeGreaterThanOrEqual(before);
     expect(event.event_at).toBeLessThanOrEqual(Date.now());
@@ -321,7 +322,7 @@ describe("reportRedditConversion — the request", () => {
     const event = sentEvent();
     expect(event.type).toEqual({ tracking_type: "SIGN_UP" });
     expect(event.event_source_url).toBe(
-      "https://test.sogverse.local/shop/abc-123",
+      `${SITE_ORIGIN}/shop/abc-123`,
     );
     const { conversion_id: _id, ...metadata } = asObject(event.metadata);
     expect(metadata).toEqual({
@@ -380,7 +381,7 @@ describe("reportRedditConversion — the request", () => {
     expect(event.type).toEqual({ tracking_type: "LEAD" });
     const { conversion_id: _id, ...metadata } = asObject(event.metadata);
     expect(metadata).toEqual(UNPRICED_PRODUCT);
-    expect(event.event_source_url).toBe("https://test.sogverse.local/register");
+    expect(event.event_source_url).toBe(`${SITE_ORIGIN}/register`);
   });
 
   it("carries the test id only when one is configured", async () => {

@@ -1,4 +1,5 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
+import { SITE_ORIGIN } from "../../mocks/site-origin";
 import {
   EVENT_METRICS,
   klaviyoEventFor,
@@ -161,7 +162,7 @@ function shapeOf(value: unknown): string {
   return typeof value;
 }
 
-beforeEach(() => vi.stubEnv("NEXT_PUBLIC_SITE_URL", "https://sogverse.sog.gg"));
+beforeEach(() => vi.stubEnv("NEXT_PUBLIC_SITE_URL", SITE_ORIGIN));
 afterEach(() => vi.unstubAllEnvs());
 
 describe("the profile", () => {
@@ -505,7 +506,7 @@ describe("the events", () => {
         delivery_mode: "in_person",
         location: "Espoo",
         spoken_language: "fi",
-        product_url: `https://sogverse.sog.gg/fi/kauppa/${CLUB.id}`,
+        product_url: `${SITE_ORIGIN}/fi/kauppa/${CLUB.id}`,
         utm_source: "meta",
         utm_medium: "paid",
         utm_campaign: "autumn",
@@ -520,7 +521,7 @@ describe("the events", () => {
       { ...enrolled, properties: { ...enrolled.properties, product: MUNICIPAL } },
       { ...FULL, profile: { ...FULL.profile, locale: "en" } },
     );
-    expect(event.properties.product_url).toBe(`https://sogverse.sog.gg/en/shop/${MUNICIPAL.id}`);
+    expect(event.properties.product_url).toBe(`${SITE_ORIGIN}/en/shop/${MUNICIPAL.id}`);
   });
 
   it("says nothing of a product that is gone, and of a parent's own seat's gamer", () => {

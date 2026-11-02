@@ -33,7 +33,7 @@ Capitalization and plurals are not cosmetic. Inconsistent casing is the clearest
 | **specialization** | Lowercase. | specializations | Three of them: Minecraft-oriented, technology-oriented, e-sports-oriented. |
 | **gamer profile** | Lowercase both words. | gamer profiles | The gamer's character sheet and record. |
 | **warm-up / cool down** | As written. | — | The bookends of a lesson. |
-| **club** | Lowercase. | clubs | The family-facing name for a recurring weekly group. Used heavily on sogverse.sog.gg. See the note below on clubs and lessons. |
+| **club** | Lowercase. | clubs | The family-facing name for a recurring weekly group. Used heavily on sog.gg. See the note below on clubs and lessons. |
 | **the gamer's oath** | Lowercase, apostrophe s. | No plural | The promise to behave kindly and righteously in every dimension. One of our strongest assets and badly under-used. |
 | **Gedu Academy** | Both capitals, no article. | No plural | "at Gedu Academy", never "at the Gedu Academy". A School of Gaming initiative. |
 | **the Gedu Path** | Capital G, capital P, takes the article. | No plural | The six-level career progression. |

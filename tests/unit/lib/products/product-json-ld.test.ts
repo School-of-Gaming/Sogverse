@@ -1,4 +1,5 @@
 import { afterAll, describe, expect, it, vi } from "vitest";
+import { SITE_ORIGIN } from "../../../mocks/site-origin";
 import {
   productJsonLd,
   statesSessionCount,
@@ -9,7 +10,7 @@ import { planSessions } from "../../../mocks/planned-sessions";
 vi.stubEnv("NEXT_PUBLIC_SUPABASE_URL", "http://127.0.0.1:54321");
 afterAll(() => vi.unstubAllEnvs());
 
-const SITE = "https://test.sogverse.local";
+const SITE = SITE_ORIGIN;
 const PATH = "/en/shop/3f8a2c1e-6b4d-4e9a-8c7f-2d1e0b9a8c76";
 const STAMP = "2026-08-01T00:00:00.000Z";
 const PRODUCT_ID = "3f8a2c1e-6b4d-4e9a-8c7f-2d1e0b9a8c76";

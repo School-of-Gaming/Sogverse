@@ -1,4 +1,5 @@
 import { describe, it, expect, vi, beforeEach } from "vitest";
+import { SITE_ORIGIN } from "../../mocks/site-origin";
 import { NextResponse } from "next/server";
 import { POST } from "@/app/api/gedu/sessions/email-report/route";
 import {
@@ -26,7 +27,7 @@ import type { EnabledSpotlight } from "@/services/spotlights/spotlights.contract
 // they are built from is the canonical one, never the browser's Host header —
 // `getOrigin` falls back to this when the request carries no trusted host, which
 // is exactly what a mock Request does.
-process.env.NEXT_PUBLIC_SITE_URL = "https://test.sogverse.local";
+process.env.NEXT_PUBLIC_SITE_URL = SITE_ORIGIN;
 
 // A photo's src is not a link and is not built from the request: it is the
 // public bucket URL an email client fetches with a bare GET, derived from the
@@ -94,7 +95,7 @@ const PRODUCT_ID = "b2c3d4e5-f607-4819-a2b3-c4d5e6f70819";
 
 const REPORT = "## We built a castle\n\nEveryone finished their tower.";
 
-const ORIGIN = "https://test.sogverse.local";
+const ORIGIN = SITE_ORIGIN;
 
 /** Participation ids, so a link assertion can name the seat it belongs to. */
 const SEATS = {
@@ -193,8 +194,8 @@ const SPOTLIGHTS: EnabledSpotlight[] = [
   {
     id: "d1000000-0000-4000-8000-000000000001",
     versions: [
-      { locale: "en", title: "Autumn camps", body: "See [the shop](https://test.sogverse.local/shop)." },
-      { locale: "fi", title: "Syysleirit", body: "Katso [kauppa](https://test.sogverse.local/shop)." },
+      { locale: "en", title: "Autumn camps", body: `See [the shop](${SITE_ORIGIN}/shop).` },
+      { locale: "fi", title: "Syysleirit", body: `Katso [kauppa](${SITE_ORIGIN}/shop).` },
     ],
     image: { url: `${SPOTLIGHT_BUCKET}/a.jpg`, width: 1200, height: 600 },
     createdAt: "2026-08-10T09:00:00Z",
@@ -974,7 +975,7 @@ describe("POST /api/gedu/sessions/email-report", () => {
     const finnish = mailTo("aino-parent@test.local").htmlContent;
     expect(finnish).toContain("Syysleirit");
     expect(finnish).not.toContain("Autumn camps");
-    expect(finnish).toMatch(/<a href="https:\/\/test\.sogverse\.local\/shop"[^>]*>kauppa<\/a>/);
+    expect(finnish.match(/<a href="([^"]*)"[^>]*>kauppa<\/a>/)?.[1]).toBe(`${SITE_ORIGIN}/shop`);
     // The adult reads in English; so does the staff copy, in the sender's.
     expect(mailTo("sylvie@test.local").htmlContent).toContain("Autumn camps");
     expect(staffCopies()[0].htmlContent).toContain("Autumn camps");

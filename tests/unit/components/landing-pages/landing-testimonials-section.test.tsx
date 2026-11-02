@@ -1,4 +1,5 @@
 import { afterAll, describe, expect, it, vi } from "vitest";
+import { SITE_ORIGIN } from "../../../mocks/site-origin";
 import { render } from "@testing-library/react";
 import { NextIntlClientProvider } from "next-intl";
 import enRichText from "@/../messages/en/richText.json";
@@ -16,7 +17,7 @@ import { LandingPageBody } from "@/components/landing-pages/landing-page-body";
 import type { PublicTestimonial } from "@/services/testimonials/testimonials.contracts";
 
 vi.stubEnv("NEXT_PUBLIC_SUPABASE_URL", "https://db.test");
-vi.stubEnv("NEXT_PUBLIC_SITE_URL", "https://sog.test");
+vi.stubEnv("NEXT_PUBLIC_SITE_URL", SITE_ORIGIN);
 afterAll(() => vi.unstubAllEnvs());
 
 const en = { richText: enRichText, testimonial: enTestimonial };

@@ -143,7 +143,7 @@ Four names, one family. Writers confuse them constantly, so this is the referenc
 | Name | What it is | Lives at | Voice |
 | :---- | :---- | :---- | :---- |
 | **School of Gaming** | The institution and parent brand. Trades under this name and "SOG". The legal entity is School of Gaming Galactic Oy; see Appendix A.4. | sog.gg | The full brand voice in this guide |
-| **Sogverse** | Two things on purpose. See below. | sogverse.sog.gg | Levels 1 to 3 depending on surface |
+| **Sogverse** | Two things on purpose. See below. | sog.gg | Levels 1 to 3 depending on surface |
 | **Gedu Academy** | Where Game Educators are trained and progress. A School of Gaming initiative. | geduacademy.com | Adult, professional, Level 1. See Section 8.7 |
 | **Tellus** | Not a brand. Our word for the physical world. | — | Levels 2 and 3 only |
 

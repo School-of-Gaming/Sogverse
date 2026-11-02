@@ -1,4 +1,5 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
+import { SITE_ORIGIN } from "../../mocks/site-origin";
 import { z } from "zod";
 import { callTool, mcpRequest, readRpc, resultText } from "../../helpers/mcp";
 
@@ -149,7 +150,7 @@ describe("get_analytics_summary", () => {
 
     const result = await tool("get_analytics_summary", {
       lastDays: 7,
-      paths: ["/shop", `https://sog.gg/fi/tutustu/${PAGE}?utm_source=meta`],
+      paths: ["/shop", `${SITE_ORIGIN}/fi/tutustu/${PAGE}?utm_source=meta`],
     });
 
     const filter = {
@@ -160,7 +161,7 @@ describe("get_analytics_summary", () => {
           addresses: ["/shop", "/en/shop", "/fi/kauppa", "/sv/butik", "/fr/boutique", "/tlh/shop"],
         },
         {
-          given: `https://sog.gg/fi/tutustu/${PAGE}?utm_source=meta`,
+          given: `${SITE_ORIGIN}/fi/tutustu/${PAGE}?utm_source=meta`,
           locale: "fi",
           addresses: [`/fi/tutustu/${PAGE}`],
         },
@@ -173,7 +174,7 @@ describe("get_analytics_summary", () => {
       filters: {
         paths: [
           { given: "/shop", matching: "every language" },
-          { given: `https://sog.gg/fi/tutustu/${PAGE}?utm_source=meta`, matching: "this address only" },
+          { given: `${SITE_ORIGIN}/fi/tutustu/${PAGE}?utm_source=meta`, matching: "this address only" },
         ],
       },
       byPath: [{ given: "/shop", pageviews: 3 }],

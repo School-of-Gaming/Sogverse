@@ -12,8 +12,8 @@
  *      Covers per-PR preview deploys, which do get tested on.
  *   2. `VERCEL_BRANCH_URL` — Vercel-injected branch alias hostname.
  *   3. The host of `NEXT_PUBLIC_SITE_URL` — configured per environment in
- *      Vercel's project settings: prod = sogverse.sog.gg, preview =
- *      sogverse-staging.sog.gg, local = localhost:3000.
+ *      Vercel's project settings: prod = sog.gg, preview =
+ *      staging.sog.gg, local = localhost:3000.
  *   4. localhost (only when NODE_ENV !== "production") for `npm run dev`.
  *
  * If the incoming Host matches a trusted source, return its origin (so the
@@ -65,11 +65,19 @@ export function getOrigin(source: Request | Headers): string {
     return `${protocol}://${host}`;
   }
 
-  // Untrusted Host — fall back to the canonical configured URL. If
-  // NEXT_PUBLIC_SITE_URL itself is missing we can't safely produce an origin;
-  // refuse rather than guess.
-  if (!process.env.NEXT_PUBLIC_SITE_URL) {
-    throw new Error("NEXT_PUBLIC_SITE_URL is not configured");
-  }
-  return process.env.NEXT_PUBLIC_SITE_URL;
+  // Untrusted Host — fall back to the canonical configured URL.
+  return getSiteUrl();
+}
+
+/**
+ * This environment's canonical public origin, `NEXT_PUBLIC_SITE_URL`. It is
+ * inlined into browser bundles, so a client module may call it too.
+ *
+ * Throws when it is not configured: there is no origin to guess, and a
+ * fallback would put a wrong address in front of somebody.
+ */
+export function getSiteUrl(): string {
+  const siteUrl = process.env.NEXT_PUBLIC_SITE_URL;
+  if (!siteUrl) throw new Error("NEXT_PUBLIC_SITE_URL is not configured");
+  return siteUrl;
 }

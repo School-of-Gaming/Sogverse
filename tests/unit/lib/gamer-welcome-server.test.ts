@@ -1,10 +1,11 @@
 import { describe, it, expect, vi, beforeEach } from "vitest";
+import { SITE_ORIGIN } from "../../mocks/site-origin";
 
 // Both are read lazily, but set before the imports anyway so nothing can depend
 // on call order: the token helper signs under PIN_COOKIE_SECRET, and the link's
 // origin falls back to NEXT_PUBLIC_SITE_URL for any Host we do not trust.
 process.env.PIN_COOKIE_SECRET = "unit-test-gamer-welcome-secret";
-process.env.NEXT_PUBLIC_SITE_URL = "https://sogverse.example.test";
+process.env.NEXT_PUBLIC_SITE_URL = SITE_ORIGIN;
 
 /**
  * The one place three routes send a child's welcome-and-verify mail from —
@@ -237,7 +238,7 @@ describe("sendGamerWelcomeEmail — what it sends", () => {
     // A spoofed Host in an emailed link is a phishing URL the recipient has
     // every reason to trust, so the origin comes from `getOrigin` — which
     // refuses this Host and answers the canonical site URL.
-    expect(url.origin).toBe("https://sogverse.example.test");
+    expect(url.origin).toBe(SITE_ORIGIN);
     expect(url.host).not.toBe("evil.example.com");
     expect(url.pathname).toBe(ROUTES.verifyEmail);
 

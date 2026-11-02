@@ -240,17 +240,10 @@ Each one exists to make the posture above hold by construction rather than by me
 Ideas not yet decided or not yet built, in rough order of expected value. An item that
 lands is deleted here and its mechanism is described above.
 
-- **Overtake the legacy site.** `www.sog.gg` is the current front door and the legacy
-  site; Sogverse is to adopt its content and features over time and `sog.gg` is
-  eventually dropped entirely (owner, 2026-09-10). The near-term goal is that Sogverse
-  draws more traffic than `sog.gg`, so families read this as the main site and the old one
-  as legacy. Today the legacy site carries every non-brand ranking and this app none, so
-  the ranking has to be *moved*, not just earned: each time Sogverse gains a page that
-  supersedes a legacy one (a club, a location, a topic), the legacy URL should 301 to it,
-  which is what carries the authority across; the `Organization` schema names this app as
-  the brand's URL, never `www.sog.gg`. The rest of the estate goes the same way: the bare
-  apex redirects to one host, the dead `sogverse-fi.sog.gg` sign-in page is removed from
-  the index, and the `en.` / `lat.` / `start.` sites either redirect here or are current.
+- **Tidy the rest of the domain estate.** The dead `sogverse-fi.sog.gg` sign-in page is
+  removed from the index, and the `en.` / `lat.` / `start.` sites either redirect here or
+  are current. The legacy marketing site's own URLs are not redirected: the owner chose a
+  clean break (2026-10-26), so they answer this app's 404, and its blog is not ported.
 - **Topic landing pages** (`/minecraft`, `/roblox`, `/fortnite`, …) generated from the
   topics module: the existing "About {topic}" prose plus that topic's listed products.
   These are the pages both search and AI assistants cite for "who runs Minecraft clubs
@@ -560,7 +553,7 @@ Same tool, same queries, same recording, so two entries compare cleanly:
   Record which tool and the date; if the tool changes, say so in the entry, because the
   numbers then compare only loosely.
 - **Per query, record:** whether any School of Gaming property appears at all; its
-  position in the returned list; **which host** — `sogverse.sog.gg` or `www.sog.gg`
+  position in the returned list; **which host** — `sog.gg` or `www.sog.gg`
   matters more than the position, since the goal is that Sogverse takes over; and the
   top three other results. Keep the table shape below.
 - **The queries, verbatim** (language in brackets where not English):
@@ -591,7 +584,9 @@ Same tool, same queries, same recording, so two entries compare cleanly:
 ### 2026-09-10 — before
 
 Captured before any of the mechanisms above shipped. Position is the rank in the list the
-tool returned; "—" means no School of Gaming property appeared at all.
+tool returned; "—" means no School of Gaming property appeared at all. Hosts are named as
+they were that day: this app was on its own subdomain, and both `sog.gg` and `www.sog.gg`
+were the legacy marketing site.
 
 **The domain estate this app sits in.** `www.sog.gg` is the marketing site (club
 catalogue under `/lessons/`, locations, municipality pages, blog; `robots.txt` names it as
@@ -635,8 +630,7 @@ partner press) rank for our story more reliably than we do. Two open goals nobod
 claimed: Finnish Roblox camps, and "gaming as a coached hobby".
 
 **Official profiles, confirmed by the owner the same day** and now the `Organization`'s
-`sameAs`: the legacy site `www.sog.gg` itself, so the entity search engines already know
-is tied to this Organization, then Instagram `sog_suomi` (the one posted to regularly), the Helsinki Facebook page
+`sameAs`: Instagram `sog_suomi` (the one posted to regularly), the Helsinki Facebook page
 `sogversum`, YouTube `@SchoolofGamingSuomi`, LinkedIn `company/school-of-gaming`, the
 Eventbrite organiser page and Crunchbase. The Oulu Facebook page `sogsuomi`, the one the
 legacy site links to, no longer resolves for a visitor and is left out. The Finnish

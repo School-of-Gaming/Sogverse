@@ -1,4 +1,4 @@
-import { demoArtUrl, type EmailRenderContext } from "../render-context";
+import { renderUrl, type EmailRenderContext } from "../render-context";
 import type { SessionReportPhoto } from "../session-photos";
 
 /**
@@ -43,7 +43,7 @@ export function sessionReportPhotoFixtures(
   context: EmailRenderContext | undefined,
 ): SessionReportPhoto[] {
   return PHOTO_ART.slice(0, count).map((art) => ({
-    src: demoArtUrl(art.path, context),
+    src: renderUrl(art.path, context),
     width: art.width,
     height: art.height,
   }));
