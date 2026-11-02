@@ -103,6 +103,7 @@ describe("the reportable-query allowlist", () => {
       "?redirect=/discover/minecraft-summer",
       "?redirect=/fr/decouvrir/minecraft-ete",
       "?redirect=/fr/roblox",
+      "?redirect=/",
       `?redirect=${encodeURIComponent(`/fi/kauppa/${productId}?utm_source=meta&fbclid=IwAR0abc`)}`,
       `?utm_source=meta&redirect=/fr/boutique/${productId}`,
     ])("admits %s", (search) => {
@@ -126,6 +127,15 @@ describe("the reportable-query allowlist", () => {
       `?redirect=${encodeURIComponent(`/fr/boutique/${productId}#token`)}`,
       // No recursion: a redirect inside a redirect refuses, even to a product.
       `?redirect=${encodeURIComponent(`/fr/register?redirect=/fr/boutique/${productId}`)}`,
+      // What is matched must be what is reported: a value the parser or the
+      // matcher would rewrite into a marketing page names a child as written.
+      `?redirect=/parent/gamers/${gamerId}/../../../fr/boutique/x`,
+      `?redirect=/parent/gamers/${gamerId}/%2e%2e/%2e%2e/%2e%2e/fr/boutique/x`,
+      `?redirect=${encodeURIComponent(`/parent\\gamers\\${gamerId}\\..\\..\\..\\fr\\boutique\\x`)}`,
+      `?redirect=/fr/boutique/a%252Fparent%252Fgamers%252F${gamerId}`,
+      `?redirect=/fr//boutique/${productId}`,
+      `?redirect=/fr/boutique/${productId}/`,
+      `?redirect=/fr/boutique/${productId}/.`,
     ])("refuses %s", (search) => {
       expect(isReportableQuery(search)).toBe(false);
     });

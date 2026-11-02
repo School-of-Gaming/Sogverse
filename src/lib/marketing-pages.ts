@@ -107,7 +107,8 @@ const REDIRECT_PARAM = "redirect";
  * **`redirect` travels only when its value is itself a reportable marketing
  * page** — the page a parent left to create an account or sign in, such as a
  * product page or a landing page's guide. The value is resolved through
- * `resolveInternalPath()`, matched on its locale-stripped internal template,
+ * `resolveInternalPath()`, must come back from it unchanged (see the helper
+ * below), is matched on its locale-stripped internal template,
  * and its own query must pass the plain key allowlist: a `redirect` nested
  * inside a `redirect` refuses rather than recursing, and so does a fragment.
  * Every occurrence of a repeated key is checked. Anything else — a child's
@@ -139,11 +140,24 @@ function hasOnlyReportableKeys(params: URLSearchParams): boolean {
  */
 const PARSE_BASE = "https://internal.invalid";
 
+/**
+ * The pixels report the raw value on the address bar, so the value matched has
+ * to be that value, not a rewriting of it. Refused unless already canonical:
+ * the URL parser hands it back unchanged (no dot segment, `%2e%2e` or
+ * backslash for it to collapse), its path has no empty segment (`//`, a
+ * trailing `/`) for the matcher to skip, and no `%` at all, which the matcher would decode — a
+ * `%2F` hidden in one segment reads as one id. No path the app links to needs
+ * one: route slugs, landing page slugs and product ids are all plain ASCII.
+ */
 function isReportableRedirect(value: string): boolean {
-  // The empty fallback is never a resolved path, which always starts with `/`.
-  const resolved = resolveInternalPath(value, "");
-  if (resolved === "") return false;
-  const target = new URL(resolved, PARSE_BASE);
+  // The empty fallback would equal an empty value, so that refuses first.
+  if (value === "" || resolveInternalPath(value, "") !== value) return false;
+  const target = new URL(value, PARSE_BASE);
+  const { pathname } = target;
+  if (pathname.includes("%")) return false;
+  if (pathname !== "/" && pathname.slice(1).split("/").includes("")) {
+    return false;
+  }
   if (target.hash !== "") return false;
   if (!isMarketingPage(normalizeExternalPath(target.pathname).template)) {
     return false;
