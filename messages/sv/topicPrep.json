@@ -34,6 +34,9 @@
     "roblox_studio": "Vi tar med datorerna till tillfället, med Roblox Studio redan installerat. Varje deltagare behöver ändå ett eget Roblox-konto. Gå igenom steget nedan före tillfället."
   },
   "remoteOnlyIntro": "Tillfällena använder ett röstrum. Gå igenom steget nedan före det första tillfället.",
+  "hybridIntro": "Deltagarna kan vara med i klubben antingen på plats eller på distans. Gedu, vårt ord för en spelfostrare, leder den gemensamma aktiviteten på distans. Alla pratar med varandra i ett gemensamt röstrum.",
+  "homeHeading": "Delta hemifrån",
+  "suppliedInPersonNote": "Allt som behövs är klart. Du behöver inte ta med en egen enhet eller skapa ett spelkonto i förväg. Vi använder arrangörens enheter och inloggningar.",
   "steps": {
     "minecraftJavaAccount": {
       "title": "Skaffa ett Microsoft-konto med Minecraft på",
@@ -127,7 +130,11 @@
     },
     "remoteSession": {
       "title": "Ställ in mikrofonen och kameran",
-      "body": "Tillfället hålls i ett röstrum som körs i en webbläsare. Deltagaren kan gå med på vilken enhet som helst: datorn som spelet finns på, eller en telefon eller surfplatta bredvid en konsol. Ett headset eller hörlurar med mikrofon fungerar bäst, så att spelets ljud inte ekar tillbaka till alla andra. Första gången deltagaren går med frågar webbläsaren om lov att använda mikrofonen och kameran. Ge det. Kameran är frivillig. Att slå på den hjälper din Gedu, vårt ord för en spelfostrare, att se att alla i rummet är den de säger att de är. Leta upp en lugn plats, och gå med några minuter tidigare första gången."
+      "body": "Du behöver en mikrofon för att kunna prata med din Gedu, vårt ord för en spelfostrare, och resten av gruppen. Ett headset med mikrofon fungerar bäst: det dämpar bakgrundsljud och hindrar spelets ljud från att eka tillbaka i de andras hörlurar. Tillfället hålls i ett röstrum som körs i en webbläsare. Du kan gå med på datorn du spelar på, eller till exempel på en telefon eller surfplatta. När du går med frågar webbläsaren om lov att använda mikrofonen. Tillåt det, så att de andra hör dig. Du behöver inte ha kameran på, men du får gärna använda den om du vill."
+    },
+    "venueVoiceRoom": {
+      "title": "Gå med i röstrummet på plats",
+      "body": "Deltagarna på plats går med i gruppens röstrum i Sogverse på en dator på plats eller, om de vill, på sin egen enhet. Inget headset behövs. Varje deltagare behöver ett sätt att logga in: om deltagaren ännu inte har någon egen inloggning kan en förälder ordna en under Spelarinställningar i Min SOG, så att ingen behöver dela en förälders inloggning."
     }
   },
   "platformNotes": {
