@@ -371,7 +371,7 @@ back to `sog.gg` while that is still Webflow.
    | WhatsApp | Webhook callback URL in the Meta app | Meta's verification handshake passes on save |
    | Claude connectors | Re-add with `https://sog.gg/api/mcp`, for the owner and Reksi | `whoami` answers |
    | Minecraft servers | The Minecraft server team changes the base URL in their config, as agreed in step 0.3 | A join check succeeds |
-   | Google Cloud OAuth (project `sogverse`) | Add `https://sog.gg` to the Sogverse client's JavaScript origins, and set the consent screen's home, privacy and terms URLs to `sog.gg`. `sog.gg` is already an authorised domain, and the redirect URI is Supabase's | A Google sign-in on `sog.gg` works |
+   | Google Cloud OAuth (project `sogverse`) | Set the consent screen's home, privacy and terms URLs to `sog.gg`. `https://sog.gg` is already among the Sogverse client's JavaScript origins, beside `https://sogverse.sog.gg` (added 2026-11-02, ahead of the hour); the old one goes in step 2.3. `sog.gg` is already an authorised domain, and the redirect URI is Supabase's | A Google sign-in on `sog.gg` works |
    | Klaviyo | The live flows Kesäleiri Lead Flow (FI) and New Flow - Guidebook Download (Finnish) link to Webflow camp and schedule pages (found 2026-10-30): repoint them to the shop | The flow emails link to `sog.gg` pages that exist |
 7. **Move staging to `staging.sog.gg`.** It's the same work as production's, on test
    data, and it runs on its own before the production hour as the rehearsal. Nothing here
@@ -404,8 +404,8 @@ back to `sog.gg` while that is still Webflow.
    and `/link-staging` answered on the new host. What the rehearsal taught the
    production hour:
    - The staging Google client listed only the old host. Google says a change takes
-     minutes to hours, so add `https://sog.gg` to the production client before the hour
-     (an extra origin changes nothing until the switch).
+     minutes to hours, so `https://sog.gg` was added to the production client ahead of
+     the hour (an extra origin changes nothing until the switch).
    - The dashboard Redeploy asks the owner for a code emailed to the account. Have the
      inbox open.
    - `vercel api … -X DELETE` won't run without a bypass flag the session is not allowed;
@@ -452,7 +452,8 @@ removing the old staging host, so until then each change can be pointed back at
 2. **Land `feat/move-to-sog-gg`** in the next normal release. Before merging, re-verify
    the domain → branch mapping in the `vercel-analytics` skill and change its
    "verified" date to the day of the check.
-3. **Remove `sogverse.sog.gg/**` from the Supabase allow-list.**
+3. **Remove `sogverse.sog.gg/**` from the Supabase allow-list**, and
+   `https://sogverse.sog.gg` from the Google client's JavaScript origins.
 4. **About two weeks after the cutover, review Search Console** once its reports describe
    only this app. Issues reported before the move were deliberately left until now
    (owner, 2026-10-27), because they mixed Webflow, the app and staging.
