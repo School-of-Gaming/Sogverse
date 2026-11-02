@@ -140,32 +140,3 @@ The logo is a **registered European Union trade mark**. This is a real legal ass
 | Classes | Nice 16 (printed matter, educational supplies), 41 (education, entertainment and sport; club education services; training; academies; video game services; competitions), 42 (IT services, software, video game development, SaaS and PaaS) |
 
 **Two things worth noticing beyond the paperwork.** The registration covers the color logo specifically, which is another reason the amber `yellow_black` lockup is the one to protect and lead with. And the classes read like a description of the business we actually are: "club education services", "academies", "video game services", and "competitions" are all registered, which quietly backs the language this guide already uses.
-
-### The legal entity
-
-The registered proprietor is **School of Gaming Galactic Oy**. That is the company. "School of Gaming" and "SOG" are the brand names it trades under.
-
-- **In brand copy**, everywhere in this guide, we are School of Gaming, or SOG. Never the full legal name in marketing.
-- **In legal, contractual, invoicing, and formal partner copy**, the entity is School of Gaming Galactic Oy. Terms, privacy policy, contracts, funding applications, and the like use the full name at least once.
-- The Princi-Pal's "accountable" signature register in Section 6 may carry the full entity in genuinely formal documents.
-
-### The ® symbol
-
-Now that the logo is a registered EUTM, the ® symbol is available and its use signals a defended asset.
-
-- **Use ® with the logo** on the website footer, product packaging, and formal or partner-facing materials, at least on first or most prominent appearance. Once per page or screen is enough; peppering every instance looks anxious.
-- **Territory matters.** The registration is EU-wide. Outside the EU the mark may not be registered, and ® should not be claimed where it is not. When in doubt in a non-EU market, ask the representative before using ®.
-- **In running body copy**, writing "School of Gaming" as words needs no symbol. The ® attaches to the logo mark, not to every mention of the name in a sentence.
-- **Never fake it.** Do not use ® on anything not actually registered, and do not use it as decoration. If a future sub-brand is unregistered, the correct symbol is ™, which claims a mark without asserting registration. Confirm status before choosing between them.
-
-### "Gedu" as a word mark, pending
-
-A separate registration for **Gedu** as a *word* is planned for autumn 2026. This matters because it is a different kind of protection from the logo. The current EUTM protects the figurative mark; a word mark on "Gedu" would protect the term itself, which is the single most valuable invented word we own and the one a competitor would most plausibly copy.
-
-Until that registration completes:
-
-- **Keep using Gedu exactly as this guide already specifies.** Consistent, capitalized, never generic. Consistent use strengthens the application; sloppy use weakens it.
-- **Do not attach ® to "Gedu"** yet, because it is not registered. Do not attach ™ either without checking with the representative, since a premature or incorrect symbol can complicate a pending filing.
-- **Guard against genericization.** The fastest way to lose a word mark is to let the word become a generic noun. Always "a Gedu" or "our Gedus", a proper role; never "gedu" lowercased as though it were an ordinary job title. This is exactly why Section 5.2 bans "teacher, tutor, coach" as substitutes: every correct use of Gedu is also trademark hygiene.
-
-Once registered, update this appendix with the number and date, and add the symbol guidance for "Gedu" alongside the logo. Logged in Section 12.

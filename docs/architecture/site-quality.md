@@ -7,7 +7,7 @@ its own open backlog; the baseline log at the end measures the first. Cross-cutt
 the URL and locale machinery is `src/i18n/CLAUDE.md`, the social cards are `src/lib/og/`,
 product visibility is `docs/architecture/products.md`, the chrome and the tab bar are
 `src/components/layout/CLAUDE.md`, the photos and video are `src/assets/marketing/CLAUDE.md`,
-and how copy sounds is the Brand Voice Guidebook in `packages/sog-ui/docs/guidebook/`.
+and how copy sounds is the `sog-brand-voice` skill.
 
 **Standing goal: a parent who types what we do into a search engine or an AI assistant
 finds us, in their language, on the first page; what they find is Sogverse, not the
@@ -24,7 +24,7 @@ child.** Conversion to a paying club is the measure, not time on page.
   easter-egg locale, supported where practical but not a market these pages persuade.
 - **Nothing about the pages is fixed but the brand.** Structure, layout, which pages
   exist, copy, imagery, navigation and the shop's design may all change if it serves the
-  goal. The one requirement is the brand guidelines (the Guidebook and SOG-UI). A
+  goal. The one requirement is the brand guidelines (the `sog-brand-voice` skill and SOG-UI). A
   guideline that is in the way is brought to the owner as a proposal (the rule, why it is
   in the way, the alternative), never worked around quietly, and an overruling is recorded
   where the rule lives, so the brand stays one system.
@@ -292,14 +292,12 @@ About FAQ as reference.
 The reader is a parent: they love their child, are unsure gaming is good for them, and
 often arrive carrying guilt or fresh from an argument about it. They want four things, in
 this order: **their child is safe, something is being learned, they can stay involved
-without becoming a gamer, and permission to stop feeling bad** (Guidebook `audience.md`).
+without becoming a gamer, and permission to stop feeling bad** (the `sog-brand-voice` skill).
 
 ### The rules that bind them
 
-The copy rules come from the Guidebook (`channels.md` §8.1, `audience.md`,
-`vocabulary.md`, `decision-log.md`), which holds the reasoning; they are listed here
-because each has been broken on these pages or nearly was. The app-wide brand, vocabulary
-and safety-copy rules in `src/CLAUDE.md` bind them too.
+The copy rules come from the `sog-brand-voice` skill, which holds the reasoning; they are
+listed here because each has been broken on these pages or nearly was.
 
 - **Order: plain-language hero, then the concrete facts, then the story.** The facts are
   who supervises, what it costs and how to start. Sogverse lore is the reward for reading,
@@ -435,14 +433,14 @@ Re-check before building on one.
   immersion card shows a large UK flag beside an FI badge, the badge being the lesson
   language; the filter panel has twelve groups and about 25 chips, several in internal
   vocabulary (Creator Studio, Game Studio, AI, "For parents" versus "For families"); the
-  nav says "Shop" where the agreed parent-facing word is "Clubs". The Guidebook's target
+  nav says "Shop" where the agreed parent-facing word is "Clubs". The skill's agreed
   naming is for what a parent searches: Clubs, Camps, For parents, How it works, About
   (Finnish: Kerhot, Leirit, Opas vanhemmille, —, Meistä), against today's Shop,
   Library, Team, About.
 - **Every Finnish headline checked at phone width**: long compounds run off the edge, as
   they do on the legacy site.
 - **The app's vocabulary for the weekly meeting.** The app's dashboards say "session"
-  where SOG-UI's guidebook vocabulary says "lesson": the club is the group, the lesson is
+  where the `sog-brand-voice` skill says "lesson": the club is the group, the lesson is
   the weekly meeting, and there is no third word. The public pages were aligned on
   2026-10-01; the app was not.
 - **The Team on the other pages.** Proposed: a "Meet the Game Educators" strip on the
@@ -501,7 +499,7 @@ free trial, and no page promises a trial until the owner decides on one.
   Helsinki); a strip saying what every club includes, with the guarantee. Unchecked:
   whether grouping can be done in the display or needs a data change, since each listing
   is its own product.
-- **About splits into "For parents" and a short "About"**, matching the Guidebook's nav.
+- **About splits into "For parents" and a short "About"**, matching the skill's agreed navigation.
   Proposed: For parents holds safety, what a lesson is, the report afterwards, parent
   game education, the FAQ ordered by worry and a button to Clubs; About holds who we are,
   the Gedus and the mission. Yty leaves the public pages or appears only as Human Skills.
@@ -509,7 +507,7 @@ free trial, and no page promises a trial until the owner decides on one.
   webinars and a weekly newsletter; Sogverse has neither, so an undecided parent is lost.
   Whether we have a mailing list or a sending setup to build on is unchecked.
 - **Offers the public pages do not show yet:** birthday parties in Minecraft, which the
-  legacy site bannered and the Guidebook's Finnish nav names (*Syntymäpäivät*).
+  legacy site bannered and the skill's Finnish navigation names (*Syntymäpäivät*).
 
 ## Owner to decide
 
@@ -518,7 +516,7 @@ free trial, and no page promises a trial until the owner decides on one.
   to the About answer that proves it); About is the reference a careful parent checks a
   claim against; the shop helps a parent choose the right club fast. It corrects home
   making general claims while About holds the proof as reference text.
-- **The home page structure.** Proposed, in Guidebook order: the hero; T4 as the emotional
+- **The home page structure.** Proposed, in the order the `sog-brand-voice` skill gives a public page: the hero; T4 as the emotional
   proof; what a lesson is (the Gedu greets the group, a story-driven adventure over voice,
   a written report afterwards); what they grow (the Human Skills, with T6 and T7); safety
   you can check (with T13 and T12); find the right club (tiles for neuroinclusive and

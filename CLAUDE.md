@@ -42,8 +42,7 @@ environment, the database tripwires, testing, code style and the documentation r
 read or edited, and it holds everything about the app itself: the roles and their
 dashboards, key conventions, the service layer pattern, the Supabase clients, auth,
 redirects and origin safety, CSP, layout and scrolling, loading and disabled state, button
-order, date and time, the brand and vocabulary rules, partner brands, safety copy, locale
-versus spoken language, styling, authored rich text, the UI component reference and the
+order, date and time, partner logos, locale versus spoken language, styling, authored rich text, the UI component reference and the
 preview scenes. A nested file loads lazily, so the four app rules that fire *before* any
 file is opened are carried here as one-line reminders, with the full rule in the app file:
 
@@ -60,11 +59,14 @@ file is opened are carried here as one-line reminders, with the full rule in the
   navigation that unloads the document; `router.push()` is not enough.
 
 **`packages/sog-ui/CLAUDE.md` — SOG-UI, the UI language package.** Every UI opinion belongs
-to it, and it is the app's brand authority. Read it before any UI work: it does not
+to it, and it is the app's visual brand authority. Read it before any UI work: it does not
 auto-load when working under `src/`. Sogverse follows it one construct at a time
 (`packages/sog-ui/docs/adoption.md`); a construct not yet adopted is still governed by the
 rule written in `src/CLAUDE.md`, and that rule leaves the app file with the adoption that
 retires it.
+
+**How School of Gaming writes is the `sog-brand-voice` skill**, the one source of truth for
+copy in every language, from a button label to a newsletter.
 
 ## Branching
 

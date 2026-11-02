@@ -268,7 +268,7 @@ export function SwitchGateBody({
  * not become somebody else's, and the way that does work.
  *
  * Three short sentences, in the words a parent standing behind the child can
- * follow. The middle one is the mechanism (`src/CLAUDE.md` § Safety copy): not
+ * follow. The middle one is the mechanism (the `sog-brand-voice` skill's safety copy rule): not
  * that we care about privacy, but that a session opened with one person's own
  * credentials opens exactly one account — which is a thing a reader can test.
  *
