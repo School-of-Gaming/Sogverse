@@ -724,9 +724,20 @@ describe("click ids", () => {
       });
     });
 
-    it("reads nothing that claims to have landed in the future", () => {
-      expect(parseAttribution(`campaign=c&at=${NOW + 1}`, NOW)).toEqual(NO_ATTRIBUTION);
-      expect(parseAttribution(`fbclid=${NOW + 1}.${FBCLID}`, NOW)).toEqual(NO_ATTRIBUTION);
+    it("keeps a part a few seconds ahead, as a stamp from a skewed clock can be", () => {
+      // The proxy stamps with its clock and the layout reads with another's.
+      const ahead = NOW + 30_000;
+      expect(parseAttribution(`campaign=c&at=${ahead}&fbclid=${ahead}.${FBCLID}`, NOW)).toEqual({
+        utm: { ...NO_UTM_ATTRIBUTION, campaign: "c" },
+        utmLandedAt: ahead,
+        clickIds: { meta: { id: FBCLID, landedAt: ahead } },
+      });
+    });
+
+    it("reads nothing that claims to have landed far in the future", () => {
+      const far = NOW + DAY_MS;
+      expect(parseAttribution(`campaign=c&at=${far}`, NOW)).toEqual(NO_ATTRIBUTION);
+      expect(parseAttribution(`fbclid=${far}.${FBCLID}`, NOW)).toEqual(NO_ATTRIBUTION);
     });
 
     it("reads a tag with no landing time as it stands", () => {
@@ -764,6 +775,36 @@ describe("click ids", () => {
           NOW,
         ),
       ).toBe(`campaign=kept&at=${EARLIER}&fbclid=${NOW}.${FBCLID}&rdt_cid=${EARLIER}.reddit`);
+    });
+
+    it("keeps the first landing time when a landing repeats the click id already kept", () => {
+      // A reload or a back navigation lands on the same link again; the id's
+      // 30 days still run from the first landing, as Meta's `_fbc` does.
+      expect(
+        attributionCookieAfterLanding(
+          stored(`fbclid=${EARLIER}.${FBCLID}&rdt_cid=${EARLIER}.${RDT_CID}`),
+          landing(`fbclid=${FBCLID}&rdt_cid=new`),
+          NOW,
+        ),
+      ).toBe(`fbclid=${EARLIER}.${FBCLID}&rdt_cid=${NOW}.new`);
+    });
+
+    it("stamps a repeated click id afresh once the kept one has expired", () => {
+      const stale = NOW - 31 * DAY_MS;
+      expect(
+        attributionCookieAfterLanding(stored(`fbclid=${stale}.${FBCLID}`), landing(`fbclid=${FBCLID}`), NOW),
+      ).toBe(`fbclid=${NOW}.${FBCLID}`);
+    });
+
+    it("carries a part a skewed server clock stamped slightly ahead of the browser's", () => {
+      const ahead = NOW + 30_000;
+      expect(
+        attributionCookieAfterLanding(
+          stored(`campaign=kept&at=${ahead}`),
+          landing(`fbclid=${FBCLID}`),
+          NOW,
+        ),
+      ).toBe(`campaign=kept&at=${ahead}&fbclid=${NOW}.${FBCLID}`);
     });
 
     it("replaces the whole tag and keeps the click ids on a tagged landing", () => {

@@ -540,13 +540,23 @@ export function sanitiseClickId(raw: string | null | undefined): string | null {
 const LANDED_AT_PATTERN = /^[1-9][0-9]{0,15}$/;
 
 /**
- * Whether a part that landed at `landedAt` is still kept at `now`: not from the
- * future, which only a hand-edited cookie could claim, and not older than the
- * cookie's own lifetime, which a later write renewing the cookie must not
- * extend.
+ * How far in the future a landing time may sit and still be read. Landing times
+ * are stamped by the proxy's clock and read by the layout's, or the browser's,
+ * which are different machines, so an honest stamp can be a little ahead.
+ */
+const LANDED_AT_CLOCK_SKEW_MS = 5 * 60 * 1000;
+
+/**
+ * Whether a part that landed at `landedAt` is still kept at `now`: not further
+ * in the future than {@link LANDED_AT_CLOCK_SKEW_MS}, which only a hand-edited
+ * cookie could claim, and not older than the cookie's own lifetime, which a
+ * later write renewing the cookie must not extend.
  */
 function isFresh(landedAt: number, now: number): boolean {
-  return landedAt <= now && now - landedAt < UTM_COOKIE_MAX_AGE_SECONDS * 1000;
+  return (
+    landedAt <= now + LANDED_AT_CLOCK_SKEW_MS &&
+    now - landedAt < UTM_COOKIE_MAX_AGE_SECONDS * 1000
+  );
 }
 
 /**
@@ -645,8 +655,10 @@ function carriesAttribution(attribution: Attribution): boolean {
  *
  * **Merged with what the cookie already keeps**, part by part: the landing's
  * tag replaces the stored one, or the stored one stays; each platform's click
- * id from the landing replaces that platform's, and the others stay. A part
- * past its 30 days is gone before the merge, and a stored tag with no landing
+ * id from the landing replaces that platform's, and the others stay — unless
+ * it is the id already kept, which keeps its first landing time, as Meta's own
+ * `_fbc` does, so a reload never extends its life. A part past its 30 days is
+ * gone before the merge, and a stored tag with no landing
  * time is not carried into the new value (see {@link Attribution}).
  *
  * Both writers call it with the `Cookie` header they can see — the proxy its
@@ -666,11 +678,18 @@ export function attributionCookieAfterLanding(
     : stored.utmLandedAt !== null
       ? stored
       : NO_ATTRIBUTION;
+  const clickIds: ClickIds = { ...stored.clickIds };
+  for (const platform of CLICK_ID_PLATFORMS) {
+    const landed = landing.clickIds[platform];
+    if (landed !== undefined && landed.id !== stored.clickIds[platform]?.id) {
+      clickIds[platform] = landed;
+    }
+  }
   return serialiseWithin(
     {
       utm: tag.utm,
       utmLandedAt: tag.utmLandedAt,
-      clickIds: { ...stored.clickIds, ...landing.clickIds },
+      clickIds,
     },
     (serialised) => encodeURIComponent(serialised).length,
     UTM_COOKIE_MAX_LENGTH,
