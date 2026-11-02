@@ -91,6 +91,65 @@ describe("the reportable-query allowlist", () => {
     ).toBe(false);
   });
 
+  // A product page's "create an account" link and a landing page's guide link
+  // carry the page the parent left; that value is itself a marketing page.
+  describe("a redirect back to a marketing page", () => {
+    const productId = "3f0c2a9e-7b1d-4c5e-9a8f-2d6b4e1c0a7f";
+    const gamerId = "8b2e6f14-0c3a-4d7b-b915-6a4e2c8d1f03";
+
+    it.each([
+      `?redirect=/fr/boutique/${productId}`,
+      `?redirect=/shop/${productId}`,
+      "?redirect=/discover/minecraft-summer",
+      "?redirect=/fr/decouvrir/minecraft-ete",
+      "?redirect=/fr/roblox",
+      `?redirect=${encodeURIComponent(`/fi/kauppa/${productId}?utm_source=meta&fbclid=IwAR0abc`)}`,
+      `?utm_source=meta&redirect=/fr/boutique/${productId}`,
+    ])("admits %s", (search) => {
+      expect(isReportableQuery(search)).toBe(true);
+    });
+
+    it.each([
+      // A child's page, and a dashboard.
+      `?redirect=/en/parent/gamers/${gamerId}`,
+      `?redirect=/parent/gamers/${gamerId}`,
+      "?redirect=/fr/parent",
+      // Off-site, however it is spelled.
+      "?redirect=https://evil.com/shop",
+      "?redirect=//evil.com/shop",
+      `?redirect=${encodeURIComponent("/\\evil.com")}`,
+      // A path matching no route, and an empty value.
+      "?redirect=/nowhere/at/all",
+      "?redirect=",
+      // A marketing page whose own query or fragment may not travel.
+      `?redirect=${encodeURIComponent(`/fr/boutique/${productId}?token=abc`)}`,
+      `?redirect=${encodeURIComponent(`/fr/boutique/${productId}#token`)}`,
+      // No recursion: a redirect inside a redirect refuses, even to a product.
+      `?redirect=${encodeURIComponent(`/fr/register?redirect=/fr/boutique/${productId}`)}`,
+    ])("refuses %s", (search) => {
+      expect(isReportableQuery(search)).toBe(false);
+    });
+
+    // Every occurrence of a repeated key is checked, whichever a reader takes.
+    it("checks every occurrence of a repeated redirect", () => {
+      expect(
+        isReportableQuery(
+          `?redirect=/fr/boutique/${productId}&redirect=/discover/minecraft-summer`,
+        ),
+      ).toBe(true);
+      expect(
+        isReportableQuery(
+          `?redirect=/fr/boutique/${productId}&redirect=/parent/gamers/${gamerId}`,
+        ),
+      ).toBe(false);
+      expect(
+        isReportableQuery(
+          `?redirect=/parent/gamers/${gamerId}&redirect=/fr/boutique/${productId}`,
+        ),
+      ).toBe(false);
+    });
+  });
+
   it("refuses any key it has not heard of", () => {
     expect(isReportableQuery("?token=abc")).toBe(false);
     expect(isReportableQuery("?email=parent%40example.com")).toBe(false);

@@ -131,6 +131,13 @@ check runs before any script is loaded at all, so such a page never has their co
 it. A visitor who moved on gets no report for either page; a query with anything else in
 it gets none.
 
+**`redirect` is the one key judged by its value.** It travels only when the value, resolved
+through `resolveInternalPath()` and matched on its locale-stripped internal path, is itself
+a marketing page whose own query passes the plain list — so the register and login pages a
+parent reaches from a product page or a landing page's guide are reported, and the proxy's
+bounce is not. A `redirect` inside a `redirect` refuses rather than being followed, and
+every occurrence of a repeated one is checked.
+
 **The query allowlist is one list for every script, so each platform's click id reaches
 all of them.** A page reached from a Reddit ad loads Meta's pixel and the container too,
 and both see `rdt_cid` in the address, exactly as Reddit sees `fbclid` and `gclid`. That
