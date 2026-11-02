@@ -360,8 +360,9 @@ back to `sog.gg` while that is still Webflow.
    redirect (308) to `sog.gg`. By now `sog.gg` is the project's serving production
    domain, so the project still has one. Also delete the dead `beta` CNAME
    (`proxy-ssl.webflow.com`) at Nordname.
-   *Check:* `curl -sI https://sogverse.sog.gg/fi/kauppa` answers 308 to
-   `https://sog.gg/fi/kauppa`.
+   *Check:* `curl -sI "https://sogverse.sog.gg/fi/kauppa?utm_source=test"` answers 308 to
+   `https://sog.gg/fi/kauppa?utm_source=test`. Partners were promised their UTM links
+   survive; the `www` redirect kept path and query when tested on 2026-11-02.
 6. **Move the rest.** These are the production apps; staging's follow in step 7.
 
    | Integration | Change | Check |
