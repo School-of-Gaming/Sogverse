@@ -34,7 +34,7 @@
     "roblox_studio": "We bring the computers to the session, with Roblox Studio already installed. Each participant still needs their own Roblox account. Please complete the step below before the session."
   },
   "remoteOnlyIntro": "The sessions use a voice room. Please complete the step below before the first session.",
-  "hybridIntro": "This club brings participants together both at the venue and remotely. The Gedu, our word for a Game Educator, leads the club remotely. Everyone talks to each other in a shared voice room.",
+  "hybridIntro": "Participants can join the club either at the venue or remotely. The Gedu, our word for a Game Educator, leads the shared activity remotely. Everyone talks to each other in a shared voice room.",
   "homeHeading": "Joining from home",
   "suppliedInPersonNote": "Everything you need is ready. You do not need to bring your own device or create a game account in advance. We use the organiser’s devices and logins.",
   "steps": {

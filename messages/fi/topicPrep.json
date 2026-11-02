@@ -34,7 +34,7 @@
     "roblox_studio": "Tuomme tietokoneet kerralle, ja Roblox Studio on niissä valmiina. Jokainen osallistuja tarvitsee silti oman Roblox-tilin. Käy alla oleva vaihe läpi ennen kertaa."
   },
   "remoteOnlyIntro": "Kerroilla käytetään äänihuonetta. Käy alla oleva vaihe läpi ennen ensimmäistä kertaa.",
-  "hybridIntro": "Kerho kokoaa osallistujat yhteen sekä paikan päällä että etänä. Gedu, eli pelikasvattaja, ohjaa kerhoa etäyhteydellä. Kaikki juttelevat toisilleen yhteisessä äänihuoneessa.",
+  "hybridIntro": "Kerhoon voi osallistua joko paikan päällä tai etänä. Gedu eli pelikasvattaja ohjaa yhteistä toimintaa etäyhteydellä. Kaikki juttelevat toisilleen yhteisessä äänihuoneessa.",
   "homeHeading": "Osallistuminen kotoa käsin",
   "suppliedInPersonNote": "Kaikki tarvittava on valmiina. Sinun ei tarvitse tuoda omaa laitetta tai luoda pelitiliä etukäteen. Käyttämme järjestäjän laitteita ja tunnuksia.",
   "steps": {

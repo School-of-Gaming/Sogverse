@@ -34,7 +34,7 @@
     "roblox_studio": "Vi tar med datorerna till tillfället, med Roblox Studio redan installerat. Varje deltagare behöver ändå ett eget Roblox-konto. Gå igenom steget nedan före tillfället."
   },
   "remoteOnlyIntro": "Tillfällena använder ett röstrum. Gå igenom steget nedan före det första tillfället.",
-  "hybridIntro": "Den här klubben för samman deltagare både på plats och på distans. Gedu, vårt ord för en spelfostrare, leder klubben på distans. Alla pratar med varandra i ett gemensamt röstrum.",
+  "hybridIntro": "Deltagarna kan vara med i klubben antingen på plats eller på distans. Gedu, vårt ord för en spelfostrare, leder den gemensamma aktiviteten på distans. Alla pratar med varandra i ett gemensamt röstrum.",
   "homeHeading": "Delta hemifrån",
   "suppliedInPersonNote": "Allt som behövs är klart. Du behöver inte ta med en egen enhet eller skapa ett spelkonto i förväg. Vi använder arrangörens enheter och inloggningar.",
   "steps": {
