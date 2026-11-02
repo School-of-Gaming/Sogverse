@@ -44,6 +44,31 @@ test.describe("Security Headers", () => {
     expect(connectSrc).toContain("https://www.facebook.com");
   });
 
+  // The Reddit Pixel, both halves of it. Its transport is alb.reddit.com — an
+  // image beacon and a fetch — and missing it stops Reddit's measurement as
+  // silently as Meta's. Its two other hosts are absent on purpose:
+  // pixel-config.reddit.com serves the Events Manager configuration that can
+  // add URL- and click-triggered event rules, auto-match form fields and
+  // scrape page metadata, and ads.reddit.com is where its event setup tool
+  // loads from. Refusing those fetches is the only switch the app has over a
+  // web form nobody here reviews, so adding either is a decision, not a fix.
+  test("names the Reddit Pixel's transport and refuses its remote configuration", async ({
+    request,
+  }) => {
+    const response = await request.get("/");
+    const csp = response.headers()["content-security-policy"];
+
+    const imgSrc = /(?:^|; )img-src ([^;]*)/.exec(csp)?.[1] ?? "";
+    const connectSrc = /(?:^|; )connect-src ([^;]*)/.exec(csp)?.[1] ?? "";
+
+    expect(imgSrc).toContain("https://alb.reddit.com");
+    expect(connectSrc).toContain("https://alb.reddit.com");
+    expect(csp).not.toContain("pixel-config.reddit.com");
+    expect(csp).not.toContain("ads.reddit.com");
+    // Nor a wildcard that would admit them by the back door.
+    expect(csp).not.toContain("*.reddit.com");
+  });
+
   // The same trap for the other advertising script — the container itself is
   // admitted by `strict-dynamic`, so `script-src` names googletagmanager.com
   // only in the development branch — and one directive further, because a

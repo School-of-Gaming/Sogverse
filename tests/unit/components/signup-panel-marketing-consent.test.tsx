@@ -328,3 +328,61 @@ describe("the optional ask never gates the CTA", () => {
     expect(cta(container).textContent).toBe("ctaAgreeConsent");
   });
 });
+
+describe("a product that asks for School of Gaming's own marketing", () => {
+  const SOG: MarketingConsentType = "school_of_gaming";
+
+  it("renders its box unticked, with no link, above the partner's", () => {
+    const { container } = render(
+      <SignupPanelView {...panel({ marketingConsentTypes: [LYNX, SOG] })} />,
+    );
+
+    const text = container.textContent;
+    expect(text).toContain("schoolOfGamingTitle");
+    // Our own list first, then the partner's — the registry's order, not the
+    // stored one.
+    expect(text.indexOf("schoolOfGaming")).toBeLessThan(
+      text.indexOf("lynxEducate"),
+    );
+    // The rules row (ticked by the fixture), then ours, then Lynx's — both
+    // optional boxes unticked.
+    expect(checkboxes(container)).toHaveLength(3);
+    expect(checkboxes(container)[1].checked).toBe(false);
+    expect(checkboxes(container)[2].checked).toBe(false);
+    // Only the partner is a link: our own sentence names nobody to look up,
+    // so adding our box adds no anchor to the panel.
+    const { container: lynxOnly } = render(
+      <SignupPanelView {...panel({ marketingConsentTypes: [LYNX] })} />,
+    );
+    expect(container.querySelectorAll("a")).toHaveLength(
+      lynxOnly.querySelectorAll("a").length,
+    );
+  });
+
+  it("reports its own consent type when ticked", () => {
+    const onMarketingConsentChange = vi.fn();
+    const { container } = render(
+      <SignupPanelView
+        {...panel({ marketingConsentTypes: [SOG], onMarketingConsentChange })}
+      />,
+    );
+
+    fireEvent.click(checkboxes(container)[1]);
+    expect(onMarketingConsentChange).toHaveBeenCalledWith(SOG, true);
+  });
+
+  it("is asked on a waitlist join exactly as the partner's box is", () => {
+    const { container } = render(
+      <SignupPanelView
+        {...panel({
+          marketingConsentTypes: [LYNX, SOG],
+          state: { kind: "full_waitlist", seatCount: 8 },
+        })}
+      />,
+    );
+
+    expect(container.textContent).toContain("schoolOfGaming");
+    expect(container.textContent).toContain("lynxEducate");
+    expect(checkboxes(container)).toHaveLength(3);
+  });
+});

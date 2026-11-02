@@ -46,8 +46,8 @@ there the send is the outcome, so its failure is the answer.
 **Corollary: a send that must happen exactly once needs a signal that a replay can be
 told apart by**, and the signal has to come from whatever committed the outcome — not
 from the presence of the row, which a replay also sees. The paid-signup confirmation
-keys on the participation RPC reporting whether it *inserted* the row or recognised one
-its own Checkout Session had already bought.
+keys on the confirm RPC reporting whether it *inserted* the seat or found its booking
+already settled.
 
 ## Family mail goes to the parent, and to a child who holds a mailbox
 

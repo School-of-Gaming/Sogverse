@@ -83,15 +83,14 @@ This is the part most likely to be re-learned the hard way.
 
 ## The metadata contract
 
-The Checkout Session's metadata is the interface between Sogverse and the workflow. Some
-keys are load-bearing for our own code — the products webhook and the paid-confirmation page
-read `purchaseShape`, `customerId`, `participantId`, `productId` and `currency` by name.
-
-These five exist **only** for the Slack workflow and have **no reader in this repo, by
-design**:
+The Checkout Session's metadata is the interface between Sogverse and the workflow, and the
+whole of it: our own code links a Session to its booking through `client_reference_id`. Every
+key here exists **only** for the Slack workflow and has **no reader in this repo, by
+design**. Removing one breaks the channel with nothing in the repo to catch it.
 
 | Key | Contents |
 |---|---|
+| `productId` | The product's id. The trigger condition above, so a Session without it posts nothing |
 | `productName` | The product's name, resolved at the **default locale** |
 | `productType` | The raw enum — `consumer_club`, `municipality_club`, `camp`, `event`. A template wanting prose must map it. Can also gate trigger conditions |
 | `adminProductUrl` | Complete absolute URL to the product in the admin dashboard |

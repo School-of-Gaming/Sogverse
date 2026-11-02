@@ -10,6 +10,24 @@ CREATE TYPE public.billing_mode AS ENUM (
 
 
 --
+-- Name: booking_status; Type: TYPE; Schema: public; Owner: -
+--
+
+CREATE TYPE public.booking_status AS ENUM (
+    'pending',
+    'settled',
+    'duplicate'
+);
+
+
+--
+-- Name: TYPE booking_status; Type: COMMENT; Schema: public; Owner: -
+--
+
+COMMENT ON TYPE public.booking_status IS 'Where a booking stands: pending (still being processed: for a paid shape, waiting for the money), settled (processing finished and produced its seat or place in line) or duplicate (processing finished, but the participant already held a seat on the product). Whether a pending booking is abandoned is derived when read, never stored.';
+
+
+--
 -- Name: catalogue_image_purpose; Type: TYPE; Schema: public; Owner: -
 --
 
@@ -166,6 +184,27 @@ COMMENT ON TYPE public.invoice_billing_cadence IS 'How often an invoice customer
 
 
 --
+-- Name: klaviyo_event_kind; Type: TYPE; Schema: public; Owner: -
+--
+
+CREATE TYPE public.klaviyo_event_kind AS ENUM (
+    'account_created',
+    'enrolled',
+    'waitlisted',
+    'seat_offered',
+    'subscription_cancelled',
+    'session'
+);
+
+
+--
+-- Name: TYPE klaviyo_event_kind; Type: COMMENT; Schema: public; Owner: -
+--
+
+COMMENT ON TYPE public.klaviyo_event_kind IS 'What happened to a parent, as a Klaviyo event: account_created (they accepted the terms for the first time, which only a parent''s registration does), enrolled (a participation on a product of any billing mode became active), waitlisted (a participation joined a waitlist), seat_offered (a waitlisted participation was offered a seat), subscription_cancelled (a family subscription moved to canceling or cancelled) and session (an attendance mark was written, or its status changed). The sync sends each with the unique id stored on its outbox row, so a retry, or the same transition happening twice, is never counted twice.';
+
+
+--
 -- Name: library_article_category; Type: TYPE; Schema: public; Owner: -
 --
 
@@ -212,7 +251,7 @@ CREATE TYPE public.marketing_consent_type AS ENUM (
 -- Name: TYPE marketing_consent_type; Type: COMMENT; Schema: public; Owner: -
 --
 
-COMMENT ON TYPE public.marketing_consent_type IS 'The marketing permissions a parent can hold. school_of_gaming is our own mailing list, asked for at parent registration. lynx_educate is our partner''s, asked for only on products an admin has attached it to — see product_marketing_consents. An enum rather than a whitelist table because a marketing consent, unlike a consent DOCUMENT, has no text to version and no republication for a stored row to outlive: it is a standing permission to mail, and the party it names is the whole of it.';
+COMMENT ON TYPE public.marketing_consent_type IS 'The marketing permissions a parent can hold in Sogverse. lynx_educate is our partner''s list, asked for only on products an admin has attached it to — see product_marketing_consents. school_of_gaming is our own mailing list, which is now answered in Klaviyo: nothing writes it, and the rows written before it moved are kept unread until a later change removes them. Sogverse keeps only what the parent answered at registration (profiles.registration_marketing_consent). An enum rather than a whitelist table because a marketing consent, unlike a consent DOCUMENT, has no text to version and no republication for a stored row to outlive: it is a standing permission to mail, and the party it names is the whole of it.';
 
 
 --

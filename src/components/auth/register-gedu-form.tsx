@@ -14,9 +14,8 @@ import { Card, CardContent, CardFooter, CardHeader } from "@/components/ui/card"
 import { getClient } from "@/lib/supabase/client";
 import { SUPPORT_EMAIL } from "@/lib/constants/brand";
 import { ROUTES } from "@/lib/constants/routes";
-import { utmRegistrationBody } from "@/lib/utm";
 import { useAuthRedirect } from "@/hooks/use-auth-redirect";
-import { useAuth, useUtm } from "@/providers";
+import { useAuth } from "@/providers";
 import { readErrorMessage } from "@/lib/api/json-response";
 import { completeRegistrationQuery } from "@/lib/navigation/post-auth-redirect";
 import { ContinueWithGoogle } from "./continue-with-google";
@@ -31,9 +30,6 @@ export function RegisterGeduForm({ redirect }: { redirect: string | null }) {
   const locale = useLocale();
   const { navigateAfterAuth, status } = useAuthRedirect(redirect);
   const { freezeUntilNavigation, unfreezeAuthState } = useAuth();
-  // Educator capture is not for the Roblox programme — it is for knowing where
-  // educators come from when SOG runs a recruitment campaign.
-  const utm = useUtm();
 
   const [firstName, setFirstName] = useState("");
   const [lastName, setLastName] = useState("");
@@ -99,10 +95,6 @@ export function RegisterGeduForm({ redirect }: { redirect: string | null }) {
           lastName: validated.lastName,
           ...profile.requestBody,
           locale,
-          // The route cannot read `x-utm` off its own request: the proxy derives
-          // that header from the query string of the request it is handling, and
-          // this POST carries no UTM params. So they travel in the body.
-          utm: utmRegistrationBody(utm),
         }),
       });
 
@@ -167,14 +159,12 @@ export function RegisterGeduForm({ redirect }: { redirect: string | null }) {
             </Alert>
           )}
           {/* The finish page's Gedu variant, in this page's language: a
-              Google account arrives with none of the fields below. The visit's
-              attribution rides on the address, since the round trip through
-              Google unloads the tab that holds it. */}
+              Google account arrives with none of the fields below. */}
           <ContinueWithGoogle
             next={getPathname({
               href: {
                 pathname: ROUTES.completeRegistration,
-                query: completeRegistrationQuery({ asGedu: true, utm }),
+                query: completeRegistrationQuery({ asGedu: true }),
               },
               locale,
             })}

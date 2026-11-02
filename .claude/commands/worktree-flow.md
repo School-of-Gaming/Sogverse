@@ -86,9 +86,8 @@ they say so.
 scenarios, UI Components entries the user wants to compare before deciding —
 that alignment work is part of this flow, not a prelude to it.** Phase 1 runs
 first, so the demos are built in the worktree on the same branch the real work
-will land on — never as uncommitted edits in the main checkout, whose dev server
-is serving `dev` and whose working tree is not this branch's scratch space. The
-demo build is delegated to an Opus agent like any other implementation, and the
+will land on — never as uncommitted edits in the main checkout, whose working
+tree is `dev` and not this branch's scratch space. The demo build is delegated to an Opus agent like any other implementation, and the
 trivial carve-out does not apply to it: demo variants are diff-heavy by nature
 (fixture plumbing, prop threading, registry entries), which makes them expensive
 to *hold* however easy they are to write. Preview them through Phase 3, take the
@@ -164,9 +163,8 @@ Multiline commit messages go through the Bash tool with a heredoc and
 
 ## Phase 3 — Preview (only when a UI change needs looking at)
 
-Assume a dev server is already running on the main checkout and being watched. It
-serves `dev`, so it cannot show a worktree branch — and that is the *only* reason
-to start a second one.
+A worktree branch is previewed by a dev server started in the worktree: a server
+on the main checkout serves `dev` and cannot show it.
 
 **The user reviews in their own browser.** Start the server from the shell and
 report URLs for them to open — never through an in-app preview or browser pane,
@@ -174,8 +172,7 @@ whatever the harness offers.
 
 - **Never restart, kill, or otherwise disturb a server you did not start.**
 - Pick a port no one is already on, and verify it is free before binding rather
-  than assuming. Next's default is 3000, so treat that and the next port or two as
-  taken.
+  than assuming.
 - Start it backgrounded: `npx next dev --turbopack -p <port>`.
 - Report the specific URLs worth opening, not just the root.
 

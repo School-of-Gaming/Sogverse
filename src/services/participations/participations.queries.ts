@@ -9,6 +9,7 @@ import { CONFIRMATION_POLL_INTERVAL_MS } from "@/lib/constants/participations";
 import type { SessionAudience } from "@/types";
 import {
   ParticipationsService,
+  type CheckoutConfirmation,
   type CreateParticipationInput,
   type InAppSeatOfferResponseInput,
   type JoinWaitlistInput,
@@ -300,13 +301,20 @@ export function useParticipationsForGamers(
   });
 }
 
+/** True once a Checkout Session's booking has an answer worth re-rendering for. */
+export function isCheckoutResolved(
+  confirmation: CheckoutConfirmation | null | undefined,
+): boolean {
+  return !!confirmation && confirmation.state !== "pending";
+}
+
 /**
- * Waits for the participation a paid Checkout Session bought to appear. Only
- * the confirmation page's finalizing state mounts this, and only when the row
- * is not there on the server render — the webhook that writes it normally lands
- * before Stripe redirects, so in the ordinary case this hook never runs at all.
+ * Waits for the booking a paid Checkout Session belongs to to settle. Only the
+ * confirmation page's finalizing state mounts this, and only when it has not on
+ * the server render — the webhook that settles it normally lands before Stripe
+ * redirects, so in the ordinary case this hook never runs at all.
  *
- * Polls on a fixed interval and stops the moment the row exists; the caller
+ * Polls on a fixed interval and stops the moment there is an answer; the caller
  * refreshes the server render from there, which unmounts this. No `staleTime`
  * games: the whole point is to see a write that happened elsewhere.
  *
@@ -325,7 +333,9 @@ export function useCheckoutConfirmation(
     queryFn: () => service.getConfirmationByCheckoutSession(checkoutSessionId),
     enabled: options?.enabled ?? true,
     refetchInterval: (query) =>
-      query.state.data ? false : CONFIRMATION_POLL_INTERVAL_MS,
+      isCheckoutResolved(query.state.data)
+        ? false
+        : CONFIRMATION_POLL_INTERVAL_MS,
   });
 }
 

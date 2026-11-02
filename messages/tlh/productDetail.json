@@ -70,6 +70,7 @@
     "holidayBreaks": "SuvwI’pu’ leSbogh poHmey"
   },
   "signupPanel": {
+    "checkoutAlreadyPaid": "DIlmeH Huch lo'lu'taH. tugh jIH SOG Daq 'oHbej!",
     "verb": {
       "consumer_club": "yImuv",
       "municipality_club": "yIqon",
@@ -130,6 +131,8 @@
       "marketing": {
         "lynxEducate": "<link>Lynx Educate</link>-vaD De’wI’ HeywI’ vInob ’e’ vIchaw’ — vaj wanI’ chu’ QIn Qujmey De’ je mungeHlaH. reH vImev’laH.",
         "lynxEducateTitle": "Lynx Educate QInmey",
+        "schoolOfGaming": "noH Quj yejHaD QIn vIneH — ghom’a’mey, raghmey, De’ chu’ je. reH vImev’laH.",
+        "schoolOfGamingTitle": "noH Quj yejHaD QInmey",
         "hint": "ra’be’lu’ — ngoQmeylIjDaq reH DachoHlaH."
       }
     },

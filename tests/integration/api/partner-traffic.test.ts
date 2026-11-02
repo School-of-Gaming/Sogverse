@@ -337,7 +337,9 @@ describe("GET /api/partner/v1/traffic", () => {
     await read();
     const filters = vercelCalls(vercel).map((url) => url.searchParams.get("filter") ?? "");
     expect(filters.every((filter) => filter.startsWith("environment eq 'production' and "))).toBe(true);
-    expect(filters).toContain("environment eq 'production' and route eq '/roblox'");
+    expect(filters).toContain(
+      "environment eq 'production' and route in ('/roblox', '/roblox-online', '/roblox-all')",
+    );
     expect(filters).toContain("environment eq 'production' and route eq '/shop'");
     expect(filters).toContain(
       `environment eq 'production' and requestPath in (${[

@@ -34,9 +34,12 @@ import {
  * unit test runs both declarations over one set of samples and requires the
  * same answer from each, so the two cannot drift.
  *
- * One deliberate difference: here a section's id and an item's id may be left
- * out. A section or item sent without one is new, and the tool gives it a
- * fresh id before the registry's own schema checks the structure.
+ * Two deliberate differences. Here a section's id and an item's id may be left
+ * out: a section or item sent without one is new, and the tool gives it a
+ * fresh id before the registry's own schema checks the structure. And the
+ * hero's picture in a language's words may be null, which clears it: a text
+ * save keeps a hero picture it leaves out, so removing one needs a value of
+ * its own, which the tool resolves before the registry reads the words.
  */
 
 // ---------------------------------------------------------------------------
@@ -158,6 +161,11 @@ interface McpLandingSection<Type extends LandingSectionType> {
   readonly ruleSamples: {
     readonly minimal: LandingSectionOf<Type>;
     readonly withOptional: Readonly<Record<string, LandingSectionOf<Type>>>;
+    /**
+     * Each optional word that asks for other words in the same language — the
+     * hero's picture asks for its alt text — alone, as the minimal section's words.
+     */
+    readonly withOptionalWords?: Readonly<Record<string, Readonly<Record<string, unknown>>>>;
   };
   /** The section's item ids, for checking the keys of its words. */
   readonly itemIds: (section: LandingSectionOf<Type>) => {
@@ -190,11 +198,10 @@ export const MCP_LANDING_SECTIONS: {
 } = {
   hero: {
     about:
-      "The page's opening: the headline is the page's only H1, with an optional line under it, an optional picture and an optional button. Every page has exactly one, first. Its picture is also the page's link preview, the image shown wherever the page is shared, with its alt text, in every language that sets no share picture of its own (shareImageId); a hero without one shares the site-wide card in those languages. A partner's logo in it (Roblox's, Lynx's) is a new placement of their mark, which needs that partner's sign-off first.",
+      "The page's opening: the headline is the page's only H1, with an optional line under it, an optional picture and an optional button. Every page has exactly one, first. Its picture is not in the structure: each language names its own in its words (imageId, beside imageAlt), because a hero picture can carry words baked into the art. There is no shared one and no fallback: a language without one shows none, so when adding a language set its hero picture too; for the same picture in every language, write the same id into each. A language's hero picture is also its link preview, with its alt text, unless that language sets a share picture of its own (shareImageId); a language with neither shares the site-wide card. A partner's logo in it (Roblox's, Lynx's) is a new placement of their mark, which needs that partner's sign-off first.",
     structure: z.strictObject({
       id: sectionId,
       type: z.literal("hero"),
-      imageId: pictureId.optional(),
       button: buttonTarget.optional(),
     }),
     text: z.strictObject({
@@ -203,14 +210,20 @@ export const MCP_LANDING_SECTIONS: {
       subline: plainText.describe("A line under the headline. Optional."),
       buttonLabel: plainText.describe("The button's words."),
       emailSubject,
+      imageId: pictureId
+        .nullable()
+        .optional()
+        .describe(
+          "This language's hero picture: the catalogue id of a wide 16:9 landing page picture from list_landing_images. A language without one shows no hero picture. Left out of a save_landing_page_text call, the language keeps the one it has; null removes it.",
+        ),
       imageAlt: plainText.describe("The picture's alt text."),
     }),
     ruleSamples: {
       minimal: { id: ANY_ID, type: "hero" },
       withOptional: {
-        imageId: { id: ANY_ID, type: "hero", imageId: ANY_ID },
         button: { id: ANY_ID, type: "hero", button: { kind: "internal", path: "/" } },
       },
+      withOptionalWords: { imageId: { imageId: ANY_ID } },
     },
     itemIds: () => null,
   },
@@ -576,30 +589,38 @@ export function withIds(sections: readonly unknown[], newId: () => string): unkn
 // The manual
 // ---------------------------------------------------------------------------
 
-/** The paths one section lacks with no words at all, by the registry's rule. */
-function requiredPaths(section: LandingSection): string[] {
+/** The paths one section lacks with these words alone — none, by default — by the registry's rule. */
+function requiredPaths(
+  section: LandingSection,
+  words: Readonly<Record<string, unknown>> = {},
+): string[] {
   const prefix = `sections.${section.id}.`;
   return missingInLandingVersion([section], {
     title: "t",
     summary: "s",
     slug: "s",
-    sectionTexts: {},
+    sectionTexts: { [section.id]: words },
   }).map((path) => path.slice(prefix.length));
 }
 
 /**
  * The required-text rule of one type, in words, read off the rule itself: the
  * fields a bare section of the type needs, then each one an optional shared
- * field adds — or "none" for a type that requires no words.
+ * field or an optional word adds — or "none" for a type that requires no words.
  */
 export function describeRequiredWords(type: LandingSectionType): string {
-  const { minimal, withOptional } = MCP_LANDING_SECTIONS[type].ruleSamples;
+  const { minimal, withOptional, withOptionalWords = {} } = MCP_LANDING_SECTIONS[type].ruleSamples;
   const always = requiredPaths(minimal);
-  const conditional = Object.entries(withOptional).flatMap(([field, sample]) =>
-    requiredPaths(sample)
-      .filter((path) => !always.includes(path))
-      .map((path) => `${path} when ${field} is set`),
-  );
+  const added = (field: string, paths: readonly string[]) =>
+    paths.filter((path) => !always.includes(path)).map((path) => `${path} when ${field} is set`);
+  const conditional = [
+    ...Object.entries(withOptionalWords).flatMap(([field, words]) =>
+      added(field, requiredPaths(minimal, words)),
+    ),
+    ...Object.entries(withOptional).flatMap(([field, sample]) =>
+      added(field, requiredPaths(sample)),
+    ),
+  ];
   const required = [...always, ...conditional];
   return required.length === 0 ? "none" : required.join("; ");
 }

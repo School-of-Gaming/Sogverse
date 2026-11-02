@@ -4,6 +4,7 @@ import { inLocaleOrder } from "@/lib/i18n/locale-order";
 import { walkPages } from "@/lib/supabase/paging";
 import {
   LANDING_PRODUCT_TYPES,
+  landingHeroImageId,
   landingPickedProductIds,
   landingPlacedGuideIds,
   landingPlacedTestimonialIds,
@@ -65,8 +66,11 @@ const DRAFT_VERSION_LIST_COLUMNS =
 
 const PUBLICATION_COLUMNS = `page_id, sections, sections_md5, pictures, published_at, first_published_at, versions:landing_page_publication_translations(locale, title, summary, slug, section_texts, texts_md5, share_title, share_image_id, share_image_alt)`;
 
-/** The published copy's columns for a list: the structure, and no words. */
-const PUBLICATION_SUMMARY_COLUMNS = `page_id, sections, pictures, published_at, first_published_at, versions:landing_page_publication_translations(locale, title, summary, slug)`;
+/**
+ * The published copy's columns for a list: the structure, and each version's
+ * words, read only for the hero picture they name.
+ */
+const PUBLICATION_SUMMARY_COLUMNS = `page_id, sections, pictures, published_at, first_published_at, versions:landing_page_publication_translations(locale, title, summary, slug, section_texts)`;
 
 /** The published copy's columns for comparing, without its words. */
 const PUBLICATION_COMPARE_COLUMNS = `sections_md5, versions:landing_page_publication_translations(locale, title, summary, slug, texts_md5, share_title, share_image_id, share_image_alt)`;
@@ -114,7 +118,13 @@ interface PublicationSummaryRow {
   pictures: unknown;
   published_at: string;
   first_published_at: string;
-  versions: readonly { locale: string; title: string; summary: string; slug: string }[];
+  versions: readonly {
+    locale: string;
+    title: string;
+    summary: string;
+    slug: string;
+    section_texts: unknown;
+  }[];
 }
 
 interface PublicationRow extends Omit<PublicationSummaryRow, "versions"> {
@@ -130,27 +140,41 @@ interface PublicationRow extends Omit<PublicationSummaryRow, "versions"> {
   }[];
 }
 
-function toPublishedSummary(row: PublicationSummaryRow): PublishedLandingPageSummary {
+/** What a list and a whole read of a published copy share: everything but its versions. */
+function toPublishedShared(
+  row: Omit<PublicationSummaryRow, "versions">,
+): Omit<PublishedLandingPageSummary, "versions"> {
   return {
     id: row.page_id,
     firstPublishedAt: row.first_published_at,
     publishedAt: row.published_at,
     sections: readSections(row.sections),
     pictures: landingPictures.parse(row.pictures),
-    versions: inLocaleOrder(row.versions).map(({ locale, title, summary, slug }) => ({
-      locale,
-      title,
-      summary,
-      slug,
-    })),
+  };
+}
+
+function toPublishedSummary(row: PublicationSummaryRow): PublishedLandingPageSummary {
+  const shared = toPublishedShared(row);
+  const { sections } = shared;
+  return {
+    ...shared,
+    versions: inLocaleOrder(row.versions).map(
+      ({ locale, title, summary, slug, section_texts }) => ({
+        locale,
+        title,
+        summary,
+        slug,
+        heroImageId: landingHeroImageId(sections, readSectionTexts(sections, section_texts)),
+      }),
+    ),
   };
 }
 
 function toPublished(row: PublicationRow): PublishedLandingPage {
-  const summary = toPublishedSummary(row);
-  const { sections } = summary;
+  const shared = toPublishedShared(row);
+  const { sections } = shared;
   return {
-    ...summary,
+    ...shared,
     versions: inLocaleOrder(row.versions).map(
       ({ locale, title, summary, slug, section_texts, share_title, share_image_id, share_image_alt }) => ({
         locale,

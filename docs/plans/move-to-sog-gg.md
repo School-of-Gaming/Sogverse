@@ -56,10 +56,12 @@ Decided by the owner on 2026-10-15 and 2026-10-26.
   preserving the path** (`sogverse.sog.gg/<path>` → `sog.gg/<path>`), in the same hour.
   There is no app code and no splash page. The DNS record is kept for about a year and
   then deleted. Nothing in the app may know `sogverse.sog.gg` existed.
-- **Staging moves to `staging.sog.gg` in the same hour, and `sogverse-staging.sog.gg` is
-  deleted outright, with no redirect** (owner, 2026-10-26). Staging is internal, so
-  nothing outside the team holds a link worth keeping. Lynx is the one outside caller,
-  and is told with its production change.
+- **Staging moves to `staging.sog.gg` first, as the rehearsal for production, and
+  `sogverse-staging.sog.gg` is deleted outright, with no redirect** (owner, 2026-10-26;
+  order set 2026-11-02). Staging is internal, so nothing outside the team holds a link
+  worth keeping. Lynx calls it only for testing, and those calls are allowed to break
+  until Lynx switches (owner, 2026-11-02). The rehearsal doesn't cover the DNS switch,
+  the certificate or either redirect, because `staging.sog.gg` is already live.
 - **Clean break from Webflow.** No old Webflow path is redirected; they return the app's
   404. The Webflow blog, Library content and landing pages are not ported.
 - **Webflow's data is exported to the team Google Drive before the subscription is
@@ -118,6 +120,12 @@ Decided by the owner on 2026-10-15 and 2026-10-26.
   `substitution_sync_url`. On 2026-10-26 it was
   `https://sogverse.sog.gg/api/substitution-notifications/sync`. pg_net does not follow
   redirects.
+- **The Klaviyo parent sync URL sits beside it**, as `klaviyo_sync_url`, written on
+  2026-10-27 to `https://sogverse.sog.gg/api/klaviyo-sync/sync` (staging:
+  `https://sogverse-staging.sog.gg/api/klaviyo-sync/sync`). Its neighbour
+  `klaviyo_sync_secret` holds no host and stays. Nothing reads the entry until the
+  `feat/klaviyo-parent-sync` migration has run on that database; once it has, a stale host
+  fails silently: parent changes queue up and never reach Klaviyo. Update it either way.
 - **Updating a Stripe webhook endpoint's URL keeps its signing secret.** No Vercel env
   change is needed. The live endpoint is `we_1U2rZcCD5Q5ECgrcKzDSQRcJ` (2026-10-26).
 - **The email records stay untouched.** On 2026-10-26 the apex held:
@@ -146,8 +154,7 @@ Every write outside the repo is confirmed with the owner before it is made.
 
 ### 0. Before the day
 
-1. **Export Webflow to the team Drive.** *Exported locally 2026-10-26; it reaches Drive
-   with step 2.6, where the details are.*
+1. **Export Webflow to the team Drive.** *Done 2026-10-30; step 2.6 has the details.*
    - CMS collections (blog, lessons, camps, staff, categories) as CSV.
    - Form submissions.
    - Members and e-commerce orders, if the site used them. These hold personal data, so
@@ -177,9 +184,10 @@ Every write outside the repo is confirmed with the owner before it is made.
    `npm run gates` passes.
    Until this branch is released, `supabase/config.toml` documents the old values.
    That's accepted, since the file is never pushed to prod.
-3. **Message the two external API users: Lynx and the Minecraft server team.** Draft each
-   with `/slack-msg` or `/whatsapp-msg`. Each message gives the date and the hour, and
-   says:
+3. **Message the two external API users: Lynx and the Minecraft server team.** The cutover
+   has no fixed date: it runs at a quiet hour the owner calls (decided 2026-10-30). So send
+   a heads-up naming the week, then a second message at the start of the hour. Draft each
+   with `/slack-msg` or `/whatsapp-msg`. The heads-up says:
    - their base URL moves from `https://sogverse.sog.gg` to `https://sog.gg`, and Lynx's
      staging one from `https://sogverse-staging.sog.gg` to `https://staging.sog.gg`
      (Lynx calls both);
@@ -187,7 +195,8 @@ Every write outside the repo is confirmed with the owner before it is made.
    - their calls fail from the cutover until they switch.
 
    For the Minecraft servers, a failing join check keeps players out, so their change has
-   to land within the hour. Agree with them who makes it, at that time.
+   to land within the hour. Agree with them who makes it and how they're reached at short
+   notice, and start the hour only once that person has answered.
 4. **Re-pull the machine-caller list**, and add anything new to step 1.6:
 
    ```bash
@@ -225,6 +234,8 @@ Every write outside the repo is confirmed with the owner before it is made.
      site. If it is, re-verify it by DNS TXT before the day, or verification is lost when
      the apex moves. Also the Pixel's allowed domains, and the WhatsApp app's webhook
      callback URL.
+   - **Reddit Ads:** any domain the pixel or conversions setup is tied to, and the
+     destination URLs of live ads.
    - **Google Cloud OAuth client:** the authorised JavaScript origins, and the consent
      screen's home, privacy and terms URLs.
    - **Google Tag Manager / GA4:** any trigger or filter on the hostname.
@@ -236,6 +247,14 @@ Every write outside the repo is confirmed with the owner before it is made.
      pages and spotlights that link to `www.sog.gg` or bare `sog.gg` Webflow pages. After
      the cutover those links open this app's 404. Find them with a read-only prod query
      over the authored text columns, and fix them in the admin UI.
+
+   Checked 2026-10-30. No action needed: Meta's verification of `sog.gg` rests on no tag
+   on the Webflow site, and the Pixel's allow-list covers `sog.gg` and its subdomains; the
+   Sogverse Tag Manager container has no hostname filters; Daily.co has no domain
+   restriction; Brevo's templates link only to the bare `https://sog.gg`; prod's stored
+   text holds one old link, in a past session report, which renders with no link. The
+   Google and Klaviyo changes are in step 1.6's table. Still open: Reddit Ads, the ad
+   links in Meta Ads Manager, and the staging OAuth client.
 6. **Add `https://sog.gg/**` to Supabase Auth's redirect allow-list**, keeping
    `sogverse.sog.gg/**`. It is harmless before the cutover.
    - Every Supabase Auth change in this plan goes through the Management API:
@@ -271,7 +290,10 @@ Every write outside the repo is confirmed with the owner before it is made.
      Re-read with `vercel api "/v6/domains/<domain>/config?projectIdOrName=sogverse"
      --scope school-of-gaming` before the hour. The existing hosts point at
      `cname.vercel-dns.com`, which Vercel ranks second and still serves.
-8. **The day before, at Nordname:**
+8. **At Nordname, at least a day before the hour.** *Done 2026-10-30, and Vercel has
+   verified all three domains.* It changes nothing for visitors while it waits. The zone
+   as it stood before is saved in `~/work/sog-gg-dns-before-2026-10-30.tsv`, and it's
+   edited at `andoria.nordname.net:2222`, not on the Nordname site:
    - Lower the TTL on the apex `A` and the `www` CNAME to 300 s.
    - Add the `_vercel` TXT records from step 0.7.
    - Add a `staging` CNAME to `cname.vercel-dns.com`. A new name changes nothing for
@@ -325,8 +347,11 @@ back to `sog.gg` while that is still Webflow.
      `SET default_transaction_read_only = off;`, then
      `SELECT vault.update_secret(id, 'https://sog.gg/api/substitution-notifications/sync') FROM vault.secrets WHERE name = 'substitution_sync_url';`.
      Read the value back from `vault.decrypted_secrets`.
+   - **Klaviyo sync:** in the same session,
+     `SELECT vault.update_secret(id, 'https://sog.gg/api/klaviyo-sync/sync') FROM vault.secrets WHERE name = 'klaviyo_sync_url';`,
+     and read it back the same way.
 
-   This plan, approved by the owner on 2026-10-26, is the authority for these two
+   This plan, approved by the owner on 2026-10-26, is the authority for these
    production writes and for the Supabase Auth changes. Each one is still confirmed with
    the owner at the moment it is made.
 4. **Set Supabase Auth's site URL to `https://sog.gg`.** *Check:* a Google sign-in on
@@ -346,21 +371,25 @@ back to `sog.gg` while that is still Webflow.
    | WhatsApp | Webhook callback URL in the Meta app | Meta's verification handshake passes on save |
    | Claude connectors | Re-add with `https://sog.gg/api/mcp`, for the owner and Reksi | `whoami` answers |
    | Minecraft servers | The Minecraft server team changes the base URL in their config, as agreed in step 0.3 | A join check succeeds |
-   | Google Cloud OAuth | Consent screen URLs, and JavaScript origins if they list the old host | Saved |
-   | Anything step 0.5 found | As found | As found |
+   | Google Cloud OAuth (project `sogverse`) | Add `https://sog.gg` to the Sogverse client's JavaScript origins, and set the consent screen's home, privacy and terms URLs to `sog.gg`. `sog.gg` is already an authorised domain, and the redirect URI is Supabase's | A Google sign-in on `sog.gg` works |
+   | Klaviyo | The live flows Kesäleiri Lead Flow (FI) and New Flow - Guidebook Download (Finnish) link to Webflow camp and schedule pages (found 2026-10-30): repoint them to the shop | The flow emails link to `sog.gg` pages that exist |
 7. **Move staging to `staging.sog.gg`.** It's the same work as production's, on test
-   data. Nothing here can drop real data or money, so it runs after production is
-   confirmed working.
+   data, and it runs on its own before the production hour as the rehearsal. Nothing here
+   can drop real data or money.
+   - Re-pull the staging host's callers (step 0.4) and add anything new to this list.
    - Set `NEXT_PUBLIC_SITE_URL` for **Preview** to `https://staging.sog.gg` with the
      `env-vars` skill. In Vercel it's one value for every preview deployment, not one per
      branch. Then redeploy the latest `dev` preview with the build cache unticked.
    - Staging Supabase Auth: site URL `https://staging.sog.gg`, and an allow-list of
      `https://staging.sog.gg/**` only.
+   - The staging Google OAuth client: add `https://staging.sog.gg` to its JavaScript
+     origins if it lists the old host.
    - The Stripe **test-mode** endpoint `we_1U0cUCCD5Q5ECgrcpTkY9xnU`: URL
      `https://staging.sog.gg/api/webhooks/stripe/products` (`stripe webhook_endpoints
      update`, without `--live`).
    - Staging Vault: `substitution_sync_url` becomes
-     `https://staging.sog.gg/api/substitution-notifications/sync`, the same way as step 3.
+     `https://staging.sog.gg/api/substitution-notifications/sync` and `klaviyo_sync_url`
+     becomes `https://staging.sog.gg/api/klaviyo-sync/sync`, the same way as step 3.
    - The staging Discord app's Interactions Endpoint URL, and the staging Slack app's
      Interactivity and `/link` URLs.
    - Claude connectors on staging: re-add them with `https://staging.sog.gg/api/mcp`.
@@ -403,7 +432,8 @@ removing the old staging host, so until then each change can be pointed back at
 
 1. **About a week later, look for stragglers.** Run the step 0.4 query again over the
    days since the cutover. Every non-browser caller on `sogverse.sog.gg` is now getting
-   308s; move each one, Lynx included if they haven't switched.
+   308s; move each one, Lynx included if they haven't switched. If DNS has held, delete
+   `~/work/sog-gg-dns-before-2026-10-30.tsv`: a rollback no longer needs it.
 2. **Land `feat/move-to-sog-gg`** in the next normal release. Before merging, re-verify
    the domain → branch mapping in the `vercel-analytics` skill and change its
    "verified" date to the day of the check.
@@ -423,14 +453,20 @@ removing the old staging host, so until then each change can be pointed back at
    Bing.
 6. **Cancel the Webflow subscription and every add-on**, once the exports are confirmed
    on Drive. Then delete the `proxy-ssl.webflow.com` TXT record on the apex.
-   - The export (2026-10-26) is in `~/work/webflow-export-2026-10-26`, with the scripts
-     that made it so it can be re-run just before cancelling. The token it uses is
+   - The export (2026-10-26) is in the team Drive's Webflow folder, with the scripts that
+     made it so it can be re-run just before cancelling. The token it uses is
      `WEBFLOW_EXPORT_TOKEN` (read-only) in `~/work/sog-translations/.env`. Its
      `personal/` folder goes to the restricted Drive folder.
-   - Two things aren't in it: the site's custom head and footer code, which no token can
-     read (copy it by hand from Site settings → Custom code), and the "My child is a
-     gamer" guidebook PDF, which Webflow refused to serve (download it from the Assets
-     panel if Sogverse's guide store doesn't already hold it).
+   - The site's custom code and the "My child is a gamer" guidebook were added on
+     2026-10-30. No token can read the custom code, so `public/custom-code/` holds the head
+     and footer read from Site settings, the app scripts and the code pulled from the
+     static mirror; re-running the export won't refresh them. The guidebook is
+     `public/files/my-child-is-a-gamer-guidebook.pdf`, from the Google Drive link on the
+     Westgate Academy page. Webflow's own copy is an empty 0-byte asset. The stylesheet,
+     scripts and images the mirror's pages reference are in `public/mirror-assets/`, with
+     `url-map.json` mapping each original address to its file. Webflow's own Export code
+     wasn't taken: it needs a paid Workspace plan, which this site's workspace doesn't
+     have (2026-10-30).
    - The add-ons are the connected apps Jetboost, LiveChat and Flowbase. Revoke the
      site's API tokens with the subscription.
    - The site's form webhooks also sent submissions to Zapier, Make, phoneflow and

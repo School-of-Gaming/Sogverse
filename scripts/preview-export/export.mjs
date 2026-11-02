@@ -137,7 +137,6 @@ import {
   resolveBase,
   resolveStack,
   shotLandingError,
-  signInOrder,
   stackFromSupabaseOrigin,
   supabaseOriginFromCsp,
   viewerOf,
@@ -1505,16 +1504,10 @@ async function shootSignedOut(shot) {
 // reason, and the login form is not what this tool is exercising. Every viewer
 // signs in before the first shot, so a refused one stops the run before it has
 // spent minutes on the others.
-//
-// **Gamers first, and the order is load-bearing**: a gamer's switch out of the
-// parent ends every session the parent account holds, so a parent viewer
-// signed in before it would shoot nothing but the login page. `signInOrder`
-// says why in full.
 const contexts = [];
 const pages = {};
 const pageKey = (viewerKey, viewport) => `${viewerKey}|${viewport}`;
-const ordered = signInOrder([...VIEWERS.values()].map((v) => v.viewer));
-for (const { viewer, credentials } of ordered.map((v) => VIEWERS.get(v.key))) {
+for (const { viewer, credentials } of VIEWERS.values()) {
   const first = await browser.newContext(contextOptions(VIEWPORTS[0]));
   await prepareContext(first, { storeRefusal: true });
   await signIn(first, viewer, credentials);

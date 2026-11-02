@@ -41,7 +41,10 @@
   },
   "marketing": {
     "title": "QIn chaw’mey",
-    "schoolOfGaming": "noH Quj yejHaD QIn HevmeH vIchaw’.",
+    "schoolOfGaming": "noH Quj yejHaD QIn — ghom’a’mey, raghmey, De’ chu’ je",
+    "schoolOfGamingNote": "Hoch QInmajDaq mevmeH rarwI’ lo’laH je. Qapla’!",
+    "schoolOfGamingLoadFailed": "chaw’vam wIlaDlaHbe’. ghuy’!",
+    "retry": "yInIDqa’",
     "lynxEducate": "<link>Lynx Educate</link>-vaD De’wI’ HeywI’ vInob ’e’ vIchaw’ — vaj wanI’ chu’ QIn Qujmey De’ je mungeHlaH. reH vImev’laH."
   },
   "notifications": {

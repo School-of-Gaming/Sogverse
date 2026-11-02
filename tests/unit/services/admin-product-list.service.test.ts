@@ -194,6 +194,24 @@ describe("ProductsService.getAdminListPage", () => {
     expect(firstUrl().searchParams.get("name_match.name")).toBe(expected);
   });
 
+  // An ID search replaces the name match rather than ORing with it, so the
+  // name embed goes unfiltered.
+  it("finds a product by its whole ID alone, without the name match", async () => {
+    fetchMock.mockResolvedValue(postgrestPage(listRows(1), { from: 0, total: 1 }));
+
+    await service.getAdminListPage({
+      ...NO_FILTERS,
+      search: " 8E624B5F-D4BF-45E0-84D0-0C7613CBAC29 ",
+    });
+
+    const url = firstUrl();
+    expect(url.searchParams.get("id")).toBe(
+      "eq.8e624b5f-d4bf-45e0-84d0-0c7613cbac29",
+    );
+    expect(url.searchParams.has("name_match.name")).toBe(false);
+    expect(url.searchParams.has("name_match")).toBe(false);
+  });
+
   it("sends no search for a needle of only wildcards and spaces", async () => {
     fetchMock.mockResolvedValue(postgrestPage(listRows(1), { from: 0, total: 1 }));
 

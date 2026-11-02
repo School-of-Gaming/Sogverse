@@ -50,6 +50,13 @@ CREATE TRIGGER on_parent_gamer_deleted AFTER DELETE ON public.parent_gamer FOR E
 
 
 --
+-- Name: parent_gamer parent_gamer_klaviyo; Type: TRIGGER; Schema: public; Owner: -
+--
+
+CREATE TRIGGER parent_gamer_klaviyo AFTER INSERT OR DELETE ON public.parent_gamer FOR EACH ROW EXECUTE FUNCTION public.klaviyo_parent_gamer_changed();
+
+
+--
 -- Name: parent_gamer validate_parent_gamer_on_insert; Type: TRIGGER; Schema: public; Owner: -
 --
 

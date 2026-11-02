@@ -9,7 +9,6 @@ import {
   resolveBase,
   resolveStack,
   shotLandingError,
-  signInOrder,
   stackFromSupabaseOrigin,
   supabaseOriginFromCsp,
   viewerOf,
@@ -224,19 +223,6 @@ describe("pickGamer", () => {
   it("names the gamers there are when the one asked for is not", () => {
     expect(() => pickGamer(family, "Otso")).toThrow(/Milo, Nea/);
     expect(() => pickGamer([family[0]], null)).toThrow(/no gamers/);
-  });
-});
-
-describe("signInOrder", () => {
-  const v = (key: string) => ({ role: key.split(":")[0], key });
-
-  it("signs every gamer in before any parent, and keeps the rest in order", () => {
-    const order = signInOrder([v("parent"), v("admin"), v("gamer"), v("gedu"), v("gamer:Nea")]);
-    expect(order.map((x) => x.key)).toEqual(["gamer", "gamer:Nea", "parent", "admin", "gedu"]);
-  });
-
-  it("leaves a run with no gamer as it was", () => {
-    expect(signInOrder([v("admin"), v("parent")]).map((x) => x.key)).toEqual(["admin", "parent"]);
   });
 });
 

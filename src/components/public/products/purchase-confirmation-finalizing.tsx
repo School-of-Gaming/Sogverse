@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react";
 import { useRouter } from "@/i18n/navigation";
 import {
+  isCheckoutResolved,
   useCheckoutConfirmation,
 } from "@/services/participations/participations.queries";
 import { CONFIRMATION_POLL_TIMEOUT_MS } from "@/lib/constants/participations";
@@ -14,10 +15,10 @@ import { PurchaseConfirmationNotice } from "./purchase-confirmation-view";
  * apart is what lets the states be rendered from fixtures in the style guide
  * without a network call, and it puts every timing decision in one small file.
  *
- * The parent has been charged and their seat has not appeared. The webhook that
- * creates it normally lands before Stripe redirects, so getting here at all
- * means the endpoint failed or ran long. Poll for the row, and the moment it
- * exists call `router.refresh()` — re-running the page's server render rather
+ * The parent has been charged and their booking has not settled. The webhook that
+ * settles it normally lands before Stripe redirects, so getting here at all
+ * means the endpoint failed or ran long. Poll the booking, and the moment it has
+ * settled call `router.refresh()` — re-running the page's server render rather
  * than rendering the confirmation from here, so the confirmed view has exactly
  * one code path.
  *
@@ -49,7 +50,7 @@ export function PurchaseConfirmationFinalizing({
   });
 
   useEffect(() => {
-    if (data) router.refresh();
+    if (isCheckoutResolved(data)) router.refresh();
   }, [data, router]);
 
   return (

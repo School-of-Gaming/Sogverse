@@ -1,7 +1,14 @@
 /**
- * The admin club-switch picker's free-text search: a case-insensitive substring
- * match over a product's name. (The admin product list asks the same question
- * of the server, as an `ilike` over every one of a product's names.)
+ * The admin club-switch picker's free-text search: a product's ID, or a
+ * case-insensitive substring of its name. (The admin product list asks the same
+ * question of the server, as an `id` match or an `ilike` over every one of a
+ * product's names.)
+ *
+ * **A search that is a whole product ID finds that product alone.** Whether it
+ * is one is `productIdFromSearch`'s to say, the one function both searches ask,
+ * so the picker and the list cannot disagree; names are not consulted then,
+ * because a product named with that text is not the product the admin pasted.
+ * Anything else is a name search.
  *
  * **Every locale's name is matched, not just the viewer's.** A product is
  * authored once and named in each locale it sells in, and the admin who created
@@ -19,8 +26,11 @@
  * wanted.
  */
 
+import { productIdFromSearch } from "@/lib/products/product-id-search";
+
 /** The columns the matcher reads; an admin product row satisfies it unchanged. */
 export interface ProductNameSearchSource {
+  id: string;
   product_translations: { name: string }[];
 }
 
@@ -39,6 +49,8 @@ export function matchesProductSearch(
   needle: string,
 ): boolean {
   if (needle === "") return true;
+  const id = productIdFromSearch(needle);
+  if (id !== null) return product.id === id;
   return product.product_translations.some((tr) =>
     tr.name.toLowerCase().includes(needle),
   );

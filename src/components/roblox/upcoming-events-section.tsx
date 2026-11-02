@@ -1,7 +1,7 @@
 import { prefetchProductRails } from "@/components/public/products/product-rail-prefetch";
 import { productRailSeed } from "@/components/public/products/product-rail-selection";
 import { SHOP_PRODUCT_TYPES } from "@/components/public/products/shop-categories";
-import { PROGRAMME_RAIL_SELECTION } from "./programme-filters";
+import { PROGRAMME_RAIL_SELECTIONS, type ProgrammeFormat } from "./programme-filters";
 import { UpcomingEventsBrowse } from "./upcoming-events-browse";
 
 /**
@@ -20,7 +20,8 @@ import { UpcomingEventsBrowse } from "./upcoming-events-browse";
  * A failed prefetch seeds nothing (the prefetch says why), and the section
  * still renders: the live query fetches on mount instead.
  */
-export async function UpcomingEventsSection() {
-  const prefetch = await prefetchProductRails(SHOP_PRODUCT_TYPES, [PROGRAMME_RAIL_SELECTION]);
-  return <UpcomingEventsBrowse seed={productRailSeed(prefetch, PROGRAMME_RAIL_SELECTION)} />;
+export async function UpcomingEventsSection({ format }: { format: ProgrammeFormat }) {
+  const selection = PROGRAMME_RAIL_SELECTIONS[format];
+  const prefetch = await prefetchProductRails(SHOP_PRODUCT_TYPES, [selection]);
+  return <UpcomingEventsBrowse format={format} seed={productRailSeed(prefetch, selection)} />;
 }

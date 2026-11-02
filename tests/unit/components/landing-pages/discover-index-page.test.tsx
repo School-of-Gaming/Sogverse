@@ -44,12 +44,18 @@ const PICTURE = "88888888-8888-4888-8888-888888888888";
 const LIVE = [
   {
     page_id: ESPOO,
-    sections: [{ id: HERO, type: "hero", imageId: PICTURE }],
+    sections: [{ id: HERO, type: "hero" }],
     pictures: { [PICTURE]: { path: "pictures/espoo.jpg", purpose: "landing_image" } },
     published_at: "2026-10-01T08:00:00Z",
     first_published_at: "2026-09-02T08:00:00Z",
     versions: [
-      { locale: "en", title: "Clubs in Espoo", summary: "For Espoo families.", slug: "clubs-espoo" },
+      {
+        locale: "en",
+        title: "Clubs in Espoo",
+        summary: "For Espoo families.",
+        slug: "clubs-espoo",
+        section_texts: { [HERO]: { imageId: PICTURE } },
+      },
     ],
   },
   {
@@ -59,7 +65,13 @@ const LIVE = [
     published_at: "2026-09-01T08:00:00Z",
     first_published_at: "2026-09-01T08:00:00Z",
     versions: [
-      { locale: "sv", title: "Klubbar i Esbo", summary: "För familjer i Esbo.", slug: "klubbar-esbo" },
+      {
+        locale: "sv",
+        title: "Klubbar i Esbo",
+        summary: "För familjer i Esbo.",
+        slug: "klubbar-esbo",
+        section_texts: {},
+      },
     ],
   },
 ];

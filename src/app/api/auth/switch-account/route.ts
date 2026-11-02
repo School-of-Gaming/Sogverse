@@ -281,8 +281,11 @@ async function switchByOtp(args: {
   const otp = linkData.properties.email_otp;
 
   // Sign out caller (clears session cookies), then verify OTP on a fresh
-  // server client so the new cookies land in the response.
-  await supabase.auth.signOut();
+  // server client so the new cookies land in the response. `local` scope,
+  // because the switch needs only this browser's session gone — the default
+  // revokes every session the account holds, and the account's sign-ins on
+  // other devices did nothing wrong.
+  await supabase.auth.signOut({ scope: "local" });
 
   const freshClient = await createClient();
   const { data: verified, error: verifyError } = await freshClient.auth.verifyOtp({

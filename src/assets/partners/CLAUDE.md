@@ -83,8 +83,9 @@ adjust transparency, add a stroke or shadow, scale parts independently, skew, ro
 vertically stack, or place it over a busy background. Their pack also supplies approved
 boilerplate copy describing Roblox, and requires a trademark notice wherever the mark
 appears. Meeting all of that is still not permission to place the mark: Roblox signs off
-per placement, and the `/roblox` hero lockup is the one placement they have approved —
-see the partner-brand rules in `src/CLAUDE.md` before putting the mark anywhere new.
+per placement, and the programme page hero lockup is the one placement they have approved
+— the same page at `/roblox`, `/roblox-online` and `/roblox-all`, which the owner ruled is one
+placement. See the partner-brand rules in `src/CLAUDE.md` before putting the mark anywhere new.
 
 **Lynx Educate** — see "The derived Lynx mark" above. Their trademark is used with
 permission; the reversal is our own and needs confirming.

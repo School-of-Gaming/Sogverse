@@ -113,6 +113,13 @@ CREATE UNIQUE INDEX uq_locations_geonames_id ON public.locations USING btree (ge
 
 
 --
+-- Name: locations locations_klaviyo; Type: TRIGGER; Schema: public; Owner: -
+--
+
+CREATE TRIGGER locations_klaviyo AFTER UPDATE OF name, country_code ON public.locations FOR EACH ROW WHEN (((old.name IS DISTINCT FROM new.name) OR (old.country_code IS DISTINCT FROM new.country_code))) EXECUTE FUNCTION public.klaviyo_location_changed();
+
+
+--
 -- Name: locations locations_updated_at; Type: TRIGGER; Schema: public; Owner: -
 --
 

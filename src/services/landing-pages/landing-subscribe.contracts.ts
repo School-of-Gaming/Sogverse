@@ -1,10 +1,7 @@
 import { z } from "zod";
 import { SUPPORTED_LOCALES } from "@/lib/constants/locales";
 import { landingId } from "@/lib/landing-pages/sections";
-import {
-  realEmailValue,
-  registrationUtmBody,
-} from "@/services/users/parent-registration.contracts";
+import { realEmailValue } from "@/services/users/parent-registration.contracts";
 
 /**
  * The wire shapes of a landing page's email sign-up form and the route it
@@ -39,12 +36,6 @@ export const landingSubscribeBody = z.object({
   lastName: optionalName(LANDING_SUBSCRIBE_LAST_NAME_MAX),
   /** The consent box. The form will not post unticked, and the route refuses it. */
   consent: z.literal(true),
-  /**
-   * The UTM values this visit arrived with, unsanitised — the registration
-   * body's own shape, for the same reason. Passed on only when the request's
-   * consent cookie grants marketing (`src/lib/utm.ts`).
-   */
-  utm: registrationUtmBody.optional(),
 });
 
 export type LandingSubscribeBody = z.input<typeof landingSubscribeBody>;

@@ -45,6 +45,14 @@ describe("POST /api/auth/signout", () => {
     expect(mockSignOut).toHaveBeenCalledTimes(1);
   });
 
+  it("signs out this device only, leaving other devices and AI-app grants alone", async () => {
+    // The default scope would revoke every session and every MCP grant the
+    // account holds; signing out everywhere is a password change's job.
+    await POST(signoutRequest());
+
+    expect(mockSignOut).toHaveBeenCalledWith({ scope: "local" });
+  });
+
   it("drops the parent-PIN unlock cookie so the next session starts locked", async () => {
     await POST(signoutRequest());
 

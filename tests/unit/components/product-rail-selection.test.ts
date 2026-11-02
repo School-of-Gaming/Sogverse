@@ -3,7 +3,7 @@ import {
   productRailSeed,
   selectRailProducts,
 } from "@/components/public/products/product-rail-selection";
-import { PROGRAMME_RAIL_SELECTION } from "@/components/roblox/programme-filters";
+import { PROGRAMME_RAIL_SELECTIONS } from "@/components/roblox/programme-filters";
 import { browseRow, emptyCounts } from "../../mocks/product-browse-row";
 
 /**
@@ -26,12 +26,24 @@ const LISTING = [
 ];
 
 describe("selectRailProducts", () => {
-  it("narrows the Roblox programme's rail to its free Roblox Studio products, in any format", () => {
-    expect(selectRailProducts(LISTING, PROGRAMME_RAIL_SELECTION).map((p) => p.id)).toEqual([
+  it("narrows the Roblox programme's all-formats rail to its free Roblox Studio products", () => {
+    expect(selectRailProducts(LISTING, PROGRAMME_RAIL_SELECTIONS.all).map((p) => p.id)).toEqual([
       id(1),
       id(2),
       id(5),
     ]);
+  });
+
+  it("narrows each Roblox format rail to that format, with a hybrid product on both", () => {
+    const listing = [
+      browseRow(id(1), { delivery_mode: "online" }),
+      browseRow(id(2), { delivery_mode: "in_person" }),
+      browseRow(id(3), { delivery_mode: "hybrid" }),
+    ];
+    const shown = (format: "online" | "in_person") =>
+      selectRailProducts(listing, PROGRAMME_RAIL_SELECTIONS[format]).map((p) => p.id);
+    expect(shown("online")).toEqual([id(1), id(3)]);
+    expect(shown("in_person")).toEqual([id(2), id(3)]);
   });
 
   it("shows picks in the order picked, whatever the listing's order", () => {
@@ -57,11 +69,11 @@ describe("productRailSeed", () => {
     expect(seed.initialListing).toBe(LISTING);
     expect(seed.initialCounts?.map((c) => c.productId)).toEqual([id(2)]);
 
-    const roblox = productRailSeed(prefetch, PROGRAMME_RAIL_SELECTION);
+    const roblox = productRailSeed(prefetch, PROGRAMME_RAIL_SELECTIONS.all);
     expect(roblox.initialCounts?.map((c) => c.productId)).toEqual([id(1), id(2), id(5)]);
   });
 
   it("seeds nothing when the prefetch failed", () => {
-    expect(productRailSeed(null, PROGRAMME_RAIL_SELECTION)).toEqual({});
+    expect(productRailSeed(null, PROGRAMME_RAIL_SELECTIONS.all)).toEqual({});
   });
 });

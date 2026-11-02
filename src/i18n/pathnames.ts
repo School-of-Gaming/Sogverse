@@ -18,7 +18,8 @@
  * voice, settings and preview segments are app surfaces rather than indexable
  * content, so they keep their English segments in every locale and are declared
  * here as a plain string (one value for all locales). `/roblox` and `/docs` are
- * brand/partner surfaces and stay English too.
+ * brand/partner surfaces and stay English too; the two Roblox format pages
+ * translate only the word after the brand name.
  *
  * **Klingon reuses the English slugs.** URLs are infrastructure; the easter egg
  * is the content.
@@ -104,6 +105,20 @@ export const PATHNAMES = {
     sv: "/om-oss",
     fr: "/a-propos",
     tlh: "/about",
+  },
+  "/roblox-online": {
+    en: "/roblox-online",
+    fi: "/roblox-verkossa",
+    sv: "/roblox-online",
+    fr: "/roblox-en-ligne",
+    tlh: "/roblox-online",
+  },
+  "/roblox-all": {
+    en: "/roblox-all",
+    fi: "/roblox-kaikki",
+    sv: "/roblox-alla",
+    fr: "/roblox-tous",
+    tlh: "/roblox-all",
   },
   "/library": {
     en: "/library",

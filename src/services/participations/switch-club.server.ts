@@ -695,10 +695,11 @@ export function switchClubIdempotencyKey({
 
 /**
  * Every subscription metadata key that NAMES a product, rewritten for the
- * target. The set is exactly what the checkout route writes onto
- * `subscription_data.metadata` (the session's camelCase keys plus the
- * snake_case finance snapshot); the keys naming the payer, the participant, the
- * purchase shape and the currency are untouched, because none of those moved.
+ * target. The checkout route now writes only the snake_case finance snapshot onto
+ * `subscription_data.metadata`; the camelCase keys are here for the subscriptions
+ * bought before bookings, which carry them and would otherwise go on naming the
+ * club the family left. The keys naming the payer, the participant, the purchase
+ * shape and the currency are untouched, because none of those moved.
  *
  * Stripe MERGES a metadata update into what is already there, so an absent
  * value has to be sent as `""` — its spelling for "remove this key" — or a

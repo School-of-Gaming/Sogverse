@@ -28,7 +28,10 @@
  * which reads the URL synchronously.
  */
 
-import { isReportableQuery } from "@/lib/marketing-pages";
+import {
+  addressBarStillShows,
+  isReportableQuery,
+} from "@/lib/marketing-pages";
 import {
   PIXEL_EVENTS,
   type MetaProductDetails,
@@ -248,12 +251,7 @@ export function reportMetaEventNow(
  * bar, because that is the URL the library attaches.
  */
 function trackIfStillOn(pathname: string, report: BrowserPixelEvent): boolean {
-  // Both sides resolved through the URL parser, so a slug with a non-ASCII
-  // character compares the same whether the router hands it over encoded or
-  // not.
-  const authorised = new URL(pathname, window.location.origin).pathname;
-  if (window.location.pathname !== authorised) return false;
-  if (!isReportableQuery(window.location.search)) return false;
+  if (!addressBarStillShows(pathname)) return false;
   const fbq = window.fbq;
   if (fbq === undefined) return false;
   if ("product" in report) fbq("track", report.event, report.product);

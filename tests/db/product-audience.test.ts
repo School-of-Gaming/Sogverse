@@ -17,6 +17,7 @@ import {
   createScheduleSlot,
   createTestProduct,
   deleteTestProducts,
+  payForBooking,
 } from "./product-helpers";
 
 /**
@@ -28,13 +29,13 @@ import {
  *      when there is a gamer audience. These are the guarantees the generated
  *      TypeScript cannot see — `min_age` reads as merely nullable there — so a
  *      test is the only thing that keeps "null iff no gamer audience" true.
- *   2. **The pre-money gates.** `create_participation`, `join_waitlist` (via
+ *   2. **The pre-money gates.** `create_booking`, `join_waitlist` (via
  *      its guarded wrapper) and `admin_enroll_participant` all decide the same two
  *      questions: is this the payer's own seat, and does the product admit that
  *      audience. Each is asserted in BOTH directions, because a gate that
  *      refuses everything passes a one-sided test.
  *   3. **The after-money recorder is deliberately ungated.**
- *      `confirm_paid_participation` records a seat whatever the product's
+ *      `confirm_booking` records a seat whatever the product's
  *      audience says. That is not an oversight to be tidied up later: an admin
  *      unticking a flag between checkout and webhook would otherwise make the
  *      webhook refuse forever, and the charge would already have happened. The
@@ -96,7 +97,7 @@ describe("product audience", () => {
 
     await deleteTestProducts(admin, ALL_PRODUCTS);
 
-    // FREE consumer clubs: the free branch of create_participation writes the
+    // FREE consumer clubs: the free branch of create_booking writes the
     // row immediately, so a gate's verdict is observable without Stripe, and
     // admin_enroll_participant accepts them (it refuses only PAID consumer clubs,
     // whose seat needs a subscription it cannot create). The helper's default
@@ -312,10 +313,10 @@ describe("product audience", () => {
   });
 
   // -------------------------------------------------------------------------
-  // create_participation — the pre-money signup gate
+  // create_booking — the pre-money signup gate
   // -------------------------------------------------------------------------
 
-  describe("create_participation", () => {
+  describe("create_booking", () => {
     /**
      * Service-role only, so the admin client is the caller — which is exactly
      * how the checkout route reaches it. There is no auth.uid() inside, so the
@@ -323,7 +324,7 @@ describe("product audience", () => {
      * route is what pins p_customer_id to the session user.
      */
     function signup(productId: string, participantId: string, customerId: string) {
-      return admin.rpc("create_participation", {
+      return admin.rpc("create_booking", {
         p_product_id: productId,
         p_participant_id: participantId,
         p_customer_id: customerId,
@@ -484,10 +485,10 @@ describe("product audience", () => {
      * ids — the raw HTTP caller is the point: the DB gate is the last line,
      * and it must hold for a caller that skips all of them.
      */
-    it("create_participation refuses NULL/NULL as nobody's seat", async () => {
+    it("create_booking refuses NULL/NULL as nobody's seat", async () => {
       const serviceKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
       if (!serviceKey) throw new Error("SUPABASE_SERVICE_ROLE_KEY is unset");
-      const result = await callRpcRaw(serviceKey, "create_participation", {
+      const result = await callRpcRaw(serviceKey, "create_booking", {
         p_product_id: PRODUCT_PARENTS,
         p_participant_id: null,
         p_customer_id: null,
@@ -552,27 +553,22 @@ describe("product audience", () => {
   });
 
   // -------------------------------------------------------------------------
-  // confirm_paid_participation — deliberately ungated
+  // confirm_booking — deliberately ungated
   // -------------------------------------------------------------------------
 
-  describe("confirm_paid_participation", () => {
+  describe("confirm_booking", () => {
     it("records a parent's own seat on a GAMERS-ONLY product, with no audience check", async () => {
       // Not a bug, and not an oversight to be fixed by a later change. This is
       // the after-money recorder: it is reached only through the
       // signature-verified Stripe webhook, with metadata our own server wrote
-      // after create_participation had already validated the same tuple. An
+      // after create_booking had already validated the same tuple. An
       // audience gate here would defend against no attacker and would create a
       // charged-without-seat failure the moment an admin edited a flag mid-
       // checkout. The refusal belongs before the money, and it is asserted
       // above; this test exists so nobody adds a second one after it.
-      const { data, error } = await admin.rpc("confirm_paid_participation", {
-        p_product_id: PRODUCT_GAMERS,
-        p_participant_id: TEST_IDS.CUSTOMER,
-        p_customer_id: TEST_IDS.CUSTOMER,
-        p_checkout_session_id: "cs_test_audience_self_seat",
-      });
+      const { data, error } = await payForBooking(admin, PRODUCT_GAMERS, TEST_IDS.CUSTOMER, TEST_IDS.CUSTOMER, "cs_test_audience_self_seat");
       expect(error).toBeNull();
-      expect(data).toMatchObject({ kind: "confirmed", idempotent: false });
+      expect(data).toMatchObject({ kind: "settled", idempotent: false });
 
       const { data: row } = await admin
         .from("participations")

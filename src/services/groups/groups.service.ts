@@ -229,7 +229,7 @@ export class GroupsService {
    *
    * This deliberately does NOT go through `apply_group_changes`: creating a
    * participation is an enrollment-lifecycle action (its domain siblings are
-   * create_participation / cancel_participation), distinct from mutating group
+   * create_booking / cancel_participation), distinct from mutating group
    * structure. On success the caller should invalidate
    * `groupsKeys.byProduct(productId)` so the new chip appears — in the product's
    * only group when the product charges nothing and has exactly one, and in

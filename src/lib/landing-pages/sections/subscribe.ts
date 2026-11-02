@@ -9,7 +9,8 @@ import {
 
 /**
  * An email sign-up form: a reader leaves their address, and optionally their
- * first and last name, to join the newsletter list in Klaviyo, single opt-in.
+ * first and last name, to join the marketing-consent list in Klaviyo, single
+ * opt-in.
  *
  * **No shared field but the background and the sticky side every section
  * takes.** The list a reader joins is the deployment's configuration, the

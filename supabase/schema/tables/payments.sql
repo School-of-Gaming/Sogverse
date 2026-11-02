@@ -56,6 +56,13 @@ CREATE INDEX idx_payments_payment_intent ON public.payments USING btree (stripe_
 
 
 --
+-- Name: payments payments_klaviyo; Type: TRIGGER; Schema: public; Owner: -
+--
+
+CREATE TRIGGER payments_klaviyo AFTER INSERT ON public.payments FOR EACH ROW EXECUTE FUNCTION public.klaviyo_payment_recorded();
+
+
+--
 -- Name: payments payments_customer_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: -
 --
 

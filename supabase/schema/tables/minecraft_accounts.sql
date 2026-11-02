@@ -25,6 +25,20 @@ CREATE INDEX minecraft_accounts_uuid_idx ON public.minecraft_accounts USING btre
 
 
 --
+-- Name: minecraft_accounts minecraft_accounts_klaviyo_renamed; Type: TRIGGER; Schema: public; Owner: -
+--
+
+CREATE TRIGGER minecraft_accounts_klaviyo_renamed AFTER UPDATE OF minecraft_username ON public.minecraft_accounts FOR EACH ROW WHEN (((old.minecraft_username IS NULL) IS DISTINCT FROM (new.minecraft_username IS NULL))) EXECUTE FUNCTION public.klaviyo_gamer_fact_changed();
+
+
+--
+-- Name: minecraft_accounts minecraft_accounts_klaviyo_written; Type: TRIGGER; Schema: public; Owner: -
+--
+
+CREATE TRIGGER minecraft_accounts_klaviyo_written AFTER INSERT OR DELETE ON public.minecraft_accounts FOR EACH ROW EXECUTE FUNCTION public.klaviyo_gamer_fact_changed();
+
+
+--
 -- Name: minecraft_accounts minecraft_accounts_user_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: -
 --
 

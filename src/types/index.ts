@@ -529,8 +529,12 @@ export type PurchaseShape =
   | "single_payment"
   | "free"
   // Municipality clubs: invoiced off-platform, so registration is instant and
-  // never touches Stripe. See create_participation's external_contract branch.
+  // never touches Stripe. See create_booking's external_contract branch.
   | "external";
+
+// bookings — a parent's request, written before Checkout. It holds no seat.
+export type Booking = Database["public"]["Tables"]["bookings"]["Row"];
+export type BookingStatus = Database["public"]["Enums"]["booking_status"];
 
 // payments
 export type Payment = Database["public"]["Tables"]["payments"]["Row"];
@@ -615,6 +619,13 @@ export type SubstitutionNotificationDmInsert = Database["public"]["Tables"]["sub
 // cancelled or past — which the close-out reads to find the passed requests
 // still drawn open.
 export type SubstitutionNotificationState = Database["public"]["Enums"]["substitution_notification_state"];
+
+// The Klaviyo sync's two outboxes, both service role only and worked through
+// their claim and finish RPCs: parents whose Klaviyo profile has something not
+// yet told, and things that happened to a parent not yet sent as events.
+export type KlaviyoProfileOutboxRow = Database["public"]["Tables"]["klaviyo_profile_outbox"]["Row"];
+export type KlaviyoEventOutboxRow = Database["public"]["Tables"]["klaviyo_event_outbox"]["Row"];
+export type KlaviyoEventKind = Database["public"]["Enums"]["klaviyo_event_kind"];
 
 // ---------------------------------------------------------------------------
 // products — session records (the gedu session feed)

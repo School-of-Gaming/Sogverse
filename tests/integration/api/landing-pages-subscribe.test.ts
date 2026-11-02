@@ -1,5 +1,6 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { CONSENT_COOKIE_NAME } from "@/lib/consent";
+import { attributionCookie } from "../../mocks/attribution-cookie";
 import { KLAVIYO_REVISION } from "@/lib/klaviyo";
 import type { LandingSection } from "@/lib/landing-pages/sections";
 import type { PublishedLandingPage } from "@/services/landing-pages/landing-pages.contracts";
@@ -64,8 +65,9 @@ const VALID = {
   firstName: " Aino ",
   lastName: " Virtanen ",
   consent: true,
-  utm: { source: "newsletter", campaign: "autumn" },
 };
+
+const ATTRIBUTION = attributionCookie({ source: "newsletter", campaign: "autumn" });
 
 function consentCookie(marketing: boolean): string {
   const value = encodeURIComponent(
@@ -114,7 +116,7 @@ function profileSent(): Record<string, unknown> {
 
 beforeEach(() => {
   vi.stubEnv("KLAVIYO_PRIVATE_API_KEY", KEY);
-  vi.stubEnv("KLAVIYO_NEWSLETTER_LIST_ID", LIST);
+  vi.stubEnv("KLAVIYO_MARKETING_CONSENT_LIST_ID", LIST);
   mockGetPublishedPage.mockReset().mockResolvedValue(livePage());
   mockFetch.mockReset();
   klaviyoAnswers(201, 202);
@@ -130,7 +132,9 @@ afterEach(() => {
 
 describe("POST /api/landing-pages/subscribe", () => {
   it("upserts the profile, then subscribes it to the list", async () => {
-    const response = await POST(request(VALID, { cookie: consentCookie(true) }));
+    const response = await POST(
+      request(VALID, { cookie: `${consentCookie(true)}; ${ATTRIBUTION}` }),
+    );
 
     expect(response.status).toBe(200);
     expect(await response.json()).toEqual({ success: true });
@@ -155,9 +159,9 @@ describe("POST /api/landing-pages/subscribe", () => {
           last_name: "Virtanen",
           locale: "fi",
           properties: {
-            landing_page_id: PAGE,
-            utm_source: "newsletter",
-            utm_campaign: "autumn",
+            sog_newsletter_page: PAGE,
+            sog_newsletter_utm_source: "newsletter",
+            sog_newsletter_utm_campaign: "autumn",
           },
         },
       },
@@ -204,25 +208,41 @@ describe("POST /api/landing-pages/subscribe", () => {
   });
 
   it.each([
-    ["no consent cookie", {}],
-    ["marketing refused", { cookie: consentCookie(false) }],
+    ["no consent cookie", { cookie: ATTRIBUTION }],
+    ["marketing refused", { cookie: `${consentCookie(false)}; ${ATTRIBUTION}` }],
   ])("sends no UTM values with %s", async (_, headers) => {
     await POST(request(VALID, headers));
     expect(profileSent().properties).toEqual({
-      landing_page_id: PAGE,
+      sog_newsletter_page: PAGE,
     });
   });
 
   it("drops a UTM value the shared sanitiser refuses, keeping the others", async () => {
     await POST(
       request(
-        { ...VALID, utm: { source: "=HYPERLINK()", medium: "email" } },
-        { cookie: consentCookie(true) },
+        VALID,
+        {
+          cookie: `${consentCookie(true)}; ${attributionCookie({
+            source: "=HYPERLINK()",
+            medium: "email",
+          })}`,
+        },
       ),
     );
     const properties = profileSent().properties;
-    expect(properties).toMatchObject({ utm_medium: "email" });
-    expect(properties).not.toHaveProperty("utm_source");
+    expect(properties).toMatchObject({ sog_newsletter_utm_medium: "email" });
+    expect(properties).not.toHaveProperty("sog_newsletter_utm_source");
+  });
+
+  it("ignores a utm field an old bundle still posts", async () => {
+    const response = await POST(
+      request(
+        { ...VALID, utm: { source: "from-an-old-bundle" } },
+        { cookie: consentCookie(true) },
+      ),
+    );
+    expect(response.status).toBe(200);
+    expect(profileSent().properties).toEqual({ sog_newsletter_page: PAGE });
   });
 
   it("answers a known address exactly as a new one", async () => {
@@ -267,12 +287,12 @@ describe("POST /api/landing-pages/subscribe", () => {
 
     it("refuses every sign-up while the key or the list is not configured, saying which", async () => {
       vi.stubEnv("KLAVIYO_PRIVATE_API_KEY", "");
-      vi.stubEnv("KLAVIYO_NEWSLETTER_LIST_ID", " ");
+      vi.stubEnv("KLAVIYO_MARKETING_CONSENT_LIST_ID", " ");
       const response = await POST(request(VALID));
       expect(response.status).toBe(503);
       expect(mockFetch).not.toHaveBeenCalled();
       expect(String(vi.mocked(console.error).mock.calls[0])).toContain(
-        "KLAVIYO_PRIVATE_API_KEY, KLAVIYO_NEWSLETTER_LIST_ID",
+        "KLAVIYO_PRIVATE_API_KEY, KLAVIYO_MARKETING_CONSENT_LIST_ID",
       );
     });
 

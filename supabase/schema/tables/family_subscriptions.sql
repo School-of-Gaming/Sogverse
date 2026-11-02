@@ -58,6 +58,20 @@ CREATE INDEX idx_family_subscriptions_participation ON public.family_subscriptio
 
 
 --
+-- Name: family_subscriptions family_subscriptions_klaviyo_changed; Type: TRIGGER; Schema: public; Owner: -
+--
+
+CREATE TRIGGER family_subscriptions_klaviyo_changed AFTER UPDATE OF status, current_period_end ON public.family_subscriptions FOR EACH ROW WHEN (((old.status IS DISTINCT FROM new.status) OR (old.current_period_end IS DISTINCT FROM new.current_period_end))) EXECUTE FUNCTION public.klaviyo_family_subscription_changed();
+
+
+--
+-- Name: family_subscriptions family_subscriptions_klaviyo_written; Type: TRIGGER; Schema: public; Owner: -
+--
+
+CREATE TRIGGER family_subscriptions_klaviyo_written AFTER INSERT OR DELETE ON public.family_subscriptions FOR EACH ROW EXECUTE FUNCTION public.klaviyo_family_subscription_changed();
+
+
+--
 -- Name: family_subscriptions family_subscriptions_updated_at; Type: TRIGGER; Schema: public; Owner: -
 --
 

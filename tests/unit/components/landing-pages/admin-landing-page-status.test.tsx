@@ -489,31 +489,32 @@ describe("the link preview it states", () => {
     expect(within(preview()).queryByText("stale")).toBeNull();
   });
 
-  it("shows the hero's picture when the hero has one", () => {
-    const page = draftPage([EN]);
+  it("shows a language's own hero picture where it names one, and the site card where it names none", () => {
+    const page = draftPage([{ ...EN, sectionTexts: { [HERO_ID]: { imageId: HERO_PICTURE } } }, FI]);
     renderStatus({
       ...page,
       draft: {
         ...page.draft,
-        sections: [{ id: HERO_ID, type: "hero", imageId: HERO_PICTURE }, ...SECTIONS.slice(1)],
         pictures: { [HERO_PICTURE]: { path: "hero.jpg", purpose: "landing_image" } },
       },
     });
 
     expect(row("English").lines[2]).toBe("picture.hero");
     expect(row("English").picture).toContain("hero.jpg");
+    // No hero picture is shared: Finnish names none, so it shares the site card.
+    expect(row("Finnish").lines[2]).toBe("picture.site");
   });
 
   it("shows each language's own overrides, the others derived, and warns they do not follow the page", () => {
+    const heroWords = { [HERO_ID]: { imageId: HERO_PICTURE } };
     const page = draftPage([
-      { ...EN, shareTitle: "Join a club in Espoo", shareImageId: SHARE_PICTURE },
-      FI,
+      { ...EN, sectionTexts: heroWords, shareTitle: "Join a club in Espoo", shareImageId: SHARE_PICTURE },
+      { ...FI, sectionTexts: heroWords },
     ]);
     renderStatus({
       ...page,
       draft: {
         ...page.draft,
-        sections: [{ id: HERO_ID, type: "hero", imageId: HERO_PICTURE }, ...SECTIONS.slice(1)],
         pictures: {
           [HERO_PICTURE]: { path: "hero.jpg", purpose: "landing_image" },
           [SHARE_PICTURE]: { path: "share.jpg", purpose: "landing_image" },
@@ -553,18 +554,20 @@ describe("the link preview it states", () => {
   });
 
   it("adds no note where a live language's card is the one it shares", () => {
-    const page = draftPage([{ ...EN, shareImageId: HERO_PICTURE }]);
-    const sections: AdminLandingPage["draft"]["sections"] = [
-      { id: HERO_ID, type: "hero", imageId: HERO_PICTURE },
-      ...SECTIONS.slice(1),
-    ];
+    const heroWords = { [HERO_ID]: { imageId: HERO_PICTURE } };
+    const page = draftPage([{ ...EN, sectionTexts: heroWords, shareImageId: HERO_PICTURE }]);
     const pictures = { [HERO_PICTURE]: { path: "hero.jpg", purpose: "landing_image" as const } };
+    const live = publication(["en"]);
     // The working copy names the hero's picture as its share picture, and the
     // live copy shares the hero's: the same card either way.
     renderStatus({
       ...page,
-      draft: { ...page.draft, sections, pictures },
-      publication: { ...publication(["en"]), sections, pictures },
+      draft: { ...page.draft, pictures },
+      publication: {
+        ...live,
+        pictures,
+        versions: live.versions.map((version) => ({ ...version, sectionTexts: heroWords })),
+      },
     });
 
     expect(row("English").lines).not.toContain("nextPublish");

@@ -21,7 +21,13 @@ export async function POST(request: Request) {
   // not be discovered after the session is already gone.
   const next = await readNextPath(request);
   const supabase = await createClient();
-  await supabase.auth.signOut();
+  // `local` scope: signing out means this device, as people expect. The
+  // default would also sign the account out on its other devices and cut off
+  // any AI app an admin has connected to the MCP server, which keeps working
+  // only until its access token lapses, up to an hour later. Signing out
+  // everywhere is what a password change does: it ends every other session
+  // and every grant.
+  await supabase.auth.signOut({ scope: "local" });
   // Drop both session markers so the next session starts locked and unmarked:
   // the parent-PIN unlock cookie, and the switch route's family-session marker.
   // Both are bound to a session_id that is now gone, so neither would validate

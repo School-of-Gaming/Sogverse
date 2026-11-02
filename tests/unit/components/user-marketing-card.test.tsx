@@ -47,8 +47,8 @@ const messages = { settings: enSettings, common: enCommon, admin: enAdmin };
  *   so pressing Save again retries exactly what is still outstanding.
  *
  * The admin block at the end is the read-only other end, and is untouched by all
- * of this: it must render both consents whatever the database holds, and a
- * customer with no rows at all has to read as *not granted* rather than a blank.
+ * of this: it must render the partner's consent whatever the database holds,
+ * and a customer with no row has to read as *not granted* rather than a blank.
  */
 
 // --------------------------------------------------------------------------
@@ -67,6 +67,22 @@ vi.mock("@/services/marketing-consents/marketing-consents.queries", () => ({
   useMyMarketingConsents: () => ({ data: mine.data, isError: mine.isError }),
   useMarketingConsentsForCustomer: () => ({ data: forCustomer.data }),
   useSetMarketingConsent: () => ({ mutateAsync: setConsentAsync }),
+}));
+
+// School of Gaming's own list, read from Klaviyo. Not the shared factory: this
+// file asserts on what a Save sends there.
+const emailMarketing: { data: { subscribed: boolean } | undefined } = {
+  data: { subscribed: false },
+};
+const setEmailMarketingAsync = vi.fn();
+vi.mock("@/services/email-marketing/email-marketing.queries", () => ({
+  useMyEmailMarketing: () => ({
+    data: emailMarketing.data,
+    isError: false,
+    isFetching: emailMarketing.data === undefined,
+    refetch: vi.fn(),
+  }),
+  useSetMyEmailMarketing: () => ({ mutateAsync: setEmailMarketingAsync }),
 }));
 
 // Not the shared factory: this file asserts on the profile write itself, and
@@ -141,25 +157,30 @@ function reseed(view: ReturnType<typeof renderIntl>) {
 }
 
 /**
- * The two marketing boxes, in render order (ours, then the partner's).
+ * The marketing group's boxes, ours and then the partner's.
  *
  * Read off the DOM rather than by test id, and deliberately *not* by taking
  * every checkbox on the page: the spoken-language group above renders its own,
- * so the marketing boxes are found inside the group its legend names.
+ * so the marketing boxes are found inside the group its legend names — and the
+ * group holding exactly these two is part of the claim.
  */
 function marketingBoxes() {
   const legend = screen.getByText(messages.settings.marketing.title);
   const group = legend.closest("fieldset");
   if (!group) throw new Error("the marketing group rendered no fieldset");
-  return Array.from(
+  const boxes = Array.from(
     group.querySelectorAll<HTMLInputElement>('input[type="checkbox"]'),
   );
+  expect(boxes).toHaveLength(2);
+  return boxes;
 }
+
+const schoolOfGamingBox = () => marketingBoxes()[0];
+const lynxBox = () => marketingBoxes()[1];
 
 const saveButton = () => screen.getByRole("button", { name: /save changes/i });
 
 const GROUP_TITLE = messages.settings.marketing.title;
-const SOG_LABEL = messages.settings.marketing.schoolOfGaming;
 const PROFILE_SAVED = messages.settings.profileUpdated;
 /** The one sentence a failed save shows, profile half or consent half. */
 const PROFILE_SAVE_FAILED = messages.settings.failedToUpdateProfile;
@@ -174,71 +195,88 @@ beforeEach(() => {
   auth.profile = createMockProfile();
   updateProfileAsync.mockResolvedValue(undefined);
   setConsentAsync.mockResolvedValue(undefined);
+  emailMarketing.data = { subscribed: false };
+  setEmailMarketingAsync.mockResolvedValue({ subscribed: true });
 });
 
 // --- The marketing group inside the Profile card --------------------------
 
 describe("the marketing preferences group", () => {
-  it("seeds each box from the stored answer, School of Gaming first", () => {
-    mine.data = [
-      // Deliberately the partner's row first: Postgres orders an enum by
-      // declaration order and a select promises no order at all, so the render
-      // order must come from the component rather than from the rows.
-      consentRow("lynx_educate", true),
-      consentRow("school_of_gaming", false),
-    ];
+  it("asks our own question from Klaviyo's answer, then the partner's from Sogverse's", () => {
+    mine.data = [consentRow("lynx_educate", true)];
+    emailMarketing.data = { subscribed: true };
     renderSettings();
 
-    const [sog, lynx] = marketingBoxes();
-    expect(sog.closest("label")?.textContent).toContain("School of Gaming");
-    expect(lynx.closest("label")?.textContent).toContain("Lynx Educate");
-    expect(sog.checked).toBe(false);
-    expect(lynx.checked).toBe(true);
+    expect(schoolOfGamingBox().labels?.[0]?.textContent).toBe(
+      messages.settings.marketing.schoolOfGaming,
+    );
+    expect(schoolOfGamingBox().checked).toBe(true);
+    const box = lynxBox();
+    expect(box.closest("label")?.textContent).toContain("Lynx Educate");
+    expect(box.checked).toBe(true);
+  });
+
+  it("sends a moved School of Gaming box to Klaviyo on Save, after the profile", async () => {
+    renderSettings();
+
+    fireEvent.click(schoolOfGamingBox());
+    expect(setEmailMarketingAsync).not.toHaveBeenCalled();
+    fireEvent.click(saveButton());
+
+    await waitFor(() => expect(setEmailMarketingAsync).toHaveBeenCalledWith(true));
+    expect(updateProfileAsync).toHaveBeenCalled();
+    expect(setConsentAsync).not.toHaveBeenCalled();
+  });
+
+  it("sends nothing to Klaviyo when the School of Gaming box was not touched", async () => {
+    emailMarketing.data = { subscribed: true };
+    renderSettings();
+
+    fireEvent.click(saveButton());
+
+    await waitFor(() => expect(screen.queryByText(PROFILE_SAVED)).not.toBeNull());
+    expect(setEmailMarketingAsync).not.toHaveBeenCalled();
   });
 
   it("renders a consent with no row at all as unticked", () => {
-    mine.data = [consentRow("school_of_gaming", true)];
+    mine.data = [];
     renderSettings();
 
-    const [sog, lynx] = marketingBoxes();
-    expect(sog.checked).toBe(true);
     // Never asked and answered no are different states in the database and the
-    // same state on screen: both are "we may not mail you".
-    expect(lynx.checked).toBe(false);
+    // same state on screen: both are "we may not share your address".
+    expect(lynxBox().checked).toBe(false);
   });
 
-  it("disables both boxes until the read resolves", () => {
+  it("disables the box until the read resolves", () => {
     mine.data = undefined;
     renderSettings();
 
-    for (const box of marketingBoxes()) expect(box.disabled).toBe(true);
+    expect(lynxBox().disabled).toBe(true);
   });
 
   // --- A read that failed, which is NOT the same state as one still loading ---
   //
   // Both arrive as `undefined` data, and treating them alike left a parent
-  // looking at two boxes disabled forever with nothing saying why. A dead
-  // control is a worse answer than a usable one showing an assumed baseline, so
-  // a failed read renders unticked and enabled and the ordinary change-only
-  // save runs against "nothing granted".
+  // looking at a box disabled forever with nothing saying why. A dead control
+  // is a worse answer than a usable one showing an assumed baseline, so a
+  // failed read renders unticked and enabled and the ordinary change-only save
+  // runs against "nothing granted".
 
   describe("when the consent read fails", () => {
-    it("renders both boxes enabled and unticked", () => {
+    it("renders the box enabled and unticked", () => {
       mine.data = undefined;
       mine.isError = true;
       renderSettings();
 
-      for (const box of marketingBoxes()) {
-        expect(box.disabled).toBe(false);
-        expect(box.checked).toBe(false);
-      }
+      expect(lynxBox().disabled).toBe(false);
+      expect(lynxBox().checked).toBe(false);
     });
 
     // **The guardrail that makes the assumed baseline safe.** A parent who
     // granted a consent months ago, hits a network blip today and saves an
     // unrelated name change must not be silently withdrawn — and they are not,
     // because an untouched box equals the assumed baseline and is never sent.
-    it("writes no consent at all when the boxes are left alone", async () => {
+    it("writes no consent at all when the box is left alone", async () => {
       mine.data = undefined;
       mine.isError = true;
       renderSettings();
@@ -258,13 +296,13 @@ describe("the marketing preferences group", () => {
       mine.isError = true;
       renderSettings();
 
-      fireEvent.click(marketingBoxes()[0]);
+      fireEvent.click(lynxBox());
       fireEvent.click(saveButton());
 
       await screen.findByText(PROFILE_SAVED);
       expect(setConsentAsync).toHaveBeenCalledTimes(1);
       expect(setConsentAsync.mock.calls[0][0]).toEqual({
-        consentType: "school_of_gaming",
+        consentType: "lynx_educate",
         granted: true,
         source: "settings",
       });
@@ -275,48 +313,46 @@ describe("the marketing preferences group", () => {
     mine.data = [];
     renderSettings();
 
-    fireEvent.click(marketingBoxes()[1]);
+    fireEvent.click(lynxBox());
 
-    expect(marketingBoxes()[1].checked).toBe(true);
+    expect(lynxBox().checked).toBe(true);
     expect(setConsentAsync).not.toHaveBeenCalled();
     expect(updateProfileAsync).not.toHaveBeenCalled();
   });
 
-  it("writes only the consents that changed, naming the answer and the source", async () => {
-    // Ours is already on and untouched; the partner's is switched on. One write.
-    mine.data = [consentRow("school_of_gaming", true)];
+  it("writes a tick, naming the answer and the source", async () => {
+    mine.data = [];
     renderSettings();
 
-    fireEvent.click(marketingBoxes()[1]);
+    fireEvent.click(lynxBox());
     fireEvent.click(saveButton());
 
     await waitFor(() => expect(setConsentAsync).toHaveBeenCalledTimes(1));
     expect(setConsentAsync.mock.calls[0][0]).toEqual({
       consentType: "lynx_educate",
       granted: true,
-      // `settings` is one of the two sources the RPC accepts; `registration` is
-      // refused there and must never be sent from a signed-in surface.
+      // `settings` is one of the two sources the RPC accepts.
       source: "settings",
     });
   });
 
   it("writes an untick as an explicit no", async () => {
-    mine.data = [consentRow("school_of_gaming", true)];
+    mine.data = [consentRow("lynx_educate", true)];
     renderSettings();
 
-    fireEvent.click(marketingBoxes()[0]);
+    fireEvent.click(lynxBox());
     fireEvent.click(saveButton());
 
     await waitFor(() => expect(setConsentAsync).toHaveBeenCalledTimes(1));
     expect(setConsentAsync.mock.calls[0][0]).toEqual({
-      consentType: "school_of_gaming",
+      consentType: "lynx_educate",
       granted: false,
       source: "settings",
     });
   });
 
-  it("writes nothing at all when no box was touched", async () => {
-    mine.data = [consentRow("school_of_gaming", true)];
+  it("writes nothing at all when the box was not touched", async () => {
+    mine.data = [consentRow("lynx_educate", true)];
     renderSettings();
 
     fireEvent.click(saveButton());
@@ -326,7 +362,7 @@ describe("the marketing preferences group", () => {
     expect(setConsentAsync).not.toHaveBeenCalled();
   });
 
-  it("saves the profile and the consents on one click, profile first", async () => {
+  it("saves the profile and the consent on one click, profile first", async () => {
     const order: string[] = [];
     updateProfileAsync.mockImplementation(async () => {
       order.push("profile");
@@ -337,11 +373,11 @@ describe("the marketing preferences group", () => {
     mine.data = [];
     renderSettings();
 
-    fireEvent.click(marketingBoxes()[0]);
+    fireEvent.click(lynxBox());
     fireEvent.click(saveButton());
 
     await screen.findByText(PROFILE_SAVED);
-    // The consent RPCs are separate writes and go after the profile row, so a
+    // The consent RPC is a separate write and goes after the profile row, so a
     // refused consent cannot roll back a profile update that already landed —
     // and cannot stop one from being attempted.
     expect(order).toEqual(["profile", "consent"]);
@@ -360,7 +396,7 @@ describe("the marketing preferences group", () => {
     mine.data = [];
     renderSettings();
 
-    fireEvent.click(marketingBoxes()[0]);
+    fireEvent.click(lynxBox());
     fireEvent.click(saveButton());
 
     await screen.findByText(PROFILE_SAVE_FAILED);
@@ -374,7 +410,7 @@ describe("the marketing preferences group", () => {
     expect(screen.queryByText(PROFILE_SAVED)).toBeNull();
     // The edit is local and the failed write left it alone, so Save again
     // re-attempts exactly the consent that is still outstanding.
-    expect(marketingBoxes()[0].checked).toBe(true);
+    expect(lynxBox().checked).toBe(true);
   });
 
   it("shows the same sentence, not the database's English, when the profile write itself fails", async () => {
@@ -398,47 +434,31 @@ describe("the marketing preferences group", () => {
     consoleError.mockRestore();
   });
 
-  it("retries only what still differs after a partial failure", async () => {
-    // Ours is switched ON and the partner's OFF in one edit, so the save has
-    // two writes to make. The first lands; the second is refused.
-    mine.data = [consentRow("lynx_educate", true)];
-    setConsentAsync
-      .mockResolvedValueOnce(undefined)
-      .mockRejectedValueOnce(new Error("refused"));
+  it("compares against the saved answer, so a landed write is not sent again", async () => {
+    mine.data = [];
     const view = renderSettings();
 
-    fireEvent.click(marketingBoxes()[0]); // school_of_gaming → true
-    fireEvent.click(marketingBoxes()[1]); // lynx_educate → false
-    fireEvent.click(saveButton());
-
-    await screen.findByText(PROFILE_SAVE_FAILED);
-    expect(setConsentAsync).toHaveBeenCalledTimes(2);
-
-    // **The retry is the claim under test.** The first write landed, so the
-    // query invalidation it triggered brings that consent back as the saved
-    // value — and the loop compares against the saved value, not against a
-    // "dirty" flag. So pressing Save again must re-send the failed one alone;
-    // re-sending the successful one would cost a round trip and stamp a second
-    // "source: settings" touch the parent never made.
-    mine.data = [
-      consentRow("school_of_gaming", true),
-      consentRow("lynx_educate", true),
-    ];
-    reseed(view);
-    setConsentAsync.mockClear();
-    setConsentAsync.mockResolvedValue(undefined);
+    fireEvent.click(lynxBox());
     fireEvent.click(saveButton());
 
     await screen.findByText(PROFILE_SAVED);
     expect(setConsentAsync).toHaveBeenCalledTimes(1);
-    expect(setConsentAsync.mock.calls[0][0]).toEqual({
-      consentType: "lynx_educate",
-      granted: false,
-      source: "settings",
-    });
+
+    // **The claim under test.** The write landed, so the query invalidation it
+    // triggered brings the consent back as the saved value — and the loop
+    // compares against the saved value, not against a "dirty" flag. So a second
+    // Save must send nothing; re-sending would cost a round trip and stamp a
+    // second "source: settings" touch the parent never made.
+    mine.data = [consentRow("lynx_educate", true)];
+    reseed(view);
+    setConsentAsync.mockClear();
+    fireEvent.click(saveButton());
+
+    await waitFor(() => expect(updateProfileAsync).toHaveBeenCalledTimes(2));
+    expect(setConsentAsync).not.toHaveBeenCalled();
   });
 
-  it("disables the boxes while a save is in flight", async () => {
+  it("disables the box while a save is in flight", async () => {
     // Never resolves: this is the window a second click would land in.
     updateProfileAsync.mockImplementation(() => new Promise(() => {}));
     mine.data = [];
@@ -446,8 +466,7 @@ describe("the marketing preferences group", () => {
 
     fireEvent.click(saveButton());
 
-    await waitFor(() => expect(marketingBoxes()[0].disabled).toBe(true));
-    expect(marketingBoxes()[1].disabled).toBe(true);
+    await waitFor(() => expect(lynxBox().disabled).toBe(true));
   });
 });
 
@@ -456,7 +475,7 @@ describe("who gets the marketing preferences group", () => {
     renderSettings();
 
     expect(screen.getByText(GROUP_TITLE)).toBeTruthy();
-    expect(screen.getByText(SOG_LABEL)).toBeTruthy();
+    expect(lynxBox()).toBeTruthy();
   });
 
   it("renders none for a gedu, whose consents the database refuses to hold", () => {
@@ -531,9 +550,8 @@ describe("the admin marketing block", () => {
   });
 
   // A gedu can arrive through a campaign link and can hold no marketing
-  // consent, so their card is the attribution block alone. An empty pair of
-  // tiles would report a question we never asked them as an answer they never
-  // gave.
+  // consent, so their card is the attribution block alone. An empty tile would
+  // report a question we never asked them as an answer they never gave.
   it("shows attribution but no preferences when there is no customer", () => {
     forCustomer.data = [];
     renderIntl(
@@ -548,40 +566,36 @@ describe("the admin marketing block", () => {
       screen.queryByText(messages.admin.users.marketing.preferences),
     ).toBeNull();
     expect(
-      screen.queryByText(messages.admin.users.marketing.schoolOfGaming),
+      screen.queryByText(messages.admin.users.marketing.lynxEducate),
     ).toBeNull();
     expect(screen.queryByText(NOT_GRANTED)).toBeNull();
   });
 
-  it("reports both consents as not granted for a customer with no rows", () => {
+  it("reports the partner's consent as not granted for a customer with no row", () => {
     forCustomer.data = [];
     renderIntl(<UserMarketingCard attribution={NO_ATTRIBUTION} customerId={CUSTOMER_ID} />);
 
-    expect(screen.getAllByText(NOT_GRANTED)).toHaveLength(2);
+    expect(screen.getAllByText(NOT_GRANTED)).toHaveLength(1);
     expect(screen.queryByText(GRANTED)).toBeNull();
-    // Both are still named — an admin reads the answer off a fixed pair of rows
-    // rather than off whichever rows happen to exist.
-    expect(
-      screen.getByText(messages.admin.users.marketing.schoolOfGaming),
-    ).toBeTruthy();
+    // Still named — an admin reads the answer off a fixed row rather than off
+    // whichever rows happen to exist.
     expect(
       screen.getByText(messages.admin.users.marketing.lynxEducate),
     ).toBeTruthy();
   });
 
-  it("reports each consent's own state, with the moment a stored row carries", () => {
+  it("reports the consent's own state, with the moment a stored row carries", () => {
     forCustomer.data = [
-      consentRow("school_of_gaming", true, "2026-04-09T10:15:00.000Z"),
-      consentRow("lynx_educate", false, "2026-04-09T10:15:00.000Z"),
+      consentRow("lynx_educate", true, "2026-04-09T10:15:00.000Z"),
     ];
     renderIntl(<UserMarketingCard attribution={NO_ATTRIBUTION} customerId={CUSTOMER_ID} />);
 
     expect(screen.getByText(GRANTED)).toBeTruthy();
-    expect(screen.getByText(NOT_GRANTED)).toBeTruthy();
-    // Two rows, two stamps. The date is formatted in the viewer's zone
-    // (Europe/Helsinki, from the mocked provider) rather than the runtime
-    // default, which is what the timestamptz rule requires.
-    expect(screen.getAllByText(/^since /)).toHaveLength(2);
+    expect(screen.queryByText(NOT_GRANTED)).toBeNull();
+    // The date is formatted in the viewer's zone (Europe/Helsinki, from the
+    // mocked provider) rather than the runtime default, which is what the
+    // timestamptz rule requires.
+    expect(screen.getAllByText(/^since /)).toHaveLength(1);
   });
 
   it("states nothing at all until the read lands", () => {
@@ -589,7 +603,7 @@ describe("the admin marketing block", () => {
     renderIntl(<UserMarketingCard attribution={NO_ATTRIBUTION} customerId={CUSTOMER_ID} />);
 
     // Saying "not granted" and correcting it a round trip later would be the
-    // card stating a fact it did not have. The labels are already on screen.
+    // card stating a fact it did not have. The label is already on screen.
     expect(screen.queryByText(NOT_GRANTED)).toBeNull();
     expect(screen.queryByText(GRANTED)).toBeNull();
     expect(

@@ -21,7 +21,15 @@ import {
 } from "@/lib/navigation/locale-path";
 import { PIN_COOKIE_NAME, isPinTokenValid } from "@/lib/pin-session";
 import { COMPLETE_REGISTRATION_GEDU_QUERY } from "@/lib/navigation/post-auth-redirect";
-import { UTM_HEADER, readUtmFromSearchParams, serialiseUtm } from "@/lib/utm";
+import { CONSENT_COOKIE_NAME, parseConsentCookie } from "@/lib/consent";
+import {
+  UTM_COOKIE_NAME,
+  UTM_HEADER,
+  readUtmFromSearchParams,
+  serialiseUtm,
+  serialiseUtmCookie,
+  utmCookieOptions,
+} from "@/lib/utm";
 
 /**
  * next-intl's rewrite, composed rather than hand-rolled.
@@ -145,7 +153,8 @@ function isPinExemptPath(pathname: string, isAuthRoute: boolean): boolean {
 // match also covers the per-municipality pages (/schools/[slug]).
 // ROUTES.roblox is the Roblox programme landing page — public so it can be
 // shared with Lynx and Roblox, but kept out of robots.txt and the sitemap
-// rather than gated.
+// rather than gated. ROUTES.robloxOnline and ROUTES.robloxAll are the same page
+// at their own addresses, which the prefix match below does not reach.
 // ROUTES.verifyEmail is public rather than an AUTH_ROUTE: an auth route bounces
 // a signed-in visitor to their dashboard, and the person clicking a
 // verification link is very often already signed in — that bounce would eat the
@@ -171,7 +180,7 @@ function isPinExemptPath(pathname: string, isAuthRoute: boolean): boolean {
 // Gedu or an admin there with a one-time `?token=` the login bounce would drop.
 // The page gates itself, and spending the token is a role-gated POST.
 // ROUTES.linkSlack is the Slack app's twin of it, for admins.
-const PUBLIC_ROUTES = [ROUTES.home, ROUTES.shop, ROUTES.schools, ROUTES.about, ROUTES.library, ROUTES.team, ROUTES.discover, ROUTES.privacy, ROUTES.termsAndConditions, ROUTES.antiBullying, ROUTES.attributions, ROUTES.docs, ROUTES.forgotPassword, ROUTES.resetPassword, ROUTES.resetPin, ROUTES.verifyEmail, ROUTES.seatOffer, ROUTES.roblox, ROUTES.voice.prefix, ROUTES.oauthConsent, ROUTES.linkDiscord, ROUTES.linkSlack];
+const PUBLIC_ROUTES = [ROUTES.home, ROUTES.shop, ROUTES.schools, ROUTES.about, ROUTES.library, ROUTES.team, ROUTES.discover, ROUTES.privacy, ROUTES.termsAndConditions, ROUTES.antiBullying, ROUTES.attributions, ROUTES.docs, ROUTES.forgotPassword, ROUTES.resetPassword, ROUTES.resetPin, ROUTES.verifyEmail, ROUTES.seatOffer, ROUTES.roblox, ROUTES.robloxOnline, ROUTES.robloxAll, ROUTES.voice.prefix, ROUTES.oauthConsent, ROUTES.linkDiscord, ROUTES.linkSlack];
 
 // The /voice/* prefix is public for instant rooms, but /voice/group/[id] is
 // the authenticated group voice room — seat-holders (a gamer, or a parent on
@@ -227,15 +236,15 @@ function buildCspHeader(nonce: string): string {
   return [
     "default-src 'self'",
     // Production needs no vendor host here: `strict-dynamic` trusts a script
-    // element created by code that was itself trusted, and both advertising
-    // scripts — the Meta Pixel and the Tag Manager container — are inserted by
-    // the app's own bundle rather than by an inline snippet. It also covers what
-    // those two load in turn, which is what keeps a container's own tags off
-    // this line. Development has no nonce and no `strict-dynamic`, so the hosts
-    // that serve fbevents.js and gtm.js have to be named.
+    // element created by code that was itself trusted, and every advertising
+    // script — the Meta and Reddit pixels and the Tag Manager container — is
+    // inserted by the app's own bundle rather than by an inline snippet. It
+    // also covers what those load in turn, which is what keeps a container's
+    // own tags off this line. Development has no nonce and no `strict-dynamic`,
+    // so the hosts that serve fbevents.js, pixel.js and gtm.js have to be named.
     isProd
       ? `script-src 'self' 'nonce-${nonce}' 'strict-dynamic'`
-      : "script-src 'self' 'unsafe-inline' 'unsafe-eval' https://va.vercel-scripts.com https://c.daily.co https://connect.facebook.net https://www.googletagmanager.com",
+      : "script-src 'self' 'unsafe-inline' 'unsafe-eval' https://va.vercel-scripts.com https://c.daily.co https://connect.facebook.net https://www.redditstatic.com https://www.googletagmanager.com",
     "style-src 'self' 'unsafe-inline'",
     // mc-heads.net renders the Minecraft skin body, which the shared game-account
     // row derives straight from a username — so it loads anywhere an identity is
@@ -267,7 +276,10 @@ function buildCspHeader(nonce: string): string {
     // block costs is an advertising audience sync, never an analytics event or
     // a conversion, and CSP allows no wildcard on the TLD, so the alternative
     // is a list of every Google country domain that rots quietly.
-    `img-src 'self' data: blob: ${SUPABASE_HOST} https://mc-heads.net https://tr.rbxcdn.com https://www.facebook.com https://www.googletagmanager.com https://*.google-analytics.com https://*.analytics.google.com https://www.googleadservices.com https://googleads.g.doubleclick.net https://td.doubleclick.net https://stats.g.doubleclick.net https://www.google.com`,
+    // alb.reddit.com is the Reddit Pixel's transport, which reports by
+    // requesting /rp.gif as an image — needed in production for the same
+    // reason as Meta's host above.
+    `img-src 'self' data: blob: ${SUPABASE_HOST} https://mc-heads.net https://tr.rbxcdn.com https://www.facebook.com https://alb.reddit.com https://www.googletagmanager.com https://*.google-analytics.com https://*.analytics.google.com https://www.googleadservices.com https://googleads.g.doubleclick.net https://td.doubleclick.net https://stats.g.doubleclick.net https://www.google.com`,
     "font-src 'self'",
     // wss: Supabase Realtime, Daily.co signaling; sentry: Daily.co's bundled error reporting.
     // www.facebook.com is where the Meta Pixel sends events once its library has
@@ -275,6 +287,18 @@ function buildCspHeader(nonce: string): string {
     // covered by `strict-dynamic`, so both branches need it. Our own
     // server-side reports go to graph.facebook.com and are named nowhere here:
     // they leave a route handler, not the document.
+    // alb.reddit.com is where the Reddit Pixel posts events by fetch, beside
+    // its image beacon above. **Two other Reddit hosts are left out on
+    // purpose, and this line is the only thing that keeps them out.**
+    // pixel-config.reddit.com serves the configuration set in Reddit's Events
+    // Manager, which can add event rules fired on URL changes and clicks, turn
+    // on automatic matching that reads email and phone values out of the page,
+    // and scrape the page title and description; ads.reddit.com is where
+    // Reddit's point-and-click event setup tool loads itself from. Both are a
+    // web form nobody here reviews, able to make the pixel report private pages
+    // after a client navigation or lift form fields — and unlike Meta's
+    // `autoConfig` the base code has no switch for it, so refusing the fetch is
+    // the switch. The pixel runs on the calls the app makes and nothing else.
     // The Google side is the same story, host for host:
     // www.googletagmanager.com is where the container fetches its own
     // configuration; *.google-analytics.com and *.analytics.google.com are
@@ -285,7 +309,7 @@ function buildCspHeader(nonce: string): string {
     // and stats.g.doubleclick.net and td.doubleclick.net take the analytics
     // property's remarketing beacon and the conversion linker's. Nothing here
     // is reached by `strict-dynamic` either.
-    `connect-src 'self' ${SUPABASE_HOST} ${SUPABASE_WS_HOST} https://*.supabase.co wss://*.supabase.co https://*.daily.co wss://*.daily.co https://*.ingest.sentry.io https://www.facebook.com https://www.googletagmanager.com https://*.google-analytics.com https://*.analytics.google.com https://www.googleadservices.com https://googleads.g.doubleclick.net https://td.doubleclick.net https://stats.g.doubleclick.net https://www.google.com`,
+    `connect-src 'self' ${SUPABASE_HOST} ${SUPABASE_WS_HOST} https://*.supabase.co wss://*.supabase.co https://*.daily.co wss://*.daily.co https://*.ingest.sentry.io https://www.facebook.com https://alb.reddit.com https://www.googletagmanager.com https://*.google-analytics.com https://*.analytics.google.com https://www.googleadservices.com https://googleads.g.doubleclick.net https://td.doubleclick.net https://stats.g.doubleclick.net https://www.google.com`,
     // The Google hosts here are the third directive `strict-dynamic` does not
     // reach, and the one easiest to forget because nothing in the app's own
     // markup is a frame: a conversion linker writes its cookie from a hidden
@@ -312,8 +336,9 @@ export async function proxy(request: NextRequest) {
 
   // UTM attribution: `utm_source` / `utm_medium` / `utm_campaign` /
   // `utm_content` / `utm_term` on the landing URL, sanitised here and handed
-  // to the root layout, which seeds them into a client context provider so
-  // they survive the whole visit as client-side navigation. See
+  // to the root layout, which seeds them into a client context provider for
+  // the consent banner, and kept in the attribution cookie when this request
+  // already carries marketing consent (`keepAttribution` below). See
   // src/lib/utm.ts for the constraints this feature is built to — including
   // why reading the query string here is itself the moment ePrivacy
   // engages, whatever we do with the value afterwards.
@@ -334,16 +359,23 @@ export async function proxy(request: NextRequest) {
   // The point of enforcing it at all is that a header a stranger controls
   // through the query string must not be able to push a request past a hop's
   // own per-header ceiling: that turns into a 502 nobody chose, where dropping
-  // the attribution costs one visit's marketing data.
+  // the attribution costs one visit's marketing data. The cookie has a budget of
+  // its own, which `serialiseUtmCookie` answers null past in the same way, and
+  // a null leaves any cookie already there as it is.
   //
   // This runs above every branch and early return, like the two sets above, so
   // no path bypasses it. The repeated-param rule and the sanitiser both live in
   // the module, so this file holds no copy of either.
   request.headers.delete(UTM_HEADER);
-  const utm = serialiseUtm(readUtmFromSearchParams(request.nextUrl.searchParams));
+  const landingUtm = readUtmFromSearchParams(request.nextUrl.searchParams);
+  const utm = serialiseUtm(landingUtm);
   if (utm !== null) {
     request.headers.set(UTM_HEADER, utm);
   }
+  const attributionToKeep =
+    parseConsentCookie(request.cookies.get(CONSENT_COOKIE_NAME)?.value)?.marketing === true
+      ? serialiseUtmCookie(landingUtm)
+      : null;
 
   // The URL as the visitor typed it: locale-prefixed, with that locale's slug.
   // Only two things use it — the bare-path ladder below, and the `?redirect=`
@@ -408,6 +440,27 @@ export async function proxy(request: NextRequest) {
   const userId = claimsData?.claims.sub ?? null;
   const sessionId = claimsData?.claims.session_id ?? null;
 
+  // Resolved further down, once the ladder has run; declared here because
+  // `keepAttribution` reads it from every response.
+  let userRole: Database["public"]["Enums"]["user_role"] | null = null;
+
+  // Helper: keep the landing link's tag on the response actually being
+  // returned. `setAll` above replaces `supabaseResponse`, so it is set here, on
+  // the final response, and `redirect` and `proceed` both call this: a bounce
+  // such as the home page's or the PIN gate's drops the query, and this is the
+  // tag's only chance to be kept. The two responses that skip it serve no page.
+  //
+  // **Never for a signed-in gamer, nor for a session whose role is not known**,
+  // the same doubt the advertising gates resolve the same way. A redirect ahead
+  // of the role lookup therefore writes nothing for a signed-in visitor, which
+  // costs nothing: the bare-path and foreign-slug redirects keep the query, so
+  // the next hop writes it with the role in hand.
+  function keepAttribution(response: NextResponse) {
+    if (attributionToKeep === null) return;
+    if (userId !== null && (userRole === null || userRole === "gamer")) return;
+    response.cookies.set(UTM_COOKIE_NAME, attributionToKeep, utmCookieOptions());
+  }
+
   // Helper: create a redirect that preserves refreshed auth cookies and CSP.
   //
   // **The whole cookie, attributes included.** `set(name, value)` writes a
@@ -421,6 +474,7 @@ export async function proxy(request: NextRequest) {
     supabaseResponse.cookies.getAll().forEach((cookie) => {
       redirectResponse.cookies.set(cookie);
     });
+    keepAttribution(redirectResponse);
     redirectResponse.headers.set("Content-Security-Policy", cspHeader);
     return redirectResponse;
   }
@@ -437,6 +491,7 @@ export async function proxy(request: NextRequest) {
     supabaseResponse.cookies.getAll().forEach((cookie) => {
       intlResponse.cookies.set(cookie);
     });
+    keepAttribution(intlResponse);
     intlResponse.headers.set("Content-Security-Policy", cspHeader);
     return intlResponse;
   }
@@ -541,7 +596,6 @@ export async function proxy(request: NextRequest) {
   // customer until re-login — and we treat role changes as a thing that doesn't
   // happen mid-session. Privileged routes (`/admin`) are role-gated below
   // regardless, so this never grants access the role itself wouldn't.
-  let userRole: Database["public"]["Enums"]["user_role"] | null = null;
   if (userId) {
     const pinVerified =
       sessionId !== null &&

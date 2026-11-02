@@ -43,7 +43,6 @@ vi.mock("@/providers", () => ({
     freezeUntilNavigation: mockFreezeUntilNavigation,
     unfreezeAuthState: mockUnfreezeAuthState,
   }),
-  useUtm: () => ({ source: null, medium: null, campaign: null }),
 }));
 
 vi.mock("@/hooks/use-auth-redirect", () => ({

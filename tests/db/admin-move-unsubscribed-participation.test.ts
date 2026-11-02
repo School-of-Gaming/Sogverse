@@ -3,7 +3,7 @@ import type { SupabaseClient } from "@supabase/supabase-js";
 import type { Database } from "@/types/database.types";
 import { createAdminTestClient, createAuthenticatedClient } from "./helpers";
 import { TEST_CREDENTIALS, TEST_IDS } from "./constants";
-import { createTestProduct, deleteTestProducts } from "./product-helpers";
+import { createTestProduct, deleteTestProducts, insertPaidBooking } from "./product-helpers";
 import { adminMoveUnsubscribedParticipationRpcResult } from "@/services/participations/participations.contracts";
 
 /**
@@ -57,7 +57,7 @@ describe("admin_move_unsubscribed_participation", () => {
   let admin: SupabaseClient<Database>;
   let adminAuth: SupabaseClient<Database>;
   let seatCounter = 0;
-  const checkoutSessions = new Map<string, string>();
+  const seatBookings = new Map<string, string>();
 
   async function clearRows() {
     await admin.from("participations").delete().in("product_id", ALL_PRODUCTS);
@@ -78,7 +78,12 @@ describe("admin_move_unsubscribed_participation", () => {
     status: Database["public"]["Enums"]["participation_status"] = "active",
   ): Promise<string> {
     seatCounter += 1;
-    const checkoutSession = `${CHECKOUT_SESSION_PREFIX}${seatCounter}`;
+    const bookingId = await insertPaidBooking(admin, {
+      productId,
+      participantId,
+      customerId: TEST_IDS.CUSTOMER,
+      checkoutSessionId: `${CHECKOUT_SESSION_PREFIX}${seatCounter}`,
+    });
     const { data, error } = await admin
       .from("participations")
       .insert({
@@ -87,13 +92,13 @@ describe("admin_move_unsubscribed_participation", () => {
         customer_id: TEST_IDS.CUSTOMER,
         status,
         signed_up_at: SIGNED_UP_AT,
-        stripe_checkout_session_id: checkoutSession,
+        booking_id: bookingId,
         waitlisted_at: status === "waitlisted" ? SIGNED_UP_AT : null,
       })
       .select("id")
       .single();
     if (error) throw new Error(`seat failed: ${error.message}`);
-    checkoutSessions.set(data.id, checkoutSession);
+    seatBookings.set(data.id, bookingId);
     return data.id;
   }
 
@@ -101,7 +106,7 @@ describe("admin_move_unsubscribed_participation", () => {
     const { data } = await admin
       .from("participations")
       .select(
-        "product_id, group_id, group_joined_at, status, signed_up_at, stripe_checkout_session_id",
+        "product_id, group_id, group_joined_at, status, signed_up_at, booking_id",
       )
       .eq("id", participationId)
       .single();
@@ -223,9 +228,7 @@ describe("admin_move_unsubscribed_participation", () => {
     // Never written by the function: the trigger stamps it from group_id.
     expect(row?.group_joined_at).not.toBeNull();
     // The purchase stamps travel with the row.
-    expect(row?.stripe_checkout_session_id).toBe(
-      checkoutSessions.get(participationId),
-    );
+    expect(row?.booking_id).toBe(seatBookings.get(participationId));
     expect(new Date(row?.signed_up_at ?? 0).toISOString()).toBe(
       new Date(SIGNED_UP_AT).toISOString(),
     );

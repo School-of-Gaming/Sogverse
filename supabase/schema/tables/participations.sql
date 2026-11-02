@@ -17,6 +17,7 @@ CREATE TABLE public.participations (
     group_joined_at timestamp with time zone,
     seat_offer_sent_at timestamp with time zone,
     seat_offer_expiry_notified_at timestamp with time zone,
+    booking_id uuid,
     CONSTRAINT chk_participations_group_joined_at_iff_group CHECK (((group_id IS NULL) = (group_joined_at IS NULL))),
     CONSTRAINT chk_participations_offer_notice_needs_offer CHECK (((seat_offer_expiry_notified_at IS NULL) OR (seat_offer_sent_at IS NOT NULL))),
     CONSTRAINT chk_participations_offer_only_when_waitlisted CHECK (((seat_offer_sent_at IS NULL) OR (status = 'waitlisted'::public.participation_status))),
@@ -42,7 +43,7 @@ COMMENT ON COLUMN public.participations.participant_id IS 'The profile occupying
 -- Name: COLUMN participations.stripe_checkout_session_id; Type: COMMENT; Schema: public; Owner: -
 --
 
-COMMENT ON COLUMN public.participations.stripe_checkout_session_id IS 'Stripe Checkout Session that paid for this seat. NULL for no-charge seats (free, municipality, admin enrollment, waitlist) and for rows predating the create-on-confirmation flow.';
+COMMENT ON COLUMN public.participations.stripe_checkout_session_id IS 'legacy-checkout-session: written only by confirm_paid_participation, for the deployment window, because the confirmation page from before bookings finds a paid seat by it; the follow-up drops it. Rows from before bookings keep their value. The Checkout Session of a seat is on its booking, bookings.stripe_checkout_session_id.';
 
 
 --
@@ -64,6 +65,21 @@ COMMENT ON COLUMN public.participations.seat_offer_sent_at IS 'When a seat offer
 --
 
 COMMENT ON COLUMN public.participations.seat_offer_expiry_notified_at IS 'When staff were emailed that this offer ran out with no answer. Orthogonal to whether the offer is live or expired: it records that a notification happened, not the offer''s standing. Claimed atomically by claim_expired_seat_offer_notifications, whose UPDATE ... WHERE seat_offer_expiry_notified_at IS NULL is what makes the mail exactly-once under concurrency with no lock held across the send. Cleared whenever a fresh offer is stamped, so a re-offer that expires again notifies again.';
+
+
+--
+-- Name: COLUMN participations.booking_id; Type: COMMENT; Schema: public; Owner: -
+--
+
+COMMENT ON COLUMN public.participations.booking_id IS 'The booking this seat came from, where the UTM tag and the School of Gaming answer live and which says whether money was involved. NULL for a seat an admin or a partner created. Promotion, a seat offer''s acceptance, demotion and an admin''s move all keep it, so after a move the booking''s product_id can differ from the seat''s.';
+
+
+--
+-- Name: participations participations_booking_id_key; Type: CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.participations
+    ADD CONSTRAINT participations_booking_id_key UNIQUE (booking_id);
 
 
 --
@@ -131,6 +147,20 @@ CREATE UNIQUE INDEX uq_participations_checkout_session ON public.participations 
 
 
 --
+-- Name: participations participations_klaviyo_changed; Type: TRIGGER; Schema: public; Owner: -
+--
+
+CREATE TRIGGER participations_klaviyo_changed AFTER UPDATE OF status, product_id, seat_offer_sent_at ON public.participations FOR EACH ROW WHEN ((((old.status IS DISTINCT FROM new.status) OR (old.product_id IS DISTINCT FROM new.product_id)) OR (old.seat_offer_sent_at IS DISTINCT FROM new.seat_offer_sent_at))) EXECUTE FUNCTION public.klaviyo_participation_changed();
+
+
+--
+-- Name: participations participations_klaviyo_written; Type: TRIGGER; Schema: public; Owner: -
+--
+
+CREATE TRIGGER participations_klaviyo_written AFTER INSERT OR DELETE ON public.participations FOR EACH ROW EXECUTE FUNCTION public.klaviyo_participation_changed();
+
+
+--
 -- Name: participations participations_updated_at; Type: TRIGGER; Schema: public; Owner: -
 --
 
@@ -170,6 +200,14 @@ CREATE TRIGGER trg_participations_stamp_group_joined_at BEFORE INSERT OR UPDATE 
 --
 
 CREATE TRIGGER trg_validate_participations_group BEFORE INSERT OR UPDATE OF group_id, product_id ON public.participations FOR EACH ROW EXECUTE FUNCTION public.validate_participations_group();
+
+
+--
+-- Name: participations participations_booking_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.participations
+    ADD CONSTRAINT participations_booking_id_fkey FOREIGN KEY (booking_id) REFERENCES public.bookings(id) ON DELETE SET NULL;
 
 
 --

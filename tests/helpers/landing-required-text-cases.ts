@@ -56,7 +56,6 @@ export function everySection(): LandingSection[] {
     {
       id: I.hero,
       type: "hero",
-      imageId: I.picture,
       button: { kind: "internal", path: "/shop" },
     },
     { id: I.text, type: "text", background: "default", imageId: I.picture, imageSide: "end" },
@@ -133,6 +132,7 @@ export function everyText(): Texts {
       headline: "Gaming clubs at your school",
       subline: "Run by trained game educators.",
       buttonLabel: "See the clubs",
+      imageId: I.picture,
       imageAlt: "Children playing together",
     },
     [I.text]: {
@@ -273,7 +273,13 @@ export function requiredTextCases(): RequiredTextCase[] {
       summary: "",
       slug: "",
       sectionTexts: {},
-      expected: ["title", "summary", "slug", ...EVERY_REQUIRED_PATH],
+      // The hero's picture is a word too, so with none written its alt text is not asked for.
+      expected: [
+        "title",
+        "summary",
+        "slug",
+        ...EVERY_REQUIRED_PATH.filter((path) => path !== `sections.${I.hero}.imageAlt`),
+      ],
     },
     {
       name: "a blank head, whitespace of every kind",
@@ -294,6 +300,13 @@ export function requiredTextCases(): RequiredTextCase[] {
         [I.text]: { heading: "How", body: "Like this." },
         [I.guide]: { heading: "The guide" },
       },
+      expected: [],
+    },
+    {
+      name: "a hero alt text without a picture in this version's words is complete",
+      sections: everySection(),
+      ...HEAD,
+      sectionTexts: withField(everyText(), `${I.hero}.imageId`, undefined),
       expected: [],
     },
     {

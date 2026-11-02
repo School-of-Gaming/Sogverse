@@ -46,7 +46,10 @@ CREATE VIEW public.user_list_entries WITH (security_invoker='true') AS
           WHERE (gq.gedu_id = p.id)
           ORDER BY gq.qualification) AS qualifications,
     utm_content,
-    utm_term
+    utm_term,
+    registration_marketing_consent,
+    signup_intent_kind,
+    signup_intent_id
    FROM public.profiles p
   WHERE ((role <> 'gamer'::public.user_role) OR (NOT (EXISTS ( SELECT 1
            FROM public.parent_gamer pg

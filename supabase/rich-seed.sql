@@ -1473,16 +1473,20 @@ BEGIN
       v_consents text[] := (SELECT array_agg(document_slug)
                               FROM public.product_required_consents
                              WHERE product_id = v_product);
+      -- A made-up checkout-session id. It has to be unique per booking (the
+      -- table says so), and it stands for nothing in Stripe.
+      v_session text := 'cs_test_' || md5(v_product::text || v_gamer::text);
     BEGIN
-      v_result := public.create_participation(
+      v_result := public.create_booking(
         v_product, v_gamer, v_parent, r.shape, 'eur', v_consents);
 
-      IF v_result->>'kind' = 'validated' THEN
-        -- A made-up checkout-session id. It has to be unique per seat (the
-        -- table says so), and it stands for nothing in Stripe.
-        PERFORM public.confirm_paid_participation(
-          v_product, v_gamer, v_parent,
-          'cs_test_' || md5(v_product::text || v_gamer::text));
+      IF v_result->>'kind' = 'pending' THEN
+        -- Stored first, as the checkout route does: confirm_booking refuses a
+        -- Session the booking does not hold.
+        UPDATE public.bookings
+           SET stripe_checkout_session_id = v_session
+         WHERE id = (v_result->>'booking_id')::uuid;
+        PERFORM public.confirm_booking((v_result->>'booking_id')::uuid, v_session);
       END IF;
     END;
   END LOOP;
@@ -1493,9 +1497,10 @@ $$;
 -- (Runs as service_role, like the checkout route that writes it.)
 DO $$
 DECLARE
-  r        record;
-  v_result jsonb;
-  v_event  uuid := (SELECT product_id FROM public.product_translations
+  r         record;
+  v_result  jsonb;
+  v_session text;
+  v_event   uuid := (SELECT product_id FROM public.product_translations
                      WHERE locale = 'en'
                        AND name = 'Parents'' Evening: Gaming and Screen Time');
 BEGIN
@@ -1504,10 +1509,13 @@ BEGIN
                             'hanna.salminen@example.com', 'camille.dubois@example.com',
                             'james.whitfield@example.com', 'tomi.hakala@example.com')
   LOOP
-    v_result := public.create_participation(v_event, r.id, r.id, 'single_payment', 'eur');
-    IF v_result->>'kind' = 'validated' THEN
-      PERFORM public.confirm_paid_participation(v_event, r.id, r.id,
-        'cs_test_' || md5(v_event::text || r.id::text));
+    v_result := public.create_booking(v_event, r.id, r.id, 'single_payment', 'eur');
+    IF v_result->>'kind' = 'pending' THEN
+      v_session := 'cs_test_' || md5(v_event::text || r.id::text);
+      UPDATE public.bookings
+         SET stripe_checkout_session_id = v_session
+       WHERE id = (v_result->>'booking_id')::uuid;
+      PERFORM public.confirm_booking((v_result->>'booking_id')::uuid, v_session);
     END IF;
   END LOOP;
 END;

@@ -31,7 +31,8 @@ import type { LandingProductsSectionPicks } from "./landing-pages.product-picks"
  * (`src/lib/landing-pages/sections/`).
  *
  * **A page's structure is shared; its words are per language.** The sections —
- * their order, pictures, buttons, icons and items — are the page's, once.
+ * their order, pictures, buttons, icons and items — are the page's, once,
+ * except the hero's picture, which each language names in its hero words.
  * Each language version holds a title, a summary, a slug and the text of every
  * section, keyed by section id. Versions are listed in `SUPPORTED_LOCALES`
  * order everywhere.
@@ -133,8 +134,8 @@ export function landingCopyTitle(title: string, copyMarker: string): string {
  * keyed by section id, and is checked against the page's structure by the
  * writer that has it. `shareTitle`, `shareImageId` and `shareImageAlt` are
  * the share card in this language; a save carries the whole of it, so one
- * left out is saved empty: the card then takes the page title, the hero's
- * picture, and for the share picture's alt text the card's title.
+ * left out is saved empty: the card then takes the page title, this
+ * language's hero picture, and for the share picture's alt text the card's title.
  */
 export const landingVersionInput = z.object({
   locale: z.enum(SUPPORTED_LOCALES),
@@ -241,7 +242,8 @@ export interface LandingPageDraftVersion {
   shareTitle: string;
   /**
    * The share picture's catalogue entry in this language, which the link
-   * preview shows in place of the hero's picture, or null to use the hero's.
+   * preview shows in place of this language's hero picture, or null to use
+   * the hero picture.
    * Its path and purpose are in the copy's `pictures`; it is always wide.
    */
   shareImageId: string | null;
@@ -274,8 +276,9 @@ export interface LandingPageDraft extends LandingPageSaver {
   id: string;
   sections: LandingSection[];
   /**
-   * Each picture the sections and every version's share picture show, by
-   * catalogue entry id. Derived by the database.
+   * Each picture the sections, every version's hero picture and every
+   * version's share picture show, by catalogue entry id. Derived by the
+   * database.
    */
   pictures: LandingPictures;
   /** Every version written, in `SUPPORTED_LOCALES` order; never empty. */
@@ -285,16 +288,25 @@ export interface LandingPageDraft extends LandingPageSaver {
   updatedAt: string;
 }
 
-/** One live language version as a list reads it: no section texts. */
-export interface PublishedLandingVersionSummary {
+/** One live language version's short fields. */
+interface PublishedLandingVersionFields {
   locale: SupportedLocale;
   title: string;
   summary: string;
   slug: string;
 }
 
-/** One live language version whole. */
-export interface PublishedLandingVersion extends PublishedLandingVersionSummary {
+/**
+ * One live language version as a list reads it: no section texts, but the
+ * hero picture this version names — a catalogue id whose path is in the copy's
+ * `pictures` — or null when it names none.
+ */
+export interface PublishedLandingVersionSummary extends PublishedLandingVersionFields {
+  heroImageId: string | null;
+}
+
+/** One live language version whole; its hero picture is in its hero words. */
+export interface PublishedLandingVersion extends PublishedLandingVersionFields {
   sectionTexts: LandingSectionTexts;
   /** As on the working copy. */
   shareTitle: string;
@@ -304,8 +316,9 @@ export interface PublishedLandingVersion extends PublishedLandingVersionSummary 
 
 /**
  * A published page as a list reads it — the `/discover` index, the sitemap,
- * `llms.txt`: its live structure, so a card can show the picture the page
- * leads with, and every live version's short fields, but no words.
+ * `llms.txt`: its live structure, and every live version's short fields and
+ * hero picture, so a card can show the picture the page leads with in the
+ * version it shows, but no words.
  */
 export interface PublishedLandingPageSummary {
   /** The page's id — its id address. */

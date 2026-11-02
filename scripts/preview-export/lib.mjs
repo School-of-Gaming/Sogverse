@@ -337,26 +337,6 @@ export const VIEWER_PROBE = {
 };
 
 /**
- * The order the run's viewers sign in: **every gamer before any parent**, the
- * rest as they come.
- *
- * **The order is load-bearing.** A gamer viewer signs in as the parent and then
- * switches into the child, and the switch signs the parent out with Supabase's
- * default, global scope — every session that parent account holds ends there,
- * not only the one being switched. A parent viewer signed in earlier in the run
- * would be holding one of them, and every one of its shots would land on the
- * login page. Signed in after the last gamer, the parent's own session is
- * created after the last revoke. (A gamer's session is the child's own account,
- * which a later switch out of the parent does not touch.)
- */
-export function signInOrder(viewers) {
-  return [
-    ...viewers.filter((v) => v.role === "gamer"),
-    ...viewers.filter((v) => v.role !== "gamer"),
-  ];
-}
-
-/**
  * Refuses a `POST /api/auth/pin/verify` answer that did not unlock the session.
  * A wrong PIN is not an HTTP error there — the route answers it `200
  * { verified: false }` — so only `verified === true` counts.

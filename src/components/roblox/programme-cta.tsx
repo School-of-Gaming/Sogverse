@@ -5,6 +5,7 @@ import { buttonVariants } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { ROUTES } from "@/lib/constants/routes";
 import { Heading } from "@sog/ui";
+import type { ProgrammeFormat } from "./programme-filters";
 
 /**
  * Closing call-to-action for the programme page — the second of the two
@@ -22,7 +23,7 @@ import { Heading } from "@sog/ui";
  * this is that CTA repeated for a reader who scrolled, and two "start here"
  * prompts landing in different places would be two different promises.
  */
-export function ProgrammeCta() {
+export function ProgrammeCta({ format }: { format: ProgrammeFormat }) {
   const t = useTranslations("roblox.cta");
 
   return (
@@ -40,7 +41,7 @@ export function ProgrammeCta() {
           </Heading>
           <p className="mt-4 max-w-xl text-muted-foreground">{t("body")}</p>
           <Link
-            href={ROUTES.robloxShop}
+            href={ROUTES.robloxShop[format]}
             className={buttonVariants({ size: "lg", className: "mt-8 gap-2" })}
           >
             {t("button")}

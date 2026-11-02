@@ -17,12 +17,17 @@ BEGIN
       USING ERRCODE = 'check_violation';
   END IF;
 
-  -- 'registration' is refused here and only ever written by the register route
-  -- through the service-role client, before the account has a session at all.
-  -- See the header: source is the one field on an event that nothing else can
-  -- corroborate, so the source with no live caller is the one a live caller may
-  -- not claim. NULL is refused by the same statement rather than by a NOT NULL
-  -- further down, so the message names the real problem.
+  -- School of Gaming's own list is answered in Klaviyo; the rows written here
+  -- before it moved stay, and nothing adds to them.
+  IF p_consent_type <> 'lynx_educate'::public.marketing_consent_type THEN
+    RAISE EXCEPTION 'marketing consent % is answered in Klaviyo, not here', p_consent_type
+      USING ERRCODE = 'check_violation';
+  END IF;
+
+  -- The source is the one field on an event that nothing else can corroborate,
+  -- so only the two surfaces that call this may be named. NULL is refused by
+  -- the same statement rather than by a NOT NULL further down, so the message
+  -- names the real problem.
   IF p_source IS NULL OR p_source NOT IN ('settings', 'enrolment') THEN
     RAISE EXCEPTION
       'marketing consent source must be settings or enrolment (got %)',
@@ -73,7 +78,7 @@ $$;
 -- Name: FUNCTION set_marketing_consent(p_consent_type public.marketing_consent_type, p_granted boolean, p_source text); Type: COMMENT; Schema: public; Owner: -
 --
 
-COMMENT ON FUNCTION public.set_marketing_consent(p_consent_type public.marketing_consent_type, p_granted boolean, p_source text) IS 'The one self-service writer of a marketing consent: the settings toggle and the product signup panel both call it, so the two paths cannot drift. Guard-first on assert_role(''customer'') — gamers and gedus hold no marketing consents, and an admin toggles their own on their own parent account rather than through here, because the answer belongs to whoever owns the mailbox. The customer is auth.uid() and is never a parameter, so there is nothing for a caller to aim at another family. REFUSES p_source = ''registration'': that source is written only by the register route through the service-role client, before a session exists, and it is the one field on an event nothing else can corroborate. IDEMPOTENT AND HONEST ABOUT IT — submitting the state already on file succeeds and appends NO event, because a change log that recorded non-changes would answer "how often did this parent change their mind" with a number made of page loads. A first explicit "no" IS a change: an absent row means never answered, which is not the same state as a recorded refusal.';
+COMMENT ON FUNCTION public.set_marketing_consent(p_consent_type public.marketing_consent_type, p_granted boolean, p_source text) IS 'The one writer of a marketing consent: the settings toggle and the product signup panel both call it, so the two paths cannot drift. Guard-first on assert_role(''customer'') — gamers and gedus hold no marketing consents, and an admin toggles their own on their own parent account rather than through here, because the answer belongs to whoever owns the mailbox. The customer is auth.uid() and is never a parameter, so there is nothing for a caller to aim at another family. p_source must be `settings` or `enrolment`, the two surfaces that call it. Only lynx_educate is accepted: School of Gaming''s own list is answered in Klaviyo — a product signup panel''s school_of_gaming answer is stored on the seat and sent there — and the school_of_gaming rows written before it moved are kept unread. IDEMPOTENT AND HONEST ABOUT IT — submitting the state already on file succeeds and appends NO event, because a change log that recorded non-changes would answer "how often did this parent change their mind" with a number made of page loads. A first explicit "no" IS a change: an absent row means never answered, which is not the same state as a recorded refusal.';
 
 
 --

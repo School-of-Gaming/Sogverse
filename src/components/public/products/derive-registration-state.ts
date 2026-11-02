@@ -226,7 +226,7 @@ export function deriveRegistrationState({
   // event is one session — someone can still usefully sign up an hour before
   // the doors open, so it stays joinable (normal seat/waitlist rules apply)
   // right up to the instant the session ends. The server-side
-  // `create_participation` gate accepts pending OR running, so it already
+  // `create_booking` gate accepts pending OR running, so it already
   // permits everything this window allows.
   if (status === "running" && LATE_JOIN_LOCKED[product.product_type]) {
     const endsAt =

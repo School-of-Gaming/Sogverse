@@ -70,6 +70,7 @@
     "holidayBreaks": "Vacances"
   },
   "signupPanel": {
+    "checkoutAlreadyPaid": "Le paiement de cette réservation est déjà en cours. Elle apparaîtra bientôt dans Mon SOG.",
     "verb": {
       "consumer_club": "S’inscrire",
       "municipality_club": "S’inscrire",
@@ -130,6 +131,8 @@
       "marketing": {
         "lynxEducate": "Partager mon adresse e-mail avec <link>Lynx Educate</link> afin qu’ils puissent m’envoyer des actualités sur les événements à venir et des ressources sur le jeu vidéo. Je peux me désabonner à tout moment.",
         "lynxEducateTitle": "Actualités de Lynx Educate",
+        "schoolOfGaming": "Je souhaite recevoir des e-mails de School of Gaming sur ses clubs, ses camps et ses actualités. Je peux me désabonner à tout moment.",
+        "schoolOfGamingTitle": "Actualités de School of Gaming",
         "hint": "Facultatif — vous pouvez modifier ce choix à tout moment dans vos paramètres."
       }
     },

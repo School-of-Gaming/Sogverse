@@ -3,8 +3,7 @@ import { NextResponse } from "next/server";
 /**
  * The registration intent cookie: what an account created through Google set
  * out to register as — the finish page's query, as the OAuth callback built it
- * (the Gedu variant, the landing link's attribution, the product page to
- * return to), every part already sanitised.
+ * (the Gedu variant, the product page to return to), every part already sanitised.
  *
  * **Why it exists.** The address is the intent's first carrier, but the
  * proxy's registration gate bounces an owing account to a bare finish page, so

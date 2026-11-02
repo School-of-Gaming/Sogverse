@@ -1,12 +1,14 @@
 import "server-only";
+import { MARKETING_CONSENT_LIST_VAR } from "@/lib/klaviyo-sync/lists.server";
 
 /**
  * Where a landing page's email sign-up sends a reader in Klaviyo. The same for
  * every page and the deployment's, so it lives in the environment:
  *
- * - `KLAVIYO_PRIVATE_API_KEY` — a private key with the profiles, lists and
- *   subscriptions write scopes, read by the Klaviyo client itself.
- * - `KLAVIYO_NEWSLETTER_LIST_ID` — the single opt-in list a reader joins.
+ * - `KLAVIYO_PRIVATE_API_KEY` — the private key, read by the Klaviyo client
+ *   itself, which names the scopes it needs.
+ * - `KLAVIYO_MARKETING_CONSENT_LIST_ID` — the single opt-in list a reader
+ *   joins, the one a registration's tick joins too (`src/lib/klaviyo-sync/`).
  */
 
 export interface SubscribeConfig {
@@ -14,7 +16,7 @@ export interface SubscribeConfig {
 }
 
 const KEY_VAR = "KLAVIYO_PRIVATE_API_KEY";
-const LIST_VAR = "KLAVIYO_NEWSLETTER_LIST_ID";
+const LIST_VAR = MARKETING_CONSENT_LIST_VAR;
 
 /**
  * The sign-up configuration, or the names of the variables that are unset.
@@ -33,15 +35,6 @@ export function readSubscribeConfig():
     missing: [...(key === "" ? [KEY_VAR] : []), ...(listId === "" ? [LIST_VAR] : [])],
   };
 }
-
-/**
- * The custom profile properties a sign-up writes, by what they hold. The UTM
- * values go alongside them under their query-parameter names (`utm_source`, …).
- */
-export const SIGNUP_PROPERTIES = {
-  /** The landing page's id: never changes, so a segment built on it outlives a new slug. */
-  pageId: "landing_page_id",
-} as const;
 
 /** The source Klaviyo records on the consent a sign-up gives. */
 export const SIGNUP_CUSTOM_SOURCE = "Sogverse landing page sign-up form";

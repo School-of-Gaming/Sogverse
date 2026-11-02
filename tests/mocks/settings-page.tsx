@@ -94,6 +94,23 @@ export function marketingConsentsServiceModule() {
 }
 
 /**
+ * `@/services/email-marketing/email-marketing.queries` — School of Gaming's
+ * own email marketing, read from Klaviyo. Answered as not subscribed: the
+ * ordinary state, and one that leaves the box a real checkbox.
+ */
+export function emailMarketingServiceModule() {
+  return {
+    useMyEmailMarketing: () => ({
+      data: { subscribed: false },
+      isError: false,
+      isFetching: false,
+      refetch: vi.fn(),
+    }),
+    useSetMyEmailMarketing: () => ({ mutateAsync: vi.fn() }),
+  };
+}
+
+/**
  * `@/components/settings/notification-preferences-card` — a neighbouring
  * section that reads and writes on its own, reduced to a marker. Its own
  * behaviour is tested against the card directly.

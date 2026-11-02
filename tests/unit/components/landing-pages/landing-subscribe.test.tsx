@@ -5,8 +5,6 @@ import common from "@/../messages/en/common.json";
 import landingSubscribe from "@/../messages/en/landingSubscribe.json";
 import { LandingPageBody } from "@/components/landing-pages/landing-page-body";
 import type { LandingSection, LandingSectionTexts } from "@/lib/landing-pages/sections";
-import { NO_UTM_ATTRIBUTION, type UtmAttribution } from "@/lib/utm";
-import { UtmProvider } from "@/providers";
 
 /**
  * **The email sign-up section as a reader meets it**: the page's own heading
@@ -50,26 +48,23 @@ afterEach(() => {
 });
 
 function renderPage({
-  utm = NO_UTM_ATTRIBUTION,
   preview = false,
   textLocale = "fi",
-}: { utm?: UtmAttribution; preview?: boolean; textLocale?: "fi" | "en" } = {}) {
+}: { preview?: boolean; textLocale?: "fi" | "en" } = {}) {
   return render(
     <NextIntlClientProvider locale="fi" messages={messages}>
-      <UtmProvider initialUtm={utm}>
-        <LandingPageBody
-          sections={SECTIONS}
-          pictures={{}}
-          testimonials={{}}
-          guideIds={[]}
-          sectionTexts={TEXTS}
-          textLocale={textLocale}
-          locale="fi"
-          products={null}
-          pageId={PAGE}
-          preview={preview}
-        />
-      </UtmProvider>
+      <LandingPageBody
+        sections={SECTIONS}
+        pictures={{}}
+        testimonials={{}}
+        guideIds={[]}
+        sectionTexts={TEXTS}
+        textLocale={textLocale}
+        locale="fi"
+        products={null}
+        pageId={PAGE}
+        preview={preview}
+      />
     </NextIntlClientProvider>,
   );
 }
@@ -154,8 +149,8 @@ describe("the email sign-up section", () => {
     expect(mockFetch).not.toHaveBeenCalled();
   });
 
-  it("posts the page, the form, the locale, the reader's words and the visit's UTM values", async () => {
-    renderPage({ utm: { ...NO_UTM_ATTRIBUTION, source: "newsletter" } });
+  it("posts the page, the form, the locale and the reader's words", async () => {
+    renderPage();
     fillIn("aino@example.com", "Aino", "Virtanen");
     fireEvent.click(screen.getByRole("checkbox"));
     await submit();
@@ -171,7 +166,6 @@ describe("the email sign-up section", () => {
       firstName: "Aino",
       lastName: "Virtanen",
       consent: true,
-      utm: { source: "newsletter" },
     });
   });
 

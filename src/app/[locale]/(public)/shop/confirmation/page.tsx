@@ -7,6 +7,7 @@ import {
 } from "@/lib/supabase/server";
 import {
   ParticipationsService,
+  type CheckoutConfirmation,
 } from "@/services/participations/participations.service";
 import { ProductsService } from "@/services/products/products.service";
 import {
@@ -30,10 +31,9 @@ import { confirmationRecipientEmail } from "./confirmation-recipient";
 //                               waitlist join.
 //   ?session_id=<checkoutId>  — a paid signup. The participation is created by
 //                               the Stripe webhook at payment confirmation, so
-//                               when `success_url` was built there was no row to
-//                               name. The Checkout Session is the handle both
-//                               ends share; the row records it, and this page
-//                               reads it back.
+//                               when `success_url` was built there was no seat to
+//                               name. The booking records the Checkout Session,
+//                               and this page reads the booking by it.
 //
 // Fetched server-side with the viewer's RLS-scoped client so the page renders
 // complete on first paint. The one case that can't is a paid signup whose
@@ -88,40 +88,52 @@ export default async function ShopConfirmationPage({
 }
 
 /**
- * The paid path, in the order the happy path can afford.
+ * The paid path. The booking answers everything: it is RLS-scoped to the customer
+ * who booked, so a session id someone else pasted returns nothing, and its status
+ * says what happened without a round trip to Stripe.
  *
- * **The row read comes first**, because when it succeeds it has already answered
- * the only question the Stripe gates below exist to answer. The read is
- * RLS-scoped (`customer_id = auth.uid()`, or the gamer's own row), so a session
- * id someone else pasted returns nothing and falls through to the gates. Asking
- * Stripe first would put a third-party round trip in front of first paint on
- * every ordinary confirmation, to re-derive an ownership fact the database just
- * proved.
- *
- * When there is no row, the gates become load-bearing and all three run: Stripe
- * must recognise the session, it must actually have bought something, and its
- * metadata must name the signed-in user as the purchaser. Without them a
- * stranger's pasted session id would be answered "Payment received", which is
- * both a lie and a leak.
+ * No booking means someone else's session id, a stale link, or a
+ * legacy-checkout-session Session the webhook has not reached yet, and only the
+ * last of those is answered differently. A transient read failure lands here too:
+ * the same accepted edge case as the participation path, cured by a reload.
  */
 async function renderPaidConfirmation(
   supabase: AppSupabaseClient,
   participations: ParticipationsService,
   checkoutSessionId: string,
 ) {
-  let confirmation: ParticipationConfirmation | null = null;
+  let booking: CheckoutConfirmation | null = null;
   try {
-    confirmation =
+    booking =
       await participations.getConfirmationByCheckoutSession(checkoutSessionId);
   } catch {
-    // Same swallow as the participation path: a transient read failure falls
-    // through to the waiting state below, which retries, rather than to a 500.
+    // Falls through to the Stripe gates below rather than to a 500.
   }
 
-  if (confirmation) {
-    return renderConfirmation(supabase, participations, confirmation);
+  switch (booking?.state) {
+    case "settled":
+      return renderConfirmation(supabase, participations, booking.confirmation);
+    case "duplicate":
+      return <PurchaseConfirmationNotice kind="duplicatePayment" />;
+    case "pending":
+      // Stripe waits up to ten seconds on our webhook before redirecting, so
+      // getting here needs the endpoint to have failed or run long. Telling a
+      // parent who has just been charged that we can't find their order would be
+      // both alarming and wrong.
+      return (
+        <PurchaseConfirmationFinalizing checkoutSessionId={checkoutSessionId} />
+      );
+    case "seat_gone":
+      return <PurchaseConfirmationFallback />;
   }
 
+  // legacy-checkout-session: everything from here to the end of this function. A
+  // Session created before bookings has no booking until its webhook lands, so
+  // Stripe's own answer stands in. All three gates are load-bearing: Stripe must
+  // recognise the session, it must actually have bought something, and its
+  // metadata must name the signed-in user as the purchaser. Without them a
+  // stranger's pasted session id would be answered "Payment received", which is
+  // both a lie and a leak.
   const user = await getUser();
   if (!user) return <PurchaseConfirmationFallback />;
 

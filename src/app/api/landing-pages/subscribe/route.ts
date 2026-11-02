@@ -2,13 +2,13 @@ import { NextResponse } from "next/server";
 import { defineRoute } from "@/lib/api/define-route";
 import { parseConsentCookieHeader } from "@/lib/consent";
 import { subscribeKlaviyoProfile, upsertKlaviyoProfile } from "@/lib/klaviyo";
+import { newsletterProperties } from "@/lib/klaviyo-sync/contract";
 import {
   readSubscribeConfig,
   SIGNUP_CUSTOM_SOURCE,
-  SIGNUP_PROPERTIES,
 } from "@/lib/landing-pages/subscribe-config.server";
 import { createAnonClient } from "@/lib/supabase/anon";
-import { utmMetadataForConsent } from "@/lib/utm";
+import { utmFromCookieHeader, utmMetadataForConsent } from "@/lib/utm";
 import { LandingPageService } from "@/services/landing-pages/landing-pages.service";
 import {
   landingSubscribeBody,
@@ -33,10 +33,12 @@ import {
  * used to learn who is on the list.
  *
  * **What is passed with the address**: the names that were given, the
- * landing page's id, the page's locale, and the visit's UTM values only when
- * the request's own consent cookie grants marketing — the registration route's
+ * landing page's id, the page's locale, and the attribution cookie's UTM values
+ * only when the request's own consent cookie grants marketing — the registration route's
  * rule, through the same helper (`src/lib/utm.ts`), since counsel's ruling
- * covers any write of them. Nothing else.
+ * covers any write of them. Nothing else. The property names are the Klaviyo
+ * contract's newsletter ones (`src/lib/klaviyo-sync/contract.ts`), apart from
+ * the names the parent sync writes, since one address can be both.
  *
  * **Two calls, both upserts**: the profile first, since the subscribe call
  * carries no name or property, then the subscription. Either failing — refused,
@@ -77,9 +79,10 @@ export const POST = defineRoute({
       return NextResponse.json({ error: "Not found" }, { status: 404 });
     }
 
+    const cookieHeader = request.headers.get("cookie");
     const utm = utmMetadataForConsent(
-      parseConsentCookieHeader(request.headers.get("cookie")),
-      body.utm,
+      parseConsentCookieHeader(cookieHeader),
+      utmFromCookieHeader(cookieHeader),
     );
 
     try {
@@ -88,10 +91,7 @@ export const POST = defineRoute({
         firstName: body.firstName,
         lastName: body.lastName,
         locale: body.locale,
-        properties: {
-          [SIGNUP_PROPERTIES.pageId]: page.id,
-          ...utm,
-        },
+        properties: newsletterProperties(page.id, utm),
       });
       await subscribeKlaviyoProfile({
         email: body.email,
