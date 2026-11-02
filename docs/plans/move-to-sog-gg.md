@@ -56,10 +56,12 @@ Decided by the owner on 2026-10-15 and 2026-10-26.
   preserving the path** (`sogverse.sog.gg/<path>` → `sog.gg/<path>`), in the same hour.
   There is no app code and no splash page. The DNS record is kept for about a year and
   then deleted. Nothing in the app may know `sogverse.sog.gg` existed.
-- **Staging moves to `staging.sog.gg` in the same hour, and `sogverse-staging.sog.gg` is
-  deleted outright, with no redirect** (owner, 2026-10-26). Staging is internal, so
-  nothing outside the team holds a link worth keeping. Lynx is the one outside caller,
-  and is told with its production change.
+- **Staging moves to `staging.sog.gg` first, as the rehearsal for production, and
+  `sogverse-staging.sog.gg` is deleted outright, with no redirect** (owner, 2026-10-26;
+  order set 2026-11-02). Staging is internal, so nothing outside the team holds a link
+  worth keeping. Lynx calls it only for testing, and those calls are allowed to break
+  until Lynx switches (owner, 2026-11-02). The rehearsal doesn't cover the DNS switch,
+  the certificate or either redirect, because `staging.sog.gg` is already live.
 - **Clean break from Webflow.** No old Webflow path is redirected; they return the app's
   404. The Webflow blog, Library content and landing pages are not ported.
 - **Webflow's data is exported to the team Google Drive before the subscription is
@@ -372,13 +374,16 @@ back to `sog.gg` while that is still Webflow.
    | Google Cloud OAuth (project `sogverse`) | Add `https://sog.gg` to the Sogverse client's JavaScript origins, and set the consent screen's home, privacy and terms URLs to `sog.gg`. `sog.gg` is already an authorised domain, and the redirect URI is Supabase's | A Google sign-in on `sog.gg` works |
    | Klaviyo | The live flows Kesäleiri Lead Flow (FI) and New Flow - Guidebook Download (Finnish) link to Webflow camp and schedule pages (found 2026-10-30): repoint them to the shop | The flow emails link to `sog.gg` pages that exist |
 7. **Move staging to `staging.sog.gg`.** It's the same work as production's, on test
-   data. Nothing here can drop real data or money, so it runs after production is
-   confirmed working.
+   data, and it runs on its own before the production hour as the rehearsal. Nothing here
+   can drop real data or money.
+   - Re-pull the staging host's callers (step 0.4) and add anything new to this list.
    - Set `NEXT_PUBLIC_SITE_URL` for **Preview** to `https://staging.sog.gg` with the
      `env-vars` skill. In Vercel it's one value for every preview deployment, not one per
      branch. Then redeploy the latest `dev` preview with the build cache unticked.
    - Staging Supabase Auth: site URL `https://staging.sog.gg`, and an allow-list of
      `https://staging.sog.gg/**` only.
+   - The staging Google OAuth client: add `https://staging.sog.gg` to its JavaScript
+     origins if it lists the old host.
    - The Stripe **test-mode** endpoint `we_1U0cUCCD5Q5ECgrcpTkY9xnU`: URL
      `https://staging.sog.gg/api/webhooks/stripe/products` (`stripe webhook_endpoints
      update`, without `--live`).
