@@ -65,6 +65,11 @@ const CHILD_IDS = [
   "9c5d8016-0263-4656-90be-e82d980e6838",
   "5822f24a-6c5b-48d6-a900-9979110ab63b",
   "99d46276-4d3f-4eb4-b432-f403cf32628d",
+  "9d820368-165f-4e4d-b2fe-9610f8801ada",
+  "0164ef8e-1ac6-4370-baad-078da4019465",
+  "18e33914-89f2-42e4-8d39-c234b4ec8a6d",
+  "a374d6f4-5125-4bb7-90a3-ac9277865516",
+  "4c5c9a33-c6b7-4bd8-97e9-c5a22127fa1e",
 ] as const;
 
 const CHILD: SignupParticipantChoice = {
