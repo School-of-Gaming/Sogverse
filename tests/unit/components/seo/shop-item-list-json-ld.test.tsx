@@ -1,4 +1,5 @@
 import { afterAll, describe, expect, it, vi } from "vitest";
+import { SITE_ORIGIN } from "../../../mocks/site-origin";
 import { renderToStaticMarkup } from "react-dom/server";
 
 // The real wrapped navigation: an item's URL is the locale-prefixed,
@@ -7,7 +8,7 @@ import { renderToStaticMarkup } from "react-dom/server";
 vi.unmock("@/i18n/navigation");
 vi.unmock("next/navigation");
 
-const SITE = "https://test.sogverse.local";
+const SITE = SITE_ORIGIN;
 vi.stubEnv("NEXT_PUBLIC_SITE_URL", SITE);
 afterAll(() => vi.unstubAllEnvs());
 import { ShopItemListJsonLd } from "@/components/public/products/shop-item-list-json-ld";

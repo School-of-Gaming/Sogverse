@@ -1,4 +1,5 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
+import { SITE_ORIGIN } from "../../mocks/site-origin";
 import { fromZonedTime } from "date-fns-tz";
 import { invitationPlanWindow } from "@/lib/email-templates/product-confirmation-invitation";
 import { planRows, planSessions } from "../../mocks/planned-sessions";
@@ -6,7 +7,7 @@ import { attributionCookie } from "../../mocks/attribution-cookie";
 
 // The confirmation mail's My SOG link comes from getOrigin(), which falls back
 // to NEXT_PUBLIC_SITE_URL when the request carries no trusted Host.
-process.env.NEXT_PUBLIC_SITE_URL = "https://test.sogverse.local";
+process.env.NEXT_PUBLIC_SITE_URL = SITE_ORIGIN;
 
 import { POST } from "@/app/api/checkout/products/create/route";
 import { NextResponse } from "next/server";
@@ -24,7 +25,7 @@ import {
 // spoofed-Host test something to assert. The default `localhost:3000` Host
 // these mock requests carry is trusted in a non-production build, so every
 // other test still sees the localhost origin.
-const TRUSTED_ORIGIN = "https://test.sogverse.local";
+const TRUSTED_ORIGIN = SITE_ORIGIN;
 process.env.NEXT_PUBLIC_SITE_URL = TRUSTED_ORIGIN;
 
 // --- Brevo mock ---
@@ -2175,7 +2176,7 @@ describe("POST /api/checkout/products/create", () => {
       await settleDeferred();
 
       const { htmlContent } = mockSendTransactionalEmail.mock.calls[0][0];
-      expect(htmlContent).toContain("https://test.sogverse.local/parent");
+      expect(htmlContent).toContain(`${SITE_ORIGIN}/parent`);
       expect(htmlContent).not.toContain("evil.com");
     });
 

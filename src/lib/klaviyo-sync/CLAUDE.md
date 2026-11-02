@@ -206,10 +206,10 @@ owner or with the owner's say — never by a session on its own initiative.
   deployment's secret.
 
 ```sql
-SELECT vault.create_secret('https://sogverse-staging.sog.gg/api/klaviyo-sync/sync', 'klaviyo_sync_url');
+SELECT vault.create_secret('https://staging.sog.gg/api/klaviyo-sync/sync', 'klaviyo_sync_url');
 SELECT vault.create_secret('<that environment''s KLAVIYO_SYNC_SECRET>', 'klaviyo_sync_secret');
 ```
 
-Prod points at `sogverse.sog.gg`. The order against the deployment does not matter: a kick
+Prod points at `sog.gg`. The order against the deployment does not matter: a kick
 the route refuses leaves its rows due, and the next write kicks again once both sides hold
 the same secret.

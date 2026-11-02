@@ -2,7 +2,7 @@
  * **Public pages** — Home, About and the shop, as a first-time visitor who is
  * not signed in meets them, in every real locale, at both widths.
  *
- *   node scripts/preview-export/export.mjs --preset public-pages --base https://sogverse.sog.gg
+ *   node scripts/preview-export/export.mjs --preset public-pages --base https://sog.gg
  *   node scripts/preview-export/export.mjs --preset public-pages --base http://localhost:3021 --locales en,fi
  *
  * **Signed out by what it is.** A signed-in reader of `/` is sent to their

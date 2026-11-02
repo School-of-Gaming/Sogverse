@@ -1,4 +1,5 @@
 import { describe, expect, it } from "vitest";
+import { SITE_ORIGIN } from "../../../mocks/site-origin";
 
 import { analyticsRouteFor } from "@/lib/analytics/route";
 import {
@@ -357,8 +358,8 @@ describe("trafficPath", () => {
   });
 
   it("reads a full address as its path, dropping the query, the fragment and a trailing slash", () => {
-    expect(trafficPath("https://sog.gg/fi/discover/pelaaja/?utm_source=meta#top")).toEqual({
-      given: "https://sog.gg/fi/discover/pelaaja/?utm_source=meta#top",
+    expect(trafficPath(`${SITE_ORIGIN}/fi/discover/pelaaja/?utm_source=meta#top`)).toEqual({
+      given: `${SITE_ORIGIN}/fi/discover/pelaaja/?utm_source=meta#top`,
       locale: "fi",
       addresses: ["/fi/discover/pelaaja"],
     });

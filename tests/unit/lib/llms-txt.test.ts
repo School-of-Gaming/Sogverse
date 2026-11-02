@@ -1,4 +1,5 @@
 import { afterAll, afterEach, describe, expect, it, vi } from "vitest";
+import { SITE_ORIGIN } from "../../mocks/site-origin";
 
 // The real wrapped navigation, not the setup's link-rendering stub: the Pages
 // and Languages sections are entirely about the locale-prefixed, translated
@@ -10,14 +11,14 @@ vi.unmock("next/navigation");
 
 // The handler reads the site URL when it runs, but the modules it pulls in read
 // it at import time, so it is set before the dynamic import below.
-process.env.NEXT_PUBLIC_SITE_URL = "https://test.sogverse.local";
+process.env.NEXT_PUBLIC_SITE_URL = SITE_ORIGIN;
 // The handler builds its anonymous client from these; the read itself is mocked.
 vi.stubEnv("NEXT_PUBLIC_SUPABASE_URL", "http://127.0.0.1:54321");
 vi.stubEnv("NEXT_PUBLIC_SUPABASE_ANON_KEY", "anon-key");
 // The file is production's; anywhere else it is not served (the last block).
 vi.stubEnv("VERCEL_ENV", "production");
 afterAll(() => vi.unstubAllEnvs());
-const BASE = "https://test.sogverse.local";
+const BASE = SITE_ORIGIN;
 
 // The live Library the file lists: an article in Finnish alone, and an older
 // one in English and Finnish.

@@ -1,4 +1,5 @@
 import { describe, it, expect, vi, beforeEach } from "vitest";
+import { SITE_ORIGIN } from "../../mocks/site-origin";
 import { NextResponse } from "next/server";
 
 // Finishing an educator registration that began with Google. The account is
@@ -10,7 +11,7 @@ import { NextResponse } from "next/server";
 // attribution and Google's verification follow in one best-effort write.
 
 process.env.PIN_COOKIE_SECRET = "route-test-gedu-complete-registration-secret";
-process.env.NEXT_PUBLIC_SITE_URL = "https://test.sogverse.local";
+process.env.NEXT_PUBLIC_SITE_URL = SITE_ORIGIN;
 
 const mockRequireRole = vi.fn();
 vi.mock("@/lib/auth", () => ({

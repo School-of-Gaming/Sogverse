@@ -90,7 +90,7 @@ import {
   SESSION_REPORT_SPOTLIGHT_LABELS,
   sessionReportSpotlightFixtures,
 } from "./fixtures/session-report-spotlights";
-import type { EmailRenderContext } from "./render-context";
+import { renderUrl, type EmailRenderContext } from "./render-context";
 import type { RenderedAttachment } from "./attachments";
 import type { EmailTranslator, TopicPrepTranslator } from "./translator";
 import { SUPPORTED_TIMEZONES } from "@/lib/calendar-invitations/ics-primitives";
@@ -117,8 +117,36 @@ import { Constants, type DeliveryMode } from "@/types";
 interface TextField {
   key: string;
   label: string;
+  /**
+   * What the untouched input posts. A link to one of our own pages is written
+   * as its path (`/parent`), never as an absolute URL: the form posts it
+   * resolved against the origin the render is built for, so a preview and a
+   * send link to the site actually serving them — see
+   * {@link textFieldValue}.
+   */
   placeholder: string;
   type?: undefined;
+}
+
+/**
+ * The value a text input posts: what was typed, else its placeholder. On a
+ * field whose placeholder is a site path, a path is resolved against `origin`
+ * — the render context's origin, the one the demo art resolves against too, so
+ * one preview never links to two sites — whether it was typed or left as the
+ * placeholder, so typing the shape the box shows works.
+ *
+ * A leading `/` is what marks a path, and it is unambiguous here: no other
+ * text placeholder in the registry starts with one.
+ */
+export function textFieldValue(
+  placeholder: string,
+  typed: string | undefined,
+  origin: string,
+): string {
+  const value = typed || placeholder;
+  return placeholder.startsWith("/") && value.startsWith("/")
+    ? new URL(value, origin).href
+    : value;
 }
 
 interface SelectField {
@@ -1563,13 +1591,15 @@ export const templateRegistry: Record<string, TemplateDefinition> = {
     schema: z.object({}),
     // Three photos: the three shapes the box arithmetic answers for.
     build: (_p, _t, locale, context) =>
-      buildComponentsReferenceEmail(locale, sessionReportPhotoFixtures(3, context)),
+      buildComponentsReferenceEmail(locale, sessionReportPhotoFixtures(3, context), (path) =>
+        renderUrl(path, context),
+      ),
     subject: () => "Email components",
   }),
   passwordReset: defineTemplate({
     label: "Password Reset",
     fields: [
-      { key: "resetLink", label: "Reset Link", placeholder: "https://sogverse.sog.gg/reset-password?token_hash=abc123&type=recovery&email=jane%40example.com" },
+      { key: "resetLink", label: "Reset Link", placeholder: "/reset-password?token_hash=abc123&type=recovery&email=jane%40example.com" },
     ],
     schema: passwordResetParamsSchema,
     build: (p, t, locale) => buildPasswordResetEmail(t, p.resetLink, locale),
@@ -1634,10 +1664,10 @@ export const templateRegistry: Record<string, TemplateDefinition> = {
     label: "Welcome (Parent)",
     fields: [
       { key: "firstName", label: "First Name", placeholder: "Jane" },
-      { key: "verificationUrl", label: `Verification URL (\`${FORM_NONE_TOKEN}\` for an address Google already verified)`, placeholder: "https://sogverse.sog.gg/verify-email?token=abc123" },
-      { key: "dashboardUrl", label: "My SOG URL", placeholder: "https://sogverse.sog.gg/parent" },
-      { key: "shopUrl", label: "Shop URL", placeholder: "https://sogverse.sog.gg/shop" },
-      { key: "settingsUrl", label: "Settings URL", placeholder: "https://sogverse.sog.gg/settings" },
+      { key: "verificationUrl", label: `Verification URL (\`${FORM_NONE_TOKEN}\` for an address Google already verified)`, placeholder: "/verify-email?token=abc123" },
+      { key: "dashboardUrl", label: "My SOG URL", placeholder: "/parent" },
+      { key: "shopUrl", label: "Shop URL", placeholder: "/shop" },
+      { key: "settingsUrl", label: "Settings URL", placeholder: "/settings" },
     ],
     schema: welcomeParentParamsSchema,
     build: (p, t, locale) => buildWelcomeParentEmail(t, locale, p),
@@ -1647,9 +1677,9 @@ export const templateRegistry: Record<string, TemplateDefinition> = {
     label: "Welcome (Gedu)",
     fields: [
       { key: "firstName", label: "First Name", placeholder: "Alice" },
-      { key: "verificationUrl", label: `Verification URL (\`${FORM_NONE_TOKEN}\` for an address Google already verified)`, placeholder: "https://sogverse.sog.gg/verify-email?token=abc123" },
-      { key: "dashboardUrl", label: "My SOG URL", placeholder: "https://sogverse.sog.gg/gedu" },
-      { key: "settingsUrl", label: "Settings URL", placeholder: "https://sogverse.sog.gg/settings" },
+      { key: "verificationUrl", label: `Verification URL (\`${FORM_NONE_TOKEN}\` for an address Google already verified)`, placeholder: "/verify-email?token=abc123" },
+      { key: "dashboardUrl", label: "My SOG URL", placeholder: "/gedu" },
+      { key: "settingsUrl", label: "Settings URL", placeholder: "/settings" },
     ],
     schema: welcomeGeduParamsSchema,
     build: (p, t, locale) => buildWelcomeGeduEmail(t, locale, p),
@@ -1703,7 +1733,7 @@ export const templateRegistry: Record<string, TemplateDefinition> = {
         // rule: a club bought before it starts renders that bare start date.
         placeholder: "13 Jan 2027",
       },
-      { key: "dashboardUrl", label: "My SOG URL", placeholder: "https://sogverse.sog.gg/parent" },
+      { key: "dashboardUrl", label: "My SOG URL", placeholder: "/parent" },
 
       {
         key: "ageRange",
@@ -1839,7 +1869,7 @@ export const templateRegistry: Record<string, TemplateDefinition> = {
     label: "Verify Email",
     fields: [
       { key: "firstName", label: "First Name", placeholder: "Jane" },
-      { key: "verificationUrl", label: "Verification URL", placeholder: "https://sogverse.sog.gg/verify-email?token=abc123" },
+      { key: "verificationUrl", label: "Verification URL", placeholder: "/verify-email?token=abc123" },
     ],
     schema: verifyEmailParamsSchema,
     build: (p, t, locale) => buildVerifyEmailEmail(t, locale, p),
@@ -1863,14 +1893,14 @@ export const templateRegistry: Record<string, TemplateDefinition> = {
       {
         key: "acceptUrl",
         label: "Accept URL",
-        placeholder: "https://sogverse.sog.gg/seat-offer?token=abc123&answer=accept",
+        placeholder: "/seat-offer?token=abc123&answer=accept",
       },
       {
         key: "declineUrl",
         label: "Decline URL",
-        placeholder: "https://sogverse.sog.gg/seat-offer?token=abc123&answer=decline",
+        placeholder: "/seat-offer?token=abc123&answer=decline",
       },
-      { key: "dashboardUrl", label: "My SOG URL", placeholder: "https://sogverse.sog.gg/parent" },
+      { key: "dashboardUrl", label: "My SOG URL", placeholder: "/parent" },
     ],
     schema: seatOfferParamsSchema,
     build: (p, t, locale) => buildSeatOfferEmail(t, locale, p),
@@ -1906,8 +1936,7 @@ export const templateRegistry: Record<string, TemplateDefinition> = {
       {
         key: "adminProductUrl",
         label: "Admin product URL",
-        placeholder:
-          "https://sogverse.sog.gg/admin/municipality-clubs/3f9c2b7e-5d14-4a8e-9c61-0b2f7e8d4a15",
+        placeholder: "/admin/municipality-clubs/3f9c2b7e-5d14-4a8e-9c61-0b2f7e8d4a15",
       },
     ],
     schema: seatOfferStaffParamsSchema,
@@ -1940,7 +1969,7 @@ export const templateRegistry: Record<string, TemplateDefinition> = {
       {
         key: "productUrl",
         label: "Product page URL (My SOG)",
-        placeholder: "https://sogverse.sog.gg/parent/clubs/3f9c2b7e-5d14-4a8e-9c61-0b2f7e8d4a15",
+        placeholder: "/parent/clubs/3f9c2b7e-5d14-4a8e-9c61-0b2f7e8d4a15",
       },
     ],
     schema: sessionReportParamsSchema,
@@ -1956,7 +1985,7 @@ export const templateRegistry: Record<string, TemplateDefinition> = {
       {
         key: "verificationUrl",
         label: "Verification URL",
-        placeholder: "https://sogverse.sog.gg/verify-email?token=abc123",
+        placeholder: "/verify-email?token=abc123",
       },
     ],
     schema: gamerWelcomeParamsSchema,
@@ -1979,7 +2008,7 @@ export const templateRegistry: Record<string, TemplateDefinition> = {
         // The same string the parent's mail states — one deadline, two readers.
         placeholder: "Monday 31 August at 14:20 EEST",
       },
-      { key: "dashboardUrl", label: "My SOG URL (gamer root)", placeholder: "https://sogverse.sog.gg/gamer" },
+      { key: "dashboardUrl", label: "My SOG URL (gamer root)", placeholder: "/gamer" },
     ],
     schema: seatOfferGamerParamsSchema,
     build: (p, t, locale) => buildSeatOfferGamerEmail(t, locale, p),

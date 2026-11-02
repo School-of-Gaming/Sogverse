@@ -634,6 +634,25 @@ describe("the page pinned for gtag's own events", () => {
     });
   });
 
+  // A product page's "create an account" link: the redirect names a marketing
+  // page, so it passes the gate before the load, the pin and the re-check.
+  it("reports and pins a register page whose redirect is a product page", async () => {
+    tabIsOn("/register?redirect=/fr/boutique/abc-123");
+    const report = gtm.reportGtmPageView(CONTAINER_ID, "/register", GRANTED_BOTH);
+
+    containerArrives();
+    await report;
+
+    expect(pinnedPage()).toEqual({
+      page_location: `${window.location.origin}/register?redirect=/fr/boutique/abc-123`,
+      page_title: "Sogverse",
+    });
+    expect(queue().at(-1)).toEqual({
+      event: "page_view",
+      page_path: "/register",
+    });
+  });
+
   // A constant, not `document.title`: the report runs from an effect just after
   // the route changed, and the App Router updates the title on its own
   // schedule — so the title read here can still be the previous page's, and the

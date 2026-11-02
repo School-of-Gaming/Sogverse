@@ -1,8 +1,9 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
+import { SITE_ORIGIN } from "../../mocks/site-origin";
 
 // The staff mail's admin link comes from getOrigin(), which falls back to
 // NEXT_PUBLIC_SITE_URL when the request carries no trusted Host.
-process.env.NEXT_PUBLIC_SITE_URL = "https://test.sogverse.local";
+process.env.NEXT_PUBLIC_SITE_URL = SITE_ORIGIN;
 
 import { NextResponse } from "next/server";
 import { POST } from "@/app/api/participations/seat-offer/route";

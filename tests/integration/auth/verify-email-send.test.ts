@@ -1,4 +1,5 @@
 import { describe, it, expect, vi, beforeEach } from "vitest";
+import { SITE_ORIGIN } from "../../mocks/site-origin";
 import { NextResponse } from "next/server";
 
 // The token is an HMAC over PIN_COOKIE_SECRET, read lazily at mint time — set
@@ -8,7 +9,7 @@ process.env.PIN_COOKIE_SECRET = "route-test-verify-email-secret";
 // NEXT_PUBLIC_SITE_URL when the request carries no trusted Host (these mock
 // requests don't). A fake value keeps the suite hermetic and exercises the
 // production-representative path (untrusted Host → canonical origin).
-process.env.NEXT_PUBLIC_SITE_URL = "https://test.sogverse.local";
+process.env.NEXT_PUBLIC_SITE_URL = SITE_ORIGIN;
 
 // --- Mocks ---
 
@@ -223,7 +224,7 @@ describe("POST /api/auth/verify-email/send", () => {
     );
 
     const { htmlContent } = mockSendTransactionalEmail.mock.calls[0][0];
-    expect(htmlContent).toContain("https://test.sogverse.local/verify-email?token=");
+    expect(htmlContent).toContain(`${SITE_ORIGIN}/verify-email?token=`);
     expect(htmlContent).not.toContain("evil.com");
   });
 

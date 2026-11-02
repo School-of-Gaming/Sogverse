@@ -1,5 +1,10 @@
 import { describe, it, expect, beforeAll, vi } from "vitest";
-import { templateRegistry, type TemplateDefinition } from "@/lib/email-templates/registry";
+import { SITE_HOST, SITE_ORIGIN } from "../../mocks/site-origin";
+import {
+  templateRegistry,
+  textFieldValue,
+  type TemplateDefinition,
+} from "@/lib/email-templates/registry";
 import { BRAND, DARK_THEME, STATUS } from "@/lib/constants/colors";
 import { styledName } from "@/lib/email-templates/utils";
 import { bulletList, ctaButtonRow, factList } from "@/lib/email-templates/blocks";
@@ -55,7 +60,9 @@ const PRODUCT_CONFIRMATION_SCHEDULE = {
  * except the ones `typed` names.
  *
  * This restates the testing page's own rule — a select posts its first option,
- * a text input its placeholder, a textarea what it holds — because that rule is
+ * a text input its placeholder (a site path resolved against the origin, as
+ * the page resolves it against the render's), a textarea what it holds —
+ * because that rule is
  * what decides whether a form nobody has typed into composes a whole mail or a
  * stripped one, and the rule lives in a client component this suite does not
  * render. Keeping it here means a field that changes control type changes what
@@ -79,7 +86,7 @@ function untouchedParams(
           ? field.options[0].value
           : field.type === "textarea"
             ? ""
-            : field.placeholder,
+            : textFieldValue(field.placeholder, undefined, SITE_ORIGIN),
       ]),
     ),
     ...typed,
@@ -194,7 +201,7 @@ describe("templateRegistry render()", () => {
       productType: "consumer_club",
       mode: "subscription",
       priceAmount: "€40.00",
-      dashboardUrl: "https://sogverse.sog.gg/parent",
+      dashboardUrl: `${SITE_ORIGIN}/parent`,
       gamerCopy: false,
       ...PRODUCT_CONFIRMATION_SCHEDULE,
     };
@@ -721,7 +728,7 @@ describe("templateRegistry sessionReport", () => {
     sample: "en",
     viewerTimezone: "Europe/Helsinki",
     reportMarkdown: "",
-    productUrl: "https://sogverse.sog.gg/parent/clubs/3f9c2b7e-5d14-4a8e-9c61-0b2f7e8d4a15",
+    productUrl: `${SITE_ORIGIN}/parent/clubs/3f9c2b7e-5d14-4a8e-9c61-0b2f7e8d4a15`,
   };
 
   /**
@@ -730,7 +737,7 @@ describe("templateRegistry sessionReport", () => {
    * render's origin, and the first body's link kept and made absolute.
    */
   it("hangs the demo spotlights under the mail when asked", () => {
-    vi.stubEnv("NEXT_PUBLIC_SITE_URL", "https://sogverse.sog.gg");
+    vi.stubEnv("NEXT_PUBLIC_SITE_URL", SITE_ORIGIN);
     try {
       const none = templateRegistry.sessionReport.render(params, t, "en");
       expect(none.html).not.toContain("/preview-art/spotlight-");
@@ -739,11 +746,13 @@ describe("templateRegistry sessionReport", () => {
         { ...params, spotlights: "two" },
         t,
         "en",
-        { origin: "https://sogverse.sog.gg" },
+        { origin: SITE_ORIGIN },
       );
-      expect(html.match(/<img src="https:\/\/sogverse\.sog\.gg\/preview-art\/spotlight-[a-z]+\.jpg"/g))
-        .toHaveLength(2);
-      expect(html).toContain('href="https://sogverse.sog.gg/shop"');
+      expect(html.match(/<img src="[^"]*\/preview-art\/spotlight-[a-z]+\.jpg"/g)).toEqual([
+        expect.stringContaining(`<img src="${SITE_ORIGIN}/preview-art/`),
+        expect.stringContaining(`<img src="${SITE_ORIGIN}/preview-art/`),
+      ]);
+      expect(html).toContain(`href="${SITE_ORIGIN}/shop"`);
       expect(html.indexOf("Autumn camps are open")).toBeLessThan(
         html.indexOf("A new Roblox club this term"),
       );
@@ -872,7 +881,7 @@ describe("templateRegistry sessionReport", () => {
    * path is unfetchable from wherever the test send lands.
    */
   it("hangs the chosen number of demo photos on the fixture session", () => {
-    const origin = { origin: "https://sogverse.sog.gg" };
+    const origin = { origin: SITE_ORIGIN };
     const none = templateRegistry.sessionReport.render(params, t, "en", origin);
     expect(none.html).not.toContain("Photos from this session");
 
@@ -883,8 +892,7 @@ describe("templateRegistry sessionReport", () => {
       origin,
     );
     expect(three.html).toContain("Photos from this session");
-    expect(three.html.match(/<img src="https:\/\/sogverse\.sog\.gg\/preview-art\//g))
-      .toHaveLength(3);
+    expect(three.html.split(`<img src="${SITE_ORIGIN}/preview-art/`).slice(1)).toHaveLength(3);
     // The staff copy is the same mail behind a banner, pictures included.
     const staff = templateRegistry.sessionReport.render(
       { ...params, photoCount: "3", copy: "staff" },
@@ -892,8 +900,7 @@ describe("templateRegistry sessionReport", () => {
       "en",
       origin,
     );
-    expect(staff.html.match(/<img src="https:\/\/sogverse\.sog\.gg\/preview-art\//g))
-      .toHaveLength(3);
+    expect(staff.html.split(`<img src="${SITE_ORIGIN}/preview-art/`).slice(1)).toHaveLength(3);
   });
 
   /**
@@ -1068,7 +1075,7 @@ describe("templateRegistry calendarInvitation", () => {
     ["startDate", { startDate: "2026-02-31" }, /Start date: expected a real calendar date/],
     ["startTime", { startTime: "16.00" }, /Start time: expected a 24-hour clock time/],
     ["durationMinutes", { durationMinutes: "two hours" }, /Duration: expected a whole number/],
-    ["url", { url: "sogverse.sog.gg" }, /URL: expected an absolute URL/],
+    ["url", { url: SITE_HOST }, /URL: expected an absolute URL/],
     ["url", { url: "javascript:alert(1)" }, /URL: expected an http or https URL/],
     ["attendeeEmail", { attendeeEmail: "nobody" }, /Attendee email: expected an email address/],
     ["organizerEmail", { organizerEmail: "nobody" }, /Organizer email: expected an email address/],
@@ -1232,7 +1239,7 @@ describe("every template renders in every locale", () => {
    */
   const TEMPLATE_PARAMS: Record<string, Record<string, string | boolean | null>> = {
     componentsReference: {},
-    passwordReset: { resetLink: "https://sogverse.sog.gg/reset-password?code=abc123" },
+    passwordReset: { resetLink: `${SITE_ORIGIN}/reset-password?code=abc123` },
     helpRequest: {
       userName: "Marja Virtanen",
       userRole: "customer",
@@ -1243,16 +1250,16 @@ describe("every template renders in every locale", () => {
     },
     welcomeParent: {
       firstName: "Marja",
-      verificationUrl: "https://sogverse.sog.gg/verify-email?token=abc123",
-      dashboardUrl: "https://sogverse.sog.gg/parent",
-      shopUrl: "https://sogverse.sog.gg/shop",
-      settingsUrl: "https://sogverse.sog.gg/settings",
+      verificationUrl: `${SITE_ORIGIN}/verify-email?token=abc123`,
+      dashboardUrl: `${SITE_ORIGIN}/parent`,
+      shopUrl: `${SITE_ORIGIN}/shop`,
+      settingsUrl: `${SITE_ORIGIN}/settings`,
     },
     welcomeGedu: {
       firstName: "Alice",
-      verificationUrl: "https://sogverse.sog.gg/verify-email?token=abc123",
-      dashboardUrl: "https://sogverse.sog.gg/gedu",
-      settingsUrl: "https://sogverse.sog.gg/settings",
+      verificationUrl: `${SITE_ORIGIN}/verify-email?token=abc123`,
+      dashboardUrl: `${SITE_ORIGIN}/gedu`,
+      settingsUrl: `${SITE_ORIGIN}/settings`,
     },
     productConfirmation: {
       participantName: "Aino",
@@ -1261,7 +1268,7 @@ describe("every template renders in every locale", () => {
       productType: "camp",
       mode: "upfront",
       priceAmount: "€40.00",
-      dashboardUrl: "https://sogverse.sog.gg/parent",
+      dashboardUrl: `${SITE_ORIGIN}/parent`,
       gamerCopy: false,
       // With a schedule, so the locale sweep also reaches the session-times
       // section, the attached-invitation sentence and — through the invitation
@@ -1270,26 +1277,26 @@ describe("every template renders in every locale", () => {
     },
     verifyEmail: {
       firstName: "Marja",
-      verificationUrl: "https://sogverse.sog.gg/verify-email?token=abc123",
+      verificationUrl: `${SITE_ORIGIN}/verify-email?token=abc123`,
     },
     seatOfferGamer: {
       gamerName: "Aino",
       productName: "Minecraft 101",
       deadline: "Sunday, 31 August at 14:20 GMT+3",
-      dashboardUrl: "https://sogverse.sog.gg/gamer",
+      dashboardUrl: `${SITE_ORIGIN}/gamer`,
     },
     gamerWelcome: {
       gamerFirstName: "Aino",
-      verificationUrl: "https://sogverse.sog.gg/verify-email?token=abc123",
+      verificationUrl: `${SITE_ORIGIN}/verify-email?token=abc123`,
     },
     seatOffer: {
       participantName: "Aino",
       isSelfSeat: false,
       productName: "Minecraft 101",
       deadline: "Sunday, 31 August at 14:20 GMT+3",
-      acceptUrl: "https://sogverse.sog.gg/seat-offer?token=abc123&answer=accept",
-      declineUrl: "https://sogverse.sog.gg/seat-offer?token=abc123&answer=decline",
-      dashboardUrl: "https://sogverse.sog.gg/parent",
+      acceptUrl: `${SITE_ORIGIN}/seat-offer?token=abc123&answer=accept`,
+      declineUrl: `${SITE_ORIGIN}/seat-offer?token=abc123&answer=decline`,
+      dashboardUrl: `${SITE_ORIGIN}/parent`,
     },
     seatOfferStaff: {
       reason: "declined",
@@ -1300,7 +1307,7 @@ describe("every template renders in every locale", () => {
       productSchedule: "Tue 16:00, Thu 16:00 (Europe/Helsinki)",
       offeredAt: "Tue, 26 Aug, 14:20 GMT+3",
       adminProductUrl:
-        "https://sogverse.sog.gg/admin/municipality-clubs/3f9c2b7e-5d14-4a8e-9c61-0b2f7e8d4a15",
+        `${SITE_ORIGIN}/admin/municipality-clubs/3f9c2b7e-5d14-4a8e-9c61-0b2f7e8d4a15`,
     },
     sessionReport: {
       gamerName: "Aino",
@@ -1315,7 +1322,7 @@ describe("every template renders in every locale", () => {
       sample: "en",
       viewerTimezone: "Europe/Helsinki",
       reportMarkdown: "",
-      productUrl: "https://sogverse.sog.gg/parent/clubs/3f9c2b7e-5d14-4a8e-9c61-0b2f7e8d4a15",
+      productUrl: `${SITE_ORIGIN}/parent/clubs/3f9c2b7e-5d14-4a8e-9c61-0b2f7e8d4a15`,
     },
     calendarInvitation: CALENDAR_INVITATION_FIXTURE,
   };
@@ -1372,7 +1379,7 @@ describe("every template renders in every locale", () => {
       for (const params of variantsOf(key)) {
         const { subject, html, text, replyTo, attachments } = templateRegistry[
           key
-        ].render(params, translator, locale, { origin: "https://sogverse.sog.gg" });
+        ].render(params, translator, locale, { origin: SITE_ORIGIN });
 
         expect(subject.trim()).not.toBe("");
         expect(subject).not.toContain(`email.${key}`);
@@ -1403,7 +1410,7 @@ describe("every template renders in every locale", () => {
 describe("templateRegistry componentsReference", () => {
   function render() {
     return templateRegistry.componentsReference.render({}, translatorStub, "en", {
-      origin: "https://sogverse.sog.gg",
+      origin: SITE_ORIGIN,
     });
   }
 
@@ -1426,12 +1433,12 @@ describe("templateRegistry componentsReference", () => {
     expect(html).toContain(
       ctaButtonRow(
         {
-          href: "https://sogverse.sog.gg/seat-offer?answer=decline",
+          href: `${SITE_ORIGIN}/seat-offer?answer=decline`,
           label: "No, thank you",
           variant: "outline",
         },
         {
-          href: "https://sogverse.sog.gg/seat-offer?answer=accept",
+          href: `${SITE_ORIGIN}/seat-offer?answer=accept`,
           label: "Accept the seat",
           variant: "secondary",
         },
@@ -1570,5 +1577,41 @@ describe("templateRegistry componentsReference", () => {
       const tag = headingTags[element] ?? element;
       expect(emitted, `the markdown specimen emits no <${tag}>`).toContain(tag);
     }
+  });
+});
+
+/**
+ * A form link to one of our pages is a path the testing page resolves against
+ * the render's own origin, so no placeholder may name a host: one that did would
+ * send a preview's links to a site other than the one serving its demo art.
+ */
+describe("templateRegistry form placeholders", () => {
+  it("names our own pages as paths, never as absolute URLs", () => {
+    const absolute = Object.entries(templateRegistry).flatMap(([name, definition]) =>
+      definition.fields
+        .filter(
+          (field) =>
+            field.type === undefined && /^[a-z][a-z0-9+.-]*:\/\//i.test(field.placeholder),
+        )
+        .map((field) => `${name}.${field.key}`),
+    );
+    expect(absolute).toEqual([]);
+  });
+
+  it("posts a path placeholder resolved against the origin, and anything else as written", () => {
+    expect(textFieldValue("/verify-email?token=abc123", undefined, "http://localhost:3005")).toBe(
+      "http://localhost:3005/verify-email?token=abc123",
+    );
+    expect(textFieldValue("Aino", undefined, SITE_ORIGIN)).toBe("Aino");
+  });
+
+  it("resolves a typed path on a path field, and posts a typed URL or text as typed", () => {
+    expect(textFieldValue("/parent", "/parent?x=1", "http://localhost:3005")).toBe(
+      "http://localhost:3005/parent?x=1",
+    );
+    expect(textFieldValue("/parent", "https://example.com/x", SITE_ORIGIN)).toBe(
+      "https://example.com/x",
+    );
+    expect(textFieldValue("Aino", "/not-a-link", SITE_ORIGIN)).toBe("/not-a-link");
   });
 });

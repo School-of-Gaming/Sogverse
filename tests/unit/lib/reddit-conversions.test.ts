@@ -1,4 +1,5 @@
 import { afterEach, beforeEach, describe, expect, it, vi, type Mock } from "vitest";
+import { SITE_HOST, SITE_ORIGIN } from "../../mocks/site-origin";
 import {
   CONSENT_COOKIE_NAME,
   serialiseConsent,
@@ -6,6 +7,7 @@ import {
 } from "@/lib/consent";
 import type { RedditProductDetails } from "@/lib/marketing-events";
 import { reportRedditConversion } from "@/lib/reddit-conversions.server";
+import { UTM_COOKIE_NAME } from "@/lib/utm";
 import { asObject } from "../../helpers/json";
 
 /**
@@ -77,10 +79,10 @@ function request({
   cookie?: string | null;
   headers?: Record<string, string>;
 } = {}): Request {
-  return new Request("https://test.sogverse.local/api/auth/register", {
+  return new Request(`${SITE_ORIGIN}/api/auth/register`, {
     method: "POST",
     headers: {
-      host: "test.sogverse.local",
+      host: SITE_HOST,
       "user-agent": "Mozilla/5.0 (test)",
       ...(cookie === null ? {} : { cookie }),
       ...headers,
@@ -107,7 +109,7 @@ beforeEach(() => {
   vi.stubEnv("NEXT_PUBLIC_REDDIT_PIXEL_ID", PIXEL_ID);
   vi.stubEnv("REDDIT_CONVERSIONS_API_ACCESS_TOKEN", ACCESS_TOKEN);
   vi.stubEnv("REDDIT_CONVERSIONS_API_TEST_ID", undefined);
-  vi.stubEnv("NEXT_PUBLIC_SITE_URL", "https://test.sogverse.local");
+  vi.stubEnv("NEXT_PUBLIC_SITE_URL", SITE_ORIGIN);
   fetchMock = vi
     .fn<FetchCall>()
     .mockResolvedValue(new Response("{}", { status: 200 }));
@@ -191,7 +193,7 @@ describe("reportRedditConversion — the request", () => {
     const event = sentEvent();
     expect(event.type).toEqual({ tracking_type: "LEAD" });
     expect(event.action_source).toBe("WEBSITE");
-    expect(event.event_source_url).toBe("https://test.sogverse.local/register");
+    expect(event.event_source_url).toBe(`${SITE_ORIGIN}/register`);
     // Milliseconds, not Meta's seconds.
     expect(event.event_at).toBeGreaterThanOrEqual(before);
     expect(event.event_at).toBeLessThanOrEqual(Date.now());
@@ -320,7 +322,7 @@ describe("reportRedditConversion — the request", () => {
     const event = sentEvent();
     expect(event.type).toEqual({ tracking_type: "SIGN_UP" });
     expect(event.event_source_url).toBe(
-      "https://test.sogverse.local/shop/abc-123",
+      `${SITE_ORIGIN}/shop/abc-123`,
     );
     const { conversion_id: _id, ...metadata } = asObject(event.metadata);
     expect(metadata).toEqual({
@@ -379,7 +381,7 @@ describe("reportRedditConversion — the request", () => {
     expect(event.type).toEqual({ tracking_type: "LEAD" });
     const { conversion_id: _id, ...metadata } = asObject(event.metadata);
     expect(metadata).toEqual(UNPRICED_PRODUCT);
-    expect(event.event_source_url).toBe("https://test.sogverse.local/register");
+    expect(event.event_source_url).toBe(`${SITE_ORIGIN}/register`);
   });
 
   it("carries the test id only when one is configured", async () => {
@@ -421,5 +423,67 @@ describe("reportRedditConversion — failure", () => {
       expect.stringContaining("[reddit-conversions]"),
       expect.any(Error),
     );
+  });
+});
+
+/**
+ * The `rdt_cid` our own attribution cookie kept from the landing, for a parent
+ * whose browser has no `_rdt_cid` because the pixel loaded after the click id
+ * had left the address bar.
+ */
+describe("reportRedditConversion — the kept click", () => {
+  const RDT_CID = "1234567890123456789_abcDEF-9";
+  /** A landing a minute ago, well inside the cookie's 30 days. */
+  const LANDED = Date.now() - 60_000;
+
+  function kept(value: string): string {
+    return `; ${UTM_COOKIE_NAME}=${encodeURIComponent(value)}`;
+  }
+
+  it("sends the kept rdt_cid, as the link carried it, when there is no _rdt_cid", async () => {
+    await reportRedditConversion(
+      request({
+        cookie: cookieHeaderFor(GRANTED, kept(`campaign=c&at=${LANDED}&rdt_cid=${LANDED}.${RDT_CID}`)),
+      }),
+      LEAD,
+      PARENT,
+    );
+
+    expect(sentEvent().click_id).toBe(RDT_CID);
+  });
+
+  it("sends the pixel's own _rdt_cid when there is one", async () => {
+    await reportRedditConversion(
+      request({
+        cookie: cookieHeaderFor(GRANTED, `; _rdt_cid=click-123${kept(`rdt_cid=${LANDED}.${RDT_CID}`)}`),
+      }),
+      LEAD,
+      PARENT,
+    );
+
+    expect(sentEvent().click_id).toBe("click-123");
+  });
+
+  it("never sends Meta's kept click id to Reddit", async () => {
+    await reportRedditConversion(
+      request({ cookie: cookieHeaderFor(GRANTED, kept(`fbclid=${LANDED}.meta_1`)) }),
+      LEAD,
+      PARENT,
+    );
+
+    expect(sentEvent()).not.toHaveProperty("click_id");
+    expect(JSON.stringify(sentEvent())).not.toContain("meta_1");
+  });
+
+  it("sends nothing at all without marketing consent, kept click or not", async () => {
+    await reportRedditConversion(
+      request({
+        cookie: cookieHeaderFor({ ...GRANTED, marketing: false }, kept(`rdt_cid=${LANDED}.${RDT_CID}`)),
+      }),
+      LEAD,
+      PARENT,
+    );
+
+    expect(fetchMock).not.toHaveBeenCalled();
   });
 });

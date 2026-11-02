@@ -1,4 +1,5 @@
 import { afterEach, beforeEach, describe, expect, it, vi, type Mock } from "vitest";
+import { SITE_HOST, SITE_ORIGIN } from "../../mocks/site-origin";
 import {
   CONSENT_COOKIE_NAME,
   serialiseConsent,
@@ -6,6 +7,7 @@ import {
 } from "@/lib/consent";
 import type { MetaProductDetails } from "@/lib/marketing-events";
 import { reportMetaConversion } from "@/lib/meta-conversions.server";
+import { UTM_COOKIE_NAME } from "@/lib/utm";
 import { asObject } from "../../helpers/json";
 
 /**
@@ -77,10 +79,10 @@ function request({
   cookie?: string | null;
   headers?: Record<string, string>;
 } = {}): Request {
-  return new Request("https://test.sogverse.local/api/auth/register", {
+  return new Request(`${SITE_ORIGIN}/api/auth/register`, {
     method: "POST",
     headers: {
-      host: "test.sogverse.local",
+      host: SITE_HOST,
       "user-agent": "Mozilla/5.0 (test)",
       ...(cookie === null ? {} : { cookie }),
       ...headers,
@@ -115,7 +117,7 @@ beforeEach(() => {
   vi.stubEnv("META_CONVERSIONS_API_TEST_EVENT_CODE", undefined);
   // The trusted origin every `event_source_url` is built off: these requests
   // carry no Vercel host, so the configured site URL is what getOrigin answers.
-  vi.stubEnv("NEXT_PUBLIC_SITE_URL", "https://test.sogverse.local");
+  vi.stubEnv("NEXT_PUBLIC_SITE_URL", SITE_ORIGIN);
   fetchMock = vi
     .fn<FetchCall>()
     .mockResolvedValue(new Response("{}", { status: 200 }));
@@ -217,7 +219,7 @@ describe("reportMetaConversion — the request", () => {
     // Built from the trusted origin and the path the caller stated — never from
     // the request's own URL, which is an API route.
     expect(event.event_source_url).toBe(
-      "https://test.sogverse.local/register",
+      `${SITE_ORIGIN}/register`,
     );
     expect(typeof event.event_id).toBe("string");
     // Seconds, not milliseconds: Meta rejects a timestamp more than seven days
@@ -379,7 +381,7 @@ describe("reportMetaConversion — the request", () => {
       content_ids: PRODUCT.content_ids,
     });
     expect(event.event_source_url).toBe(
-      "https://test.sogverse.local/shop/abc-123",
+      `${SITE_ORIGIN}/shop/abc-123`,
     );
   });
 
@@ -447,7 +449,7 @@ describe("reportMetaConversion — the request", () => {
     });
     // Still the page the account was created on, not the product's page.
     expect(event.event_source_url).toBe(
-      "https://test.sogverse.local/register",
+      `${SITE_ORIGIN}/register`,
     );
   });
 
@@ -519,5 +521,73 @@ describe("reportMetaConversion — failure", () => {
       expect.stringContaining("[meta-conversions]"),
       expect.any(Error),
     );
+  });
+});
+
+/**
+ * The `fbclid` our own attribution cookie kept from the landing, for a parent
+ * whose browser has no `_fbc` because the pixel loaded after the click id had
+ * left the address bar.
+ */
+describe("reportMetaConversion — the kept click", () => {
+  const FBCLID = "IwZXh0bgNhZW0CMTEAAR2_aem_AeVgoX2Yh5Qx4n7Z-p";
+  /** A landing a minute ago, well inside the cookie's 30 days. */
+  const LANDED = Date.now() - 60_000;
+
+  function kept(value: string): string {
+    return `; ${UTM_COOKIE_NAME}=${encodeURIComponent(value)}`;
+  }
+
+  it("builds fbc from the kept fbclid when there is no _fbc", async () => {
+    await reportMetaConversion(
+      request({
+        cookie: cookieHeaderFor(GRANTED, kept(`campaign=c&at=${LANDED}&fbclid=${LANDED}.${FBCLID}`)),
+      }),
+      { event: "account_created", sourcePath: "/register" },
+      PARENT,
+    );
+
+    expect(asObject(sentEvent().user_data).fbc).toBe(`fb.1.${LANDED}.${FBCLID}`);
+  });
+
+  it("sends the pixel's own _fbc when there is one", async () => {
+    await reportMetaConversion(
+      request({
+        cookie: cookieHeaderFor(
+          GRANTED,
+          `; _fbc=fb.1.123.IwAR${kept(`fbclid=${LANDED}.${FBCLID}`)}`,
+        ),
+      }),
+      { event: "account_created", sourcePath: "/register" },
+      PARENT,
+    );
+
+    expect(asObject(sentEvent().user_data).fbc).toBe("fb.1.123.IwAR");
+  });
+
+  it("never sends Reddit's kept click id to Meta", async () => {
+    await reportMetaConversion(
+      request({ cookie: cookieHeaderFor(GRANTED, kept(`rdt_cid=${LANDED}.reddit_1`)) }),
+      { event: "account_created", sourcePath: "/register" },
+      PARENT,
+    );
+
+    expect(asObject(sentEvent().user_data)).not.toHaveProperty("fbc");
+    expect(JSON.stringify(sentBody())).not.toContain("reddit_1");
+  });
+
+  it("sends nothing at all without marketing consent, kept click or not", async () => {
+    await reportMetaConversion(
+      request({
+        cookie: cookieHeaderFor(
+          { ...GRANTED, marketing: false },
+          kept(`fbclid=${LANDED}.${FBCLID}`),
+        ),
+      }),
+      { event: "account_created", sourcePath: "/register" },
+      PARENT,
+    );
+
+    expect(fetchMock).not.toHaveBeenCalled();
   });
 });

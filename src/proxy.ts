@@ -25,9 +25,9 @@ import { CONSENT_COOKIE_NAME, parseConsentCookie } from "@/lib/consent";
 import {
   UTM_COOKIE_NAME,
   UTM_HEADER,
-  readUtmFromSearchParams,
-  serialiseUtm,
-  serialiseUtmCookie,
+  attributionCookieAfterLanding,
+  readAttributionFromSearchParams,
+  serialiseAttribution,
   utmCookieOptions,
 } from "@/lib/utm";
 
@@ -335,7 +335,9 @@ export async function proxy(request: NextRequest) {
   request.headers.set("Content-Security-Policy", cspHeader);
 
   // UTM attribution: `utm_source` / `utm_medium` / `utm_campaign` /
-  // `utm_content` / `utm_term` on the landing URL, sanitised here and handed
+  // `utm_content` / `utm_term` on the landing URL, with Meta's `fbclid` and
+  // Reddit's `rdt_cid` beside them, each stamped with this request's time as its
+  // landing time, sanitised here and handed
   // to the root layout, which seeds them into a client context provider for
   // the consent banner, and kept in the attribution cookie when this request
   // already carries marketing consent (`keepAttribution` below). See
@@ -353,28 +355,33 @@ export async function proxy(request: NextRequest) {
   // true and merely being intended.
   //
   // **A value over the byte budget is dropped, not truncated**, and the budget
-  // lives in the module with the rest of the rules — `serialiseUtm` answers
-  // null past `UTM_HEADER_MAX_LENGTH`, so it arrives here as the same "nothing
-  // to send" the no-attribution case produces and needs no branch of its own.
+  // lives in the module with the rest of the rules — `serialiseAttribution`
+  // answers null for a tag past `UTM_HEADER_MAX_LENGTH`, so it arrives here as
+  // the same "nothing to send" the no-attribution case produces and needs no
+  // branch of its own (a click id that does not fit beside the tag is dropped
+  // there too, alone).
   // The point of enforcing it at all is that a header a stranger controls
   // through the query string must not be able to push a request past a hop's
   // own per-header ceiling: that turns into a 502 nobody chose, where dropping
   // the attribution costs one visit's marketing data. The cookie has a budget of
-  // its own, which `serialiseUtmCookie` answers null past in the same way, and
-  // a null leaves any cookie already there as it is.
+  // its own, which `attributionCookieAfterLanding` answers null past in the same
+  // way, and a null leaves any cookie already there as it is. That function also
+  // merges the landing into the cookie this request carried, part by part — a
+  // landing replaces only the tag or the click ids it carries.
   //
   // This runs above every branch and early return, like the two sets above, so
   // no path bypasses it. The repeated-param rule and the sanitiser both live in
   // the module, so this file holds no copy of either.
   request.headers.delete(UTM_HEADER);
-  const landingUtm = readUtmFromSearchParams(request.nextUrl.searchParams);
-  const utm = serialiseUtm(landingUtm);
+  const landedAt = Date.now();
+  const landing = readAttributionFromSearchParams(request.nextUrl.searchParams, landedAt);
+  const utm = serialiseAttribution(landing);
   if (utm !== null) {
     request.headers.set(UTM_HEADER, utm);
   }
   const attributionToKeep =
     parseConsentCookie(request.cookies.get(CONSENT_COOKIE_NAME)?.value)?.marketing === true
-      ? serialiseUtmCookie(landingUtm)
+      ? attributionCookieAfterLanding(request.headers.get("cookie"), landing, landedAt)
       : null;
 
   // The URL as the visitor typed it: locale-prefixed, with that locale's slug.

@@ -22,7 +22,7 @@ import {
   type ConsentState,
 } from "@/lib/consent";
 import {
-  serialiseUtmCookie,
+  attributionCookieAfterLanding,
   UTM_COOKIE_MAX_AGE_SECONDS,
   UTM_COOKIE_NAME,
 } from "@/lib/utm";
@@ -120,13 +120,20 @@ export function ConsentProvider({ initial, children }: ConsentProviderProps) {
         maxAge: CONSENT_MAX_AGE_SECONDS,
       });
 
-      // Marketing granted just now: the proxy could not keep the tag this visit
-      // landed with, because the landing request carried no such answer, so it
-      // is kept here. Ahead of the reload below, which an answer that also
-      // takes analytics away goes through. No tag, or one over the cookie's
-      // budget, writes nothing, so a tag kept from an earlier visit stands.
+      // Marketing granted just now: the proxy could not keep the tag and click
+      // ids this visit landed with, because the landing request carried no such
+      // answer, so they are kept here. Ahead of the reload below, which an
+      // answer that also takes analytics away goes through. Merged into the
+      // cookie this document can see, as the proxy merges into the request's:
+      // another tab may have written one while this one waited. Nothing landed,
+      // or a tag over the cookie's budget, writes nothing, so what is already
+      // kept stands.
       if (consent?.marketing !== true && next.marketing && isNotAGamer) {
-        const serialised = serialiseUtmCookie(utm);
+        const serialised = attributionCookieAfterLanding(
+          document.cookie,
+          utm,
+          Date.now(),
+        );
         if (serialised !== null) {
           setCookie(UTM_COOKIE_NAME, serialised, {
             maxAge: UTM_COOKIE_MAX_AGE_SECONDS,
@@ -196,8 +203,8 @@ export function ConsentProvider({ initial, children }: ConsentProviderProps) {
   // Two things fall out of it that the withdrawal path never covered. Cookies
   // already stranded on real browsers by that race are cleared on the visitor's
   // next page, with nothing to migrate; and so are cookies this app never set,
-  // which matters because the legacy sog.gg site does not gate its tags behind
-  // consent and writes on the registrable domain our pages can read and expire.
+  // which matters because the legacy marketing site did not gate its tags behind
+  // consent and wrote on the registrable domain our pages can read and expire.
   //
   // Not granted covers a refusal, analytics-only, *and* a visitor who has not
   // answered yet — the answer is only ever `marketing: true` or nothing doing.

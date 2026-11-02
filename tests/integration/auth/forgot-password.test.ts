@@ -1,4 +1,5 @@
 import { describe, it, expect, vi, beforeEach } from "vitest";
+import { SITE_ORIGIN } from "../../mocks/site-origin";
 import { POST } from "@/app/api/auth/forgot-password/route";
 
 // The route builds the emailed reset link's redirectTo via getOrigin(), which
@@ -7,7 +8,7 @@ import { POST } from "@/app/api/auth/forgot-password/route";
 // exercises the production-representative path (untrusted Host → canonical
 // origin). getOrigin reads process.env at call time, so setting it here works
 // despite import hoisting.
-process.env.NEXT_PUBLIC_SITE_URL = "https://test.sogverse.local";
+process.env.NEXT_PUBLIC_SITE_URL = SITE_ORIGIN;
 
 // --- Mocks ---
 
@@ -135,7 +136,7 @@ describe("POST /api/auth/forgot-password", () => {
     await POST(spoofed);
 
     const { htmlContent } = mockSendTransactionalEmail.mock.calls[0][0];
-    expect(htmlContent).toContain("https://test.sogverse.local/reset-password?token_hash=");
+    expect(htmlContent).toContain(`${SITE_ORIGIN}/reset-password?token_hash=`);
     expect(htmlContent).not.toContain("evil.com");
   });
 
@@ -147,7 +148,7 @@ describe("POST /api/auth/forgot-password", () => {
         toEmail: "user@example.com",
         subject: "Reset your School of Gaming password",
         htmlContent: expect.stringContaining(
-          "https://test.sogverse.local/reset-password?token_hash=hashed-abc-123&type=recovery",
+          `${SITE_ORIGIN}/reset-password?token_hash=hashed-abc-123&type=recovery`,
         ),
       })
     );

@@ -1,9 +1,10 @@
 import { describe, expect, it } from "vitest";
+import { SITE_ORIGIN } from "../../mocks/site-origin";
 import { siteJsonLd } from "@/lib/seo/organization";
 import { SUPPORT_EMAIL } from "@/lib/constants/brand";
 import { INDEXED_LOCALES } from "@/lib/metadata/localized-page";
 
-const SITE = "https://test.sogverse.local";
+const SITE = SITE_ORIGIN;
 
 const [organization, website] = siteJsonLd({
   siteUrl: SITE,
@@ -39,7 +40,6 @@ describe("siteJsonLd", () => {
     // Facebook page) must never creep back in, because a `sameAs` that 404s
     // is a corroboration that fails.
     expect(organization.sameAs).toEqual([
-      "https://www.sog.gg/",
       "https://www.instagram.com/sog_suomi/",
       "https://www.facebook.com/sogversum",
       "https://www.youtube.com/@SchoolofGamingSuomi",

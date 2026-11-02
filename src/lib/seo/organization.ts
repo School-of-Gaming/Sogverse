@@ -29,15 +29,8 @@ import { INDEXED_LOCALES } from "@/lib/metadata/localized-page";
  * resolves for a visitor, and a `sameAs` that 404s is a corroboration that
  * fails. The Discord server is invite-only and has no public URL to list;
  * there is no TikTok and no X account.
- *
- * The legacy marketing site leads the list on purpose. Search engines' notion
- * of the School of Gaming entity is attached to it today, and this entry says
- * the Organization published here is that same entity — the hand-over the
- * site-quality doc's first "found" backlog item is about. It goes when the host is
- * retired, or stays harmlessly once the host redirects here.
  */
 export const SAME_AS = [
-  "https://www.sog.gg/",
   "https://www.instagram.com/sog_suomi/",
   "https://www.facebook.com/sogversum",
   "https://www.youtube.com/@SchoolofGamingSuomi",

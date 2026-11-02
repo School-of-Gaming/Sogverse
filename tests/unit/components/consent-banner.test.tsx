@@ -10,14 +10,15 @@ import {
 } from "@/lib/consent";
 import { getCookie } from "@/lib/cookies";
 import {
+  NO_ATTRIBUTION,
   NO_UTM_ATTRIBUTION,
   UTM_COOKIE_NAME,
-  type UtmAttribution,
+  type Attribution,
 } from "@/lib/utm";
 
 const messages = { consent: enConsent };
 
-let mockUtm: UtmAttribution = NO_UTM_ATTRIBUTION;
+let mockUtm: Attribution = NO_ATTRIBUTION;
 let mockAuth: {
   user: { id: string } | null;
   profile: { role: string } | null;
@@ -116,7 +117,7 @@ let reload: ReturnType<typeof vi.fn>;
 
 beforeEach(() => {
   clearCookies();
-  mockUtm = NO_UTM_ATTRIBUTION;
+  mockUtm = NO_ATTRIBUTION;
   mockAuth = { user: null, profile: null, isLoading: false };
   window.localStorage.clear();
   window.sessionStorage.clear();
@@ -283,7 +284,13 @@ describe("ConsentBanner", () => {
   });
 
   describe("the attribution cookie", () => {
-    const TAG = { ...NO_UTM_ATTRIBUTION, source: "lynx", campaign: "Rentrée" };
+    // The landing time the proxy stamped, recent enough to be kept.
+    const LANDED = Date.now() - 60_000;
+    const TAG: Attribution = {
+      utm: { ...NO_UTM_ATTRIBUTION, source: "lynx", campaign: "Rentrée" },
+      utmLandedAt: LANDED,
+      clickIds: {},
+    };
 
     it("is written from the visit's tag when marketing is accepted", () => {
       mockUtm = TAG;
@@ -291,7 +298,38 @@ describe("ConsentBanner", () => {
 
       press(messages.consent.acceptAll);
 
-      expect(getCookie(UTM_COOKIE_NAME)).toBe("source=lynx&campaign=Rentr%C3%A9e");
+      expect(getCookie(UTM_COOKIE_NAME)).toBe(
+        `source=lynx&campaign=Rentr%C3%A9e&at=${LANDED}`,
+      );
+    });
+
+    it("keeps the visit's click id beside its tag", () => {
+      mockUtm = { ...TAG, clickIds: { meta: { id: "IwAR_abc-1", landedAt: LANDED } } };
+      render(<Harness initial={null} />);
+
+      press(messages.consent.acceptAll);
+
+      expect(getCookie(UTM_COOKIE_NAME)).toBe(
+        `source=lynx&campaign=Rentr%C3%A9e&at=${LANDED}&fbclid=${LANDED}.IwAR_abc-1`,
+      );
+    });
+
+    it("keeps another platform's click id that another tab already kept", () => {
+      mockUtm = {
+        ...NO_ATTRIBUTION,
+        clickIds: { reddit: { id: "t3_reddit", landedAt: LANDED } },
+      };
+      // Written after mount: the unanswered document clears it on the way in.
+      render(<Harness initial={null} />);
+      document.cookie = `${UTM_COOKIE_NAME}=${encodeURIComponent(
+        `campaign=earlier&at=${LANDED}&fbclid=${LANDED}.meta-id`,
+      )};path=/`;
+
+      press(messages.consent.acceptAll);
+
+      expect(getCookie(UTM_COOKIE_NAME)).toBe(
+        `campaign=earlier&at=${LANDED}&fbclid=${LANDED}.meta-id&rdt_cid=${LANDED}.t3_reddit`,
+      );
     });
 
     it("is written when marketing is added to an analytics-only answer", () => {
@@ -309,7 +347,9 @@ describe("ConsentBanner", () => {
 
       press(messages.consent.acceptAll);
 
-      expect(getCookie(UTM_COOKIE_NAME)).toBe("source=lynx&campaign=Rentr%C3%A9e");
+      expect(getCookie(UTM_COOKIE_NAME)).toBe(
+        `source=lynx&campaign=Rentr%C3%A9e&at=${LANDED}`,
+      );
     });
 
     it("is not written on a refusal, or on analytics alone", () => {
@@ -348,9 +388,9 @@ describe("ConsentBanner", () => {
 
     it("leaves an earlier tag standing when the visit's tag is over the cookie's budget", () => {
       mockUtm = {
-        ...NO_UTM_ATTRIBUTION,
-        source: "é".repeat(100),
-        campaign: "é".repeat(200),
+        utm: { ...NO_UTM_ATTRIBUTION, source: "é".repeat(100), campaign: "é".repeat(200) },
+        utmLandedAt: LANDED,
+        clickIds: {},
       };
       // Written after mount: the unanswered document clears it on the way in.
       render(<Harness initial={null} />);
