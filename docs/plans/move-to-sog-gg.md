@@ -305,6 +305,20 @@ Every write outside the repo is confirmed with the owner before it is made.
 
 ### 1. The cutover hour
 
+*Done 2026-11-02, late morning Helsinki.* Steps 1–8 ran and their checks passed: Stripe, both
+Vault syncs and Discord arrive on `sog.gg`, and `sogverse.sog.gg` 308s with path and query.
+Left for the owner: Claude connectors (re-add), the Minecraft server team and Lynx switching
+their base URL, the two Klaviyo flows, and submitting the sitemap (step 9). What differed:
+- `sog.gg` gave a TLS error for about three minutes after the DNS switch, until Vercel
+  issued its certificate; `sogverse.sog.gg` served throughout.
+- The Stripe CLI's key cannot write webhooks; the live endpoint was edited in the dashboard.
+- WhatsApp's callback was a long-dead feature-branch preview, never `sogverse.sog.gg`, and
+  the Meta app is unpublished (the integration is parked). It now points at `sog.gg`;
+  Meta's form needs the verify token pasted again for any URL change.
+- Also done in the hour, at the owner's word: `sogverse.vercel.app` removed from the
+  project, the dead `beta` CNAME deleted, `staging` moved to the project's own CNAME, and
+  two dead Stripe webhooks (a disabled WooCommerce one, a Chargebee test one) deleted.
+
 At a quiet hour, in this order. Each step lists its check.
 
 **The expected error window is about five minutes.** From the DNS switch until the
