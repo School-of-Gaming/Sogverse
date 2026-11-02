@@ -27,7 +27,7 @@ export const marketingConsentKeys = {
 /**
  * The signed-in parent's own marketing consents.
  *
- * At most two rows, read by primary-key prefix — a near-instant indexed call, so
+ * At most one row, read by primary-key prefix — a near-instant indexed call, so
  * a consumer renders nothing while it flies inside a container that already has
  * its final size rather than a skeleton or a spinner. What a consumer *must*
  * do is treat `undefined` as "not answered yet" and never let an unresolved

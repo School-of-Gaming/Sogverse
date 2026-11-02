@@ -8,8 +8,7 @@ cancelled — as events. One way only:
 nothing Klaviyo holds is ever read back except the profile's own Klaviyo id. The newsletter
 form on landing pages writes to the same Klaviyo account (`src/services/landing-pages/`),
 through the same client. Klaviyo is the source of truth for School of Gaming's own mailing
-list; the `school_of_gaming` consent rows Sogverse wrote before it moved stay in the
-database unread, and carrying them into Klaviyo and removing them are later changes.
+list; Sogverse stores no account-level answer for it.
 
 ## The database announces ids, never payloads
 
@@ -197,13 +196,9 @@ owner or with the owner's say — never by a session on its own initiative.
   (`SV Marketing consent`, from `…_PRODUCTION`), and `KLAVIYO_ACCOUNT_LIST_ID`,
   `KLAVIYO_CLUB_LIST_ID`, `KLAVIYO_CAMP_LIST_ID`, `KLAVIYO_EVENT_LIST_ID` and
   `KLAVIYO_MUNICIPAL_CLUB_LIST_ID` on Production alone (each from its `…_PRODUCTION`). The code reads only the unsuffixed names.
-  `KLAVIYO_MARKETING_CONSENT_LIST_ID` replaces `KLAVIYO_NEWSLETTER_LIST_ID`, and has to be
-  on Vercel Preview and Production before this code deploys — the sign-up and the
-  registration tick fail without it. It is already set on both. Once this is released,
-  `KLAVIYO_NEWSLETTER_LIST_ID` is deleted from Vercel and from `.env.local`.
-  `KLAVIYO_EVENT_LIST_ID` has to be on Vercel Production before this code reaches
-  production — without it every parent holding a seat on an event fails their profile row
-  until it is set.
+  The sign-up and the registration tick fail without `KLAVIYO_MARKETING_CONSENT_LIST_ID`,
+  and without `KLAVIYO_EVENT_LIST_ID` every parent holding a seat on an event fails their
+  profile row until it is set.
 - **The secret.** `KLAVIYO_SYNC_SECRET`, one random value per environment, on Vercel
   Preview (the unsuffixed value) and Production (`KLAVIYO_SYNC_SECRET_PRODUCTION`),
   sensitive, then a redeploy. An unset secret refuses every call to the sync route.

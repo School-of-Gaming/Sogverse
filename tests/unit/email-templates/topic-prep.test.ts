@@ -15,11 +15,12 @@ import enTopicPrep from "@/../messages/en/topicPrep.json";
 const messages = { topicPrep: enTopicPrep };
 
 // The mail's half of the "Before the first session" guide. What is worth
-// asserting here is the two answers a caller cannot recover for itself: that
-// there is genuinely *nothing* to state where nothing applies — a mail splices
-// the string in raw, so a section label over a closing line would be furniture
-// announcing that there is nothing to say — and that an in-person render drops
-// exactly the steps School of Gaming is supplying the machines for.
+// asserting here is the answers a caller cannot recover for itself: that there
+// is genuinely *nothing* to state where nothing applies — a mail splices the
+// string in raw, so a section label over a closing line would be furniture
+// announcing that there is nothing to say — that an in-person render drops
+// exactly the steps School of Gaming is supplying the machines for, and that a
+// topic with none left states the one note and nothing else.
 //
 // Both builders take a plan the caller resolved, which is what keeps the body
 // and its plain-text twin stating one document. So the empty answer is the
@@ -72,12 +73,25 @@ describe("topic prep email section", () => {
     expect(lines.some((line) => line.startsWith("2. "))).toBe(false);
   });
 
-  it("has nothing to compose for Minecraft Education in person", () => {
-    // Its one step is an install, and in person we supply the machines and the
-    // logins alike — so there is genuinely nothing for a family to do, and the
-    // mail says nothing rather than saying so.
-    expect(resolveTopicPrep("minecraft_education", "in_person")).toBeNull();
-    expect(section("minecraft_education", "online")).not.toBe("");
+  it("states only the heading and the note for a supplied topic in person", () => {
+    // In person we supply the machines and the logins alike, so there are no
+    // steps: no intro, no list (an empty one would draw nothing but a margin)
+    // and no closing, which presumes steps were followed.
+    const prep = messages.topicPrep;
+    const html = section("minecraft_education", "in_person");
+
+    expect(html).toContain(prep.heading);
+    expect(html).toContain(prep.suppliedInPersonNote);
+    expect(html).not.toContain("<ol");
+    expect(html).not.toContain("<table");
+    expect(html).not.toContain(prep.closing);
+    expect(html).not.toContain(prep.steps.minecraftEducationInstall.title);
+
+    expect(textLines("minecraft_education", "in_person")).toEqual([
+      prep.heading,
+      "",
+      prep.suppliedInPersonNote,
+    ]);
   });
 
   it("renders the guide as a numbered list under a section label", () => {
@@ -162,6 +176,56 @@ describe("topic prep email section", () => {
     // The shared step is numbered like any other, and it is the last one.
     expect(lines).toContain(`4. ${prep.steps.remoteSession.title}`);
     expect(lines.at(-1)).toBe(prep.closing);
+  });
+
+  it("states a hybrid guide as two lists around the home heading", () => {
+    const prep = messages.topicPrep;
+    const html = section("roblox_studio", "hybrid");
+
+    expect(html).toContain(prep.hybridIntro);
+    expect(html).not.toContain(prep.topics.roblox_studio.intro);
+
+    // In reading order: the first list, the heading, the second list, the end.
+    const order = [
+      prep.steps.robloxStudioAccount.title,
+      prep.steps.venueVoiceRoom.title,
+      prep.homeHeading,
+      prep.steps.robloxStudioInstall.title,
+      prep.steps.remoteSession.title,
+      prep.closing,
+    ].map((text) => html.indexOf(text));
+    expect(order).not.toContain(-1);
+    expect(order).toEqual([...order].sort((a, b) => a - b));
+  });
+
+  it("restarts the numbering after the home heading in the text twin", () => {
+    const prep = messages.topicPrep;
+    const lines = textLines("roblox_studio", "hybrid");
+    const home = lines.indexOf(prep.homeHeading);
+
+    expect(lines).toContain(prep.hybridIntro);
+    expect(lines.indexOf(`1. ${prep.steps.robloxStudioAccount.title}`)).toBeLessThan(home);
+    expect(lines.indexOf(`2. ${prep.steps.venueVoiceRoom.title}`)).toBeLessThan(home);
+    expect(lines.indexOf(`1. ${prep.steps.robloxStudioInstall.title}`)).toBeGreaterThan(home);
+    expect(lines.indexOf(`3. ${prep.steps.remoteSession.title}`)).toBeGreaterThan(home);
+    expect(lines.at(-1)).toBe(prep.closing);
+  });
+
+  it("gives a label-only topic the two shared steps on a hybrid product", () => {
+    const prep = messages.topicPrep;
+    const html = section("programming", "hybrid");
+
+    expect(html).toContain(prep.steps.venueVoiceRoom.title);
+    expect(html).toContain(prep.homeHeading);
+    expect(html).toContain(prep.steps.remoteSession.title);
+  });
+
+  it("states no home heading off a hybrid product", () => {
+    const prep = messages.topicPrep;
+    for (const mode of ["online", "in_person"] as const) {
+      expect(section("roblox_studio", mode)).not.toContain(prep.homeHeading);
+      expect(textLines("roblox_studio", mode)).not.toContain(prep.homeHeading);
+    }
   });
 
   it("keeps every Pokémon GO step in person", () => {

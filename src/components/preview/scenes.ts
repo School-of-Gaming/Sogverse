@@ -243,6 +243,11 @@ export const PREVIEW_SCENES = [
         description:
           "The same guides with the install steps gone, including the one topic that filters down to nothing.",
       },
+      {
+        slug: "hybrid",
+        label: "Hybrid — venue and home",
+        description: "The two-section guide of a product with gamers at a site and a voice room.",
+      },
     ],
   },
   {

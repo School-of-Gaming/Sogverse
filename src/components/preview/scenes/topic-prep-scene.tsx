@@ -1,4 +1,4 @@
-/* eslint-disable i18next/no-literal-string -- every literal in this file is preview scaffolding on an admin-only page: the column's own title, the per-topic heading's fallback line, the label-only card's heading, and the note that a topic renders nothing in this form. The guides themselves are the translated part, and they come from <TopicPrepContent> */
+/* eslint-disable i18next/no-literal-string -- every literal in this file is preview scaffolding on an admin-only page: the column's own title, the per-topic heading's fallback line and the label-only card's heading. The guides themselves are the translated part, and they come from <TopicPrepContent> */
 import { Heading } from "@sog/ui";
 import { Card, CardContent } from "@/components/ui/card";
 import { TopicPrepContent } from "@/components/topic-prep/TopicPrepContent";
@@ -26,34 +26,49 @@ import type { DeliveryMode, ProductTopic } from "@/types";
  * a run of guides with no boundary between them reads as one long guide, which
  * is exactly the comparison this page exists to make possible.
  *
- * The two scenarios are the two forms a guide is filtered into, and they are
- * scenarios rather than an axis because no product is both: `remote` renders
- * every step, `in-person` only the steps that are still the family's to do. A
- * topic that filters down to nothing says so in a muted line instead of
- * vanishing — the three Minecraft topics are deliberately empty in person,
- * because the login there is ours as well as the machine, and a page that
- * simply skipped them would look identical to one where the guides had gone
- * missing.
+ * The scenarios are the delivery modes, and they are scenarios rather than an
+ * axis because no product is two of them: `remote` renders every step,
+ * `in-person` only the steps that are still the family's to do, and `hybrid`
+ * the two-section guide. The three Minecraft topics show their one note in
+ * person, because the login there is ours as well as the machine.
  *
- * The `remote` column is an online product's guide; a hybrid product's is
- * whatever the resolver answers for its mode, which today is this one. It
- * carries one card the topic registry cannot name: the one-step guide every
- * label-only topic gets, which is the shared voice-room step under the generic
- * intro. It is written once and rendered
- * on every label-only topic, so it is read once here rather than once per topic — and it only
- * exists in this column, which is why `in-person` is unchanged.
+ * The columns with a room carry one card the topic registry cannot name: the
+ * guide every label-only topic gets, which has nothing keyed by topic in it. It
+ * is rendered on every label-only topic, so it is read once here rather than
+ * once per topic.
  */
 
 /**
  * Any one of the label-only topics stands in for all of them: their guide
- * is the shared step under the generic intro, with nothing keyed by topic in
+ * is the shared steps under a generic intro, with nothing keyed by topic in
  * it, so rendering a second would render the same words again.
  */
 const LABEL_ONLY_SAMPLE: ProductTopic = "esports";
 
-export const TOPIC_PREP_SCENARIOS = ["remote", "in-person"] as const;
+export const TOPIC_PREP_SCENARIOS = ["remote", "in-person", "hybrid"] as const;
 
 export type TopicPrepSceneScenario = (typeof TOPIC_PREP_SCENARIOS)[number];
+
+const SCENARIO_MODE = {
+  remote: "online",
+  "in-person": "in_person",
+  hybrid: "hybrid",
+} as const satisfies Record<TopicPrepSceneScenario, DeliveryMode>;
+
+const SCENARIO_HEADING = {
+  remote: "online products",
+  "in-person": "in-person products",
+  hybrid: "hybrid products",
+} as const satisfies Record<TopicPrepSceneScenario, string>;
+
+const SCENARIO_NOTE = {
+  remote:
+    "Every step of every guide, plus the shared voice-room step every product with a voice room ends on.",
+  "in-person":
+    "Only what is still the family's to do: School of Gaming brings the machines with the software already on them, and the Minecraft logins as well.",
+  hybrid:
+    "What applies wherever the child is, ending on joining the room at the venue, then what joining from home adds.",
+} as const satisfies Record<TopicPrepSceneScenario, string>;
 
 export function isTopicPrepScenario(s: string): s is TopicPrepSceneScenario {
   return (TOPIC_PREP_SCENARIOS as readonly string[]).includes(s);
@@ -64,11 +79,10 @@ export function TopicPrepScene({
 }: {
   scenario: TopicPrepSceneScenario;
 }) {
-  const isOnline = scenario === "remote";
-  const mode: DeliveryMode = isOnline ? "online" : "in_person";
+  const mode = SCENARIO_MODE[scenario];
   const topics = PRODUCT_TOPIC_VALUES.filter(topicHasPrep);
-  // Null in person, and never null online — every product with a room has the
-  // shared voice-room step — so the card below is conditional on the answer
+  // Null in person, and never null with a room — every product with a room has
+  // the shared voice-room step — so the card below is conditional on the answer
   // like every other card on this page.
   const labelOnlyPlan = resolveTopicPrep(LABEL_ONLY_SAMPLE, mode);
 
@@ -77,13 +91,10 @@ export function TopicPrepScene({
       <div className="mx-auto max-w-2xl space-y-6">
         <div className="space-y-1">
           <Heading level={1} step="section">
-            Topic prep guides &mdash;{" "}
-            {isOnline ? "online products" : "in-person products"}
+            Topic prep guides &mdash; {SCENARIO_HEADING[scenario]}
           </Heading>
           <p className="text-sm text-muted-foreground">
-            {isOnline
-              ? "Every step of every guide, plus the shared voice-room step every product with a voice room ends on."
-              : "Only what is still the family's to do: School of Gaming brings the machines with the software already on them, and the Minecraft logins as well."}
+            {SCENARIO_NOTE[scenario]}
           </p>
         </div>
 
@@ -91,28 +102,22 @@ export function TopicPrepScene({
           // The one resolve per card: the same answer decides whether there is
           // a guide here at all and what the guide is.
           const plan = resolveTopicPrep(topic, mode);
+          if (plan === null) return null;
           return (
             <Card key={topic}>
               <CardContent className="space-y-4 p-5 sm:p-6">
                 <Heading level={2} step="card-title">
                   {PRODUCT_TOPICS[topic].label}
                 </Heading>
-                {plan === null ? (
-                  <p className="text-sm italic text-muted-foreground">
-                    Nothing renders in this form &mdash; every step belongs to a
-                    machine or a login School of Gaming supplies.
-                  </p>
-                ) : (
-                  <TopicPrepContent plan={plan} />
-                )}
+                <TopicPrepContent plan={plan} />
               </CardContent>
             </Card>
           );
         })}
 
         {/* The label-only topics render one identical guide, so they get
-            one card rather than one each. Online only: in person they have
-            nothing to say. */}
+            one card rather than one each. In person they have nothing to
+            say. */}
         {labelOnlyPlan !== null && (
           <Card>
             <CardContent className="space-y-4 p-5 sm:p-6">

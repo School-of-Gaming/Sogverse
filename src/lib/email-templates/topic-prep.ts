@@ -8,7 +8,7 @@ import {
   PLAIN_MARKUP_TAGS,
 } from "./blocks";
 import { paragraph } from "./utils";
-import type { TopicPrepPlan } from "@/lib/products/topics";
+import type { TopicPrepPlan, TopicPrepStep } from "@/lib/products/topics";
 import type { TopicPrepTranslator } from "./translator";
 
 /**
@@ -25,18 +25,20 @@ import type { TopicPrepTranslator } from "./translator";
  * than two guides. Which steps apply is
  * `resolveTopicPrep`'s answer and not this file's — an in-person product
  * renders only the account steps, because School of Gaming brings the machines,
- * and a remote one gains the shared step about the voice room's mic and camera
- * (see the registry's header note).
+ * a remote one gains the shared step about the voice room's mic and camera, a
+ * hybrid one takes two lists, the second under a heading for joining from home,
+ * and a topic whose in-person machine and login are both ours takes one note
+ * under the heading, with no list and no closing (see the registry's header
+ * note).
  *
  * **Both halves take the plan rather than resolving one.** Which steps apply is
  * `resolveTopicPrep`'s answer, made **once** at the call site and handed to
  * both — the HTML body and its plain-text twin state the same document, and two
  * resolves are two chances for them to state different ones. It is also where
- * the empty answer is handled: a `null` plan is the in-person product with
- * nothing left after the filter (the topic never had steps of its own, or every
- * one of them belongs to a machine we are supplying), and the caller composes
- * no section at all rather than a section label over a closing line. A remote
- * product always has something, because the room always does.
+ * the empty answer is handled: a `null` plan is a label-only topic on an
+ * in-person product, and the caller composes no section at all rather than a
+ * section label over a closing line. A remote product always has something,
+ * because the room always does.
  *
  * The translator is scoped to `topicPrep` rather than to `email` — see
  * `translator.ts` for why the mail takes a second translator instead of a
@@ -44,12 +46,16 @@ import type { TopicPrepTranslator } from "./translator";
  */
 
 /**
- * The intro this form takes: the topic's own, the accounts-only twin, or — for
- * a label-only topic whose remote guide is the shared step alone — the one
- * generic line. Three branches rather than two because only two of the forms
- * carry a topic the catalog has an intro for.
+ * The intro this form takes: the topic's own, the accounts-only twin, or one of
+ * the two generic lines — the hybrid guide's, or the one for a guide that is
+ * the shared voice-room step alone. Only two of the forms carry a topic the
+ * catalog has an intro for.
  */
-function introOf(t: TopicPrepTranslator, plan: TopicPrepPlan): string {
+function introOf(
+  t: TopicPrepTranslator,
+  plan: Exclude<TopicPrepPlan, { form: "suppliedNote" }>,
+): string {
+  if (plan.form === "hybrid") return t("hybridIntro");
   if (plan.form === "remoteOnly") return t("remoteOnlyIntro");
   return plan.form === "accountsOnly"
     ? t(`accountsOnlyIntro.${plan.topic}`)
@@ -67,10 +73,7 @@ function introOf(t: TopicPrepTranslator, plan: TopicPrepPlan): string {
  * sentence, and a checklist is the ordinary bulleted list nested inside the
  * numbered one.
  */
-function stepItem(
-  t: TopicPrepTranslator,
-  step: TopicPrepPlan["steps"][number],
-): string {
+function stepItem(t: TopicPrepTranslator, step: TopicPrepStep): string {
   const parts = [
     inlineBold(t(`steps.${step.key}.title`)),
     "<br />",
@@ -112,31 +115,35 @@ export function buildTopicPrepSection(
   t: TopicPrepTranslator,
   plan: TopicPrepPlan,
 ): string {
+  if (plan.form === "suppliedNote") {
+    return [
+      sectionLabel(t("heading")),
+      paragraph(t("suppliedInPersonNote")),
+    ].join("");
+  }
+
+  const list = (steps: readonly TopicPrepStep[]) =>
+    numberedList(steps.map((step) => stepItem(t, step)));
+
   return [
     sectionLabel(t("heading")),
     paragraph(introOf(t, plan)),
-    numberedList(plan.steps.map((step) => stepItem(t, step))),
+    list(plan.steps),
+    ...(plan.form === "hybrid"
+      ? [sectionLabel(t("homeHeading")), list(plan.homeSteps)]
+      : []),
     paragraph(t("closing")),
   ].join("");
 }
 
-/**
- * The same guide as plain-text lines, in the same order — the twin a mail
- * carrying a calendar part needs, because Exchange fills the entry's notes from
- * the body and would otherwise flatten the markup into them.
- *
- * Lines rather than one string, so the caller splices them into its own text
- * body at the position the HTML section sits at, with the blank lines around it
- * decided there. It takes the same plan its HTML twin was handed, which is what
- * stops the two from stating different documents.
- */
-export function topicPrepText(
+/** One list of steps as text lines, numbered from one, each step ending blank. */
+function stepLines(
   t: TopicPrepTranslator,
-  plan: TopicPrepPlan,
+  steps: readonly TopicPrepStep[],
 ): string[] {
-  const lines: string[] = [t("heading"), "", introOf(t, plan), ""];
+  const lines: string[] = [];
 
-  plan.steps.forEach((step, index) => {
+  steps.forEach((step, index) => {
     lines.push(`${index + 1}. ${t(`steps.${step.key}.title`)}`);
     lines.push(t.markup(`steps.${step.key}.body`, PLAIN_MARKUP_TAGS));
 
@@ -158,6 +165,36 @@ export function topicPrepText(
     lines.push("");
   });
 
-  lines.push(t("closing"));
   return lines;
+}
+
+/**
+ * The same guide as plain-text lines, in the same order — the twin a mail
+ * carrying a calendar part needs, because Exchange fills the entry's notes from
+ * the body and would otherwise flatten the markup into them.
+ *
+ * Lines rather than one string, so the caller splices them into its own text
+ * body at the position the HTML section sits at, with the blank lines around it
+ * decided there. It takes the same plan its HTML twin was handed, which is what
+ * stops the two from stating different documents.
+ */
+export function topicPrepText(
+  t: TopicPrepTranslator,
+  plan: TopicPrepPlan,
+): string[] {
+  if (plan.form === "suppliedNote") {
+    return [t("heading"), "", t("suppliedInPersonNote")];
+  }
+
+  return [
+    t("heading"),
+    "",
+    introOf(t, plan),
+    "",
+    ...stepLines(t, plan.steps),
+    ...(plan.form === "hybrid"
+      ? [t("homeHeading"), "", ...stepLines(t, plan.homeSteps)]
+      : []),
+    t("closing"),
+  ];
 }

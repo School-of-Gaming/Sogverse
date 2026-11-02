@@ -1,8 +1,9 @@
 "use client";
 
+import { Heading } from "@sog/ui";
 import { ExternalLink } from "lucide-react";
 import { useTranslations } from "next-intl";
-import type { TopicPrepPlan } from "@/lib/products/topics";
+import type { TopicPrepPlan, TopicPrepStep } from "@/lib/products/topics";
 
 // The "Before the first session" guide, rendered from the topic's prep block
 // and the `topicPrep` catalog. One component, two surfaces — the parent's
@@ -25,89 +26,121 @@ import type { TopicPrepPlan } from "@/lib/products/topics";
 // What the resolver decided, for context: where the family brings their own
 // machine every step renders, and otherwise only the account steps, because
 // School of Gaming brings the machines; where there is a voice room the shared
-// step about its mic and camera is appended. See the registry's header note
-// for that split, and for why a label-only topic's guide is that shared step
-// alone.
+// step about its mic and camera is appended. A hybrid product takes two
+// sections, the second for joining from home, and a topic whose machine and
+// login are both ours in person takes one note instead of any steps. See the
+// registry's header note for that split, and for why a label-only topic has a
+// guide wherever there is a room.
 
 export interface TopicPrepContentProps {
   /** What to render — `resolveTopicPrep`'s answer, resolved by the surface. */
   plan: TopicPrepPlan;
 }
 
+/** One numbered list of steps. A section's numbering starts at one. */
+function StepList({ steps }: { steps: readonly TopicPrepStep[] }) {
+  const t = useTranslations("topicPrep");
+
+  return (
+    <ol className="list-decimal space-y-4 pl-5 text-sm marker:text-muted-foreground">
+      {steps.map((step) => (
+        <li key={step.key} className="space-y-2">
+          <p className="font-medium">{t(`steps.${step.key}.title`)}</p>
+
+          {/* Rich rather than plain because a few of these bodies carry a
+              <b> around the one clause that costs a family the session if
+              they skim it — the wrong device, the wrong kind of purchase, a
+              password sent to a stranger. Emphasis is spent there and
+              nowhere else. */}
+          <p className="text-muted-foreground">
+            {t.rich(`steps.${step.key}.body`, {
+              b: (chunks) => <b className="font-semibold">{chunks}</b>,
+            })}
+          </p>
+
+          {"url" in step && (
+            <a
+              href={step.url}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="inline-flex items-center gap-1.5 font-medium text-act hover:underline"
+            >
+              {t(`steps.${step.key}.linkLabel`)}
+              <ExternalLink className="h-3.5 w-3.5 shrink-0" />
+            </a>
+          )}
+
+          {"platformNotes" in step && (
+            <div className="space-y-1 text-muted-foreground">
+              {step.platformNotes.map((note) => (
+                <p key={note}>
+                  <span className="font-medium text-foreground">
+                    {t(`platformNotes.${note}.title`)}
+                  </span>{" "}
+                  {t(`platformNotes.${note}.body`)}
+                </p>
+              ))}
+            </div>
+          )}
+
+          {"checklist" in step && (
+            <ul className="list-disc space-y-1 pl-5 text-muted-foreground marker:text-muted-foreground">
+              {step.checklist.map((item) => (
+                <li key={item}>{t(`checklist.${item}`)}</li>
+              ))}
+            </ul>
+          )}
+        </li>
+      ))}
+    </ol>
+  );
+}
+
 export function TopicPrepContent({ plan }: TopicPrepContentProps) {
   const t = useTranslations("topicPrep");
 
+  // No intro, no list and no closing: the closing presumes steps were followed.
+  if (plan.form === "suppliedNote") {
+    return (
+      <p className="text-sm text-muted-foreground">
+        {t("suppliedInPersonNote")}
+      </p>
+    );
+  }
+
   // One branch per form, because each reads a different key and only two of
-  // the three have a topic to key by — a label-only topic has no
+  // them have a topic to key by — a label-only topic has no
   // `topics.<topic>.intro` to ask for, which is exactly what the plan's
   // discriminant is protecting.
   const intro =
-    plan.form === "remoteOnly"
-      ? t("remoteOnlyIntro")
-      : plan.form === "accountsOnly"
-        ? t(`accountsOnlyIntro.${plan.topic}`)
-        : t(`topics.${plan.topic}.intro`);
+    plan.form === "hybrid"
+      ? t("hybridIntro")
+      : plan.form === "remoteOnly"
+        ? t("remoteOnlyIntro")
+        : plan.form === "accountsOnly"
+          ? t(`accountsOnlyIntro.${plan.topic}`)
+          : t(`topics.${plan.topic}.intro`);
 
   return (
     <div className="space-y-4">
       <p className="text-sm text-muted-foreground">{intro}</p>
 
-      <ol className="list-decimal space-y-4 pl-5 text-sm marker:text-muted-foreground">
-        {plan.steps.map((step) => (
-          <li key={step.key} className="space-y-2">
-            <p className="font-medium">{t(`steps.${step.key}.title`)}</p>
+      <StepList steps={plan.steps} />
 
-            {/* Rich rather than plain because a few of these bodies carry a
-                <b> around the one clause that costs a family the session if
-                they skim it — the wrong device, the wrong kind of purchase, a
-                password sent to a stranger. Emphasis is spent there and
-                nowhere else. */}
-            <p className="text-muted-foreground">
-              {t.rich(`steps.${step.key}.body`, {
-                b: (chunks) => <b className="font-semibold">{chunks}</b>,
-              })}
-            </p>
+      {plan.form === "hybrid" && (
+        <>
+          <Heading level={3} step="label">
+            {t("homeHeading")}
+          </Heading>
+          <StepList steps={plan.homeSteps} />
+        </>
+      )}
 
-            {"url" in step && (
-              <a
-                href={step.url}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="inline-flex items-center gap-1.5 font-medium text-act hover:underline"
-              >
-                {t(`steps.${step.key}.linkLabel`)}
-                <ExternalLink className="h-3.5 w-3.5 shrink-0" />
-              </a>
-            )}
-
-            {"platformNotes" in step && (
-              <div className="space-y-1 text-muted-foreground">
-                {step.platformNotes.map((note) => (
-                  <p key={note}>
-                    <span className="font-medium text-foreground">
-                      {t(`platformNotes.${note}.title`)}
-                    </span>{" "}
-                    {t(`platformNotes.${note}.body`)}
-                  </p>
-                ))}
-              </div>
-            )}
-
-            {"checklist" in step && (
-              <ul className="list-disc space-y-1 pl-5 text-muted-foreground marker:text-muted-foreground">
-                {step.checklist.map((item) => (
-                  <li key={item}>{t(`checklist.${item}`)}</li>
-                ))}
-              </ul>
-            )}
-          </li>
-        ))}
-      </ol>
-
-      {/* One closing for every topic and both filtered forms. A per-topic one
-          would have needed a twin apiece — "everything installed and tested"
-          is false of a guide that showed no install step — and there was
-          nothing topic-specific left to say once it had to be true of both. */}
+      {/* One closing for every topic and every form with steps. A per-topic
+          one would have needed a twin apiece — "everything installed and
+          tested" is false of a guide that showed no install step — and there
+          was nothing topic-specific left to say once it had to be true of
+          every form. */}
       <p className="text-sm text-muted-foreground">{t("closing")}</p>
     </div>
   );
