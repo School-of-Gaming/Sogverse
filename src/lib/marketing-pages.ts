@@ -35,6 +35,8 @@ import {
   TOPIC_PARAM,
 } from "@/components/public/products/browse-state";
 import { CATEGORY_PARAM } from "@/components/public/products/shop-categories";
+import { resolveInternalPath } from "@/lib/navigation/internal-path";
+import { normalizeExternalPath } from "@/lib/navigation/locale-path";
 
 export const MARKETING_PAGES = [
   "/",
@@ -65,14 +67,15 @@ export function isMarketingPage(
  * The query keys a marketing page may carry and still be reported.
  *
  * The allowlist above is matched against the pathname, but the pixels'
- * libraries report the whole URL, query string included — and the proxy puts a private
- * path into the query of two marketing pages: a signed-out parent reaching a
- * child's page is bounced to `/login?redirect=/parent/gamers/<id>`. So a page
- * view is reported only when every key in the query is one of these: the
- * campaign parameters an ad link carries, the click ids the platforms append,
- * and the shop's own filter state, which names topics, formats and prices and
- * nobody. Anything else — `redirect` above all — refuses the report, which
- * costs a measurement rather than a secret.
+ * libraries report the whole URL, query string included — and the proxy puts a
+ * private path into the query of two marketing pages: a signed-out parent
+ * reaching a child's page is bounced to `/login?redirect=/parent/gamers/<id>`.
+ * So a page view is reported only when every key in the query is one of these:
+ * the campaign parameters an ad link carries, the click ids the platforms
+ * append, and the shop's own filter state, which names topics, formats and
+ * prices and nobody. `redirect` is the one key judged by its value instead —
+ * see the function below. Anything else refuses the report, which costs a
+ * measurement rather than a secret.
  */
 const REPORTABLE_QUERY_KEYS: ReadonlySet<string> = new Set([
   "utm_source",
@@ -95,12 +98,71 @@ const REPORTABLE_QUERY_KEYS: ReadonlySet<string> = new Set([
   FROM_PARAM,
 ]);
 
-/** Whether a page's query string (`location.search`) may travel to an ad platform. */
+const REDIRECT_PARAM = "redirect";
+
+/**
+ * Whether a page's query string (`location.search`) may travel to an ad
+ * platform.
+ *
+ * **`redirect` travels only when its value is itself a reportable marketing
+ * page** — the page a parent left to create an account or sign in, such as a
+ * product page or a landing page's guide. The value is resolved through
+ * `resolveInternalPath()`, must come back from it unchanged (see the helper
+ * below), is matched on its locale-stripped internal template,
+ * and its own query must pass the plain key allowlist: a `redirect` nested
+ * inside a `redirect` refuses rather than recursing, and so does a fragment.
+ * Every occurrence of a repeated key is checked. Anything else — a child's
+ * page, an external or unparseable value, a path matching no route — refuses
+ * exactly as an unknown key does.
+ *
+ * Pure: it needs no `window`, so it runs anywhere.
+ */
 export function isReportableQuery(search: string): boolean {
-  for (const key of new URLSearchParams(search).keys()) {
+  for (const [key, value] of new URLSearchParams(search)) {
+    if (REPORTABLE_QUERY_KEYS.has(key)) continue;
+    if (key === REDIRECT_PARAM && isReportableRedirect(value)) continue;
+    return false;
+  }
+  return true;
+}
+
+/** Whether every key in a query is on the plain allowlist — no `redirect`. */
+function hasOnlyReportableKeys(params: URLSearchParams): boolean {
+  for (const key of params.keys()) {
     if (!REPORTABLE_QUERY_KEYS.has(key)) return false;
   }
   return true;
+}
+
+/**
+ * Any absolute base: the value has already been resolved to an internal path,
+ * so this only splits it into its parts.
+ */
+const PARSE_BASE = "https://internal.invalid";
+
+/**
+ * The pixels report the raw value on the address bar, so the value matched has
+ * to be that value, not a rewriting of it. Refused unless already canonical:
+ * the URL parser hands it back unchanged (no dot segment, `%2e%2e` or
+ * backslash for it to collapse), its path has no empty segment (`//`, a
+ * trailing `/`) for the matcher to skip, and no `%` at all, which the matcher would decode — a
+ * `%2F` hidden in one segment reads as one id. No path the app links to needs
+ * one: route slugs, landing page slugs and product ids are all plain ASCII.
+ */
+function isReportableRedirect(value: string): boolean {
+  // The empty fallback would equal an empty value, so that refuses first.
+  if (value === "" || resolveInternalPath(value, "") !== value) return false;
+  const target = new URL(value, PARSE_BASE);
+  const { pathname } = target;
+  if (pathname.includes("%")) return false;
+  if (pathname !== "/" && pathname.slice(1).split("/").includes("")) {
+    return false;
+  }
+  if (target.hash !== "") return false;
+  if (!isMarketingPage(normalizeExternalPath(target.pathname).template)) {
+    return false;
+  }
+  return hasOnlyReportableKeys(target.searchParams);
 }
 
 /**

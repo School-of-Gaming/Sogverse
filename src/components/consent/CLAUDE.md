@@ -123,13 +123,24 @@ before its library has downloaded and replays it on arrival against the URL the 
 *then*; Reddit's stub does the same, and the container's queue is read the same way. A parent can client-navigate from a
 shop page into a child's page inside that window. So a report waits for the script to
 load, then re-reads the address bar: the tab must still be on the page that authorised the
-report, and the query string must carry only campaign keys, the platforms' click ids and
-the shop's own filter state. The second check is what keeps
+report, and the query string must carry only campaign keys, the platforms' click ids,
+the shop's own filter state, or a `redirect` whose value is itself a reportable marketing
+page. The second check is what keeps
 `/login?redirect=/parent/gamers/<id>` — the proxy's bounce for a signed-out parent — from
 ever being reported, even though the login page itself is a marketing page — and the same
 check runs before any script is loaded at all, so such a page never has their code in
 it. A visitor who moved on gets no report for either page; a query with anything else in
 it gets none.
+
+**`redirect` is the one key judged by its value.** It travels only when the value, resolved
+through `resolveInternalPath()` and matched on its locale-stripped internal path, is itself
+a marketing page whose own query passes the plain list — so the register and login pages a
+parent reaches from a product page or a landing page's guide are reported, and the proxy's
+bounce is not. A `redirect` inside a `redirect` refuses rather than being followed, and
+every occurrence of a repeated one is checked. The value must already be in the canonical
+form it is matched in — handed back unchanged by the URL parser, with no empty path segment
+and no `%` in its path — because the pixels report the raw value, so a dot segment, a
+backslash or an encoded slash that a rewriting would turn into a marketing page refuses.
 
 **The query allowlist is one list for every script, so each platform's click id reaches
 all of them.** A page reached from a Reddit ad loads Meta's pixel and the container too,

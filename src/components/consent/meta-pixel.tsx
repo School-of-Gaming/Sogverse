@@ -32,9 +32,10 @@ const PAGE_VIEW: BrowserPixelEvent = { event: PIXEL_EVENTS.pageView };
  *   4. the advertiser id is configured, and is an id rather than a placeholder;
  *   5. the page is on the marketing-page allowlist (`@/lib/marketing-pages`);
  *   6. at the moment of reporting, the tab is still on that page and its query
- *      string carries only campaign and shop-filter keys — never the
- *      `redirect` the proxy adds when it bounces a signed-out parent from a
- *      child's page to the login page.
+ *      string carries only campaign keys, click ids, shop-filter keys, or a
+ *      `redirect` whose value is itself a reportable marketing page — never
+ *      the `redirect` the proxy adds when it bounces a signed-out parent from
+ *      a child's page to the login page.
  *
  * **The fifth and sixth gates are what make the other four sufficient.** Meta's
  * library sends the page URL and the document's referrer with every event, and
