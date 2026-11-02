@@ -8,8 +8,7 @@ cancelled — as events. One way only:
 nothing Klaviyo holds is ever read back except the profile's own Klaviyo id. The newsletter
 form on landing pages writes to the same Klaviyo account (`src/services/landing-pages/`),
 through the same client. Klaviyo is the source of truth for School of Gaming's own mailing
-list; the `school_of_gaming` consent rows Sogverse wrote before it moved stay in the
-database unread, and carrying them into Klaviyo and removing them are later changes.
+list; Sogverse stores no account-level answer for it.
 
 ## The database announces ids, never payloads
 

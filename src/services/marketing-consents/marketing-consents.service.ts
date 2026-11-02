@@ -36,9 +36,10 @@ export class MarketingConsentsService {
    * ignores — which is worse than not having one, because it reads like it
    * decides something.
    *
-   * **An absent row is a real answer.** At most two rows come back, and a
-   * consent type missing from the result means "never asked or never answered",
-   * which is not the same state as a stored `granted = false`. Both mean "do not
+   * **An absent row is a real answer.** At most one row comes back — the
+   * table holds `lynx_educate` answers alone — and a consent type missing
+   * from the result means "never asked or never answered", which is not the
+   * same state as a stored `granted = false`. Both mean "do not
    * mail"; only one of them is a decision the parent made. Callers that only
    * need the current answer may collapse the two, and callers that care about
    * provenance must not.
@@ -79,9 +80,8 @@ export class MarketingConsentsService {
    * nobody can answer on anyone else's behalf. `source` names which surface the
    * answer came from and is the one field on the stored event that no other
    * field can corroborate, which is why the RPC accepts only the two sources a
-   * signed-in caller can legitimately be on: `settings` and `enrolment`.
-   * `registration` is written by the register route's service-role client and is
-   * refused here, so it is not in this method's type either.
+   * signed-in caller can legitimately be on: `settings` and `enrolment`, the
+   * only two the table admits.
    *
    * **Idempotent, and honest about it.** Submitting the state already on file
    * succeeds and appends no event — a stale tab replaying its answer costs
