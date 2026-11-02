@@ -50,7 +50,7 @@ const featureKeys = ["minecraftClubs", "screenTime", "newFriends", "parents"] as
  * The safety facts, in the order a parent asks them: who is with my child,
  * who can reach them, where, what is kept, and what they can spend. Each one
  * is checked against the About FAQ answer and the code before it is written —
- * `src/CLAUDE.md`, "Safety copy: mechanisms, never intentions". Four are
+ * the `sog-brand-voice` skill's safety copy rule. Four are
  * mechanisms the product enforces. The first two are not. The interview and
  * the Gedu training are how we hire, stated on the CEO's word (2026-11-02)
  * that every Gedu has been through both. Certification does not wait on the record check, so

@@ -147,7 +147,7 @@ export async function buildProductMetadata(
   // `… | School of Gaming` string built by hand to bypass a root template that
   // said `%s | Sogverse` — a shared product link is cold contact, and the brand
   // is the name a parent recognises. The template says the brand on every page
-  // now (CLAUDE.md § Brand vs. Platform), so the document title arrives at the
+  // now (the `sog-brand-voice` skill), so the document title arrives at the
   // same words by inheriting it, and the hand-built version has nothing left to
   // fix. The Open Graph and Twitter cards take this name bare, because there the
   // brand has its own field — `og:site_name` below — and a card whose site and

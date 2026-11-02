@@ -10,8 +10,12 @@ the demo's code as the reference for how the library is meant to be used.
 package alone, and Sogverse takes it whole.** Anything that would need a Sogverse edit to
 follow a brand change is in the wrong place.
 
-**The School of Gaming Brand Voice & Identity Guidebook is this library's input, and this
-is the only `CLAUDE.md` that names it.** It lives as an excerpt in `docs/guidebook/`, one
+**How School of Gaming writes is not this library's.** The `sog-brand-voice` skill is the
+one source of truth for copy: the voice, the vocabulary and the canonical form of every
+brand word. The library renders words it is handed and owns how they look.
+
+**The visual half of the School of Gaming Brand Voice & Identity Guidebook is this
+library's input, and this is the only `CLAUDE.md` that names it.** It lives as an excerpt in `docs/guidebook/`, one
 file per topic behind that folder's own index, for as long as it is needed. For anything
 the library does not yet cover, the Guidebook is the source of truth, consulted while
 deciding (what else is consulted beside it is in `docs/rollout.md`). For anything the
@@ -30,8 +34,8 @@ never needs one.
 
 **SOG-UI owns every UI opinion, and the three `CLAUDE.md` files never disagree.** The root
 file governs the monorepo: lint, type-check, commits, branching, testing, the database. The
-app file (`src/CLAUDE.md`) governs Sogverse the web app: its roles, services, auth and
-copy. This file governs the UI. Sogverse follows the library one construct at a time,
+app file (`src/CLAUDE.md`) governs Sogverse the web app: its roles, services and auth.
+This file governs the UI. How copy reads is the `sog-brand-voice` skill's. Sogverse follows the library one construct at a time,
 as each is adopted (`docs/adoption.md`); for a construct not yet adopted, the app file's
 existing rule for it still governs Sogverse's code, and the adoption that retires the
 construct deletes that rule. A rule about the UI is never added to the root file or the
@@ -254,10 +258,11 @@ its own copy.
 
 **Vocabulary.** Marks are constants the library renders itself: School of Gaming, SOG,
 Sogverse, the lockup, The Princi-Pal, the Yty vocabulary and its fixed forms. A mark is
-never a prop, because a prop can be misspelled. Translatable brand terms (camp, club,
-event, session, parent, gamer, gedu) are declared in the library's glossary with their
-canonical form per locale and their translate-or-not rule; Sogverse supplies copy, and its
-copy is checked against the glossary.
+never a prop, because a prop can be misspelled. A mark's spelling, and the canonical form
+of every translatable brand term (camp, club, event, lesson, parent, gamer, Gedu) with its
+translate-or-not rule, are the `sog-brand-voice` skill's; the library spells a mark the way
+the skill does, and a glossary entry arrives with the first component that renders the
+term, taking its forms from there.
 
 **The tone grammar.** Each colour family carries one meaning, and which fact takes which
 family is a table in this tier: a role, a product kind, a Yty element, a status. Components

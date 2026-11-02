@@ -96,7 +96,7 @@ export async function generateMetadata({
   // The root title is the one place with room for the lockup; the sub-page
   // template and `og:site_name` below carry the brand alone, because a tab is
   // read while scanning a row of them for the name the reader came looking for
-  // (CLAUDE.md § Brand vs. Platform).
+  // (the `sog-brand-voice` skill, on the names).
   const title = BRAND_LOCKUP;
   const description = t("description");
   // The site-wide card, at this URL's locale. It is emitted here rather than by
