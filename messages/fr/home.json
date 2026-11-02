@@ -60,6 +60,10 @@
   "safety": {
     "heading": "Comment mon enfant est-il protégé ?",
     "facts": {
+      "trained": {
+        "title": "Nos animateurs sont recrutés sur entretien et formés",
+        "description": "Chaque animateur ou animatrice suit la formation Gedu. Lors des entretiens, la priorité va aux personnes qui ont déjà l’expérience du travail auprès d’enfants."
+      },
       "vetted": {
         "title": "Extrait de casier judiciaire exigé",
         "description": "Nous exigeons de chaque animateur ou animatrice un extrait de casier judiciaire pour le travail auprès d’enfants avant de le certifier."
@@ -106,6 +110,6 @@
   "cta": {
     "heading": "Prêt à transformer le temps d’écran en temps qui fait grandir ?",
     "subheading": "Offrez à votre enfant un rendez-vous chaque semaine pour jouer, apprendre et se faire des amis, avec un animateur ou une animatrice à chaque séance et chaque chat ouvert à tout le groupe.",
-    "whereWeAre": "Nos clubs en ligne se déroulent en {languages}, pour les familles du monde entier. Et notre siège mondial ? Un studio douillet à Lauttasaari, à Helsinki, en Finlande, sur une petite île tranquille."
+    "whereWeAre": "Vous pouvez participer à nos activités en ligne, depuis chez vous, dans plusieurs langues. Au fait, saviez-vous que le jeu vidéo est aussi un excellent moyen d’apprendre une langue ?"
   }
 }

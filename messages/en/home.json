@@ -60,13 +60,17 @@
   "safety": {
     "heading": "How is my child kept safe?",
     "facts": {
+      "trained": {
+        "title": "Game Educators are interviewed and trained for the role",
+        "description": "Every Game Educator completes the Gedu training course. During the interview stage, priority is given to candidates who already have a background in working with children."
+      },
       "vetted": {
         "title": "Record checks required",
         "description": "We require every Gedu to show us a criminal record extract for working with children before we certify them."
       },
       "noDirectMessages": {
-        "title": "Every chat is the whole group’s",
-        "description": "Chat in a lesson goes to the whole room, where the Gedu can see it."
+        "title": "No direct messaging",
+        "description": "DMs are not possible on our platform, and every chat is visible to every member of the group, including the Gedu."
       },
       "groupOnlyRooms": {
         "title": "Only the group gets in",
@@ -104,8 +108,8 @@
     }
   },
   "cta": {
-    "heading": "Ready to turn gaming into learning?",
-    "subheading": "Give your child a place to play, learn and make friends every week, with a Game Educator in every lesson and every chat open to the whole group.",
-    "whereWeAre": "Our online clubs run in {languages}, for families anywhere in the world. And our global headquarters? A cosy studio in Lauttasaari, Helsinki, Finland, on a quiet little island."
+    "heading": "Do you want gaming to support your child’s growth?",
+    "subheading": "School of Gaming is a place where gaming becomes a great hobby that supports your child’s growth. Best of all, children can enjoy this hobby alongside new friends in a safe environment, guided by a professional adult.",
+    "whereWeAre": "You can take part in our activities remotely from the comfort of your own home, in several different languages. By the way, did you know that gaming is also a great way to learn languages?"
   }
 }
