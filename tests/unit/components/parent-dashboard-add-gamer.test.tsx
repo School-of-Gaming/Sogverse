@@ -108,6 +108,11 @@ const CHILD_IDS = [
   "49182dd3-9f7f-46ae-8fc7-35be6c5ad50a",
   "b51cd896-2749-4811-82b1-3f4abdcc88b6",
   "3249a60d-032c-4a78-a447-a33a0239c83b",
+  "e288101d-abf8-4a26-928e-64f84f327b04",
+  "5c23b665-799d-491f-9a8b-8277110d0dc4",
+  "b9d96fcf-ccde-4c8f-b732-9437b69e462c",
+  "ad734c0a-31e0-4f70-a193-e5ecbb25beed",
+  "348668e0-45e0-4f24-b54e-0b5628237f56",
 ] as const;
 
 /**

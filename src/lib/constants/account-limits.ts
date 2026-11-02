@@ -10,8 +10,8 @@ export const DISPLAY_NAME_MAX = 32;
  * at this many gamers, but the API and DB happily accept more if a power user
  * calls the route directly. Single source of truth for that limit.
  *
- * Raised from Steven's seven to 15 as a special request for a Lynx Educate
+ * Raised from Steven's seven to 20 as a special request for a Lynx Educate
  * partner whose families need more children on one account. We plan to lower
  * it again; `TODO.md` tracks that.
  */
-export const MAX_GAMERS_PER_PARENT = 15;
+export const MAX_GAMERS_PER_PARENT = 20;
