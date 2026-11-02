@@ -241,7 +241,9 @@ the three routes are customer-only, so a gamer cannot reach one.
 **What identifies a person in a server report, exhaustively:** the user agent, the IP the
 request arrived from, the platform's own browser and click cookies if the browser carries
 them (Meta's `_fbp` and `_fbc`, Reddit's `_rdt_uuid` and `_rdt_cid` — each platform is
-sent only its own), a SHA-256 hash of the parent's own account email, and a SHA-256 hash
+sent only its own) or, where the click cookie is missing, that platform's click id kept in
+our attribution cookie (Meta's in the `_fbc` format, `fb.1.<landing ms>.<fbclid>`; Reddit's
+as the link carried it), a SHA-256 hash of the parent's own account email, and a SHA-256 hash
 of the parent's own account id (`external_id`) — both hashed on our server, so neither the
 address nor the id is ever sent or logged, and never a gamer's. **The two platforms
 canonicalise the email differently before hashing**: Meta trims and lowercases; Reddit also
@@ -322,11 +324,31 @@ domain, which sets its tags without asking anybody.
 **`sog_attribution` is ours: first party, no vendor sets or needs it, and it is the one
 cookie here that is not an advertising script's.** It sits behind marketing all the same,
 because it keeps a campaign link's tag on the device (`src/lib/utm.ts` has the legal
-reasoning). It holds the latest tagged link's five values for 30 days, and a later tagged
-link overwrites it. The proxy writes it when a landing request already carries marketing
-consent; otherwise the proxy passes the tag to the page in memory, and the banner writes it
-if marketing is accepted during that document's life. Neither writes it for a signed-in
-gamer, or for a session whose role is unknown.
+reasoning). It holds the latest tagged link's five values, and the latest Meta `fbclid`
+and Reddit `rdt_cid` an ad link carried, each with the time it landed. **A landing replaces
+only what it carries**: a tagged link replaces the whole tag, a link with an `fbclid`
+replaces the Meta id and leaves the Reddit one, and a link carrying neither writes nothing.
+Every part is read as absent 30 days after its own landing, so a later write renewing the
+cookie never stretches an older part's life; a tag kept before landing times were recorded
+is read as it stands and dropped on the next write rather than renewed. The proxy writes it
+when a landing request already carries marketing consent; otherwise the proxy passes the
+values to the page in memory, and the banner writes them if marketing is accepted during
+that document's life. Both writers merge into the cookie they can see. Neither writes it
+for a signed-in gamer, or for a session whose role is unknown.
+
+**The click ids are there for one reader: each platform's server report.** A pixel turns its
+platform's click id into its own click cookie only if it loads while the id is still in the
+address bar, and ours loads only once marketing is granted, on a marketing page — so a
+parent who answers the banner a few pages after landing would otherwise convert with no
+click on record. The report sends the pixel's own cookie where there is one and the kept id
+where there is not, and never the other platform's. A click id is never stored on an
+account or a booking and never reaches Klaviyo. Google's `gclid` is not kept, because no
+server report reads it. Keeping the click ids is newer than counsel's ruling on the tag and
+has not had a legal review of its own (`src/lib/utm.ts`).
+
+**The tag stands ahead of the click ids in the byte budget.** The tag is measured alone and
+dropped whole when it does not fit, as it always was; each click id is added only into the
+room the tag leaves, so a long `fbclid` can never cost a parent their tag.
 
 **It is not httpOnly because the banner writes it from client code**, so a script in the
 page can read it. A value it holds is therefore never trusted: it is sanitised again on
@@ -335,9 +357,10 @@ every read.
 Withdrawing marketing deletes it with the advertising cookies, and the mount invariant
 above removes it from any document where marketing is not granted.
 
-**Consent is checked again at read, off the request itself.** A tag written during consent
-is usable only while the request storing it still carries marketing consent, so a cookie
-that outlived its consent stores nothing, even before a document has mounted to remove it.
+**Consent is checked again at read, off the request itself.** A tag or click id written
+during consent is usable only while the request storing or reporting it still carries
+marketing consent, so a cookie that outlived its consent stores and reports nothing, even
+before a document has mounted to remove it.
 
 **It did not change the question (owner's ruling, 2026-10-30).** Marketing consent already
 governed storing the tag, so the cookie is a change in how that is kept: the banner names
