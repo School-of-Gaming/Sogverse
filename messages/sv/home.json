@@ -60,6 +60,10 @@
   "safety": {
     "heading": "Hur hålls mitt barn tryggt?",
     "facts": {
+      "trained": {
+        "title": "Spelfostrarna intervjuas och utbildas för uppdraget",
+        "description": "Varje spelfostrare går igenom Gedu-utbildningen. I intervjuskedet prioriteras de som redan har erfarenhet av att arbeta med barn."
+      },
       "vetted": {
         "title": "Krav på straffregisterutdrag",
         "description": "Vi kräver att varje Gedu visar oss ett straffregisterutdrag för arbete med barn innan vi certifierar hen."
@@ -106,6 +110,6 @@
   "cta": {
     "heading": "Redo att förvandla spelande till lärande?",
     "subheading": "Ge ditt barn en plats att spela, lära sig och få vänner varje vecka, med en spelfostrare vid varje tillfälle och varje chatt öppen för hela gruppen.",
-    "whereWeAre": "Våra onlineklubbar hålls på {languages}, för familjer var som helst i världen. Och vårt globala huvudkontor? En mysig studio på Drumsö i Helsingfors, Finland, på en lugn liten ö."
+    "whereWeAre": "Du kan delta i vår verksamhet på nätet, hemifrån, på flera olika språk. Visste du förresten att spelande också är ett utmärkt sätt att lära sig språk?"
   }
 }
