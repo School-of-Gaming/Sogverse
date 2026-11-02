@@ -100,7 +100,7 @@ BEGIN
                      'has_live_subscription',          (fs.id IS NOT NULL),
                      -- The promote dialog's condition: money once arrived for
                      -- this seat.
-                     'has_payment_marker',             (p.stripe_checkout_session_id IS NOT NULL),
+                     'has_payment_marker',             EXISTS (SELECT 1 FROM public.bookings paid WHERE paid.id = p.booking_id AND paid.purchase_shape IN ('subscription_monthly', 'single_payment')),
                      -- The staff-only flair, identical in all three
                      -- arms. The groups PANEL draws neither mark — a chip there
                      -- is a drag handle — so these ride for shape parity across
@@ -178,7 +178,7 @@ BEGIN
              'status',                         p.status,
              'signed_up_at',                   p.signed_up_at,
              'has_live_subscription',          (fs.id IS NOT NULL),
-             'has_payment_marker',             (p.stripe_checkout_session_id IS NOT NULL),
+             'has_payment_marker',             EXISTS (SELECT 1 FROM public.bookings paid WHERE paid.id = p.booking_id AND paid.purchase_shape IN ('subscription_monthly', 'single_payment')),
              -- Group-less by definition, so the join matches nothing and all
              -- three come back NULL. That is the truth rather than a gap: a
              -- seat in no group is new to nothing and has no note filed under
@@ -234,9 +234,9 @@ BEGIN
   -- same join as the other two.
   --
   -- has_payment_marker remains a real read and remains the branch where it
-  -- decides something: demotion leaves the Checkout Session id in place, so a
-  -- family that paid and was later demoted is distinguishable here from one
-  -- that only ever queued.
+  -- decides something: demotion leaves the seat's booking in place, so a family
+  -- that paid and was later demoted still has a paid shape here, where one that
+  -- only ever queued has none.
   --
   -- The two seat-offer stamps are the same story one step further on:
   -- this is the ONLY arm where either can be non-NULL, and the waitlist card is
@@ -262,7 +262,7 @@ BEGIN
              'status',                         p.status,
              'signed_up_at',                   p.signed_up_at,
              'has_live_subscription',          (fs.id IS NOT NULL),
-             'has_payment_marker',             (p.stripe_checkout_session_id IS NOT NULL),
+             'has_payment_marker',             EXISTS (SELECT 1 FROM public.bookings paid WHERE paid.id = p.booking_id AND paid.purchase_shape IN ('subscription_monthly', 'single_payment')),
              -- A waitlisted seat holds no group either, so these are NULL for
              -- the same reason as the arm above. The note RPC does admit a
              -- waitlisted TARGET — a note about somebody queueing for the group
@@ -314,7 +314,7 @@ $$;
 -- Name: FUNCTION get_product_groups_with_details(p_product_id uuid); Type: COMMENT; Schema: public; Owner: -
 --
 
-COMMENT ON FUNCTION public.get_product_groups_with_details(p_product_id uuid) IS 'Admin-gated snapshot behind the product Groups panel: groups with their gedus and active members, the unassigned actives, and the waitlist in derived (waitlisted_at, id) order. Every participation object carries the same fields, including the two the panel''s refusal dialogs are keyed to: has_live_subscription (a real read on ALL THREE branches — a LEFT JOIN to family_subscriptions excluding status ''cancelled'', so it means live rather than ever-existed) and has_payment_marker (a real read of stripe_checkout_session_id — money once arrived for this seat, which demotion does not clear). Both are resolved here so the panel decides a drag from one snapshot rather than asking per chip. The person keys are participant_* (whoever holds the seat) and the contact behind a child''s seat is parent_first_name/parent_last_name; an adult seat names none of those and carries participant_email — its own address — instead. Each chip also carries participant_roblox_username/participant_roblox_user_id beside the Minecraft pair, so the panel can show whichever identity the product''s topic is about; the topic itself is NOT emitted here, because the page already holds the product row. All three branches also carry the staff-only flair — group_joined_at, note and note_updated_by_first_name — from one identical LEFT JOIN, which comes back NULL on the two group-less branches because that is the truth and because one expression is what keeps the three shapes one shape. The groups panel draws neither mark, and no admin surface reads either of them from THIS document — the group details page renders both and reads them off get_gedu_group_feed, the copy a note write invalidates — so all three fields ride here for shape parity across the three roster readers rather than for a reader of this one. All three branches also carry seat_offer_sent_at and seat_offer_expiry_notified_at, on exactly the same terms: only the WAITLIST branch can hold a non-NULL value (a CHECK forbids an offer stamp on any other status) and only the waitlist card reads them, but the expression is identical in all three so the shape stays one shape. Whether an offer is LIVE is derived on the reader''s side from sent_at plus the five-day window. Each entry of a group''s `gedus` carries the assignment `role` — primary or assistant — which is what the panel''s per-pill role select reads and writes back through apply_group_changes. This panel is the PERMANENT assignment editor; the session card''s staffing editor is a different tool, and nothing links the two, deliberately. Each group also carries `trainees`, its trainee seats as {id, first_name, email} in placement order, which the panel places and removes through apply_group_changes.';
+COMMENT ON FUNCTION public.get_product_groups_with_details(p_product_id uuid) IS 'Admin-gated snapshot behind the product Groups panel: groups with their gedus and active members, the unassigned actives, and the waitlist in derived (waitlisted_at, id) order. Every participation object carries the same fields, including the two the panel''s refusal dialogs are keyed to: has_live_subscription (a real read on ALL THREE branches — a LEFT JOIN to family_subscriptions excluding status ''cancelled'', so it means live rather than ever-existed) and has_payment_marker (whether the seat''s booking is a paid shape — money once arrived for this seat, which demotion does not clear, and which a waitlist join''s booking, having no shape, does not claim). Both are resolved here so the panel decides a drag from one snapshot rather than asking per chip. The person keys are participant_* (whoever holds the seat) and the contact behind a child''s seat is parent_first_name/parent_last_name; an adult seat names none of those and carries participant_email — its own address — instead. Each chip also carries participant_roblox_username/participant_roblox_user_id beside the Minecraft pair, so the panel can show whichever identity the product''s topic is about; the topic itself is NOT emitted here, because the page already holds the product row. All three branches also carry the staff-only flair — group_joined_at, note and note_updated_by_first_name — from one identical LEFT JOIN, which comes back NULL on the two group-less branches because that is the truth and because one expression is what keeps the three shapes one shape. The groups panel draws neither mark, and no admin surface reads either of them from THIS document — the group details page renders both and reads them off get_gedu_group_feed, the copy a note write invalidates — so all three fields ride here for shape parity across the three roster readers rather than for a reader of this one. All three branches also carry seat_offer_sent_at and seat_offer_expiry_notified_at, on exactly the same terms: only the WAITLIST branch can hold a non-NULL value (a CHECK forbids an offer stamp on any other status) and only the waitlist card reads them, but the expression is identical in all three so the shape stays one shape. Whether an offer is LIVE is derived on the reader''s side from sent_at plus the five-day window. Each entry of a group''s `gedus` carries the assignment `role` — primary or assistant — which is what the panel''s per-pill role select reads and writes back through apply_group_changes. This panel is the PERMANENT assignment editor; the session card''s staffing editor is a different tool, and nothing links the two, deliberately. Each group also carries `trainees`, its trainee seats as {id, first_name, email} in placement order, which the panel places and removes through apply_group_changes.';
 
 
 --

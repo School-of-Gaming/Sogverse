@@ -25,9 +25,7 @@ type SearchParams = Record<string, string | string[] | undefined>;
  * here is sent where their role belongs.
  *
  * `?as=gedu` asks for the Gedu variant (`?as=parent` for the parent one,
- * outright), the `utm_*` params carry the landing link's attribution across
- * the Google round trip and `?redirect=` names the product page to land on
- * afterwards — put on the address by the register page's button and carried by
+ * outright) and `?redirect=` names the product page to land on afterwards — put on the address by the register page's button and carried by
  * the callback, which also keeps them in the intent cookie this page falls
  * back to for whatever its address lacks.
  */
@@ -70,7 +68,6 @@ export default async function CompleteRegistrationPage({
       email={profile.email}
       initialFirstName={firstName}
       initialLastName={lastName}
-      utm={intent.utm}
       redirect={intent.redirect}
     />
   );

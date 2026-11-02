@@ -17,12 +17,12 @@ export async function generateMetadata(): Promise<Metadata> {
     // Same posture as /roblox, whose policy this is: the copy is signed off, but
     // the surface stays unpublished until the Programme launches. The tag is
     // what actually keeps it out of search results; the route is deliberately
-    // absent from sitemap.ts and linked only from /roblox itself.
+    // absent from sitemap.ts and linked only from the programme pages.
     //
     // Deliberately NOT disallowed in robots.txt — a disallowed URL is never
     // fetched, so the crawler never reads this tag and the bare URL can still be
     // indexed off an external link. Allowing the crawl and serving noindex is
-    // what deindexes. Flip this together with /roblox, never on its own.
+    // what deindexes. Flip this together with the programme pages, never on its own.
     robots: { index: false, follow: false },
   };
 }

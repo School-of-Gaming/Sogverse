@@ -26,7 +26,7 @@
       },
       "minecraft_bedrock": {
         "description": "Minecraft est un jeu de construction créatif. Imaginez des LEGO numériques. Les enfants explorent un monde en blocs, récoltent des matériaux et construisent tout ce qu’ils imaginent, d’une maison douillette à une ville entière. Il n’y a ni victoire ni défaite. C’est un espace calme et ouvert pour créer et résoudre des problèmes. « Bedrock » est la version qui fonctionne sur consoles (Xbox, PlayStation, Switch), téléphones, tablettes et PC Windows.",
-        "note": "Minecraft Bedrock n’est pas compris dans le prix. C’est le même jeu vendu séparément pour chaque appareil, et un exemplaire acheté pour un appareil ne se reporte pas sur un autre. Celui qui compte est celui de l’appareil sur lequel votre enfant jouera. Sur une console de jeu, jouer en ligne nécessite en plus l’abonnement en ligne payant de cette console.",
+        "note": "Minecraft Bedrock n’est pas compris dans le prix d’un club à distance. C’est le même jeu vendu séparément pour chaque appareil, et un exemplaire acheté pour un appareil ne se reporte pas sur un autre. Celui qui compte est celui de l’appareil sur lequel votre enfant jouera. Sur une console de jeu, jouer en ligne nécessite en plus l’abonnement en ligne payant de cette console.",
         "linkLabel": "Où se le procurer"
       },
       "minecraft_education": {
@@ -70,6 +70,7 @@
     "holidayBreaks": "Vacances"
   },
   "signupPanel": {
+    "checkoutAlreadyPaid": "Le paiement de cette réservation est déjà en cours. Elle apparaîtra bientôt dans Mon SOG.",
     "verb": {
       "consumer_club": "S’inscrire",
       "municipality_club": "S’inscrire",

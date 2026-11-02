@@ -8,7 +8,7 @@ import {
   SIGNUP_CUSTOM_SOURCE,
 } from "@/lib/landing-pages/subscribe-config.server";
 import { createAnonClient } from "@/lib/supabase/anon";
-import { utmMetadataForConsent } from "@/lib/utm";
+import { utmFromCookieHeader, utmMetadataForConsent } from "@/lib/utm";
 import { LandingPageService } from "@/services/landing-pages/landing-pages.service";
 import {
   landingSubscribeBody,
@@ -33,8 +33,8 @@ import {
  * used to learn who is on the list.
  *
  * **What is passed with the address**: the names that were given, the
- * landing page's id, the page's locale, and the visit's UTM values only when
- * the request's own consent cookie grants marketing — the registration route's
+ * landing page's id, the page's locale, and the attribution cookie's UTM values
+ * only when the request's own consent cookie grants marketing — the registration route's
  * rule, through the same helper (`src/lib/utm.ts`), since counsel's ruling
  * covers any write of them. Nothing else. The property names are the Klaviyo
  * contract's newsletter ones (`src/lib/klaviyo-sync/contract.ts`), apart from
@@ -79,9 +79,10 @@ export const POST = defineRoute({
       return NextResponse.json({ error: "Not found" }, { status: 404 });
     }
 
+    const cookieHeader = request.headers.get("cookie");
     const utm = utmMetadataForConsent(
-      parseConsentCookieHeader(request.headers.get("cookie")),
-      body.utm,
+      parseConsentCookieHeader(cookieHeader),
+      utmFromCookieHeader(cookieHeader),
     );
 
     try {

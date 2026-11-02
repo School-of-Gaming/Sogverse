@@ -1096,7 +1096,7 @@ const PRIVILEGE_COLUMN_DENYLIST: readonly (readonly [string, string])[] = [
   // The Checkout Session that paid for the seat: writable, it would let one
   // family point a seat at another family's payment — and it is what the paid
   // confirmation page and the webhook's own replay check both key on.
-  ["participations", "stripe_checkout_session_id"],
+  ["participations", "booking_id"],
   // Money.
   ["payments", "amount_cents"],
   ["family_subscriptions", "status"],

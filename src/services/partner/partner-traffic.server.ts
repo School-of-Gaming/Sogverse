@@ -4,6 +4,7 @@ import { unstable_cache } from "next/cache";
 
 import { PartnerQueryError } from "@/lib/api/partner-auth.server";
 import { SUPPORTED_LOCALES } from "@/lib/constants/locales";
+import { ROUTES } from "@/lib/constants/routes";
 import {
   MAX_FILTER_LENGTH,
   VercelAnalyticsClient,
@@ -50,8 +51,12 @@ type SourceMediumEntry = TrafficPage["by_source_medium"][number];
 type ContentEntry = TrafficPage["by_content"][number];
 type TermEntry = TrafficPage["by_term"][number];
 
-/** The Vercel `route` of the Roblox landing page and of the shop, every locale on one row. */
-const LANDING_ROUTE = "/roblox";
+/**
+ * The Vercel `route` of the Roblox landing page and of the shop, every locale
+ * on one row. The landing page is one page at three addresses, one per format,
+ * and Lynx is told about it as one page.
+ */
+const LANDING_ROUTES = [ROUTES.roblox, ROUTES.robloxOnline, ROUTES.robloxAll];
 const SHOP_ROUTE = "/shop";
 
 /**
@@ -394,7 +399,7 @@ export async function computePartnerTraffic(
   const range = { from: key.from, to: key.to };
   const wants = (page: TrafficPageKind) => key.page === null || key.page === page;
 
-  const landingFilter = `${PRODUCTION} and route eq ${odataString(LANDING_ROUTE)}`;
+  const landingFilter = `${PRODUCTION} and route in (${LANDING_ROUTES.map(odataString).join(", ")})`;
   const shopFilter = `${PRODUCTION} and route eq ${odataString(SHOP_ROUTE)}`;
 
   const readProducts = async (): Promise<TrafficPage[]> => {

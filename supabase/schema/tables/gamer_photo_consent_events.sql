@@ -39,7 +39,7 @@ COMMENT ON COLUMN public.gamer_photo_consent_events.granted IS 'The state that w
 -- Name: COLUMN gamer_photo_consent_events.source; Type: COMMENT; Schema: public; Owner: -
 --
 
-COMMENT ON COLUMN public.gamer_photo_consent_events.source IS 'Which surface the answer came from: `settings` (the card on the gamer''s page under the parent''s My SOG) or `enrolment` (the ask inside a product signup panel). There is deliberately NO `registration` value, which is the one place this CHECK differs from marketing_consent_events'': that source exists because a parent ticks a marketing box before their account exists, and no gamer exists at that moment for a photo consent to be about. A CHECK rather than an enum because the set is a list of our own surfaces, which move with the product rather than with the data model.';
+COMMENT ON COLUMN public.gamer_photo_consent_events.source IS 'Which surface the answer came from: `settings` (the card on the gamer''s page under the parent''s My SOG) or `enrolment` (the ask inside a product signup panel). There is deliberately NO `registration` value: no gamer exists while a parent is registering, so there is nothing for a photo consent to be about at that moment. A CHECK rather than an enum because the set is a list of our own surfaces, which move with the product rather than with the data model.';
 
 
 --

@@ -424,10 +424,9 @@ function resolveFirstSession(
  * buy the game and install it beside a mail saying they are in a queue is the
  * one thing this mail must not do.
  *
- * The resolver answers `null` on a topic with no guide and on an in-person
- * product whose every step belongs to a machine we are supplying — the same
- * answer from a mail's point of view, and this passes it straight on as `null`
- * so the body and its twin each have one thing to check.
+ * The resolver answers `null` on an in-person product whose topic has no guide,
+ * and this passes it straight on as `null` so the body and its twin each have
+ * one thing to check.
  */
 function resolveTopicPrepSection(
   tPrep: TopicPrepTranslator | null,
@@ -664,9 +663,9 @@ export function buildProductConfirmationEmail(
       // the guide the parent's does.
       //
       // Already composed HTML from the section builder, spliced whole: it is
-      // empty on a topic with no guide, on an in-person product with nothing
-      // left to do, and on every waitlist join, and an empty string costs the
-      // mail nothing — no wrapper left behind, no gap to close.
+      // empty on a label-only topic in person and on every waitlist join, and
+      // an empty string costs the mail nothing — no wrapper left behind, no gap
+      // to close.
       content.topicPrep?.html ?? ""
     }
     ${

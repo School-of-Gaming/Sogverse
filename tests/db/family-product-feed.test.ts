@@ -212,7 +212,7 @@ describe("family product feed", () => {
           status: "active",
         },
         // The parent's own seat, in the same group as their children's. Written
-        // directly rather than through create_participation, exactly as every
+        // directly rather than through create_booking, exactly as every
         // other row here is: this file tests the read, and the audience gate
         // that would police the write has its own coverage in the enrollment
         // suite. What matters here is that the row shape (participant =

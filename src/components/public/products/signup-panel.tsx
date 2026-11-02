@@ -1,6 +1,8 @@
 "use client";
 
 import { useState } from "react";
+import { useTranslations } from "next-intl";
+import { ApiError } from "@/lib/api/api-error";
 import { useRouter } from "@/i18n/navigation";
 import type {
   GamerPhotoConsentType,
@@ -15,8 +17,6 @@ import { GTM_EVENTS } from "@/lib/gtm-events";
 import { isAdvertisedProduct } from "@/lib/marketing-events";
 import { localizedLocationName } from "@/lib/locations/localized-name";
 import { useAuth } from "@/providers/auth-provider";
-import { useUtm } from "@/providers";
-import { utmRegistrationBody } from "@/lib/utm";
 import {
   useSetMarketingConsent,
 } from "@/services/marketing-consents/marketing-consents.queries";
@@ -31,6 +31,7 @@ import {
   type CreateParticipationInput,
 } from "@/services/participations/participations.service";
 import { isConsentRefusal } from "@/services/participations/consent-refusal";
+import { CHECKOUT_ALREADY_PAID_CODE } from "@/services/participations/participations.contracts";
 import { useUpdateProfile } from "@/services/users/users.queries";
 import { purchaseShapeFor } from "./pricing-options";
 import type { RegionGate } from "./region-lock/region-gate";
@@ -132,8 +133,18 @@ function failureMessage(error: unknown, fallback: string): string {
   return error instanceof Error ? error.message : fallback;
 }
 
-const signupErrorMessage = (error: unknown) =>
-  failureMessage(error, "Could not sign up");
+/**
+ * The one checkout refusal with a sentence of its own: an earlier Session for
+ * this seat has completed, so there is nothing to retry and the parent is told to
+ * wait for it.
+ */
+function signupErrorMessage(error: unknown, alreadyPaid: string): string {
+  if (error instanceof ApiError && error.code === CHECKOUT_ALREADY_PAID_CODE) {
+    return alreadyPaid;
+  }
+  return failureMessage(error, "Could not sign up");
+}
+
 const waitlistErrorMessage = (error: unknown) =>
   failureMessage(error, "Could not join waitlist");
 
@@ -150,8 +161,8 @@ export function SignupPanel({
   onCheckoutStart,
 }: SignupPanelProps) {
   const router = useRouter();
+  const t = useTranslations("productDetail.signupPanel");
   const { user, refreshProfile } = useAuth();
-  const utm = useUtm();
 
   // Pricing / gamer selection / agreed / locale+currency — the view props
   // shared verbatim with the preview panel. This panel only adds the live
@@ -336,10 +347,6 @@ export function SignupPanel({
       purchaseShape,
       currency: fields.currency,
       consentedDocuments: consentedDocuments(),
-      // The visit's tag, sent whatever the cookie banner said: the route reads
-      // the consent cookie off this request and stores the tag only under
-      // marketing consent (`src/lib/utm.ts`).
-      utm: utmRegistrationBody(utm),
       // School of Gaming's own box, which `recordConsentAnswers` above never
       // writes: its answer is stored on the row this request creates.
       schoolOfGamingMarketingOptIn: fields.schoolOfGamingMarketingOptIn,
@@ -415,7 +422,7 @@ export function SignupPanel({
         // Released on every error outcome, which is what makes the retry the
         // refetch below sets up actually clickable.
         setCommitting(false);
-        setSubmitError(signupErrorMessage(err));
+        setSubmitError(signupErrorMessage(err, t("checkoutAlreadyPaid")));
       },
     });
   };
@@ -430,8 +437,6 @@ export function SignupPanel({
         productId: product.id,
         participantId: fields.selectedParticipantId,
         consentedDocuments: consentedDocuments(),
-        // A place in line is a booking too, and records what a seat does.
-        utm: utmRegistrationBody(utm),
         schoolOfGamingMarketingOptIn: fields.schoolOfGamingMarketingOptIn,
       },
       {

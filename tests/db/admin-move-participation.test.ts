@@ -3,7 +3,7 @@ import type { SupabaseClient } from "@supabase/supabase-js";
 import type { Database } from "@/types/database.types";
 import { createAdminTestClient, createAuthenticatedClient } from "./helpers";
 import { TEST_CREDENTIALS, TEST_IDS } from "./constants";
-import { createTestProduct, deleteTestProducts } from "./product-helpers";
+import { createTestProduct, deleteTestProducts, insertPaidBooking } from "./product-helpers";
 import { adminMoveParticipationRpcResult } from "@/services/participations/participations.contracts";
 
 /**
@@ -52,7 +52,7 @@ describe("admin_move_participation", () => {
   let customerAuth: SupabaseClient<Database>;
   let subCounter = 0;
   let seatCounter = 0;
-  const checkoutSessions = new Map<string, string>();
+  const seatBookings = new Map<string, string>();
 
   async function clearParticipations() {
     // family_subscriptions cascade from participations, so this clears both.
@@ -73,7 +73,12 @@ describe("admin_move_participation", () => {
     status: Database["public"]["Enums"]["participation_status"] = "active",
   ): Promise<string> {
     seatCounter += 1;
-    const checkoutSession = `${CHECKOUT_SESSION_PREFIX}${seatCounter}`;
+    const bookingId = await insertPaidBooking(admin, {
+      productId,
+      participantId,
+      customerId: TEST_IDS.CUSTOMER,
+      checkoutSessionId: `${CHECKOUT_SESSION_PREFIX}${seatCounter}`,
+    });
     const { data, error } = await admin
       .from("participations")
       .insert({
@@ -82,7 +87,7 @@ describe("admin_move_participation", () => {
         customer_id: TEST_IDS.CUSTOMER,
         status,
         signed_up_at: SIGNED_UP_AT,
-        stripe_checkout_session_id: checkoutSession,
+        booking_id: bookingId,
         // `chk_participations_waitlisted_has_timestamp`: a queued row carries
         // the instant it joined the queue.
         waitlisted_at: status === "waitlisted" ? SIGNED_UP_AT : null,
@@ -90,7 +95,7 @@ describe("admin_move_participation", () => {
       .select("id")
       .single();
     if (error) throw new Error(`seat failed: ${error.message}`);
-    checkoutSessions.set(data.id, checkoutSession);
+    seatBookings.set(data.id, bookingId);
     return data.id;
   }
 
@@ -127,7 +132,7 @@ describe("admin_move_participation", () => {
     const { data } = await admin
       .from("participations")
       .select(
-        "product_id, group_id, group_joined_at, status, signed_up_at, stripe_checkout_session_id",
+        "product_id, group_id, group_joined_at, status, signed_up_at, booking_id",
       )
       .eq("id", participationId)
       .single();
@@ -233,9 +238,7 @@ describe("admin_move_participation", () => {
     expect(row?.status).toBe("active");
     // The two facts the family bought the seat with. Nothing about a switch
     // makes them untrue, and the payment marker travels with the row.
-    expect(row?.stripe_checkout_session_id).toBe(
-      checkoutSessions.get(participationId),
-    );
+    expect(row?.booking_id).toBe(seatBookings.get(participationId));
     expect(new Date(row?.signed_up_at ?? 0).toISOString()).toBe(
       new Date(SIGNED_UP_AT).toISOString(),
     );

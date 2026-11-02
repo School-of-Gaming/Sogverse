@@ -4,10 +4,7 @@ import { DISPLAY_NAME_MIN, DISPLAY_NAME_MAX } from "@/lib/constants/account-limi
 import { trimPersonName } from "@/lib/person-name-trim";
 import { minecraftUsernameValue } from "@/services/minecraft/minecraft.contracts";
 import { robloxUsernameValue } from "@/services/roblox/roblox.contracts";
-import {
-  realEmailValue,
-  registrationUtmBody,
-} from "@/services/users/parent-registration.contracts";
+import { realEmailValue } from "@/services/users/parent-registration.contracts";
 
 /**
  * Request body for public gedu self-registration (`POST /api/gedu/register`).
@@ -48,14 +45,6 @@ export const registerGeduBody = z.object({
    */
   minecraftUsername: minecraftUsernameValue.optional(),
   robloxUsername: robloxUsernameValue.optional(),
-  /**
-   * Marketing provenance: the UTM values this visit arrived with, if any.
-   *
-   * Imported rather than restated — the parent registration body takes the
-   * identical shape, both routes hand it to the same signup trigger, and the
-   * reasoning for why these carry no format rule lives with the definition.
-   */
-  utm: registrationUtmBody.optional(),
 });
 
 export type RegisterGeduBody = z.infer<typeof registerGeduBody>;

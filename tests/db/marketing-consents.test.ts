@@ -29,7 +29,8 @@ import { createTestProduct, deleteTestProducts } from "./product-helpers";
  *     is the one field on an event that nothing else can corroborate.
  *   * School of Gaming's own list is not written here: its consent lives in
  *     Klaviyo, the writers refuse it, and what the registration form was told
- *     is a write-once profile column. The rows written before it moved stay.
+ *     is a write-once profile column. Both consent tables refuse it by CHECK,
+ *     the service role included.
  *   * The consent is ACCOUNT-level and belongs to the purchasing customer, so
  *     a gamer and a gedu are refused by the role guard rather than by an empty
  *     result, and one family can never read another's answers.
@@ -52,7 +53,7 @@ const PRODUCT_FINISHED = "00000000-0000-0000-0000-000000000691";
 const ALL_TEST_PRODUCTS = [PRODUCT_PUBLISHED, PRODUCT_FINISHED];
 
 const LYNX = "lynx_educate" as const;
-/** School of Gaming's own list: answered in Klaviyo, its old rows kept unread. */
+/** School of Gaming's own list: answered in Klaviyo, and refused by both tables. */
 const SOG = "school_of_gaming" as const;
 
 /** The canonical forbidden SQLSTATE every guard primitive raises. */
@@ -312,20 +313,29 @@ describe("marketing consents", () => {
       expect(await eventsFor(TEST_IDS.CUSTOMER)).toEqual([]);
     });
 
-    it("keeps the school_of_gaming rows written before the move, registration-sourced ones included", async () => {
-      // As the registration route wrote them then: the CHECK still admits them.
+    it("refuses a school_of_gaming row or a registration-sourced event at the schema, even from the service role", async () => {
+      // The RPC's guard is not the only thing standing in the way: a direct
+      // write that skips it fails at the tables' CHECKs.
       const state = await admin
         .from("marketing_consents")
         .insert({ customer_id: TEST_IDS.CUSTOMER_2, consent_type: SOG, granted: true });
-      expect(state.error).toBeNull();
-      const event = await admin.from("marketing_consent_events").insert({
+      expect(state.error?.code).toBe(CHECK_VIOLATION);
+      const sogEvent = await admin.from("marketing_consent_events").insert({
         customer_id: TEST_IDS.CUSTOMER_2,
         consent_type: SOG,
         granted: true,
+        source: "settings",
+      });
+      expect(sogEvent.error?.code).toBe(CHECK_VIOLATION);
+      const registrationEvent = await admin.from("marketing_consent_events").insert({
+        customer_id: TEST_IDS.CUSTOMER_2,
+        consent_type: LYNX,
+        granted: true,
         source: "registration",
       });
-      expect(event.error).toBeNull();
-      expect(await stateFor(TEST_IDS.CUSTOMER_2)).toEqual([{ consent_type: SOG, granted: true }]);
+      expect(registrationEvent.error?.code).toBe(CHECK_VIOLATION);
+      expect(await stateFor(TEST_IDS.CUSTOMER_2)).toEqual([]);
+      expect(await eventsFor(TEST_IDS.CUSTOMER_2)).toEqual([]);
     });
 
     it("refuses a gedu", async () => {

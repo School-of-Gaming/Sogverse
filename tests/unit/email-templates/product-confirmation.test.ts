@@ -1152,8 +1152,8 @@ describe("the “Before the first session” guide", () => {
   /**
    * The Roblox guide's account and install steps. The in-person cases read
    * this topic rather than Java, because in person the Minecraft login is
-   * ours along with the machine, so Java has nothing to say there at all —
-   * Roblox is the guide that keeps an account step for the family to do.
+   * ours along with the machine, so Java has no steps there at all — Roblox
+   * is the guide that keeps an account step for the family to do.
    */
   const ROBLOX_ACCOUNT_STEP = "Create a Roblox account";
   const ROBLOX_INSTALL_STEP = "Install Roblox Studio";
@@ -1221,8 +1221,12 @@ describe("the “Before the first session” guide", () => {
     expect(html).toContain("We bring the computers to the session");
   });
 
-  it("states no guide for an in-person Minecraft product, whose login is ours", () => {
-    expect(render({ deliveryMode: "in_person" })).not.toContain(HEADING);
+  it("states the one note for an in-person Minecraft product, whose login is ours", () => {
+    const html = render({ deliveryMode: "in_person" });
+    expect(html).toContain(HEADING);
+    expect(html).toContain("You do not need to bring your own device");
+    expect(html).not.toContain(ACCOUNT_STEP);
+    expect(html).not.toContain("you’re ready for the session!");
   });
 
   /**
@@ -1273,6 +1277,13 @@ describe("the “Before the first session” guide", () => {
       expect(inPerson).not.toContain(ROBLOX_INSTALL_STEP);
       expect(inPerson).not.toContain(REMOTE_STEP);
       expect(text({ topic: "esports", deliveryMode: "in_person" })).not.toContain(HEADING);
+    });
+
+    it("states the one note with the HTML", () => {
+      const inPerson = text({ deliveryMode: "in_person" });
+      expect(inPerson).toContain(HEADING);
+      expect(inPerson).toContain("You do not need to bring your own device");
+      expect(inPerson).not.toContain(ACCOUNT_STEP);
     });
   });
 

@@ -26,7 +26,7 @@
       },
       "minecraft_bedrock": {
         "description": "Minecraft ’oH chenmoHmeH Quj quv’e’. nagh qo’Daq lengtaH puqpu’, Doch luSuq, qachmey’a’ luchenmoH – juHHom, veng, qo’ naQ ghap. Suvbe’lu’, QaplaHbe’lu’; jot ’ej tlhab Daq ’oH. ”Bedrock” ’oH mIllogh qImroQ (Xbox, PlayStation, Switch), telategh, tablet, Windows De’wI’ je lo’bogh.",
-        "note": "Huch ngaSbe’ Minecraft Bedrock. rap Quj, ’ach jan Hoch je’lu’, ’ej wa’ janvaD je’lu’bogh latlh janDaq jaHbe’ – lI’bogh je’lu’bogh, jan Quj puqlI’. qImroQDaq, online Suvmey luSuvmeH, qImroQ Huch-membership je poQlu’.",
+        "note": "Hop ghomHomvaD Huch ngaSbe’ Minecraft Bedrock. rap Quj, ’ach jan Hoch je’lu’, ’ej wa’ janvaD je’lu’bogh latlh janDaq jaHbe’ – lI’bogh je’lu’bogh, jan Quj puqlI’. qImroQDaq, online Suvmey luSuvmeH, qImroQ Huch-membership je poQlu’.",
         "linkLabel": "nuqDaq Suqlu’"
       },
       "minecraft_education": {
@@ -70,6 +70,7 @@
     "holidayBreaks": "SuvwI’pu’ leSbogh poHmey"
   },
   "signupPanel": {
+    "checkoutAlreadyPaid": "DIlmeH Huch lo'lu'taH. tugh jIH SOG Daq 'oHbej!",
     "verb": {
       "consumer_club": "yImuv",
       "municipality_club": "yIqon",

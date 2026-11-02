@@ -11,7 +11,7 @@ import { notFound } from "next/navigation";
 import { Providers } from "@/providers";
 import { getUserWithProfile } from "@/lib/supabase/server";
 import { resolveTimezone, TIMEZONE_COOKIE_NAME } from "@/lib/timezone";
-import { UTM_HEADER, parseUtmHeader } from "@/lib/utm";
+import { UTM_HEADER, parseAttribution } from "@/lib/utm";
 import { BRAND_LOCKUP } from "@/lib/constants/brand";
 import { isSupportedLocale, resolveLocale, toDetectedLocale } from "@/lib/constants/locales";
 import { ogCardImage } from "@/lib/og/card-metadata";
@@ -176,7 +176,7 @@ export default async function LocaleLayout({
   // first client render — keeps SSR HTML and the first hydration render in
   // lockstep. Client-side tick takes over after mount.
   const initialNow = new Date();
-  // The UTM attribution for this visit, already sanitised (and, on any request
+  // The UTM attribution and click ids for this visit, already sanitised (and, on any request
   // that did not carry one, already deleted) by the proxy — a layout cannot
   // receive `searchParams`, and `useSearchParams()` in a root-level client
   // provider would put the whole app under a Suspense boundary whose *fallback*
@@ -186,7 +186,7 @@ export default async function LocaleLayout({
   // requirement. The parse re-sanitises every field, so the values reaching the
   // provider came through our own sanitiser whatever the header said.
   const requestHeaders = await headers();
-  const initialUtm = parseUtmHeader(requestHeaders.get(UTM_HEADER));
+  const initialUtm = parseAttribution(requestHeaders.get(UTM_HEADER), initialNow.getTime());
   // What this browser *asked* for, read straight from Accept-Language and
   // deliberately bypassing both the `locale` cookie and `profiles.locale` —
   // those carry the answer the user has already given us, and this is the

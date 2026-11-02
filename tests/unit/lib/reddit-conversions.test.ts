@@ -7,6 +7,7 @@ import {
 } from "@/lib/consent";
 import type { RedditProductDetails } from "@/lib/marketing-events";
 import { reportRedditConversion } from "@/lib/reddit-conversions.server";
+import { UTM_COOKIE_NAME } from "@/lib/utm";
 import { asObject } from "../../helpers/json";
 
 /**
@@ -422,5 +423,67 @@ describe("reportRedditConversion — failure", () => {
       expect.stringContaining("[reddit-conversions]"),
       expect.any(Error),
     );
+  });
+});
+
+/**
+ * The `rdt_cid` our own attribution cookie kept from the landing, for a parent
+ * whose browser has no `_rdt_cid` because the pixel loaded after the click id
+ * had left the address bar.
+ */
+describe("reportRedditConversion — the kept click", () => {
+  const RDT_CID = "1234567890123456789_abcDEF-9";
+  /** A landing a minute ago, well inside the cookie's 30 days. */
+  const LANDED = Date.now() - 60_000;
+
+  function kept(value: string): string {
+    return `; ${UTM_COOKIE_NAME}=${encodeURIComponent(value)}`;
+  }
+
+  it("sends the kept rdt_cid, as the link carried it, when there is no _rdt_cid", async () => {
+    await reportRedditConversion(
+      request({
+        cookie: cookieHeaderFor(GRANTED, kept(`campaign=c&at=${LANDED}&rdt_cid=${LANDED}.${RDT_CID}`)),
+      }),
+      LEAD,
+      PARENT,
+    );
+
+    expect(sentEvent().click_id).toBe(RDT_CID);
+  });
+
+  it("sends the pixel's own _rdt_cid when there is one", async () => {
+    await reportRedditConversion(
+      request({
+        cookie: cookieHeaderFor(GRANTED, `; _rdt_cid=click-123${kept(`rdt_cid=${LANDED}.${RDT_CID}`)}`),
+      }),
+      LEAD,
+      PARENT,
+    );
+
+    expect(sentEvent().click_id).toBe("click-123");
+  });
+
+  it("never sends Meta's kept click id to Reddit", async () => {
+    await reportRedditConversion(
+      request({ cookie: cookieHeaderFor(GRANTED, kept(`fbclid=${LANDED}.meta_1`)) }),
+      LEAD,
+      PARENT,
+    );
+
+    expect(sentEvent()).not.toHaveProperty("click_id");
+    expect(JSON.stringify(sentEvent())).not.toContain("meta_1");
+  });
+
+  it("sends nothing at all without marketing consent, kept click or not", async () => {
+    await reportRedditConversion(
+      request({
+        cookie: cookieHeaderFor({ ...GRANTED, marketing: false }, kept(`rdt_cid=${LANDED}.${RDT_CID}`)),
+      }),
+      LEAD,
+      PARENT,
+    );
+
+    expect(fetchMock).not.toHaveBeenCalled();
   });
 });

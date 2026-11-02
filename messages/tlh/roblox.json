@@ -48,7 +48,7 @@
   "how": {
     "eyebrow": "chay’ Qu’",
     "heading": "loS Qu’mey ngeD — yIchu’",
-    "subheading": "Do’Ha’ yIwIv: pa’Daq pagh jIrDaq, wa’ rep ghap Hut Hogh.",
+    "subheading": "pa’Daq jIrDaq je jajmey qaS, wa’ rep ghap Hut Hogh.",
     "step1": {
       "title": "jaj yIwIv",
       "description": "bIngDaq yIwIv — reH jajmey chu’ wImaH, vaj reH yIleghqa’."
@@ -69,7 +69,7 @@
   "events": {
     "heading": "ghoSbogh jajmey",
     "subheading": "reH jajmey chu’ wImaH — nuq ghoS yIlegh.",
-    "empty": "jajmey wa’DIch DaH wIqech. tugh yIleghqa’, ’ej nuq ghoS yISov.",
+    "empty": "jajmey chu’ DaH wIqech. tugh yIleghqa’, ’ej nuq ghoS yISov.",
     "previous": "jajmey ret yIcha’",
     "next": "jajmey veb yIcha’",
     "browseShop": "ngevwI’ yIlegh"

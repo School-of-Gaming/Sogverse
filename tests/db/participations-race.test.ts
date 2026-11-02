@@ -6,12 +6,13 @@ import { TEST_IDS, TEST_CREDENTIALS } from "./constants";
 import {
   createTestProduct,
   deleteTestProducts,
+  payForBooking,
 } from "./product-helpers";
 import { z } from "zod";
 import { getString, getNumber } from "../helpers/json";
 import {
-  confirmPaidParticipationRpcResult,
-  createParticipationRpcResult,
+  confirmBookingRpcResult,
+  createBookingRpcResult,
   joinWaitlistRpcResult,
 } from "@/services/participations/participations.contracts";
 
@@ -79,7 +80,7 @@ describe("participations race + idempotency", () => {
   // Concurrent paid confirmations
   // ---------------------------------------------------------------------------
 
-  describe("confirm_paid_participation — concurrent payments on a 1-seat product", () => {
+  describe("confirm_booking — concurrent payments on a 1-seat product", () => {
     beforeAll(async () => {
       await createTestProduct(admin, {
         id: PRODUCT_RACE_1SEAT,
@@ -99,18 +100,8 @@ describe("participations race + idempotency", () => {
       const ITERATIONS = 20;
       for (let i = 0; i < ITERATIONS; i++) {
         const [a, b] = await Promise.all([
-          admin.rpc("confirm_paid_participation", {
-            p_product_id: PRODUCT_RACE_1SEAT,
-            p_participant_id: TEST_IDS.GAMER,
-            p_customer_id: TEST_IDS.CUSTOMER,
-            p_checkout_session_id: `cs_race_${i}_a`,
-          }),
-          admin.rpc("confirm_paid_participation", {
-            p_product_id: PRODUCT_RACE_1SEAT,
-            p_participant_id: TEST_IDS.GAMER,
-            p_customer_id: TEST_IDS.CUSTOMER,
-            p_checkout_session_id: `cs_race_${i}_b`,
-          }),
+          payForBooking(admin, PRODUCT_RACE_1SEAT, TEST_IDS.GAMER, TEST_IDS.CUSTOMER, `cs_race_${i}_a`),
+          payForBooking(admin, PRODUCT_RACE_1SEAT, TEST_IDS.GAMER, TEST_IDS.CUSTOMER, `cs_race_${i}_b`),
         ]);
 
         expect(a.error, `iteration ${i}: a.error`).toBeNull();
@@ -121,8 +112,8 @@ describe("participations race + idempotency", () => {
           getString(b.data, "kind"),
         ].sort();
         expect(kinds, `iteration ${i}`).toEqual([
-          "confirmed",
           "duplicate_payment",
+          "settled",
         ]);
 
         const { data: rows } = await admin
@@ -140,22 +131,18 @@ describe("participations race + idempotency", () => {
       }
     }, 30_000);
 
-    it("create_participation validates a paid signup without writing a row", async () => {
-      // The seat cap is checked before Stripe, but nothing is stored: an
-      // abandoned checkout has to leave the product exactly as it was.
-      const validated = await admin.rpc("create_participation", {
+    it("create_booking answers a paid signup with a pending booking and no seat", async () => {
+      // The seat cap is checked before Stripe, but no seat is taken: an
+      // abandoned checkout has to leave the product's seats exactly as they were.
+      const pending = await admin.rpc("create_booking", {
         p_product_id: PRODUCT_RACE_1SEAT,
         p_participant_id: TEST_IDS.GAMER,
         p_customer_id: TEST_IDS.CUSTOMER,
         p_purchase_shape: "subscription_monthly",
         p_currency: "eur",
       });
-      // Parsed through the contract schema the checkout route depends on
-      // (createParticipationRpcResult), so this real RPC output is the CI guard
-      // that participations.contracts.ts stays true to Postgres.
-      const parsed = createParticipationRpcResult.parse(validated.data);
-      expect(parsed.kind).toBe("validated");
-      expect(parsed.participation_id).toBeUndefined();
+      expect(pending.error).toBeNull();
+      expect(createBookingRpcResult.parse(pending.data).kind).toBe("pending");
 
       const { data: rows } = await admin
         .from("participations")
@@ -165,14 +152,9 @@ describe("participations race + idempotency", () => {
     });
 
     it("an active seat fills the product for everyone else", async () => {
-      await admin.rpc("confirm_paid_participation", {
-        p_product_id: PRODUCT_RACE_1SEAT,
-        p_participant_id: TEST_IDS.GAMER,
-        p_customer_id: TEST_IDS.CUSTOMER,
-        p_checkout_session_id: "cs_fills_the_seat",
-      });
+      await payForBooking(admin, PRODUCT_RACE_1SEAT, TEST_IDS.GAMER, TEST_IDS.CUSTOMER, "cs_fills_the_seat");
 
-      const second = await admin.rpc("create_participation", {
+      const second = await admin.rpc("create_booking", {
         p_product_id: PRODUCT_RACE_1SEAT,
         p_participant_id: TEST_IDS.GAMER_2,
         p_customer_id: TEST_IDS.CUSTOMER,
@@ -180,13 +162,13 @@ describe("participations race + idempotency", () => {
         p_currency: "eur",
       });
       // Covers the 'full' kind of the same contract schema (no id).
-      expect(createParticipationRpcResult.parse(second.data).kind).toBe("full");
+      expect(createBookingRpcResult.parse(second.data).kind).toBe("full");
     });
 
     it.each(["active", "waitlisted", "completed"] as const)(
       "refuses a signup when the gamer already holds a %s row",
       async (status) => {
-        // These three are exactly the statuses `confirm_paid_participation`
+        // These three are exactly the statuses `confirm_booking`
         // conflicts on, and the two lists have to stay identical: a status this
         // gate lets through but the confirmation refuses would take a parent's
         // money and then hand them nothing. `completed` is the one that was
@@ -202,7 +184,7 @@ describe("participations race + idempotency", () => {
         });
         expect(seedErr).toBeNull();
 
-        const again = await admin.rpc("create_participation", {
+        const again = await admin.rpc("create_booking", {
           p_product_id: PRODUCT_RACE_1SEAT,
           p_participant_id: TEST_IDS.GAMER,
           p_customer_id: TEST_IDS.CUSTOMER,
@@ -217,10 +199,10 @@ describe("participations race + idempotency", () => {
   });
 
   // ---------------------------------------------------------------------------
-  // confirm_paid_participation
+  // confirm_booking
   // ---------------------------------------------------------------------------
 
-  describe("confirm_paid_participation", () => {
+  describe("confirm_booking", () => {
     beforeAll(async () => {
       await createTestProduct(admin, {
         id: PRODUCT_CONFIRM,
@@ -229,25 +211,21 @@ describe("participations race + idempotency", () => {
     });
 
     it("creates an active row and records the session that bought it", async () => {
-      const result = await admin.rpc("confirm_paid_participation", {
-        p_product_id: PRODUCT_CONFIRM,
-        p_participant_id: TEST_IDS.GAMER,
-        p_customer_id: TEST_IDS.CUSTOMER,
-        p_checkout_session_id: "cs_confirm_1",
-      });
-      const body = confirmPaidParticipationRpcResult.parse(result.data);
-      expect(body.kind).toBe("confirmed");
-      const participationId =
-        body.kind === "confirmed" ? body.participation_id : "";
+      const result = await payForBooking(admin, PRODUCT_CONFIRM, TEST_IDS.GAMER, TEST_IDS.CUSTOMER, "cs_confirm_1");
+      const body = confirmBookingRpcResult.parse(result.data);
+      if (body.kind !== "settled" || !body.participation_id) {
+        throw new Error("expected a settled seat");
+      }
+      const participationId = body.participation_id;
 
       const { data: row } = await admin
         .from("participations")
-        .select("status, customer_id, stripe_checkout_session_id")
+        .select("status, customer_id, booking:bookings(stripe_checkout_session_id)")
         .eq("id", participationId)
         .single();
       expect(row?.status).toBe("active");
       expect(row?.customer_id).toBe(TEST_IDS.CUSTOMER);
-      expect(row?.stripe_checkout_session_id).toBe("cs_confirm_1");
+      expect(row?.booking?.stripe_checkout_session_id).toBe("cs_confirm_1");
     });
 
     it("is idempotent for a redelivery of the same Checkout Session", async () => {
@@ -255,25 +233,15 @@ describe("participations race + idempotency", () => {
       // created leaves no commit marker and Stripe re-runs the whole handler.
       // That re-run must get its own row back — not a duplicate verdict, which
       // would cancel a paying customer's live subscription.
-      const first = await admin.rpc("confirm_paid_participation", {
-        p_product_id: PRODUCT_CONFIRM,
-        p_participant_id: TEST_IDS.GAMER,
-        p_customer_id: TEST_IDS.CUSTOMER,
-        p_checkout_session_id: "cs_replay_1",
-      });
-      const second = await admin.rpc("confirm_paid_participation", {
-        p_product_id: PRODUCT_CONFIRM,
-        p_participant_id: TEST_IDS.GAMER,
-        p_customer_id: TEST_IDS.CUSTOMER,
-        p_checkout_session_id: "cs_replay_1",
-      });
+      const first = await payForBooking(admin, PRODUCT_CONFIRM, TEST_IDS.GAMER, TEST_IDS.CUSTOMER, "cs_replay_1");
+      const second = await payForBooking(admin, PRODUCT_CONFIRM, TEST_IDS.GAMER, TEST_IDS.CUSTOMER, "cs_replay_1");
 
-      const a = confirmPaidParticipationRpcResult.parse(first.data);
-      const b = confirmPaidParticipationRpcResult.parse(second.data);
-      expect(a.kind).toBe("confirmed");
-      expect(b.kind).toBe("confirmed");
-      expect(b.kind === "confirmed" && b.participation_id).toBe(
-        a.kind === "confirmed" && a.participation_id,
+      const a = confirmBookingRpcResult.parse(first.data);
+      const b = confirmBookingRpcResult.parse(second.data);
+      expect(a.kind).toBe("settled");
+      expect(b.kind).toBe("settled");
+      expect(b.kind === "settled" && b.participation_id).toBe(
+        a.kind === "settled" && a.participation_id,
       );
       expect(
         z.object({ idempotent: z.boolean() }).parse(second.data).idempotent,
@@ -293,27 +261,17 @@ describe("participations race + idempotency", () => {
       // raise on the partial UNIQUE; it must come back as a duplicate so the
       // webhook records the charge and cancels the second subscription instead
       // of looping on Stripe retries.
-      const first = await admin.rpc("confirm_paid_participation", {
-        p_product_id: PRODUCT_CONFIRM,
-        p_participant_id: TEST_IDS.GAMER,
-        p_customer_id: TEST_IDS.CUSTOMER,
-        p_checkout_session_id: "cs_dup_first",
-      });
-      const firstBody = confirmPaidParticipationRpcResult.parse(first.data);
+      const first = await payForBooking(admin, PRODUCT_CONFIRM, TEST_IDS.GAMER, TEST_IDS.CUSTOMER, "cs_dup_first");
+      const firstBody = confirmBookingRpcResult.parse(first.data);
 
-      const second = await admin.rpc("confirm_paid_participation", {
-        p_product_id: PRODUCT_CONFIRM,
-        p_participant_id: TEST_IDS.GAMER,
-        p_customer_id: TEST_IDS.CUSTOMER,
-        p_checkout_session_id: "cs_dup_second",
-      });
-      const secondBody = confirmPaidParticipationRpcResult.parse(second.data);
+      const second = await payForBooking(admin, PRODUCT_CONFIRM, TEST_IDS.GAMER, TEST_IDS.CUSTOMER, "cs_dup_second");
+      const secondBody = confirmBookingRpcResult.parse(second.data);
 
       expect(secondBody.kind).toBe("duplicate_payment");
       expect(
         secondBody.kind === "duplicate_payment" &&
           secondBody.existing_participation_id,
-      ).toBe(firstBody.kind === "confirmed" && firstBody.participation_id);
+      ).toBe(firstBody.kind === "settled" && firstBody.participation_id);
 
       // Still exactly one seat.
       const { data: rows } = await admin
@@ -341,28 +299,14 @@ describe("participations race + idempotency", () => {
         .select("id")
         .single();
 
-      const result = await admin.rpc("confirm_paid_participation", {
-        p_product_id: PRODUCT_CONFIRM,
-        p_participant_id: TEST_IDS.GAMER_2,
-        p_customer_id: TEST_IDS.CUSTOMER,
-        p_checkout_session_id: "cs_waitlist_clash",
-      });
-      const body = confirmPaidParticipationRpcResult.parse(result.data);
+      const result = await payForBooking(admin, PRODUCT_CONFIRM, TEST_IDS.GAMER_2, TEST_IDS.CUSTOMER, "cs_waitlist_clash");
+      const body = confirmBookingRpcResult.parse(result.data);
       expect(body.kind).toBe("duplicate_payment");
       expect(
         body.kind === "duplicate_payment" && body.existing_participation_id,
       ).toBe(waitlisted!.id);
     });
 
-    it("raises for a product that does not exist", async () => {
-      const result = await admin.rpc("confirm_paid_participation", {
-        p_product_id: "00000000-0000-0000-0000-000000000fff",
-        p_participant_id: TEST_IDS.GAMER,
-        p_customer_id: TEST_IDS.CUSTOMER,
-        p_checkout_session_id: "cs_no_product",
-      });
-      expect(result.error).not.toBeNull();
-    });
   });
 
   // ---------------------------------------------------------------------------
@@ -466,11 +410,11 @@ describe("participations race + idempotency", () => {
   //
   // The schema permits any product, free included, to carry an explicit
   // seat_count (seat_count is optional for every billing mode). The gate sits
-  // ABOVE create_participation's free branch: a free path that INSERTed an
+  // ABOVE create_booking's free branch: a free path that INSERTed an
   // active row before the seat-count check would let a free product with
   // seat_count=1 silently accept the second signup.
 
-  describe("create_participation — free product with seat_count enforces cap", () => {
+  describe("create_booking — free product with seat_count enforces cap", () => {
     beforeAll(async () => {
       await createTestProduct(admin, {
         id: PRODUCT_FREE_CAP,
@@ -480,7 +424,7 @@ describe("participations race + idempotency", () => {
     });
 
     it("first free signup activates; second returns 'full'", async () => {
-      const first = await admin.rpc("create_participation", {
+      const first = await admin.rpc("create_booking", {
         p_product_id: PRODUCT_FREE_CAP,
         p_participant_id: TEST_IDS.GAMER,
         p_customer_id: TEST_IDS.CUSTOMER,
@@ -490,7 +434,7 @@ describe("participations race + idempotency", () => {
       expect(first.error).toBeNull();
       expect(getString(first.data, "kind")).toBe("free_active");
 
-      const second = await admin.rpc("create_participation", {
+      const second = await admin.rpc("create_booking", {
         p_product_id: PRODUCT_FREE_CAP,
         p_participant_id: TEST_IDS.GAMER_2,
         p_customer_id: TEST_IDS.CUSTOMER,
@@ -516,7 +460,7 @@ describe("participations race + idempotency", () => {
   // The block above is the hard half: on a no-charge signup the gate and the
   // write happen in one locked transaction, so the cap cannot be exceeded. This
   // block is the executable statement of the other half — deliberate policy,
-  // not an oversight. `confirm_paid_participation` never re-checks the cap
+  // not an oversight. `confirm_booking` never re-checks the cap
   // deliberately, because a refusal *after* the parent has paid is
   // worse than one visible oversold seat: the alternative is an automated
   // refund path the platform does not have. The window is a Stripe Checkout
@@ -536,42 +480,34 @@ describe("participations race + idempotency", () => {
 
     it("confirms an over-cap payment on a full product and writes the seat", async () => {
       // The one seat, taken.
-      const filled = await admin.rpc("confirm_paid_participation", {
-        p_product_id: PRODUCT_PAID_CAP,
-        p_participant_id: TEST_IDS.GAMER,
-        p_customer_id: TEST_IDS.CUSTOMER,
-        p_checkout_session_id: "cs_soft_cap_first",
-      });
-      expect(confirmPaidParticipationRpcResult.parse(filled.data).kind).toBe(
-        "confirmed",
+      const filled = await payForBooking(admin, PRODUCT_PAID_CAP, TEST_IDS.GAMER, TEST_IDS.CUSTOMER, "cs_soft_cap_first");
+      expect(confirmBookingRpcResult.parse(filled.data).kind).toBe(
+        "settled",
       );
 
       // The gate does its job: a NEW entrant is turned away before Stripe.
-      const gate = await admin.rpc("create_participation", {
+      const gate = await admin.rpc("create_booking", {
         p_product_id: PRODUCT_PAID_CAP,
         p_participant_id: TEST_IDS.GAMER_2,
         p_customer_id: TEST_IDS.CUSTOMER,
         p_purchase_shape: "subscription_monthly",
         p_currency: "eur",
       });
-      expect(createParticipationRpcResult.parse(gate.data).kind).toBe("full");
+      expect(createBookingRpcResult.parse(gate.data).kind).toBe("full");
 
       // But someone who passed that gate earlier and has now paid gets their
       // seat regardless — this is the soft half, and it must stay true.
-      const overCap = await admin.rpc("confirm_paid_participation", {
-        p_product_id: PRODUCT_PAID_CAP,
-        p_participant_id: TEST_IDS.GAMER_2,
-        p_customer_id: TEST_IDS.CUSTOMER,
-        p_checkout_session_id: "cs_soft_cap_over",
-      });
+      const overCap = await payForBooking(admin, PRODUCT_PAID_CAP, TEST_IDS.GAMER_2, TEST_IDS.CUSTOMER, "cs_soft_cap_over");
       expect(overCap.error).toBeNull();
-      const parsed = confirmPaidParticipationRpcResult.parse(overCap.data);
-      expect(parsed.kind).toBe("confirmed");
+      const parsed = confirmBookingRpcResult.parse(overCap.data);
+      if (parsed.kind !== "settled" || !parsed.participation_id) {
+        throw new Error("expected a settled seat");
+      }
 
       const { data: row } = await admin
         .from("participations")
         .select("status")
-        .eq("id", parsed.kind === "confirmed" ? parsed.participation_id : "")
+        .eq("id", parsed.participation_id)
         .single();
       expect(row?.status).toBe("active");
 

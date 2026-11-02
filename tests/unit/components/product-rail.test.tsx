@@ -28,7 +28,7 @@ vi.mock("@/components/public/products/product-browse-card", () => ({
 
 import { ProductRail } from "@/components/public/products/product-rail";
 import { productRailSeed } from "@/components/public/products/product-rail-selection";
-import { PROGRAMME_RAIL_SELECTION } from "@/components/roblox/programme-filters";
+import { PROGRAMME_RAIL_SELECTIONS } from "@/components/roblox/programme-filters";
 import { UpcomingEventsBrowse } from "@/components/roblox/upcoming-events-browse";
 import { browseRow, emptyCounts } from "../../mocks/product-browse-row";
 
@@ -73,7 +73,7 @@ describe("the Roblox page's upcoming events, through the shared pipeline", () =>
     const prefetch = { listing: LISTING, counts: [id(1), id(2), id(4)].map(emptyCounts) };
     render(
       <Providers>
-        <UpcomingEventsBrowse seed={productRailSeed(prefetch, PROGRAMME_RAIL_SELECTION)} />
+        <UpcomingEventsBrowse format="all" seed={productRailSeed(prefetch, PROGRAMME_RAIL_SELECTIONS.all)} />
       </Providers>,
     );
     expect(screen.getByRole("heading", { level: 2, name: roblox.events.heading })).toBeTruthy();
@@ -86,7 +86,7 @@ describe("the Roblox page's upcoming events, through the shared pipeline", () =>
     const prefetch = { listing: [LISTING[2], LISTING[3]], counts: [] };
     render(
       <Providers>
-        <UpcomingEventsBrowse seed={productRailSeed(prefetch, PROGRAMME_RAIL_SELECTION)} />
+        <UpcomingEventsBrowse format="all" seed={productRailSeed(prefetch, PROGRAMME_RAIL_SELECTIONS.all)} />
       </Providers>,
     );
     expect(screen.getByText(roblox.events.empty)).toBeTruthy();
@@ -99,7 +99,8 @@ describe("the Roblox page's upcoming events, through the shared pipeline", () =>
     render(
       <Providers>
         <UpcomingEventsBrowse
-          seed={productRailSeed({ listing, counts: [] }, PROGRAMME_RAIL_SELECTION)}
+          format="all"
+          seed={productRailSeed({ listing, counts: [] }, PROGRAMME_RAIL_SELECTIONS.all)}
         />
       </Providers>,
     );

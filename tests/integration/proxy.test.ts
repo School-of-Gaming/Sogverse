@@ -4,7 +4,7 @@
 // @vitest-environment node
 import { readdirSync } from "node:fs";
 import { join, relative } from "node:path";
-import { describe, it, expect, vi, beforeEach } from "vitest";
+import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
 import { NextRequest } from "next/server";
 import { unstable_doesMiddlewareMatch } from "next/experimental/testing/server";
 
@@ -14,6 +14,12 @@ process.env.PIN_COOKIE_SECRET = "test-pin-cookie-secret";
 
 import { config, proxy } from "@/proxy";
 import { PIN_COOKIE_NAME, pinTokenFor } from "@/lib/pin-session";
+import {
+  CONSENT_COOKIE_NAME,
+  consentForPurposes,
+  serialiseConsent,
+} from "@/lib/consent";
+import { UTM_COOKIE_MAX_AGE_SECONDS, UTM_COOKIE_NAME } from "@/lib/utm";
 import {
   decodeExternalPathname,
   localizeInternalPath,
@@ -879,7 +885,21 @@ describe("proxy", () => {
   // header back off the request object after the call is reading exactly what
   // the layout would get.
 
+  // Every landing time below is this clock's. Only `Date` is faked, so the
+  // proxy's awaits run as they always do.
+  const LANDED = Date.UTC(2026, 10, 2, 12, 0, 0);
+  const DAY_MS = 24 * 60 * 60 * 1000;
+  const FBCLID = "IwZXh0bgNhZW0CMTEAAR2_aem_AeVgoX2Yh5Qx4n7Z-p";
+
   describe("utm attribution header", () => {
+    beforeEach(() => {
+      vi.useFakeTimers({ toFake: ["Date"] });
+      vi.setSystemTime(LANDED);
+    });
+    afterEach(() => {
+      vi.useRealTimers();
+    });
+
     function utmHeaderAfter(request: NextRequest) {
       return request.headers.get("x-utm");
     }
@@ -891,7 +911,7 @@ describe("proxy", () => {
       );
       await proxy(request);
       expect(utmHeaderAfter(request)).toBe(
-        "source=Lynx&medium=email&campaign=lynx-summer-a&content=hero&term=roblox+club",
+        `source=Lynx&medium=email&campaign=lynx-summer-a&content=hero&term=roblox+club&at=${LANDED}`,
       );
     });
 
@@ -899,11 +919,11 @@ describe("proxy", () => {
       mockNoUser();
       const request = createNextRequest("/shop?utm_campaign=lynx-summer-a");
       await proxy(request);
-      expect(utmHeaderAfter(request)).toBe("campaign=lynx-summer-a");
+      expect(utmHeaderAfter(request)).toBe(`campaign=lynx-summer-a&at=${LANDED}`);
 
       const termOnly = createNextRequest("/shop?utm_term=minecraft");
       await proxy(termOnly);
-      expect(utmHeaderAfter(termOnly)).toBe("term=minecraft");
+      expect(utmHeaderAfter(termOnly)).toBe(`term=minecraft&at=${LANDED}`);
     });
 
     it("emits nothing when there are no utm params at all", async () => {
@@ -924,7 +944,7 @@ describe("proxy", () => {
         "/shop?utm_source=lynx&utm_campaign=good&utm_campaign=junk",
       );
       await proxy(request);
-      expect(utmHeaderAfter(request)).toBe("source=lynx");
+      expect(utmHeaderAfter(request)).toBe(`source=lynx&at=${LANDED}`);
     });
 
     it("emits nothing for a malformed value", async () => {
@@ -950,6 +970,31 @@ describe("proxy", () => {
       expect(utmHeaderAfter(request)).toBeNull();
     });
 
+    it("carries each platform's click id with its landing time, and no gclid", async () => {
+      mockNoUser();
+      const request = createNextRequest(
+        `/shop?utm_campaign=c&fbclid=${FBCLID}&rdt_cid=abc_123&gclid=Cj0KCQ`,
+      );
+      await proxy(request);
+      expect(utmHeaderAfter(request)).toBe(
+        `campaign=c&at=${LANDED}&fbclid=${LANDED}.${FBCLID}&rdt_cid=${LANDED}.abc_123`,
+      );
+    });
+
+    it("carries a click id that arrived without a tag", async () => {
+      mockNoUser();
+      const request = createNextRequest(`/fr/roblox?fbclid=${FBCLID}`);
+      await proxy(request);
+      expect(utmHeaderAfter(request)).toBe(`fbclid=${LANDED}.${FBCLID}`);
+    });
+
+    it("drops a click id the sanitiser refuses and keeps the tag", async () => {
+      mockNoUser();
+      const request = createNextRequest("/shop?utm_campaign=c&fbclid=a%2Eb");
+      await proxy(request);
+      expect(utmHeaderAfter(request)).toBe(`campaign=c&at=${LANDED}`);
+    });
+
     it("percent-encodes a value no raw header could carry", async () => {
       // A Meta macro expands to an ad's own name — spaces and accents included
       // — and the header has to stay ASCII whatever the value was.
@@ -959,7 +1004,7 @@ describe("proxy", () => {
       );
       await proxy(request);
       const header = utmHeaderAfter(request);
-      expect(header).toBe("campaign=Rentr%C3%A9e+scolaire");
+      expect(header).toBe(`campaign=Rentr%C3%A9e+scolaire&at=${LANDED}`);
       expect(header).toMatch(/^[\x20-\x7E]*$/);
     });
 
@@ -982,7 +1027,7 @@ describe("proxy", () => {
         "x-utm": "campaign=forged-by-the-client",
       });
       await proxy(request);
-      expect(utmHeaderAfter(request)).toBe("campaign=lynx-summer-a");
+      expect(utmHeaderAfter(request)).toBe(`campaign=lynx-summer-a&at=${LANDED}`);
     });
 
     it("is set above every branch, so a redirecting request still carries it", async () => {
@@ -992,7 +1037,210 @@ describe("proxy", () => {
       const request = createNextRequest("/parent?utm_campaign=lynx-summer-a");
       const response = await proxy(request);
       expect(response.status).toBe(307);
-      expect(utmHeaderAfter(request)).toBe("campaign=lynx-summer-a");
+      expect(utmHeaderAfter(request)).toBe(`campaign=lynx-summer-a&at=${LANDED}`);
+    });
+  });
+
+  // --- The attribution cookie ---
+  //
+  // Written only when the request's own consent cookie grants marketing, on
+  // whichever response goes back, because a bounce is the tag's last chance.
+  describe("the attribution cookie", () => {
+    beforeEach(() => {
+      vi.useFakeTimers({ toFake: ["Date"] });
+      vi.setSystemTime(LANDED);
+    });
+    afterEach(() => {
+      vi.useRealTimers();
+    });
+
+    function consent(purposes: { analytics: boolean; marketing: boolean }): string {
+      const value = serialiseConsent(consentForPurposes(purposes));
+      return `${CONSENT_COOKIE_NAME}=${encodeURIComponent(value)}`;
+    }
+    const GRANTED = consent({ analytics: false, marketing: true });
+    const TAGGED = "/shop?utm_source=lynx&utm_campaign=lynx-summer-a";
+
+    function keptBy(response: { cookies: { get(name: string): unknown } }) {
+      return response.cookies.get(UTM_COOKIE_NAME);
+    }
+
+    it("is written under marketing consent, with its attributes whole", async () => {
+      mockNoUser();
+      const response = await proxy(createNextRequest(TAGGED, GRANTED));
+      expect(keptBy(response)).toMatchObject({
+        value: `source=lynx&campaign=lynx-summer-a&at=${LANDED}`,
+        path: "/",
+        maxAge: UTM_COOKIE_MAX_AGE_SECONDS,
+        sameSite: "lax",
+      });
+      expect(keptBy(response)).not.toMatchObject({ httpOnly: true });
+    });
+
+    it.each([
+      ["unanswered", undefined],
+      ["refused", consent({ analytics: false, marketing: false })],
+      ["analytics only", consent({ analytics: true, marketing: false })],
+    ])("is not written when the answer is %s", async (_, cookie) => {
+      mockNoUser();
+      const response = await proxy(createNextRequest(TAGGED, cookie));
+      expect(keptBy(response)).toBeUndefined();
+    });
+
+    it("is overwritten by a later tag, which is what last touch means", async () => {
+      mockNoUser();
+      const response = await proxy(
+        createNextRequest(
+          "/shop?utm_campaign=later",
+          `${GRANTED}; ${UTM_COOKIE_NAME}=campaign%3Dearlier`,
+        ),
+      );
+      expect(keptBy(response)).toMatchObject({ value: `campaign=later&at=${LANDED}` });
+    });
+
+    it("replaces one platform's click id and keeps the tag and the other's", async () => {
+      mockNoUser();
+      const earlier = LANDED - 3 * DAY_MS;
+      const kept = encodeURIComponent(
+        `campaign=earlier&at=${earlier}&fbclid=${earlier}.old&rdt_cid=${earlier}.reddit`,
+      );
+      const response = await proxy(
+        createNextRequest(`/fr/roblox?fbclid=${FBCLID}`, `${GRANTED}; ${UTM_COOKIE_NAME}=${kept}`),
+      );
+      expect(keptBy(response)).toMatchObject({
+        value: `campaign=earlier&at=${earlier}&fbclid=${LANDED}.${FBCLID}&rdt_cid=${earlier}.reddit`,
+      });
+    });
+
+    it("keeps a click id that arrives without a tag, under consent only", async () => {
+      mockNoUser();
+      const granted = await proxy(createNextRequest(`/shop?rdt_cid=abc_123`, GRANTED));
+      expect(keptBy(granted)).toMatchObject({ value: `rdt_cid=${LANDED}.abc_123` });
+
+      const refused = await proxy(
+        createNextRequest(`/shop?rdt_cid=abc_123`, consent({ analytics: true, marketing: false })),
+      );
+      expect(keptBy(refused)).toBeUndefined();
+    });
+
+    it("keeps no click id for a signed-in gamer", async () => {
+      mockUser("gamer");
+      const response = await proxy(createNextRequest(`/shop?fbclid=${FBCLID}`, GRANTED));
+      expect(keptBy(response)).toBeUndefined();
+    });
+
+    it("leaves the cookie alone on a request with no tag", async () => {
+      mockNoUser();
+      const response = await proxy(
+        createNextRequest("/shop", `${GRANTED}; ${UTM_COOKIE_NAME}=campaign%3Dearlier`),
+      );
+      expect(keptBy(response)).toBeUndefined();
+    });
+
+    it("drops a tag over the byte budget rather than cutting it", async () => {
+      mockNoUser();
+      const wide = encodeURIComponent("𝕎".repeat(200));
+      const response = await proxy(
+        createNextRequest(
+          `/shop?utm_source=${wide}&utm_medium=${wide}&utm_campaign=${wide}`,
+          GRANTED,
+        ),
+      );
+      expect(keptBy(response)).toBeUndefined();
+    });
+
+    it("leaves the earlier cookie as it is when a new tag is over the cookie's budget", async () => {
+      mockNoUser();
+      const source = encodeURIComponent("é".repeat(100));
+      const campaign = encodeURIComponent("é".repeat(200));
+      const response = await proxy(
+        createNextRequest(
+          `/shop?utm_source=${source}&utm_campaign=${campaign}`,
+          `${GRANTED}; ${UTM_COOKIE_NAME}=campaign%3Dearlier`,
+        ),
+      );
+      expect(keptBy(response)).toBeUndefined();
+    });
+
+    it("is not written on a request that is not a page", async () => {
+      mockNoUser();
+      const response = await proxy(
+        createBareRequest("/api/health?utm_campaign=a", GRANTED),
+      );
+      expect(keptBy(response)).toBeUndefined();
+    });
+
+    it("rides the locale redirect of a signed-out bare path", async () => {
+      mockNoUser();
+      const response = await proxy(createBareRequest(TAGGED, GRANTED));
+      expect(response.status).toBe(307);
+      expect(getRedirectUrl(response).search).toContain("utm_campaign");
+      expect(keptBy(response)).toMatchObject({
+        value: `source=lynx&campaign=lynx-summer-a&at=${LANDED}`,
+        path: "/",
+      });
+    });
+
+    it("rides a bounce that drops the query", async () => {
+      // A signed-in admin on the home page goes to their dashboard, and the
+      // landing link's query does not go with them.
+      mockUser("admin");
+      const response = await proxy(
+        createNextRequest("/?utm_campaign=lynx-summer-a", GRANTED),
+      );
+      expect(response.status).toBe(307);
+      expect(getRedirectUrl(response).search).toBe("");
+      expect(keptBy(response)).toMatchObject({ value: `campaign=lynx-summer-a&at=${LANDED}` });
+    });
+
+    it("rides the login bounce off a protected page", async () => {
+      mockNoUser();
+      const response = await proxy(
+        createNextRequest("/parent?utm_campaign=lynx-summer-a", GRANTED),
+      );
+      expect(response.status).toBe(307);
+      expect(keptBy(response)).toMatchObject({ value: `campaign=lynx-summer-a&at=${LANDED}` });
+    });
+
+    it("survives a session refresh recreating the response", async () => {
+      mockGetClaims.mockImplementation(async () => {
+        capturedCookieHandlers?.setAll([
+          { name: "sb-token", value: "refreshed", options: { path: "/" } },
+        ]);
+        return { data: null, error: null };
+      });
+      const response = await proxy(createNextRequest(TAGGED, GRANTED));
+      expect(response.cookies.get("sb-token")?.value).toBe("refreshed");
+      expect(keptBy(response)).toMatchObject({
+        value: `source=lynx&campaign=lynx-summer-a&at=${LANDED}`,
+      });
+    });
+
+    it("is not written for a signed-in gamer", async () => {
+      mockUser("gamer");
+      const response = await proxy(createNextRequest(TAGGED, GRANTED));
+      expect(response.status).toBe(200);
+      expect(keptBy(response)).toBeUndefined();
+    });
+
+    it("is not written for a session whose role could not be read", async () => {
+      mockGetClaims.mockResolvedValue({
+        data: { claims: { sub: TEST_USER_ID, session_id: TEST_SESSION_ID } },
+        error: null,
+      });
+      mockProfileQuery.mockResolvedValue({ data: null, error: { message: "down" } });
+      const response = await proxy(createNextRequest(TAGGED, GRANTED));
+      expect(keptBy(response)).toBeUndefined();
+    });
+
+    it("waits for the next hop when the role is not known yet", async () => {
+      // The locale redirect runs ahead of the role lookup. It keeps the query,
+      // so the localized hop writes the cookie with the role in hand.
+      mockUser("customer");
+      const response = await proxy(createBareRequest(TAGGED, GRANTED));
+      expect(response.status).toBe(307);
+      expect(getRedirectUrl(response).search).toContain("utm_campaign");
+      expect(keptBy(response)).toBeUndefined();
     });
   });
 

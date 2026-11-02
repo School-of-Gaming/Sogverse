@@ -21,6 +21,13 @@ import {
   type ConsentPurposes,
   type ConsentState,
 } from "@/lib/consent";
+import {
+  attributionCookieAfterLanding,
+  UTM_COOKIE_MAX_AGE_SECONDS,
+  UTM_COOKIE_NAME,
+} from "@/lib/utm";
+import { useAuth } from "@/providers/auth-provider";
+import { useUtm } from "@/providers/utm-provider";
 
 /**
  * Who is allowed to run, and the one place that answer changes.
@@ -47,7 +54,9 @@ const ConsentContext = createContext<ConsentContextValue | undefined>(
 
 /**
  * Take away everything an advertising script left on this browser: its cookies,
- * and what either vendor keeps in web storage.
+ * and what either vendor keeps in web storage. Our own attribution cookie goes
+ * with them. It is no advertising script's, so it is named here rather than
+ * listed among their prefixes, but it stands on the same marketing grant.
  *
  * Both stores are swept although only one of them has ever been seen to hold
  * anything. They are blocked together, cleared together and cost one call
@@ -67,6 +76,7 @@ function clearAdvertisingTraces(): void {
   for (const name of advertisingCookieNames(document.cookie)) {
     deleteCookie(name);
   }
+  deleteCookie(UTM_COOKIE_NAME);
   try {
     clearAdvertisingStorage(window.localStorage);
     clearAdvertisingStorage(window.sessionStorage);
@@ -91,6 +101,13 @@ interface ConsentProviderProps {
 export function ConsentProvider({ initial, children }: ConsentProviderProps) {
   const [consent, setConsent] = useState<ConsentState | null>(initial);
   const [isOpen, setIsOpen] = useState(false);
+  const utm = useUtm();
+  const { user, profile, isLoading } = useAuth();
+  // The advertising gates' own reading of who is signed in (`pixel-gates.ts`): a
+  // gamer's browsing keeps no attribution, and doubt counts as a gamer.
+  const isNotAGamer =
+    !isLoading &&
+    (user === null || (profile !== null && profile.role !== "gamer"));
 
   const open = useCallback(() => {
     setIsOpen(true);
@@ -102,6 +119,27 @@ export function ConsentProvider({ initial, children }: ConsentProviderProps) {
       setCookie(CONSENT_COOKIE_NAME, serialiseConsent(next), {
         maxAge: CONSENT_MAX_AGE_SECONDS,
       });
+
+      // Marketing granted just now: the proxy could not keep the tag and click
+      // ids this visit landed with, because the landing request carried no such
+      // answer, so they are kept here. Ahead of the reload below, which an
+      // answer that also takes analytics away goes through. Merged into the
+      // cookie this document can see, as the proxy merges into the request's:
+      // another tab may have written one while this one waited. Nothing landed,
+      // or a tag over the cookie's budget, writes nothing, so what is already
+      // kept stands.
+      if (consent?.marketing !== true && next.marketing && isNotAGamer) {
+        const serialised = attributionCookieAfterLanding(
+          document.cookie,
+          utm,
+          Date.now(),
+        );
+        if (serialised !== null) {
+          setCookie(UTM_COOKIE_NAME, serialised, {
+            maxAge: UTM_COOKIE_MAX_AGE_SECONDS,
+          });
+        }
+      }
 
       // **A downgrade is a full reload, an upgrade is just state.** Mounting a
       // gated component is enough to start a script; unmounting it is not
@@ -148,7 +186,7 @@ export function ConsentProvider({ initial, children }: ConsentProviderProps) {
       setConsent(next);
       setIsOpen(false);
     },
-    [consent],
+    [consent, isNotAGamer, utm],
   );
 
   // **Advertising cookies may exist only in a document where marketing is

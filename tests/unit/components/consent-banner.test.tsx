@@ -9,8 +9,24 @@ import {
   type ConsentState,
 } from "@/lib/consent";
 import { getCookie } from "@/lib/cookies";
+import {
+  NO_ATTRIBUTION,
+  NO_UTM_ATTRIBUTION,
+  UTM_COOKIE_NAME,
+  type Attribution,
+} from "@/lib/utm";
 
 const messages = { consent: enConsent };
+
+let mockUtm: Attribution = NO_ATTRIBUTION;
+let mockAuth: {
+  user: { id: string } | null;
+  profile: { role: string } | null;
+  isLoading: boolean;
+} = { user: null, profile: null, isLoading: false };
+
+vi.mock("@/providers/utm-provider", () => ({ useUtm: () => mockUtm }));
+vi.mock("@/providers/auth-provider", () => ({ useAuth: () => mockAuth }));
 
 /**
  * ============================================================================
@@ -101,6 +117,8 @@ let reload: ReturnType<typeof vi.fn>;
 
 beforeEach(() => {
   clearCookies();
+  mockUtm = NO_ATTRIBUTION;
+  mockAuth = { user: null, profile: null, isLoading: false };
   window.localStorage.clear();
   window.sessionStorage.clear();
   reload = vi.fn();
@@ -263,6 +281,158 @@ describe("ConsentBanner", () => {
 
     expect(storedAnswer()).toMatchObject({ analytics: true, marketing: true });
     expect(reload).not.toHaveBeenCalled();
+  });
+
+  describe("the attribution cookie", () => {
+    // The landing time the proxy stamped, recent enough to be kept.
+    const LANDED = Date.now() - 60_000;
+    const TAG: Attribution = {
+      utm: { ...NO_UTM_ATTRIBUTION, source: "lynx", campaign: "Rentrée" },
+      utmLandedAt: LANDED,
+      clickIds: {},
+    };
+
+    it("is written from the visit's tag when marketing is accepted", () => {
+      mockUtm = TAG;
+      render(<Harness initial={null} />);
+
+      press(messages.consent.acceptAll);
+
+      expect(getCookie(UTM_COOKIE_NAME)).toBe(
+        `source=lynx&campaign=Rentr%C3%A9e&at=${LANDED}`,
+      );
+    });
+
+    it("keeps the visit's click id beside its tag", () => {
+      mockUtm = { ...TAG, clickIds: { meta: { id: "IwAR_abc-1", landedAt: LANDED } } };
+      render(<Harness initial={null} />);
+
+      press(messages.consent.acceptAll);
+
+      expect(getCookie(UTM_COOKIE_NAME)).toBe(
+        `source=lynx&campaign=Rentr%C3%A9e&at=${LANDED}&fbclid=${LANDED}.IwAR_abc-1`,
+      );
+    });
+
+    it("keeps another platform's click id that another tab already kept", () => {
+      mockUtm = {
+        ...NO_ATTRIBUTION,
+        clickIds: { reddit: { id: "t3_reddit", landedAt: LANDED } },
+      };
+      // Written after mount: the unanswered document clears it on the way in.
+      render(<Harness initial={null} />);
+      document.cookie = `${UTM_COOKIE_NAME}=${encodeURIComponent(
+        `campaign=earlier&at=${LANDED}&fbclid=${LANDED}.meta-id`,
+      )};path=/`;
+
+      press(messages.consent.acceptAll);
+
+      expect(getCookie(UTM_COOKIE_NAME)).toBe(
+        `campaign=earlier&at=${LANDED}&fbclid=${LANDED}.meta-id&rdt_cid=${LANDED}.t3_reddit`,
+      );
+    });
+
+    it("is written when marketing is added to an analytics-only answer", () => {
+      mockUtm = TAG;
+      render(
+        <Harness
+          initial={{
+            analytics: true,
+            marketing: false,
+            decidedAt: "2026-09-01T08:00:00.000Z",
+          }}
+        />,
+      );
+      fireEvent.click(screen.getByRole("button", { name: "reopen" }));
+
+      press(messages.consent.acceptAll);
+
+      expect(getCookie(UTM_COOKIE_NAME)).toBe(
+        `source=lynx&campaign=Rentr%C3%A9e&at=${LANDED}`,
+      );
+    });
+
+    it("is not written on a refusal, or on analytics alone", () => {
+      mockUtm = TAG;
+      render(<Harness initial={null} />);
+
+      press(messages.consent.customise);
+      fireEvent.click(purposeCheckbox(PURPOSES.analytics.title));
+      press(messages.consent.saveChoices);
+      expect(getCookie(UTM_COOKIE_NAME)).toBeUndefined();
+      cleanup();
+
+      render(<Harness initial={null} />);
+      press(messages.consent.rejectAll);
+      expect(getCookie(UTM_COOKIE_NAME)).toBeUndefined();
+    });
+
+    it("is not written for a signed-in gamer, or while the session is unknown", () => {
+      mockUtm = TAG;
+      mockAuth = {
+        user: { id: "gamer" },
+        profile: { role: "gamer" },
+        isLoading: false,
+      };
+      render(<Harness initial={null} />);
+      press(messages.consent.acceptAll);
+      expect(getCookie(UTM_COOKIE_NAME)).toBeUndefined();
+      cleanup();
+      clearCookies();
+
+      mockAuth = { user: { id: "someone" }, profile: null, isLoading: false };
+      render(<Harness initial={null} />);
+      press(messages.consent.acceptAll);
+      expect(getCookie(UTM_COOKIE_NAME)).toBeUndefined();
+    });
+
+    it("leaves an earlier tag standing when the visit's tag is over the cookie's budget", () => {
+      mockUtm = {
+        utm: { ...NO_UTM_ATTRIBUTION, source: "é".repeat(100), campaign: "é".repeat(200) },
+        utmLandedAt: LANDED,
+        clickIds: {},
+      };
+      // Written after mount: the unanswered document clears it on the way in.
+      render(<Harness initial={null} />);
+      document.cookie = `${UTM_COOKIE_NAME}=campaign%3Dearlier;path=/`;
+
+      press(messages.consent.acceptAll);
+
+      expect(getCookie(UTM_COOKIE_NAME)).toBe("campaign=earlier");
+    });
+
+    it("leaves an earlier tag standing when an accept has no tag of its own", () => {
+      // Written after mount: the unanswered document clears it on the way in.
+      render(<Harness initial={null} />);
+      document.cookie = `${UTM_COOKIE_NAME}=campaign%3Dearlier;path=/`;
+
+      press(messages.consent.acceptAll);
+
+      expect(getCookie(UTM_COOKIE_NAME)).toBe("campaign=earlier");
+    });
+
+    it("is deleted when marketing is withdrawn", () => {
+      document.cookie = `${UTM_COOKIE_NAME}=campaign%3Dkept;path=/`;
+      render(<Harness initial={GRANTED_BOTH} />);
+      fireEvent.click(screen.getByRole("button", { name: "reopen" }));
+
+      press(messages.consent.rejectAll);
+
+      expect(getCookie(UTM_COOKIE_NAME)).toBeUndefined();
+      expect(reload).toHaveBeenCalledTimes(1);
+    });
+
+    it("survives withdrawing analytics alone", () => {
+      document.cookie = `${UTM_COOKIE_NAME}=campaign%3Dkept;path=/`;
+      render(<Harness initial={GRANTED_BOTH} />);
+      fireEvent.click(screen.getByRole("button", { name: "reopen" }));
+
+      press(messages.consent.customise);
+      fireEvent.click(purposeCheckbox(PURPOSES.analytics.title));
+      press(messages.consent.saveChoices);
+
+      expect(getCookie(UTM_COOKIE_NAME)).toBe("campaign=kept");
+    });
   });
 
   it("unticking marketing in the panel clears the advertising cookies and reloads", () => {
@@ -433,6 +603,22 @@ describe("ConsentProvider", () => {
     expect(window.localStorage.getItem("_gcl_ls")).toBeNull();
     expect(document.cookie).toContain(CONSENT_COOKIE_NAME);
     expect(window.localStorage.getItem("sog-theme")).toBe("dark");
+  });
+
+  it("deletes the attribution cookie where marketing is not granted", () => {
+    document.cookie = `${UTM_COOKIE_NAME}=campaign%3Dstale;path=/`;
+
+    mount(null);
+
+    expect(document.cookie).not.toContain(UTM_COOKIE_NAME);
+  });
+
+  it("keeps the attribution cookie where marketing is granted", () => {
+    document.cookie = `${UTM_COOKIE_NAME}=campaign%3Dkept;path=/`;
+
+    mount(GRANTED_BOTH);
+
+    expect(document.cookie).toContain(UTM_COOKIE_NAME);
   });
 
   // A visitor who has never answered is the same case as a refusal: whatever is

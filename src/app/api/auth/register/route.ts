@@ -10,7 +10,7 @@ import { detectLocaleFromHeader } from "@/lib/constants/locales";
 import { buildWelcomeParentEmail } from "@/lib/email-templates/welcome";
 import { getEmailTranslator } from "@/lib/email-templates/translator";
 import { createEmailVerificationToken } from "@/lib/email-verification";
-import { utmMetadataForConsent } from "@/lib/utm";
+import { utmFromCookieHeader, utmMetadataForConsent } from "@/lib/utm";
 import { parseConsentCookieHeader } from "@/lib/consent";
 import { reportAdConversion } from "@/lib/ad-conversions.server";
 import { signUpProductFor } from "@/lib/sign-up-product.server";
@@ -76,15 +76,14 @@ export const POST = defineRoute({
       lastName,
       homeLocationId,
       locale: requestedLocale,
-      utm,
       redirect,
       marketingConsent,
     } = body;
 
-    // The schema takes these as plain strings and leaves the format rule here,
-    // deliberately — see the contract. A malformed value degrades to null and
-    // the account is created without that field; the five are independent, so
-    // a junk `utm_source` does not cost a well-formed `utm_campaign`.
+    // The attribution cookie, re-sanitised on the way out of it. A malformed
+    // value degrades to null and the account is created without that field; the
+    // five are independent, so a junk `utm_source` does not cost a well-formed
+    // `utm_campaign`.
     //
     // GATED ON MARKETING CONSENT, DECIDED HERE. Counsel reads the UTM
     // parameters on a landing link as tracking, under the marketing purpose, so
@@ -96,9 +95,10 @@ export const POST = defineRoute({
     // `marketingConsent` field in the body is the checkbox for our mailing
     // list, a different question with a different answer, and either way a
     // client can send whatever it likes. `src/lib/utm.ts` has the ruling.
+    const cookieHeader = request.headers.get("cookie");
     const utmMetadata = utmMetadataForConsent(
-      parseConsentCookieHeader(request.headers.get("cookie")),
-      utm,
+      parseConsentCookieHeader(cookieHeader),
+      utmFromCookieHeader(cookieHeader),
     );
 
     // Which of our pages the parent set out to reach — a product, a

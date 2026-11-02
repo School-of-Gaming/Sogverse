@@ -1,7 +1,6 @@
 import { describe, it, expect, vi, beforeEach } from "vitest";
 import { act, fireEvent, render, screen } from "@testing-library/react";
 import { mockSupabaseClient } from "../../setup";
-import { NO_UTM_ATTRIBUTION, type UtmAttribution } from "@/lib/utm";
 
 /**
  * **The Gedu register page's Google button asks for the Gedu finish page.** A
@@ -25,14 +24,11 @@ vi.mock("next-intl", () => ({
   useLocale: () => "fi",
 }));
 
-let mockUtm: UtmAttribution = NO_UTM_ATTRIBUTION;
-
 vi.mock("@/providers", () => ({
   useAuth: () => ({
     freezeUntilNavigation: vi.fn(),
     unfreezeAuthState: vi.fn(),
   }),
-  useUtm: () => mockUtm,
 }));
 
 vi.mock("@/hooks/use-auth-redirect", () => ({
@@ -80,7 +76,6 @@ function precedes(a: Element, b: Element): boolean {
 
 beforeEach(() => {
   vi.clearAllMocks();
-  mockUtm = NO_UTM_ATTRIBUTION;
   signInWithOAuth.mockResolvedValue({
     data: { provider: "google", url: "https://accounts.google.test" },
     error: null,
@@ -126,33 +121,6 @@ describe("the Gedu register page's Google button", () => {
     const nextUrl = new URL(next, "https://internal.invalid");
     expect(nextUrl.pathname).toBe("/complete-registration");
     expect(nextUrl.searchParams.get("as")).toBe("gedu");
-  });
-
-  // The round trip through Google unloads the tab holding the visit's
-  // attribution in memory, so it travels on the finish page's address.
-  it("carries the visit's attribution on next", async () => {
-    mockUtm = {
-      ...NO_UTM_ATTRIBUTION,
-      source: "recruit",
-      campaign: "gedu-autumn",
-      content: "jobs-board",
-    };
-    render(<RegisterGeduForm redirect={null} />);
-
-    await act(async () => {
-      fireEvent.click(screen.getByRole("button", { name: "continue" }));
-    });
-
-    const [args] = signInWithOAuth.mock.calls[0];
-    const next = new URL(args.options.redirectTo).searchParams.get("next");
-    if (!next) throw new Error("no next");
-    const nextUrl = new URL(next, "https://internal.invalid");
-    expect(nextUrl.searchParams.get("as")).toBe("gedu");
-    expect(nextUrl.searchParams.get("utm_source")).toBe("recruit");
-    expect(nextUrl.searchParams.get("utm_campaign")).toBe("gedu-autumn");
-    expect(nextUrl.searchParams.get("utm_content")).toBe("jobs-board");
-    expect(nextUrl.searchParams.has("utm_medium")).toBe(false);
-    expect(nextUrl.searchParams.has("utm_term")).toBe(false);
   });
 });
 

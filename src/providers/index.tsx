@@ -11,7 +11,7 @@ import { UtmProvider } from "./utm-provider";
 import { ConsentProvider } from "@/components/consent";
 import { LocaleSwitchPathsProvider } from "@/i18n/locale-switch-paths";
 import type { ConsentState } from "@/lib/consent";
-import type { UtmAttribution } from "@/lib/utm";
+import type { Attribution } from "@/lib/utm";
 import type { AuthenticatedUser, Profile } from "@/types";
 import {
   DEFAULT_TIMEZONE,
@@ -36,12 +36,12 @@ interface ProvidersProps {
    */
   initialNow: Date;
   /**
-   * The sanitised UTM attribution from this request's `x-utm` header — five
-   * fields, each a value or null. Seeds `UtmProvider` once and is never
+   * The sanitised attribution from this request's `x-utm` header — the five
+   * tag fields, each a value or null, and any click ids. Seeds `UtmProvider` once and is never
    * re-synced — a language switch re-runs the document layout against a URL
    * that no longer carries the params. See `src/providers/utm-provider.tsx`.
    */
-  initialUtm: UtmAttribution;
+  initialUtm: Attribution;
   /**
    * The server's parse of the `sog_consent` cookie, or `null` when the visitor
    * has not answered a question of the current version. Seeds `ConsentProvider`
@@ -120,7 +120,7 @@ export { AuthProvider } from "./auth-provider";
 export { LocaleProvider, useLocaleControl } from "./locale-provider";
 export { TimezoneProvider, useTimezone } from "./timezone-provider";
 export { NowProvider, useNow } from "./now-provider";
-export { UtmProvider, useUtm } from "./utm-provider";
+export { UtmProvider } from "./utm-provider";
 // Re-exported here so a consumer asking for "the providers" finds it beside
 // its neighbours. It is *defined* in `@/components/consent`, next to the
 // banner and the gated scripts it serves, because those three are one feature.

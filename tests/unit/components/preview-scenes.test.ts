@@ -1824,11 +1824,11 @@ describe("the preview topic axis", () => {
 
 /**
  * The topic-prep scene is the one scene with no product fixture behind it: it
- * enumerates the topic registry itself, and its two scenarios are the two forms
- * a guide filters into rather than two products.
+ * enumerates the topic registry itself, and its scenarios are the delivery
+ * modes a guide takes a form from rather than products.
  */
 describe("the topic prep scene", () => {
-  it("registers exactly the two filtered forms", () => {
+  it("registers exactly one scenario per delivery mode", () => {
     expect(slugsFor("topic-prep")).toEqual([...TOPIC_PREP_SCENARIOS]);
     for (const slug of TOPIC_PREP_SCENARIOS) {
       expect(isTopicPrepScenario(slug)).toBe(true);
@@ -1838,9 +1838,7 @@ describe("the topic prep scene", () => {
 
   it("has a guide to show in the remote form for every topic it lists", () => {
     // The column is built by filtering the topic values on `topicHasPrep`, so
-    // this is the check that the filter leaves a non-empty page — and that the
-    // remote form never reaches the muted "nothing renders" line, which belongs
-    // to the in-person one alone.
+    // this is the check that the filter leaves a non-empty page.
     const listed = PRODUCT_TOPIC_VALUES.filter(topicHasPrep);
     expect(listed.length).toBeGreaterThan(0);
     for (const topic of listed) {
@@ -1848,15 +1846,18 @@ describe("the topic prep scene", () => {
     }
   });
 
-  it("keeps the topics that filter down to nothing in the in-person column", () => {
-    // The three Minecraft topics are the ones — in person we supply the
-    // machines and the Minecraft logins alike — and the scene's muted line is
-    // what makes their emptiness visible instead of them silently dropping out
-    // of the page.
-    const emptied = PRODUCT_TOPIC_VALUES.filter(topicHasPrep).filter(
-      (topic) => resolveTopicPrep(topic, "in_person") === null,
+  it("shows every listed topic in the in-person column, the supplied note included", () => {
+    // A topic with no plan drops out of the column, so nothing listed may
+    // answer null. The three Minecraft topics are the ones showing the note:
+    // in person we supply the machines and the Minecraft logins alike.
+    const listed = PRODUCT_TOPIC_VALUES.filter(topicHasPrep);
+    for (const topic of listed) {
+      expect(resolveTopicPrep(topic, "in_person"), topic).not.toBeNull();
+    }
+    const noted = listed.filter(
+      (topic) => resolveTopicPrep(topic, "in_person")?.form === "suppliedNote",
     );
-    expect([...emptied].sort()).toEqual([
+    expect([...noted].sort()).toEqual([
       "minecraft_bedrock",
       "minecraft_education",
       "minecraft_java",
@@ -1873,8 +1874,8 @@ describe("the topic prep scene", () => {
 
     for (const topic of labelOnly) {
       const remote = resolveTopicPrep(topic, "online");
-      expect(remote?.form, topic).toBe("remoteOnly");
-      expect(remote?.steps, topic).toHaveLength(1);
+      if (remote?.form !== "remoteOnly") throw new Error(`${topic}: not remoteOnly`);
+      expect(remote.steps, topic).toHaveLength(1);
       expect(resolveTopicPrep(topic, "in_person"), topic).toBeNull();
     }
   });

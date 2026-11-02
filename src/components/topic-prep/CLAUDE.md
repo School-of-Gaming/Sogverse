@@ -45,17 +45,38 @@ the guide says the opposite, as a mechanism a reader can hold us to.
 
 ## The delivery mode is two inputs, asked separately
 
-**Rule: the resolver asks a product's delivery mode two questions, each through its own
-helper in `src/lib/products/delivery-mode.ts`, and never compares the mode itself.**
-`familyBringsOwnMachine` decides whether the topic's `ownDevice` steps (install, sign in,
-test) apply; `hasVoiceRoom` decides whether the shared voice-room step is appended. They
-are separate on purpose: what one helper answers for a mode changes that half of the guide
-and leaves the other alone, so a surface never needs to know which modes get which steps.
+**Rule: the resolver asks a product's delivery mode through the helpers in
+`src/lib/products/delivery-mode.ts`, and never compares the mode itself.** A product with
+both a voice room and gamers at a site takes the hybrid guide below, decided first. For any
+other, `familyBringsOwnMachine` decides whether the topic's `ownDevice` steps (install, sign
+in, test) apply and `hasVoiceRoom` decides whether the shared voice-room step is appended,
+so a surface never needs to know which modes get which steps.
+
+## A hybrid guide has two sections, because its gamers are in two places
+
+**Rule: a hybrid product's guide is one list of what applies wherever the child is, then a
+second list, under its own heading, of what joining from home adds.** The surfaces cannot
+tell a child at the venue from a child at home, and a child at the venue must not be told
+to install software, so the guide sorts the steps by scope rather than choosing a reader.
+The first list is the topic's `always` steps followed by the venue step; the second is the
+topic's `ownDevice` steps followed by the mic-and-camera step. Each list numbers from one.
+
+**Rule: joining the room from the venue is a shared step of its own, not the mic-and-camera
+step.** The game runs on a computer provided at the venue, and a child there has no headset
+to choose and nothing to test; they join the room on that computer, or on their own device
+if they prefer, which is optional. What they need is a way to sign in, so the step says who
+sets one up and where. It belongs to the hybrid guide alone, and its scope says `always` because
+that sign-in is the family's wherever the device came from.
+
+Both shared steps are there whatever the topic brought, so every topic has a hybrid guide:
+a label-only topic's is the two shared steps, and a topic with no `always` steps opens on
+the venue step. The guide opens on a generic intro rather than a topic's, because the intro
+describes how the club runs.
 
 ## Every step declares a scope, because in person we bring the machines
 
 **Rule: an `always` step renders on every product; an `ownDevice` step renders only where
-the family brings their own machine.** At an in-person product School of Gaming supplies the computers with
+the family brings their own machine, which on a hybrid product is the home section.** At an in-person product School of Gaming supplies the computers with
 everything already installed, so an install, sign-in or test step is not the family's to
 do there and is scoped to the device. A guide read on a phone the family owns has no
 device-scoped steps at all, because the phone is theirs wherever the session happens.
@@ -65,8 +86,8 @@ is an account.** In person we provide the Minecraft login as well as the machine
 own venues the gamers play on School of Gaming's Minecraft accounts and are not allowed to
 sign in with their own on our devices, and municipality clubs run on School of Gaming's
 Minecraft Education accounts. So the Minecraft account steps are scoped to the device
-alongside the installs, and all three Minecraft topics have nothing to say in person: no
-heading, no intro, no closing. The other topics with prep keep account steps that survive every
+alongside the installs, and in person all three Minecraft topics have no steps left and show
+one note instead. The other topics with prep keep account steps that survive every
 filter, because those accounts are the family's own wherever the sessions happen — the
 family creates them, holds them, and brings them to an in-person session the same way they
 bring them to an online one.
@@ -74,40 +95,45 @@ bring them to an online one.
 ## One step belongs to the product, not to the topic
 
 **Rule: getting the mic and camera ready for the voice room is declared once, outside every
-topic, and appended as the last step of every guide for a product with a voice room.** It
-is a fact about the product's room, not about any topic — so writing it into every topic
+topic, and appended as the last step of every guide for a product with a voice room; in a
+hybrid guide it closes the home section.** It is a fact about the product's room, not about any topic — so writing it into every topic
 block would be one paragraph copied per topic, drifting apart the first time one of them
 was edited. It is added by `hasVoiceRoom`, never by its scope, and its scope says
 `ownDevice` because the room runs in a browser on a machine of the family's.
 
 **Consequence: a label-only topic has a guide wherever there is a voice room.** The
 topics that name subject matter rather than one piece of software (the ones without an
-`info` block) bring no steps; with a room they render exactly one step, under a generic
-intro of its own rather than a topic's. The same form is the answer when every step a
-topic declares is filtered out but there is still a room. That makes `null` unreachable on
-a product with a voice room: the empty answer belongs to a product without one.
+`info` block) bring no steps; on an online product they render exactly one step, under a
+generic intro of its own rather than a topic's. That makes `null` unreachable on a product
+with a voice room: the empty answer belongs to a product without one.
 
 **Consequence: an intro may not count the steps.** A guide that opened "Three things to sort
 out" was true of what the topic declared and false the moment a shared step joined it. The
 intros state what the guide is about and leave the numbering to the list.
 
-Two consequences the surfaces have to honour:
+Three consequences the surfaces have to honour:
 
-- **An in-person guide can filter down to nothing, and then nothing renders** — no
-  heading, no intro, no closing. That is the correct answer for a topic where we supply the
-  machines *and* the logins: there is genuinely nothing to do beforehand, and a guide
-  saying so is furniture. The registry's resolver answers this, and it is the only render
-  condition a surface should ask — never "does the topic have a block", which is now a
-  narrower question than "is there a guide".
+- **A topic where we supply the machine *and* the login says so in one note.** Families
+  ask whether to bring anything, and on such a topic in person every step filters out, so
+  the guide answers them: the shared note under the usual heading, with no intro, no list
+  and no closing. The topic declares this in the registry, so it is a stated fact rather
+  than a list in the resolver. A card offers it like any other guide.
+- **A label-only topic in person renders nothing** — no heading, no note, no closing. The
+  registry's resolver answers this, and it is the only render condition a surface should
+  ask — never "does the topic have a block", which is a narrower question than "is there a
+  guide".
 - **The intro has to be true of the form being rendered, so the plan names which intro to
   read.** A guide shortened to its account steps cannot open by promising software to
   install, so a topic with both scopes carries a second, accounts-only intro; a guide that
   is only the shared voice-room step has no topic to open about at all, so it takes one generic
-  intro. Those are the plan's three forms — `full`, `accountsOnly`, `remoteOnly` — and the
-  discriminant exists precisely because each reads a different message key and only two of
-  them have a topic narrow enough to key by. The **closing** deliberately has no twin:
-  there is one, shared by every topic and every form, written so that it is true of all of
-  them.
+  intro; a hybrid guide takes another, and is the one form with a second list of steps. Those
+  are the plan's four forms with steps — `full`, `accountsOnly`, `remoteOnly`, `hybrid` — and
+  the discriminant exists precisely because each reads a different message key and only two
+  of them have a topic narrow enough to key by. The fifth, `suppliedNote`, is the one note
+  and carries no steps at all, so a renderer cannot draw an empty list for it. The
+  **closing** deliberately has no twin: there is one, shared by every topic and every form
+  with steps, written so that it is true of all of them. The note takes none, because the
+  closing presumes steps were followed.
 
 ## Three surfaces, two renderers, one guide
 

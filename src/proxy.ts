@@ -21,7 +21,15 @@ import {
 } from "@/lib/navigation/locale-path";
 import { PIN_COOKIE_NAME, isPinTokenValid } from "@/lib/pin-session";
 import { COMPLETE_REGISTRATION_GEDU_QUERY } from "@/lib/navigation/post-auth-redirect";
-import { UTM_HEADER, readUtmFromSearchParams, serialiseUtm } from "@/lib/utm";
+import { CONSENT_COOKIE_NAME, parseConsentCookie } from "@/lib/consent";
+import {
+  UTM_COOKIE_NAME,
+  UTM_HEADER,
+  attributionCookieAfterLanding,
+  readAttributionFromSearchParams,
+  serialiseAttribution,
+  utmCookieOptions,
+} from "@/lib/utm";
 
 /**
  * next-intl's rewrite, composed rather than hand-rolled.
@@ -145,7 +153,8 @@ function isPinExemptPath(pathname: string, isAuthRoute: boolean): boolean {
 // match also covers the per-municipality pages (/schools/[slug]).
 // ROUTES.roblox is the Roblox programme landing page — public so it can be
 // shared with Lynx and Roblox, but kept out of robots.txt and the sitemap
-// rather than gated.
+// rather than gated. ROUTES.robloxOnline and ROUTES.robloxAll are the same page
+// at their own addresses, which the prefix match below does not reach.
 // ROUTES.verifyEmail is public rather than an AUTH_ROUTE: an auth route bounces
 // a signed-in visitor to their dashboard, and the person clicking a
 // verification link is very often already signed in — that bounce would eat the
@@ -171,7 +180,7 @@ function isPinExemptPath(pathname: string, isAuthRoute: boolean): boolean {
 // Gedu or an admin there with a one-time `?token=` the login bounce would drop.
 // The page gates itself, and spending the token is a role-gated POST.
 // ROUTES.linkSlack is the Slack app's twin of it, for admins.
-const PUBLIC_ROUTES = [ROUTES.home, ROUTES.shop, ROUTES.schools, ROUTES.about, ROUTES.library, ROUTES.team, ROUTES.discover, ROUTES.privacy, ROUTES.termsAndConditions, ROUTES.antiBullying, ROUTES.attributions, ROUTES.docs, ROUTES.forgotPassword, ROUTES.resetPassword, ROUTES.resetPin, ROUTES.verifyEmail, ROUTES.seatOffer, ROUTES.roblox, ROUTES.voice.prefix, ROUTES.oauthConsent, ROUTES.linkDiscord, ROUTES.linkSlack];
+const PUBLIC_ROUTES = [ROUTES.home, ROUTES.shop, ROUTES.schools, ROUTES.about, ROUTES.library, ROUTES.team, ROUTES.discover, ROUTES.privacy, ROUTES.termsAndConditions, ROUTES.antiBullying, ROUTES.attributions, ROUTES.docs, ROUTES.forgotPassword, ROUTES.resetPassword, ROUTES.resetPin, ROUTES.verifyEmail, ROUTES.seatOffer, ROUTES.roblox, ROUTES.robloxOnline, ROUTES.robloxAll, ROUTES.voice.prefix, ROUTES.oauthConsent, ROUTES.linkDiscord, ROUTES.linkSlack];
 
 // The /voice/* prefix is public for instant rooms, but /voice/group/[id] is
 // the authenticated group voice room — seat-holders (a gamer, or a parent on
@@ -326,9 +335,12 @@ export async function proxy(request: NextRequest) {
   request.headers.set("Content-Security-Policy", cspHeader);
 
   // UTM attribution: `utm_source` / `utm_medium` / `utm_campaign` /
-  // `utm_content` / `utm_term` on the landing URL, sanitised here and handed
-  // to the root layout, which seeds them into a client context provider so
-  // they survive the whole visit as client-side navigation. See
+  // `utm_content` / `utm_term` on the landing URL, with Meta's `fbclid` and
+  // Reddit's `rdt_cid` beside them, each stamped with this request's time as its
+  // landing time, sanitised here and handed
+  // to the root layout, which seeds them into a client context provider for
+  // the consent banner, and kept in the attribution cookie when this request
+  // already carries marketing consent (`keepAttribution` below). See
   // src/lib/utm.ts for the constraints this feature is built to — including
   // why reading the query string here is itself the moment ePrivacy
   // engages, whatever we do with the value afterwards.
@@ -343,22 +355,34 @@ export async function proxy(request: NextRequest) {
   // true and merely being intended.
   //
   // **A value over the byte budget is dropped, not truncated**, and the budget
-  // lives in the module with the rest of the rules — `serialiseUtm` answers
-  // null past `UTM_HEADER_MAX_LENGTH`, so it arrives here as the same "nothing
-  // to send" the no-attribution case produces and needs no branch of its own.
+  // lives in the module with the rest of the rules — `serialiseAttribution`
+  // answers null for a tag past `UTM_HEADER_MAX_LENGTH`, so it arrives here as
+  // the same "nothing to send" the no-attribution case produces and needs no
+  // branch of its own (a click id that does not fit beside the tag is dropped
+  // there too, alone).
   // The point of enforcing it at all is that a header a stranger controls
   // through the query string must not be able to push a request past a hop's
   // own per-header ceiling: that turns into a 502 nobody chose, where dropping
-  // the attribution costs one visit's marketing data.
+  // the attribution costs one visit's marketing data. The cookie has a budget of
+  // its own, which `attributionCookieAfterLanding` answers null past in the same
+  // way, and a null leaves any cookie already there as it is. That function also
+  // merges the landing into the cookie this request carried, part by part — a
+  // landing replaces only the tag or the click ids it carries.
   //
   // This runs above every branch and early return, like the two sets above, so
   // no path bypasses it. The repeated-param rule and the sanitiser both live in
   // the module, so this file holds no copy of either.
   request.headers.delete(UTM_HEADER);
-  const utm = serialiseUtm(readUtmFromSearchParams(request.nextUrl.searchParams));
+  const landedAt = Date.now();
+  const landing = readAttributionFromSearchParams(request.nextUrl.searchParams, landedAt);
+  const utm = serialiseAttribution(landing);
   if (utm !== null) {
     request.headers.set(UTM_HEADER, utm);
   }
+  const attributionToKeep =
+    parseConsentCookie(request.cookies.get(CONSENT_COOKIE_NAME)?.value)?.marketing === true
+      ? attributionCookieAfterLanding(request.headers.get("cookie"), landing, landedAt)
+      : null;
 
   // The URL as the visitor typed it: locale-prefixed, with that locale's slug.
   // Only two things use it — the bare-path ladder below, and the `?redirect=`
@@ -423,6 +447,27 @@ export async function proxy(request: NextRequest) {
   const userId = claimsData?.claims.sub ?? null;
   const sessionId = claimsData?.claims.session_id ?? null;
 
+  // Resolved further down, once the ladder has run; declared here because
+  // `keepAttribution` reads it from every response.
+  let userRole: Database["public"]["Enums"]["user_role"] | null = null;
+
+  // Helper: keep the landing link's tag on the response actually being
+  // returned. `setAll` above replaces `supabaseResponse`, so it is set here, on
+  // the final response, and `redirect` and `proceed` both call this: a bounce
+  // such as the home page's or the PIN gate's drops the query, and this is the
+  // tag's only chance to be kept. The two responses that skip it serve no page.
+  //
+  // **Never for a signed-in gamer, nor for a session whose role is not known**,
+  // the same doubt the advertising gates resolve the same way. A redirect ahead
+  // of the role lookup therefore writes nothing for a signed-in visitor, which
+  // costs nothing: the bare-path and foreign-slug redirects keep the query, so
+  // the next hop writes it with the role in hand.
+  function keepAttribution(response: NextResponse) {
+    if (attributionToKeep === null) return;
+    if (userId !== null && (userRole === null || userRole === "gamer")) return;
+    response.cookies.set(UTM_COOKIE_NAME, attributionToKeep, utmCookieOptions());
+  }
+
   // Helper: create a redirect that preserves refreshed auth cookies and CSP.
   //
   // **The whole cookie, attributes included.** `set(name, value)` writes a
@@ -436,6 +481,7 @@ export async function proxy(request: NextRequest) {
     supabaseResponse.cookies.getAll().forEach((cookie) => {
       redirectResponse.cookies.set(cookie);
     });
+    keepAttribution(redirectResponse);
     redirectResponse.headers.set("Content-Security-Policy", cspHeader);
     return redirectResponse;
   }
@@ -452,6 +498,7 @@ export async function proxy(request: NextRequest) {
     supabaseResponse.cookies.getAll().forEach((cookie) => {
       intlResponse.cookies.set(cookie);
     });
+    keepAttribution(intlResponse);
     intlResponse.headers.set("Content-Security-Policy", cspHeader);
     return intlResponse;
   }
@@ -556,7 +603,6 @@ export async function proxy(request: NextRequest) {
   // customer until re-login — and we treat role changes as a thing that doesn't
   // happen mid-session. Privileged routes (`/admin`) are role-gated below
   // regardless, so this never grants access the role itself wouldn't.
-  let userRole: Database["public"]["Enums"]["user_role"] | null = null;
   if (userId) {
     const pinVerified =
       sessionId !== null &&

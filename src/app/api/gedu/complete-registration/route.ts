@@ -60,7 +60,6 @@ export const POST = defineRoute({
       locationIds,
       minecraftUsername,
       robloxUsername,
-      utm,
     } = body;
 
     // The role gate narrowed this to a customer; the stamp is the rest of the
@@ -126,7 +125,7 @@ export const POST = defineRoute({
       profile.email,
     );
     const followUp = {
-      ...utmProfileColumns(request, utm),
+      ...utmProfileColumns(request),
       ...(emailVerifiedByGoogle
         ? { email_verified_at: new Date().toISOString() }
         : {}),

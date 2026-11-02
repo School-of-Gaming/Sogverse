@@ -48,7 +48,7 @@
   "how": {
     "eyebrow": "How it works",
     "heading": "Get started in four simple steps",
-    "subheading": "Choose the format that suits: in person or online, ranging from one hour to nine weeks.",
+    "subheading": "Events run in person and online, from one hour to nine weeks.",
     "step1": {
       "title": "Pick an event",
       "description": "Pick from the options below — we add new events often, so keep checking back."
@@ -69,7 +69,7 @@
   "events": {
     "heading": "What’s on",
     "subheading": "We add new events often — check back to see what is coming up.",
-    "empty": "The first events are being scheduled now. Check back shortly to see what is coming up.",
+    "empty": "New events are being scheduled now. Check back shortly to see what is coming up.",
     "previous": "Previous events",
     "next": "Next events",
     "browseShop": "Browse the shop"

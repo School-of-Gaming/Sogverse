@@ -529,8 +529,12 @@ export type PurchaseShape =
   | "single_payment"
   | "free"
   // Municipality clubs: invoiced off-platform, so registration is instant and
-  // never touches Stripe. See create_participation's external_contract branch.
+  // never touches Stripe. See create_booking's external_contract branch.
   | "external";
+
+// bookings — a parent's request, written before Checkout. It holds no seat.
+export type Booking = Database["public"]["Tables"]["bookings"]["Row"];
+export type BookingStatus = Database["public"]["Enums"]["booking_status"];
 
 // payments
 export type Payment = Database["public"]["Tables"]["payments"]["Row"];

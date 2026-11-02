@@ -123,13 +123,24 @@ before its library has downloaded and replays it on arrival against the URL the 
 *then*; Reddit's stub does the same, and the container's queue is read the same way. A parent can client-navigate from a
 shop page into a child's page inside that window. So a report waits for the script to
 load, then re-reads the address bar: the tab must still be on the page that authorised the
-report, and the query string must carry only campaign keys, the platforms' click ids and
-the shop's own filter state. The second check is what keeps
+report, and the query string must carry only campaign keys, the platforms' click ids,
+the shop's own filter state, or a `redirect` whose value is itself a reportable marketing
+page. The second check is what keeps
 `/login?redirect=/parent/gamers/<id>` — the proxy's bounce for a signed-out parent — from
 ever being reported, even though the login page itself is a marketing page — and the same
 check runs before any script is loaded at all, so such a page never has their code in
 it. A visitor who moved on gets no report for either page; a query with anything else in
 it gets none.
+
+**`redirect` is the one key judged by its value.** It travels only when the value, resolved
+through `resolveInternalPath()` and matched on its locale-stripped internal path, is itself
+a marketing page whose own query passes the plain list — so the register and login pages a
+parent reaches from a product page or a landing page's guide are reported, and the proxy's
+bounce is not. A `redirect` inside a `redirect` refuses rather than being followed, and
+every occurrence of a repeated one is checked. The value must already be in the canonical
+form it is matched in — handed back unchanged by the URL parser, with no empty path segment
+and no `%` in its path — because the pixels report the raw value, so a dot segment, a
+backslash or an encoded slash that a rewriting would turn into a marketing page refuses.
 
 **The query allowlist is one list for every script, so each platform's click id reaches
 all of them.** A page reached from a Reddit ad loads Meta's pixel and the container too,
@@ -241,7 +252,9 @@ the three routes are customer-only, so a gamer cannot reach one.
 **What identifies a person in a server report, exhaustively:** the user agent, the IP the
 request arrived from, the platform's own browser and click cookies if the browser carries
 them (Meta's `_fbp` and `_fbc`, Reddit's `_rdt_uuid` and `_rdt_cid` — each platform is
-sent only its own), a SHA-256 hash of the parent's own account email, and a SHA-256 hash
+sent only its own) or, where the click cookie is missing, that platform's click id kept in
+our attribution cookie (Meta's in the `_fbc` format, `fb.1.<landing ms>.<fbclid>`; Reddit's
+as the link carried it), a SHA-256 hash of the parent's own account email, and a SHA-256 hash
 of the parent's own account id (`external_id`) — both hashed on our server, so neither the
 address nor the id is ever sent or logged, and never a gamer's. **The two platforms
 canonicalise the email differently before hashing**: Meta trims and lowercases; Reddit also
@@ -309,13 +322,60 @@ library rewrites its own session cookie as the document is torn down — measure
 third of a second after the deletion — and the reload then arrives too late to matter,
 leaving a cookie no later document will ever remove, because consent is now refused and
 the script never loads again. So the deletion before the reload is best-effort, and the
-guarantee is a standing invariant checked on every mount: **an advertising cookie may
-exist only in a document where marketing is granted.** In a document where it is not,
+guarantee is a standing invariant checked on every mount: **an advertising cookie, or our
+own attribution cookie, may exist only in a document where marketing is granted.** In a document where it is not,
 nothing is running to undo the clearing, which is the whole of why it holds. Stating it as
 an invariant rather than as a step in the withdrawal also buys two things the withdrawal
 path could not: it clears whatever an earlier failure stranded, with no migration and no
 list of affected browsers, and it clears what the legacy marketing site left on the
 registrable domain, which set its tags without asking anybody.
+
+## The attribution cookie
+
+**`sog_attribution` is ours: first party, no vendor sets or needs it, and it is the one
+cookie here that is not an advertising script's.** It sits behind marketing all the same,
+because it keeps a campaign link's tag on the device (`src/lib/utm.ts` has the legal
+reasoning). It holds the latest tagged link's five values, and the latest Meta `fbclid`
+and Reddit `rdt_cid` an ad link carried, each with the time it landed. **A landing replaces
+only what it carries**: a tagged link replaces the whole tag, a link with an `fbclid`
+replaces the Meta id and leaves the Reddit one, and a link carrying neither writes nothing.
+Every part is read as absent 30 days after its own landing, so a later write renewing the
+cookie never stretches an older part's life; a tag kept before landing times were recorded
+is read as it stands and dropped on the next write rather than renewed. The proxy writes it
+when a landing request already carries marketing consent; otherwise the proxy passes the
+values to the page in memory, and the banner writes them if marketing is accepted during
+that document's life. Both writers merge into the cookie they can see. Neither writes it
+for a signed-in gamer, or for a session whose role is unknown.
+
+**The click ids are there for one reader: each platform's server report.** A pixel turns its
+platform's click id into its own click cookie only if it loads while the id is still in the
+address bar, and ours loads only once marketing is granted, on a marketing page — so a
+parent who answers the banner a few pages after landing would otherwise convert with no
+click on record. The report sends the pixel's own cookie where there is one and the kept id
+where there is not, and never the other platform's. A click id is never stored on an
+account or a booking and never reaches Klaviyo. Google's `gclid` is not kept, because no
+server report reads it. Keeping the click ids is newer than counsel's ruling on the tag and
+has not had a legal review of its own (`src/lib/utm.ts`).
+
+**The tag stands ahead of the click ids in the byte budget.** The tag is measured alone and
+dropped whole when it does not fit, as it always was; each click id is added only into the
+room the tag leaves, so a long `fbclid` can never cost a parent their tag.
+
+**It is not httpOnly because the banner writes it from client code**, so a script in the
+page can read it. A value it holds is therefore never trusted: it is sanitised again on
+every read.
+
+Withdrawing marketing deletes it with the advertising cookies, and the mount invariant
+above removes it from any document where marketing is not granted.
+
+**Consent is checked again at read, off the request itself.** A tag or click id written
+during consent is usable only while the request storing or reporting it still carries
+marketing consent, so a cookie that outlived its consent stores and reports nothing, even
+before a document has mounted to remove it.
+
+**It did not change the question (owner's ruling, 2026-10-30).** Marketing consent already
+governed storing the tag, so the cookie is a change in how that is kept: the banner names
+no cookie, the privacy policy describes it, and the consent version stayed where it was.
 
 ## What a new recipient does and does not cost
 

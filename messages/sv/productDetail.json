@@ -26,7 +26,7 @@
       },
       "minecraft_bedrock": {
         "description": "Minecraft är ett kreativt byggspel. Tänk digitalt Lego. Barn utforskar en värld av block, samlar material och bygger vad de kan föreställa sig, från ett mysigt hus till en hel stad. Det finns inget att vinna eller förlora. Det är ett lugnt och öppet utrymme för att skapa och lösa problem. ”Bedrock” är versionen som körs på konsoler (Xbox, PlayStation, Switch), telefoner, surfplattor och Windows-datorer.",
-        "note": "Minecraft Bedrock ingår inte i priset. Det är samma spel sålt separat för varje enhet, och ett exemplar köpt till en enhet följer inte med till en annan. Det exemplar som räknas är det för enheten ditt barn ska spela på. På en spelkonsol kräver onlinespel dessutom konsolens betalda onlinemedlemskap.",
+        "note": "Minecraft Bedrock ingår inte i priset för en distansklubb. Det är samma spel sålt separat för varje enhet, och ett exemplar köpt till en enhet följer inte med till en annan. Det exemplar som räknas är det för enheten ditt barn ska spela på. På en spelkonsol kräver onlinespel dessutom konsolens betalda onlinemedlemskap.",
         "linkLabel": "Var du köper det"
       },
       "minecraft_education": {
@@ -70,6 +70,7 @@
     "holidayBreaks": "Lov"
   },
   "signupPanel": {
+    "checkoutAlreadyPaid": "Betalningen för den här bokningen behandlas redan. Bokningen visas snart i Min SOG.",
     "verb": {
       "consumer_club": "Anmäl dig",
       "municipality_club": "Registrera dig",

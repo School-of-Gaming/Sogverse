@@ -1,5 +1,6 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { CONSENT_COOKIE_NAME } from "@/lib/consent";
+import { attributionCookie } from "../../mocks/attribution-cookie";
 import { KLAVIYO_REVISION } from "@/lib/klaviyo";
 import type { LandingSection } from "@/lib/landing-pages/sections";
 import type { PublishedLandingPage } from "@/services/landing-pages/landing-pages.contracts";
@@ -64,8 +65,9 @@ const VALID = {
   firstName: " Aino ",
   lastName: " Virtanen ",
   consent: true,
-  utm: { source: "newsletter", campaign: "autumn" },
 };
+
+const ATTRIBUTION = attributionCookie({ source: "newsletter", campaign: "autumn" });
 
 function consentCookie(marketing: boolean): string {
   const value = encodeURIComponent(
@@ -130,7 +132,9 @@ afterEach(() => {
 
 describe("POST /api/landing-pages/subscribe", () => {
   it("upserts the profile, then subscribes it to the list", async () => {
-    const response = await POST(request(VALID, { cookie: consentCookie(true) }));
+    const response = await POST(
+      request(VALID, { cookie: `${consentCookie(true)}; ${ATTRIBUTION}` }),
+    );
 
     expect(response.status).toBe(200);
     expect(await response.json()).toEqual({ success: true });
@@ -204,8 +208,8 @@ describe("POST /api/landing-pages/subscribe", () => {
   });
 
   it.each([
-    ["no consent cookie", {}],
-    ["marketing refused", { cookie: consentCookie(false) }],
+    ["no consent cookie", { cookie: ATTRIBUTION }],
+    ["marketing refused", { cookie: `${consentCookie(false)}; ${ATTRIBUTION}` }],
   ])("sends no UTM values with %s", async (_, headers) => {
     await POST(request(VALID, headers));
     expect(profileSent().properties).toEqual({
@@ -216,13 +220,29 @@ describe("POST /api/landing-pages/subscribe", () => {
   it("drops a UTM value the shared sanitiser refuses, keeping the others", async () => {
     await POST(
       request(
-        { ...VALID, utm: { source: "=HYPERLINK()", medium: "email" } },
-        { cookie: consentCookie(true) },
+        VALID,
+        {
+          cookie: `${consentCookie(true)}; ${attributionCookie({
+            source: "=HYPERLINK()",
+            medium: "email",
+          })}`,
+        },
       ),
     );
     const properties = profileSent().properties;
     expect(properties).toMatchObject({ sog_newsletter_utm_medium: "email" });
     expect(properties).not.toHaveProperty("sog_newsletter_utm_source");
+  });
+
+  it("ignores a utm field an old bundle still posts", async () => {
+    const response = await POST(
+      request(
+        { ...VALID, utm: { source: "from-an-old-bundle" } },
+        { cookie: consentCookie(true) },
+      ),
+    );
+    expect(response.status).toBe(200);
+    expect(profileSent().properties).toEqual({ sog_newsletter_page: PAGE });
   });
 
   it("answers a known address exactly as a new one", async () => {

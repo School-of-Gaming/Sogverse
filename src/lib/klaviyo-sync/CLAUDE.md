@@ -8,8 +8,7 @@ cancelled — as events. One way only:
 nothing Klaviyo holds is ever read back except the profile's own Klaviyo id. The newsletter
 form on landing pages writes to the same Klaviyo account (`src/services/landing-pages/`),
 through the same client. Klaviyo is the source of truth for School of Gaming's own mailing
-list; the `school_of_gaming` consent rows Sogverse wrote before it moved stay in the
-database unread, and carrying them into Klaviyo and removing them are later changes.
+list; Sogverse stores no account-level answer for it.
 
 ## The database announces ids, never payloads
 
@@ -77,8 +76,10 @@ always deliberate.
   through Stripe's own integration, and payments are profile totals
   (`sog_first_payment_at`, `sog_last_payment_at`, `sog_total_paid_eur`), never events. It
   says who holds the seat and, on a gamer's, the child's birth year and gender, and it
-  carries the UTM tag of the visit that led to the booking — stored on the seat when it is
-  made, and only under marketing cookie consent, the same gate as the account's own tag.
+  carries the UTM tag the browser's attribution cookie held at booking — stored on the
+  booking, read through the seat's link to it, and only under marketing cookie consent, the
+  same gate as the account's own tag. A seat with no booking (an admin's, a partner's) files
+  it with no tag.
   `SV Waitlisted` carries the waitlist join's tag under the same five names.
 - `SV Session` is one event per attendance mark a gedu writes, present or absent. A mark
   changed to the other status is a new event, keyed by session, gamer and status, so a
@@ -96,7 +97,7 @@ always deliberate.
   staging registration with the mailing-list box ticked subscribes that real address.
   Staging accounts therefore use addresses that exist nowhere in production — a
   plus-address of a mailbox the tester owns (`name+staging-1@…`) is the usual one.
-- The account's `sog_utm_…` properties — the visit the account was created on — and the
+- The account's `sog_utm_…` properties — the tag the account was created with — and the
   newsletter's `sog_newsletter_…` ones are separate on purpose: a subscriber who later
   opens an account is one profile.
 
@@ -133,7 +134,8 @@ it was given, and never sends a no.** Two moments give one:
   `sog_registration_marketing_answer` property.
 - **A product sign-up that asked.** A product may ask "I want emails from School of
   Gaming", unticked, with every booking, a waitlist join included. The answer is stored
-  on the participation, never in `marketing_consents`, and a yes subscribes the parent,
+  on the booking, never in `marketing_consents` and never on the seat, where a signed-in
+  child could read it, and a yes subscribes the parent,
   under the custom source `Sogverse product sign-up`, when the event the booking's own
   insert files goes out: `SV Enrolled` for a seat taken at once, `SV Waitlisted` for a
   waitlist join. A later promotion or demotion never carries it, so a parent who has
@@ -194,13 +196,9 @@ owner or with the owner's say — never by a session on its own initiative.
   (`SV Marketing consent`, from `…_PRODUCTION`), and `KLAVIYO_ACCOUNT_LIST_ID`,
   `KLAVIYO_CLUB_LIST_ID`, `KLAVIYO_CAMP_LIST_ID`, `KLAVIYO_EVENT_LIST_ID` and
   `KLAVIYO_MUNICIPAL_CLUB_LIST_ID` on Production alone (each from its `…_PRODUCTION`). The code reads only the unsuffixed names.
-  `KLAVIYO_MARKETING_CONSENT_LIST_ID` replaces `KLAVIYO_NEWSLETTER_LIST_ID`, and has to be
-  on Vercel Preview and Production before this code deploys — the sign-up and the
-  registration tick fail without it. It is already set on both. Once this is released,
-  `KLAVIYO_NEWSLETTER_LIST_ID` is deleted from Vercel and from `.env.local`.
-  `KLAVIYO_EVENT_LIST_ID` has to be on Vercel Production before this code reaches
-  production — without it every parent holding a seat on an event fails their profile row
-  until it is set.
+  The sign-up and the registration tick fail without `KLAVIYO_MARKETING_CONSENT_LIST_ID`,
+  and without `KLAVIYO_EVENT_LIST_ID` every parent holding a seat on an event fails their
+  profile row until it is set.
 - **The secret.** `KLAVIYO_SYNC_SECRET`, one random value per environment, on Vercel
   Preview (the unsuffixed value) and Production (`KLAVIYO_SYNC_SECRET_PRODUCTION`),
   sensitive, then a redeploy. An unset secret refuses every call to the sync route.

@@ -1,21 +1,22 @@
 "use client";
 
 import { createContext, useContext, useState, type ReactNode } from "react";
-import type { UtmAttribution } from "@/lib/utm";
+import type { Attribution } from "@/lib/utm";
 
 /**
  * Holds the UTM attribution the visitor arrived with (`utm_source`,
- * `utm_medium`, `utm_campaign`, `utm_content`, `utm_term` on the landing URL)
- * for the duration of the visit, so browsing shop → about → home → register as
- * client-side navigation still yields it at account creation.
+ * `utm_medium`, `utm_campaign`, `utm_content`, `utm_term` on the landing URL),
+ * and Meta's and Reddit's click ids if the link carried one, in memory for the document's life, for one reader: the consent banner, which
+ * writes the attribution cookie from it when marketing is accepted mid-visit.
+ * Nothing else reads attribution in the browser; the routes that store it read
+ * the cookie off their own request.
  *
  * Flow: the proxy reads and sanitises the params and sets `x-utm` on the
  * request; the root layout parses that header and passes the result in here as
- * `initialUtm`; the two registration forms read it from context and include it
- * in the new user's signup metadata. The params are deliberately left in the URL
- * rather than stripped — the first in-app navigation drops them from the address
- * bar anyway, and leaving them means a reload or back-button on the landing page
- * recovers the values instead of losing them.
+ * `initialUtm`. The params are deliberately left in the URL rather than stripped
+ * — the first in-app navigation drops them from the address bar anyway, and
+ * leaving them means a reload or back-button on the landing page recovers the
+ * values instead of losing them.
  *
  * **`useState(initial)` seeds once, and the prop must never be synced into
  * state afterwards.** This is a live requirement, not a guard against a
@@ -27,37 +28,34 @@ import type { UtmAttribution } from "@/lib/utm";
  * `useEffect` syncing the prop into state would wipe the values the first time
  * anyone switched language.
  *
- * **Nothing here writes the values to the browser — no cookie, no
- * `localStorage`, no `sessionStorage`.** That is a design property worth keeping
- * (attribution that dies with the visit is attribution nobody has to reason
- * about deleting), but it is no longer claimed as the thing that keeps this
- * processing lawful: reading the params off the landing URL is itself what
- * engages Art 5(3), and it has already happened in the proxy by the time this
- * provider mounts. `src/lib/utm.ts` has the full account.
+ * **Nothing here writes to the browser.** The cookie the banner and the proxy
+ * write is `src/lib/utm.ts`'s account, including what consent does and does not
+ * settle: reading the params off the landing URL engages Art 5(3) on its own,
+ * and it has already happened in the proxy by the time this provider mounts.
  */
 
-const UtmContext = createContext<UtmAttribution | undefined>(undefined);
+const UtmContext = createContext<Attribution | undefined>(undefined);
 
 interface UtmProviderProps {
   /**
-   * The sanitised attribution from this request's `x-utm` header — five
-   * fields, each a value or null. Read once, at mount — see the note above.
+   * The sanitised attribution from this request's `x-utm` header — the five
+   * tag fields, each a value or null, and any click ids. Read once, at mount —
+   * see the note above.
    */
-  initialUtm: UtmAttribution;
+  initialUtm: Attribution;
   children: ReactNode;
 }
 
 export function UtmProvider({ initialUtm, children }: UtmProviderProps) {
-  const [utm] = useState<UtmAttribution>(initialUtm);
+  const [utm] = useState<Attribution>(initialUtm);
 
   return <UtmContext.Provider value={utm}>{children}</UtmContext.Provider>;
 }
 
 /**
- * The attribution this visit arrived with. All five fields null is the common
- * case, and `hasUtmAttribution` is the way to ask whether anything survived.
+ * The attribution this visit arrived with. Nothing at all is the common case.
  */
-export function useUtm(): UtmAttribution {
+export function useUtm(): Attribution {
   const ctx = useContext(UtmContext);
   if (ctx === undefined) {
     throw new Error("useUtm must be used within a UtmProvider");

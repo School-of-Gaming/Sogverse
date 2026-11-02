@@ -35,9 +35,9 @@ export function geduAttendsSite(mode: DeliveryMode): boolean {
 /**
  * Whether the family sets up a machine of their own for the sessions, which is
  * what the "Before the first session" guide's install-and-test steps are for.
- * At a site School of Gaming brings the machines with everything installed; a
- * hybrid product is prepared for as an online one, since any gamer on it may
- * join from home.
+ * At a site School of Gaming brings the machines with everything installed. A
+ * hybrid product has both kinds of gamer, so its guide does not ask this: it
+ * gives those steps a section of their own, for joining from home.
  */
 export function familyBringsOwnMachine(mode: DeliveryMode): boolean {
   return mode === "online" || mode === "hybrid";
