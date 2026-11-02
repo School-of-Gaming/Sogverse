@@ -1,12 +1,12 @@
 "use client";
 
 import { createContext, useContext, useState, type ReactNode } from "react";
-import type { UtmAttribution } from "@/lib/utm";
+import type { Attribution } from "@/lib/utm";
 
 /**
  * Holds the UTM attribution the visitor arrived with (`utm_source`,
- * `utm_medium`, `utm_campaign`, `utm_content`, `utm_term` on the landing URL)
- * in memory for the document's life, for one reader: the consent banner, which
+ * `utm_medium`, `utm_campaign`, `utm_content`, `utm_term` on the landing URL),
+ * and Meta's and Reddit's click ids if the link carried one, in memory for the document's life, for one reader: the consent banner, which
  * writes the attribution cookie from it when marketing is accepted mid-visit.
  * Nothing else reads attribution in the browser; the routes that store it read
  * the cookie off their own request.
@@ -34,28 +34,28 @@ import type { UtmAttribution } from "@/lib/utm";
  * and it has already happened in the proxy by the time this provider mounts.
  */
 
-const UtmContext = createContext<UtmAttribution | undefined>(undefined);
+const UtmContext = createContext<Attribution | undefined>(undefined);
 
 interface UtmProviderProps {
   /**
-   * The sanitised attribution from this request's `x-utm` header — five
-   * fields, each a value or null. Read once, at mount — see the note above.
+   * The sanitised attribution from this request's `x-utm` header — the five
+   * tag fields, each a value or null, and any click ids. Read once, at mount —
+   * see the note above.
    */
-  initialUtm: UtmAttribution;
+  initialUtm: Attribution;
   children: ReactNode;
 }
 
 export function UtmProvider({ initialUtm, children }: UtmProviderProps) {
-  const [utm] = useState<UtmAttribution>(initialUtm);
+  const [utm] = useState<Attribution>(initialUtm);
 
   return <UtmContext.Provider value={utm}>{children}</UtmContext.Provider>;
 }
 
 /**
- * The attribution this visit arrived with. All five fields null is the common
- * case, and `hasUtmAttribution` is the way to ask whether anything survived.
+ * The attribution this visit arrived with. Nothing at all is the common case.
  */
-export function useUtm(): UtmAttribution {
+export function useUtm(): Attribution {
   const ctx = useContext(UtmContext);
   if (ctx === undefined) {
     throw new Error("useUtm must be used within a UtmProvider");

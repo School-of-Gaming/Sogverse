@@ -9,6 +9,7 @@ import {
   type RedditProductDetails,
 } from "@/lib/marketing-events";
 import { getOrigin } from "@/lib/url";
+import { clickIdFromCookieHeader } from "@/lib/utm";
 
 /**
  * The conversions we report to Reddit from our own servers, through its
@@ -21,7 +22,8 @@ import { getOrigin } from "@/lib/url";
  * **What is sent about a person, exhaustively:** the user agent, the IP address
  * the request arrived from, Reddit's own `_rdt_uuid` (its browser id) and
  * `_rdt_cid` (the click that brought the visitor) cookies if this browser
- * carries them, a SHA-256 hash of the parent's own account email in Reddit's
+ * carries them — or, where it has no `_rdt_cid`, the `rdt_cid` our own
+ * attribution cookie kept from the ad click (`@/lib/utm`), a SHA-256 hash of the parent's own account email in Reddit's
  * canonical form, and a SHA-256 hash of the parent's own account id
  * (`external_id`). Neither the address nor the id itself is ever sent or
  * logged. No phone number, no name, no participation id, and nothing about a
@@ -124,9 +126,16 @@ export async function reportRedditConversion(
     const userAgent = request.headers.get("user-agent") ?? undefined;
     const clientIp = clientIpFrom(request.headers);
     // Reddit's own identifiers, if this browser has them — what lets the
-    // server event be recognised as the same person the pixel saw.
+    // server event be recognised as the same person the pixel saw. Reddit's
+    // click id is the `rdt_cid` its ad appended to the link, unmodified, which
+    // its pixel keeps in `_rdt_cid` only if it loaded while that was still in
+    // the address bar. Where the pixel's cookie is missing, the `rdt_cid` our
+    // own cookie kept from that landing is sent in its place; the pixel's wins
+    // where there is one.
     const uuid = cookieValueFromHeader(cookieHeader, "_rdt_uuid");
-    const clickId = cookieValueFromHeader(cookieHeader, "_rdt_cid");
+    const clickId =
+      cookieValueFromHeader(cookieHeader, "_rdt_cid") ??
+      clickIdFromCookieHeader(cookieHeader, "reddit")?.id;
     const email = account.email?.trim();
     const emailHash = email ? hashEmailForReddit(email) : undefined;
     const accountId = account.id?.trim();

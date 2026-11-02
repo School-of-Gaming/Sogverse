@@ -1,6 +1,7 @@
-import { describe, it, expect } from "vitest";
+import { afterEach, describe, it, expect, vi } from "vitest";
 import { ResponseCookies } from "next/dist/compiled/@edge-runtime/cookies";
 import {
+  NO_ATTRIBUTION,
   NO_UTM_ATTRIBUTION,
   UTM_COOKIE_MAX_AGE_SECONDS,
   UTM_COOKIE_MAX_LENGTH,
@@ -8,19 +9,51 @@ import {
   UTM_HEADER,
   UTM_HEADER_MAX_LENGTH,
   UTM_QUERY_PARAMS,
+  attributionCookieAfterLanding,
+  clickIdFromCookieHeader,
   hasUtmAttribution,
-  parseUtmHeader,
+  parseAttribution,
+  readAttributionFromSearchParams,
   readUtmFromSearchParams,
+  sanitiseClickId,
   sanitiseUtmValue,
-  serialiseUtm,
-  serialiseUtmCookie,
+  serialiseAttribution,
   utmCookieOptions,
   utmFromCookieHeader,
   utmInputFromAttribution,
   utmMetadataForConsent,
+  type Attribution,
+  type UtmAttribution,
 } from "@/lib/utm";
 import type { ConsentState } from "@/lib/consent";
 import { attributionCookie } from "../../mocks/attribution-cookie";
+
+/** The clock every case below reads its landing times against. */
+const NOW = Date.UTC(2026, 10, 2, 12, 0, 0);
+const DAY_MS = 24 * 60 * 60 * 1000;
+
+/**
+ * A tag with no landing time and no click ids, so the serialised value is the
+ * five fields alone and the tag-only cases below read as they always have.
+ */
+function tagOnly(utm: UtmAttribution): Attribution {
+  return { utm, utmLandedAt: null, clickIds: {} };
+}
+
+/** The header value for a tag alone. */
+function serialiseUtm(utm: UtmAttribution): string | null {
+  return serialiseAttribution(tagOnly(utm));
+}
+
+/** The tag a header value carries. */
+function parseUtmHeader(raw: string | null | undefined): UtmAttribution {
+  return parseAttribution(raw, NOW).utm;
+}
+
+/** The cookie a landing carrying this tag alone writes into an empty jar. */
+function serialiseUtmCookie(utm: UtmAttribution): string | null {
+  return attributionCookieAfterLanding(null, tagOnly(utm), NOW);
+}
 
 /**
  * The shared UTM sanitiser. Three callers depend on it agreeing with the
@@ -480,7 +513,7 @@ describe("the attribution cookie", () => {
   });
 });
 
-describe("serialiseUtmCookie", () => {
+describe("the cookie's budget for a tag", () => {
   it("writes no cookie for a value inside the header's budget but over its own", () => {
     // Each character is six bytes in the header and ten once the writer encodes
     // the value again.
@@ -527,5 +560,323 @@ describe("utmInputFromAttribution", () => {
       term: "minecraft",
     });
     expect(utmInputFromAttribution(NO_UTM_ATTRIBUTION)).toEqual({});
+  });
+});
+
+describe("click ids", () => {
+  afterEach(() => {
+    vi.useRealTimers();
+  });
+
+  // A real `fbclid` of today's shape: long, mixed case, `_` and `-` in it.
+  const FBCLID = "IwZXh0bgNhZW0CMTEAAR2ehbmXt8D0SzVQ-kJ3lr_aem_AeVgoX2Yh5Qx4n7Z-p_Q1bC9w";
+  const RDT_CID = "1234567890123456789_abcDEF-9";
+
+  describe("sanitiseClickId", () => {
+    it("passes an id through exactly as the link carried it", () => {
+      expect(sanitiseClickId(FBCLID)).toBe(FBCLID);
+      expect(sanitiseClickId(RDT_CID)).toBe(RDT_CID);
+    });
+
+    it.each([
+      ["empty", ""],
+      ["padded", ` ${FBCLID}`],
+      ["a dot, which would split from its landing time", "abc.def"],
+      ["a formula lead", "=SUM(A1)"],
+      ["a space", "abc def"],
+      ["a control character", "abc\ndef"],
+      ["a non-ASCII letter", "abcé"],
+      ["percent-encoding", "abc%20def"],
+      ["over the cap", "a".repeat(401)],
+    ])("refuses %s rather than repairing it", (_, raw) => {
+      expect(sanitiseClickId(raw)).toBeNull();
+    });
+
+    it("keeps one at the cap", () => {
+      expect(sanitiseClickId("a".repeat(400))).toBe("a".repeat(400));
+    });
+
+    it("is nothing for no value", () => {
+      expect(sanitiseClickId(null)).toBeNull();
+      expect(sanitiseClickId(undefined)).toBeNull();
+    });
+  });
+
+  describe("reading a landing", () => {
+    function read(query: string): Attribution {
+      return readAttributionFromSearchParams(new URLSearchParams(query), NOW);
+    }
+
+    it("stamps the tag and each click id with the landing time", () => {
+      expect(read(`utm_campaign=c&fbclid=${FBCLID}&rdt_cid=${RDT_CID}`)).toEqual({
+        utm: { ...NO_UTM_ATTRIBUTION, campaign: "c" },
+        utmLandedAt: NOW,
+        clickIds: {
+          meta: { id: FBCLID, landedAt: NOW },
+          reddit: { id: RDT_CID, landedAt: NOW },
+        },
+      });
+    });
+
+    it("reads a click id with no tag beside it", () => {
+      expect(read(`fbclid=${FBCLID}`)).toEqual({
+        ...NO_ATTRIBUTION,
+        clickIds: { meta: { id: FBCLID, landedAt: NOW } },
+      });
+    });
+
+    it("keeps no click id the sanitiser refuses, or that the link repeats", () => {
+      expect(read("fbclid=a.b&rdt_cid=x&rdt_cid=y")).toEqual(NO_ATTRIBUTION);
+    });
+
+    it("keeps no gclid, which no report reads", () => {
+      expect(read("gclid=Cj0KCQ")).toEqual(NO_ATTRIBUTION);
+    });
+  });
+
+  describe("the header", () => {
+    it("round-trips the tag, its landing time and both click ids", () => {
+      const attribution: Attribution = {
+        utm: { ...NO_UTM_ATTRIBUTION, source: "meta", campaign: "Rentrée" },
+        utmLandedAt: NOW,
+        clickIds: {
+          meta: { id: FBCLID, landedAt: NOW },
+          reddit: { id: RDT_CID, landedAt: NOW - DAY_MS },
+        },
+      };
+      const serialised = serialiseAttribution(attribution);
+      expect(serialised).toBe(
+        `source=meta&campaign=Rentr%C3%A9e&at=${NOW}&fbclid=${NOW}.${FBCLID}&rdt_cid=${NOW - DAY_MS}.${RDT_CID}`,
+      );
+      expect(parseAttribution(serialised, NOW)).toEqual(attribution);
+    });
+
+    it("drops a click id rather than the tag when the two do not fit together", () => {
+      // A tag just under the budget on its own: an `fbclid` beside it would push
+      // the whole past it, and the tag is what stands.
+      const campaign = "a".repeat(UTM_HEADER_MAX_LENGTH - "campaign=".length - 30);
+      const attribution: Attribution = {
+        utm: { ...NO_UTM_ATTRIBUTION, campaign },
+        utmLandedAt: null,
+        clickIds: { meta: { id: FBCLID, landedAt: NOW } },
+      };
+      expect(serialiseAttribution(attribution)).toBe(`campaign=${campaign}`);
+    });
+
+    it("drops the click ids with the tag when the tag alone is over the budget", () => {
+      const wide = "𝔸".repeat(200);
+      expect(
+        serialiseAttribution({
+          utm: { source: wide, medium: wide, campaign: wide, content: wide, term: wide },
+          utmLandedAt: NOW,
+          clickIds: { meta: { id: FBCLID, landedAt: NOW } },
+        }),
+      ).toBeNull();
+    });
+
+    it("fits two click ids at their cap beside a full plain-ASCII tag", () => {
+      const full = "a".repeat(200);
+      const longest = "b".repeat(400);
+      const attribution: Attribution = {
+        utm: { source: full, medium: full, campaign: full, content: full, term: full },
+        utmLandedAt: NOW,
+        clickIds: {
+          meta: { id: longest, landedAt: NOW },
+          reddit: { id: longest, landedAt: NOW },
+        },
+      };
+      expect(parseAttribution(serialiseAttribution(attribution), NOW)).toEqual(attribution);
+      expect(
+        attributionCookieAfterLanding(null, attribution, NOW),
+      ).toBe(serialiseAttribution(attribution));
+    });
+
+    it("sends the click ids alone when there is no tag", () => {
+      expect(
+        serialiseAttribution({
+          ...NO_ATTRIBUTION,
+          clickIds: { reddit: { id: RDT_CID, landedAt: NOW } },
+        }),
+      ).toBe(`rdt_cid=${NOW}.${RDT_CID}`);
+    });
+
+    it("re-sanitises a click id on parse", () => {
+      expect(parseAttribution(`fbclid=${NOW}.a%3Db&rdt_cid=${NOW}.ok`, NOW).clickIds).toEqual({
+        reddit: { id: "ok", landedAt: NOW },
+      });
+      expect(parseAttribution(`fbclid=${FBCLID}`, NOW).clickIds).toEqual({});
+      expect(parseAttribution(`fbclid=soon.${FBCLID}`, NOW).clickIds).toEqual({});
+    });
+  });
+
+  describe("expiry at read", () => {
+    it("reads a part as absent 30 days after it landed, whatever the cookie's own age", () => {
+      const old = NOW - 30 * DAY_MS;
+      const recent = NOW - 29 * DAY_MS;
+      expect(
+        parseAttribution(
+          `campaign=c&at=${old}&fbclid=${old}.${FBCLID}&rdt_cid=${recent}.${RDT_CID}`,
+          NOW,
+        ),
+      ).toEqual({
+        ...NO_ATTRIBUTION,
+        clickIds: { reddit: { id: RDT_CID, landedAt: recent } },
+      });
+    });
+
+    it("keeps a part a few seconds ahead, as a stamp from a skewed clock can be", () => {
+      // The proxy stamps with its clock and the layout reads with another's.
+      const ahead = NOW + 30_000;
+      expect(parseAttribution(`campaign=c&at=${ahead}&fbclid=${ahead}.${FBCLID}`, NOW)).toEqual({
+        utm: { ...NO_UTM_ATTRIBUTION, campaign: "c" },
+        utmLandedAt: ahead,
+        clickIds: { meta: { id: FBCLID, landedAt: ahead } },
+      });
+    });
+
+    it("reads nothing that claims to have landed far in the future", () => {
+      const far = NOW + DAY_MS;
+      expect(parseAttribution(`campaign=c&at=${far}`, NOW)).toEqual(NO_ATTRIBUTION);
+      expect(parseAttribution(`fbclid=${far}.${FBCLID}`, NOW)).toEqual(NO_ATTRIBUTION);
+    });
+
+    it("reads a tag with no landing time as it stands", () => {
+      expect(parseAttribution("campaign=c", NOW)).toEqual({
+        ...NO_ATTRIBUTION,
+        utm: { ...NO_UTM_ATTRIBUTION, campaign: "c" },
+      });
+    });
+
+    it("reads a tag whose landing time is junk as no tag", () => {
+      expect(parseAttribution("campaign=c&at=yesterday", NOW)).toEqual(NO_ATTRIBUTION);
+    });
+  });
+
+  describe("the cookie after a landing", () => {
+    const EARLIER = NOW - 10 * DAY_MS;
+    function stored(value: string): string {
+      return `${UTM_COOKIE_NAME}=${encodeURIComponent(value)}`;
+    }
+    function landing(query: string): Attribution {
+      return readAttributionFromSearchParams(new URLSearchParams(query), NOW);
+    }
+
+    it("writes nothing for a landing that carried nothing", () => {
+      expect(
+        attributionCookieAfterLanding(stored(`campaign=kept&at=${EARLIER}`), landing(""), NOW),
+      ).toBeNull();
+    });
+
+    it("replaces one platform's click id and keeps the tag and the other platform's", () => {
+      expect(
+        attributionCookieAfterLanding(
+          stored(`campaign=kept&at=${EARLIER}&fbclid=${EARLIER}.old&rdt_cid=${EARLIER}.reddit`),
+          landing(`fbclid=${FBCLID}`),
+          NOW,
+        ),
+      ).toBe(`campaign=kept&at=${EARLIER}&fbclid=${NOW}.${FBCLID}&rdt_cid=${EARLIER}.reddit`);
+    });
+
+    it("keeps the first landing time when a landing repeats the click id already kept", () => {
+      // A reload or a back navigation lands on the same link again; the id's
+      // 30 days still run from the first landing, as Meta's `_fbc` does.
+      expect(
+        attributionCookieAfterLanding(
+          stored(`fbclid=${EARLIER}.${FBCLID}&rdt_cid=${EARLIER}.${RDT_CID}`),
+          landing(`fbclid=${FBCLID}&rdt_cid=new`),
+          NOW,
+        ),
+      ).toBe(`fbclid=${EARLIER}.${FBCLID}&rdt_cid=${NOW}.new`);
+    });
+
+    it("stamps a repeated click id afresh once the kept one has expired", () => {
+      const stale = NOW - 31 * DAY_MS;
+      expect(
+        attributionCookieAfterLanding(stored(`fbclid=${stale}.${FBCLID}`), landing(`fbclid=${FBCLID}`), NOW),
+      ).toBe(`fbclid=${NOW}.${FBCLID}`);
+    });
+
+    it("carries a part a skewed server clock stamped slightly ahead of the browser's", () => {
+      const ahead = NOW + 30_000;
+      expect(
+        attributionCookieAfterLanding(
+          stored(`campaign=kept&at=${ahead}`),
+          landing(`fbclid=${FBCLID}`),
+          NOW,
+        ),
+      ).toBe(`campaign=kept&at=${ahead}&fbclid=${NOW}.${FBCLID}`);
+    });
+
+    it("replaces the whole tag and keeps the click ids on a tagged landing", () => {
+      expect(
+        attributionCookieAfterLanding(
+          stored(`source=old&campaign=old&at=${EARLIER}&fbclid=${EARLIER}.kept`),
+          landing("utm_campaign=new"),
+          NOW,
+        ),
+      ).toBe(`campaign=new&at=${NOW}&fbclid=${EARLIER}.kept`);
+    });
+
+    it("drops what has run past its 30 days rather than carrying it forward", () => {
+      const stale = NOW - 31 * DAY_MS;
+      expect(
+        attributionCookieAfterLanding(
+          stored(`campaign=stale&at=${stale}&rdt_cid=${stale}.reddit`),
+          landing(`fbclid=${FBCLID}`),
+          NOW,
+        ),
+      ).toBe(`fbclid=${NOW}.${FBCLID}`);
+    });
+
+    it("never carries a tag with no landing time into a new write", () => {
+      // Rewriting it would renew a 30 days nobody can measure.
+      expect(
+        attributionCookieAfterLanding(stored("campaign=untimed"), landing(`fbclid=${FBCLID}`), NOW),
+      ).toBe(`fbclid=${NOW}.${FBCLID}`);
+    });
+
+    it("leaves the cookie standing when the landing's tag is over the cookie's budget", () => {
+      const query = new URLSearchParams({
+        utm_source: "é".repeat(100),
+        utm_campaign: "é".repeat(200),
+        fbclid: FBCLID,
+      }).toString();
+      expect(
+        attributionCookieAfterLanding(stored(`campaign=kept&at=${EARLIER}`), landing(query), NOW),
+      ).toBeNull();
+    });
+  });
+
+  describe("clickIdFromCookieHeader", () => {
+    const KEPT = `${UTM_COOKIE_NAME}=${encodeURIComponent(
+      `campaign=c&at=${NOW}&fbclid=${NOW}.${FBCLID}`,
+    )}`;
+
+    it("hands each platform its own id and nothing else", () => {
+      vi.useFakeTimers();
+      vi.setSystemTime(NOW);
+      expect(clickIdFromCookieHeader(`locale=fi; ${KEPT}`, "meta")).toEqual({
+        id: FBCLID,
+        landedAt: NOW,
+      });
+      expect(clickIdFromCookieHeader(KEPT, "reddit")).toBeNull();
+    });
+
+    it("is nothing once the id is 30 days old", () => {
+      vi.useFakeTimers();
+      vi.setSystemTime(NOW + 30 * DAY_MS);
+      expect(clickIdFromCookieHeader(KEPT, "meta")).toBeNull();
+    });
+
+    it("is nothing without the cookie, or for one that will not decode", () => {
+      expect(clickIdFromCookieHeader(null, "meta")).toBeNull();
+      expect(clickIdFromCookieHeader(`${UTM_COOKIE_NAME}=%E0%A4%A`, "meta")).toBeNull();
+    });
+
+    it("is never part of the stored tag, so no route can store a click id", () => {
+      vi.useFakeTimers();
+      vi.setSystemTime(NOW);
+      expect(utmFromCookieHeader(KEPT)).toEqual({ campaign: "c" });
+    });
   });
 });

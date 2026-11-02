@@ -18,17 +18,44 @@
  * Those columns are first touch for the account, since they are written once;
  * the cookie is last touch.
  *
+ * **The same path keeps the ad platforms' click ids.** A Meta ad appends
+ * `fbclid` to the link and a Reddit ad `rdt_cid`. Each vendor's own pixel turns
+ * its id into a click cookie of its own (`_fbc`, `_rdt_cid`), but only if the
+ * pixel loads while the id is still in the address bar, and ours loads only
+ * after marketing consent, on a marketing page with a clean query — so a parent
+ * who accepts the banner a few pages later never gets one. So the proxy reads
+ * each platform's id beside the tag, stamped with the landing time, and the
+ * cookie keeps it on the same terms as the tag. The servers' conversion reports
+ * fall back to it when the vendor's own click cookie is missing, and send each
+ * platform only its own id. A click id is never stored anywhere else: not on
+ * the account, not on a booking, not in Klaviyo.
+ *
+ * **What a landing replaces.** The cookie holds parts, and a landing replaces
+ * only the parts it carries: the five tag fields are one part (a tagged link
+ * replaces the whole tag, as before, and a link with no tag leaves it), and
+ * each platform's click id is a part of its own (a link carrying a new `fbclid`
+ * replaces the stored one, and leaves the Reddit id alone) — the same rule
+ * Meta's own `_fbc` follows. A link carrying nothing writes nothing. Every part
+ * carries its landing time and is read as absent 30 days after it, so a later
+ * write that renews the cookie never extends an older part's life.
+ *
+ * A platform is added by naming it and its query param in
+ * {@link CLICK_ID_QUERY_PARAMS} (the compiler holds the two together), and a
+ * reporter that reads it. Google's `gclid` is not kept: no server report reads
+ * it, and keeping an id nothing reads is storage without a purpose.
+ *
  * Values are invented ad hoc by whoever makes the link; there is no registry of
  * valid ones, and validating against one was considered and turned down.
  * Whoever reads this data filters for the values they issued, so junk rows are
  * noise they never query.
  *
  * **The transport has a byte budget and drops rather than truncates.** The
- * serialised value is capped at `UTM_HEADER_MAX_LENGTH`; over that, the proxy
- * sets no header and no cookie, and the visit carries no attribution. The cookie
+ * serialised value is capped at `UTM_HEADER_MAX_LENGTH`; a tag over that sets
+ * no header and no cookie, and the visit carries no attribution. The cookie
  * has a cap of its own, `UTM_COOKIE_MAX_LENGTH`, measured as it is written. See
- * those constants for why a per-field cap is not enough on its own and why
- * dropping is the only safe answer.
+ * those constants for why a per-field cap is not enough on its own, why
+ * dropping is the only safe answer, and why a click id is what gives way when
+ * the two have to share the room.
  *
  * **The partner convention: a campaign issued to or for a partner is prefixed
  * with the partner's slug and a hyphen** — `lynx-summer-a`, `rblx-launch`. This
@@ -87,16 +114,26 @@
  *
  *     **What is stored on the device.** Under marketing consent, and only
  *     then, the browser holds a first-party cookie, `sog_attribution`, carrying
- *     the five values of the latest tagged link for 30 days. It is not
- *     httpOnly, because the banner writes it from client code, so scripts in
- *     the page can read it. The proxy writes it when a landing request already
- *     carries the consent; the banner writes it from the in-memory tag when
- *     marketing is accepted mid-visit. A later tagged link overwrites it, and
- *     a link with no tag leaves it. Withdrawing marketing deletes it with the
- *     advertising cookies, and a document where marketing is not granted
- *     deletes it on mount. A refusal never writes it. The server gate above
- *     still applies when it is read, so a cookie that outlived its consent
- *     stores nothing.
+ *     the five values of the latest tagged link, and the latest Meta and Reddit
+ *     click ids, each with the time it landed and each for 30 days from then.
+ *     It is not httpOnly, because the banner writes it from client code, so
+ *     scripts in the page can read it. The proxy writes it when a landing
+ *     request already carries the consent; the banner writes it from the
+ *     in-memory values when marketing is accepted mid-visit. A later tagged
+ *     link overwrites the tag, a later click id from one platform overwrites
+ *     that platform's, and a link carrying neither leaves the cookie alone.
+ *     Withdrawing marketing deletes it with the advertising cookies, and a
+ *     document where marketing is not granted deletes it on mount. A refusal
+ *     never writes it. The server gate above still applies when it is read,
+ *     so a cookie that outlived its consent stores nothing and reports
+ *     nothing.
+ *
+ *     **The click ids are newer than the rulings above, and not covered by
+ *     them.** Counsel ruled on the UTM parameters; keeping a platform's click
+ *     id under the same gate, for that platform's conversion report, is an
+ *     extension of this design that has not yet had a legal review of its own.
+ *     It rides every constraint in this list exactly as the tag does, and
+ *     point 8 states the one that is its own.
  *
  *     **The same gate covers every other write of them.** A landing page's
  *     email sign-up passes them to Klaviyo as profile properties, through
@@ -142,6 +179,13 @@
  *     discount or priority, it stops being a label and becomes a credential — a
  *     different thing legally, and a worse thing to have travelling in public
  *     links that get forwarded and screenshotted.
+ *  8. **A click id goes back to the platform that issued it, and nowhere
+ *     else.** It is read off the cookie only by that platform's server
+ *     conversion report, under the request's own marketing consent, and is
+ *     what the vendor's own click cookie would have carried had its pixel been
+ *     loaded in time. It is never written to an account, a booking or Klaviyo,
+ *     never shown, and never sent to another platform: the Meta id reaches
+ *     only Meta, the Reddit id only Reddit.
  */
 
 // The consent module is pure string work with no imports, so it is as safe in
@@ -182,7 +226,9 @@ export type UtmInput = Partial<Record<UtmField, string>>;
  * — and a raw non-ASCII header value is not something every hop between the
  * proxy and the layout is obliged to carry intact. Percent-encoding through
  * `URLSearchParams` makes the transport ASCII by construction, and one header
- * keeps the five fields arriving or not arriving together.
+ * keeps the five fields arriving or not arriving together. The click ids ride
+ * the same header, in the same format the cookie keeps
+ * ({@link serialiseAttribution}).
  */
 export const UTM_HEADER = "x-utm";
 
@@ -209,13 +255,26 @@ export const UTM_HEADER = "x-utm";
  * and even all five fields at their full 200 plain-ASCII characters serialise to
  * about 1,050 — the budget only bites on values dense with heavily encoded
  * characters, which no real link carries.
+ *
+ * **The click ids share the budget, and they are what gives way.** The tag is
+ * measured first, on its own, exactly as it always was: over budget, nothing is
+ * sent. Each click id is then added only if the whole still fits, and one that
+ * does not is dropped while the tag stands — so however long an `fbclid` runs,
+ * it can never cost a parent their tag. The cost runs the other way only for a
+ * tag already near the budget, which no real link produces. A click id is
+ * plain ASCII from a short alphabet that percent-encoding leaves as it is, so
+ * at its cap ({@link sanitiseClickId}) with its key and landing time it costs
+ * a little over 420 bytes, and two of them beside a full plain-ASCII tag still
+ * fit — in the cookie too, where encoding the separators costs a few bytes
+ * more. Raising the budget to make room for them instead would only move it
+ * closer to the ceilings it exists to keep clear of, which did not move.
  */
 export const UTM_HEADER_MAX_LENGTH = 2048;
 
 /**
- * The first-party cookie that keeps the latest tag this browser arrived with.
- * Built by {@link serialiseUtmCookie}, and read back through
- * {@link utmFromCookieHeader}.
+ * The first-party cookie that keeps the latest tag and click ids this browser
+ * arrived with. Built by {@link attributionCookieAfterLanding}, and read back
+ * through {@link utmFromCookieHeader} and {@link clickIdFromCookieHeader}.
  */
 export const UTM_COOKIE_NAME = "sog_attribution";
 
@@ -227,7 +286,8 @@ export const UTM_COOKIE_NAME = "sog_attribution";
  * 4 KB. The cookie then rides every request for 30 days beside the session's own
  * chunks, and a stranger's crafted link could hold that browser past a header
  * limit for a month. Over this budget the tag is dropped rather than truncated,
- * for the reason the header's is, and a cookie already there stands.
+ * for the reason the header's is, and a cookie already there stands. The click
+ * ids give way to the tag here exactly as they do in the header.
  */
 export const UTM_COOKIE_MAX_LENGTH = 2048;
 
@@ -396,39 +456,244 @@ export function readUtmFromSearchParams(params: URLSearchParams): UtmAttribution
 }
 
 /**
- * The `x-utm` header and `sog_attribution` cookie value for an attribution, or
- * `null` when there is nothing to send. Only the fields that survived appear, so
- * a value that is present is always a value carrying something.
+ * The ad platforms whose own click id the cookie keeps, for every place that
+ * walks them.
+ */
+const CLICK_ID_PLATFORMS = ["meta", "reddit"] as const;
+
+/** One platform whose click id is kept. */
+export type ClickIdPlatform = (typeof CLICK_ID_PLATFORMS)[number];
+
+/**
+ * The query param each platform's ads append to a link — and the key the id
+ * travels under in the header and the cookie, so one name follows it from the
+ * link to the report.
+ */
+export const CLICK_ID_QUERY_PARAMS = {
+  meta: "fbclid",
+  reddit: "rdt_cid",
+} as const satisfies Record<ClickIdPlatform, string>;
+
+/** A platform's click id, and when the link carrying it was landed on, in ms. */
+export interface ClickId {
+  id: string;
+  landedAt: number;
+}
+
+/** Each platform's click id, where one was kept. */
+export type ClickIds = Partial<Record<ClickIdPlatform, ClickId>>;
+
+/**
+ * Everything one landing carried, or one cookie keeps: the tag, when it
+ * landed, and each platform's click id.
+ */
+export interface Attribution {
+  utm: UtmAttribution;
+  /**
+   * When the tag landed, in ms. `null` where there is no tag — and on a tag kept
+   * by a cookie written before landing times were recorded, which reads like
+   * any other until its own 30 days run out but is never carried into a new
+   * write, because a rewrite would renew a life nobody can measure.
+   */
+  utmLandedAt: number | null;
+  clickIds: ClickIds;
+}
+
+/** Nothing at all. */
+export const NO_ATTRIBUTION: Attribution = {
+  utm: NO_UTM_ATTRIBUTION,
+  utmLandedAt: null,
+  clickIds: {},
+};
+
+/**
+ * The longest click id kept. Meta's `fbclid` has grown over the years, from
+ * ids of about 60 characters to ones carrying an `_aem_` suffix that run to a
+ * couple of hundred, and neither vendor publishes a maximum — so the cap leaves
+ * room for another round of growth while keeping the budget arithmetic on
+ * {@link UTM_HEADER_MAX_LENGTH} true. An id over it is dropped, never cut,
+ * since a shortened id names no click.
+ */
+const CLICK_ID_MAX_LENGTH = 400;
+
+/**
+ * The whole of what a click id may be: letters, digits, `_` and `-`, which is
+ * every id either platform issues. Nothing in it needs percent-encoding, so its
+ * size in the header and the cookie is its length; and neither `.` (the
+ * separator from its landing time) nor anything a spreadsheet or a header could
+ * misread can appear.
+ */
+const CLICK_ID_PATTERN = new RegExp(`^[A-Za-z0-9_-]{1,${CLICK_ID_MAX_LENGTH}}$`);
+
+/**
+ * One raw click id, or `null` when it is not one. **Never trimmed, folded or
+ * shortened**: both platforms match the id byte for byte, and Meta says in as
+ * many words not to modify it, so an id that does not pass as it stands is
+ * refused.
+ */
+export function sanitiseClickId(raw: string | null | undefined): string | null {
+  if (typeof raw !== "string") return null;
+  return CLICK_ID_PATTERN.test(raw) ? raw : null;
+}
+
+/** A landing time as it is written: a positive integer of milliseconds. */
+const LANDED_AT_PATTERN = /^[1-9][0-9]{0,15}$/;
+
+/**
+ * How far in the future a landing time may sit and still be read. Landing times
+ * are stamped by the proxy's clock and read by the layout's, or the browser's,
+ * which are different machines, so an honest stamp can be a little ahead.
+ */
+const LANDED_AT_CLOCK_SKEW_MS = 5 * 60 * 1000;
+
+/**
+ * Whether a part that landed at `landedAt` is still kept at `now`: not further
+ * in the future than {@link LANDED_AT_CLOCK_SKEW_MS}, which only a hand-edited
+ * cookie could claim, and not older than the cookie's own lifetime, which a
+ * later write renewing the cookie must not extend.
+ */
+function isFresh(landedAt: number, now: number): boolean {
+  return (
+    landedAt <= now + LANDED_AT_CLOCK_SKEW_MS &&
+    now - landedAt < UTM_COOKIE_MAX_AGE_SECONDS * 1000
+  );
+}
+
+/**
+ * Read everything a landing URL carries: the tag ({@link readUtmFromSearchParams})
+ * and each platform's click id, all stamped with `now` as their landing time.
  *
- * Returns `null` too when the encoded value would exceed
- * {@link UTM_HEADER_MAX_LENGTH} — the whole attribution is dropped rather than
- * cut down, for the reason stated there. The check lives here rather than at
- * the one call site so no future caller can serialise past the budget.
+ * A repeated click-id param is no click id, for the reason a repeated UTM param
+ * is no value.
+ */
+export function readAttributionFromSearchParams(
+  params: URLSearchParams,
+  now: number,
+): Attribution {
+  const utm = readUtmFromSearchParams(params);
+  const clickIds: ClickIds = {};
+  for (const platform of CLICK_ID_PLATFORMS) {
+    const values = params.getAll(CLICK_ID_QUERY_PARAMS[platform]);
+    const id = values.length === 1 ? sanitiseClickId(values[0]) : null;
+    if (id !== null) clickIds[platform] = { id, landedAt: now };
+  }
+  return { utm, utmLandedAt: hasUtmAttribution(utm) ? now : null, clickIds };
+}
+
+/** The key the tag's landing time travels under. */
+const UTM_LANDED_AT_KEY = "at";
+
+/**
+ * Serialise an attribution within a budget, measured by `measure`: the tag
+ * first, all or nothing, then each click id into whatever room is left — the
+ * order {@link UTM_HEADER_MAX_LENGTH} reasons out. `null` when nothing is left
+ * to send, which includes a tag over the budget.
+ *
+ * The click ids are written as `<landing ms>.<id>`, the order Meta's own `fbc`
+ * keeps them in; the id cannot contain a `.`, so the split back is unambiguous.
+ */
+function serialiseWithin(
+  attribution: Attribution,
+  measure: (serialised: string) => number,
+  max: number,
+): string | null {
+  const params = new URLSearchParams();
+  if (hasUtmAttribution(attribution.utm)) {
+    for (const field of UTM_FIELDS) {
+      const value = attribution.utm[field];
+      if (value !== null) params.set(field, value);
+    }
+    if (attribution.utmLandedAt !== null) {
+      params.set(UTM_LANDED_AT_KEY, String(attribution.utmLandedAt));
+    }
+    if (measure(params.toString()) > max) return null;
+  }
+  for (const platform of CLICK_ID_PLATFORMS) {
+    const clickId = attribution.clickIds[platform];
+    if (clickId === undefined) continue;
+    const key = CLICK_ID_QUERY_PARAMS[platform];
+    params.set(key, `${clickId.landedAt}.${clickId.id}`);
+    if (measure(params.toString()) > max) params.delete(key);
+  }
+  const serialised = params.toString();
+  return serialised.length === 0 ? null : serialised;
+}
+
+/**
+ * The `x-utm` header value for a landing, or `null` when there is nothing to
+ * send. Only what survived appears, so a value that is present is always a
+ * value carrying something.
+ *
+ * Within {@link UTM_HEADER_MAX_LENGTH}: a tag over it is dropped whole rather
+ * than cut down, and takes the click ids with it; a click id that does not fit
+ * beside the tag is dropped alone. The check lives here rather than at the one
+ * call site so no future caller can serialise past the budget.
  *
  * The length is measured on the percent-encoded string, which is ASCII by
  * construction, so code units, code points and bytes are all the same number.
  */
-export function serialiseUtm(utm: UtmAttribution): string | null {
-  if (!hasUtmAttribution(utm)) return null;
-
-  const params = new URLSearchParams();
-  for (const field of UTM_FIELDS) {
-    const value = utm[field];
-    if (value !== null) params.set(field, value);
-  }
-  const encoded = params.toString();
-  return encoded.length > UTM_HEADER_MAX_LENGTH ? null : encoded;
+export function serialiseAttribution(attribution: Attribution): string | null {
+  return serialiseWithin(attribution, (serialised) => serialised.length, UTM_HEADER_MAX_LENGTH);
 }
 
 /**
- * The value to hand a cookie writer for an attribution, or `null` when no cookie
- * should be written: nothing to keep, or a value past
- * {@link UTM_COOKIE_MAX_LENGTH} once the writer has encoded it.
+ * Whether a landing carried anything the cookie keeps. A landing carrying
+ * nothing writes nothing, so what is already kept stands.
  */
-export function serialiseUtmCookie(utm: UtmAttribution): string | null {
-  const serialised = serialiseUtm(utm);
-  if (serialised === null) return null;
-  return encodeURIComponent(serialised).length > UTM_COOKIE_MAX_LENGTH ? null : serialised;
+function carriesAttribution(attribution: Attribution): boolean {
+  return (
+    hasUtmAttribution(attribution.utm) ||
+    CLICK_ID_PLATFORMS.some((platform) => attribution.clickIds[platform] !== undefined)
+  );
+}
+
+/**
+ * The value to hand a cookie writer after a landing, or `null` when no cookie
+ * should be written: the landing carried nothing, or its tag would not fit
+ * within {@link UTM_COOKIE_MAX_LENGTH} once the writer has encoded it. Either
+ * way the cookie already there stands.
+ *
+ * **Merged with what the cookie already keeps**, part by part: the landing's
+ * tag replaces the stored one, or the stored one stays; each platform's click
+ * id from the landing replaces that platform's, and the others stay — unless
+ * it is the id already kept, which keeps its first landing time, as Meta's own
+ * `_fbc` does, so a reload never extends its life. A part past its 30 days is
+ * gone before the merge, and a stored tag with no landing
+ * time is not carried into the new value (see {@link Attribution}).
+ *
+ * Both writers call it with the `Cookie` header they can see — the proxy its
+ * request's, the banner the document's — because both can meet a cookie:
+ * the proxy on any returning visitor, the banner when another tab wrote one
+ * while this document waited for an answer.
+ */
+export function attributionCookieAfterLanding(
+  cookieHeader: string | null,
+  landing: Attribution,
+  now: number,
+): string | null {
+  if (!carriesAttribution(landing)) return null;
+  const stored = storedAttribution(cookieHeader, now);
+  const tag = hasUtmAttribution(landing.utm)
+    ? landing
+    : stored.utmLandedAt !== null
+      ? stored
+      : NO_ATTRIBUTION;
+  const clickIds: ClickIds = { ...stored.clickIds };
+  for (const platform of CLICK_ID_PLATFORMS) {
+    const landed = landing.clickIds[platform];
+    if (landed !== undefined && landed.id !== stored.clickIds[platform]?.id) {
+      clickIds[platform] = landed;
+    }
+  }
+  return serialiseWithin(
+    {
+      utm: tag.utm,
+      utmLandedAt: tag.utmLandedAt,
+      clickIds,
+    },
+    (serialised) => encodeURIComponent(serialised).length,
+    UTM_COOKIE_MAX_LENGTH,
+  );
 }
 
 /**
@@ -506,49 +771,101 @@ export function utmInputFromAttribution(utm: UtmAttribution): UtmInput {
 
 /**
  * Read a serialised value back: the `x-utm` header on the server side of the
- * layout, and the decoded attribution cookie.
+ * layout, and the decoded attribution cookie. A part past its 30 days at `now`
+ * reads as absent.
  *
  * Re-sanitises every field rather than trusting the string it was handed. The
  * proxy deletes any incoming `x-utm` before setting its own, so a forged header
  * cannot reach here, though a cookie is the browser's to edit — and running the
- * sanitiser again is what makes "the value always came through our own
+ * sanitisers again is what makes "the value always came through our own
  * sanitiser" a fact about this code rather than a fact about the call order of
  * two files.
  *
  * `.getAll()` and a repeated key nulls that field, exactly as on the query-string
  * side. Serialising never produces a repeat, so this only ever fires on a value
- * that did not come from `serialiseUtm` — which is the case the re-sanitise
+ * that did not come from this module — which is the case the re-sanitise
  * exists for, and it should behave the same way at both ends rather than
  * quietly taking the first entry here and refusing it there.
+ *
+ * A tag whose landing time is present but unreadable or stale is no tag. One
+ * with no landing time at all is read as it stands: only a cookie written
+ * before landing times were recorded carries one, and its own Max-Age still
+ * bounds it.
  */
-export function parseUtmHeader(raw: string | null | undefined): UtmAttribution {
-  if (typeof raw !== "string" || raw.length === 0) return NO_UTM_ATTRIBUTION;
+export function parseAttribution(raw: string | null | undefined, now: number): Attribution {
+  if (typeof raw !== "string" || raw.length === 0) return NO_ATTRIBUTION;
 
   const params = new URLSearchParams(raw);
   const readOne = (key: string): string | null => {
     const values = params.getAll(key);
-    return values.length === 1 ? sanitiseUtmValue(values[0]) : null;
+    return values.length === 1 ? values[0] : null;
+  };
+  const readLandedAt = (value: string): number | null => {
+    if (!LANDED_AT_PATTERN.test(value)) return null;
+    const landedAt = Number(value);
+    return isFresh(landedAt, now) ? landedAt : null;
   };
 
-  return mapUtmFields(readOne);
+  const utm = mapUtmFields((field) => sanitiseUtmValue(readOne(field)));
+  const rawUtmLandedAt = readOne(UTM_LANDED_AT_KEY);
+  const utmLandedAt = rawUtmLandedAt === null ? null : readLandedAt(rawUtmLandedAt);
+  const tagKept = hasUtmAttribution(utm) && (rawUtmLandedAt === null || utmLandedAt !== null);
+
+  const clickIds: ClickIds = {};
+  for (const platform of CLICK_ID_PLATFORMS) {
+    const value = readOne(CLICK_ID_QUERY_PARAMS[platform]);
+    const separator = value?.indexOf(".") ?? -1;
+    if (value === null || separator === -1) continue;
+    const landedAt = readLandedAt(value.slice(0, separator));
+    const id = sanitiseClickId(value.slice(separator + 1));
+    if (landedAt !== null && id !== null) clickIds[platform] = { id, landedAt };
+  }
+
+  return {
+    utm: tagKept ? utm : NO_UTM_ATTRIBUTION,
+    utmLandedAt: tagKept ? utmLandedAt : null,
+    clickIds,
+  };
 }
 
 /**
- * The attribution a request's `Cookie` header carries, for a server route to
- * pass through {@link utmMetadataForConsent} with that same request's consent:
- * a cookie outliving its consent reads as nothing there. `{}` for a header
- * without the cookie, and for a value that is not percent-encoded text, which
- * only a hand-edited cookie can be.
+ * What the attribution cookie in a `Cookie` header keeps at `now`, or
+ * {@link NO_ATTRIBUTION} for a header without the cookie and for a value that
+ * is not percent-encoded text, which only a hand-edited cookie can be.
  *
  * Both writers percent-encode the serialised value once more on its way into
- * the cookie, so it is decoded here before it is parsed.
+ * the cookie, so it is decoded here before it is parsed. **Nothing here checks
+ * consent**: every reader does, off the same request, before it uses a value.
+ */
+function storedAttribution(cookieHeader: string | null, now: number): Attribution {
+  const raw = cookieValueFromHeader(cookieHeader, UTM_COOKIE_NAME);
+  if (raw === undefined) return NO_ATTRIBUTION;
+  try {
+    return parseAttribution(decodeURIComponent(raw), now);
+  } catch {
+    return NO_ATTRIBUTION;
+  }
+}
+
+/**
+ * The tag a request's `Cookie` header carries, for a server route to pass
+ * through {@link utmMetadataForConsent} with that same request's consent: a
+ * cookie outliving its consent reads as nothing there. `{}` when the cookie
+ * keeps no tag. The click ids beside it are never part of this, so nothing
+ * that stores attribution can store one.
  */
 export function utmFromCookieHeader(cookieHeader: string | null): UtmInput {
-  const raw = cookieValueFromHeader(cookieHeader, UTM_COOKIE_NAME);
-  if (raw === undefined) return {};
-  try {
-    return utmInputFromAttribution(parseUtmHeader(decodeURIComponent(raw)));
-  } catch {
-    return {};
-  }
+  return utmInputFromAttribution(storedAttribution(cookieHeader, Date.now()).utm);
+}
+
+/**
+ * One platform's click id from a request's `Cookie` header, or `null`, for
+ * that platform's conversion report and no one else's. The report checks the
+ * same request's marketing consent before it reads this.
+ */
+export function clickIdFromCookieHeader(
+  cookieHeader: string | null,
+  platform: ClickIdPlatform,
+): ClickId | null {
+  return storedAttribution(cookieHeader, Date.now()).clickIds[platform] ?? null;
 }

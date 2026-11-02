@@ -4,7 +4,7 @@
 // @vitest-environment node
 import { readdirSync } from "node:fs";
 import { join, relative } from "node:path";
-import { describe, it, expect, vi, beforeEach } from "vitest";
+import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
 import { NextRequest } from "next/server";
 import { unstable_doesMiddlewareMatch } from "next/experimental/testing/server";
 
@@ -885,7 +885,21 @@ describe("proxy", () => {
   // header back off the request object after the call is reading exactly what
   // the layout would get.
 
+  // Every landing time below is this clock's. Only `Date` is faked, so the
+  // proxy's awaits run as they always do.
+  const LANDED = Date.UTC(2026, 10, 2, 12, 0, 0);
+  const DAY_MS = 24 * 60 * 60 * 1000;
+  const FBCLID = "IwZXh0bgNhZW0CMTEAAR2_aem_AeVgoX2Yh5Qx4n7Z-p";
+
   describe("utm attribution header", () => {
+    beforeEach(() => {
+      vi.useFakeTimers({ toFake: ["Date"] });
+      vi.setSystemTime(LANDED);
+    });
+    afterEach(() => {
+      vi.useRealTimers();
+    });
+
     function utmHeaderAfter(request: NextRequest) {
       return request.headers.get("x-utm");
     }
@@ -897,7 +911,7 @@ describe("proxy", () => {
       );
       await proxy(request);
       expect(utmHeaderAfter(request)).toBe(
-        "source=Lynx&medium=email&campaign=lynx-summer-a&content=hero&term=roblox+club",
+        `source=Lynx&medium=email&campaign=lynx-summer-a&content=hero&term=roblox+club&at=${LANDED}`,
       );
     });
 
@@ -905,11 +919,11 @@ describe("proxy", () => {
       mockNoUser();
       const request = createNextRequest("/shop?utm_campaign=lynx-summer-a");
       await proxy(request);
-      expect(utmHeaderAfter(request)).toBe("campaign=lynx-summer-a");
+      expect(utmHeaderAfter(request)).toBe(`campaign=lynx-summer-a&at=${LANDED}`);
 
       const termOnly = createNextRequest("/shop?utm_term=minecraft");
       await proxy(termOnly);
-      expect(utmHeaderAfter(termOnly)).toBe("term=minecraft");
+      expect(utmHeaderAfter(termOnly)).toBe(`term=minecraft&at=${LANDED}`);
     });
 
     it("emits nothing when there are no utm params at all", async () => {
@@ -930,7 +944,7 @@ describe("proxy", () => {
         "/shop?utm_source=lynx&utm_campaign=good&utm_campaign=junk",
       );
       await proxy(request);
-      expect(utmHeaderAfter(request)).toBe("source=lynx");
+      expect(utmHeaderAfter(request)).toBe(`source=lynx&at=${LANDED}`);
     });
 
     it("emits nothing for a malformed value", async () => {
@@ -956,6 +970,31 @@ describe("proxy", () => {
       expect(utmHeaderAfter(request)).toBeNull();
     });
 
+    it("carries each platform's click id with its landing time, and no gclid", async () => {
+      mockNoUser();
+      const request = createNextRequest(
+        `/shop?utm_campaign=c&fbclid=${FBCLID}&rdt_cid=abc_123&gclid=Cj0KCQ`,
+      );
+      await proxy(request);
+      expect(utmHeaderAfter(request)).toBe(
+        `campaign=c&at=${LANDED}&fbclid=${LANDED}.${FBCLID}&rdt_cid=${LANDED}.abc_123`,
+      );
+    });
+
+    it("carries a click id that arrived without a tag", async () => {
+      mockNoUser();
+      const request = createNextRequest(`/fr/roblox?fbclid=${FBCLID}`);
+      await proxy(request);
+      expect(utmHeaderAfter(request)).toBe(`fbclid=${LANDED}.${FBCLID}`);
+    });
+
+    it("drops a click id the sanitiser refuses and keeps the tag", async () => {
+      mockNoUser();
+      const request = createNextRequest("/shop?utm_campaign=c&fbclid=a%2Eb");
+      await proxy(request);
+      expect(utmHeaderAfter(request)).toBe(`campaign=c&at=${LANDED}`);
+    });
+
     it("percent-encodes a value no raw header could carry", async () => {
       // A Meta macro expands to an ad's own name — spaces and accents included
       // — and the header has to stay ASCII whatever the value was.
@@ -965,7 +1004,7 @@ describe("proxy", () => {
       );
       await proxy(request);
       const header = utmHeaderAfter(request);
-      expect(header).toBe("campaign=Rentr%C3%A9e+scolaire");
+      expect(header).toBe(`campaign=Rentr%C3%A9e+scolaire&at=${LANDED}`);
       expect(header).toMatch(/^[\x20-\x7E]*$/);
     });
 
@@ -988,7 +1027,7 @@ describe("proxy", () => {
         "x-utm": "campaign=forged-by-the-client",
       });
       await proxy(request);
-      expect(utmHeaderAfter(request)).toBe("campaign=lynx-summer-a");
+      expect(utmHeaderAfter(request)).toBe(`campaign=lynx-summer-a&at=${LANDED}`);
     });
 
     it("is set above every branch, so a redirecting request still carries it", async () => {
@@ -998,7 +1037,7 @@ describe("proxy", () => {
       const request = createNextRequest("/parent?utm_campaign=lynx-summer-a");
       const response = await proxy(request);
       expect(response.status).toBe(307);
-      expect(utmHeaderAfter(request)).toBe("campaign=lynx-summer-a");
+      expect(utmHeaderAfter(request)).toBe(`campaign=lynx-summer-a&at=${LANDED}`);
     });
   });
 
@@ -1007,6 +1046,14 @@ describe("proxy", () => {
   // Written only when the request's own consent cookie grants marketing, on
   // whichever response goes back, because a bounce is the tag's last chance.
   describe("the attribution cookie", () => {
+    beforeEach(() => {
+      vi.useFakeTimers({ toFake: ["Date"] });
+      vi.setSystemTime(LANDED);
+    });
+    afterEach(() => {
+      vi.useRealTimers();
+    });
+
     function consent(purposes: { analytics: boolean; marketing: boolean }): string {
       const value = serialiseConsent(consentForPurposes(purposes));
       return `${CONSENT_COOKIE_NAME}=${encodeURIComponent(value)}`;
@@ -1022,7 +1069,7 @@ describe("proxy", () => {
       mockNoUser();
       const response = await proxy(createNextRequest(TAGGED, GRANTED));
       expect(keptBy(response)).toMatchObject({
-        value: "source=lynx&campaign=lynx-summer-a",
+        value: `source=lynx&campaign=lynx-summer-a&at=${LANDED}`,
         path: "/",
         maxAge: UTM_COOKIE_MAX_AGE_SECONDS,
         sameSite: "lax",
@@ -1048,7 +1095,38 @@ describe("proxy", () => {
           `${GRANTED}; ${UTM_COOKIE_NAME}=campaign%3Dearlier`,
         ),
       );
-      expect(keptBy(response)).toMatchObject({ value: "campaign=later" });
+      expect(keptBy(response)).toMatchObject({ value: `campaign=later&at=${LANDED}` });
+    });
+
+    it("replaces one platform's click id and keeps the tag and the other's", async () => {
+      mockNoUser();
+      const earlier = LANDED - 3 * DAY_MS;
+      const kept = encodeURIComponent(
+        `campaign=earlier&at=${earlier}&fbclid=${earlier}.old&rdt_cid=${earlier}.reddit`,
+      );
+      const response = await proxy(
+        createNextRequest(`/fr/roblox?fbclid=${FBCLID}`, `${GRANTED}; ${UTM_COOKIE_NAME}=${kept}`),
+      );
+      expect(keptBy(response)).toMatchObject({
+        value: `campaign=earlier&at=${earlier}&fbclid=${LANDED}.${FBCLID}&rdt_cid=${earlier}.reddit`,
+      });
+    });
+
+    it("keeps a click id that arrives without a tag, under consent only", async () => {
+      mockNoUser();
+      const granted = await proxy(createNextRequest(`/shop?rdt_cid=abc_123`, GRANTED));
+      expect(keptBy(granted)).toMatchObject({ value: `rdt_cid=${LANDED}.abc_123` });
+
+      const refused = await proxy(
+        createNextRequest(`/shop?rdt_cid=abc_123`, consent({ analytics: true, marketing: false })),
+      );
+      expect(keptBy(refused)).toBeUndefined();
+    });
+
+    it("keeps no click id for a signed-in gamer", async () => {
+      mockUser("gamer");
+      const response = await proxy(createNextRequest(`/shop?fbclid=${FBCLID}`, GRANTED));
+      expect(keptBy(response)).toBeUndefined();
     });
 
     it("leaves the cookie alone on a request with no tag", async () => {
@@ -1098,7 +1176,7 @@ describe("proxy", () => {
       expect(response.status).toBe(307);
       expect(getRedirectUrl(response).search).toContain("utm_campaign");
       expect(keptBy(response)).toMatchObject({
-        value: "source=lynx&campaign=lynx-summer-a",
+        value: `source=lynx&campaign=lynx-summer-a&at=${LANDED}`,
         path: "/",
       });
     });
@@ -1112,7 +1190,7 @@ describe("proxy", () => {
       );
       expect(response.status).toBe(307);
       expect(getRedirectUrl(response).search).toBe("");
-      expect(keptBy(response)).toMatchObject({ value: "campaign=lynx-summer-a" });
+      expect(keptBy(response)).toMatchObject({ value: `campaign=lynx-summer-a&at=${LANDED}` });
     });
 
     it("rides the login bounce off a protected page", async () => {
@@ -1121,7 +1199,7 @@ describe("proxy", () => {
         createNextRequest("/parent?utm_campaign=lynx-summer-a", GRANTED),
       );
       expect(response.status).toBe(307);
-      expect(keptBy(response)).toMatchObject({ value: "campaign=lynx-summer-a" });
+      expect(keptBy(response)).toMatchObject({ value: `campaign=lynx-summer-a&at=${LANDED}` });
     });
 
     it("survives a session refresh recreating the response", async () => {
@@ -1134,7 +1212,7 @@ describe("proxy", () => {
       const response = await proxy(createNextRequest(TAGGED, GRANTED));
       expect(response.cookies.get("sb-token")?.value).toBe("refreshed");
       expect(keptBy(response)).toMatchObject({
-        value: "source=lynx&campaign=lynx-summer-a",
+        value: `source=lynx&campaign=lynx-summer-a&at=${LANDED}`,
       });
     });
 

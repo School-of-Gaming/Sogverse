@@ -9,6 +9,7 @@ import {
   type MetaProductDetails,
 } from "@/lib/marketing-events";
 import { getOrigin } from "@/lib/url";
+import { clickIdFromCookieHeader, type ClickId } from "@/lib/utm";
 
 /**
  * The conversions we report to Meta from our own servers, through the
@@ -32,7 +33,9 @@ import { getOrigin } from "@/lib/url";
  *
  * **What is sent about a person, exhaustively:** the user agent, the IP address
  * the request arrived from, Meta's own `_fbp` / `_fbc` cookies if this browser
- * carries them, a SHA-256 hash of the parent's own account email, and a SHA-256
+ * carries them — or, where it has no `_fbc`, the same value built from the
+ * `fbclid` our own attribution cookie kept from the ad click (`@/lib/utm`), a
+ * SHA-256 hash of the parent's own account email, and a SHA-256
  * hash of the parent's own account id (Meta's `external_id`). Both are hashed
  * here, so neither the address nor the id itself is ever sent or logged; the
  * address is sent whether or not it has been verified (standard practice,
@@ -136,6 +139,16 @@ function hashAccountIdForMeta(id: string): string {
   return sha256Hex(id.trim().toLowerCase());
 }
 
+/**
+ * Meta's `fbc` for a click our attribution cookie kept, in the format Meta's own
+ * `_fbc` cookie holds: version `fb`, subdomain index `1`, the time the click id
+ * was first seen in milliseconds, and the `fbclid` exactly as the link carried
+ * it.
+ */
+function fbcForClick(click: ClickId): string {
+  return `fb.1.${click.landedAt}.${click.id}`;
+}
+
 function eventNameFor(conversion: MetaConversion): string {
   return conversion.event === "account_created"
     ? PIXEL_EVENTS.accountCreated
@@ -192,8 +205,17 @@ export async function reportMetaConversion(
     // browser id and `_fbc` records the click that brought the visitor here.
     // Passing them is what lets a server-side event be recognised as the same
     // person as the browser's page view instead of counted as a stranger.
+    //
+    // `_fbc` exists only if the pixel loaded while the `fbclid` was still in
+    // the address bar, which a parent who answers the banner a few pages in
+    // misses. The `fbclid` our own cookie kept from that landing then stands
+    // in for it; the pixel's own cookie wins where there is one, because it is
+    // the value Meta's browser events already carry.
     const fbp = cookieValueFromHeader(cookieHeader, "_fbp");
-    const fbc = cookieValueFromHeader(cookieHeader, "_fbc");
+    const keptClick = clickIdFromCookieHeader(cookieHeader, "meta");
+    const fbc =
+      cookieValueFromHeader(cookieHeader, "_fbc") ??
+      (keptClick === null ? undefined : fbcForClick(keptClick));
     // Advanced matching: the hash, never the address, and only when there is
     // an address to hash.
     const email = account.email?.trim();
