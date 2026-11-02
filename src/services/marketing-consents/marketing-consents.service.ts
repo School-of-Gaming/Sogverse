@@ -37,8 +37,9 @@ export class MarketingConsentsService {
    * decides something.
    *
    * **An absent row is a real answer.** At most one row comes back — the
-   * table holds `lynx_educate` answers alone — and a consent type missing from the result means "never asked or never answered",
-   * which is not the same state as a stored `granted = false`. Both mean "do not
+   * table holds `lynx_educate` answers alone — and a consent type missing
+   * from the result means "never asked or never answered", which is not the
+   * same state as a stored `granted = false`. Both mean "do not
    * mail"; only one of them is a decision the parent made. Callers that only
    * need the current answer may collapse the two, and callers that care about
    * provenance must not.
