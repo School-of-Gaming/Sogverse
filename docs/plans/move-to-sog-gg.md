@@ -399,6 +399,21 @@ back to `sog.gg` while that is still Webflow.
 
    *Check:* a Google sign-in on `staging.sog.gg` lands signed in, a staging `/sub`
    answers, and a Stripe test event shows as delivered.
+
+   *Done 2026-11-02*, except re-adding the Claude connectors and opencode. Sign-in, `/sub`
+   and `/link-staging` answered on the new host. What the rehearsal taught the
+   production hour:
+   - The staging Google client listed only the old host. Google says a change takes
+     minutes to hours, so add `https://sog.gg` to the production client before the hour
+     (an extra origin changes nothing until the switch).
+   - The dashboard Redeploy asks the owner for a code emailed to the account. Have the
+     inbox open.
+   - `vercel api … -X DELETE` won't run without a bypass flag the session is not allowed;
+     domain edits and removals go through the dashboard's Domains page.
+   - A resent Stripe event only proves delivery if the database holds its booking: the
+     one resent here reached the handler and answered 500 because staging lacked it.
+   - The Slack API site stays signed out in the browser pane until the owner opens the
+     workspace there; then `api.slack.com/apps` opens in a fresh tab.
 8. **Confirm nothing was dropped.**
    - Stripe: list the live endpoint's recent deliveries, or the events since the hour
      began. Resend any failed delivery with
