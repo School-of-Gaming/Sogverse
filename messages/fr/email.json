@@ -2,7 +2,7 @@
   "footer": "© {year} School of Gaming. Tous droits réservés.",
   "roleAdmin": "Administrateur",
   "roleParent": "Parent",
-  "roleGamer": "Joueur",
+  "roleGamer": "Gamer",
   "roleGedu": "Gedu",
   "passwordReset": {
     "subject": "Réinitialisez le mot de passe de votre compte School of Gaming",
@@ -29,8 +29,8 @@
     "replyToLabel": "Répondre à",
     "sent": "Envoyé",
     "message": "Message",
-    "gamerNoteNoMailbox": "Message envoyé depuis un compte joueur ({firstName}), qui n’a pas d’adresse e-mail propre.",
-    "gamerNoteOwnMailbox": "Message envoyé depuis un compte joueur ({firstName}) — cette personne lit aussi sa propre boîte e-mail, {gamerEmail}."
+    "gamerNoteNoMailbox": "Message envoyé depuis un compte gamer ({firstName}), qui n’a pas d’adresse e-mail propre.",
+    "gamerNoteOwnMailbox": "Message envoyé depuis un compte gamer ({firstName}) — cette personne lit aussi sa propre boîte e-mail, {gamerEmail}."
   },
   "welcomeParent": {
     "subject": "Bienvenue chez School of Gaming",

@@ -14,7 +14,7 @@ answered by whether the product has the thing. Describe a feature only if it exi
 | :-- | :-- | :-- | :-- |
 | **School of Gaming** | As written; SOG as the short form | | The brand. See `foundation.md` for when it leads |
 | **Sogverse** | One word, capital S, no article | | `foundation.md`, The names |
-| **gamer** | Lowercase | gamers | Our word for the children in our care. Lowercase on purpose: it is who they are, not a title we grant. Finnish: gamer, gamerit, gamerisi (`SKILL.md`, Finnish) |
+| **gamer** | Lowercase | gamers | Our word for the children in our care. Lowercase on purpose: it is who they are, not a title we grant. Finnish: gamer, gamerit, gamerisi (`SKILL.md`, Finnish); French: gamer, never joueur (`SKILL.md`, French) |
 | **Gedu** | Capital G in every language | Gedus; fi Gedut | Short for Game Educator. Glossed once on a public surface; bare in the signed-in product, where the reader knows it |
 | **Game Educator** | Both capitals | Game Educators | The English role word where Gedu is not used |
 | **Gedumaster** | One word, capital G | Gedumasters | A job title, not a rank: a Gedu's immediate supervisor, who runs the weekly lesson plan meeting. Never "promoted to Gedumaster". Mostly internal |
