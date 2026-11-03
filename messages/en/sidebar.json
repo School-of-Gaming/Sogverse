@@ -5,14 +5,12 @@
   "analytics": "Analytics",
   "marketing": "Marketing",
   "platformVision": "Platform Vision",
-  "uiComponents": "UI Components",
-  "uiPreviews": "UI Previews",
-  "testing": "Testing",
   "tools": "Tools",
   "expandSidebar": "Expand sidebar",
   "collapseSidebar": "Collapse sidebar",
   "substitutions": "Substitutions",
   "feedback": "Feedback",
   "products": "Products",
-  "invoicing": "Invoicing"
+  "invoicing": "Invoicing",
+  "developer": "Developer"
 }

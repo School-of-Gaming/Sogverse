@@ -9,6 +9,7 @@ import {
   ADMIN_HUBS,
   ADMIN_HUB_IDS,
   adminHubForPathname,
+  type AdminHubId,
 } from "@/components/admin/hubs/admin-hubs";
 import { Sidebar } from "@/components/layout/sidebar";
 
@@ -68,6 +69,9 @@ describe("which hub a page belongs to", () => {
     ["/admin/municipality-invoicing", "invoicing"],
     ["/admin/invoice-customers/[id]", "invoicing"],
     ["/admin/gedu-invoicing", "invoicing"],
+    ["/admin/ui-components", "developer"],
+    ["/admin/ui-previews", "developer"],
+    ["/admin/testing", "developer"],
   ])("puts %s in the %s hub", (pathname, hub) => {
     expect(adminHubForPathname(pathname)).toBe(hub);
   });
@@ -149,7 +153,7 @@ describe("the hub's tab strip", () => {
 });
 
 describe("the rail entry of a hub", () => {
-  const railEntry = (hub: "products" | "invoicing" | "marketing") =>
+  const railEntry = (hub: AdminHubId) =>
     screen.getByTitle(en.sidebar[hub]);
 
   it.each(

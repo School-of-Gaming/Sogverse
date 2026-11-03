@@ -49,6 +49,17 @@ export const ADMIN_HUBS = {
     ],
     alsoCovers: [],
   },
+  // The tooling only the people building Sogverse open: the style guide, the
+  // preview scenes and the testing tools. The scenes themselves live at
+  // `/preview/*`, outside the dashboard, so nothing beyond the tabs is covered.
+  developer: {
+    tabs: [
+      { id: "uiComponents", href: ROUTES.admin.uiComponents },
+      { id: "uiPreviews", href: ROUTES.admin.uiPreviews },
+      { id: "testing", href: ROUTES.admin.testing },
+    ],
+    alsoCovers: [],
+  },
 } as const satisfies Record<
   string,
   {
@@ -64,7 +75,12 @@ export type AdminHubTabId =
   (typeof ADMIN_HUBS)[AdminHubId]["tabs"][number]["id"];
 
 /** Every hub, in rail order. */
-export const ADMIN_HUB_IDS: readonly AdminHubId[] = ["products", "invoicing", "marketing"];
+export const ADMIN_HUB_IDS: readonly AdminHubId[] = [
+  "products",
+  "invoicing",
+  "marketing",
+  "developer",
+];
 
 /**
  * Whether `pathname` is `prefix` or a page beneath it. A segment boundary, so

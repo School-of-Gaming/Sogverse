@@ -1624,7 +1624,6 @@
     "noProducts": "Inget körs här ännu."
   },
   "testing": {
-    "title": "Testning",
     "description": "Interna verktyg för testning och utveckling",
     "emailTool": "Verktyg för e-posttestning",
     "emailToolDescription": "Skicka testmeddelanden via Brevo (SMTP) för att verifiera leverans och mallar.",

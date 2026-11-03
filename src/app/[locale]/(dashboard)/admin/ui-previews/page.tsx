@@ -1,4 +1,5 @@
 /* eslint-disable i18next/no-literal-string -- internal admin-only index of fixture-driven preview scenes; every string here is scene metadata or an explanation of the mechanism, not user-facing copy that ships in any locale */
+import { AdminHub } from "@/components/admin/hubs/admin-hub";
 import { buttonVariants } from "@/components/ui/button";
 import { Heading } from "@sog/ui";
 import { previewScenePath } from "@/components/preview/href";
@@ -74,9 +75,25 @@ export default function AdminUIPreviewsPage() {
   );
 
   return (
+    <AdminHub
+      hub="developer"
+      description="Full-page preview scenes — one fixture-driven page each, judged as a page."
+    >
+      <PreviewSceneIndex sceneCount={sceneCount} scenarioCount={scenarioCount} />
+    </AdminHub>
+  );
+}
+
+function PreviewSceneIndex({
+  sceneCount,
+  scenarioCount,
+}: {
+  sceneCount: number;
+  scenarioCount: number;
+}) {
+  return (
     <div className="space-y-8">
       <div className="space-y-2">
-        <Heading level={1} step="section">UI Previews</Heading>
         <p className="max-w-prose text-muted-foreground">
           Full-page preview scenes: one fixture-driven page each, served at{" "}
           <code>/preview/{"{surface}"}/{"{scenario}"}</code> inside the same
