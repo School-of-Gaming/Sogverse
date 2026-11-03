@@ -1908,7 +1908,7 @@
   },
   "business": {
     "title": "Verksamhet",
-    "description": "Hur det går för School of Gaming, månad för månad. Månaderna är kalendermånader i Helsingfors, och den pågående månaden är inte slut än.",
+    "description": "Hur det går för School of Gaming, månad för månad.",
     "readAt": "Siffror från {time}.",
     "loadError": "Verksamhetssiffrorna kunde inte läsas. Ladda om sidan och försök igen.",
     "loadErrorWithReason": "Verksamhetssiffrorna kunde inte läsas: {reason}",
@@ -1917,13 +1917,21 @@
     "soFar": "hittills",
     "monthSoFar": "{month}, hittills",
     "tiles": {
-      "payingFamilies": {
-        "label": "Betalande familjer"
+      "revenueTotal": {
+        "label": "Intäkter förra månaden",
+        "largest": "{share} från {band, select, subscription {prenumerationer} campsAndEvents {läger och evenemang} municipality {kommuner} other {ingen angiven produkt}}",
+        "none": "Inga betalningar registrerade",
+        "change": "{change} mot månaden före",
+        "same": "Samma som månaden före"
       },
-      "revenue": {
-        "label": "Månatliga återkommande intäkter",
-        "subscriptions": "{count, plural, one {# aktiv prenumeration} other {# aktiva prenumerationer}}",
-        "outside": "{count, plural, one {# prenumeration ingår inte i siffran: den är i en annan valuta, eller klubben saknar pris i euro.} other {# prenumerationer ingår inte i siffran: de är i en annan valuta, eller klubben saknar pris i euro.}}"
+      "subscriptions": {
+        "label": "Prenumerationer per månad",
+        "live": "{count, plural, one {# aktiv prenumeration} other {# aktiva prenumerationer}}",
+        "outside": "{count, plural, other {# ingår inte, inget pris i euro}}"
+      },
+      "payingFamilies": {
+        "label": "Betalande familjer",
+        "startingLater": "{count, plural, other {+# börjar en klubb senare}}"
       },
       "gamers": {
         "label": "Gamers med plats",
@@ -1931,14 +1939,14 @@
       },
       "signup": {
         "label": "Från registrering till första plats",
-        "detail": "{seated} av {registered} familjer som registrerade sig de senaste {days} dagarna",
+        "detail": "{seated} av {registered} registreringar, senaste {days} dagarna",
         "none": "Ingen registrerade sig de senaste {days} dagarna.",
         "change": "{change} procentenheter denna månad"
       }
     },
     "engagement": {
       "heading": "Familjer efter engagemang",
-      "caption": "Varje föräldrakonto, i den första grupp det passar in i.",
+      "caption": "Alla föräldrakonton.",
       "chart": "Familjer efter engagemang",
       "total": "{count, plural, one {familj} other {familjer}}",
       "slices": {
@@ -1951,7 +1959,7 @@
     },
     "revenue": {
       "heading": "Intäkter per månad",
-      "caption": "Debiterade belopp varje månad, före återbetalningar.",
+      "caption": "Före återbetalningar.",
       "chart": "Intäkter per månad",
       "series": {
         "subscriptionCents": "Prenumerationer",
@@ -1960,16 +1968,17 @@
         "unattributedCents": "Ingen produkt angiven"
       },
       "noData": "Inga uppgifter",
-      "startsFrom": "Betalningar registreras från {month}. Tidigare månader visar bara kommunfakturor.",
-      "none": "Inga betalningar är registrerade än, så bara kommunfakturor visas.",
+      "startsFrom": "Betalningar registreras från {month}.",
+      "none": "Inga betalningar registrerade än.",
       "nonEur": "{count, plural, one {# betalning} other {# betalningar}} i en annan valuta utelämnade.",
       "clubsWithoutFee": "{count, plural, one {# klubb utan avgift utelämnad} other {# klubbar utan avgift utelämnade}}"
     },
     "families": {
-      "heading": "Familjer per månad",
-      "caption": "Nya föräldrakonton, familjer som tar sin första plats och familjer vars sista prenumeration tog slut.",
-      "chart": "Familjer per månad",
+      "heading": "Betalande familjer per månad",
+      "caption": "Vid varje månads slut.",
+      "chart": "Betalande familjer per månad",
       "series": {
+        "payingFamilies": "Betalande familjer",
         "signups": "Nya registreringar",
         "firstSeats": "Första plats",
         "stoppedPaying": "Slutade betala"
@@ -1977,20 +1986,13 @@
     },
     "gedus": {
       "heading": "Gamers per Gedu",
-      "caption": "Hur många gamers en Gedu i snitt hade framför sig på en lektion under månaden. En stigande linje betyder att grupperna fylls snabbare än vi hinner få fler Gedus.",
+      "caption": "Per lektion, i snitt.",
       "chart": "Gamers per Gedu per månad",
       "series": "Gamers per Gedu",
-      "now": {
-        "label": "Nu, på det som pågår",
-        "detail": "{gamers, plural, one {# gamer} other {# gamers}} i grupper med {gedus, plural, one {# tilldelad Gedu} other {# tilldelade Gedus}}",
-        "none": "Ingen Gedu är tilldelad något som pågår."
-      },
-      "tooltip": "{sessions, plural, one {# lektion} other {# lektioner}}: {gamers, plural, one {# gamer} other {# gamers}} och {gedus, plural, one {# Gedu} other {# Gedus}}",
+      "ranBy": "{sessions, plural, one {# lektion} other {# lektioner}}, {gedus, plural, one {# Gedu} other {# Gedus}}",
       "noData": "Inga uppgifter",
       "startsFrom": "Lektionerna har uppgifter från {month}.",
       "none": "Ingen lektion registrerades under dessa månader.",
-      "recordedNote": "En lektion räknas när en rapport, en anteckning eller närvaro har registrerats för den.",
-      "staffingNote": "Vem som höll en tidigare lektion läses från dagens grupptilldelningar och de vikarier som bokats för den, så en Gedu som flyttats från en grupp försvinner från de månader hen höll den.",
       "certified": {
         "heading": "Certifierade Gedus",
         "certified": "Certifierade",

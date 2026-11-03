@@ -146,7 +146,18 @@ export interface SignupConversion {
   seated: number;
 }
 
+/** One complete month's revenue, every band summed, beside the month before's. */
+export interface MonthRevenueTotal {
+  /** The last complete Helsinki month, `YYYY-MM-01`. */
+  month: string;
+  /** In EUR cents; null when no payments were recorded yet that month. */
+  totalCents: number | null;
+  /** The total of the month before it, null on the same terms. */
+  monthBeforeCents: number | null;
+}
+
 export interface BusinessHeadline {
+  revenueLastMonth: MonthRevenueTotal;
   payingFamilies: BusinessFigure;
   /** In EUR cents. */
   monthlyRecurringRevenueCents: BusinessFigure;
@@ -180,6 +191,11 @@ export interface BusinessEngagement {
   slices: readonly { slice: EngagementSlice; families: number }[];
   /** Every parent account — the slices' sum. */
   totalFamilies: number;
+  /**
+   * Subscribing families that are not paying families yet: they subscribe to a
+   * club whose run has not begun, and hold no paid seat now.
+   */
+  subscribersNotYetBegun: number;
 }
 
 export interface RevenueMonth {
@@ -196,6 +212,8 @@ export interface RevenueMonth {
   unattributedCents: number | null;
   /** The municipality invoicing page's total for the month. */
   municipalityCents: number;
+  /** Every band summed; null exactly when the payment bands are. */
+  totalCents: number | null;
   /** Clubs that page leaves out of that total for having no fee. */
   municipalityClubsWithoutFee: number;
 }
@@ -210,6 +228,11 @@ export interface BusinessRevenue {
 
 export interface FamilyMonth {
   month: string;
+  /**
+   * Paying families at the month's last instant; for the month in progress,
+   * now, so the last point is the headline figure.
+   */
+  payingFamilies: number;
   /** Parent accounts created. */
   signups: number;
   /** Families whose first seat ever began. */
@@ -233,17 +256,17 @@ export interface GamersPerGedu {
 
 export interface GeduMonth {
   month: string;
-  /** Sessions held. Null before `recordsBeginMonth`, as is `ratio`. */
+  /** Sessions held. Null before `recordsBeginMonth`, as are the rest. */
   sessions: number | null;
   ratio: GamersPerGedu | null;
+  /** Distinct gedus who ran any of the month's sessions. */
+  gedusWhoRan: number | null;
 }
 
 export interface BusinessGedus {
   months: readonly GeduMonth[];
   /** The first month of the window in which any session was held, or null. */
   recordsBeginMonth: string | null;
-  /** Over the groups of products running now that have a gedu assigned. */
-  now: GamersPerGedu;
   /** Certified gedus now, and how many of them are assigned to a product running now. */
   certified: { certified: number; onRunningProduct: number };
 }
@@ -272,6 +295,7 @@ export interface BusinessOverview {
  * family committed rather than when the seat was in use.
  */
 export interface SeatSpan {
+  seatId: string;
   customerId: string;
   participantId: string;
   /** The seat's group now, or the one it ended in; null for a seat in none. */
@@ -311,6 +335,7 @@ export function seatSpans(
     if (end !== null && end <= start) return [];
     return [
       {
+        seatId: seat.id,
         customerId: seat.customer_id,
         participantId: seat.participant_id,
         groupId: seat.group_id,
@@ -369,12 +394,16 @@ function groupBy<T>(items: readonly T[], key: (item: T) => string): Map<string, 
 // The headline
 // ---------------------------------------------------------------------------
 
-function payingFamiliesAt(spans: readonly SeatSpan[], at: number): number {
+function payingFamilySet(spans: readonly SeatSpan[], at: number): Set<string> {
   return new Set(
     spans
       .filter((span) => span.billingMode === "paid" && heldAt(span, at))
       .map((span) => span.customerId),
-  ).size;
+  );
+}
+
+function payingFamiliesAt(spans: readonly SeatSpan[], at: number): number {
+  return payingFamilySet(spans, at).size;
 }
 
 /** A seat the parent holds themselves is not a gamer's. */
@@ -472,6 +501,17 @@ function engagementOf(
     facts.payments.filter((p) => p.amount_cents > 0).map((p) => p.customer_id),
   );
   const seatsByFamily = groupBy(spans, (span) => span.customerId);
+  const spanBySeat = new Map(spans.map((span) => [span.seatId, span]));
+  const paying = payingFamilySet(spans, now);
+  // A live subscription whose seat's club has not begun: its span starts later.
+  const awaitingStart = new Set(
+    facts.subscriptions
+      .filter((sub) => {
+        const span = spanBySeat.get(sub.participation_id);
+        return subscriptionLiveAt(sub, now) && span !== undefined && span.start > now;
+      })
+      .map((sub) => sub.customer_id),
+  );
 
   const counts = new Map<EngagementSlice, number>(
     ENGAGEMENT_SLICES.map((slice) => [slice, 0]),
@@ -492,6 +532,9 @@ function engagementOf(
   return {
     slices: ENGAGEMENT_SLICES.map((slice) => ({ slice, families: counts.get(slice) ?? 0 })),
     totalFamilies: facts.families.length,
+    subscribersNotYetBegun: [...subscribers].filter(
+      (id) => !paying.has(id) && awaitingStart.has(id),
+    ).length,
   };
 }
 
@@ -555,12 +598,18 @@ function revenueOf(
       }
       const bucket = buckets[index];
       const recorded = paymentsBeginMonth !== null && month >= paymentsBeginMonth;
+      const subscriptionCents = sumCents(bucket.subscription);
+      const campsAndEventsCents = sumCents(bucket.campsAndEvents);
+      const unattributedCents = sumCents(bucket.unattributed);
       return {
         month,
-        subscriptionCents: recorded ? sumCents(bucket.subscription) : null,
-        campsAndEventsCents: recorded ? sumCents(bucket.campsAndEvents) : null,
-        unattributedCents: recorded ? sumCents(bucket.unattributed) : null,
+        subscriptionCents: recorded ? subscriptionCents : null,
+        campsAndEventsCents: recorded ? campsAndEventsCents : null,
+        unattributedCents: recorded ? unattributedCents : null,
         municipalityCents: muni.totalCents,
+        totalCents: recorded
+          ? sumCents([subscriptionCents, campsAndEventsCents, unattributedCents, muni.totalCents])
+          : null,
         municipalityClubsWithoutFee: muni.clubsWithoutFee,
       };
     }),
@@ -585,6 +634,7 @@ function countByMonth(instants: readonly number[], months: readonly string[]): M
 
 function familiesByMonth(
   facts: BusinessFacts,
+  spans: readonly SeatSpan[],
   firstSeatByFamily: ReadonlyMap<string, number>,
   months: readonly string[],
   now: number,
@@ -611,12 +661,18 @@ function familiesByMonth(
   );
   const stopped = countByMonth(stops, months);
 
-  return months.map((month) => ({
-    month,
-    signups: signups.get(month) ?? 0,
-    firstSeats: firstSeats.get(month) ?? 0,
-    stoppedPaying: stopped.get(month) ?? 0,
-  }));
+  return months.map((month, index) => {
+    // The month's last instant, or now for the month in progress, the last.
+    const at =
+      index === months.length - 1 ? now : helsinkiMonthStart(months[index + 1]).getTime() - 1;
+    return {
+      month,
+      payingFamilies: payingFamiliesAt(spans, at),
+      signups: signups.get(month) ?? 0,
+      firstSeats: firstSeats.get(month) ?? 0,
+      stoppedPaying: stopped.get(month) ?? 0,
+    };
+  });
 }
 
 // ---------------------------------------------------------------------------
@@ -663,34 +719,6 @@ function gamersAtSession(
   return new Set(seated.map((span) => span.participantId)).size;
 }
 
-/**
- * The groups of products running now that have a gedu assigned: their gamers
- * seated now over their assignments. A group nobody is assigned to is left
- * out, as a session no gedu is paid for is left out of the months.
- */
-function gamersPerGeduNow(
-  facts: BusinessFacts,
-  spansByGroup: ReadonlyMap<string, readonly SeatSpan[]>,
-  running: ReadonlySet<string>,
-  now: number,
-): GamersPerGedu {
-  const assignedByGroup = groupBy(
-    facts.assignments.filter((row) => running.has(row.product_id)),
-    (row) => row.group_id,
-  );
-  let gamers = 0;
-  let gedus = 0;
-  for (const [groupId, assigned] of assignedByGroup) {
-    gedus += assigned.length;
-    gamers += new Set(
-      (spansByGroup.get(groupId) ?? [])
-        .filter((span) => span.participantId !== span.customerId && heldAt(span, now))
-        .map((span) => span.participantId),
-    ).size;
-  }
-  return ratioOf(gamers, gedus);
-}
-
 function gedusOf(
   facts: BusinessFacts,
   spans: readonly SeatSpan[],
@@ -726,7 +754,7 @@ function gedusOf(
       const sessions = sessionsByMonth.get(month);
       if (sessions === undefined) throw new Error(`No gedu invoicing month for ${month}`);
       if (recordsBeginMonth === null || month < recordsBeginMonth) {
-        return { month, sessions: null, ratio: null };
+        return { month, sessions: null, ratio: null, gedusWhoRan: null };
       }
       let gamers = 0;
       let gedus = 0;
@@ -734,10 +762,14 @@ function gedusOf(
         gamers += gamersAtSession(session, spansByGroup, products);
         gedus += session.geduIds.length;
       }
-      return { month, sessions: sessions.length, ratio: ratioOf(gamers, gedus) };
+      return {
+        month,
+        sessions: sessions.length,
+        ratio: ratioOf(gamers, gedus),
+        gedusWhoRan: new Set(sessions.flatMap((session) => session.geduIds)).size,
+      };
     }),
     recordsBeginMonth,
-    now: gamersPerGeduNow(facts, spansByGroup, running, now.getTime()),
     certified: {
       certified: certified.length,
       onRunningProduct: certified.filter((profile) => onRunning.has(profile.user_id)).length,
@@ -768,6 +800,15 @@ export function buildBusinessOverview(facts: BusinessFacts, now: Date): Business
     }
   }
 
+  const revenue = revenueOf(facts, months);
+  // The window ends with the month in progress, so the last complete month is
+  // the one before it.
+  const lastComplete = revenue.months.at(-2);
+  const monthBefore = revenue.months.at(-3);
+  if (lastComplete === undefined || monthBefore === undefined) {
+    throw new Error(`A window of ${BUSINESS_MONTH_COUNT} months holds no two complete months`);
+  }
+
   const mrrNow = recurringRevenueAt(facts, nowMs);
   const mrrThen = recurringRevenueAt(facts, lastMonthEnd);
 
@@ -775,6 +816,11 @@ export function buildBusinessOverview(facts: BusinessFacts, now: Date): Business
     readAt: now.toISOString(),
     currentMonth,
     headline: {
+      revenueLastMonth: {
+        month: lastComplete.month,
+        totalCents: lastComplete.totalCents,
+        monthBeforeCents: monthBefore.totalCents,
+      },
       payingFamilies: {
         now: payingFamiliesAt(spans, nowMs),
         endOfLastMonth: payingFamiliesAt(spans, lastMonthEnd),
@@ -797,8 +843,8 @@ export function buildBusinessOverview(facts: BusinessFacts, now: Date): Business
       },
     },
     engagement: engagementOf(facts, spans, nowMs),
-    revenue: revenueOf(facts, months),
-    families: familiesByMonth(facts, firstSeatByFamily, months, nowMs),
+    revenue,
+    families: familiesByMonth(facts, spans, firstSeatByFamily, months, nowMs),
     gedus: gedusOf(facts, spans, months, now),
   };
 }

@@ -1908,7 +1908,7 @@
   },
   "business": {
     "title": "Liiketoiminta",
-    "description": "Miten School of Gamingilla menee kuukausi kuukaudelta. Kuukaudet ovat Helsingin kalenterikuukausia, ja kuluva kuukausi on vielä kesken.",
+    "description": "Miten School of Gamingilla menee kuukausi kuukaudelta.",
     "readAt": "Luvut luettu {time}.",
     "loadError": "Liiketoiminnan lukuja ei saatu luettua. Lataa sivu uudelleen ja yritä uudestaan.",
     "loadErrorWithReason": "Liiketoiminnan lukuja ei saatu luettua: {reason}",
@@ -1917,13 +1917,21 @@
     "soFar": "kesken",
     "monthSoFar": "{month}, kesken",
     "tiles": {
-      "payingFamilies": {
-        "label": "Maksavat perheet"
+      "revenueTotal": {
+        "label": "Viime kuun tulot",
+        "largest": "{share} {band, select, subscription {tilauksista} campsAndEvents {leireistä ja tapahtumista} municipality {kunnilta} other {ilman tuotetta}}",
+        "none": "Maksuja ei kirjattu",
+        "change": "{change} edelliseen kuuhun",
+        "same": "Sama kuin edellisenä kuuna"
       },
-      "revenue": {
-        "label": "Kuukausittain toistuva tulo",
-        "subscriptions": "{count, plural, one {# voimassa oleva tilaus} other {# voimassa olevaa tilausta}}",
-        "outside": "{count, plural, one {# tilaus ei ole mukana luvussa: se on muussa valuutassa, tai sen kerholla ei ole hintaa euroina.} other {# tilausta ei ole mukana luvussa: ne ovat muussa valuutassa, tai niiden kerholla ei ole hintaa euroina.}}"
+      "subscriptions": {
+        "label": "Tilaukset kuukaudessa",
+        "live": "{count, plural, one {# voimassa oleva tilaus} other {# voimassa olevaa tilausta}}",
+        "outside": "{count, plural, one {# ei mukana, ei hintaa euroina} other {# ei mukana, ei hintaa euroina}}"
+      },
+      "payingFamilies": {
+        "label": "Maksavat perheet",
+        "startingLater": "{count, plural, one {+# aloittaa kerhon myöhemmin} other {+# aloittaa kerhon myöhemmin}}"
       },
       "gamers": {
         "label": "Gamerit, joilla on paikka",
@@ -1931,14 +1939,14 @@
       },
       "signup": {
         "label": "Rekisteröitymisestä ensimmäiseen paikkaan",
-        "detail": "{seated} / {registered} perhettä, jotka rekisteröityivät viimeisten {days} päivän aikana",
+        "detail": "{seated} / {registered} rekisteröityneestä, {days} päivää",
         "none": "Kukaan ei rekisteröitynyt viimeisten {days} päivän aikana.",
         "change": "{change} %-yksikköä tässä kuussa"
       }
     },
     "engagement": {
       "heading": "Perheet aktiivisuuden mukaan",
-      "caption": "Jokainen vanhemman tili ensimmäisessä ryhmässä, johon se sopii.",
+      "caption": "Kaikki vanhempien tilit.",
       "chart": "Perheet aktiivisuuden mukaan",
       "total": "{count, plural, one {perhe} other {perhettä}}",
       "slices": {
@@ -1951,7 +1959,7 @@
     },
     "revenue": {
       "heading": "Tulot kuukausittain",
-      "caption": "Kunkin kuukauden veloitukset ennen hyvityksiä.",
+      "caption": "Ennen hyvityksiä.",
       "chart": "Tulot kuukausittain",
       "series": {
         "subscriptionCents": "Tilaukset",
@@ -1960,16 +1968,17 @@
         "unattributedCents": "Ei tuotetta"
       },
       "noData": "Ei tietoa",
-      "startsFrom": "Ensimmäinen kirjattu maksu: {month}. Aiemmilta kuukausilta näkyvät vain kuntien laskut.",
-      "none": "Maksuja ei ole vielä kirjattu, joten vain kuntien laskut näkyvät.",
+      "startsFrom": "Ensimmäinen kirjattu maksu: {month}.",
+      "none": "Maksuja ei ole vielä kirjattu.",
       "nonEur": "{count, plural, one {# muussa valuutassa veloitettu maksu} other {# muussa valuutassa veloitettua maksua}} jätetty pois.",
       "clubsWithoutFee": "{count, plural, one {# hinnaton kerho jätetty pois} other {# hinnatonta kerhoa jätetty pois}}"
     },
     "families": {
-      "heading": "Perheet kuukausittain",
-      "caption": "Uudet vanhempien tilit, ensimmäisen paikkansa saaneet perheet ja perheet, joiden viimeinen tilaus päättyi.",
-      "chart": "Perheet kuukausittain",
+      "heading": "Maksavat perheet kuukausittain",
+      "caption": "Kunkin kuukauden lopussa.",
+      "chart": "Maksavat perheet kuukausittain",
       "series": {
+        "payingFamilies": "Maksavat perheet",
         "signups": "Uudet rekisteröitymiset",
         "firstSeats": "Ensimmäinen paikka",
         "stoppedPaying": "Lopetti maksamisen"
@@ -1977,20 +1986,13 @@
     },
     "gedus": {
       "heading": "Gamereita Gedua kohden",
-      "caption": "Kuinka monta gameria yhdellä Gedulla oli keskimäärin kerhokerralla kuukauden aikana. Nouseva käyrä tarkoittaa, että ryhmät täyttyvät nopeammin kuin saamme lisää Geduja.",
+      "caption": "Kerhokertaa kohden, keskimäärin.",
       "chart": "Gamereita Gedua kohden kuukausittain",
       "series": "Gamereita Gedua kohden",
-      "now": {
-        "label": "Nyt käynnissä olevissa",
-        "detail": "{gamers, plural, one {# gamer} other {# gameria}} ryhmissä, joihin on nimetty {gedus, plural, one {# Gedu} other {# Gedua}}",
-        "none": "Yhtään Gedua ei ole nimetty mihinkään käynnissä olevaan."
-      },
-      "tooltip": "{sessions, plural, one {# kerhokerta} other {# kerhokertaa}}: {gamers, plural, one {# gamer} other {# gameria}} ja {gedus, plural, one {# Gedu} other {# Gedua}}",
+      "ranBy": "{sessions, plural, one {# kerhokerta} other {# kerhokertaa}}, {gedus, plural, one {# Gedu} other {# Gedua}}",
       "noData": "Ei tietoa",
       "startsFrom": "Ensimmäinen kuukausi, jolta kerhokertoja on kirjattu: {month}.",
       "none": "Näiltä kuukausilta ei ole kirjattu yhtään kerhokertaa.",
-      "recordedNote": "Kerhokerta lasketaan mukaan, kun siitä on kirjattu raportti, muistiinpano tai läsnäolo.",
-      "staffingNote": "Menneen kerhokerran Gedut luetaan ryhmien nykyisistä nimityksistä ja kerralle sovituista sijaisista, joten ryhmästä pois siirretty Gedu putoaa pois niiltä kuukausilta, joina hän piti ryhmää.",
       "certified": {
         "heading": "Sertifioidut Gedut",
         "certified": "Sertifioituja",

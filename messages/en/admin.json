@@ -1908,7 +1908,7 @@
   },
   "business": {
     "title": "Business",
-    "description": "How School of Gaming is doing, month by month. Months are Helsinki calendar months, and the current one is still running.",
+    "description": "How School of Gaming is doing, month by month.",
     "readAt": "Figures as of {time}.",
     "loadError": "The business figures could not be read. Reload the page to try again.",
     "loadErrorWithReason": "The business figures could not be read: {reason}",
@@ -1917,13 +1917,21 @@
     "soFar": "so far",
     "monthSoFar": "{month}, so far",
     "tiles": {
-      "payingFamilies": {
-        "label": "Paying families"
+      "revenueTotal": {
+        "label": "Revenue last month",
+        "largest": "{share} from {band, select, subscription {subscriptions} campsAndEvents {camps and events} municipality {municipalities} other {no named product}}",
+        "none": "No payments recorded",
+        "change": "{change} on the month before",
+        "same": "Same as the month before"
       },
-      "revenue": {
-        "label": "Monthly recurring revenue",
-        "subscriptions": "{count, plural, one {# live subscription} other {# live subscriptions}}",
-        "outside": "{count, plural, one {# subscription is not in this figure: it is in another currency, or its club has no euro price.} other {# subscriptions are not in this figure: they are in another currency, or their club has no euro price.}}"
+      "subscriptions": {
+        "label": "Subscriptions per month",
+        "live": "{count, plural, one {# live subscription} other {# live subscriptions}}",
+        "outside": "{count, plural, other {# not counted: no euro price}}"
+      },
+      "payingFamilies": {
+        "label": "Paying families",
+        "startingLater": "{count, plural, one {+# starts a club later} other {+# start a club later}}"
       },
       "gamers": {
         "label": "Gamers in a seat",
@@ -1931,14 +1939,14 @@
       },
       "signup": {
         "label": "Sign-up to first seat",
-        "detail": "{seated} of {registered} families who signed up in the last {days} days",
+        "detail": "{seated} of {registered} sign-ups, last {days} days",
         "none": "Nobody signed up in the last {days} days.",
         "change": "{change} points this month"
       }
     },
     "engagement": {
       "heading": "Families by engagement",
-      "caption": "Every parent account, in the first group it fits.",
+      "caption": "Every parent account.",
       "chart": "Families by engagement",
       "total": "{count, plural, one {family} other {families}}",
       "slices": {
@@ -1951,7 +1959,7 @@
     },
     "revenue": {
       "heading": "Revenue by month",
-      "caption": "Money charged each month, before refunds.",
+      "caption": "Before refunds.",
       "chart": "Revenue by month",
       "series": {
         "subscriptionCents": "Subscriptions",
@@ -1960,16 +1968,17 @@
         "unattributedCents": "No product named"
       },
       "noData": "No data",
-      "startsFrom": "Payments are recorded from {month}. Earlier months show municipality invoices only.",
-      "none": "No payments are recorded yet, so only municipality invoices are shown.",
+      "startsFrom": "Payments are recorded from {month}.",
+      "none": "No payments recorded yet.",
       "nonEur": "{count, plural, one {# payment} other {# payments}} in another currency left out.",
       "clubsWithoutFee": "{count, plural, one {# club without a fee left out} other {# clubs without a fee left out}}"
     },
     "families": {
-      "heading": "Families by month",
-      "caption": "New parent accounts, families taking their first seat, and families whose last subscription ended.",
-      "chart": "Families by month",
+      "heading": "Paying families by month",
+      "caption": "At each month’s end.",
+      "chart": "Paying families by month",
       "series": {
+        "payingFamilies": "Paying families",
         "signups": "New sign-ups",
         "firstSeats": "First seat taken",
         "stoppedPaying": "Stopped paying"
@@ -1977,20 +1986,13 @@
     },
     "gedus": {
       "heading": "Gamers per Gedu",
-      "caption": "On average, how many gamers one Gedu had in front of them in a lesson that month. A rising line means groups are filling faster than we’re adding Gedus.",
+      "caption": "Per lesson, on average.",
       "chart": "Gamers per Gedu by month",
       "series": "Gamers per Gedu",
-      "now": {
-        "label": "Now, on what’s running",
-        "detail": "{gamers, plural, one {# gamer} other {# gamers}} in groups with {gedus, plural, one {# Gedu} other {# Gedus}} assigned",
-        "none": "No Gedu is assigned to anything running."
-      },
-      "tooltip": "{sessions, plural, one {# lesson} other {# lessons}}: {gamers, plural, one {# gamer} other {# gamers}} and {gedus, plural, one {# Gedu} other {# Gedus}}",
+      "ranBy": "{sessions, plural, one {# lesson} other {# lessons}}, {gedus, plural, one {# Gedu} other {# Gedus}}",
       "noData": "No data",
       "startsFrom": "Lesson records start in {month}.",
       "none": "No lesson was recorded in these months.",
-      "recordedNote": "A lesson counts once a report, a note or attendance has been recorded for it.",
-      "staffingNote": "Who ran a past lesson is read from today’s group assignments and the substitutes booked for it, so a Gedu taken off a group drops out of the months they ran it.",
       "certified": {
         "heading": "Certified Gedus",
         "certified": "Certified",

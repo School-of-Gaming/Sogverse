@@ -1908,7 +1908,7 @@
   },
   "business": {
     "title": "Qu’ Huch",
-    "description": "chay’ Qu’ School of Gaming, jar jar. Helsinki jarmey chaH, ’ej DaH jar wej rIn.",
+    "description": "chay’ Qu’ School of Gaming, jar jar.",
     "readAt": "mI’mey: {time}.",
     "loadError": "Qu’ Huch mI’mey laDlaHbe’. nav yIchu’qa’.",
     "loadErrorWithReason": "Qu’ Huch mI’mey laDlaHbe’: {reason}",
@@ -1917,13 +1917,21 @@
     "soFar": "wej rIn",
     "monthSoFar": "{month}, wej rIn",
     "tiles": {
-      "payingFamilies": {
-        "label": "Huch nobbogh qorDu’"
+      "revenueTotal": {
+        "label": "jar vorgh Huch",
+        "largest": "{share} {band, select, subscription {ghItlhmey} campsAndEvents {raQ ’ej wanI’} municipality {veng} other {Doch pagh}}",
+        "none": "Huch qonlu’be’",
+        "change": "{change} jar vorgh vorgh",
+        "same": "jar vorgh vorgh rur"
       },
-      "revenue": {
-        "label": "jar Huch",
-        "subscriptions": "{count, plural, other {# ghItlh yIn}}",
-        "outside": "{count, plural, other {# ghItlh mI’vaD chelbe’lu’: latlh Huch Segh, pagh Huch ghajbe’.}}"
+      "subscriptions": {
+        "label": "jar ghItlhmey",
+        "live": "{count, plural, other {# ghItlh yIn}}",
+        "outside": "{count, plural, other {# mI’be’lu’, Huch ghajbe’}}"
+      },
+      "payingFamilies": {
+        "label": "Huch nobbogh qorDu’",
+        "startingLater": "{count, plural, other {+# ghom tagh tugh}}"
       },
       "gamers": {
         "label": "Daq ghajbogh gamer",
@@ -1931,14 +1939,14 @@
       },
       "signup": {
         "label": "qon mo’ Daq wa’DIch",
-        "detail": "{registered} qorDu’ qonta’bogh {days} jaj, {seated} Daq ghaj",
+        "detail": "{seated}/{registered} qon, {days} jaj",
         "none": "{days} jaj qonbe’ pagh.",
         "change": "{change} DaH jar"
       }
     },
     "engagement": {
       "heading": "qorDu’ Qu’ rur",
-      "caption": "vavnI’ ghItlh Hoch, ghom wa’DIch DaqDaq.",
+      "caption": "vavnI’ ghItlh Hoch.",
       "chart": "qorDu’ Qu’ rur",
       "total": "{count, plural, other {qorDu’}}",
       "slices": {
@@ -1951,7 +1959,7 @@
     },
     "revenue": {
       "heading": "jar Huch",
-      "caption": "jar Huch, Huch nobHa’ wej boqlu’.",
+      "caption": "Huch nobHa’ wej boqlu’.",
       "chart": "jar Huch",
       "series": {
         "subscriptionCents": "ghItlhmey",
@@ -1966,10 +1974,11 @@
       "clubsWithoutFee": "{count, plural, other {# ghom DIlbe’lu’}}"
     },
     "families": {
-      "heading": "jar qorDu’",
-      "caption": "vavnI’ ghItlh chu’, Daq wa’DIch, Huch nge’ghach mev.",
-      "chart": "jar qorDu’",
+      "heading": "jar Huch nobbogh qorDu’",
+      "caption": "jar Qav.",
+      "chart": "jar Huch nobbogh qorDu’",
       "series": {
+        "payingFamilies": "Huch nobbogh qorDu’",
         "signups": "qon chu’",
         "firstSeats": "Daq wa’DIch",
         "stoppedPaying": "nobmeH mev"
@@ -1977,20 +1986,13 @@
     },
     "gedus": {
       "heading": "Gedu wa’vaD Qujwi’pu’",
-      "caption": "ghom wa’Daq Gedu wa’ tlhop Qujwi’pu’ ’ar tu’lu’? jenchoHchugh tlhegh, Gedu wISamlaHbogh law’ ghommey tebbogh law’ puS.",
+      "caption": "ghom wa’vaD.",
       "chart": "Gedu wa’vaD Qujwi’pu’ jar",
       "series": "Gedu wa’vaD Qujwi’pu’",
-      "now": {
-        "label": "DaH, Qu’ ta’taHvIS",
-        "detail": "{gamers} Qujwi’pu’, {gedus} Gedu",
-        "none": "Qu’ ta’taHbogh Gedu tu’lu’be’."
-      },
-      "tooltip": "{sessions} ghom: {gamers} Qujwi’pu’, {gedus} Gedu",
+      "ranBy": "{sessions} ghom, {gedus} Gedu",
       "noData": "De’ tu’lu’be’",
       "startsFrom": "{month} Daqvo’ ghom qonlu’.",
       "none": "jarmeyvam ghom qonlu’be’.",
-      "recordedNote": "ghom qonlu’DI’ ghom mI’lu’.",
-      "staffingNote": "DaH Gedu ghom nab, Gedu ghom ghoS je; ghom mejbogh Gedu lIjlu’.",
       "certified": {
         "heading": "chaw’ ghajbogh Gedu",
         "certified": "chaw’ ghaj",

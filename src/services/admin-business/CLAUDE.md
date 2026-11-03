@@ -28,8 +28,17 @@ nothing; what it cannot see is a change that leaves no timestamp (below).
 
 ## The figures
 
-- **Paying families**: families holding a seat on a product whose billing mode is paid.
-- **Recurring revenue**: live subscriptions (stored as active, past due or cancelling),
+- **Revenue last month**: the last complete Helsinki month's revenue by month (below), every
+  band summed, beside the month before's; the band that brought in most is named with its
+  share. It leads the money because municipality invoices dwarf subscriptions, so recurring
+  revenue alone reads as the business being a tenth of its size. A month before payments were
+  recorded has no total rather than a municipality-only one.
+- **Paying families**: families holding a seat on a product whose billing mode is paid. It is
+  not the subscriber slice (below), and the two differ for real: a family subscribed to a club
+  that has not begun holds no seat yet, so it subscribes without paying, and a family at a camp
+  pays without subscribing. The tile counts the first kind beside itself ("+2 start a club
+  later") so the gap reads off the page.
+- **Subscriptions per month** (recurring revenue): live subscriptions (stored as active, past due or cancelling),
   each at the monthly price its seat's product carries today in EUR. Discounts and
   prorations are not in it, and there is no price history, so last month's figure is
   last month's subscriptions at today's prices. A subscription in another currency, or
@@ -50,7 +59,9 @@ nothing; what it cannot see is a change that leaves no timestamp (below).
 - **Municipality revenue is the municipality invoicing page's month total**, read and
   built by that page's own code, never a second formula — clubs without a fee are outside
   it exactly as they are there. A month that page refuses fails this page too.
-- **Families by month**: sign-ups are parent accounts created; a first seat is the month a
+- **Paying families by month**: the paying families figure at each month's last instant, and
+  now for the month in progress, so the line ends on the tile. The month's flows ride in its
+  tooltip: sign-ups are parent accounts created; a first seat is the month a
   family booked its earliest seat; a stop is the month a family's last live subscription ended,
   leaving it none — one that subscribes again and leaves again has stopped twice. A camp or
   event ending is never a stop: it is a finished purchase, not a lost family, and counting
@@ -70,13 +81,17 @@ nothing; what it cannot see is a change that leaves no timestamp (below).
     present group from the day they moved, and in the earlier one not at all.
   - Months before the first one with a session in the window are absent; a later month with
     none has no ratio.
-- **Gamers per Gedu now**: over the groups of products running now (the derived product
-  status — begun and not yet ended; not yet begun is not running) that have a gedu
-  assigned, the gamers seated in them now over their assignments. A group nobody is
-  assigned to is left out, as its sessions are in the months.
+  - The figure over the line is the last complete month's point, never a second "now" rule:
+    one over today's groups and assignments disagreed with every point of the line (groups
+    that held no recorded session, gedus on several groups), and a figure beside a line has
+    to be one of its points.
+- **A number of Gedus is always distinct people**, never assignment rows or paid lines: a
+  gedu on three groups is one Gedu. The ratio's denominator is the exception by design, a
+  sum of gedus over sessions, and is never shown as a count of Gedus.
 - **Certified Gedus**: gedus whose profile is certified now, and of those how many are
-  assigned to a group of a product running now; the page shows the difference too. An
-  uncertified gedu still assigned somewhere is in neither figure.
+  assigned to a group of a product running now (the derived product status: begun and not
+  yet ended); the page shows the difference too. An uncertified gedu still assigned
+  somewhere is in neither figure.
 
 **Who ran a past session is read against today's assignments.** The database records per
 session who was *expected* only through dated substitutions; standing staffing is the group
@@ -85,7 +100,8 @@ attendance mark's) is stored, but no admin read reaches it, and the writer of a 
 not necessarily the gedu who ran the session. So a past month counts a substitute on the
 date they covered, and otherwise the gedus assigned to the group today: a gedu taken off a
 group leaves the months they ran it, and one added later appears in months before they
-joined. The page says so under the chart.
+joined. The page does not say so: it shows rather than explains (`src/CLAUDE.md`), so the
+caveats live here.
 
 **Revenue is before refunds.** Refunds are credit notes, and credit notes live only in
 Stripe, so nothing here can net them; a refunded payment counts in full.

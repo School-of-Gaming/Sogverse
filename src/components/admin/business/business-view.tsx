@@ -40,6 +40,9 @@ import {
   figureChange,
   gamersPerGeduPoints,
   hasUnattributedRevenue,
+  largestRevenueBand,
+  lastCompletePoint,
+  revenueChange,
   seriesStart,
   signupRate,
   signupRateChangePoints,
@@ -59,10 +62,8 @@ import {
  * the product kind they come from, in the kind's own Yty family as the admin
  * surfaces already spend it — consumer clubs in Glow, camps and events in
  * Valor, municipality clubs in Wit — so a subscription is the same green on the
- * donut and in the revenue bars. What belongs to no kind takes the inks. The
- * three per-month series of families take act for the figure the business
- * works for, a seat taken, beside the ink and the destructive status for a
- * family that stopped paying.
+ * donut and in the revenue bars. What belongs to no kind takes the inks, and
+ * the two lines take act.
  */
 
 /** Each chart's height: fixed, so the box is held while it measures. */
@@ -80,6 +81,12 @@ const REVENUE_STACK = "revenue";
 /** The Gedu ratio line's colour: the one its series is configured with below. */
 const RATIO_STROKE = "var(--series-gamersPerGedu)";
 
+/** The paying families line's colour: the one its series is configured with below. */
+const PAYING_STROKE = "var(--series-payingFamilies)";
+
+/** The month axis: room for the month, its year where shown, and "so far". */
+const AXIS_LINE_HEIGHT = 14;
+
 /** A count in the reader's locale. */
 function useCount(): (value: number) => string {
   const format = new Intl.NumberFormat(formattingLocale(useLocale()));
@@ -92,31 +99,45 @@ function useSignedCount(): (value: number) => string {
   return (value) => format.format(value);
 }
 
-/** EUR cents as money in the reader's locale. */
+/** EUR cents as money in the reader's locale, to the cent: the tooltips. */
 function useEuros(): (cents: number) => string {
   const locale = useLocale();
   return (cents) => formatCurrencyFromCents(cents, "eur", locale);
 }
 
 /**
- * A month as the axis and the tooltip name it. The axis gives the first month
- * and January their year, so a window crossing New Year says which year each
- * side is in; the tooltip always does.
+ * EUR cents as whole euros, with a sign when `signed`: the tiles, where cents
+ * are noise beside the figure.
+ */
+function useWholeEuros(signed = false): (cents: number) => string {
+  const format = new Intl.NumberFormat(formattingLocale(useLocale()), {
+    style: "currency",
+    currency: "EUR",
+    maximumFractionDigits: 0,
+    minimumFractionDigits: 0,
+    signDisplay: signed ? "exceptZero" : "auto",
+  });
+  return (cents) => format.format(Math.round(cents / 100));
+}
+
+/**
+ * A month as the axis and the tooltip name it. The axis names the month short,
+ * with its year on a line of its own under the first month and every January,
+ * so a window crossing New Year says which year each side is in and no two
+ * labels run together; the tooltip always names the year.
  */
 function useMonthName(): {
-  tick: (month: string, index: number) => string;
+  short: (month: string) => string;
+  year: (month: string, index: number) => string | null;
   full: (month: string) => string;
 } {
   const locale = useLocale();
   return {
-    tick: (month, index) =>
-      formatDateOnly(
-        month,
-        locale,
-        index === 0 || month.slice(5, 7) === "01"
-          ? { month: "short", year: "numeric" }
-          : { month: "short" },
-      ),
+    short: (month) => formatDateOnly(month, locale, { month: "short" }),
+    year: (month, index) =>
+      index === 0 || month.slice(5, 7) === "01"
+        ? formatDateOnly(month, locale, { year: "numeric" })
+        : null,
     full: (month) => formatDateOnly(month, locale, { month: "long", year: "numeric" }),
   };
 }
@@ -200,10 +221,19 @@ function Notes({ lines }: { lines: string[] }) {
 // Headline tiles
 // ---------------------------------------------------------------------------
 
+/** The tiles' grid: five across at desktop width, so the row stays one row. */
+const TILE_GRID = "grid gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5";
+
+/**
+ * The money first, the month's whole takings before the part that recurs, then
+ * the families, the gamers and the funnel.
+ */
 function HeadlineTiles({ overview }: { overview: BusinessOverview }) {
   const t = useTranslations("admin.business.tiles");
+  const tBusiness = useTranslations("admin.business");
   const count = useCount();
-  const euros = useEuros();
+  const euros = useWholeEuros();
+  const signedEuros = useWholeEuros(true);
   const { headline } = overview;
   const percent = new Intl.NumberFormat(formattingLocale(useLocale()), {
     style: "percent",
@@ -214,24 +244,62 @@ function HeadlineTiles({ overview }: { overview: BusinessOverview }) {
     headline.signupToSeat.now,
     headline.signupToSeat.endOfLastMonth,
   );
+  const lastMonth = headline.revenueLastMonth;
+  const lastMonthRow = overview.revenue.months.find((month) => month.month === lastMonth.month);
+  const largest = lastMonthRow === undefined ? null : largestRevenueBand(lastMonthRow);
+  const totalChange = revenueChange(lastMonth);
 
   return (
-    <dl className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
+    <dl className={TILE_GRID}>
+      <Tile
+        label={t("revenueTotal.label")}
+        value={lastMonth.totalCents === null ? null : euros(lastMonth.totalCents)}
+        detail={
+          lastMonth.totalCents === null
+            ? t("revenueTotal.none")
+            : largest === null
+              ? undefined
+              : t("revenueTotal.largest", {
+                  share: percent.format(largest.share),
+                  band: largest.band,
+                })
+        }
+        change={
+          totalChange === null
+            ? undefined
+            : totalChange === 0
+              ? t("revenueTotal.same")
+              : t("revenueTotal.change", { change: signedEuros(totalChange) })
+        }
+      />
+      <Tile
+        label={t("subscriptions.label")}
+        value={euros(headline.monthlyRecurringRevenueCents.now)}
+        detail={t("subscriptions.live", { count: headline.liveSubscriptions.now })}
+        change={
+          figureChange(headline.monthlyRecurringRevenueCents) === 0
+            ? tBusiness("noChange")
+            : tBusiness("change", {
+                change: signedEuros(figureChange(headline.monthlyRecurringRevenueCents)),
+              })
+        }
+        note={
+          headline.subscriptionsOutsideRevenue > 0
+            ? t("subscriptions.outside", { count: headline.subscriptionsOutsideRevenue })
+            : undefined
+        }
+      />
       <Tile
         label={t("payingFamilies.label")}
         value={count(headline.payingFamilies.now)}
-        change={<CountChange change={figureChange(headline.payingFamilies)} />}
-      />
-      <Tile
-        label={t("revenue.label")}
-        value={euros(headline.monthlyRecurringRevenueCents.now)}
-        detail={t("revenue.subscriptions", { count: headline.liveSubscriptions.now })}
-        change={<MoneyChange cents={figureChange(headline.monthlyRecurringRevenueCents)} />}
-        note={
-          headline.subscriptionsOutsideRevenue > 0
-            ? t("revenue.outside", { count: headline.subscriptionsOutsideRevenue })
+        detail={
+          overview.engagement.subscribersNotYetBegun > 0
+            ? t("payingFamilies.startingLater", {
+                count: overview.engagement.subscribersNotYetBegun,
+              })
             : undefined
         }
+        change={<CountChange change={figureChange(headline.payingFamilies)} />}
       />
       <Tile
         label={t("gamers.label")}
@@ -290,16 +358,6 @@ function CountChange({ change }: { change: number }) {
   const t = useTranslations("admin.business");
   const signed = useSignedCount();
   return <>{change === 0 ? t("noChange") : t("change", { change: signed(change) })}</>;
-}
-
-function MoneyChange({ cents }: { cents: number }) {
-  const t = useTranslations("admin.business");
-  const format = new Intl.NumberFormat(formattingLocale(useLocale()), {
-    style: "currency",
-    currency: "EUR",
-    signDisplay: "exceptZero",
-  });
-  return <>{cents === 0 ? t("noChange") : t("change", { change: format.format(cents / 100) })}</>;
 }
 
 function PointsChange({ points }: { points: number }) {
@@ -389,22 +447,37 @@ function EngagementCard({ overview }: { overview: BusinessOverview }) {
  */
 function useMonthTick(currentMonth: string): (props: XAxisTickContentProps) => ReactNode {
   const t = useTranslations("admin.business");
-  const { tick } = useMonthName();
+  const { short, year } = useMonthName();
   return function renderTick({ x, y, payload }: XAxisTickContentProps) {
     const month = String(payload.value);
+    const yearLine = year(month, payload.index);
     return (
       <text x={x} y={y} textAnchor="middle" className="fill-muted-foreground text-xs">
         <tspan x={x} dy={12}>
-          {tick(month, payload.index)}
+          {short(month)}
         </tspan>
+        {yearLine !== null && (
+          <tspan x={x} dy={AXIS_LINE_HEIGHT}>
+            {yearLine}
+          </tspan>
+        )}
         {month === currentMonth && (
-          <tspan x={x} dy={14}>
+          <tspan x={x} dy={AXIS_LINE_HEIGHT}>
             {t("soFar")}
           </tspan>
         )}
       </text>
     );
   };
+}
+
+/**
+ * The month axis's height: one line for the month and one for whichever of
+ * the year or "so far" sits under it, and a third when the month in progress
+ * is a January and carries both.
+ */
+function monthAxisHeight(currentMonth: string): number {
+  return currentMonth.slice(5, 7) === "01" ? 40 + AXIS_LINE_HEIGHT : 40;
 }
 
 /** The tooltip's heading: the month in full, and "so far" for the month in progress. */
@@ -508,7 +581,7 @@ function RevenueCard({ overview }: { overview: BusinessOverview }) {
           aria-describedby={describedBy}
         >
           <CartesianGrid vertical={false} />
-          <XAxis dataKey="month" tick={monthTick} interval={0} height={40} tickLine={false} axisLine={false} />
+          <XAxis dataKey="month" tick={monthTick} interval={0} height={monthAxisHeight(overview.currentMonth)} tickLine={false} axisLine={false} />
           <YAxis
             tickFormatter={(cents: number) => compact.format(cents / 100)}
             tickLine={false}
@@ -566,19 +639,13 @@ function RevenueCard({ overview }: { overview: BusinessOverview }) {
   );
 }
 
-const FAMILY_SERIES = ["signups", "firstSeats", "stoppedPaying"] as const;
-type FamilySeries = (typeof FAMILY_SERIES)[number];
+/** What a month's paying families point carries into its tooltip besides itself. */
+const FAMILY_TOOLTIP = ["signups", "firstSeats", "stoppedPaying"] as const;
 
-const FAMILY_COLOUR: Record<FamilySeries, ChartColor> = {
-  signups: "var(--color-foreground)",
-  firstSeats: "var(--color-act)",
-  stoppedPaying: "var(--color-destructive)",
-};
-
-function isFamilySeries(name: unknown): name is FamilySeries {
-  return FAMILY_SERIES.some((series) => series === name);
-}
-
+/**
+ * Paying families at each month's end, the month in progress at now, so the
+ * line ends on the headline tile. The month's flows sit in its tooltip.
+ */
 function FamiliesCard({ overview }: { overview: BusinessOverview }) {
   const t = useTranslations("admin.business.families");
   const count = useCount();
@@ -586,47 +653,59 @@ function FamiliesCard({ overview }: { overview: BusinessOverview }) {
   const monthTick = useMonthTick(overview.currentMonth);
   const monthLabel = useMonthLabel(overview.currentMonth);
   const describedBy = useId();
-  const config = Object.fromEntries(
-    FAMILY_SERIES.map((key) => [key, { label: t(`series.${key}`), color: FAMILY_COLOUR[key] }]),
-  ) satisfies ChartConfig;
+  const config = {
+    payingFamilies: { label: t("series.payingFamilies"), color: "var(--color-act)" },
+  } satisfies ChartConfig;
+  const months = [...overview.families];
 
   return (
     <BusinessCard heading={t("heading")} caption={t("caption")}>
       <ChartContainer config={config} className={MONTHLY_CHART_SIZE}>
-        <BarChart
-          data={[...overview.families]}
+        <LineChart
+          data={months}
           margin={{ top: 8, right: 12, bottom: 0, left: 0 }}
           aria-label={t("chart")}
           aria-describedby={describedBy}
         >
           <CartesianGrid vertical={false} />
-          <XAxis dataKey="month" tick={monthTick} interval={0} height={40} tickLine={false} axisLine={false} />
+          <XAxis dataKey="month" tick={monthTick} interval={0} height={monthAxisHeight(overview.currentMonth)} tickLine={false} axisLine={false} />
           <YAxis allowDecimals={false} tickFormatter={count} tickLine={false} axisLine={false} width={40} />
           <ChartTooltip
-            cursor={false}
             content={
               <ChartTooltipContent
                 labelFormatter={monthLabel}
-                formatter={(value, name) =>
-                  isFamilySeries(name) && typeof value === "number" ? (
-                    <TooltipRow label={t(`series.${name}`)} value={count(value)} />
-                  ) : null
-                }
+                formatter={(value, _name, item) => {
+                  const month = months.find((one) => one.month === item.payload?.month);
+                  if (typeof value !== "number" || month === undefined) return null;
+                  return (
+                    <div className="w-full">
+                      <TooltipRow label={t("series.payingFamilies")} value={count(value)} />
+                      {FAMILY_TOOLTIP.map((key) => (
+                        <TooltipRow key={key} label={t(`series.${key}`)} value={count(month[key])} />
+                      ))}
+                    </div>
+                  );
+                }}
               />
             }
           />
-          <ChartLegend content={<ChartLegendContent />} />
-          {FAMILY_SERIES.map((key) => (
-            <Bar key={key} dataKey={key} fill={`var(--series-${key})`} isAnimationActive={false} />
-          ))}
-        </BarChart>
+          <Line
+            dataKey="payingFamilies"
+            type="linear"
+            stroke={PAYING_STROKE}
+            strokeWidth={2}
+            dot={{ r: 3, fill: PAYING_STROKE }}
+            isAnimationActive={false}
+          />
+        </LineChart>
       </ChartContainer>
       <ul id={describedBy} className="sr-only">
-        {overview.families.map((month) => (
+        {months.map((month) => (
           <li key={month.month}>
             {[
               full(month.month),
-              ...FAMILY_SERIES.map((key) => `${t(`series.${key}`)} ${count(month[key])}`),
+              `${t("series.payingFamilies")} ${count(month.payingFamilies)}`,
+              ...FAMILY_TOOLTIP.map((key) => `${t(`series.${key}`)} ${count(month[key])}`),
             ].join(SCHEDULE_PART_SEPARATOR)}
           </li>
         ))}
@@ -648,10 +727,11 @@ function CardFigure({ label, value, detail }: { label: string; value: string; de
 
 /**
  * The owner's two questions about Gedus in one card: how many gamers one Gedu
- * has in front of them, now and month by month, and how many certified Gedus
- * are actually on something running. The ratio leads as a figure over its
- * line; the certified three sit under it, set off by a divider rather than a
- * box of their own.
+ * has in front of them month by month, and how many certified Gedus are
+ * actually on something running. The last complete month's point leads as a
+ * figure over its line, so the figure is always one of the line's points; the
+ * certified three sit under it, set off by a divider rather than a box of
+ * their own.
  */
 function GedusCard({ overview }: { overview: BusinessOverview }) {
   const t = useTranslations("admin.business.gedus");
@@ -662,37 +742,34 @@ function GedusCard({ overview }: { overview: BusinessOverview }) {
   const startNote = useStartNote();
   const describedBy = useId();
   const ratio = new Intl.NumberFormat(formattingLocale(useLocale()), { maximumFractionDigits: 1 });
-  const { months, recordsBeginMonth, now, certified } = overview.gedus;
+  const { months, recordsBeginMonth, certified } = overview.gedus;
   const points = gamersPerGeduPoints(months);
+  const lead = lastCompletePoint(points, overview.currentMonth);
   const config = {
     gamersPerGedu: { label: t("series"), color: "var(--color-act)" },
   } satisfies ChartConfig;
   const pointValue = (point: (typeof points)[number]) =>
     point.gamersPerGedu === null ? t("noData") : ratio.format(point.gamersPerGedu);
+  const ranBy = (point: (typeof points)[number]) =>
+    t("ranBy", { sessions: point.sessions ?? 0, gedus: point.gedusWhoRan ?? 0 });
 
-  const notes = [
-    ...startNote(
-      seriesStart(months.map((month) => month.month), recordsBeginMonth),
-      (month) => t("startsFrom", { month }),
-      t("none"),
-    ),
-    t("recordedNote"),
-    t("staffingNote"),
-  ];
+  const notes = startNote(
+    seriesStart(months.map((month) => month.month), recordsBeginMonth),
+    (month) => t("startsFrom", { month }),
+    t("none"),
+  );
 
   return (
     <BusinessCard heading={t("heading")} caption={t("caption")} notes={<Notes lines={notes} />}>
-      <dl>
-        <CardFigure
-          label={t("now.label")}
-          value={now.ratio === null ? t("noData") : ratio.format(now.ratio)}
-          detail={
-            now.ratio === null
-              ? t("now.none")
-              : t("now.detail", { gamers: now.gamers, gedus: now.gedus })
-          }
-        />
-      </dl>
+      {lead !== null && (
+        <dl>
+          <CardFigure
+            label={full(lead.month)}
+            value={pointValue(lead)}
+            detail={lead.gamersPerGedu === null ? undefined : ranBy(lead)}
+          />
+        </dl>
+      )}
       <ChartContainer config={config} className={MONTHLY_CHART_SIZE}>
         <LineChart
           data={points}
@@ -701,7 +778,7 @@ function GedusCard({ overview }: { overview: BusinessOverview }) {
           aria-describedby={describedBy}
         >
           <CartesianGrid vertical={false} />
-          <XAxis dataKey="month" tick={monthTick} interval={0} height={40} tickLine={false} axisLine={false} />
+          <XAxis dataKey="month" tick={monthTick} interval={0} height={monthAxisHeight(overview.currentMonth)} tickLine={false} axisLine={false} />
           <YAxis tickFormatter={ratio.format} tickLine={false} axisLine={false} width={40} />
           <ChartTooltip
             content={
@@ -713,13 +790,7 @@ function GedusCard({ overview }: { overview: BusinessOverview }) {
                   return (
                     <div className="w-full">
                       <TooltipRow label={t("series")} value={ratio.format(figure)} />
-                      <p className="text-muted-foreground">
-                        {t("tooltip", {
-                          sessions: point.sessions ?? 0,
-                          gamers: point.gamers ?? 0,
-                          gedus: point.gedus ?? 0,
-                        })}
-                      </p>
+                      <p className="text-muted-foreground">{ranBy(point)}</p>
                     </div>
                   );
                 }}
@@ -772,8 +843,8 @@ export function BusinessOverviewSkeleton() {
   return (
     <div className="space-y-6" aria-hidden>
       <Ghost className="h-4 w-48" />
-      <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
-        {[0, 1, 2, 3].map((index) => (
+      <div className={TILE_GRID}>
+        {[0, 1, 2, 3, 4].map((index) => (
           <Card key={index} className="space-y-3 p-5">
             <Ghost className="h-4 w-32" />
             <Ghost className="h-8 w-24" />

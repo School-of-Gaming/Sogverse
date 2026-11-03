@@ -1908,7 +1908,7 @@
   },
   "business": {
     "title": "Activité",
-    "description": "Comment se porte School of Gaming, mois par mois. Les mois sont des mois civils à l’heure d’Helsinki, et le mois en cours n’est pas terminé.",
+    "description": "Comment se porte School of Gaming, mois par mois.",
     "readAt": "Chiffres au {time}.",
     "loadError": "Impossible de lire les chiffres d’activité. Rechargez la page pour réessayer.",
     "loadErrorWithReason": "Impossible de lire les chiffres d’activité : {reason}",
@@ -1917,13 +1917,21 @@
     "soFar": "en cours",
     "monthSoFar": "{month}, en cours",
     "tiles": {
-      "payingFamilies": {
-        "label": "Familles payantes"
+      "revenueTotal": {
+        "label": "Revenus du mois dernier",
+        "largest": "{share} {band, select, subscription {des abonnements} campsAndEvents {des camps et événements} municipality {des communes} other {sans produit indiqué}}",
+        "none": "Aucun paiement enregistré",
+        "change": "{change} par rapport au mois précédent",
+        "same": "Comme le mois précédent"
       },
-      "revenue": {
-        "label": "Revenu mensuel récurrent",
-        "subscriptions": "{count, plural, one {# abonnement actif} other {# abonnements actifs}}",
-        "outside": "{count, plural, one {# abonnement n’est pas compté : il est dans une autre devise, ou son club n’a pas de prix en euros.} other {# abonnements ne sont pas comptés : ils sont dans une autre devise, ou leur club n’a pas de prix en euros.}}"
+      "subscriptions": {
+        "label": "Abonnements par mois",
+        "live": "{count, plural, one {# abonnement actif} other {# abonnements actifs}}",
+        "outside": "{count, plural, one {# non compté, sans prix en euros} other {# non comptés, sans prix en euros}}"
+      },
+      "payingFamilies": {
+        "label": "Familles payantes",
+        "startingLater": "{count, plural, one {+# commence un club plus tard} other {+# commencent un club plus tard}}"
       },
       "gamers": {
         "label": "Gamers ayant une place",
@@ -1931,14 +1939,14 @@
       },
       "signup": {
         "label": "De l’inscription à la première place",
-        "detail": "{seated} familles sur {registered} inscrites ces {days} derniers jours",
+        "detail": "{seated} sur {registered} inscriptions, {days} derniers jours",
         "none": "Aucune inscription ces {days} derniers jours.",
         "change": "{change} points ce mois-ci"
       }
     },
     "engagement": {
       "heading": "Familles par engagement",
-      "caption": "Chaque compte parent, dans le premier groupe qui lui correspond.",
+      "caption": "Tous les comptes parents.",
       "chart": "Familles par engagement",
       "total": "{count, plural, one {famille} other {familles}}",
       "slices": {
@@ -1951,7 +1959,7 @@
     },
     "revenue": {
       "heading": "Revenus par mois",
-      "caption": "Montants facturés chaque mois, avant remboursements.",
+      "caption": "Avant remboursements.",
       "chart": "Revenus par mois",
       "series": {
         "subscriptionCents": "Abonnements",
@@ -1960,16 +1968,17 @@
         "unattributedCents": "Aucun produit indiqué"
       },
       "noData": "Aucune donnée",
-      "startsFrom": "Les paiements sont enregistrés depuis {month}. Les mois précédents ne montrent que les factures aux communes.",
-      "none": "Aucun paiement n’est encore enregistré, seules les factures aux communes apparaissent.",
+      "startsFrom": "Paiements enregistrés depuis {month}.",
+      "none": "Aucun paiement enregistré pour l’instant.",
       "nonEur": "{count, plural, one {# paiement} other {# paiements}} dans une autre devise non comptés.",
       "clubsWithoutFee": "{count, plural, one {# club sans tarif non compté} other {# clubs sans tarif non comptés}}"
     },
     "families": {
-      "heading": "Familles par mois",
-      "caption": "Nouveaux comptes parents, familles qui prennent leur première place et familles dont le dernier abonnement a pris fin.",
-      "chart": "Familles par mois",
+      "heading": "Familles payantes par mois",
+      "caption": "À la fin de chaque mois.",
+      "chart": "Familles payantes par mois",
       "series": {
+        "payingFamilies": "Familles payantes",
         "signups": "Nouvelles inscriptions",
         "firstSeats": "Première place",
         "stoppedPaying": "Ont arrêté de payer"
@@ -1977,20 +1986,13 @@
     },
     "gedus": {
       "heading": "Joueurs par Gedu",
-      "caption": "En moyenne, le nombre de joueurs qu’un Gedu avait devant lui lors d’une séance ce mois-là. Une courbe qui monte signifie que les groupes se remplissent plus vite que nous n’ajoutons de Gedus.",
+      "caption": "Par séance, en moyenne.",
       "chart": "Joueurs par Gedu par mois",
       "series": "Joueurs par Gedu",
-      "now": {
-        "label": "En ce moment, sur ce qui est en cours",
-        "detail": "{gamers, plural, one {# joueur} other {# joueurs}} dans des groupes avec {gedus, plural, one {# Gedu affecté} other {# Gedus affectés}}",
-        "none": "Aucun Gedu n’est affecté à quoi que ce soit en cours."
-      },
-      "tooltip": "{sessions, plural, one {# séance} other {# séances}} : {gamers, plural, one {# joueur} other {# joueurs}} et {gedus, plural, one {# Gedu} other {# Gedus}}",
+      "ranBy": "{sessions, plural, one {# séance} other {# séances}}, {gedus, plural, one {# Gedu} other {# Gedus}}",
       "noData": "Aucune donnée",
       "startsFrom": "Les séances sont enregistrées depuis {month}.",
       "none": "Aucune séance n’a été enregistrée sur ces mois.",
-      "recordedNote": "Une séance compte dès qu’un compte rendu, une note ou les présences y ont été enregistrés.",
-      "staffingNote": "Les Gedus d’une séance passée sont lus dans les affectations actuelles des groupes et les remplaçants réservés pour elle : un Gedu retiré d’un groupe disparaît des mois où il l’animait.",
       "certified": {
         "heading": "Gedus certifiés",
         "certified": "Certifiés",

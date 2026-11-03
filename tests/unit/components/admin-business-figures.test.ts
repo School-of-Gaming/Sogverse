@@ -4,6 +4,9 @@ import {
   engagementShares,
   gamersPerGeduPoints,
   hasUnattributedRevenue,
+  largestRevenueBand,
+  lastCompletePoint,
+  revenueChange,
   seriesStart,
   signupRate,
   signupRateChangePoints,
@@ -19,6 +22,7 @@ function revenueMonth(overrides: Partial<RevenueMonth>): RevenueMonth {
     campsAndEventsCents: 0,
     unattributedCents: 0,
     municipalityCents: 0,
+    totalCents: 0,
     municipalityClubsWithoutFee: 0,
     ...overrides,
   };
@@ -52,6 +56,7 @@ describe("engagementShares", () => {
   it("gives each slice its share of every family", () => {
     const shares = engagementShares({
       totalFamilies: 4,
+      subscribersNotYetBegun: 0,
       slices: [
         { slice: "subscriber", families: 1 },
         { slice: "neverEnrolled", families: 3 },
@@ -63,6 +68,7 @@ describe("engagementShares", () => {
   it("gives every slice nought when there are no families", () => {
     const shares = engagementShares({
       totalFamilies: 0,
+      subscribersNotYetBegun: 0,
       slices: [{ slice: "subscriber", families: 0 }],
     });
     expect(shares[0]?.share).toBe(0);
@@ -81,6 +87,31 @@ describe("hasUnattributedRevenue", () => {
 
   it("is true when any month has money naming no product", () => {
     expect(hasUnattributedRevenue([revenueMonth({ unattributedCents: 500 })])).toBe(true);
+  });
+});
+
+describe("last month's revenue", () => {
+  it("names the band that brought in most, with its share of the total", () => {
+    expect(
+      largestRevenueBand(
+        revenueMonth({
+          subscriptionCents: 1000,
+          campsAndEventsCents: 500,
+          municipalityCents: 8500,
+          totalCents: 10000,
+        }),
+      ),
+    ).toEqual({ band: "municipality", share: 0.85 });
+  });
+
+  it("names no band for a month with no total, or nothing taken", () => {
+    expect(largestRevenueBand(revenueMonth({ totalCents: null }))).toBeNull();
+    expect(largestRevenueBand(revenueMonth({ totalCents: 0 }))).toBeNull();
+  });
+
+  it("moves on the month before, or has no change when either has no total", () => {
+    expect(revenueChange({ month: "2026-10-01", totalCents: 900, monthBeforeCents: 1000 })).toBe(-100);
+    expect(revenueChange({ month: "2026-10-01", totalCents: 900, monthBeforeCents: null })).toBeNull();
   });
 });
 
@@ -103,15 +134,24 @@ describe("the gamers per Gedu line", () => {
   it("draws no point for a month before records or with no gedu, and a point for the rest", () => {
     expect(
       gamersPerGeduPoints([
-        { month: "2025-12-01", sessions: null, ratio: null },
-        { month: "2026-01-01", sessions: 0, ratio: { gamers: 0, gedus: 0, ratio: null } },
-        { month: "2026-02-01", sessions: 3, ratio: { gamers: 12, gedus: 4, ratio: 3 } },
+        { month: "2025-12-01", sessions: null, ratio: null, gedusWhoRan: null },
+        { month: "2026-01-01", sessions: 0, ratio: { gamers: 0, gedus: 0, ratio: null }, gedusWhoRan: 0 },
+        { month: "2026-02-01", sessions: 3, ratio: { gamers: 12, gedus: 4, ratio: 3 }, gedusWhoRan: 2 },
       ]),
     ).toEqual([
-      { month: "2025-12-01", gamersPerGedu: null, sessions: null, gamers: null, gedus: null },
-      { month: "2026-01-01", gamersPerGedu: null, sessions: 0, gamers: 0, gedus: 0 },
-      { month: "2026-02-01", gamersPerGedu: 3, sessions: 3, gamers: 12, gedus: 4 },
+      { month: "2025-12-01", gamersPerGedu: null, sessions: null, gedusWhoRan: null },
+      { month: "2026-01-01", gamersPerGedu: null, sessions: 0, gedusWhoRan: 0 },
+      { month: "2026-02-01", gamersPerGedu: 3, sessions: 3, gedusWhoRan: 2 },
     ]);
+  });
+
+  it("leads with the last complete month's point, never the month in progress", () => {
+    const points = [
+      { month: "2026-01-01", gamersPerGedu: 2, sessions: 4, gedusWhoRan: 2 },
+      { month: "2026-02-01", gamersPerGedu: 3, sessions: 3, gedusWhoRan: 1 },
+    ];
+    expect(lastCompletePoint(points, "2026-02-01")?.month).toBe("2026-01-01");
+    expect(lastCompletePoint(points, "2026-01-01")).toBeNull();
   });
 
   it("counts the certified Gedus on nothing running", () => {

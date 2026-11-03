@@ -177,6 +177,34 @@ describe("families by engagement", () => {
       { slice: "neverEnrolled", families: 2 },
     ]);
     expect(overview.engagement.totalFamilies).toBe(6);
+    expect(overview.engagement.subscribersNotYetBegun).toBe(0);
+  });
+
+  it("counts the subscribers whose club has not begun, who are not paying families yet", () => {
+    const SPRING: BusinessProductRow = { id: "spring", product_type: "consumer_club", billing_mode: "paid", start_date: "2026-12-01", end_date: null, timezone: "Europe/Helsinki" };
+    const overview = buildBusinessOverview(
+      facts({
+        products: [...PRODUCTS, SPRING],
+        families: [family("now"), family("later"), family("both")],
+        seats: [
+          seat("n1", "now", "club", "2026-09-01T10:00:00Z"),
+          seat("l1", "later", "spring", "2026-10-20T10:00:00Z"),
+          // Paying now in one club, and starting another later: already paying.
+          seat("b1", "both", "club", "2026-09-01T10:00:00Z"),
+          seat("b2", "both", "spring", "2026-10-20T10:00:00Z"),
+        ],
+        subscriptions: [
+          sub("now", "n1", "2026-09-01T10:00:00Z", "active"),
+          sub("later", "l1", "2026-10-20T10:00:00Z", "active"),
+          sub("both", "b1", "2026-09-01T10:00:00Z", "active"),
+          sub("both", "b2", "2026-10-20T10:00:00Z", "active"),
+        ],
+      }),
+      NOW,
+    );
+    expect(overview.engagement.slices[0]).toEqual({ slice: "subscriber", families: 3 });
+    expect(overview.headline.payingFamilies.now).toBe(2);
+    expect(overview.engagement.subscribersNotYetBegun).toBe(1);
   });
 });
 
@@ -210,6 +238,7 @@ describe("revenue by month", () => {
       campsAndEventsCents: null,
       unattributedCents: null,
       municipalityCents: 0,
+      totalCents: null,
       municipalityClubsWithoutFee: 0,
     });
     expect(byMonth.get("2026-09-01")?.subscriptionCents).toBe(4900);
@@ -219,16 +248,63 @@ describe("revenue by month", () => {
       campsAndEventsCents: 19900,
       unattributedCents: 1000,
       municipalityCents: 65000,
+      totalCents: 90800,
       municipalityClubsWithoutFee: 1,
     });
     expect(overview.revenue.nonEurPayments).toBe(1);
     expect(overview.revenue.months.map((m) => m.month)).toEqual(MONTHS);
+    // The headline reads the last complete month, every band summed, beside the one before.
+    expect(overview.headline.revenueLastMonth).toEqual({
+      month: "2026-10-01",
+      totalCents: 90800,
+      monthBeforeCents: 4900,
+    });
+  });
+
+  it("gives a month before payments were recorded no total, though the municipality had one", () => {
+    const overview = buildBusinessOverview(
+      facts({
+        payments: [payment("a", 4900, "2026-10-15T10:00:00Z", "club")],
+        municipalityMonths: MONTHS.map((month) => ({ month, totalCents: 1000, clubsWithoutFee: 0 })),
+      }),
+      NOW,
+    );
+    expect(overview.headline.revenueLastMonth).toEqual({
+      month: "2026-10-01",
+      totalCents: 5900,
+      monthBeforeCents: null,
+    });
   });
 
   it("throws rather than draw a month the municipality build did not answer", () => {
     expect(() => buildBusinessOverview(facts({ municipalityMonths: [] }), NOW)).toThrow(
       /municipality/,
     );
+  });
+});
+
+describe("paying families by month", () => {
+  it("counts paying families at each month's last instant, and now for the month in progress", () => {
+    const overview = buildBusinessOverview(
+      facts({
+        families: [family("a"), family("b")],
+        seats: [
+          seat("a1", "a", "club", "2026-08-10T10:00:00Z"),
+          // Ended at 00:30 on 1 October in Helsinki: paying when September ended.
+          seat("b1", "b", "club", "2026-09-05T10:00:00Z", "2026-09-30T21:30:00Z"),
+          // Booked on 2 November: paying now, not at October's end.
+          seat("b2", "b", "club2", "2026-11-02T10:00:00Z"),
+        ],
+      }),
+      NOW,
+    );
+    const paying = new Map(overview.families.map((m) => [m.month, m.payingFamilies]));
+    expect(paying.get("2026-07-01")).toBe(0);
+    expect(paying.get("2026-08-01")).toBe(1);
+    expect(paying.get("2026-09-01")).toBe(2);
+    expect(paying.get("2026-10-01")).toBe(1);
+    expect(paying.get("2026-11-01")).toBe(2);
+    expect(overview.families.at(-1)?.payingFamilies).toBe(overview.headline.payingFamilies.now);
   });
 });
 
@@ -388,19 +464,22 @@ describe("gamers per gedu", () => {
     );
     const byMonth = new Map(overview.gedus.months.map((m) => [m.month, m]));
     expect(overview.gedus.recordsBeginMonth).toBe("2026-10-01");
-    expect(byMonth.get("2026-09-01")).toEqual({ month: "2026-09-01", sessions: null, ratio: null });
+    expect(byMonth.get("2026-09-01")).toEqual({ month: "2026-09-01", sessions: null, ratio: null, gedusWhoRan: null });
     // gA on the 5th: kidA. On the 15th: kidA and kidB, two gedus. gB on the
     // 15th: kidD and kidE. gA on the 25th: kidA, kidB having left.
     expect(byMonth.get("2026-10-01")).toEqual({
       month: "2026-10-01",
       sessions: 4,
       ratio: { gamers: 6, gedus: 5, ratio: 6 / 5 },
+      // g1 ran three of the four, but is one Gedu.
+      gedusWhoRan: 3,
     });
     // After records begin, a month with no session has a count of none and no ratio.
     expect(byMonth.get("2026-11-01")).toEqual({
       month: "2026-11-01",
       sessions: 0,
       ratio: { gamers: 0, gedus: 0, ratio: null },
+      gedusWhoRan: 0,
     });
   });
 
@@ -423,18 +502,18 @@ describe("gamers per gedu", () => {
     expect(at("2026-10-10")).toBe(1);
   });
 
-  it("reads now over the groups of running products that have a gedu, and counts certified gedus on them", () => {
+  it("counts certified gedus, and those of them assigned to a product running now, once each", () => {
     const AUTUMN: BusinessProductRow = { id: "autumn", product_type: "camp", billing_mode: "paid", start_date: "2026-11-05", end_date: "2026-11-08", timezone: "Europe/Helsinki" };
     const overview = buildBusinessOverview(
       facts({
         products: [...PRODUCTS, AUTUMN],
         seats: [
           ...SEATS,
-          // A group of a running club with nobody assigned is left out.
-          seat("h1", "h", "club2", "2026-09-01T10:00:00Z", null, "kidH", { id: "gUnstaffed", joined: "2026-09-01T10:00:00Z" }),
         ],
         assignments: [
           { gedu_id: "g1", group_id: "gA", product_id: "club" },
+          // A second group of another running club: still one Gedu.
+          { gedu_id: "g1", group_id: "gB", product_id: "club2" },
           { gedu_id: "g2", group_id: "gA", product_id: "club" },
           { gedu_id: "g3", group_id: "gB", product_id: "club2" },
           // The summer camp is over, and the autumn one has not begun.
@@ -452,8 +531,6 @@ describe("gamers per gedu", () => {
       }),
       NOW,
     );
-    // gA now: kidA (kidB left, c is a parent). gB: kidD and kidE.
-    expect(overview.gedus.now).toEqual({ gamers: 3, gedus: 3, ratio: 1 });
     expect(overview.gedus.certified).toEqual({ certified: 4, onRunningProduct: 2 });
   });
 });
