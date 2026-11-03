@@ -1977,13 +1977,13 @@
     },
     "gedus": {
       "heading": "Gedujen kapasiteetti kuukausittain",
-      "caption": "Sertifioidut Gedut, joille maksettiin kuukauden aikana vähintään yhdestä kerhokerrasta, ja kuukauden aikana täytetyt paikat.",
-      "chart": "Paikkoja Gedua kohden kuukausittain",
+      "caption": "Suunnilleen kuinka monta lasta kullakin Gedulla oli kuukauden aikana. Nouseva käyrä tarkoittaa, että myymme paikkoja nopeammin kuin saamme Geduja kerhoihin.",
+      "chart": "Lapsia Gedua kohden kuukausittain",
       "month": "Kuukausi",
       "rows": {
         "teachingGedus": "Kerhokertoja pitäneet Gedut",
         "seatsFilled": "Täytetyt paikat",
-        "seatsPerTeachingGedu": "Paikkoja Gedua kohden"
+        "seatsPerTeachingGedu": "Lapsia Gedua kohden"
       },
       "noData": "Ei tietoa",
       "startsFrom": "Gedujen laskutuksen ensimmäinen kuukausi: {month}.",

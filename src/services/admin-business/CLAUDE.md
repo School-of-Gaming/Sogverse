@@ -55,7 +55,7 @@ nothing; what it cannot see is a change that leaves no timestamp (below).
   leaving it none — one that subscribes again and leaves again has stopped twice. A camp or
   event ending is never a stop: it is a finished purchase, not a lost family, and counting
   it would make every summer look like churn.
-- **Gedu capacity by month**: certified gedus (certified now) whom that month's gedu
+- **Gedu capacity by month**: the gedus whom that month's gedu
   invoicing pays for at least one session, beside the seats held at any moment of the month.
   Gedu invoicing reads today's assignments, so a past month is read against today's
   staffing, as it is there. Months before the first one in which any gedu is paid are absent.

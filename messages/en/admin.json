@@ -1977,13 +1977,13 @@
     },
     "gedus": {
       "heading": "Gedu capacity by month",
-      "caption": "Certified Gedus paid for at least one lesson that month, and the seats held during it.",
-      "chart": "Seats per Gedu by month",
+      "caption": "Roughly how many children each Gedu carried that month. A rising line means we’re selling seats faster than we’re staffing them.",
+      "chart": "Children per Gedu by month",
       "month": "Month",
       "rows": {
         "teachingGedus": "Gedus who ran lessons",
         "seatsFilled": "Seats filled",
-        "seatsPerTeachingGedu": "Seats per Gedu"
+        "seatsPerTeachingGedu": "Children per Gedu"
       },
       "noData": "No data",
       "startsFrom": "Gedu invoicing has records from {month}.",

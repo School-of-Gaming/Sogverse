@@ -97,7 +97,6 @@ export interface BusinessFacts {
   municipalityMonths: readonly MunicipalityMonthTotal[];
   /** One per month of the window, from the gedu invoicing build. */
   geduMonths: readonly GeduMonthTeaching[];
-  certifiedGeduIds: readonly string[];
 }
 
 // ---------------------------------------------------------------------------
@@ -191,7 +190,7 @@ export interface FamilyMonth {
 
 export interface GeduMonth {
   month: string;
-  /** Certified gedus paid for at least one session. Null before `recordsBeginMonth`. */
+  /** Gedus paid for at least one session. Null before `recordsBeginMonth`. */
   teachingGedus: number | null;
   /** Seats held at any moment of the month. */
   seatsFilled: number;
@@ -579,10 +578,7 @@ function gedusByMonth(
   spans: readonly SeatSpan[],
   months: readonly string[],
 ): BusinessGedus {
-  const certified = new Set(facts.certifiedGeduIds);
-  const teaching = new Map(
-    facts.geduMonths.map((m) => [m.month, m.paidGeduIds.filter((id) => certified.has(id)).length]),
-  );
+  const teaching = new Map(facts.geduMonths.map((m) => [m.month, m.paidGeduIds.length]));
   const anyPaid = new Set(
     facts.geduMonths.filter((m) => m.paidGeduIds.length > 0).map((m) => m.month),
   );

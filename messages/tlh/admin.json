@@ -1977,13 +1977,13 @@
     },
     "gedus": {
       "heading": "Gedu HoS jar",
-      "caption": "Gedu ta’pu’ DIllu’bogh, Daq teblu’bogh je.",
-      "chart": "Gedu wa’vaD Daqmey jar",
+      "caption": "Gedu wa’ puqpu’ ’ar ghaj jar? jenchoHchugh tlhegh, Gedu wISamlaHbogh law’ Daqmey wInobbogh law’ puS.",
+      "chart": "Gedu wa’vaD puqpu’ jar",
       "month": "jar",
       "rows": {
         "teachingGedus": "Qu’ ta’bogh Gedu",
         "seatsFilled": "Daq teblu’",
-        "seatsPerTeachingGedu": "Gedu wa’vaD Daqmey"
+        "seatsPerTeachingGedu": "Gedu wa’vaD puqpu’"
       },
       "noData": "De’ tu’lu’be’",
       "startsFrom": "{month} Daqvo’ Gedu DIl qonlu’.",

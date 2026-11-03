@@ -47,7 +47,6 @@ export class AdminBusinessService {
       subscriptions,
       prices,
       payments,
-      certifiedGeduIds,
       municipalityMonths,
       geduMonths,
     ] = await Promise.all([
@@ -57,7 +56,6 @@ export class AdminBusinessService {
       this.readSubscriptions(),
       this.readPrices(),
       this.readPayments(),
-      this.readCertifiedGeduIds(),
       Promise.all(months.map((month) => this.readMunicipalityMonth(month, now))),
       Promise.all(months.map((month) => this.readGeduMonth(month, now))),
     ]);
@@ -68,7 +66,6 @@ export class AdminBusinessService {
       subscriptions,
       prices,
       payments,
-      certifiedGeduIds,
       municipalityMonths,
       geduMonths,
     };
@@ -144,18 +141,6 @@ export class AdminBusinessService {
         .order("id")
         .range(from, to),
     );
-  }
-
-  private async readCertifiedGeduIds(): Promise<string[]> {
-    const rows = await walkPages("businessCertifiedGedus", (from, to) =>
-      this.supabase
-        .from("gedu_profiles")
-        .select("user_id", { count: "exact" })
-        .eq("certified", true)
-        .order("user_id")
-        .range(from, to),
-    );
-    return rows.map((row) => row.user_id);
   }
 
   /**

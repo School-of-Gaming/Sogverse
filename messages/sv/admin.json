@@ -1977,13 +1977,13 @@
     },
     "gedus": {
       "heading": "Gedu-kapacitet per månad",
-      "caption": "Certifierade Gedus som fick betalt för minst en lektion under månaden, och platserna som var fyllda under den.",
-      "chart": "Platser per Gedu per månad",
+      "caption": "Ungefär hur många barn varje Gedu hade under månaden. En stigande linje betyder att vi säljer platser snabbare än vi hittar Gedus till dem.",
+      "chart": "Barn per Gedu per månad",
       "month": "Månad",
       "rows": {
         "teachingGedus": "Gedus som höll lektioner",
         "seatsFilled": "Fyllda platser",
-        "seatsPerTeachingGedu": "Platser per Gedu"
+        "seatsPerTeachingGedu": "Barn per Gedu"
       },
       "noData": "Inga uppgifter",
       "startsFrom": "Gedu-faktureringen har uppgifter från {month}.",

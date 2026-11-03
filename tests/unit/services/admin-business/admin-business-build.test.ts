@@ -50,7 +50,6 @@ function facts(overrides: Partial<BusinessFacts> = {}): BusinessFacts {
     payments: [],
     municipalityMonths: MONTHS.map((month) => ({ month, totalCents: 0, clubsWithoutFee: 0 })),
     geduMonths: MONTHS.map((month) => ({ month, paidGeduIds: [] })),
-    certifiedGeduIds: [],
     ...overrides,
   };
 }
@@ -339,7 +338,7 @@ describe("families by month", () => {
 });
 
 describe("gedu capacity by month", () => {
-  it("counts certified paid gedus against seats held in the month, from the first month any gedu was paid", () => {
+  it("counts paid gedus against seats held in the month, from the first month any gedu was paid", () => {
     const overview = buildBusinessOverview(
       facts({
         families: [family("a")],
@@ -349,9 +348,8 @@ describe("gedu capacity by month", () => {
         ],
         geduMonths: MONTHS.map((month) => ({
           month,
-          paidGeduIds: month === "2026-10-01" ? ["g1", "g2", "uncertified"] : [],
+          paidGeduIds: month === "2026-10-01" ? ["g1", "g2"] : [],
         })),
-        certifiedGeduIds: ["g1", "g2"],
       }),
       NOW,
     );

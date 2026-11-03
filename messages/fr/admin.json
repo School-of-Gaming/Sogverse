@@ -1977,13 +1977,13 @@
     },
     "gedus": {
       "heading": "Capacité des Gedus par mois",
-      "caption": "Gedus certifiés payés pour au moins une séance dans le mois, et les places occupées pendant ce mois.",
-      "chart": "Places par Gedu par mois",
+      "caption": "Le nombre approximatif d’enfants pris en charge par chaque Gedu ce mois-là. Une courbe qui monte signifie que nous vendons des places plus vite que nous ne trouvons de Gedus pour les encadrer.",
+      "chart": "Enfants par Gedu par mois",
       "month": "Mois",
       "rows": {
         "teachingGedus": "Gedus ayant animé des séances",
         "seatsFilled": "Places occupées",
-        "seatsPerTeachingGedu": "Places par Gedu"
+        "seatsPerTeachingGedu": "Enfants par Gedu"
       },
       "noData": "Aucune donnée",
       "startsFrom": "La facturation des Gedus a des données depuis {month}.",
