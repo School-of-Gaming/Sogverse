@@ -814,31 +814,6 @@ describe("POST /api/participations/waitlist", () => {
     expect(mockSendTransactionalEmail).not.toHaveBeenCalled();
   });
 
-  // Same for a seat mid-purchase. Like every non-`waitlisted` shape the RPC has
-  // today it comes back `idempotent: true`, so the flag is what excludes it; the
-  // route's status check rides along as belt-and-braces against a future shape
-  // that pairs `idempotent: false` with something other than `waitlisted`.
-  it("sends nothing when the participant is mid-reservation", async () => {
-    mockAuthenticatedCustomer();
-    mockRpc.mockResolvedValue({
-      data: {
-        participation_id: PARTICIPATION_ID,
-        waitlist_position: 0,
-        status: "reserving",
-        idempotent: true,
-      },
-      error: null,
-    });
-
-    const res = await POST(
-      createRequest({ productId: PRODUCT_ID, participantId: GAMER_ID }),
-    );
-
-    expect(res.status).toBe(200);
-    expect(deferred).toHaveLength(0);
-    expect(mockSendTransactionalEmail).not.toHaveBeenCalled();
-  });
-
   it("sends nothing when the join is refused", async () => {
     mockAuthenticatedCustomer();
     mockRpc.mockResolvedValue({

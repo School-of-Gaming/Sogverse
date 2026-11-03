@@ -15,7 +15,7 @@ CREATE TABLE public.payments (
     created_at timestamp with time zone DEFAULT now() NOT NULL,
     participation_id uuid,
     product_id uuid,
-    CONSTRAINT payments_amount_cents_check CHECK ((amount_cents > 0)),
+    CONSTRAINT payments_amount_cents_check CHECK ((amount_cents >= 0)),
     CONSTRAINT payments_currency_check CHECK ((currency = ANY (ARRAY['eur'::text, 'gbp'::text, 'usd'::text])))
 );
 
@@ -32,13 +32,6 @@ COMMENT ON COLUMN public.payments.participation_id IS 'The seat this payment pai
 --
 
 COMMENT ON COLUMN public.payments.product_id IS 'The product this payment paid for: the seat''s product at the moment it was paid, which a club switch can later move the seat away from. Set on every checkout (single_payment, subscription_invoice, reservation_duplicate) and every renewal. NULL only on a row written before this column whose product could not be recovered — a renewal whose seat had been deleted, or a bundle row carrying no product. ON DELETE RESTRICT: a product money was taken for is not deleted.';
-
-
---
--- Name: CONSTRAINT payments_amount_cents_check ON payments; Type: COMMENT; Schema: public; Owner: -
---
-
-COMMENT ON CONSTRAINT payments_amount_cents_check ON public.payments IS 'A payment is money that moved: a checkout or an invoice settled at €0 records no payment, and the products webhook marks its event processed in stripe_processed_events instead.';
 
 
 --

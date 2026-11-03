@@ -826,9 +826,12 @@ function sessionSummary(
   const awaiting = row.groupId === null;
   const hasVoiceRoom = modeHasVoiceRoom(product.deliveryMode);
   const subEnd = row.subscriptionEndsAt;
-  // An ended seat has nothing ahead of it: no session to name, none cancelled
-  // before it, no room to join and no winding-down line — the card is a
-  // finished one, and its page holds the sessions up to the end.
+  // An ended seat has nothing ahead of it, and the reads already say so: its
+  // plan is empty (sessions are planned for active seats only) and its
+  // subscription, cancelled with the seat, is neither past due nor
+  // canceling — so no session, no badge and no winding-down line reach it
+  // from here. Its group survives the end, though, so the room is the one
+  // thing the card has to withhold itself.
   const ended = row.endedAt !== null;
 
   const closeMarginMs = VOICE_CONFIG.SESSION_WINDOW_AFTER_MINUTES * 60_000;
@@ -839,12 +842,10 @@ function sessionSummary(
           (session) => session.startsAt.getTime() <= subEnd.getTime(),
         );
   const lockedJoin = awaiting && hasVoiceRoom;
-  const { next, cancelledAhead } = ended
-    ? { next: null, cancelledAhead: [] }
-    : nextSessionFor(covered, now, lockedJoin);
+  const { next, cancelledAhead } = nextSessionFor(covered, now, lockedJoin);
   // What the paid window still covers, for the winding-down line: the family
   // does not attend a cancelled session, so it cannot be their last one.
-  const running = sessionsAhead(ended ? [] : covered, now, lockedJoin).filter(
+  const running = sessionsAhead(covered, now, lockedJoin).filter(
     (session) =>
       !session.cancelled &&
       session.endsAt.getTime() + closeMarginMs > now.getTime(),
@@ -879,7 +880,8 @@ function sessionSummary(
     // The room is keyed by group, so an unplaced seat has no destination —
     // the same inert `"#"` an in-person product gets, and for the same reason:
     // there is nothing to navigate to. An unplaced seat's Join is never lit,
-    // so the href is never followed.
+    // so the href is never followed. An ended seat keeps its group_id, so it
+    // is withheld here by status: the family no longer belongs in that room.
     voiceHref:
       hasVoiceRoom && row.groupId !== null && !ended
         ? ROUTES.voice.groupSession(row.groupId)
@@ -912,13 +914,13 @@ function sessionSummary(
     // status but `waitlisted` — so there is nothing here to carry, ever.
     seatOfferSentAt: null,
     awaiting,
-    paymentProblem: !ended && row.paymentProblem,
+    paymentProblem: row.paymentProblem,
     // Emitted for the whole of a winding-down membership's life, including the
     // stretch after its last session has run — that is when a parent is most
     // likely to be looking. What varies is whether it carries a date: only a
     // session still to come is one this surface is entitled to state. See
     // `cancellationFor`.
-    cancellation: ended ? null : cancellationFor(subEnd, running),
+    cancellation: cancellationFor(subEnd, running),
     scheduleLines: scheduleLinesFor(
       {
         type: product.type,

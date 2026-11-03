@@ -96,9 +96,9 @@ describe("readInScopeSeats", () => {
 
   it("throws on a seat the scope should never have returned", async () => {
     const fetch = postgrestTables({
-      participations: () => [seat("40000000-0000-4000-8000-000000000001", { status: "reserving" })],
+      participations: () => [seat("40000000-0000-4000-8000-000000000001", { status: "ended" })],
     });
-    await expect(readInScopeSeats(createFetchStubbedClient(fetch))).rejects.toThrow(/reserving/);
+    await expect(readInScopeSeats(createFetchStubbedClient(fetch))).rejects.toThrow(/ended/);
   });
 });
 

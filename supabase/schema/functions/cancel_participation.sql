@@ -22,7 +22,7 @@ $$;
 -- Name: FUNCTION cancel_participation(p_participation_id uuid, p_reason text); Type: COMMENT; Schema: public; Owner: -
 --
 
-COMMENT ON FUNCTION public.cancel_participation(p_participation_id uuid, p_reason text) IS 'legacy-cancel-participation: kept for the deployment window, because the Stripe webhook from before seats ended calls it, and removed by the follow-up that moves the webhook onto end_participation. Delegates to end_participation, reading the old admin_cancelled reason as admin_removed. service_role only.';
+COMMENT ON FUNCTION public.cancel_participation(p_participation_id uuid, p_reason text) IS 'legacy-cancel-participation: kept only for the app deployed before seats ended, whose Stripe webhook calls it while the migrations run ahead of the new app, and for Stripe''s three-day redelivery window after that; a follow-up drops it once that window has passed. Delegates to end_participation, reading the old admin_cancelled reason as admin_removed. service_role only.';
 
 
 --

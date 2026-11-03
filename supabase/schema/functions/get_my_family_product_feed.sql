@@ -287,7 +287,7 @@ BEGIN
    WHERE fs.participation_id = p_participation_id
      AND fs.status = 'canceling';
 
-  -- An ended seat is paid through the end of its access, product-local.
+  -- An ended seat's access stops at the product-local date it ended.
   IF v_access_end IS NOT NULL THEN
     SELECT (v_access_end AT TIME ZONE p.timezone)::date
       INTO v_paid_through

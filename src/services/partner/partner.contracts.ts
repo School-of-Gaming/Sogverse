@@ -67,7 +67,7 @@ export const ATTENDANCE_MARK = ["present", "absent"] as const;
 
 /**
  * The enrolment states the API reports: a live seat's stored status
- * (`LIVE_SEAT_STATUSES`, which is held to the generated enum), and
+ * (`OCCUPYING_STATUSES`, which is held to the generated enum), and
  * `completed`, which no seat stores — it is an active seat on a product whose
  * dates have passed, derived by `reportedEnrolmentStatus`.
  */

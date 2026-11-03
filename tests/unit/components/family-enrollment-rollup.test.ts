@@ -674,13 +674,19 @@ describe("toFamilyEnrollments — an ended seat", () => {
   const ENDED_AT = new Date("2026-02-09T10:00:00Z");
 
   it("is a finished card: nothing ahead, no Join, and the day it ended", () => {
+    // As the reads hand it over: no plan (sessions are planned for active
+    // seats only), and a subscription cancelled with the seat is neither past
+    // due nor canceling. The group survives, which is why the room is withheld.
     const summary = mapOne({
       sessionRows: [
-        sessionRow({
-          endedAt: ENDED_AT,
-          paymentProblem: true,
-          subscriptionEndsAt: new Date("2026-02-20T00:00:00Z"),
-        }),
+        {
+          ...sessionRow({
+            endedAt: ENDED_AT,
+            paymentProblem: false,
+            subscriptionEndsAt: null,
+          }),
+          plan: [],
+        },
       ],
       openHref: (e) => ({
         pathname: "/parent/clubs/[id]",

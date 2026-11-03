@@ -132,8 +132,8 @@ const SEATS = [
     participant_id: GAMER_D,
     home_location_id: L_REGION,
   }),
-  // Mid-checkout: never a seat anyone holds.
-  seat(R6, { product_id: P_EVENT, participant_id: GAMER_D, status: "reserving" }),
+  // Ended: held once, and never reported to a partner.
+  seat(R6, { product_id: P_EVENT, participant_id: GAMER_D, status: "ended" }),
 ];
 
 function chainNode(

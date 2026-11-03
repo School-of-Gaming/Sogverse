@@ -119,13 +119,13 @@ const SEATS = [
     }),
     programme: { programme_terms: [] },
   },
-  // Mid-checkout: never a seat anyone holds.
+  // Ended: held once, and never reported to a partner.
   seat(E6, {
     product_id: P_RUNNING,
     participant_id: GAMER_B,
     customer_id: PARENT_B,
     group_id: null,
-    status: "reserving",
+    status: "ended",
   }),
 ];
 

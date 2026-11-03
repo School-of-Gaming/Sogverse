@@ -17,9 +17,12 @@
 -- THE DEPLOYMENT WINDOW
 --
 -- Migrations reach production before the app does, and the app from before
--- this change calls `cancel_participation(uuid, text)` from the Stripe webhook.
--- It stays, tagged legacy-cancel-participation, as a wrapper over
--- end_participation; the follow-up that moves the webhook drops it.
+-- this change calls `cancel_participation(uuid, text)` from the Stripe webhook;
+-- this change's webhook calls end_participation. The old function stays, tagged
+-- legacy-cancel-participation, as a wrapper over end_participation, only for
+-- the app still deployed when these migrations run and for the deliveries
+-- Stripe may retry to it over the following three days. A follow-up after that
+-- window drops it, and tightens payments_amount_cents_check to positive.
 
 -- ---------------------------------------------------------------------------
 -- 1. family_subscriptions.ended_at and its terminal state
@@ -119,7 +122,7 @@ BEGIN
 END;
 $$;
 
-COMMENT ON FUNCTION public.end_participation(p_participation_id uuid, p_reason public.participation_end_reason) IS 'The one way a seat ends. Under the product lock: a seat that is held (active, or the retired reserving) becomes ended with ended_at now() and end_reason p_reason, keeping its group so the family reads the feed up to that day, and its family_subscriptions row becomes cancelled with ended_at now(), after which that row is terminal. A waitlisted row never held a seat and is deleted instead. A row already ended, or not there at all, answers kind=noop and writes nothing, so a redelivered Stripe deletion is harmless. Otherwise answers kind=cancelled with product_id, previous_status, the stripe_subscription_id the row carried (NULL when none) and reason. Touches only the database: whoever calls it has already dealt with Stripe, or Stripe is the one telling us. service_role only.';
+COMMENT ON FUNCTION public.end_participation(p_participation_id uuid, p_reason public.participation_end_reason) IS 'The one way a seat ends. Under the product lock: an active seat becomes ended with ended_at now() and end_reason p_reason, keeping its group so the family reads the feed up to that day, and its family_subscriptions row becomes cancelled with ended_at now(), after which that row is terminal. A waitlisted row never held a seat and is deleted instead. A row already ended, or not there at all, answers kind=noop and writes nothing, so a redelivered Stripe deletion is harmless. Otherwise answers kind=cancelled with product_id, previous_status, the stripe_subscription_id the row carried (NULL when none) and reason. Touches only the database: whoever calls it has already dealt with Stripe, or Stripe is the one telling us. service_role only.';
 
 REVOKE ALL ON FUNCTION public.end_participation(uuid, public.participation_end_reason) FROM PUBLIC;
 GRANT ALL ON FUNCTION public.end_participation(uuid, public.participation_end_reason) TO service_role;
@@ -139,7 +142,7 @@ BEGIN
 END;
 $$;
 
-COMMENT ON FUNCTION public.cancel_participation(p_participation_id uuid, p_reason text) IS 'legacy-cancel-participation: kept for the deployment window, because the Stripe webhook from before seats ended calls it, and removed by the follow-up that moves the webhook onto end_participation. Delegates to end_participation, reading the old admin_cancelled reason as admin_removed. service_role only.';
+COMMENT ON FUNCTION public.cancel_participation(p_participation_id uuid, p_reason text) IS 'legacy-cancel-participation: kept only for the app deployed before seats ended, whose Stripe webhook calls it while the migrations run ahead of the new app, and for Stripe''s three-day redelivery window after that; a follow-up drops it once that window has passed. Delegates to end_participation, reading the old admin_cancelled reason as admin_removed. service_role only.';
 
 REVOKE ALL ON FUNCTION public.cancel_participation(uuid, text) FROM PUBLIC;
 GRANT ALL ON FUNCTION public.cancel_participation(uuid, text) TO service_role;

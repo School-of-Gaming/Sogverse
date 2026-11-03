@@ -6171,7 +6171,7 @@ export type Database = {
       notification_channel: "email"
       notification_kind: "session_report_copy"
       participation_end_reason: "subscription_cancelled" | "admin_removed"
-      participation_status: "reserving" | "active" | "waitlisted" | "ended"
+      participation_status: "active" | "waitlisted" | "ended"
       payment_purpose:
         | "bundle"
         | "subscription_invoice"
@@ -6371,7 +6371,7 @@ export const Constants = {
       notification_channel: ["email"],
       notification_kind: ["session_report_copy"],
       participation_end_reason: ["subscription_cancelled", "admin_removed"],
-      participation_status: ["reserving", "active", "waitlisted", "ended"],
+      participation_status: ["active", "waitlisted", "ended"],
       payment_purpose: [
         "bundle",
         "subscription_invoice",

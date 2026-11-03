@@ -1575,7 +1575,6 @@
     "participationStatus": {
       "active": "Aktiv",
       "waitlisted": "På väntelista",
-      "reserving": "Inväntar betalning",
       "ended": "Avslutad"
     },
     "emailVerified": "E-postadress verifierad",

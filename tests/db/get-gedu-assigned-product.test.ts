@@ -336,15 +336,11 @@ describe("get_gedu_assigned_product", () => {
       //
       // A CHECK constraint requires waitlisted to carry a waitlisted_at. The
       // admin (service-role) client bypasses RLS but NOT CHECK constraints.
-      // `reserving` is a retired status — nothing writes it any more — kept in
-      // the sweep because the filter under test must exclude every member of
-      // the enum that isn't 'active', retired ones included.
       const fixtures = [
         {
           status: "waitlisted" as const,
           extras: { waitlisted_at: new Date().toISOString() },
         },
-        { status: "reserving" as const, extras: {} },
         {
           status: "ended" as const,
           extras: {

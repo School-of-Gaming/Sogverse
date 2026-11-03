@@ -1,5 +1,6 @@
 import "server-only";
 
+import { OCCUPYING_STATUSES } from "@/lib/constants/participations";
 import { z } from "zod";
 
 import { readPartnerPage } from "@/lib/api/partner-cursor.server";
@@ -21,7 +22,6 @@ import {
   readRobloxAccounts,
 } from "./partner-shared-lookups.server";
 import {
-  LIVE_SEAT_STATUSES,
   PROGRAMME_TERMS_SLUG,
   productDelivery,
 } from "./partner-shared-values";
@@ -84,7 +84,7 @@ export async function readRobloxResearch(
     let seats = db
       .from("participations")
       .select(RESEARCH_SEAT_COLUMNS, { count: "exact" })
-      .in("status", LIVE_SEAT_STATUSES)
+      .in("status", OCCUPYING_STATUSES)
       .eq(IN_SCOPE_SEAT_FILTER, PROGRAMME_TERMS_SLUG)
       .eq("child.role", "gamer");
     if (query.product_id !== undefined) seats = seats.eq("product_id", query.product_id);

@@ -1,5 +1,6 @@
 import "server-only";
 
+import { OCCUPYING_STATUSES, isOccupyingStatus } from "@/lib/constants/participations";
 import {
   effectiveStatus,
   type EffectiveProductStatus,
@@ -8,9 +9,7 @@ import { chunkKeys, walkPages } from "@/lib/supabase/paging";
 import type { PartnerEnrolmentStatus } from "./partner.contracts";
 import type { PartnerDb } from "./partner-shared-db.server";
 import {
-  LIVE_SEAT_STATUSES,
   PROGRAMME_TERMS_SLUG,
-  isLiveStatus,
 } from "./partner-shared-values";
 
 /**
@@ -77,7 +76,7 @@ export async function readProgrammeProductIds(db: PartnerDb): Promise<string[]> 
  *
  *   db.from("participations")
  *     .select(`id, product_id, ${IN_SCOPE_SEAT_EMBED}`, { count: "exact" })
- *     .in("status", LIVE_SEAT_STATUSES)
+ *     .in("status", OCCUPYING_STATUSES)
  *     .eq(IN_SCOPE_SEAT_FILTER, PROGRAMME_TERMS_SLUG)
  *     .order("id")
  *
@@ -131,7 +130,7 @@ export async function readInScopeSeats(
     db
       .from("participations")
       .select(IN_SCOPE_SEAT_COLUMNS, { count: "exact" })
-      .in("status", LIVE_SEAT_STATUSES)
+      .in("status", OCCUPYING_STATUSES)
       .eq(IN_SCOPE_SEAT_FILTER, PROGRAMME_TERMS_SLUG);
 
   type Row = Awaited<ReturnType<typeof base>>["data"];
@@ -164,9 +163,9 @@ export async function readInScopeSeats(
 
   const seats = new Map<string, InScopeSeat>();
   for (const row of rows) {
-    // The query filters on the live statuses, so this narrows a type and
+    // The query filters on the occupying statuses, so this narrows a type and
     // refuses nothing the database did not already refuse.
-    if (!isLiveStatus(row.status)) {
+    if (!isOccupyingStatus(row.status)) {
       throw new Error(`partner in-scope seats: seat ${row.id} came back ${row.status}`);
     }
     seats.set(row.id, {

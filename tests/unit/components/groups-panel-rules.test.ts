@@ -844,7 +844,6 @@ describe("heldProductIds", () => {
     expect(
       heldProductIds([
         row("ended", "club-a"),
-        row("reserving", "club-b"),
       ]).size,
     ).toBe(0);
   });

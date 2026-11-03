@@ -66,7 +66,7 @@ export const DB_SEAT_READERS: Record<string, SeatRead> = {
   "function:end_participation": { kind: "history", why: "the one way a seat ends: it reads the row to answer noop on one already ended" },
   "function:enqueue_klaviyo_parents_of_location": { kind: "history", why: "an over-wide fan-out: re-snapshotting a family whose seat ended costs one profile sync and changes nothing" },
   "function:enqueue_klaviyo_parents_of_product": { kind: "history", why: "an over-wide fan-out: re-snapshotting a family whose seat ended costs one profile sync and changes nothing" },
-  "function:get_my_family_product_feed": { kind: "history", why: "an ended seat keeps its page, bounded at what it paid for" },
+  "function:get_my_family_product_feed": { kind: "history", why: "an ended seat keeps its page, bounded at the instant it ended" },
   "function:klaviyo_attendance_marked": { kind: "history", why: "attributes an attendance mark to the family that held the seat, preferring a live one" },
 
   // --- by-id-gated -------------------------------------------------------
@@ -83,7 +83,7 @@ export const DB_SEAT_READERS: Record<string, SeatRead> = {
 
   // --- writer ------------------------------------------------------------
   "function:admin_enroll_participant": { kind: "writer", why: "inserts an active seat; the occupying-status unique index refuses a second one and lets an ended pair come back" },
-  "function:apply_group_changes": { kind: "writer", why: "moves seats the admin panel shows, which are active ones" },
+  "function:apply_group_changes": { kind: "writer", why: "its move filters to active seats, so one naming an ended seat from a stale panel is skipped" },
   "function:claim_expired_seat_offer_notifications": { kind: "writer", why: "claims waitlisted rows whose offer lapsed" },
   "function:confirm_paid_participation": { kind: "writer", why: "stamps the seat confirm_booking just answered with" },
   "function:erase_participations": { kind: "writer", why: "the one deletion of seats, for erasure" },
@@ -129,8 +129,8 @@ export const TS_SEAT_READERS: Record<string, readonly TsSeatRead[]> = {
     { in: "resolveSeatOfferDeadEnd", kind: "by-id-gated", why: "the signed link's row; the offer classifier refuses anything not waitlisted" },
   ],
   "src/services/billing/billing.server.ts": [
-    { in: "resolveBillingAccountsViaRls", kind: "history", why: "the billing page lists ended subscriptions too, marked as ended" },
-    { in: "resolveBillingAccountsViaRls", kind: "history", why: "the name and club of each listed subscription's seat" },
+    { in: "resolveBillingAccountsViaRls", kind: "history", why: "an ended subscription covers nobody and is left out of an account's list, but its Stripe customer stays, its invoices and cards still the family's" },
+    { in: "resolveBillingAccountsViaRls", kind: "history", why: "the name and club of each subscription's seat, read with it before the ended ones are skipped" },
     { in: "resolveParticipationStripeCustomerId", kind: "by-id-gated", why: "the Stripe customer behind one seat, which stays the family's after it ends" },
     { in: "ownsStripeCustomer", kind: "history", why: "an ownership proof: any subscription the parent ever had shows the Stripe customer is theirs" },
   ],

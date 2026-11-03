@@ -3,7 +3,6 @@ import { describe, it, expect } from "vitest";
 import { CONSENT_DOCUMENTS } from "@/lib/constants/consent-documents";
 import type { LocationWithChain } from "@/services/locations/locations.service";
 import {
-  LIVE_SEAT_STATUSES,
   PROGRAMME_AGE_RANGE,
   PROGRAMME_PRIVACY_SLUG,
   PROGRAMME_TERMS_SLUG,
@@ -24,10 +23,6 @@ describe("the Programme", () => {
 
   it("serves 13 to 17", () => {
     expect(PROGRAMME_AGE_RANGE).toEqual({ min: 13, max: 17 });
-  });
-
-  it("counts every held seat live, never a reservation", () => {
-    expect([...LIVE_SEAT_STATUSES].sort()).toEqual(["active", "waitlisted"]);
   });
 });
 

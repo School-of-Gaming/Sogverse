@@ -1575,7 +1575,6 @@
     "participationStatus": {
       "active": "Actif",
       "waitlisted": "En liste d’attente",
-      "reserving": "En attente de paiement",
       "ended": "Terminé"
     },
     "emailVerified": "Adresse e-mail vérifiée",

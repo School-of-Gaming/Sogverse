@@ -487,6 +487,41 @@ describe("apply_group_changes", () => {
         .eq("group_id", groupA)
         .eq("gedu_id", GEDU_A);
     });
+
+    it("leaves an ended seat in the group it ended in", async () => {
+      // A panel loaded before the seat ended still offers to move it.
+      const { data: seat, error: seatError } = await admin
+        .from("participations")
+        .insert({
+          product_id: PRODUCT_MOVES,
+          participant_id: TEST_IDS.GAMER_2,
+          customer_id: TEST_IDS.CUSTOMER,
+          status: "active",
+          group_id: groupA,
+        })
+        .select("id")
+        .single();
+      expect(seatError).toBeNull();
+      const endedId = seat!.id;
+      const ended = await admin.rpc("end_participation", {
+        p_participation_id: endedId,
+        p_reason: "admin_removed",
+      });
+      expect(ended.error).toBeNull();
+
+      const { error } = await adminAuth.rpc("apply_group_changes", {
+        p_product_id: PRODUCT_MOVES,
+        p_participation_moves: [{ participationId: endedId, toGroupId: groupB }],
+      });
+      expect(error).toBeNull();
+
+      const { data: row } = await admin
+        .from("participations")
+        .select("status, group_id")
+        .eq("id", endedId)
+        .single();
+      expect(row).toEqual({ status: "ended", group_id: groupA });
+    });
   });
 
   // ---------------------------------------------------------------------------

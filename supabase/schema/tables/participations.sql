@@ -82,7 +82,7 @@ COMMENT ON COLUMN public.participations.booking_id IS 'The booking this seat cam
 -- Name: COLUMN participations.ended_at; Type: COMMENT; Schema: public; Owner: -
 --
 
-COMMENT ON COLUMN public.participations.ended_at IS 'When the seat ended, set by end_participation; NULL exactly when the status is not ended (chk_participations_ended_iff_ended_at). An ended seat keeps its group_id and group_joined_at, so its family reads the group''s feed and reports up to this instant, or to the end of the period its subscription had paid for when that is later.';
+COMMENT ON COLUMN public.participations.ended_at IS 'When the seat ended, set by end_participation; NULL exactly when the status is not ended (chk_participations_ended_iff_ended_at). An ended seat keeps its group_id and group_joined_at, so its family reads the group''s feed and reports up to this instant and no further, never raised to the date its subscription had paid through.';
 
 
 --

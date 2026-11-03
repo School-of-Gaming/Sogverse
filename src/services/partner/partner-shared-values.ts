@@ -1,5 +1,4 @@
 import { CONSENT_DOCUMENT_BUNDLES } from "@/lib/constants/consent-documents";
-import { OCCUPYING_STATUSES } from "@/lib/constants/participations";
 import type { EffectiveProductStatus } from "@/lib/products/effective-status";
 import type { DeliveryMode } from "@/types";
 import type {
@@ -62,23 +61,6 @@ export const PROGRAMME_PRIVACY_SLUG = PROGRAMME_SLUGS.privacy;
  * legal eligibility, which does not move when the shop's bands do.
  */
 export const PROGRAMME_AGE_RANGE = { min: 13, max: 17 } as const;
-
-/**
- * The stored seat states that put a seat in scope: a seat a family holds or a
- * place it waits in — never `reserving`, and never `ended`, so a seat that has
- * ended is not reported to a partner. The app's one occupying set, which is
- * held to the generated enum where it is declared.
- */
-export const LIVE_SEAT_STATUSES = OCCUPYING_STATUSES;
-
-/**
- * Narrow a stored seat status to a live one. A read that filters on
- * `LIVE_SEAT_STATUSES` refuses nothing with it that the database did not
- * already refuse; it is how the row's status gets the enrolment status type.
- */
-export function isLiveStatus(status: string): status is PartnerEnrolmentStatus {
-  return (LIVE_SEAT_STATUSES as readonly string[]).includes(status);
-}
 
 /**
  * The status an enrolment reports. A seat keeps `active` in storage after

@@ -74,22 +74,6 @@ describe("payments stand on their own", () => {
     return data?.id ?? "";
   }
 
-  it("refuses a €0 payment: a payment is money that moved", async () => {
-    // The migration that tightened this deleted the €0 rows written before it,
-    // which a test running on the migrated database cannot stage; the CHECK is
-    // what keeps them gone.
-    const { error } = await admin.from("payments").insert({
-      customer_id: TEST_IDS.CUSTOMER,
-      amount_cents: 0,
-      currency: "eur",
-      purpose: "subscription_invoice",
-      participation_id: participationId,
-      product_id: productId,
-      stripe_event_id: `evt_payments_${RUN}_zero`,
-    });
-    expect(error?.code).toBe("23514");
-  });
-
   it("refuses deleting a product money was taken for", async () => {
     await insertPayment();
     // Its seat erased first, so only the payment stands in the way.

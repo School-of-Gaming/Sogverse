@@ -11,9 +11,8 @@
 -- 2. Every event id a payments row already carries is copied in, €0 rows
 --    included, so a redelivery of an event processed before this change is
 --    still recognised.
--- 3. The €0 payment rows, which recorded no money, are deleted, and the amount
---    CHECK tightens from "not negative" to "positive" so none is written again.
---    Nothing fires on a payments delete. Their parents are filed in the Klaviyo
+-- 3. The €0 payment rows, which recorded no money, are deleted, and the webhook
+--    writes none again. Nothing fires on a payments delete. Their parents are filed in the Klaviyo
 --    profile outbox, because the snapshot's first and last payment and lifetime
 --    totals are read from payments and move for every family whose first
 --    checkout cost nothing: `sog_first_payment_at` becomes the first money they
@@ -55,8 +54,11 @@ SELECT public.enqueue_klaviyo_profiles(ARRAY(
 
 DELETE FROM public.payments WHERE amount_cents = 0;
 
-ALTER TABLE public.payments
-  DROP CONSTRAINT payments_amount_cents_check,
-  ADD CONSTRAINT payments_amount_cents_check CHECK (amount_cents > 0);
-
-COMMENT ON CONSTRAINT payments_amount_cents_check ON public.payments IS 'A payment is money that moved: a checkout or an invoice settled at €0 records no payment, and the products webhook marks its event processed in stripe_processed_events instead.';
+-- payments_amount_cents_check stays "not negative" in this release, though the
+-- webhook no longer writes a €0 row. The app deployed before this change runs on
+-- the new schema for about a minute before it is replaced, and its webhook still
+-- writes a €0 row for a deferred-billing checkout. A check tightened to
+-- "positive" would fail that delivery before its confirmation mail, and Stripe's
+-- retry, reaching the new app, would find the seat already confirmed and send no
+-- mail at all. The check is tightened in the follow-up that drops the legacy
+-- cancel_participation wrapper, once no old app can be writing.

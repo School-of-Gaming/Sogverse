@@ -308,7 +308,6 @@ COMMENT ON TYPE public.participation_end_reason IS 'Why a seat ended. subscripti
 --
 
 CREATE TYPE public.participation_status AS ENUM (
-    'reserving',
     'active',
     'waitlisted',
     'ended'
@@ -319,7 +318,7 @@ CREATE TYPE public.participation_status AS ENUM (
 -- Name: TYPE participation_status; Type: COMMENT; Schema: public; Owner: -
 --
 
-COMMENT ON TYPE public.participation_status IS 'Where a participation stands. active: it holds a seat now. waitlisted: a place in line, not a seat; leaving the line deletes the row. ended: it held a seat and does not any more, kept so who was in which club, when, and why they left survives, with ended_at and end_reason saying when and why (end_participation is the one writer). Whether the product itself has finished is derived from its dates and never stored here. ''reserving'' is RETIRED (2026-08): paid participations are created at payment confirmation, so nothing writes it; it stays listed because rows written before then may carry it.';
+COMMENT ON TYPE public.participation_status IS 'Where a participation stands. active: it holds a seat now. waitlisted: a place in line, not a seat; leaving the line deletes the row. ended: it held a seat and does not any more, kept so who was in which club, when, and why they left survives, with ended_at and end_reason saying when and why (end_participation is the one writer). Whether the product itself has finished is derived from its dates and never stored here.';
 
 
 --
