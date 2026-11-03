@@ -226,8 +226,9 @@ describe("participations race + idempotency", () => {
     });
 
     it("is idempotent for a redelivery of the same Checkout Session", async () => {
-      // The webhook writes its payment row last, so a failure after the seat is
-      // created leaves no commit marker and Stripe re-runs the whole handler.
+      // The webhook marks an event processed only after its last write, so a
+      // failure after the seat is created leaves it unmarked and Stripe re-runs
+      // the whole handler.
       // That re-run must get its own row back — not a duplicate verdict, which
       // would cancel a paying customer's live subscription.
       const first = await payForBooking(admin, PRODUCT_CONFIRM, TEST_IDS.GAMER, TEST_IDS.CUSTOMER, "cs_replay_1");

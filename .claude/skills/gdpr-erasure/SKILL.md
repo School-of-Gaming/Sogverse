@@ -32,6 +32,13 @@ change the plan:
   money or staffing history, so it is a decision rather than an obstacle. Accounting
   records carry a statutory retention obligation, so raise it with finance before
   touching them. Do not delete these rows to clear the way.
+- **A payment survives its seat.** When a gamer is erased while the parent who paid
+  stays, the cascade takes the gamer's seats and each payment's `participation_id`
+  goes NULL by itself (`ON DELETE SET NULL`): the money stays recorded against the
+  parent and the product. Its `metadata` still names the gamer's and the seat's ids
+  (`gamerId`, `participationId`), so the scan below HITs `payments.metadata`. Those
+  are expected, leave them: after the delete they point at nothing, and the row is
+  the accounting record.
 - **`consent_acceptances.accepted_by`, `gamer_consent_acceptances.accepted_by`,
   `products.created_by` and the `voice_*` columns carry no `ON DELETE` action.** A row
   there blocks the delete unless the same delete cascades it away by another column. A

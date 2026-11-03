@@ -424,10 +424,23 @@ describe("family product feed", () => {
     });
 
     it("keeps an ended seat's page, bounded at the instant its seat ended", async () => {
-      // Ended between the TWO_DAYS_AGO session's start and YESTERDAY's, with
-      // no subscription to raise the bound: the earlier two stay, the later
-      // report is somebody else's club now, and the plan stops there too.
+      // Ended between the TWO_DAYS_AGO session's start and YESTERDAY's: the
+      // earlier two stay, the later report is somebody else's club now, and
+      // the plan stops there too. Its subscription had paid a month further,
+      // and that does not raise the bound: reports up to the day they left.
       const endedAt = `${TWO_DAYS_AGO}T18:00:00.000Z`;
+      const sub = await admin.from("family_subscriptions").insert({
+        customer_id: TEST_IDS.CUSTOMER,
+        participation_id: siblingPlaced,
+        stripe_subscription_id: `sub_feed_ended_${siblingPlaced}`,
+        stripe_customer_id: "cus_feed_ended",
+        currency: "eur",
+        status: "cancelled",
+        current_period_end: new Date(
+          Date.now() + 30 * 24 * 60 * 60 * 1000,
+        ).toISOString(),
+      });
+      expect(sub.error).toBeNull();
       const ended = await admin
         .from("participations")
         .update({
@@ -457,6 +470,10 @@ describe("family product feed", () => {
           .from("participations")
           .update({ status: "active", ended_at: null, end_reason: null })
           .eq("id", siblingPlaced);
+        await admin
+          .from("family_subscriptions")
+          .delete()
+          .eq("participation_id", siblingPlaced);
       }
     });
 

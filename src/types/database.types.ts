@@ -2592,6 +2592,8 @@ export type Database = {
           customer_id: string
           id: string
           metadata: Json
+          participation_id: string | null
+          product_id: string | null
           purpose: Database["public"]["Enums"]["payment_purpose"]
           stripe_event_id: string
           stripe_invoice_id: string | null
@@ -2604,6 +2606,8 @@ export type Database = {
           customer_id: string
           id?: string
           metadata?: Json
+          participation_id?: string | null
+          product_id?: string | null
           purpose: Database["public"]["Enums"]["payment_purpose"]
           stripe_event_id: string
           stripe_invoice_id?: string | null
@@ -2616,6 +2620,8 @@ export type Database = {
           customer_id?: string
           id?: string
           metadata?: Json
+          participation_id?: string | null
+          product_id?: string | null
           purpose?: Database["public"]["Enums"]["payment_purpose"]
           stripe_event_id?: string
           stripe_invoice_id?: string | null
@@ -2634,6 +2640,20 @@ export type Database = {
             columns: ["customer_id"]
             isOneToOne: false
             referencedRelation: "user_list_entries"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "payments_participation_id_fkey"
+            columns: ["participation_id"]
+            isOneToOne: false
+            referencedRelation: "participations"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "payments_product_id_fkey"
+            columns: ["product_id"]
+            isOneToOne: false
+            referencedRelation: "products"
             referencedColumns: ["id"]
           },
         ]
@@ -3761,6 +3781,24 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      stripe_processed_events: {
+        Row: {
+          event_type: string
+          processed_at: string
+          stripe_event_id: string
+        }
+        Insert: {
+          event_type: string
+          processed_at?: string
+          stripe_event_id: string
+        }
+        Update: {
+          event_type?: string
+          processed_at?: string
+          stripe_event_id?: string
+        }
+        Relationships: []
       }
       substitution_notification_dms: {
         Row: {
