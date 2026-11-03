@@ -30,14 +30,16 @@ BEGIN
   -- two checks together are what stands in for an entry there, and the db tests
   -- assert both halves negatively.
   --
-  -- ANY status counts, not just active: a note about somebody on the group's
-  -- waitlist is a coherent thing to write, and narrowing it buys nothing. What
-  -- it does exclude is a member who has LEFT the group, which is why an
-  -- orphaned note cannot be edited back into life.
+  -- Any status but ended counts, not just active: a note about somebody on the
+  -- group's waitlist is a coherent thing to write, and narrowing it buys
+  -- nothing. What it does exclude is a member who has LEFT the group — moved
+  -- out, or whose seat ended and so keeps the group only as history — which is
+  -- why an orphaned note cannot be edited back into life.
   IF NOT EXISTS (
     SELECT 1 FROM public.participations part
      WHERE part.group_id       = p_group_id
        AND part.participant_id = p_participant_id
+       AND part.status        <> 'ended'
   ) THEN
     RAISE EXCEPTION 'Forbidden' USING ERRCODE = '42501';
   END IF;
@@ -94,7 +96,7 @@ $$;
 -- Name: FUNCTION set_gamer_group_note(p_group_id uuid, p_participant_id uuid, p_note text); Type: COMMENT; Schema: public; Owner: -
 --
 
-COMMENT ON FUNCTION public.set_gamer_group_note(p_group_id uuid, p_participant_id uuid, p_note text) IS 'Write, replace or clear the staff note about one member of one group, and return the resulting document (group_id, participant_id, note, note_updated_by_first_name, updated_at). Open to an ADMIN or to any gedu assigned to any group of the group''s product, with full read/write parity between the two; guard-first on assert_role, then two further 42501s — the ACTOR half (staff reach over the product) and the TARGET half (the participant actually holds a participation in that group, at ANY status). The target half is what stands in for a write-IDOR loop entry, since the table carries no write grant for any client role. A trimmed-empty note DELETES the row and returns the null-shaped document, because absence of a row is what "no note" means everywhere else. Over-long notes are refused by the table''s CHECK (23514) rather than truncated. Last-write-wins, and only the last editor is stored — there is no history. A note does not follow a member moved to another group: it stays where it was written.';
+COMMENT ON FUNCTION public.set_gamer_group_note(p_group_id uuid, p_participant_id uuid, p_note text) IS 'Write, replace or clear the staff note about one member of one group, and return the resulting document (group_id, participant_id, note, note_updated_by_first_name, updated_at). Open to an ADMIN or to any gedu assigned to any group of the group''s product, with full read/write parity between the two; guard-first on assert_role, then two further 42501s — the ACTOR half (staff reach over the product) and the TARGET half (the participant actually holds a participation in that group, at any status but ended). The target half is what stands in for a write-IDOR loop entry, since the table carries no write grant for any client role. A trimmed-empty note DELETES the row and returns the null-shaped document, because absence of a row is what "no note" means everywhere else. Over-long notes are refused by the table''s CHECK (23514) rather than truncated. Last-write-wins, and only the last editor is stored — there is no history. A note does not follow a member moved to another group: it stays where it was written.';
 
 
 --

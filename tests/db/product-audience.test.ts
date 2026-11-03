@@ -18,6 +18,7 @@ import {
   createTestProduct,
   deleteTestProducts,
   payForBooking,
+  eraseParticipations,
 } from "./product-helpers";
 
 /**
@@ -183,16 +184,15 @@ describe("product audience", () => {
   });
 
   afterAll(async () => {
-    await admin.from("participations").delete().in("product_id", ALL_PRODUCTS);
+    await eraseParticipations(admin, (q) => q.in("product_id", ALL_PRODUCTS));
     await deleteTestProducts(admin, ALL_PRODUCTS);
   });
 
   /** Everything except the roster fixture, which the roster block relies on. */
   beforeEach(async () => {
-    await admin
-      .from("participations")
-      .delete()
-      .in("product_id", [PRODUCT_GAMERS, PRODUCT_PARENTS, PRODUCT_BOTH]);
+    await eraseParticipations(admin, (q) =>
+      q.in("product_id", [PRODUCT_GAMERS, PRODUCT_PARENTS, PRODUCT_BOTH]),
+    );
   });
 
   // -------------------------------------------------------------------------

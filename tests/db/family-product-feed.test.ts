@@ -12,6 +12,7 @@ import {
   createScheduleSlot,
   createTestProduct,
   deleteTestProducts,
+  eraseParticipations,
 } from "./product-helpers";
 
 /**
@@ -290,7 +291,7 @@ describe("family product feed", () => {
   });
 
   afterAll(async () => {
-    await admin.from("participations").delete().in("product_id", ALL_PRODUCTS);
+    await eraseParticipations(admin, (q) => q.in("product_id", ALL_PRODUCTS));
     await deleteTestProducts(admin, ALL_PRODUCTS);
     await admin
       .from("site_details")
@@ -419,6 +420,43 @@ describe("family product feed", () => {
         expect(session.report).toBe(`Report for ${session.session_date}`);
         expect(session.starts_at).toBeTruthy();
         expect(session.ends_at).toBeTruthy();
+      }
+    });
+
+    it("keeps an ended seat's page, bounded at the instant its seat ended", async () => {
+      // Ended between the TWO_DAYS_AGO session's start and YESTERDAY's, with
+      // no subscription to raise the bound: the earlier two stay, the later
+      // report is somebody else's club now, and the plan stops there too.
+      const endedAt = `${TWO_DAYS_AGO}T18:00:00.000Z`;
+      const ended = await admin
+        .from("participations")
+        .update({
+          status: "ended",
+          ended_at: endedAt,
+          end_reason: "admin_removed",
+        })
+        .eq("id", siblingPlaced);
+      expect(ended.error).toBeNull();
+
+      try {
+        const { data, error } = await customerAuth.rpc(
+          "get_my_family_product_feed",
+          { p_participation_id: siblingPlaced },
+        );
+        expect(error).toBeNull();
+        const feed = familyProductFeed.parse(data);
+        expect(feed.sessions.map((s) => s.session_date)).toEqual([
+          TWO_DAYS_AGO,
+          LONG_AGO,
+        ]);
+        for (const planned of feed.planned_sessions) {
+          expect(planned.date <= TWO_DAYS_AGO).toBe(true);
+        }
+      } finally {
+        await admin
+          .from("participations")
+          .update({ status: "active", ended_at: null, end_reason: null })
+          .eq("id", siblingPlaced);
       }
     });
 

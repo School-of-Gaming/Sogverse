@@ -1576,7 +1576,7 @@
       "active": "Aktiv",
       "waitlisted": "På väntelista",
       "reserving": "Inväntar betalning",
-      "completed": "Avslutad"
+      "ended": "Avslutad"
     },
     "emailVerified": "E-postadress verifierad",
     "emailNotVerified": "E-postadressen är inte verifierad",

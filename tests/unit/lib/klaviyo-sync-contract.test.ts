@@ -109,7 +109,7 @@ const FULL: KlaviyoParentSnapshot = {
   gamers: [{ birth_year: 2016, gender: "boy", minecraft: true, roblox: false }],
   participations: [
     { id: "p1", status: "active", product: CLUB },
-    { id: "p2", status: "completed", product: CAMP },
+    { id: "p2", status: "active", product: CAMP },
     { id: "p3", status: "waitlisted", product: EVENT },
     { id: "p4", status: "active", product: MUNICIPAL },
   ],

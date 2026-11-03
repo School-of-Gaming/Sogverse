@@ -346,7 +346,7 @@ function buildGamerParticipationsQuery(
  * `buildGamerParticipationsQuery`. Powers the admin user-detail page's
  * "Assigned products" surface, where an admin views every product a gamer (or
  * a parent's gamers) is signed up to — across all statuses (active /
- * waitlisted / completed), so support can see exactly what state
+ * waitlisted / ended), so support can see exactly what state
  * each gamer is in. Reachable only for admins via the
  * `admin_full_access_participations` RLS policy.
  */
@@ -857,7 +857,7 @@ export class ParticipationsService {
       .select("id")
       .eq("product_id", productId)
       .eq("participant_id", participantId)
-      .in("status", ["active", "waitlisted", "completed"])
+      .in("status", ["active", "waitlisted"])
       .maybeSingle();
 
     if (error) throw error;
@@ -1186,11 +1186,11 @@ function mergeGamerSignupState(
   // Priority order: active > waitlisted. A gamer can hold more than one row on
   // a product (e.g. a stale waitlisted row plus a fresh active one); the
   // strongest state wins so the picker shows "Signed up" over "On waitlist".
-  // `completed` and any other status are ignored — only placed/waitlisted rows
+  // `ended` and any other status are ignored — only placed/waitlisted rows
   // lock a child out of the picker.
   if (current === "active" || rowStatus === "active") return "active";
   if (current === "waitlisted" || rowStatus === "waitlisted") return "waitlisted";
   // `current` is narrowed to `undefined` here (both states returned above), and
-  // `rowStatus` is something we don't lock on (completed/other) — no change.
+  // `rowStatus` is something we don't lock on (ended/other) — no change.
   return null;
 }

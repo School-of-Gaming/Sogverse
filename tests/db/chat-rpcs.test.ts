@@ -15,6 +15,7 @@ import {
   createScheduleSlot,
   createTestProduct,
   deleteTestProducts,
+  eraseParticipations,
 } from "./product-helpers";
 import { getStringRecord } from "../helpers/json";
 
@@ -300,7 +301,7 @@ describe("chat RPCs", () => {
     // delete them explicitly so a failed run does not leave rows behind that
     // outlive the product teardown.
     await admin.from("chat_channels").delete().eq("group_id", liveGroup);
-    await admin.from("participations").delete().in("product_id", ALL_PRODUCTS);
+    await eraseParticipations(admin, (q) => q.in("product_id", ALL_PRODUCTS));
     await deleteTestProducts(admin, ALL_PRODUCTS);
   });
 

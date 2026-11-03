@@ -53,7 +53,7 @@ const EFFECTIVE_PRODUCT_STATUSES = Constants.public.Enums.effective_product_stat
  */
 function storedStatusesReporting(
   reported: PartnerEnrolmentStatus | undefined,
-): PartnerEnrolmentStatus[] {
+): (typeof LIVE_SEAT_STATUSES)[number][] {
   if (reported === undefined) return [...LIVE_SEAT_STATUSES];
   return LIVE_SEAT_STATUSES.filter((stored) =>
     EFFECTIVE_PRODUCT_STATUSES.some(

@@ -297,7 +297,7 @@ describe("GET /api/partner/v1/roblox-research", () => {
       "eq.roblox-programme-terms",
     );
     expect(url.searchParams.get("child.role")).toBe("eq.gamer");
-    expect(url.searchParams.get("status")).toBe("in.(active,waitlisted,completed)");
+    expect(url.searchParams.get("status")).toBe("in.(active,waitlisted)");
     expect(url.searchParams.get("order")).toBe("id.asc");
   });
 

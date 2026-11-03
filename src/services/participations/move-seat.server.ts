@@ -24,7 +24,7 @@ import type { SwitchClubRefusal } from "@/services/participations/switch-club.co
  */
 
 /** The statuses the participations unique index covers. */
-const OCCUPIED_STATUSES = ["active", "waitlisted", "completed"] as const;
+const OCCUPIED_STATUSES = ["active", "waitlisted"] as const;
 
 /**
  * Whether a live subscription stands behind the seat, in exactly the sense both

@@ -50,7 +50,7 @@ import type {
  */
 
 /** The statuses the participations unique index covers. */
-const OCCUPIED_STATUSES = ["active", "waitlisted", "completed"] as const;
+const OCCUPIED_STATUSES = ["active", "waitlisted"] as const;
 
 /** The target product columns every step of the switch needs. */
 const TARGET_PRODUCT_COLUMNS =

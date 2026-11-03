@@ -11,6 +11,7 @@ import {
   createScheduleSlot,
   createTestProduct,
   deleteTestProducts,
+  eraseParticipations,
 } from "./product-helpers";
 import { getStringRecord } from "../helpers/json";
 
@@ -246,7 +247,7 @@ describe("chat image storage policy", () => {
       .from(CHAT_IMAGES_BUCKET)
       .remove([liveImageId, expiredImageId, ORPHAN_OBJECT_NAME]);
     await admin.from("chat_channels").delete().eq("group_id", liveGroup);
-    await admin.from("participations").delete().eq("product_id", PRODUCT_LIVE);
+    await eraseParticipations(admin, (q) => q.eq("product_id", PRODUCT_LIVE));
     await deleteTestProducts(admin, [PRODUCT_LIVE]);
   });
 

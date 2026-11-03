@@ -6,40 +6,23 @@ CREATE FUNCTION public.cancel_participation(p_participation_id uuid, p_reason te
     LANGUAGE plpgsql SECURITY DEFINER
     SET search_path TO ''
     AS $$
-DECLARE
-  v_product_id              UUID;
-  v_status                  public.participation_status;
-  v_stripe_subscription_id  TEXT;
 BEGIN
-  SELECT product_id, status
-    INTO v_product_id, v_status
-    FROM public.participations
-    WHERE id = p_participation_id;
-
-  IF NOT FOUND THEN
-    RETURN jsonb_build_object('kind', 'noop');
-  END IF;
-
-  PERFORM 1 FROM public.products WHERE id = v_product_id FOR UPDATE;
-
-  -- Read the linked Stripe sub id before the delete (CASCADE removes the row).
-  SELECT stripe_subscription_id
-    INTO v_stripe_subscription_id
-    FROM public.family_subscriptions
-    WHERE participation_id = p_participation_id
-    LIMIT 1;
-
-  DELETE FROM public.participations WHERE id = p_participation_id;
-
-  RETURN jsonb_build_object(
-    'kind', 'cancelled',
-    'product_id', v_product_id,
-    'previous_status', v_status::text,
-    'stripe_subscription_id', v_stripe_subscription_id,
-    'reason', p_reason
+  RETURN public.end_participation(
+    p_participation_id,
+    CASE p_reason
+      WHEN 'admin_cancelled' THEN 'admin_removed'
+      ELSE p_reason
+    END::public.participation_end_reason
   );
 END;
 $$;
+
+
+--
+-- Name: FUNCTION cancel_participation(p_participation_id uuid, p_reason text); Type: COMMENT; Schema: public; Owner: -
+--
+
+COMMENT ON FUNCTION public.cancel_participation(p_participation_id uuid, p_reason text) IS 'legacy-cancel-participation: kept for the deployment window, because the Stripe webhook from before seats ended calls it, and removed by the follow-up that moves the webhook onto end_participation. Delegates to end_participation, reading the old admin_cancelled reason as admin_removed. service_role only.';
 
 
 --

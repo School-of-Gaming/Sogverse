@@ -14,6 +14,7 @@ import {
   createTestProduct,
   deleteTestProducts,
   insertPaidBooking,
+  eraseParticipations,
 } from "./product-helpers";
 
 /**
@@ -86,7 +87,7 @@ describe("bookings", () => {
   });
 
   afterEach(async () => {
-    await admin.from("participations").delete().in("product_id", ALL_PRODUCTS);
+    await eraseParticipations(admin, (q) => q.in("product_id", ALL_PRODUCTS));
     // No role can delete a booking, so a case's rows go with the products
     // afterAll. Settling them keeps one case's open Session out of the next.
     await admin
@@ -139,6 +140,17 @@ describe("bookings", () => {
       .eq("product_id", productId);
     expect(error).toBeNull();
     return data ?? [];
+  }
+
+  /** Ends every seat on a product, as a Stripe deletion or an admin would. */
+  async function endSeatsOn(productId: string) {
+    for (const seat of await seatsOn(productId)) {
+      const { error } = await admin.rpc("end_participation", {
+        p_participation_id: seat.id,
+        p_reason: "subscription_cancelled",
+      });
+      expect(error).toBeNull();
+    }
   }
 
   async function paymentMarkers(productId: string) {
@@ -321,10 +333,10 @@ describe("bookings", () => {
       expect(await seatsOn(PAID_CLUB)).toHaveLength(1);
     });
 
-    it("does not put a cancelled seat back on a redelivery", async () => {
+    it("does not put an ended seat back on a redelivery", async () => {
       const bookingId = await paidBooking("cs_booking_cancelled");
       await confirm(bookingId, "cs_booking_cancelled");
-      await admin.from("participations").delete().eq("product_id", PAID_CLUB);
+      await endSeatsOn(PAID_CLUB);
 
       const { data, error } = await confirm(bookingId, "cs_booking_cancelled");
       expect(error).toBeNull();
@@ -333,7 +345,9 @@ describe("bookings", () => {
         idempotent: true,
         participation_id: null,
       });
-      expect(await seatsOn(PAID_CLUB)).toEqual([]);
+      expect((await seatsOn(PAID_CLUB)).map((seat) => seat.status)).toEqual([
+        "ended",
+      ]);
     });
 
     it("marks a second payment duplicate and leaves the first seat alone", async () => {
@@ -355,14 +369,28 @@ describe("bookings", () => {
       expect((await readBooking(secondBooking)).status).toBe("duplicate");
       expect(await seatsOn(PAID_CLUB)).toHaveLength(1);
 
-      // Redelivered once the first seat has gone: still a duplicate, no seat.
-      await admin.from("participations").delete().eq("product_id", PAID_CLUB);
+      // Redelivered once the first seat has ended: still a duplicate, no seat.
+      await endSeatsOn(PAID_CLUB);
       const again = await confirm(secondBooking, "cs_booking_second");
       expect(again.data).toMatchObject({
         kind: "duplicate_payment",
         existing_participation_id: null,
       });
-      expect(await seatsOn(PAID_CLUB)).toEqual([]);
+      expect((await seatsOn(PAID_CLUB)).map((s) => s.status)).toEqual(["ended"]);
+    });
+
+    it("seats a family again once their earlier seat has ended", async () => {
+      const first = await paidBooking("cs_booking_before_end");
+      await confirm(first, "cs_booking_before_end");
+      await endSeatsOn(PAID_CLUB);
+
+      const second = await paidBooking("cs_booking_after_end");
+      const { data, error } = await confirm(second, "cs_booking_after_end");
+      expect(error).toBeNull();
+      expect(data).toMatchObject({ kind: "settled", idempotent: false });
+      expect(
+        (await seatsOn(PAID_CLUB)).map((seat) => seat.status).sort(),
+      ).toEqual(["active", "ended"]);
     });
 
     it("refuses a session other than the booking's", async () => {
@@ -515,13 +543,15 @@ describe("bookings", () => {
         });
       });
 
-      it("refuses a redelivery after the seat was cancelled, and leaves it cancelled", async () => {
+      it("refuses a redelivery after the seat ended, and leaves it ended", async () => {
         await oldConfirm("cs_booking_legacy_cancelled");
-        await admin.from("participations").delete().eq("product_id", PAID_CLUB);
+        await endSeatsOn(PAID_CLUB);
 
         const { error } = await oldConfirm("cs_booking_legacy_cancelled");
         expect(error?.code).toBe("23514");
-        expect(await seatsOn(PAID_CLUB)).toEqual([]);
+        expect((await seatsOn(PAID_CLUB)).map((s) => s.status)).toEqual([
+          "ended",
+        ]);
       });
 
       it("leaves the seat findable by its session, as the old confirmation page looks", async () => {

@@ -1576,7 +1576,7 @@
       "active": "Active",
       "waitlisted": "Waitlisted",
       "reserving": "Awaiting payment",
-      "completed": "Completed"
+      "ended": "Ended"
     },
     "emailVerified": "Email verified",
     "emailNotVerified": "Email not verified",

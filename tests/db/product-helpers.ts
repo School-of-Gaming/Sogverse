@@ -27,7 +27,7 @@ import { TEST_IDS } from "./constants";
  *   5b8–5b9        participations-external.test.ts
  *   5ba–5bf        bookings.test.ts
  *   5c1            product-seat-counts-trigger.test.ts
- *   5c2            cancel-participation.test.ts
+ *   5c2            end-participation.test.ts (15c2 is its product_groups id)
  *   5c3–5c6        get-my-participation-subscription-states.test.ts
  *   5c7            waitlist-admin.test.ts (its muni product; see also 5f6)
  *   5c8–5ca        admin-participation-rpcs.test.ts (5ca is its free club)
@@ -561,6 +561,37 @@ export async function createScheduleSlot(
   }
 }
 
+/** The query `eraseParticipations` narrows: every participation's id. */
+function participationIds(admin: SupabaseClient<Database>) {
+  return admin.from("participations").select("id");
+}
+
+/**
+ * Deletes the participations a filter selects, whatever their status. A seat
+ * that has been held is history, and the table's delete guard refuses an
+ * ordinary DELETE of it, so teardown goes through `erase_participations`, the
+ * service-role door the GDPR erasure uses. Their family_subscriptions rows
+ * cascade with them. Errors throw, for the reason `deleteTestProducts` gives.
+ */
+export async function eraseParticipations(
+  admin: SupabaseClient<Database>,
+  filter: (
+    query: ReturnType<typeof participationIds>,
+  ) => ReturnType<typeof participationIds>,
+): Promise<void> {
+  const { data, error } = await filter(participationIds(admin));
+  if (error) {
+    throw new Error(`eraseParticipations (select) failed: ${error.message}`);
+  }
+  if (data.length === 0) return;
+  const erased = await admin.rpc("erase_participations", {
+    p_participation_ids: data.map((row) => row.id),
+  });
+  if (erased.error) {
+    throw new Error(`eraseParticipations failed: ${erased.error.message}`);
+  }
+}
+
 /**
  * Hard-deletes v2 products by id, participations first. Every FK from
  * products cascades, but the AFTER DELETE trigger on participations
@@ -578,15 +609,7 @@ export async function deleteTestProducts(
   productIds: string[],
 ): Promise<void> {
   if (productIds.length === 0) return;
-  const participations = await admin
-    .from("participations")
-    .delete()
-    .in("product_id", productIds);
-  if (participations.error) {
-    throw new Error(
-      `deleteTestProducts (participations) failed: ${participations.error.message}`,
-    );
-  }
+  await eraseParticipations(admin, (q) => q.in("product_id", productIds));
   const products = await admin.from("products").delete().in("id", productIds);
   if (products.error) {
     throw new Error(

@@ -3,7 +3,7 @@ import type { SupabaseClient } from "@supabase/supabase-js";
 import type { Database } from "@/types/database.types";
 import { createAdminTestClient, createAuthenticatedClient } from "./helpers";
 import { TEST_IDS, TEST_CREDENTIALS } from "./constants";
-import { createTestProduct, deleteTestProducts } from "./product-helpers";
+import { createTestProduct, deleteTestProducts, eraseParticipations } from "./product-helpers";
 import { getStringRecord } from "../helpers/json";
 import { productGroupsSnapshot } from "@/services/groups/groups.contracts";
 import { z } from "zod";
@@ -184,10 +184,9 @@ describe("apply_group_changes", () => {
 
   describe("deleting groups", () => {
     afterEach(async () => {
-      await admin
-        .from("participations")
-        .delete()
-        .eq("product_id", PRODUCT_DELETE);
+      await eraseParticipations(admin, (q) =>
+        q.eq("product_id", PRODUCT_DELETE),
+      );
       await admin
         .from("product_groups")
         .delete()
@@ -383,10 +382,9 @@ describe("apply_group_changes", () => {
     });
 
     afterAll(async () => {
-      await admin
-        .from("participations")
-        .delete()
-        .eq("product_id", PRODUCT_MOVES);
+      await eraseParticipations(admin, (q) =>
+        q.eq("product_id", PRODUCT_MOVES),
+      );
       await admin
         .from("product_groups")
         .delete()
@@ -631,10 +629,9 @@ describe("get_product_groups_with_details", () => {
     expect(result.unassigned[0].has_payment_marker).toBe(false);
 
     // Cleanup.
-    await admin
-      .from("participations")
-      .delete()
-      .eq("product_id", PRODUCT_DETAILS);
+    await eraseParticipations(admin, (q) =>
+      q.eq("product_id", PRODUCT_DETAILS),
+    );
   });
 
   it("orders participations by updated_at (most recently moved last)", async () => {
@@ -686,10 +683,9 @@ describe("get_product_groups_with_details", () => {
     ]);
 
     // Cleanup.
-    await admin
-      .from("participations")
-      .delete()
-      .eq("product_id", PRODUCT_DETAILS);
+    await eraseParticipations(admin, (q) =>
+      q.eq("product_id", PRODUCT_DETAILS),
+    );
   });
 
   it("carries the staff-only flair identically on the grouped and group-less arms", async () => {
@@ -756,10 +752,9 @@ describe("get_product_groups_with_details", () => {
     expect(unassigned?.group_joined_at).toBeNull();
 
     // Cleanup. The note row goes with the group, which goes with the product.
-    await admin
-      .from("participations")
-      .delete()
-      .eq("product_id", PRODUCT_DETAILS);
+    await eraseParticipations(admin, (q) =>
+      q.eq("product_id", PRODUCT_DETAILS),
+    );
   });
 
   it("returns Forbidden when called by a non-admin", async () => {

@@ -3,7 +3,7 @@ import type { SupabaseClient } from "@supabase/supabase-js";
 import type { Database, Json } from "@/types/database.types";
 import { createAdminTestClient, createAuthenticatedClient } from "./helpers";
 import { TEST_IDS, TEST_CREDENTIALS } from "./constants";
-import { createTestProduct, deleteTestProducts } from "./product-helpers";
+import { createTestProduct, deleteTestProducts, eraseParticipations } from "./product-helpers";
 
 /**
  * `session_feedback` — the row a child writes on the way out of an
@@ -164,7 +164,7 @@ describe("session_feedback RLS + shape constraints", () => {
       .from("session_feedback")
       .delete()
       .in("group_id", [GROUP_X, GROUP_Y]);
-    await admin.from("participations").delete().in("product_id", ALL_PRODUCTS);
+    await eraseParticipations(admin, (q) => q.in("product_id", ALL_PRODUCTS));
     await deleteTestProducts(admin, ALL_PRODUCTS);
   });
 

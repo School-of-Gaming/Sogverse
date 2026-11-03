@@ -1,12 +1,11 @@
 import { CONSENT_DOCUMENT_BUNDLES } from "@/lib/constants/consent-documents";
 import type { EffectiveProductStatus } from "@/lib/products/effective-status";
-import type { DeliveryMode } from "@/types";
+import type { DeliveryMode, ParticipationStatus } from "@/types";
 import type {
   LocationChainNode,
   LocationWithChain,
 } from "@/services/locations/locations.service";
 import {
-  ENROLMENT_STATUS,
   type PartnerDelivery,
   type PartnerEnrolmentStatus,
   type PartnerPlace,
@@ -64,11 +63,15 @@ export const PROGRAMME_PRIVACY_SLUG = PROGRAMME_SLUGS.privacy;
 export const PROGRAMME_AGE_RANGE = { min: 13, max: 17 } as const;
 
 /**
- * The seat states that put a seat in scope: everything a family holds,
- * never `reserving`. The same tuple as the contract's enrolment statuses, since
- * a live seat is exactly one the API may report.
+ * The stored seat states that put a seat in scope: a seat a family holds or a
+ * place it waits in — never `reserving`, and never `ended`. The `satisfies`
+ * keeps it honest: a rename in the generated enum fails to compile here rather
+ * than silently leaving the API reading a state that no longer exists.
  */
-export const LIVE_SEAT_STATUSES = ENROLMENT_STATUS;
+export const LIVE_SEAT_STATUSES = [
+  "active",
+  "waitlisted",
+] as const satisfies readonly ParticipationStatus[];
 
 /**
  * Narrow a stored seat status to a live one. A read that filters on

@@ -1,6 +1,6 @@
 import { z } from "zod";
 import { Constants } from "@/types";
-import type { EffectiveProductStatusDB, ParticipationStatus } from "@/types";
+import type { EffectiveProductStatusDB } from "@/types";
 
 /**
  * The wire contracts of the Lynx Educate partner API — one query schema and one
@@ -66,17 +66,12 @@ export const CAMPAIGN_MINIMUM_COUNT = 5;
 export const ATTENDANCE_MARK = ["present", "absent"] as const;
 
 /**
- * The enrolment states the API reports — the participation states minus
- * `reserving`, which is the half-second between starting a checkout and paying
- * for it and is never a seat anyone holds. The `satisfies` is what keeps the
- * narrowing honest: a rename in the generated enum fails to compile here rather
- * than silently leaving the API describing a state that no longer exists.
+ * The enrolment states the API reports: a live seat's stored status
+ * (`LIVE_SEAT_STATUSES`, which is held to the generated enum), and
+ * `completed`, which no seat stores — it is an active seat on a product whose
+ * dates have passed, derived by `reportedEnrolmentStatus`.
  */
-export const ENROLMENT_STATUS = [
-  "active",
-  "waitlisted",
-  "completed",
-] as const satisfies readonly ParticipationStatus[];
+export const ENROLMENT_STATUS = ["active", "waitlisted", "completed"] as const;
 
 /**
  * The product states the API reports: the lifecycle a product moves through

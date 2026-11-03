@@ -7,6 +7,7 @@ import {
   createTestProduct,
   deleteTestProducts,
   payForBooking,
+  eraseParticipations,
 } from "./product-helpers";
 import { z } from "zod";
 import { getString, getNumber } from "../helpers/json";
@@ -70,10 +71,9 @@ describe("participations race + idempotency", () => {
   afterEach(async () => {
     // Wipe participations between tests but keep products around (cheaper
     // than recreating). CASCADE handles family_subscriptions etc.
-    await admin
-      .from("participations")
-      .delete()
-      .in("product_id", ALL_TEST_PRODUCTS);
+    await eraseParticipations(admin, (q) =>
+      q.in("product_id", ALL_TEST_PRODUCTS),
+    );
   });
 
   // ---------------------------------------------------------------------------
@@ -124,10 +124,9 @@ describe("participations race + idempotency", () => {
 
         // Reset for the next iteration so we always start from a clean
         // 0/1 seat state.
-        await admin
-          .from("participations")
-          .delete()
-          .eq("product_id", PRODUCT_RACE_1SEAT);
+        await eraseParticipations(admin, (q) =>
+          q.eq("product_id", PRODUCT_RACE_1SEAT),
+        );
       }
     }, 30_000);
 
@@ -165,15 +164,13 @@ describe("participations race + idempotency", () => {
       expect(createBookingRpcResult.parse(second.data).kind).toBe("full");
     });
 
-    it.each(["active", "waitlisted", "completed"] as const)(
+    it.each(["active", "waitlisted"] as const)(
       "refuses a signup when the gamer already holds a %s row",
       async (status) => {
-        // These three are exactly the statuses `confirm_booking`
+        // These two are exactly the statuses `confirm_booking`
         // conflicts on, and the two lists have to stay identical: a status this
         // gate lets through but the confirmation refuses would take a parent's
-        // money and then hand them nothing. `completed` is the one that was
-        // missing — unreachable today, since nothing writes it, which is why it
-        // needs a test rather than a bug report.
+        // money and then hand them nothing.
         const { error: seedErr } = await admin.from("participations").insert({
           product_id: PRODUCT_RACE_1SEAT,
           participant_id: TEST_IDS.GAMER,

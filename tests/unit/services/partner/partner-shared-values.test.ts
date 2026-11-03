@@ -27,7 +27,7 @@ describe("the Programme", () => {
   });
 
   it("counts every held seat live, never a reservation", () => {
-    expect([...LIVE_SEAT_STATUSES].sort()).toEqual(["active", "completed", "waitlisted"]);
+    expect([...LIVE_SEAT_STATUSES].sort()).toEqual(["active", "waitlisted"]);
   });
 });
 

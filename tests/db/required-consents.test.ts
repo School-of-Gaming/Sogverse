@@ -9,7 +9,7 @@ import {
   createAuthenticatedClient,
 } from "./helpers";
 import { TEST_IDS, TEST_CREDENTIALS } from "./constants";
-import { createTestProduct, deleteTestProducts } from "./product-helpers";
+import { createTestProduct, deleteTestProducts, eraseParticipations } from "./product-helpers";
 import { createBookingRpcResult } from "@/services/participations/participations.contracts";
 
 /**
@@ -153,10 +153,9 @@ describe("product required consents", () => {
   });
 
   afterEach(async () => {
-    await admin
-      .from("participations")
-      .delete()
-      .in("product_id", ALL_TEST_PRODUCTS);
+    await eraseParticipations(admin, (q) =>
+      q.in("product_id", ALL_TEST_PRODUCTS),
+    );
     await admin
       .from("consent_acceptances")
       .delete()

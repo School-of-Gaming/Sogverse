@@ -9,6 +9,7 @@ import {
   createScheduleSlot,
   createTestProduct,
   deleteTestProducts,
+  eraseParticipations,
 } from "./product-helpers";
 
 /**
@@ -224,7 +225,7 @@ describe("session photos", () => {
     // go before the account does.
     await admin.from("gedu_group_assignments").delete().eq("gedu_id", peerId);
     await admin.auth.admin.deleteUser(peerId);
-    await admin.from("participations").delete().in("product_id", ALL_PRODUCTS);
+    await eraseParticipations(admin, (q) => q.in("product_id", ALL_PRODUCTS));
     await deleteTestProducts(admin, ALL_PRODUCTS);
   });
 

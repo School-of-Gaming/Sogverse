@@ -641,6 +641,7 @@ export type Database = {
           currency: string
           current_period_end: string | null
           customer_id: string
+          ended_at: string | null
           id: string
           participation_id: string
           status: string
@@ -654,6 +655,7 @@ export type Database = {
           currency: string
           current_period_end?: string | null
           customer_id: string
+          ended_at?: string | null
           id?: string
           participation_id: string
           status: string
@@ -667,6 +669,7 @@ export type Database = {
           currency?: string
           current_period_end?: string | null
           customer_id?: string
+          ended_at?: string | null
           id?: string
           participation_id?: string
           status?: string
@@ -2470,6 +2473,10 @@ export type Database = {
           booking_id: string | null
           created_at: string
           customer_id: string
+          end_reason:
+            | Database["public"]["Enums"]["participation_end_reason"]
+            | null
+          ended_at: string | null
           group_id: string | null
           group_joined_at: string | null
           id: string
@@ -2487,6 +2494,10 @@ export type Database = {
           booking_id?: string | null
           created_at?: string
           customer_id: string
+          end_reason?:
+            | Database["public"]["Enums"]["participation_end_reason"]
+            | null
+          ended_at?: string | null
           group_id?: string | null
           group_joined_at?: string | null
           id?: string
@@ -2504,6 +2515,10 @@ export type Database = {
           booking_id?: string | null
           created_at?: string
           customer_id?: string
+          end_reason?:
+            | Database["public"]["Enums"]["participation_end_reason"]
+            | null
+          ended_at?: string | null
           group_id?: string | null
           group_joined_at?: string | null
           id?: string
@@ -4866,6 +4881,13 @@ export type Database = {
         Args: { p_product_id: string }
         Returns: Database["public"]["Enums"]["effective_product_status"]
       }
+      end_participation: {
+        Args: {
+          p_participation_id: string
+          p_reason: Database["public"]["Enums"]["participation_end_reason"]
+        }
+        Returns: Json
+      }
       enqueue_klaviyo_event: {
         Args: {
           p_customer_id: string
@@ -4922,6 +4944,10 @@ export type Database = {
       ensure_group_session: {
         Args: { p_group_id: string; p_session_date: string }
         Returns: string
+      }
+      erase_participations: {
+        Args: { p_participation_ids: string[] }
+        Returns: number
       }
       file_klaviyo_profiles: {
         Args: { p_customer_ids: string[] }
@@ -5346,6 +5372,10 @@ export type Database = {
       }
       is_chat_channel_moderator: {
         Args: { p_channel_id: string }
+        Returns: boolean
+      }
+      is_live_seat: {
+        Args: { p_status: Database["public"]["Enums"]["participation_status"] }
         Returns: boolean
       }
       is_no_charge: {
@@ -6102,7 +6132,8 @@ export type Database = {
       marketing_consent_type: "school_of_gaming" | "lynx_educate"
       notification_channel: "email"
       notification_kind: "session_report_copy"
-      participation_status: "reserving" | "active" | "waitlisted" | "completed"
+      participation_end_reason: "subscription_cancelled" | "admin_removed"
+      participation_status: "reserving" | "active" | "waitlisted" | "ended"
       payment_purpose:
         | "bundle"
         | "subscription_invoice"
@@ -6301,7 +6332,8 @@ export const Constants = {
       marketing_consent_type: ["school_of_gaming", "lynx_educate"],
       notification_channel: ["email"],
       notification_kind: ["session_report_copy"],
-      participation_status: ["reserving", "active", "waitlisted", "completed"],
+      participation_end_reason: ["subscription_cancelled", "admin_removed"],
+      participation_status: ["reserving", "active", "waitlisted", "ended"],
       payment_purpose: [
         "bundle",
         "subscription_invoice",

@@ -112,6 +112,7 @@ explicit go-ahead.
 \set ON_ERROR_STOP on
 SET default_transaction_read_only = off;
 BEGIN READ WRITE;
+SET LOCAL sogverse.erasure = on;
 DELETE FROM auth.flow_state WHERE user_id IN ('<parent-uuid>', '<gamer-uuid>');
 DELETE FROM auth.users WHERE id IN ('<gamer-uuid>') AND email LIKE '%@gamer.sogverse.internal';
 DELETE FROM auth.users WHERE id = '<parent-uuid>' AND email = '<address>';
@@ -132,6 +133,10 @@ COMMIT;
   auth tables that key on the user, and `public.profiles`, and from there through every
   cascading FK. A gamer's address is the synthetic `@gamer.sogverse.internal` one unless
   their sign-in is `email`; match the gamer's real address in that case.
+- **`SET LOCAL sogverse.erasure = on` lets the cascade take the family's seats.** A seat
+  that has been held is history: it ends rather than being deleted, and a trigger on
+  `participations` refuses any delete of one, cascades from `profiles` included, unless the
+  transaction is an erasure. `LOCAL` scopes it to this transaction alone.
 - **`auth.flow_state` is the exception in `auth`**: it carries a `user_id` with no FK, so
   its rows survive a SQL delete and are removed explicitly.
 - **List every gamer being erased in every id list, and only those.** A gamer who keeps

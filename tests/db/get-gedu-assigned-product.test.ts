@@ -12,6 +12,7 @@ import {
   createScheduleSlot,
   createTestProduct,
   deleteTestProducts,
+  eraseParticipations,
 } from "./product-helpers";
 
 /**
@@ -168,10 +169,7 @@ describe("get_gedu_assigned_product", () => {
   });
 
   afterAll(async () => {
-    await admin
-      .from("participations")
-      .delete()
-      .in("product_id", ALL_PRODUCTS);
+    await eraseParticipations(admin, (q) => q.in("product_id", ALL_PRODUCTS));
     await admin
       .from("minecraft_accounts")
       .delete()
@@ -347,7 +345,13 @@ describe("get_gedu_assigned_product", () => {
           extras: { waitlisted_at: new Date().toISOString() },
         },
         { status: "reserving" as const, extras: {} },
-        { status: "completed" as const, extras: {} },
+        {
+          status: "ended" as const,
+          extras: {
+            ended_at: new Date().toISOString(),
+            end_reason: "admin_removed" as const,
+          },
+        },
       ];
 
       for (const { status, extras } of fixtures) {
@@ -371,7 +375,7 @@ describe("get_gedu_assigned_product", () => {
 
       await admin
         .from("participations")
-        .update({ status: "active" })
+        .update({ status: "active", ended_at: null, end_reason: null })
         .eq("product_id", PRODUCT_GEDU_ON)
         .eq("participant_id", TEST_IDS.GAMER);
     });

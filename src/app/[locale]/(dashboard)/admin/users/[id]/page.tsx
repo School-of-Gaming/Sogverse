@@ -98,7 +98,7 @@ const STATUS_BADGE_STYLES: Record<ParticipationStatus, string> = {
   active: "border border-border bg-transparent text-success",
   waitlisted: "border border-border bg-transparent text-info",
   reserving: "border border-border bg-transparent text-info",
-  completed: "border border-border bg-transparent text-muted-foreground",
+  ended: "border border-border bg-transparent text-muted-foreground",
 };
 
 /**
@@ -389,7 +389,7 @@ export default async function AdminUserDetailPage({
     active: t("participationStatus.active"),
     waitlisted: t("participationStatus.waitlisted"),
     reserving: t("participationStatus.reserving"),
-    completed: t("participationStatus.completed"),
+    ended: t("participationStatus.ended"),
   };
 
   const renderAssignedProducts = (rows: AdminGamerParticipationRow[]) =>

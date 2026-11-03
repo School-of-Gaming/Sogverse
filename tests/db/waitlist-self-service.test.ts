@@ -3,7 +3,7 @@ import type { SupabaseClient } from "@supabase/supabase-js";
 import type { Database } from "@/types/database.types";
 import { createAdminTestClient, createAuthenticatedClient } from "./helpers";
 import { TEST_IDS, TEST_CREDENTIALS } from "./constants";
-import { createTestProduct, deleteTestProducts } from "./product-helpers";
+import { createTestProduct, deleteTestProducts, eraseParticipations } from "./product-helpers";
 import {
   joinWaitlistRpcResult,
   leaveWaitlistRpcResult,
@@ -79,10 +79,9 @@ describe("waitlist — self-service positions + leave", () => {
   });
 
   afterEach(async () => {
-    await admin
-      .from("participations")
-      .delete()
-      .in("product_id", [PRODUCT_A, PRODUCT_B]);
+    await eraseParticipations(admin, (q) =>
+      q.in("product_id", [PRODUCT_A, PRODUCT_B]),
+    );
   });
 
   /** Puts one of CUSTOMER's gamers on a product's waitlist; returns the id. */
