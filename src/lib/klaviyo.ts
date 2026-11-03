@@ -175,24 +175,47 @@ function dataId(answer: unknown): string | null {
   return typeof id === "string" ? id : null;
 }
 
-/**
- * The Klaviyo id of the profile whose external id is `externalId`, or null
- * when Klaviyo holds none. The one read: what the sync wrote is found again
- * by the key it wrote it under.
- */
-export async function findKlaviyoProfileIdByExternalId(
-  externalId: string,
-): Promise<string | null> {
-  const filter = encodeURIComponent(`equals(external_id,"${externalId}")`);
+/** Which profile a read asks for: the one under this external id, or this address. */
+type KlaviyoProfileKey = { externalId: string } | { email: string };
+
+/** The `/profiles` filter matching the profile `by` names. */
+function profileFilter(by: KlaviyoProfileKey): string {
+  const condition =
+    "externalId" in by ? `equals(external_id,"${by.externalId}")` : `equals(email,"${by.email}")`;
+  return encodeURIComponent(condition);
+}
+
+/** The Klaviyo id of the first profile `by` matches, or null when Klaviyo holds none. */
+async function findKlaviyoProfileId(by: KlaviyoProfileKey): Promise<string | null> {
   const answer = await klaviyoCall(
     "GET",
-    `/profiles?filter=${filter}&fields[profile]=external_id&page[size]=1`,
+    `/profiles?filter=${profileFilter(by)}&fields[profile]=external_id&page[size]=1`,
   );
   const data = isRecord(answer) ? answer.data : undefined;
   if (!Array.isArray(data)) return null;
   const first: unknown = data[0];
   const id = isRecord(first) ? first.id : undefined;
   return typeof id === "string" ? id : null;
+}
+
+/**
+ * The Klaviyo id of the profile whose external id is `externalId`, or null
+ * when Klaviyo holds none: what the sync wrote is found again by the key it
+ * wrote it under.
+ */
+export async function findKlaviyoProfileIdByExternalId(
+  externalId: string,
+): Promise<string | null> {
+  return findKlaviyoProfileId({ externalId });
+}
+
+/**
+ * The Klaviyo id of a profile holding `email`, or null when Klaviyo holds
+ * none: a profile another source made for the address, before the sync knew
+ * the parent.
+ */
+export async function findKlaviyoProfileIdByEmail(email: string): Promise<string | null> {
+  return findKlaviyoProfileId({ email });
 }
 
 /** A profile's email marketing standing, as Klaviyo holds it. */
@@ -221,14 +244,11 @@ export interface KlaviyoEmailMarketing {
  * address, or null when Klaviyo holds none.
  */
 export async function findKlaviyoEmailMarketing(
-  by: { externalId: string } | { email: string },
+  by: KlaviyoProfileKey,
 ): Promise<KlaviyoEmailMarketing | null> {
-  const condition =
-    "externalId" in by ? `equals(external_id,"${by.externalId}")` : `equals(email,"${by.email}")`;
   const answer = await klaviyoCall(
     "GET",
-    `/profiles?filter=${encodeURIComponent(condition)}` +
-      "&additional-fields[profile]=subscriptions&page[size]=1",
+    `/profiles?filter=${profileFilter(by)}&additional-fields[profile]=subscriptions&page[size]=1`,
   );
   const data = isRecord(answer) ? answer.data : undefined;
   const first: unknown = Array.isArray(data) ? data[0] : undefined;

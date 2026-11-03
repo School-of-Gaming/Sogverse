@@ -2,6 +2,7 @@ import "server-only";
 import {
   addKlaviyoProfileToList,
   createKlaviyoEvent,
+  findKlaviyoProfileIdByEmail,
   findKlaviyoProfileIdByExternalId,
   isKlaviyoConfigured,
   requestKlaviyoProfileDeletion,
@@ -173,15 +174,21 @@ async function syncProfile(
 ): Promise<"synced" | "deleted"> {
   if (snapshot === "unreadable") throw new Error("The parent's snapshot did not parse");
 
-  const klaviyoId = await findKlaviyoProfileIdByExternalId(customerId);
+  const ownId = await findKlaviyoProfileIdByExternalId(customerId);
   if (snapshot === undefined || isKeptOutOfKlaviyo(snapshot)) {
-    if (klaviyoId !== null) await requestKlaviyoProfileDeletion(klaviyoId);
+    // A gone parent has no snapshot, so no address to look further by: what
+    // is deleted is the profile the sync wrote.
+    if (ownId !== null) await requestKlaviyoProfileDeletion(ownId);
     return "deleted";
   }
   // Read before any write, so a list nobody configured fails the row first.
   const listIds = listIdsFor(klaviyoListsFor(snapshot));
-  // Updating by Klaviyo's id is what carries a changed address across: an
-  // import matched on the address would create a second profile instead.
+  // Updating by Klaviyo's id is what carries a changed address across, and
+  // what adopts a profile another source made for the address — its external
+  // id overwritten with ours. An import with no id, matched on an address
+  // whose profile carries another external id, creates a second profile.
+  // A parent whose address is held twice is already found by their own id.
+  const klaviyoId = ownId ?? (await findKlaviyoProfileIdByEmail(snapshot.profile.email));
   const written = await upsertKlaviyoProfile({
     ...(klaviyoId === null ? {} : { id: klaviyoId }),
     ...klaviyoProfileFor(snapshot),

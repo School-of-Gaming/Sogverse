@@ -1,6 +1,10 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
-import { findKlaviyoEmailMarketing, unsubscribeKlaviyoProfile } from "@/lib/klaviyo";
+import {
+  findKlaviyoEmailMarketing,
+  findKlaviyoProfileIdByEmail,
+  unsubscribeKlaviyoProfile,
+} from "@/lib/klaviyo";
 
 /**
  * The two Klaviyo calls the consent handover's withdrawal rests on: reading the
@@ -74,6 +78,21 @@ describe("Klaviyo email marketing", () => {
       }),
     );
     expect((await findKlaviyoEmailMarketing({ externalId: "x" }))?.source).toBeNull();
+  });
+
+  it("finds a profile's Klaviyo id by its address", async () => {
+    mockFetch.mockResolvedValue(answer(200, { data: [{ id: "kl-3", attributes: {} }] }));
+
+    expect(await findKlaviyoProfileIdByEmail("anna@example.com")).toBe("kl-3");
+    const [url] = mockFetch.mock.calls[0];
+    expect(decodeURIComponent(new URL(url).searchParams.get("filter") ?? "")).toBe(
+      'equals(email,"anna@example.com")',
+    );
+  });
+
+  it("finds no Klaviyo id for an address Klaviyo does not hold", async () => {
+    mockFetch.mockResolvedValue(answer(200, { data: [] }));
+    expect(await findKlaviyoProfileIdByEmail("nobody@example.com")).toBeNull();
   });
 
   it("unsubscribes the address globally: no list named", async () => {

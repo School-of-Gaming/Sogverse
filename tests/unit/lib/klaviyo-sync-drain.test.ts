@@ -4,8 +4,8 @@ import type { KlaviyoParentSnapshot } from "@/lib/klaviyo-sync/snapshot.contract
 /**
  * The Klaviyo drain against a scripted outbox and a mocked Klaviyo client.
  * Pinned: an unconfigured environment claims nothing; a parent with a snapshot
- * is upserted onto the profile Klaviyo already holds for their id and added
- * to its lists — production's history lists, or staging's one list — and one
+ * is upserted onto the profile Klaviyo already holds for their id — or, with
+ * none, the one it holds for their address — and added to its lists — production's history lists, or staging's one list — and one
  * without is deleted; one row's failure is finished with a label and the rest
  * go on; an event whose parent is gone is finished unsent; an event goes
  * under the row's own unique id; and a subscription goes only with a ticked
@@ -16,7 +16,8 @@ import type { KlaviyoParentSnapshot } from "@/lib/klaviyo-sync/snapshot.contract
 const klaviyo = {
   isKlaviyoConfigured: vi.fn(() => true),
   findKlaviyoProfileIdByExternalId: vi.fn<(id: string) => Promise<string | null>>(),
-  upsertKlaviyoProfile: vi.fn<() => Promise<string | null>>(async () => "kl-id"),
+  findKlaviyoProfileIdByEmail: vi.fn<(email: string) => Promise<string | null>>(),
+  upsertKlaviyoProfile: vi.fn<(profile: unknown) => Promise<string | null>>(async () => "kl-id"),
   addKlaviyoProfileToList: vi.fn(async () => undefined),
   requestKlaviyoProfileDeletion: vi.fn(async () => undefined),
   createKlaviyoEvent: vi.fn(async () => undefined),
@@ -117,6 +118,7 @@ beforeEach(() => {
   vi.clearAllMocks();
   klaviyo.isKlaviyoConfigured.mockReturnValue(true);
   klaviyo.findKlaviyoProfileIdByExternalId.mockResolvedValue(null);
+  klaviyo.findKlaviyoProfileIdByEmail.mockResolvedValue(null);
   vi.spyOn(console, "error").mockImplementation(() => undefined);
   vi.spyOn(console, "warn").mockImplementation(() => undefined);
   vi.stubEnv("VERCEL_ENV", "preview");
@@ -161,6 +163,48 @@ describe("drainKlaviyoSync", () => {
       { p_customer_id: KEPT, p_seq: 3 },
       { p_customer_id: GONE, p_seq: 1 },
     ]);
+  });
+
+  it("updates the profile under the parent's external id without asking by address", async () => {
+    outbox({ profiles: [{ customer_id: KEPT, seq: 1 }], snapshots: [snapshot(KEPT)] });
+    klaviyo.findKlaviyoProfileIdByExternalId.mockResolvedValue("kl-own");
+    klaviyo.findKlaviyoProfileIdByEmail.mockResolvedValue("kl-other");
+
+    await drainKlaviyoSync();
+
+    expect(klaviyo.findKlaviyoProfileIdByEmail).not.toHaveBeenCalled();
+    expect(klaviyo.upsertKlaviyoProfile).toHaveBeenCalledWith(
+      expect.objectContaining({ id: "kl-own", externalId: KEPT }),
+    );
+  });
+
+  it("adopts the profile another source made for the address, writing our external id onto it", async () => {
+    outbox({ profiles: [{ customer_id: KEPT, seq: 1 }], snapshots: [snapshot(KEPT)] });
+    klaviyo.findKlaviyoProfileIdByEmail.mockResolvedValue("kl-eventbrite");
+
+    const result = await drainKlaviyoSync();
+
+    expect(result).toMatchObject({ profilesSynced: 1, failed: 0 });
+    expect(klaviyo.findKlaviyoProfileIdByEmail).toHaveBeenCalledWith(`${KEPT}@example.com`);
+    expect(klaviyo.upsertKlaviyoProfile).toHaveBeenCalledWith(
+      expect.objectContaining({
+        id: "kl-eventbrite",
+        externalId: KEPT,
+        email: `${KEPT}@example.com`,
+      }),
+    );
+  });
+
+  it("creates a profile, naming no Klaviyo id, when neither the external id nor the address is held", async () => {
+    outbox({ profiles: [{ customer_id: KEPT, seq: 1 }], snapshots: [snapshot(KEPT)] });
+
+    await drainKlaviyoSync();
+
+    expect(klaviyo.findKlaviyoProfileIdByEmail).toHaveBeenCalledWith(`${KEPT}@example.com`);
+    const [sent] = klaviyo.upsertKlaviyoProfile.mock.calls[0];
+    expect(sent).not.toHaveProperty("id");
+    expect(sent).toMatchObject({ externalId: KEPT, email: `${KEPT}@example.com` });
+    expect(klaviyo.addKlaviyoProfileToList).toHaveBeenCalledWith("list-consent", "kl-id");
   });
 
   it("adds a staging parent to the one staging list and no other", async () => {
@@ -225,6 +269,7 @@ describe("drainKlaviyoSync", () => {
     await drainKlaviyoSync();
 
     expect(klaviyo.requestKlaviyoProfileDeletion).not.toHaveBeenCalled();
+    expect(klaviyo.findKlaviyoProfileIdByEmail).not.toHaveBeenCalled();
     expect(finishes("finish_klaviyo_profile_job")).toEqual([{ p_customer_id: GONE, p_seq: 1 }]);
   });
 
