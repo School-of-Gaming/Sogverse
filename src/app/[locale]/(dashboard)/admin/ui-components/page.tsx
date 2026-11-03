@@ -153,6 +153,7 @@ import { ParticipantChip } from "@/components/admin/products/groups/participant-
 import type { ChipGameIdentity } from "@/components/admin/products/groups/panel-rules";
 import { DndContext } from "@dnd-kit/core";
 import { AddGamerFormCard } from "@/components/family";
+import { AdminHub } from "@/components/admin/hubs/admin-hub";
 import {
   PRODUCT_TYPE_ORDER,
   PRODUCT_TYPE_PRESENTATION,
@@ -2427,15 +2428,18 @@ function SessionPhotosDemo() {
 
 export default function AdminUIComponentsPage() {
   return (
-    <div className="space-y-8">
-      <div>
-        <Heading level={1} step="section">UI Components</Heading>
-        <p className="text-muted-foreground">
-          Living style guide &mdash; every component variant and composite
-          pattern used across the app.
-        </p>
-      </div>
+    <AdminHub
+      hub="developer"
+      description="Living style guide — every component variant and composite pattern used across the app."
+    >
+      <StyleGuide />
+    </AdminHub>
+  );
+}
 
+function StyleGuide() {
+  return (
+    <div className="space-y-8">
       <ProductTypePaletteDemo />
 
       <Section title="Button">

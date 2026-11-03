@@ -307,7 +307,7 @@ A living style guide is available at `/admin/ui-components` (admin login require
 
 ## Full-page preview scenes
 
-The style guide demos components; a *page-level* change has to be judged as a page — real chrome, real viewport, real scrolling. That's what a **preview scene** is: one fixture-driven page at `/preview/{surface}/{scenario}`, served by a single dynamic route from a central scene registry (`src/components/preview/`), admin-gated in the proxy, noindex, and listed automatically on the admin **UI Previews** page (its own sidebar entry, directly below UI Components). Scenes make page-level iteration cheap: sign the design off from fixtures first, wire it once afterwards.
+The style guide demos components; a *page-level* change has to be judged as a page — real chrome, real viewport, real scrolling. That's what a **preview scene** is: one fixture-driven page at `/preview/{surface}/{scenario}`, served by a single dynamic route from a central scene registry (`src/components/preview/`), admin-gated in the proxy, noindex, and listed automatically on the admin **UI Previews** page (a tab of the Developer hub, beside UI Components). Scenes make page-level iteration cheap: sign the design off from fixtures first, wire it once afterwards.
 
 **Rule: a page the rich seed can show gets no scene — it is reviewed on a local stack built
 from `supabase/rich-seed.sql`.** A scene earns its place only where one rich seed cannot

@@ -2,7 +2,8 @@
   "titles": {
     "products": "Kerhot, leirit ja tapahtumat",
     "invoicing": "Laskutus",
-    "marketing": "Markkinointi"
+    "marketing": "Markkinointi",
+    "developer": "Kehittäjä"
   },
   "tabs": {
     "products": "Tuotteet",
@@ -14,6 +15,9 @@
     "landingPages": "Laskeutumissivut",
     "testimonials": "Asiakaskokemukset",
     "guides": "Oppaat",
-    "spotlights": "Nostot"
+    "spotlights": "Nostot",
+    "uiComponents": "UI-komponentit",
+    "uiPreviews": "UI-esikatselut",
+    "testing": "Testaus"
   }
 }

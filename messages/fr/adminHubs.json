@@ -2,7 +2,8 @@
   "titles": {
     "products": "Clubs, stages et événements",
     "invoicing": "Facturation",
-    "marketing": "Marketing"
+    "marketing": "Marketing",
+    "developer": "Développeur"
   },
   "tabs": {
     "products": "Produits",
@@ -14,6 +15,9 @@
     "landingPages": "Pages d’atterrissage",
     "testimonials": "Témoignages",
     "guides": "Guides",
-    "spotlights": "Mises en avant"
+    "spotlights": "Mises en avant",
+    "uiComponents": "Composants UI",
+    "uiPreviews": "Aperçus UI",
+    "testing": "Tests"
   }
 }

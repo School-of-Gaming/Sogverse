@@ -1624,7 +1624,6 @@
     "noProducts": "Täällä ei vielä pyöri mitään."
   },
   "testing": {
-    "title": "Testaus",
     "description": "Sisäiset testaus- ja kehitystyökalut",
     "emailTool": "Sähköpostin testaustyökalu",
     "emailToolDescription": "Lähetä testisähköposteja Brevo-palvelun (SMTP) kautta toimituksen ja mallien varmistamiseksi.",
