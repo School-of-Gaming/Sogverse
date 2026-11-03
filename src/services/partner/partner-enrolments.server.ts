@@ -1,5 +1,6 @@
 import "server-only";
 
+import { OCCUPYING_STATUSES, isOccupyingStatus } from "@/lib/constants/participations";
 import { z } from "zod";
 
 import { readPartnerPage } from "@/lib/api/partner-cursor.server";
@@ -22,9 +23,7 @@ import {
   readSeatConsents,
 } from "./partner-shared-lookups.server";
 import {
-  LIVE_SEAT_STATUSES,
   PROGRAMME_TERMS_SLUG,
-  isLiveStatus,
   reportedEnrolmentStatus,
   toUtcIso,
 } from "./partner-shared-values";
@@ -39,8 +38,8 @@ import {
  * does not store. So the query narrows to the stored statuses that can report
  * the asked-for value, and `build` drops the seats whose product decided
  * otherwise: `status=active` fetches active seats and drops those on completed
- * products; `status=completed` fetches active and completed seats and drops the
- * active ones on products that have not completed.
+ * products; `status=completed` fetches active seats and drops those on products
+ * that have not completed.
  */
 
 const EFFECTIVE_PRODUCT_STATUSES = Constants.public.Enums.effective_product_status;
@@ -53,9 +52,9 @@ const EFFECTIVE_PRODUCT_STATUSES = Constants.public.Enums.effective_product_stat
  */
 function storedStatusesReporting(
   reported: PartnerEnrolmentStatus | undefined,
-): PartnerEnrolmentStatus[] {
-  if (reported === undefined) return [...LIVE_SEAT_STATUSES];
-  return LIVE_SEAT_STATUSES.filter((stored) =>
+): (typeof OCCUPYING_STATUSES)[number][] {
+  if (reported === undefined) return [...OCCUPYING_STATUSES];
+  return OCCUPYING_STATUSES.filter((stored) =>
     EFFECTIVE_PRODUCT_STATUSES.some(
       (product) => reportedEnrolmentStatus(stored, product) === reported,
     ),
@@ -95,9 +94,9 @@ export async function readEnrolments(
     );
 
     const reported = rows.map((row) => {
-      // The query filters on live statuses, so this narrows a type and refuses
+      // The query filters on occupying statuses, so this narrows a type and refuses
       // nothing the database did not already refuse.
-      if (!isLiveStatus(row.status)) {
+      if (!isOccupyingStatus(row.status)) {
         throw new Error(`partner /enrolments: seat ${row.id} came back ${row.status}`);
       }
       const productStatus = productStatuses.get(row.product_id);

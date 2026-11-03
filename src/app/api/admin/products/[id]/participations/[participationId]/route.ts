@@ -22,8 +22,9 @@ const routeParams = z.object({
  * DELETE /api/admin/products/[id]/participations/[participationId]
  *
  * Admin-only un-enrollment — the inverse of the comp-enrollment POST on the
- * collection route. Hard-deletes the participation, which CASCADEs any linked
- * family_subscriptions row.
+ * collection route. Ends the participation through `end_participation` with
+ * reason `admin_removed`: a held seat is kept as ended, with its group, and its
+ * family_subscriptions row is marked cancelled; a waitlisted row is deleted.
  *
  * Model C, like every other handler in this file: `participations` is
  * grant-locked, so the write goes through `admin_remove_participation`, an
@@ -32,11 +33,11 @@ const routeParams = z.object({
  *
  *  - the participation must be on THIS product (an id from another product
  *    could otherwise be cancelled through this URL);
- *  - a participation with a LIVE Stripe subscription is refused, because the
- *    CASCADE would orphan a subscription that keeps billing the customer with
- *    no DB record and no refund. In the RPC that check shares a transaction and
- *    a product lock with the delete, so unlike the route-level version it has no
- *    window between checking and deleting. It is what makes removal safe on
+ *  - a participation with a LIVE Stripe subscription is refused, because ending
+ *    the seat would mark its subscription cancelled here while Stripe keeps
+ *    billing the customer, with no refund. In the RPC that check shares a
+ *    transaction and a product lock with the ending, so unlike the route-level
+ *    version it has no window between checking and writing. It is what makes removal safe on
  *    every product type, including the paid consumer clubs a blanket type
  *    refusal used to stand in for — that refusal is gone, because without
  *    admin removal a *free* club has no exit at all (there is no parent-facing

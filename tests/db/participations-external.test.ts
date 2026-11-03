@@ -3,7 +3,7 @@ import type { SupabaseClient } from "@supabase/supabase-js";
 import type { Database } from "@/types/database.types";
 import { createAdminTestClient } from "./helpers";
 import { TEST_IDS } from "./constants";
-import { createTestProduct, deleteTestProducts } from "./product-helpers";
+import { createTestProduct, deleteTestProducts, eraseParticipations } from "./product-helpers";
 import { createBookingRpcResult } from "@/services/participations/participations.contracts";
 
 /**
@@ -54,10 +54,9 @@ describe("create_booking — external_contract (municipality) registration", () 
   });
 
   afterEach(async () => {
-    await admin
-      .from("participations")
-      .delete()
-      .in("product_id", ALL_TEST_PRODUCTS);
+    await eraseParticipations(admin, (q) =>
+      q.in("product_id", ALL_TEST_PRODUCTS),
+    );
     // Reset the muni product to the default open/10-seat state so tests that
     // mutate it (seat cap, registration window) don't leak into others.
     await admin

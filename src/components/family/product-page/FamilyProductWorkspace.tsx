@@ -104,7 +104,7 @@ async function seedFeed(
 }
 
 /**
- * The viewer's active participation rows, for the enrollment's own billing
+ * The viewer's held and ended participation rows, for the enrollment's own billing
  * state: the failing-card flag and the paid-through instant a cancelled
  * membership clamps everything at.
  *

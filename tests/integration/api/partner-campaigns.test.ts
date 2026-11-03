@@ -104,7 +104,7 @@ const BIRTHS: Record<string, string> = {
 const SEATS = [
   { participant_id: C(2), customer_id: A(1), status: "active" },
   { participant_id: A(2), customer_id: A(2), status: "active" },
-  { participant_id: C(4), customer_id: A(3), status: "completed" },
+  { participant_id: C(4), customer_id: A(3), status: "active" },
   { participant_id: C(5), customer_id: A(4), status: "waitlisted" },
   { participant_id: C(6), customer_id: A(5), status: "active" },
   { participant_id: C(7), customer_id: B(1), status: "active" },

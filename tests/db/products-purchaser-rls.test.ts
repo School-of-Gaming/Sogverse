@@ -8,6 +8,7 @@ import {
   createTestProduct,
   deleteTestProducts,
 } from "./product-helpers";
+import { ParticipationsService } from "@/services/participations/participations.service";
 
 /**
  * Pins the parent-side dashboard reads against a product whose term ended long
@@ -50,11 +51,18 @@ const CLOSED_END = "2020-01-31";
 
 const CLOSED_ACTIVE_PRODUCT = "00000000-0000-0000-0000-0000000005e5";
 const CLOSED_WAITLISTED_PRODUCT = "00000000-0000-0000-0000-0000000005e6";
-const ALL_PRODUCTS = [CLOSED_ACTIVE_PRODUCT, CLOSED_WAITLISTED_PRODUCT];
+/** A product the family's seat on has ended — a cancellation, or a removal. */
+const ENDED_SEAT_PRODUCT = "00000000-0000-0000-0000-0000000005e7";
+const ALL_PRODUCTS = [
+  CLOSED_ACTIVE_PRODUCT,
+  CLOSED_WAITLISTED_PRODUCT,
+  ENDED_SEAT_PRODUCT,
+];
 
 describe("purchaser dashboard: product join shapes on an ended term", () => {
   let admin: SupabaseClient<Database>;
   let customerClient: SupabaseClient<Database>;
+  let endedSeatId: string;
 
   beforeAll(async () => {
     admin = createAdminTestClient();
@@ -89,6 +97,26 @@ describe("purchaser dashboard: product join shapes on an ended term", () => {
       },
     ]);
     if (seed.error) throw seed.error;
+
+    // A seat held and then ended through the one writer, as the Stripe
+    // deletion or an admin removal ends one.
+    const endedSeat = await admin
+      .from("participations")
+      .insert({
+        product_id: ENDED_SEAT_PRODUCT,
+        participant_id: TEST_IDS.GAMER,
+        customer_id: TEST_IDS.CUSTOMER,
+        status: "active",
+      })
+      .select("id")
+      .single();
+    if (endedSeat.error) throw endedSeat.error;
+    endedSeatId = endedSeat.data.id;
+    const ended = await admin.rpc("end_participation", {
+      p_participation_id: endedSeatId,
+      p_reason: "admin_removed",
+    });
+    if (ended.error) throw ended.error;
 
     // The parent dashboard's `getMyUpcomingSessions("customer")` embeds the
     // product's schedule slots and translations under the product. Seed both
@@ -178,5 +206,21 @@ describe("purchaser dashboard: product join shapes on an ended term", () => {
     // policies, and the dashboard reads both through this join.
     expect(row?.schedule_slots.length).toBeGreaterThan(0);
     expect(row?.product_translations.length).toBeGreaterThan(0);
+  });
+
+  it("the dashboard read keeps an ended seat, marked ended, beside the held one", async () => {
+    // The family dashboards draw an ended seat as a finished card, so the read
+    // behind them has to return it — and say when it ended.
+    const rows = await new ParticipationsService(
+      customerClient,
+    ).getMyUpcomingSessions("customer");
+    const byProduct = new Map(rows.map((row) => [row.product.id, row]));
+
+    expect(byProduct.get(CLOSED_ACTIVE_PRODUCT)?.endedAt).toBeNull();
+    const ended = byProduct.get(ENDED_SEAT_PRODUCT);
+    expect(ended?.participationId).toBe(endedSeatId);
+    expect(ended?.endedAt).toBeInstanceOf(Date);
+    // A waitlist place is the other read's, never this one's.
+    expect(byProduct.has(CLOSED_WAITLISTED_PRODUCT)).toBe(false);
   });
 });

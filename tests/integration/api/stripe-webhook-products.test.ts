@@ -51,7 +51,6 @@ const PRODUCT_ID = "22222222-2222-2222-2222-222222222222";
 const GAMER_ID = "33333333-3333-3333-3333-333333333333";
 const CUSTOMER_ID = "44444444-4444-4444-4444-444444444444";
 const FAM_SUB_ROW_ID = "66666666-6666-6666-6666-666666666666";
-const PAYMENT_ROW_ID = "77777777-7777-7777-7777-777777777777";
 const SUB_ID = "sub_live_1";
 
 function createWebhookRequest(): Request {
@@ -213,6 +212,8 @@ function createSubscriptionUpdatedEvent(overrides: {
 
 type AdminInserts = {
   payments: Record<string, unknown>[];
+  /** Events the route marked processed, in order. */
+  processedEvents: Record<string, unknown>[];
   family_subscriptions: Record<string, unknown>[];
   /**
    * Payloads passed to `family_subscriptions` UPDATE. Separate from the inserts
@@ -223,8 +224,13 @@ type AdminInserts = {
 };
 
 type AdminMockOptions = {
-  /** Returned from the payments idempotency check (event-id dedup). */
-  existingPayment?: { id: string } | null;
+  /** Whether `stripe_processed_events` already holds the delivered event. */
+  alreadyProcessed?: boolean;
+  /**
+   * Error returned from the `payments` INSERT. `23505` is the re-run of an
+   * event whose payment already landed; the row is not captured when set.
+   */
+  paymentInsertError?: { code: string; message: string } | null;
   /**
    * Returned from a `family_subscriptions` SELECT lookup. The deleted/updated/
    * invoice handlers look the row up by stripe_subscription_id; the
@@ -254,33 +260,41 @@ type AdminMockOptions = {
 function mockAdmin(opts: AdminMockOptions = {}) {
   const inserts: AdminInserts = {
     payments: [],
+    processedEvents: [],
     family_subscriptions: [],
     familySubscriptionUpdates: [],
   };
 
   mockAdminFrom.mockImplementation((table: string) => {
-    if (table === "payments") {
+    if (table === "stripe_processed_events") {
       return {
-        // Both handlers read this table for one reason only — the
-        // `stripe_event_id` dedup guard — so one answer covers every SELECT.
         select: () => ({
-          eq: () => ({
+          eq: (_column: string, eventId: string) => ({
             maybeSingle: () =>
               Promise.resolve({
-                data: opts.existingPayment ?? null,
+                data: opts.alreadyProcessed
+                  ? { stripe_event_id: eventId }
+                  : null,
                 error: null,
               }),
           }),
         }),
-        insert: (row: Record<string, unknown>) => ({
-          select: () => ({
-            single: () => {
-              const id = `payment_${inserts.payments.length + 1}`;
-              inserts.payments.push({ id, ...row });
-              return Promise.resolve({ data: { id }, error: null });
-            },
-          }),
-        }),
+        insert: (row: Record<string, unknown>) => {
+          inserts.processedEvents.push(row);
+          return Promise.resolve({ error: null });
+        },
+      };
+    }
+    if (table === "payments") {
+      // Written, never read: the payment row records money and nothing else.
+      return {
+        insert: (row: Record<string, unknown>) => {
+          if (opts.paymentInsertError) {
+            return Promise.resolve({ error: opts.paymentInsertError });
+          }
+          inserts.payments.push(row);
+          return Promise.resolve({ error: null });
+        },
       };
     }
     if (table === "family_subscriptions") {
@@ -293,8 +307,8 @@ function mockAdmin(opts: AdminMockOptions = {}) {
         }),
         // One per-participation row per subscription; the route inserts and
         // swallows 23505 on replay. On a forced insert error, don't capture the
-        // row — mirrors a real failed write so tests can assert the payment row
-        // (the commit marker) wasn't reached.
+        // row — mirrors a real failed write so tests can assert neither the
+        // payment row nor the processed mark was reached.
         insert: (row: Record<string, unknown>) => {
           if (opts.famSubInsertError) {
             return Promise.resolve({ error: opts.famSubInsertError });
@@ -464,8 +478,17 @@ describe("POST /api/webhooks/stripe/products", () => {
         amount_cents: 10000,
         currency: "eur",
         purpose: "single_payment",
+        participation_id: PARTICIPATION_ID,
+        product_id: PRODUCT_ID,
         stripe_payment_intent_id: "pi_test_1",
       });
+      // Marked processed once the handler finished, and only then.
+      expect(inserts.processedEvents).toEqual([
+        {
+          stripe_event_id: "evt_completed_1",
+          event_type: "checkout.session.completed",
+        },
+      ]);
       // The ledger echo keeps the historical spelling on purpose — every
       // payments row ever written carries `gamerId`, and forking the stored
       // shape at the rename would buy nothing and cost every future reader.
@@ -596,30 +619,19 @@ describe("POST /api/webhooks/stripe/products", () => {
       });
     });
 
-    it("leaves the zero-amount payment row as the idempotency marker", async () => {
-      // Amount 0 and the ordinary `subscription_invoice` purpose. That exact
-      // shape is the accepted outcome: it is what stops a redelivery re-running
-      // the handler, and the real charge lands later through invoice.paid.
-      //
-      // The session here *does* name an invoice, because whether Stripe raises a
-      // €0 `subscription_create` invoice for an anchored subscription is not
-      // something this route depends on either way — what it must do is record
-      // whichever invoice the session names, so a marker row can be traced back.
-      // (A session naming none simply leaves the column null.)
+    it("records no payment, and still marks the event processed", async () => {
+      // Nothing was paid, so there is no payment: the first one is the renewal
+      // that charges, through invoice.paid. The processed mark is what stops a
+      // redelivery re-running the handler. The session names an invoice here to
+      // show that even a €0 invoice it names is not recorded as money.
       zeroDueSubscription("subscription", "in_zero_1");
       const inserts = mockAdmin();
 
-      await POST(createWebhookRequest());
+      const res = await POST(createWebhookRequest());
 
-      expect(inserts.payments).toHaveLength(1);
-      expect(inserts.payments[0]).toMatchObject({
-        amount_cents: 0,
-        purpose: "subscription_invoice",
-        stripe_invoice_id: "in_zero_1",
-      });
-      expect(inserts.payments[0].metadata).toMatchObject({
-        participationId: PARTICIPATION_ID,
-      });
+      expect(res.status).toBe(200);
+      expect(inserts.payments).toEqual([]);
+      expect(inserts.processedEvents).toHaveLength(1);
     });
 
     it("still ignores a payment-mode session that collected nothing", async () => {
@@ -659,7 +671,7 @@ describe("POST /api/webhooks/stripe/products", () => {
     });
   });
 
-  describe("checkout.session.completed — sub row gates the payment commit marker", () => {
+  describe("checkout.session.completed — a failed write leaves the event unmarked", () => {
     function subscriptionCompletion() {
       mockConstructEvent.mockReturnValue(
         createCompletedEvent({
@@ -688,7 +700,7 @@ describe("POST /api/webhooks/stripe/products", () => {
       });
     }
 
-    it("does not write the payment row when the sub insert fails (so Stripe's retry re-runs)", async () => {
+    it("does not mark the event processed when the sub insert fails (so Stripe's retry re-runs)", async () => {
       subscriptionCompletion();
       // Non-23505 sub insert error → handler throws → 500 so Stripe retries.
       const inserts = mockAdmin({
@@ -698,12 +710,9 @@ describe("POST /api/webhooks/stripe/products", () => {
       const res = await POST(createWebhookRequest());
       expect(res.status).toBe(500);
 
-      // The payment row is the commit marker the top-of-handler idempotency
-      // guard keys on. Because the sub row is written first, a failed sub insert
-      // leaves no payment behind — so the retry re-runs the whole handler instead
-      // of short-circuiting and orphaning a live recurring Stripe sub. (Under the
-      // old order — payment first — this row would already be written and the
-      // retry would skip the sub forever.)
+      // Unmarked, so the retry re-runs the whole handler instead of
+      // short-circuiting and orphaning a live recurring Stripe sub.
+      expect(inserts.processedEvents).toHaveLength(0);
       expect(inserts.payments).toHaveLength(0);
     });
 
@@ -716,20 +725,36 @@ describe("POST /api/webhooks/stripe/products", () => {
       const res = await POST(createWebhookRequest());
       expect(res.status).toBe(200);
       // Sub row already existed (replay) → swallowed, not re-captured — but the
-      // handler runs to completion and the payment commit marker still lands.
+      // handler runs to completion, records the payment and marks the event.
       expect(inserts.family_subscriptions).toHaveLength(0);
       expect(inserts.payments).toHaveLength(1);
+      expect(inserts.processedEvents).toHaveLength(1);
+    });
+
+    it("finishes and marks a re-run whose payment had already landed", async () => {
+      // The first delivery recorded the payment and died before its mark: the
+      // UNIQUE on stripe_event_id refuses the second row, and that is success.
+      subscriptionCompletion();
+      const inserts = mockAdmin({
+        paymentInsertError: { code: "23505", message: "duplicate key" },
+      });
+
+      const res = await POST(createWebhookRequest());
+      expect(res.status).toBe(200);
+      expect(inserts.processedEvents).toHaveLength(1);
     });
   });
 
   describe("checkout.session.completed — idempotency / dedup", () => {
-    it("bails before calling the RPC if the event id is already recorded", async () => {
+    it("bails before calling the RPC if the event is already marked processed", async () => {
       mockConstructEvent.mockReturnValue(createCompletedEvent());
-      mockAdmin({ existingPayment: { id: "payment_existing" } });
+      const inserts = mockAdmin({ alreadyProcessed: true });
 
       const res = await POST(createWebhookRequest());
       expect(res.status).toBe(200);
       expect(mockAdminRpc).not.toHaveBeenCalled();
+      expect(inserts.payments).toEqual([]);
+      expect(inserts.processedEvents).toEqual([]);
     });
 
     it("skips when required metadata is missing", async () => {
@@ -813,6 +838,12 @@ describe("POST /api/webhooks/stripe/products", () => {
         stripe_event_id: "evt_completed_2",
         stripe_payment_intent_id: "pi_dup_1",
         customer_id: CUSTOMER_ID,
+        // It bought no seat; the one already held is in the metadata.
+        participation_id: null,
+        product_id: PRODUCT_ID,
+      });
+      expect(inserts.payments[0].metadata).toMatchObject({
+        existingParticipationId: EXISTING_PARTICIPATION_ID,
       });
 
       // One-off charge: nothing recurring to stop, so no Stripe call. The
@@ -941,7 +972,7 @@ describe("POST /api/webhooks/stripe/products", () => {
       };
     }
 
-    it("tears the participation down via cancel_participation when we own the sub", async () => {
+    it("ends the seat via end_participation when we own the sub", async () => {
       mockConstructEvent.mockReturnValue(createDeletedEvent("sub_live_1"));
       mockAdmin({ famSubRow: { participation_id: PARTICIPATION_ID } });
       mockAdminRpc.mockResolvedValue({
@@ -952,15 +983,27 @@ describe("POST /api/webhooks/stripe/products", () => {
       const res = await POST(createWebhookRequest());
       expect(res.status).toBe(200);
 
-      // Stripe already cancelled the sub — we only tear down our DB. Deleting
-      // the participation CASCADEs the family_subscriptions row away.
-      expect(mockAdminRpc).toHaveBeenCalledWith("cancel_participation", {
+      // Stripe already cancelled the sub — we only end the seat in our DB,
+      // which keeps it and its family_subscriptions row.
+      expect(mockAdminRpc).toHaveBeenCalledWith("end_participation", {
         p_participation_id: PARTICIPATION_ID,
         p_reason: "subscription_cancelled",
       });
     });
 
-    it("is a no-op for a sub we don't have a row for (e.g. a replayed deletion)", async () => {
+    it("answers a replayed deletion with a clean 200 once the seat has ended", async () => {
+      // The ended seat's row is still there, so the replay reaches the RPC
+      // again; end_participation answers noop for a seat already ended.
+      mockConstructEvent.mockReturnValue(createDeletedEvent("sub_live_1"));
+      mockAdmin({ famSubRow: { participation_id: PARTICIPATION_ID } });
+      mockAdminRpc.mockResolvedValue({ data: { kind: "noop" }, error: null });
+
+      const res = await POST(createWebhookRequest());
+      expect(res.status).toBe(200);
+      expect(mockAdminRpc).toHaveBeenCalledTimes(1);
+    });
+
+    it("is a no-op for a sub we don't have a row for", async () => {
       mockConstructEvent.mockReturnValue(createDeletedEvent("sub_unknown"));
       mockAdmin({ famSubRow: null });
 
@@ -977,9 +1020,9 @@ describe("POST /api/webhooks/stripe/products", () => {
     // so a handler that reads one and not the other stops recording renewals the
     // moment the endpoint's version moves — silently, with a 200.
     const RENEWAL_FAM_SUB = {
-      id: FAM_SUB_ROW_ID,
       customer_id: CUSTOMER_ID,
-      currency: "eur",
+      participation_id: PARTICIPATION_ID,
+      participations: { product_id: PRODUCT_ID },
     };
 
     it("records the renewal payment when the subscription id is top-level", async () => {
@@ -1003,9 +1046,15 @@ describe("POST /api/webhooks/stripe/products", () => {
         amount_cents: 4900,
         currency: "eur",
         purpose: "subscription_invoice",
+        // The seat the family-sub row names, and that seat's product now.
+        participation_id: PARTICIPATION_ID,
+        product_id: PRODUCT_ID,
         stripe_invoice_id: "in_renewal_1",
         metadata: { stripeSubscriptionId: SUB_ID, billingReason: "subscription_cycle" },
       });
+      expect(inserts.processedEvents).toEqual([
+        { stripe_event_id: "evt_invoice_top_level", event_type: "invoice.paid" },
+      ]);
     });
 
     it("records the renewal payment when the subscription id is under parent.subscription_details", async () => {
@@ -1041,6 +1090,27 @@ describe("POST /api/webhooks/stripe/products", () => {
       const res = await POST(createWebhookRequest());
       expect(res.status).toBe(200);
       expect(inserts.payments).toHaveLength(0);
+    });
+
+    it("records no payment for an invoice settled at €0, and still marks the event processed", async () => {
+      // A coupon or a credit balance can settle a renewal at €0. Nothing was
+      // charged, so there is no payment; the processed mark is what stops a
+      // redelivery from running the handler again.
+      mockConstructEvent.mockReturnValue(
+        createInvoicePaidEvent({
+          placement: "parent",
+          id: "evt_invoice_zero",
+          amountPaid: 0,
+        }),
+      );
+      const inserts = mockAdmin({ famSubRow: RENEWAL_FAM_SUB });
+
+      const res = await POST(createWebhookRequest());
+      expect(res.status).toBe(200);
+      expect(inserts.payments).toHaveLength(0);
+      expect(inserts.processedEvents).toEqual([
+        { stripe_event_id: "evt_invoice_zero", event_type: "invoice.paid" },
+      ]);
     });
 
     it("is a no-op for a subscription we have no row for", async () => {
@@ -1084,23 +1154,25 @@ describe("POST /api/webhooks/stripe/products", () => {
       const res = await POST(createWebhookRequest());
       expect(res.status).toBe(200);
       expect(inserts.payments).toHaveLength(0);
-      // Before any read — not merely before the write. The admin client is
-      // never touched, so a one-off invoice costs no database round trip.
-      expect(mockAdminFrom).not.toHaveBeenCalled();
+      // Before any read of ours — not merely before the write. The only tables
+      // touched are the route's own processed check and mark.
+      expect(mockAdminFrom).not.toHaveBeenCalledWith("family_subscriptions");
+      expect(mockAdminFrom).not.toHaveBeenCalledWith("payments");
     });
 
-    it("writes nothing on a replay, where the event id is already recorded", async () => {
+    it("writes nothing on a replay, where the event is already marked processed", async () => {
       mockConstructEvent.mockReturnValue(
         createInvoicePaidEvent({ placement: "top-level" }),
       );
       const inserts = mockAdmin({
         famSubRow: RENEWAL_FAM_SUB,
-        existingPayment: { id: PAYMENT_ROW_ID },
+        alreadyProcessed: true,
       });
 
       const res = await POST(createWebhookRequest());
       expect(res.status).toBe(200);
       expect(inserts.payments).toHaveLength(0);
+      expect(inserts.processedEvents).toHaveLength(0);
     });
   });
 
@@ -1111,7 +1183,22 @@ describe("POST /api/webhooks/stripe/products", () => {
     // translated before it is written. Passing one through verbatim used to
     // produce a rejected write whose error was dropped: the row kept its old
     // status and the route answered 200.
-    const OURS = { id: FAM_SUB_ROW_ID };
+    const OURS = { id: FAM_SUB_ROW_ID, ended_at: null };
+
+    it("never writes a subscription that ended with its seat", async () => {
+      // A late update must not revive an ended subscription: the row's trigger
+      // would refuse the write, so the handler leaves it alone instead.
+      mockConstructEvent.mockReturnValue(
+        createSubscriptionUpdatedEvent({ status: "active" }),
+      );
+      const inserts = mockAdmin({
+        famSubRow: { ...OURS, ended_at: "2026-03-01T10:00:00Z" },
+      });
+
+      const res = await POST(createWebhookRequest());
+      expect(res.status).toBe(200);
+      expect(inserts.familySubscriptionUpdates).toEqual([]);
+    });
 
     it("maps trialing onto active", async () => {
       mockConstructEvent.mockReturnValue(
@@ -1648,9 +1735,9 @@ describe("POST /api/webhooks/stripe/products", () => {
       expect(mockSendTransactionalEmail).not.toHaveBeenCalled();
     });
 
-    it("sends nothing on a delivery the payments dedup guard short-circuits", async () => {
+    it("sends nothing on a delivery the processed check short-circuits", async () => {
       mockConstructEvent.mockReturnValue(createCompletedEvent());
-      mockAdmin({ existingPayment: { id: PAYMENT_ROW_ID } });
+      mockAdmin({ alreadyProcessed: true });
       confirmFresh();
 
       const res = await POST(createWebhookRequest());
@@ -1691,10 +1778,11 @@ describe("POST /api/webhooks/stripe/products", () => {
       const res = await POST(createWebhookRequest());
 
       // A 500 here would win a redelivery that re-ran a money path to fix an
-      // email — and the payment row is already written, so the redelivery would
-      // do nothing but log.
+      // email — and the RPC would answer it idempotent, so the redelivery would
+      // send nothing anyway.
       expect(res.status).toBe(200);
       expect(inserts.payments).toHaveLength(1);
+      expect(inserts.processedEvents).toHaveLength(1);
       spy.mockRestore();
     });
   });
@@ -1781,6 +1869,8 @@ describe("POST /api/webhooks/stripe/products — a Session with a booking", () =
         customer_id: CUSTOMER_ID,
         currency: "eur",
         purpose: "subscription_invoice",
+        participation_id: PARTICIPATION_ID,
+        product_id: PRODUCT_ID,
         metadata: {
           gamerId: GAMER_ID,
           productId: PRODUCT_ID,
@@ -1806,8 +1896,8 @@ describe("POST /api/webhooks/stripe/products — a Session with a booking", () =
     expect(mockSendTransactionalEmail).not.toHaveBeenCalled();
   });
 
-  it("bails before confirming when the event is already recorded", async () => {
-    mockAdmin({ existingPayment: { id: PAYMENT_ROW_ID } });
+  it("bails before confirming when the event is already marked processed", async () => {
+    mockAdmin({ alreadyProcessed: true });
 
     const res = await POST(createWebhookRequest());
     expect(res.status).toBe(200);
@@ -1863,7 +1953,7 @@ describe("POST /api/webhooks/stripe/products — a Session with a booking", () =
     consoleError.mockRestore();
   });
 
-  it("makes no seat-dependent write when the seat has since been cancelled", async () => {
+  it("makes no seat-dependent write when the seat has since ended", async () => {
     const inserts = mockAdmin();
     const consoleError = vi.spyOn(console, "error").mockImplementation(() => {});
     mockAdminRpc.mockResolvedValueOnce({
@@ -1880,11 +1970,13 @@ describe("POST /api/webhooks/stripe/products — a Session with a booking", () =
     expect(inserts.payments).toEqual([
       expect.objectContaining({
         customer_id: CUSTOMER_ID,
+        participation_id: null,
+        product_id: PRODUCT_ID,
         metadata: expect.objectContaining({ participationId: null }),
       }),
     ]);
     expect(consoleError).toHaveBeenCalledWith(
-      expect.stringContaining("since been cancelled"),
+      expect.stringContaining("since ended"),
       expect.objectContaining({ subscription: SUB_ID }),
     );
     consoleError.mockRestore();
@@ -1901,6 +1993,7 @@ describe("POST /api/webhooks/stripe/products — a Session with a booking", () =
     const res = await POST(createWebhookRequest());
     expect(res.status).toBe(500);
     expect(inserts.payments).toEqual([]);
+    expect(inserts.processedEvents).toEqual([]);
     consoleError.mockRestore();
   });
 });

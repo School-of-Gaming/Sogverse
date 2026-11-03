@@ -13,7 +13,7 @@ import {
   createAuthenticatedClient,
 } from "./helpers";
 import { SEED, TEST_CREDENTIALS, TEST_IDS } from "./constants";
-import { createTestProduct, deleteTestProducts } from "./product-helpers";
+import { createTestProduct, deleteTestProducts, eraseParticipations } from "./product-helpers";
 
 /**
  * Parents announce their changes to Klaviyo: the triggers that file a parent in
@@ -115,7 +115,7 @@ describe("the Klaviyo sync", () => {
 
   async function seat(
     productId: string,
-    status: "active" | "waitlisted" | "completed",
+    status: "active" | "waitlisted",
   ): Promise<string> {
     const { data, error } = await admin
       .from("participations")
@@ -273,7 +273,7 @@ describe("the Klaviyo sync", () => {
       expect((await profileRow(TEST_IDS.CUSTOMER))?.seq).toBe(3);
       await admin.from("products").update({ billing_mode: "paid" }).eq("id", CLUB);
 
-      await admin.from("participations").delete().eq("id", participationId);
+      await eraseParticipations(admin, (q) => q.eq("id", participationId));
       expect((await profileRow(TEST_IDS.CUSTOMER))?.seq).toBe(5);
     });
 
@@ -292,7 +292,7 @@ describe("the Klaviyo sync", () => {
       expect((await profileRow(TEST_IDS.CUSTOMER))?.seq).toBe(3);
       await admin.from("locations").update({ name: location?.name ?? "" }).eq("id", TEST_IDS.LOCATION_MUNICIPALITY);
 
-      await admin.from("participations").delete().in("id", [clubSeat, muniSeat]);
+      await eraseParticipations(admin, (q) => q.in("id", [clubSeat, muniSeat]));
       await clearProfiles([TEST_IDS.CUSTOMER]);
     });
   });
@@ -511,7 +511,7 @@ describe("the Klaviyo sync", () => {
       await admin.from("participations").update({ status: "active", seat_offer_sent_at: null }).eq("id", waiting);
       expect(await eventRow("enrolled", waiting)).toMatchObject({ product_id: ENDED, facts: GAMER_SEAT_UNTAGGED });
 
-      await admin.from("participations").delete().in("id", [active, waiting]);
+      await eraseParticipations(admin, (q) => q.in("id", [active, waiting]));
     });
 
     it("files an enrolment for a seat on a free product and on a municipality's contract", async () => {
@@ -520,7 +520,7 @@ describe("the Klaviyo sync", () => {
       const muni = await seat(MUNI, "active");
       expect(await eventRow("enrolled", free)).toMatchObject({ product_id: FREE, facts: GAMER_SEAT_UNTAGGED });
       expect(await eventRow("enrolled", muni)).toMatchObject({ product_id: MUNI, facts: GAMER_SEAT_UNTAGGED });
-      await admin.from("participations").delete().in("id", [free, muni]);
+      await eraseParticipations(admin, (q) => q.in("id", [free, muni]));
     });
 
     it("records the booking's UTM tag and School of Gaming answer the seat writer was handed", async () => {
@@ -562,7 +562,7 @@ describe("the Klaviyo sync", () => {
         },
       });
 
-      await admin.from("participations").delete().eq("id", participationId);
+      await eraseParticipations(admin, (q) => q.eq("id", participationId));
     });
 
     it("carries the School of Gaming answer only with the booking, never with a later re-activation", async () => {
@@ -598,7 +598,7 @@ describe("the Klaviyo sync", () => {
         facts: { ...GAMER_SEAT_UNTAGGED, utm_source: "lynx", marketing_opt_in: null },
       });
 
-      await admin.from("participations").delete().eq("id", participationId);
+      await eraseParticipations(admin, (q) => q.eq("id", participationId));
     });
 
     it("carries a waitlist join's campaign tag on every waitlisted event, and its School of Gaming answer only on the join", async () => {
@@ -657,7 +657,7 @@ describe("the Klaviyo sync", () => {
         utm_campaign: "lynx-autumn",
       });
 
-      await admin.from("participations").delete().eq("id", participationId);
+      await eraseParticipations(admin, (q) => q.eq("id", participationId));
     });
 
     it("tells a parent's own seat apart from their gamer's", async () => {
@@ -672,7 +672,7 @@ describe("the Klaviyo sync", () => {
       expect(await eventRow("enrolled", own)).toMatchObject({
         facts: { ...GAMER_SEAT_UNTAGGED, seat_holder: "parent", gamer_birth_year: null, gamer_gender: null },
       });
-      await admin.from("participations").delete().eq("id", own);
+      await eraseParticipations(admin, (q) => q.eq("id", own));
     });
 
     describe("attendance", () => {
@@ -715,7 +715,7 @@ describe("the Klaviyo sync", () => {
       });
 
       afterAll(async () => {
-        await admin.from("participations").delete().eq("id", groupSeat);
+        await eraseParticipations(admin, (q) => q.eq("id", groupSeat));
         await admin.from("product_groups").delete().eq("id", GROUP);
       });
 
@@ -858,7 +858,7 @@ describe("the Klaviyo sync", () => {
       expect((await eventRow("subscription_cancelled", subscriptionId))?.id).toBe(first?.id);
 
       await admin.from("family_subscriptions").delete().eq("id", subscriptionId);
-      await admin.from("participations").delete().eq("id", participationId);
+      await eraseParticipations(admin, (q) => q.eq("id", participationId));
     });
   });
 
@@ -928,7 +928,7 @@ describe("the Klaviyo sync", () => {
 
       await admin.rpc("finish_klaviyo_event_job", { p_event_id: eventId });
       expect(await eventRow("enrolled", participationId)).toBeNull();
-      await admin.from("participations").delete().eq("id", participationId);
+      await eraseParticipations(admin, (q) => q.eq("id", participationId));
     });
   });
 
@@ -985,8 +985,38 @@ describe("the Klaviyo sync", () => {
         expect.arrayContaining([expect.objectContaining({ locale: "fi", name: "Klaviyo-kerho" })]),
       );
 
-      await admin.from("participations").delete().in("id", [active, past, muni]);
+      await eraseParticipations(admin, (q) => q.in("id", [active, past, muni]));
       await admin.from("minecraft_accounts").delete().eq("user_id", TEST_IDS.GAMER);
+    });
+
+    it("leaves an ended seat and its ended subscription out of the snapshot", async () => {
+      const held = await seat(MUNI, "active");
+      const left = await seat(CLUB, "active");
+      const sub = await admin.from("family_subscriptions").insert({
+        customer_id: TEST_IDS.CUSTOMER,
+        participation_id: left,
+        stripe_subscription_id: "sub_klaviyo_ended",
+        stripe_customer_id: "cus_klaviyo_ended",
+        currency: "eur",
+        status: "active",
+        current_period_end: new Date().toISOString(),
+      });
+      expect(sub.error).toBeNull();
+      const ended = await admin.rpc("end_participation", {
+        p_participation_id: left,
+        p_reason: "subscription_cancelled",
+      });
+      expect(ended.error).toBeNull();
+
+      const { data, error } = await admin.rpc("get_klaviyo_parent_snapshots", {
+        p_customer_ids: [TEST_IDS.CUSTOMER],
+      });
+      expect(error).toBeNull();
+      const snapshot = klaviyoParentSnapshotRow.parse(data?.[0]).snapshot;
+      expect(snapshot.participations.map((p) => p.id)).toEqual([held]);
+      expect(snapshot.subscriptions).toEqual([]);
+
+      await eraseParticipations(admin, (q) => q.in("id", [held, left]));
     });
 
     it("reads a claimed event through the contract, with its unique id and product", async () => {
@@ -1006,7 +1036,7 @@ describe("the Klaviyo sync", () => {
       });
       expect(rows[0].properties.product?.id).toBe(CLUB);
 
-      await admin.from("participations").delete().eq("id", participationId);
+      await eraseParticipations(admin, (q) => q.eq("id", participationId));
       await clearEvents([TEST_IDS.CUSTOMER]);
     });
   });

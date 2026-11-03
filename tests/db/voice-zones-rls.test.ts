@@ -3,7 +3,7 @@ import type { SupabaseClient } from "@supabase/supabase-js";
 import type { Database } from "@/types/database.types";
 import { createAdminTestClient, createAuthenticatedClient } from "./helpers";
 import { TEST_IDS, TEST_CREDENTIALS } from "./constants";
-import { createTestProduct, deleteTestProducts } from "./product-helpers";
+import { createTestProduct, deleteTestProducts, eraseParticipations } from "./product-helpers";
 import { getStringRecord } from "../helpers/json";
 
 /**
@@ -143,7 +143,7 @@ describe("voice_zones + voice_private_zone_occupants RLS", () => {
     // failed run doesn't leak rows that outlive the product teardown.
     await admin.from("voice_private_zone_occupants").delete().in("group_id", [groupX1, groupY1]);
     await admin.from("voice_zones").delete().in("group_id", [groupX1, groupY1]);
-    await admin.from("participations").delete().in("product_id", ALL_PRODUCTS);
+    await eraseParticipations(admin, (q) => q.in("product_id", ALL_PRODUCTS));
     await deleteTestProducts(admin, ALL_PRODUCTS);
   });
 

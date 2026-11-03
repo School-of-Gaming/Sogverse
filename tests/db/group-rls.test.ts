@@ -3,7 +3,7 @@ import type { SupabaseClient } from "@supabase/supabase-js";
 import type { Database } from "@/types/database.types";
 import { createAdminTestClient, createAuthenticatedClient } from "./helpers";
 import { TEST_IDS, TEST_CREDENTIALS } from "./constants";
-import { createTestProduct, deleteTestProducts } from "./product-helpers";
+import { createTestProduct, deleteTestProducts, eraseParticipations } from "./product-helpers";
 import { getStringRecord } from "../helpers/json";
 
 /**
@@ -88,10 +88,7 @@ describe("product_groups + gedu_group_assignments RLS", () => {
   });
 
   afterAll(async () => {
-    await admin
-      .from("participations")
-      .delete()
-      .in("product_id", ALL_PRODUCTS);
+    await eraseParticipations(admin, (q) => q.in("product_id", ALL_PRODUCTS));
     await deleteTestProducts(admin, ALL_PRODUCTS);
   });
 
@@ -215,8 +212,8 @@ describe("product_groups + gedu_group_assignments RLS", () => {
 
 // ---------------------------------------------------------------------------
 // Non-active participations don't grant ongoing visibility.
-// The participation_status enum is ('reserving', 'active', 'waitlisted',
-// 'completed') — no 'cancelled', and 'reserving' is retired. The realistic leak
+// The participation_status enum is ('active', 'waitlisted', 'ended') — no
+// 'cancelled'. The realistic leak
 // is a former participant
 // of a finished product retaining visibility into its current group/Gedu
 // structure, which the migration closes by gating on status = 'active'.
@@ -226,7 +223,7 @@ describe("product_groups + gedu_group_assignments RLS", () => {
 
 const PRODUCT_Z = "00000000-0000-0000-0000-0000000007b3";
 
-describe("completed participation loses RLS visibility on v2 groups", () => {
+describe("ended participation loses RLS visibility on v2 groups", () => {
   let admin: SupabaseClient<Database>;
   let adminAuth: SupabaseClient<Database>;
   let customerAuth: SupabaseClient<Database>;
@@ -274,7 +271,7 @@ describe("completed participation loses RLS visibility on v2 groups", () => {
   });
 
   afterAll(async () => {
-    await admin.from("participations").delete().eq("product_id", PRODUCT_Z);
+    await eraseParticipations(admin, (q) => q.eq("product_id", PRODUCT_Z));
     await deleteTestProducts(admin, [PRODUCT_Z]);
   });
 
@@ -288,7 +285,11 @@ describe("completed participation loses RLS visibility on v2 groups", () => {
 
     await admin
       .from("participations")
-      .update({ status: "completed" })
+      .update({
+        status: "ended",
+        ended_at: new Date().toISOString(),
+        end_reason: "admin_removed",
+      })
       .eq("id", participationZ);
 
     const after = await customerAuth
@@ -300,14 +301,18 @@ describe("completed participation loses RLS visibility on v2 groups", () => {
     // Restore for subsequent assertions.
     await admin
       .from("participations")
-      .update({ status: "active" })
+      .update({ status: "active", ended_at: null, end_reason: null })
       .eq("id", participationZ);
   });
 
   it("gamer loses product_groups visibility once their own participation is no longer active", async () => {
     await admin
       .from("participations")
-      .update({ status: "completed" })
+      .update({
+        status: "ended",
+        ended_at: new Date().toISOString(),
+        end_reason: "admin_removed",
+      })
       .eq("id", participationZ);
 
     const { data } = await gamerAuth
@@ -318,14 +323,18 @@ describe("completed participation loses RLS visibility on v2 groups", () => {
 
     await admin
       .from("participations")
-      .update({ status: "active" })
+      .update({ status: "active", ended_at: null, end_reason: null })
       .eq("id", participationZ);
   });
 
   it("customer loses gedu_group_assignments visibility once the participation is no longer active", async () => {
     await admin
       .from("participations")
-      .update({ status: "completed" })
+      .update({
+        status: "ended",
+        ended_at: new Date().toISOString(),
+        end_reason: "admin_removed",
+      })
       .eq("id", participationZ);
 
     const { data } = await customerAuth
@@ -336,7 +345,7 @@ describe("completed participation loses RLS visibility on v2 groups", () => {
 
     await admin
       .from("participations")
-      .update({ status: "active" })
+      .update({ status: "active", ended_at: null, end_reason: null })
       .eq("id", participationZ);
   });
 });

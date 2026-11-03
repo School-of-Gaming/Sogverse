@@ -124,7 +124,7 @@ const SEATS = [
   // No group, no home location, an unverified username.
   seat(R2, { product_id: P_CLUB, participant_id: GAMER_B, status: "waitlisted" }),
   // A cleared username: no account, so no row.
-  seat(R3, { product_id: P_CAMP, participant_id: GAMER_C, status: "completed" }),
+  seat(R3, { product_id: P_CAMP, participant_id: GAMER_C, status: "ended" }),
   // A parent's own seat: never a research row.
   seat(R4, { product_id: P_CAMP, participant_id: PARENT_A, role: "customer" }),
   seat(R5, {
@@ -132,8 +132,8 @@ const SEATS = [
     participant_id: GAMER_D,
     home_location_id: L_REGION,
   }),
-  // Mid-checkout: never a seat anyone holds.
-  seat(R6, { product_id: P_EVENT, participant_id: GAMER_D, status: "reserving" }),
+  // Ended: held once, and never reported to a partner.
+  seat(R6, { product_id: P_EVENT, participant_id: GAMER_D, status: "ended" }),
 ];
 
 function chainNode(
@@ -297,7 +297,7 @@ describe("GET /api/partner/v1/roblox-research", () => {
       "eq.roblox-programme-terms",
     );
     expect(url.searchParams.get("child.role")).toBe("eq.gamer");
-    expect(url.searchParams.get("status")).toBe("in.(active,waitlisted,completed)");
+    expect(url.searchParams.get("status")).toBe("in.(active,waitlisted)");
     expect(url.searchParams.get("order")).toBe("id.asc");
   });
 

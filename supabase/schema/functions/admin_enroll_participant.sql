@@ -91,8 +91,8 @@ BEGIN
       ) g;
   END IF;
 
-  -- The partial unique index on (product_id, participant_id) for non-reserving
-  -- statuses is the source of truth for "already enrolled"; it raises 23505 and
+  -- The partial unique index on (product_id, participant_id) over active and
+  -- waitlisted rows is the source of truth for "already enrolled"; it raises 23505 and
   -- the route maps that to 409. Re-checking it here would be a race, not a
   -- safeguard.
   --

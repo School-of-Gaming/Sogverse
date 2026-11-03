@@ -229,7 +229,7 @@ export class GroupsService {
    *
    * This deliberately does NOT go through `apply_group_changes`: creating a
    * participation is an enrollment-lifecycle action (its domain siblings are
-   * create_booking / cancel_participation), distinct from mutating group
+   * create_booking / end_participation), distinct from mutating group
    * structure. On success the caller should invalidate
    * `groupsKeys.byProduct(productId)` so the new chip appears — in the product's
    * only group when the product charges nothing and has exactly one, and in
@@ -358,9 +358,10 @@ export class GroupsService {
   }
 
   /**
-   * Admin un-enrollment: hard-deletes a participation — the inverse of
-   * addParticipantToProduct. Hits the DELETE participations route, which calls
-   * cancel_participation(reason='admin_cancelled'). No refund is issued (see
+   * Admin un-enrollment: ends a participation (a waitlisted one is deleted) —
+   * the inverse of addParticipantToProduct. Hits the DELETE participations
+   * route, which calls admin_remove_participation, ending the seat through
+   * end_participation with reason 'admin_removed'. No refund is issued (see
    * the route). Blocked server-side on consumer_club, same as the add path. On
    * success the caller should invalidate groupsKeys.byProduct(productId) so the
    * chip leaves the panel.

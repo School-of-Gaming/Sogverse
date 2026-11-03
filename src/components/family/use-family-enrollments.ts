@@ -93,7 +93,7 @@ const gamerOpenHref = ({
  * as already stale.
  */
 interface FamilyEnrollmentRows {
-  /** `status='active'` rows — seats held, placed and unplaced alike. */
+  /** Seats held, placed and unplaced alike, and seats that have ended. */
   initialSessionRows: MyUpcomingSessionRow[] | null;
   /** `status='waitlisted'` rows, each with its live place in line. */
   initialWaitlistRows: MyWaitlistRow[] | null;

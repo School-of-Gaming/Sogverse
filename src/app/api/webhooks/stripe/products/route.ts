@@ -14,8 +14,12 @@ import type { Json, PaymentPurpose } from "@/types";
 
 const webhookSecret = process.env.STRIPE_PRODUCTS_WEBHOOK_SECRET!;
 
-// Webhook idempotency: every payments row carries the stripe_event_id; a UNIQUE
-// constraint catches duplicate deliveries.
+// Webhook idempotency: an event this route handles is looked up in
+// `stripe_processed_events` before anything else, and recorded there only once
+// its handler has made its last write. A redelivery of a finished event does
+// nothing; one whose first delivery died part-way runs again, and every write a
+// handler makes is safe to repeat (the UNIQUE on payments.stripe_event_id is the
+// net under the payment row).
 //
 // Errors during writes return 500 so Stripe retries. Unhandled event types
 // return 200 — quieter than 4xx and Stripe will stop retrying.
@@ -44,6 +48,12 @@ export async function POST(request: Request) {
   const admin = createAdminClient();
 
   try {
+    // Unhandled types are not recorded: there is nothing to have finished.
+    const handled = HANDLED_EVENT_TYPES.has(event.type);
+    if (handled && (await isProcessed(admin, event.id))) {
+      return NextResponse.json({ received: true });
+    }
+
     switch (event.type) {
       case "checkout.session.completed":
         await handleCheckoutCompleted(admin, event, request);
@@ -76,6 +86,10 @@ export async function POST(request: Request) {
         // Unhandled type — fine.
         break;
     }
+    // Last, after every write the handler made: the mark means "finished", so
+    // a delivery that failed before this line is run again in full by Stripe's
+    // retry.
+    if (handled) await markProcessed(admin, event);
     return NextResponse.json({ received: true });
   } catch (err) {
     console.error(
@@ -90,6 +104,32 @@ export async function POST(request: Request) {
 }
 
 type Admin = ReturnType<typeof createAdminClient>;
+
+/** The event types the switch above acts on, and so the ones marked processed. */
+const HANDLED_EVENT_TYPES: ReadonlySet<string> = new Set<Stripe.Event.Type>([
+  "checkout.session.completed",
+  "invoice.paid",
+  "customer.subscription.updated",
+  "customer.subscription.deleted",
+]);
+
+async function isProcessed(admin: Admin, eventId: string): Promise<boolean> {
+  const { data, error } = await admin
+    .from("stripe_processed_events")
+    .select("stripe_event_id")
+    .eq("stripe_event_id", eventId)
+    .maybeSingle();
+  if (error) throw error;
+  return data !== null;
+}
+
+async function markProcessed(admin: Admin, event: Stripe.Event) {
+  const { error } = await admin
+    .from("stripe_processed_events")
+    .insert({ stripe_event_id: event.id, event_type: event.type });
+  // A concurrent delivery of the same event finished first: already marked.
+  if (error && error.code !== "23505") throw error;
+}
 
 async function handleCheckoutCompleted(
   admin: Admin,
@@ -122,17 +162,10 @@ async function handleCheckoutCompleted(
   const legacyFacts = bookingId ? null : legacyFactsFromMetadata(session);
   if (!bookingId && !legacyFacts) return;
 
-  // Idempotency on payments — UNIQUE on stripe_event_id is the safety net.
-  // This guard runs FIRST, before any write: it reads "a payment exists for this
-  // event" as "this event is fully processed", which is what makes a replayed
-  // delivery cheap and safe.
-  const { data: existingPayment } = await admin
-    .from("payments")
-    .select("id")
-    .eq("stripe_event_id", event.id)
-    .maybeSingle();
-  if (existingPayment) return;
-
+  // A finished event never gets here (the route checks it first), so this is a
+  // first delivery or the re-run of one that died part-way. Every write below is
+  // safe to repeat on that re-run, and the comments on each say why.
+  //
   // The money has arrived, so this is where the participation is created, and
   // the answer carries every fact the writes below need. Two outcomes:
   //   settled           — a fresh seat, or the seat this very session already
@@ -179,8 +212,8 @@ async function handleCheckoutCompleted(
     //
     // A failed cancel is logged rather than thrown, deliberately. Throwing
     // would win a free Stripe retry, but it would also stop the payment row
-    // landing — and that row is both this branch's commit marker and the record
-    // an admin queries when the customer reports the double charge. Worse, a
+    // landing — the record an admin queries when the customer reports the
+    // double charge — and the event being marked processed. Worse, a
     // cancel is not safely repeatable: if the first one succeeded and only its
     // response was lost, the retry asks Stripe to cancel an already-cancelled
     // subscription and fails again, looping until Stripe gives up with nothing
@@ -197,12 +230,16 @@ async function handleCheckoutCompleted(
       }
     }
 
-    await insertPaymentRow(admin, {
+    // A duplicate bought no seat, so it names none: the seat the family
+    // already held is the metadata's `existingParticipationId`.
+    await recordPayment(admin, {
       stripeEventId: event.id,
       customerId,
       amountCents: session.amount_total ?? 0,
       currency,
       purpose: "reservation_duplicate",
+      participationId: null,
+      productId,
       stripePaymentIntentId: expandableId(session.payment_intent),
       stripeInvoiceId: expandableId(session.invoice),
       // The ledger echo KEEPS the historical `gamerId` key. Every payments row
@@ -222,15 +259,17 @@ async function handleCheckoutCompleted(
     return;
   }
 
-  // A redelivery after the seat this session bought was cancelled. It can only
-  // get this far when the first delivery died before its payment row, so nothing
-  // recorded the money. The seat stays cancelled, which rules out every
-  // seat-dependent write below: no subscription row and no mail. The payment
-  // still lands, as the commit marker and the record of the charge, and a live
-  // subscription now has nothing tracking it, so the log names it for a person.
+  // A redelivery after the seat this session bought has ended: confirm_booking
+  // answers a settled booking whose seat ended with no participation id. It can
+  // only get this far when the first delivery died before it was marked
+  // processed, so the money may be unrecorded. The seat stays ended, which rules
+  // out every seat-dependent write below: no subscription row and no mail. The
+  // payment still lands, as the record of the charge, naming the product but no
+  // seat (the answer carries none), and a live subscription now has nothing
+  // tracking it, so the log names it for a person.
   if (confirmed.participationId === null) {
     console.error(
-      "[stripe/products webhook] completed session for a seat that has since been cancelled — check the subscription and refund by hand",
+      "[stripe/products webhook] completed session for a seat that has since ended — check the subscription and refund by hand",
       {
         eventId: event.id,
         customerId,
@@ -240,12 +279,14 @@ async function handleCheckoutCompleted(
         paymentIntent: expandableId(session.payment_intent),
       },
     );
-    await insertPaymentRow(admin, {
+    await recordPayment(admin, {
       stripeEventId: event.id,
       customerId,
       amountCents: session.amount_total ?? 0,
       currency,
       purpose: paymentPurposeFor(purchaseShape),
+      participationId: null,
+      productId,
       stripePaymentIntentId: expandableId(session.payment_intent),
       stripeInvoiceId: expandableId(session.invoice),
       metadata: {
@@ -258,18 +299,14 @@ async function handleCheckoutCompleted(
     return;
   }
 
-  // Subscription mode: record the per-participation family_subscriptions row
-  // BEFORE the payment row, on purpose. The payment row is this handler's commit
-  // marker — the idempotency guard at the top reads "a payment exists for this
-  // event" as "this event is fully processed" and short-circuits the whole
-  // handler. Writing the sub row first makes that invariant true: if the sub
-  // insert fails, no payment row lands, so Stripe's retry re-runs the handler
-  // and gets another shot at the sub row — instead of the guard skipping it
-  // forever and leaving a live, untracked recurring Stripe sub (renewals would
-  // then drop in handleInvoicePaid, and a cancellation would find no row to tear
-  // the participation down). That re-run is only safe because the booking records
-  // that it settled: the RPC above hands back the same seat rather than mistaking
-  // it for a second payment.
+  // Subscription mode: the per-participation family_subscriptions row. A
+  // failed insert throws, so the event is not marked processed and Stripe's
+  // retry re-runs the handler and gets another shot at it — rather than leaving
+  // a live, untracked recurring Stripe sub (renewals would then drop in
+  // handleInvoicePaid, and a cancellation would find no row to tear the
+  // participation down). That re-run is only safe because the booking records
+  // that it settled: the RPC above hands back the same seat rather than
+  // mistaking it for a second payment.
   //
   // Each subscription Checkout creates a brand-new Stripe sub (one per
   // gamer×club), so there's nothing to find-or-merge — just insert, keyed to the
@@ -319,15 +356,16 @@ async function handleCheckoutCompleted(
     }
   }
 
-  // Confirmed — record the payment row LAST. It's the commit marker the
-  // idempotency guard at the top keys on (see the sub-row note above), so it
-  // must come after every other write this handler makes.
-  await insertPaymentRow(admin, {
+  // Confirmed — record the money. A re-run meets the UNIQUE on
+  // stripe_event_id and records nothing twice.
+  await recordPayment(admin, {
     stripeEventId: event.id,
     customerId,
     amountCents: session.amount_total ?? 0,
     currency,
     purpose: paymentPurposeFor(purchaseShape),
+    participationId: confirmed.participationId,
+    productId,
     stripePaymentIntentId: expandableId(session.payment_intent),
     stripeInvoiceId: expandableId(session.invoice),
     // `gamerId` again, and deliberately — see the duplicate branch above.
@@ -344,16 +382,16 @@ async function handleCheckoutCompleted(
   //
   // **What guards it is `idempotent === false`, and nothing else can.** Stripe
   // redelivers, and a redelivery that gets this far — because the first attempt
-  // died before writing its payment row, so the guard at the top of the handler
-  // did not short-circuit it — calls the RPC again and is answered `settled`
+  // died before the event was marked processed, so the route's check did not
+  // short-circuit it — calls the RPC again and is answered `settled`
   // with the same participation id. The two answers are indistinguishable
   // except for this flag, which the function sets from whether it INSERTed or
   // found the booking already settled. Keying on
   // the id, or on the absence of a payment row, would send the mail twice.
   //
-  // **Last, after every write.** The payment row is this handler's commit
-  // marker; putting a third-party round trip in front of it would add latency
-  // and a failure surface to the middle of a money path. The accepted cost is
+  // **Last, after every write.** Putting a third-party round trip in front of
+  // the payment row would add latency and a failure surface to the middle of a
+  // money path. The accepted cost is
   // the narrow case where a delivery creates the participation and then fails a
   // later write: its retry reports `idempotent`, so no mail is ever sent for
   // that seat. The seat itself is intact and visible in My SOG, which is the
@@ -558,30 +596,28 @@ async function handleInvoicePaid(admin: Admin, event: Stripe.InvoicePaidEvent) {
   // arrives weeks later at the anchor with `billing_reason:
   // "subscription_cycle"`, i.e. shaped exactly like a month-2 renewal, so the
   // ordinary renewal path below is the right one to record it. No gate here
-  // needs widening for deferred billing: the €0 checkout leaves a zero-amount
-  // payment row (its idempotency marker) and this handler writes the real one
-  // when the money actually moves.
+  // needs widening for deferred billing: the €0 checkout records no payment,
+  // and this handler writes the first one when the money actually moves. An
+  // invoice settled at €0 (a coupon, a credit balance) records nothing either.
   if (!subId || invoice.billing_reason === "subscription_create") return;
-  const { data: famSub } = await admin
+  const { data: famSub, error: famSubErr } = await admin
     .from("family_subscriptions")
-    .select("id, customer_id, currency")
+    .select("customer_id, participation_id, participations!inner(product_id)")
     .eq("stripe_subscription_id", subId)
     .maybeSingle();
+  if (famSubErr) throw famSubErr;
   if (!famSub) return;
 
-  const { data: existingPayment } = await admin
-    .from("payments")
-    .select("id")
-    .eq("stripe_event_id", event.id)
-    .maybeSingle();
-  if (existingPayment) return;
-
-  await insertPaymentRow(admin, {
+  // The seat's product as it stands when the renewal is paid: a club switch
+  // moves the seat, and this renewal paid for the club it is in now.
+  await recordPayment(admin, {
     stripeEventId: event.id,
     customerId: famSub.customer_id,
     amountCents: invoice.amount_paid,
     currency: invoice.currency,
     purpose: "subscription_invoice",
+    participationId: famSub.participation_id,
+    productId: famSub.participations.product_id,
     stripePaymentIntentId: null,
     stripeInvoiceId: invoice.id,
     metadata: {
@@ -602,10 +638,14 @@ async function handleSubscriptionUpdated(
   // the account; "do we have a row for this stripe_subscription_id" is the gate.
   const { data: ours } = await admin
     .from("family_subscriptions")
-    .select("id, updated_at")
+    .select("id, updated_at, ended_at")
     .eq("stripe_subscription_id", sub.id)
     .maybeSingle();
   if (!ours) return;
+  // A subscription that ended with its seat is final: a late or out-of-order
+  // update describing it must never revive it, and the row's trigger refuses
+  // the write (55000) if one tries. Stripe has nothing left to tell us here.
+  if (ours.ended_at) return;
 
   const periodEnd = currentPeriodEndOf(sub);
   const priceId = sub.items.data[0]?.price.id;
@@ -766,13 +806,13 @@ function statusForSubscriptionUpdate(
  *
  * The asymmetry with the update path is the point. Here the throw would land
  * mid-sequence: the Stripe subscription is already live and charging, and the
- * payment row — this handler's commit marker — has not been written yet. Stripe's
+ * payment row and the processed mark have not been written yet. Stripe's
  * retry would re-read the same unmapped status and fail again, forever, so the
  * subscription would be left with no `family_subscriptions` row at all: renewals
  * drop in the invoice handler, and a cancellation finds nothing to tear the
- * participation down with. That is the exact state the write-ordering comment
- * further up this file exists to prevent, and a status we failed to translate is
- * not a good enough reason to enter it.
+ * participation down with. That is the exact state the sub-row comment further
+ * up this file exists to prevent, and a status we failed to translate is not a
+ * good enough reason to enter it.
  *
  * So: log loudly enough to be found, store `incomplete`, and let the payment row
  * land. `incomplete` is the safe corner of the vocabulary — it does not claim the
@@ -810,20 +850,17 @@ async function handleSubscriptionDeleted(
     .select("participation_id")
     .eq("stripe_subscription_id", sub.id)
     .maybeSingle();
-  // No row → nothing to do. The normal way to hit this is a *replayed*
-  // deletion: the first delivery already tore the participation down (which
-  // CASCADE-removed this row), so a redelivery finds nothing. Returning here
-  // keeps the replay a clean 200 instead of a null-deref 500 that Stripe would
-  // retry forever. (Also covers any sub on the account not created by this flow.)
+  // No row → nothing to do: a sub on the account this flow never created.
   if (!famSub) return;
 
   // Portal-only cancellation (§4.5c): the parent cancelled this club's sub in
-  // Stripe's hosted portal, Stripe fired this event, and now we tear the
-  // participation down. Stripe has ALREADY cancelled the sub, so this path must
-  // not call Stripe again — `cancel_participation` only touches our DB.
-  // Hard-deleting the participation CASCADEs the family_subscriptions row away.
-  // Idempotent: a replay finds no row (already gone) and returns kind='noop'.
-  const { error } = await admin.rpc("cancel_participation", {
+  // Stripe's hosted portal, Stripe fired this event, and now the seat ends.
+  // Stripe has ALREADY cancelled the sub, so this path must not call Stripe
+  // again — `end_participation` only touches our DB. The seat is kept, ended,
+  // with its family_subscriptions row cancelled and stamped. A replayed
+  // deletion finds that row again and end_participation answers kind='noop'
+  // for a seat already ended, so the redelivery writes nothing.
+  const { error } = await admin.rpc("end_participation", {
     p_participation_id: famSub.participation_id,
     p_reason: "subscription_cancelled",
   });
@@ -836,31 +873,37 @@ interface InsertPaymentParams {
   amountCents: number;
   currency: string;
   purpose: PaymentPurpose;
+  /** The seat paid for; null where none was bought (see the column's comment). */
+  participationId: string | null;
+  productId: string;
   stripePaymentIntentId: string | null;
   stripeInvoiceId: string | null;
   metadata: Json;
 }
 
-async function insertPaymentRow(admin: Admin, params: InsertPaymentParams) {
-  const { data, error } = await admin
-    .from("payments")
-    .insert({
-      stripe_event_id: params.stripeEventId,
-      customer_id: params.customerId,
-      amount_cents: params.amountCents,
-      currency: params.currency,
-      purpose: params.purpose,
-      stripe_payment_intent_id: params.stripePaymentIntentId,
-      stripe_invoice_id: params.stripeInvoiceId,
-      metadata: params.metadata,
-    })
-    .select("id")
-    .single();
-  if (error) {
-    if (error.code === "23505") return null; // duplicate event — ignore.
-    throw error;
-  }
-  return data;
+/**
+ * A payment, recorded only when money moved. A club bought before it starts, or
+ * with a 100%-off code, completes Checkout at €0, and a coupon or a credit
+ * balance can settle an invoice at €0: the seat and the subscription are real,
+ * but nothing was charged, so there is no payment. The event is still marked
+ * processed by the route.
+ */
+async function recordPayment(admin: Admin, params: InsertPaymentParams) {
+  if (params.amountCents === 0) return;
+  const { error } = await admin.from("payments").insert({
+    stripe_event_id: params.stripeEventId,
+    customer_id: params.customerId,
+    amount_cents: params.amountCents,
+    currency: params.currency,
+    purpose: params.purpose,
+    participation_id: params.participationId,
+    product_id: params.productId,
+    stripe_payment_intent_id: params.stripePaymentIntentId,
+    stripe_invoice_id: params.stripeInvoiceId,
+    metadata: params.metadata,
+  });
+  // The re-run of an event that died after its payment landed: recorded once.
+  if (error && error.code !== "23505") throw error;
 }
 
 function paymentPurposeFor(purchaseShape: string): PaymentPurpose {

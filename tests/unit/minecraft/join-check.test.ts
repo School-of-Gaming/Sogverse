@@ -35,7 +35,7 @@ describe("seatGrantsServerAccess", () => {
     ).toBe(false);
   });
 
-  it.each(["waitlisted", "reserving", "completed"] as const)(
+  it.each(["waitlisted", "ended"] as const)(
     "refuses a %s seat",
     (status) => {
       expect(seatGrantsServerAccess(seat({ status }), NOW)).toBe(false);

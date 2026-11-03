@@ -6,7 +6,6 @@ import type {
   LocationWithChain,
 } from "@/services/locations/locations.service";
 import {
-  ENROLMENT_STATUS,
   type PartnerDelivery,
   type PartnerEnrolmentStatus,
   type PartnerPlace,
@@ -64,25 +63,9 @@ export const PROGRAMME_PRIVACY_SLUG = PROGRAMME_SLUGS.privacy;
 export const PROGRAMME_AGE_RANGE = { min: 13, max: 17 } as const;
 
 /**
- * The seat states that put a seat in scope: everything a family holds,
- * never `reserving`. The same tuple as the contract's enrolment statuses, since
- * a live seat is exactly one the API may report.
- */
-export const LIVE_SEAT_STATUSES = ENROLMENT_STATUS;
-
-/**
- * Narrow a stored seat status to a live one. A read that filters on
- * `LIVE_SEAT_STATUSES` refuses nothing with it that the database did not
- * already refuse; it is how the row's status gets the enrolment status type.
- */
-export function isLiveStatus(status: string): status is PartnerEnrolmentStatus {
-  return (LIVE_SEAT_STATUSES as readonly string[]).includes(status);
-}
-
-/**
  * The status an enrolment reports. A seat keeps `active` in storage after
  * its product has run its course — nothing flips it — so an active seat on a
- * completed product reports `completed`, as does a stored `completed`. A
+ * completed product reports `completed`. A
  * waitlisted seat stays `waitlisted` whatever the product did: it never held a
  * place to complete. Filters on the reported value, never the stored one.
  */

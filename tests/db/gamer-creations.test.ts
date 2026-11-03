@@ -17,6 +17,7 @@ import {
   createScheduleSlot,
   createTestProduct,
   deleteTestProducts,
+  eraseParticipations,
 } from "./product-helpers";
 
 /**
@@ -284,7 +285,7 @@ describe("gamer creations", () => {
   });
 
   afterAll(async () => {
-    await admin.from("participations").delete().in("product_id", ALL_PRODUCTS);
+    await eraseParticipations(admin, (q) => q.in("product_id", ALL_PRODUCTS));
     // Creations cascade with their group, which cascades with its product — so
     // deleting the products is the whole of the cleanup.
     await deleteTestProducts(admin, ALL_PRODUCTS);
@@ -444,6 +445,36 @@ describe("gamer creations", () => {
       expect(error?.code).toBe("42501");
 
       expect(await storedRows(GROUP_A, TEST_IDS.GAMER_2)).toEqual([]);
+    });
+
+    it("refuses a list filed against a member whose seat has ended in that group", async () => {
+      // An ended seat keeps its group, so the family still reads the feed;
+      // staff writing about a child who has left is what this refuses.
+      const ended = await admin
+        .from("participations")
+        .update({
+          status: "ended",
+          ended_at: new Date().toISOString(),
+          end_reason: "admin_removed",
+        })
+        .eq("group_id", GROUP_A)
+        .eq("participant_id", TEST_IDS.GAMER);
+      expect(ended.error).toBeNull();
+
+      const { error } = await geduAuth.rpc("set_gamer_group_creations", {
+        p_group_id: GROUP_A,
+        p_participant_id: TEST_IDS.GAMER,
+        p_creations: [ROBLOX_GAME],
+      });
+      expect(error?.code).toBe("42501");
+
+      const restored = await admin
+        .from("participations")
+        .update({ status: "active", ended_at: null, end_reason: null })
+        .eq("group_id", GROUP_A)
+        .eq("participant_id", TEST_IDS.GAMER);
+      expect(restored.error).toBeNull();
+      expect(await storedRows(GROUP_A, TEST_IDS.GAMER)).toEqual([]);
     });
 
     it("refuses a customer and a gamer on the first statement", async () => {

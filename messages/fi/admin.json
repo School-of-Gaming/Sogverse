@@ -1575,8 +1575,7 @@
     "participationStatus": {
       "active": "Aktiivinen",
       "waitlisted": "Jonossa",
-      "reserving": "Odottaa maksua",
-      "completed": "Päättynyt"
+      "ended": "Päättynyt"
     },
     "emailVerified": "Sähköposti vahvistettu",
     "emailNotVerified": "Sähköpostia ei ole vahvistettu",

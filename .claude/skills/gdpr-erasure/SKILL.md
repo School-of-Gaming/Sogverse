@@ -32,6 +32,13 @@ change the plan:
   money or staffing history, so it is a decision rather than an obstacle. Accounting
   records carry a statutory retention obligation, so raise it with finance before
   touching them. Do not delete these rows to clear the way.
+- **A payment survives its seat.** When a gamer is erased while the parent who paid
+  stays, the cascade takes the gamer's seats and each payment's `participation_id`
+  goes NULL by itself (`ON DELETE SET NULL`): the money stays recorded against the
+  parent and the product. Its `metadata` still names the gamer's and the seat's ids
+  (`gamerId`, `participationId`), so the scan below HITs `payments.metadata`. Those
+  are expected, leave them: after the delete they point at nothing, and the row is
+  the accounting record.
 - **`consent_acceptances.accepted_by`, `gamer_consent_acceptances.accepted_by`,
   `products.created_by` and the `voice_*` columns carry no `ON DELETE` action.** A row
   there blocks the delete unless the same delete cascades it away by another column. A
@@ -112,6 +119,7 @@ explicit go-ahead.
 \set ON_ERROR_STOP on
 SET default_transaction_read_only = off;
 BEGIN READ WRITE;
+SET LOCAL sogverse.erasure = on;
 DELETE FROM auth.flow_state WHERE user_id IN ('<parent-uuid>', '<gamer-uuid>');
 DELETE FROM auth.users WHERE id IN ('<gamer-uuid>') AND email LIKE '%@gamer.sogverse.internal';
 DELETE FROM auth.users WHERE id = '<parent-uuid>' AND email = '<address>';
@@ -132,6 +140,10 @@ COMMIT;
   auth tables that key on the user, and `public.profiles`, and from there through every
   cascading FK. A gamer's address is the synthetic `@gamer.sogverse.internal` one unless
   their sign-in is `email`; match the gamer's real address in that case.
+- **`SET LOCAL sogverse.erasure = on` lets the cascade take the family's seats.** A seat
+  that has been held is history: it ends rather than being deleted, and a trigger on
+  `participations` refuses any delete of one, cascades from `profiles` included, unless the
+  transaction is an erasure. `LOCAL` scopes it to this transaction alone.
 - **`auth.flow_state` is the exception in `auth`**: it carries a `user_id` with no FK, so
   its rows survive a SQL delete and are removed explicitly.
 - **List every gamer being erased in every id list, and only those.** A gamer who keeps

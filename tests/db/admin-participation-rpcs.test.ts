@@ -3,7 +3,7 @@ import type { SupabaseClient } from "@supabase/supabase-js";
 import type { Database } from "@/types/database.types";
 import { createAdminTestClient, createAuthenticatedClient } from "./helpers";
 import { TEST_CREDENTIALS, TEST_IDS } from "./constants";
-import { createTestProduct, deleteTestProducts } from "./product-helpers";
+import { createTestProduct, deleteTestProducts, eraseParticipations } from "./product-helpers";
 import {
   adminEnrollParticipantRpcResult,
   adminRemoveParticipationRpcResult,
@@ -42,10 +42,9 @@ describe("admin participation RPCs", () => {
   let adminAuth: SupabaseClient<Database>;
 
   async function clearParticipations() {
-    await admin
-      .from("participations")
-      .delete()
-      .in("product_id", [CAMP, CLUB, FREE_CLUB]);
+    await eraseParticipations(admin, (q) =>
+      q.in("product_id", [CAMP, CLUB, FREE_CLUB]),
+    );
   }
 
   /** The participation id for a gamer on a product, read past RLS. */
@@ -60,6 +59,15 @@ describe("admin participation RPCs", () => {
       .eq("participant_id", gamerId)
       .maybeSingle();
     return data?.id ?? null;
+  }
+
+  async function statusOf(participationId: string) {
+    const { data } = await admin
+      .from("participations")
+      .select("status, end_reason")
+      .eq("id", participationId)
+      .maybeSingle();
+    return data;
   }
 
   beforeAll(async () => {
@@ -203,7 +211,7 @@ describe("admin participation RPCs", () => {
       return adminEnrollParticipantRpcResult.parse(data).participation_id;
     }
 
-    it("cancels the participation and reports what it removed", async () => {
+    it("ends the participation, keeping the row, and reports what it removed", async () => {
       const participationId = await seatTheGamer();
 
       const { data, error } = await adminAuth.rpc(
@@ -217,10 +225,13 @@ describe("admin participation RPCs", () => {
       if (parsed.kind === "cancelled") {
         expect(parsed.product_id).toBe(CAMP);
         expect(parsed.previous_status).toBe("active");
-        expect(parsed.reason).toBe("admin_cancelled");
+        expect(parsed.reason).toBe("admin_removed");
       }
 
-      expect(await participationOn(CAMP, TEST_IDS.GAMER)).toBeNull();
+      expect(await statusOf(participationId)).toEqual({
+        status: "ended",
+        end_reason: "admin_removed",
+      });
     });
 
     it("refuses a participation that is not on the named product", async () => {
@@ -264,7 +275,7 @@ describe("admin participation RPCs", () => {
       });
 
       expect(error).toBeNull();
-      expect(await participationOn(FREE_CLUB, TEST_IDS.GAMER)).toBeNull();
+      expect((await statusOf(participationId))?.status).toBe("ended");
     });
 
     /** Seats the gamer and hangs a subscription row in `status` off the seat. */
@@ -342,9 +353,16 @@ describe("admin participation RPCs", () => {
       expect(adminRemoveParticipationRpcResult.parse(data).kind).toBe(
         "cancelled",
       );
-      // The subscription row went with it, which is exactly the CASCADE the
-      // refusal exists to prevent when there IS something live to orphan.
-      expect(await participationOn(CAMP, TEST_IDS.GAMER)).toBeNull();
+      // The subscription row ended with it, which is exactly what the refusal
+      // exists to prevent when there IS something live left billing.
+      expect((await statusOf(participationId))?.status).toBe("ended");
+      const { data: sub } = await admin
+        .from("family_subscriptions")
+        .select("status, ended_at")
+        .eq("participation_id", participationId)
+        .single();
+      expect(sub?.status).toBe("cancelled");
+      expect(sub?.ended_at).not.toBeNull();
     });
   });
 });

@@ -69,12 +69,13 @@ always deliberate.
   free or a municipality's contract — and the event carries `billing_mode`, so a segment
   that wants paying families asks for it. Only `sog_paid_until` reads paid seats alone:
   the latest date any of them runs to, a club's subscription paid period end as a date in
-  the club's zone, and a camp's or event's last day. A cancelled seat is deleted from the
-  database, so the profile describes the seats held now; the lists and the events are
-  what keep history.
+  the club's zone, and a camp's or event's last day. The profile describes the seats held
+  now: an ended seat, and the subscription that ended with it, are kept in the database
+  but left out of the snapshot, so the lists and the events are what keep history.
 - `SV Enrolled` is one event per held seat, with no money value: renewals reach Klaviyo
   through Stripe's own integration, and payments are profile totals
-  (`sog_first_payment_at`, `sog_last_payment_at`, `sog_total_paid_eur`), never events. It
+  (`sog_first_payment_at`, `sog_last_payment_at`, `sog_total_paid_eur`), never events.
+  They count money actually charged: a €0 checkout or invoice records nothing. It
   says who holds the seat and, on a gamer's, the child's birth year and gender, and it
   carries the UTM tag the browser's attribution cookie held at booking — stored on the
   booking, read through the seat's link to it, and only under marketing cookie consent, the
@@ -106,9 +107,11 @@ always deliberate.
 **Rule: the contract sends what happened and what is so, and leaves to Klaviyo anything its
 own segment and flow filters can work out from those.** A derived property is a second
 copy of a fact that can only lag it, and every one is another public name to keep. So there
-is no youngest or oldest child (a segment filters the birth years), no first purchase (a
-new customer is `sog_first_payment_at` within the last day, and a first booking of a kind
-is a filter over `SV Enrolled`), and no last-attended date (a filter over `SV Session`).
+is no youngest or oldest child (a segment filters the birth years), no commitment flag (a
+parent committing money is their first `SV Enrolled` whose `billing_mode` is paid, a
+deferred-billing club included; a seat taken on something free, `billing_mode` free or a
+municipality's contract, is the warm lead; a first booking of a kind is a filter over
+`SV Enrolled` too), and no last-attended date (a filter over `SV Session`).
 A new property earns its place only when Klaviyo cannot reach the answer from what is
 already sent.
 
@@ -118,7 +121,7 @@ already sent.
 `SV Account`, and for every seat held, whatever its billing mode, to its type's list:
 `SV Club` for a consumer club, `SV Camp`, `SV Event` and `SV Municipal club`. Klaviyo's add is a no-op for a
 member, so repeating it every sync costs nothing, and nothing ever removes anyone: a list
-answers "ever had", which the snapshot alone cannot once a seat is deleted. **Staging adds
+answers "ever had", which the snapshot alone cannot, since it holds only the seats held now. **Staging adds
 to `SV Staging` and to no other list**, so staging traffic never lands in a production
 list. The ids are deployment configuration (`lists.server.ts`), and an unset id fails the
 row, naming the variable, before anything is written.

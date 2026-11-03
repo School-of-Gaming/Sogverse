@@ -3,7 +3,7 @@ import type { SupabaseClient } from "@supabase/supabase-js";
 import type { Database } from "@/types/database.types";
 import { createAdminTestClient, createAuthenticatedClient } from "./helpers";
 import { TEST_CREDENTIALS, TEST_IDS } from "./constants";
-import { createTestProduct, deleteTestProducts, insertPaidBooking } from "./product-helpers";
+import { createTestProduct, deleteTestProducts, insertPaidBooking, eraseParticipations } from "./product-helpers";
 import { adminMoveParticipationRpcResult } from "@/services/participations/participations.contracts";
 
 /**
@@ -56,10 +56,9 @@ describe("admin_move_participation", () => {
 
   async function clearParticipations() {
     // family_subscriptions cascade from participations, so this clears both.
-    await admin
-      .from("participations")
-      .delete()
-      .in("product_id", [CLUB_A, CLUB_B, FREE_CLUB]);
+    await eraseParticipations(admin, (q) =>
+      q.in("product_id", [CLUB_A, CLUB_B, FREE_CLUB]),
+    );
   }
 
   /**
@@ -478,12 +477,12 @@ describe("admin_move_participation", () => {
   });
 
   it("fails on the unique index when the participant already holds a seat on the target", async () => {
-    // The index covers `completed` as well as active and waitlisted, so a child
-    // who once finished the target club collides. Deliberately NOT pre-checked
+    // The index covers active and waitlisted rows, so a child who already
+    // sits in the target club collides. Deliberately NOT pre-checked
     // in SQL: the commit route pre-flights it with a plain read before touching
     // Stripe, and the index is what makes the remaining race safe.
     const participationId = await subscribedSeatOnA();
-    const completedOnB = await seat(CLUB_B, TEST_IDS.GAMER, "completed");
+    const heldOnB = await seat(CLUB_B, TEST_IDS.GAMER, "active");
 
     const { error } = await adminAuth.rpc("admin_move_participation", {
       p_participation_id: participationId,
@@ -496,9 +495,9 @@ describe("admin_move_participation", () => {
     expect(error?.code).toBe("23505");
     // The whole statement rolled back: neither row moved and the price stands.
     expect((await readSeat(participationId))?.product_id).toBe(CLUB_A);
-    const stale = await readSeat(completedOnB);
+    const stale = await readSeat(heldOnB);
     expect(stale?.product_id).toBe(CLUB_B);
-    expect(stale?.status).toBe("completed");
+    expect(stale?.status).toBe("active");
     expect(await readPrice(participationId)).toBe(PRICE_A);
   });
 

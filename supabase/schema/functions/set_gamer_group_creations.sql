@@ -30,13 +30,15 @@ BEGIN
   -- checks together are what stands in for an entry there, and the db tests
   -- assert both halves negatively.
   --
-  -- ANY status counts, not just active, exactly as the note's target check does:
-  -- what it excludes is a member who has LEFT the group, which is why an
-  -- orphaned list cannot be edited back into life.
+  -- Any status but ended counts, not just active, exactly as the note's target
+  -- check does: what it excludes is a member who has LEFT the group — moved
+  -- out, or whose seat ended — which is why an orphaned list cannot be edited
+  -- back into life.
   IF NOT EXISTS (
     SELECT 1 FROM public.participations part
      WHERE part.group_id       = p_group_id
        AND part.participant_id = p_participant_id
+       AND part.status        <> 'ended'
   ) THEN
     RAISE EXCEPTION 'Forbidden' USING ERRCODE = '42501';
   END IF;
@@ -93,7 +95,7 @@ $$;
 -- Name: FUNCTION set_gamer_group_creations(p_group_id uuid, p_participant_id uuid, p_creations jsonb); Type: COMMENT; Schema: public; Owner: -
 --
 
-COMMENT ON FUNCTION public.set_gamer_group_creations(p_group_id uuid, p_participant_id uuid, p_creations jsonb) IS 'Replace the whole list of creations for one member of one group, and return the resulting document (group_id, participant_id, creations, updated_at). Set-shaped rather than per-row add/update/delete: nothing reads or references a single creation, and a small list edited in a dialog is replaced whole. Open to an ADMIN or to any gedu assigned to any group of the group''s product, with full read/write parity between the two; guard-first on assert_role, then two further 42501s — the ACTOR half (staff reach over the product) and the TARGET half (the participant actually holds a participation in that group, at ANY status). The target half is what stands in for a write-IDOR loop entry, since the table carries no write grant for any client role. An EMPTY list deletes the row and returns the empty-shaped document, because absence of a row is what "no creations" means everywhere else. The value is stored verbatim — no trimming, no key filtering — so the table''s CHECK is the single authority on shape, caps and blankness (23514); normalising here would discard the extra keys that CHECK exists to refuse. Idempotent: the same list written twice is the same row, which is what makes a partial failure in the two-write dialog safe to retry. Last-write-wins, and only the last writer is stored — there is no history, and nothing in v1 displays the provenance it does keep.';
+COMMENT ON FUNCTION public.set_gamer_group_creations(p_group_id uuid, p_participant_id uuid, p_creations jsonb) IS 'Replace the whole list of creations for one member of one group, and return the resulting document (group_id, participant_id, creations, updated_at). Set-shaped rather than per-row add/update/delete: nothing reads or references a single creation, and a small list edited in a dialog is replaced whole. Open to an ADMIN or to any gedu assigned to any group of the group''s product, with full read/write parity between the two; guard-first on assert_role, then two further 42501s — the ACTOR half (staff reach over the product) and the TARGET half (the participant actually holds a participation in that group, at any status but ended). The target half is what stands in for a write-IDOR loop entry, since the table carries no write grant for any client role. An EMPTY list deletes the row and returns the empty-shaped document, because absence of a row is what "no creations" means everywhere else. The value is stored verbatim — no trimming, no key filtering — so the table''s CHECK is the single authority on shape, caps and blankness (23514); normalising here would discard the extra keys that CHECK exists to refuse. Idempotent: the same list written twice is the same row, which is what makes a partial failure in the two-write dialog safe to retry. Last-write-wins, and only the last writer is stored — there is no history, and nothing in v1 displays the provenance it does keep.';
 
 
 --

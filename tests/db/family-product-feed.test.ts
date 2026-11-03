@@ -12,6 +12,7 @@ import {
   createScheduleSlot,
   createTestProduct,
   deleteTestProducts,
+  eraseParticipations,
 } from "./product-helpers";
 
 /**
@@ -290,7 +291,7 @@ describe("family product feed", () => {
   });
 
   afterAll(async () => {
-    await admin.from("participations").delete().in("product_id", ALL_PRODUCTS);
+    await eraseParticipations(admin, (q) => q.in("product_id", ALL_PRODUCTS));
     await deleteTestProducts(admin, ALL_PRODUCTS);
     await admin
       .from("site_details")
@@ -419,6 +420,60 @@ describe("family product feed", () => {
         expect(session.report).toBe(`Report for ${session.session_date}`);
         expect(session.starts_at).toBeTruthy();
         expect(session.ends_at).toBeTruthy();
+      }
+    });
+
+    it("keeps an ended seat's page, bounded at the instant its seat ended", async () => {
+      // Ended between the TWO_DAYS_AGO session's start and YESTERDAY's: the
+      // earlier two stay, the later report is somebody else's club now, and
+      // the plan stops there too. Its subscription had paid a month further,
+      // and that does not raise the bound: reports up to the day they left.
+      const endedAt = `${TWO_DAYS_AGO}T18:00:00.000Z`;
+      const sub = await admin.from("family_subscriptions").insert({
+        customer_id: TEST_IDS.CUSTOMER,
+        participation_id: siblingPlaced,
+        stripe_subscription_id: `sub_feed_ended_${siblingPlaced}`,
+        stripe_customer_id: "cus_feed_ended",
+        currency: "eur",
+        status: "cancelled",
+        current_period_end: new Date(
+          Date.now() + 30 * 24 * 60 * 60 * 1000,
+        ).toISOString(),
+      });
+      expect(sub.error).toBeNull();
+      const ended = await admin
+        .from("participations")
+        .update({
+          status: "ended",
+          ended_at: endedAt,
+          end_reason: "admin_removed",
+        })
+        .eq("id", siblingPlaced);
+      expect(ended.error).toBeNull();
+
+      try {
+        const { data, error } = await customerAuth.rpc(
+          "get_my_family_product_feed",
+          { p_participation_id: siblingPlaced },
+        );
+        expect(error).toBeNull();
+        const feed = familyProductFeed.parse(data);
+        expect(feed.sessions.map((s) => s.session_date)).toEqual([
+          TWO_DAYS_AGO,
+          LONG_AGO,
+        ]);
+        for (const planned of feed.planned_sessions) {
+          expect(planned.date <= TWO_DAYS_AGO).toBe(true);
+        }
+      } finally {
+        await admin
+          .from("participations")
+          .update({ status: "active", ended_at: null, end_reason: null })
+          .eq("id", siblingPlaced);
+        await admin
+          .from("family_subscriptions")
+          .delete()
+          .eq("participation_id", siblingPlaced);
       }
     });
 

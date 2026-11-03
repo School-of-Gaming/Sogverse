@@ -11,6 +11,10 @@ import type {
   SessionAudience,
 } from "@/types";
 import type { SupportedCurrency } from "@/lib/constants/currency";
+import {
+  HELD_SEAT_STATUSES,
+  OCCUPYING_STATUSES,
+} from "@/lib/constants/participations";
 import { gamersAttendSite } from "@/lib/products/delivery-mode";
 import type { QueryData } from "@supabase/supabase-js";
 import {
@@ -62,9 +66,10 @@ export interface ProductSiteName {
  * slot list and date bounds (the schedule sentence and whether the run has
  * ended) and the timezone those are stated in.
  *
- * Filtered to active participations (assigned and unassigned alike);
- * waitlisted rows are excluded since they have no placement. `groupId` is
- * null for unassigned rows — the adapter turns those into plain seat cards
+ * Filtered to held seats (assigned and unassigned alike) and ended ones;
+ * waitlisted rows are excluded since they have no placement. An ended seat
+ * comes back with `endedAt` set and renders as a finished card that opens its
+ * page up to the end. `groupId` is null for unassigned rows — the adapter turns those into plain seat cards
  * whose Join stays locked and which open no page, so a fresh purchase shows
  * up before an admin has placed the gamer in a group.
  */
@@ -166,6 +171,14 @@ export interface MyUpcomingSessionRow {
    */
   groupJoinedAt: Date | null;
   /**
+   * When this seat ended (`status='ended'`), `null` on a seat still held.
+   *
+   * An ended seat stays on the family's dashboard as a finished card, exactly
+   * like a seat on a product whose dates have passed: no next session, no Join,
+   * and a link to its page, whose feed the database bounds at the end.
+   */
+  endedAt: Date | null;
+  /**
    * The product's weekly slots, for the schedule sentence alone: which
    * sessions are planned comes from `plan`, never from walking these.
    */
@@ -208,8 +221,8 @@ export interface MyUpcomingSessionRow {
 /**
  * Row shape returned by `getMyWaitlistEntries()` — one waitlisted
  * participation, with the live position that makes it a card. The counterpart
- * to `MyUpcomingSessionRow`: that one covers `status='active'` rows, which have
- * a placement and a schedule; this one covers `status='waitlisted'` rows, which
+ * to `MyUpcomingSessionRow`: that one covers held and ended seats, which
+ * have a placement and a schedule; this one covers `status='waitlisted'` rows, which
  * have neither and so never appear in the sessions list.
  *
  * **It carries roughly the sessions read's product shell**, because a waitlist
@@ -346,7 +359,7 @@ function buildGamerParticipationsQuery(
  * `buildGamerParticipationsQuery`. Powers the admin user-detail page's
  * "Assigned products" surface, where an admin views every product a gamer (or
  * a parent's gamers) is signed up to — across all statuses (active /
- * waitlisted / completed), so support can see exactly what state
+ * waitlisted / ended), so support can see exactly what state
  * each gamer is in. Reachable only for admins via the
  * `admin_full_access_participations` RLS policy.
  */
@@ -405,7 +418,7 @@ export type CreateParticipationInput = {
 
 /**
  * What a Checkout Session's booking says about the purchase. `seat_gone` is a
- * settled booking whose seat has since been cancelled: an old link, revisited.
+ * settled booking whose seat has since ended: an old link, revisited.
  */
 export type CheckoutConfirmation =
   | { state: "settled"; confirmation: ParticipationConfirmation }
@@ -426,7 +439,8 @@ export interface ParticipationConfirmation {
    * participation.
    */
   participationId: string;
-  status: ParticipationStatus;
+  /** Never `ended`: an ended seat has no confirmation to show (both reads). */
+  status: Exclude<ParticipationStatus, "ended">;
   productId: string;
   /**
    * The payer — the profile the confirmation email is always sent to. The page
@@ -525,12 +539,13 @@ export class ParticipationsService {
   }
 
   /**
-   * The logged-in user's *active* participations, joined with the bits the
-   * family dashboards need to roll one up into an enrollment card: per-product
-   * weekly slots, start/end-date bounds and timezone.
+   * The logged-in user's held and ended participations, joined with the bits
+   * the family dashboards need to roll one up into an enrollment card:
+   * per-product weekly slots, start/end-date bounds and timezone.
    *
-   * Filtered to `status='active'` only — waitlisted rows aren't scheduled
-   * yet, but BOTH assigned (`group_id IS NOT NULL`) and unassigned
+   * Filtered to `status` active or ended — waitlisted rows aren't scheduled
+   * yet, and an ended seat is the family's history, shown as a finished card.
+   * BOTH assigned (`group_id IS NOT NULL`) and unassigned
    * (`group_id IS NULL`) rows are returned. The schedule lives on the
    * *product* (`schedule_slots`), not the group, so an unassigned gamer's
    * sessions are identical to an assigned one's — the only difference is
@@ -636,8 +651,8 @@ export class ParticipationsService {
   /**
    * The logged-in user's *waitlisted* participations, with each one's live
    * position — the waitlist band on both dashboards. The complement of
-   * `getMyUpcomingSessions`, which filters to `status='active'`: between them
-   * the two reads cover every row a family holds on a product, and neither
+   * `getMyUpcomingSessions`, which reads held and ended seats: between them
+   * the two reads cover every row a family has on a product, and neither
    * shows a row the other does.
    *
    * Audience selects the owner column exactly as it does for the sessions read
@@ -770,7 +785,9 @@ export class ParticipationsService {
    *
    * Status is returned but NOT gated on: the row exists before the page is ever
    * linked to (a free or municipality signup activates in the same request, a
-   * waitlist join likewise), so whatever status it carries is the one to show.
+   * waitlist join likewise), so whatever status it carries is the one to show —
+   * except `ended`. An ended seat is kept as history, and an old link to it
+   * reads as null like a seat that is gone, never as "enrolled".
    */
   async getConfirmation(
     participationId: string,
@@ -787,7 +804,7 @@ export class ParticipationsService {
       .maybeSingle();
 
     if (error) throw error;
-    if (!data) return null;
+    if (!data || data.status === "ended") return null;
 
     return {
       participationId: data.id,
@@ -828,7 +845,7 @@ export class ParticipationsService {
     if (!data) return null;
 
     if (data.status !== "settled") return { state: data.status };
-    if (!data.seat) return { state: "seat_gone" };
+    if (!data.seat || data.seat.status === "ended") return { state: "seat_gone" };
 
     return {
       state: "settled",
@@ -865,7 +882,7 @@ export class ParticipationsService {
       .select("id")
       .eq("product_id", productId)
       .eq("participant_id", participantId)
-      .in("status", ["active", "waitlisted", "completed"])
+      .in("status", OCCUPYING_STATUSES)
       .maybeSingle();
 
     if (error) throw error;
@@ -1040,6 +1057,7 @@ function buildMyUpcomingSessionsQuery(
         group_id,
         signed_up_at,
         group_joined_at,
+        ended_at,
         product:products!inner(
           id, product_type, topic, timezone, start_date, end_date, delivery_mode,
           voice_room_mode, external_voice_url,
@@ -1053,7 +1071,9 @@ function buildMyUpcomingSessionsQuery(
       `,
     )
     .eq(audienceColumn, userId)
-    .eq("status", "active");
+    // A held seat, or one that has ended: the dashboards keep an ended seat as
+    // a finished card, the way they keep a seat on a product that has run.
+    .in("status", [...HELD_SEAT_STATUSES, "ended"]);
 }
 
 type RawMyUpcomingSessionRow = QueryData<
@@ -1145,6 +1165,7 @@ function toMyUpcomingSessionRow(
     signedUpAt: new Date(row.signed_up_at),
     groupJoinedAt:
       row.group_joined_at === null ? null : new Date(row.group_joined_at),
+    endedAt: row.ended_at === null ? null : new Date(row.ended_at),
     slots: product.schedule_slots.map((s) => ({
       weekday: s.weekday,
       startTime: s.start_time,
@@ -1194,11 +1215,11 @@ function mergeGamerSignupState(
   // Priority order: active > waitlisted. A gamer can hold more than one row on
   // a product (e.g. a stale waitlisted row plus a fresh active one); the
   // strongest state wins so the picker shows "Signed up" over "On waitlist".
-  // `completed` and any other status are ignored — only placed/waitlisted rows
+  // `ended` and any other status are ignored — only placed/waitlisted rows
   // lock a child out of the picker.
   if (current === "active" || rowStatus === "active") return "active";
   if (current === "waitlisted" || rowStatus === "waitlisted") return "waitlisted";
   // `current` is narrowed to `undefined` here (both states returned above), and
-  // `rowStatus` is something we don't lock on (completed/other) — no change.
+  // `rowStatus` is something we don't lock on (ended/other) — no change.
   return null;
 }

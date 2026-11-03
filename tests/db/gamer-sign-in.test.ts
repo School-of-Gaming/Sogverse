@@ -7,6 +7,7 @@ import {
   createScheduleSlot,
   createTestProduct,
   deleteTestProducts,
+  eraseParticipations,
 } from "./product-helpers";
 
 /**
@@ -153,7 +154,7 @@ describe("gamer sign-in mode", () => {
   });
 
   afterAll(async () => {
-    await admin.from("participations").delete().eq("product_id", PRODUCT);
+    await eraseParticipations(admin, (q) => q.eq("product_id", PRODUCT));
     await deleteTestProducts(admin, [PRODUCT]);
     for (const userId of [childId, parentId]) {
       if (!userId) continue;

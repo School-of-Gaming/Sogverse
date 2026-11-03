@@ -201,6 +201,15 @@ dashboard's sort alike — and it bounds *stored rows* as well as planned sessio
 row exists whether or not the plan holds it. A listed session nobody may turn up to is a promise the platform will not
 keep.
 
+**Rule: an ended seat keeps its page up to its end, and nothing after it.** A seat that
+ended — its membership ran out, or an admin removed it — is kept with its group, so the
+family goes on reading the reports from the time they were in the club. The feed read
+bounds an ended seat's sessions, cancellations and plan at the instant it ended — never
+at a later paid-through date, since an admin's removal is immediate and a seat Stripe
+cancels ends at its period end anyway; the dashboard draws it as a finished card, the
+same as a seat on a product whose dates have passed, dated the day the seat ended (or the
+run's last day, when the run finished first), with no next session and no Join.
+
 ## One fetch, and a scroll sentinel over it
 
 **Rule: the whole history arrives in one JSONB document; the feed pages nothing.** The

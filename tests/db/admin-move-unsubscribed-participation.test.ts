@@ -3,7 +3,7 @@ import type { SupabaseClient } from "@supabase/supabase-js";
 import type { Database } from "@/types/database.types";
 import { createAdminTestClient, createAuthenticatedClient } from "./helpers";
 import { TEST_CREDENTIALS, TEST_IDS } from "./constants";
-import { createTestProduct, deleteTestProducts, insertPaidBooking } from "./product-helpers";
+import { createTestProduct, deleteTestProducts, insertPaidBooking, eraseParticipations } from "./product-helpers";
 import { adminMoveUnsubscribedParticipationRpcResult } from "@/services/participations/participations.contracts";
 
 /**
@@ -60,7 +60,7 @@ describe("admin_move_unsubscribed_participation", () => {
   const seatBookings = new Map<string, string>();
 
   async function clearRows() {
-    await admin.from("participations").delete().in("product_id", ALL_PRODUCTS);
+    await eraseParticipations(admin, (q) => q.in("product_id", ALL_PRODUCTS));
     await admin
       .from("consent_acceptances")
       .delete()
@@ -429,20 +429,16 @@ describe("admin_move_unsubscribed_participation", () => {
   });
 
   it("fails on the unique index when the participant already holds a seat on the target", async () => {
-    // The index covers `completed` too, so a child who once finished the
+    // The index covers the target's held seats, so a child already on the
     // target collides. Not pre-checked: the index is the answer.
     const participationId = await seat(SOURCE);
-    const completedOnTarget = await seat(
-      FREE_TARGET,
-      TEST_IDS.GAMER,
-      "completed",
-    );
+    const heldOnTarget = await seat(FREE_TARGET, TEST_IDS.GAMER, "active");
 
     const { error } = await move(participationId, FREE_TARGET);
 
     expect(error?.code).toBe("23505");
     expect((await readSeat(participationId))?.product_id).toBe(SOURCE);
-    expect((await readSeat(completedOnTarget))?.status).toBe("completed");
+    expect((await readSeat(heldOnTarget))?.status).toBe("active");
     expect(await acceptancesOn(FREE_TARGET)).toEqual([]);
   });
 

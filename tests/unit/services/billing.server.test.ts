@@ -50,9 +50,11 @@ function subscriptionRow(
   stripeCustomerId: string,
   participantFirstName: string,
   productName: string,
+  endedAt: string | null = null,
 ) {
   return {
     stripe_customer_id: stripeCustomerId,
+    ended_at: endedAt,
     participation: {
       participant: { first_name: participantFirstName },
       product: {
@@ -173,6 +175,37 @@ describe("resolveBillingAccountsViaRls", () => {
           },
         ],
       },
+    ]);
+  });
+
+  it("keeps an ended subscription's customer but covers nobody with it", async () => {
+    // The seat and its subscription ended; the customer still holds the
+    // family's invoices, so the button stays, naming only who it covers now.
+    mockBackend({ stripe_customer_id: "cus_native" }, {
+      rows: [
+        subscriptionRow("cus_native", "Alex", "Rocket League Club"),
+        subscriptionRow(
+          "cus_migrated",
+          "Bobby",
+          "Cosmic Builders Club",
+          "2026-10-01T00:00:00Z",
+        ),
+      ],
+    });
+
+    const accounts = await resolveBillingAccountsViaRls(supabase);
+
+    expect(accounts).toEqual([
+      {
+        stripeCustomerId: "cus_native",
+        covers: [
+          {
+            participantFirstName: "Alex",
+            productTranslations: [{ locale: "en", name: "Rocket League Club" }],
+          },
+        ],
+      },
+      { stripeCustomerId: "cus_migrated", covers: [] },
     ]);
   });
 

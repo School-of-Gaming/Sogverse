@@ -1,6 +1,8 @@
 // Constants specific to the participation lifecycle.
 // Pricing/discount constants live in src/lib/constants/pricing.ts.
 
+import type { ParticipationStatus } from "@/types";
+
 /**
  * How long a Stripe Checkout Session stays payable. **This bounds a stale tab,
  * not a seat**: nothing is held while a parent pays, so an expiring session
@@ -33,3 +35,35 @@ export const CONFIRMATION_POLL_TIMEOUT_MS = 30_000;
  * a credit (sub-covered) or a no-charge (bundle-covered).
  */
 export const PARTICIPATION_CHARGE_WINDOW_HOURS = 24;
+
+/**
+ * The status of a seat a participant holds now — the TypeScript twin of the
+ * database's `is_live_seat()`. An `ended` seat was held and is kept as history;
+ * a `waitlisted` row is a place in line, not a seat.
+ */
+export const HELD_SEAT_STATUSES = [
+  "active",
+] as const satisfies readonly ParticipationStatus[];
+
+/**
+ * The statuses that occupy a participant's place on a product: a held seat or a
+ * waitlist place. Exactly the set the participations unique index covers, so a
+ * row in it blocks a second booking, move or switch onto that product, and an
+ * ended row leaves the pair free for the family to come back.
+ */
+export const OCCUPYING_STATUSES = [
+  "active",
+  "waitlisted",
+] as const satisfies readonly ParticipationStatus[];
+
+export type OccupyingStatus = (typeof OCCUPYING_STATUSES)[number];
+
+export function isOccupyingStatus(status: string): status is OccupyingStatus {
+  return (OCCUPYING_STATUSES as readonly string[]).includes(status);
+}
+
+export function isHeldSeatStatus(
+  status: string,
+): status is (typeof HELD_SEAT_STATUSES)[number] {
+  return (HELD_SEAT_STATUSES as readonly string[]).includes(status);
+}
