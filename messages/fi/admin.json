@@ -1,20 +1,9 @@
 {
   "dashboard": {
     "title": "Hallintapaneeli",
-    "description": "Mikä vaatii ylläpitäjää tänään, keitä alustalla on ja mitä on käynnissä.",
+    "description": "Mikä vaatii ylläpitäjää tänään ja mitä on käynnissä.",
     "loadError": "Hallintapaneelin lataus epäonnistui. Päivitä sivu ja yritä uudelleen.",
     "loadErrorWithReason": "Hallintapaneelin lataus epäonnistui – {reason}. Päivitä sivu ja yritä uudelleen.",
-    "users": {
-      "label": "Käyttäjät",
-      "roles": {
-        "customer": "Vanhemmat",
-        "gamer": "Pelaajat",
-        "gedu": "Gedut",
-        "admin": "Ylläpitäjät"
-      },
-      "verified": "{count} vahvistettua",
-      "certified": "{count} hyväksyttyä"
-    },
     "attention": {
       "title": "Vaatii huomiota",
       "allClearTitle": "Kaikki kunnossa",
@@ -1915,6 +1904,90 @@
         "mobile": "Puhelin",
         "tablet": "Tabletti"
       }
+    }
+  },
+  "business": {
+    "title": "Liiketoiminta",
+    "description": "Miten School of Gamingilla menee kuukausi kuukaudelta. Kuukaudet ovat Helsingin kalenterikuukausia, ja kuluva kuukausi on vielä kesken.",
+    "readAt": "Luvut luettu {time}.",
+    "loadError": "Liiketoiminnan lukuja ei saatu luettua. Lataa sivu uudelleen ja yritä uudestaan.",
+    "loadErrorWithReason": "Liiketoiminnan lukuja ei saatu luettua: {reason}",
+    "change": "{change} tässä kuussa",
+    "noChange": "Ei muutosta tässä kuussa",
+    "soFar": "kesken",
+    "monthSoFar": "{month}, kesken",
+    "tiles": {
+      "payingFamilies": {
+        "label": "Maksavat perheet"
+      },
+      "revenue": {
+        "label": "Kuukausittain toistuva tulo",
+        "subscriptions": "{count, plural, one {# voimassa oleva tilaus} other {# voimassa olevaa tilausta}}",
+        "outside": "{count, plural, one {# tilaus ei ole mukana luvussa: se on muussa valuutassa, tai sen kerholla ei ole hintaa euroina.} other {# tilausta ei ole mukana luvussa: ne ovat muussa valuutassa, tai niiden kerholla ei ole hintaa euroina.}}"
+      },
+      "gamers": {
+        "label": "Gamerit, joilla on paikka",
+        "municipality": "{count, plural, one {# kuntakerhossa} other {# kuntakerhoissa}}"
+      },
+      "signup": {
+        "label": "Rekisteröitymisestä ensimmäiseen paikkaan",
+        "detail": "{seated} / {registered} perhettä, jotka rekisteröityivät viimeisten {days} päivän aikana",
+        "none": "Kukaan ei rekisteröitynyt viimeisten {days} päivän aikana.",
+        "change": "{change} %-yksikköä tässä kuussa"
+      }
+    },
+    "engagement": {
+      "heading": "Perheet aktiivisuuden mukaan",
+      "caption": "Jokainen vanhemman tili ensimmäisessä ryhmässä, johon se sopii.",
+      "chart": "Perheet aktiivisuuden mukaan",
+      "total": "{count, plural, one {perhe} other {perhettä}}",
+      "slices": {
+        "subscriber": "Tilaa nyt",
+        "paidBefore": "Maksanut aiemmin, ei tilausta",
+        "municipalityOnly": "Vain kuntakerhoja",
+        "freeOnly": "Vain maksuttomia tai veloittamattomia paikkoja",
+        "neverEnrolled": "Ei koskaan paikkaa"
+      }
+    },
+    "revenue": {
+      "heading": "Tulot kuukausittain",
+      "caption": "Kunkin kuukauden veloitukset ennen hyvityksiä.",
+      "chart": "Tulot kuukausittain",
+      "series": {
+        "subscriptionCents": "Tilaukset",
+        "campsAndEventsCents": "Leirit ja tapahtumat",
+        "municipalityCents": "Kuntien laskut",
+        "unattributedCents": "Ei tuotetta"
+      },
+      "noData": "Ei tietoa",
+      "startsFrom": "Ensimmäinen kirjattu maksu: {month}. Aiemmilta kuukausilta näkyvät vain kuntien laskut.",
+      "none": "Maksuja ei ole vielä kirjattu, joten vain kuntien laskut näkyvät.",
+      "nonEur": "{count, plural, one {# muussa valuutassa veloitettu maksu} other {# muussa valuutassa veloitettua maksua}} jätetty pois.",
+      "clubsWithoutFee": "{count, plural, one {# hinnaton kerho jätetty pois} other {# hinnatonta kerhoa jätetty pois}}"
+    },
+    "families": {
+      "heading": "Perheet kuukausittain",
+      "caption": "Uudet vanhempien tilit, ensimmäisen paikkansa saaneet perheet ja perheet, joiden viimeinen maksullinen paikka päättyi.",
+      "chart": "Perheet kuukausittain",
+      "series": {
+        "signups": "Uudet rekisteröitymiset",
+        "firstSeats": "Ensimmäinen paikka",
+        "stoppedPaying": "Lopetti maksamisen"
+      }
+    },
+    "gedus": {
+      "heading": "Gedujen kapasiteetti kuukausittain",
+      "caption": "Sertifioidut Gedut, joille maksettiin kuukauden aikana vähintään yhdestä kerhokerrasta, ja kuukauden aikana täytetyt paikat.",
+      "chart": "Paikkoja Gedua kohden kuukausittain",
+      "month": "Kuukausi",
+      "rows": {
+        "teachingGedus": "Kerhokertoja pitäneet Gedut",
+        "seatsFilled": "Täytetyt paikat",
+        "seatsPerTeachingGedu": "Paikkoja Gedua kohden"
+      },
+      "noData": "Ei tietoa",
+      "startsFrom": "Gedujen laskutuksen ensimmäinen kuukausi: {month}.",
+      "none": "Yhdellekään Gedulle ei maksettu kerhokerrasta näinä kuukausina."
     }
   },
   "testimonials": {

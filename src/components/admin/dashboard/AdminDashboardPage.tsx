@@ -194,8 +194,8 @@ export function AdminDashboardPage({
    * rejection, and a fire-and-forget call could tell it neither. The mutation
    * already invalidates the whole `gedu-profiles` key on success — the users
    * list, the picker and the certification card follow from that — so all this
-   * adds is the dashboard's own key, because the strip's "12 certified" and the
-   * row that just left the queue are the same fact counted twice.
+   * adds is the dashboard's own key, because the certification queue is read
+   * from the dashboard's own document rather than from that list.
    */
   const handleCertifyGedu = useCallback(
     async (geduId: string) => {

@@ -1,20 +1,9 @@
 {
   "dashboard": {
     "title": "Dashboard",
-    "description": "What needs an admin today, who is on the platform, and what is running.",
+    "description": "What needs an admin today, and what is running.",
     "loadError": "Could not load the dashboard. Refresh to try again.",
     "loadErrorWithReason": "Could not load the dashboard — {reason}. Refresh to try again.",
-    "users": {
-      "label": "Users",
-      "roles": {
-        "customer": "Parents",
-        "gamer": "Gamers",
-        "gedu": "Gedus",
-        "admin": "Admins"
-      },
-      "verified": "{count} verified",
-      "certified": "{count} certified"
-    },
     "attention": {
       "title": "Needs attention",
       "allClearTitle": "All clear",
@@ -1915,6 +1904,90 @@
         "mobile": "Mobile",
         "tablet": "Tablet"
       }
+    }
+  },
+  "business": {
+    "title": "Business",
+    "description": "How School of Gaming is doing, month by month. Months are Helsinki calendar months, and the current one is still running.",
+    "readAt": "Figures as of {time}.",
+    "loadError": "The business figures could not be read. Reload the page to try again.",
+    "loadErrorWithReason": "The business figures could not be read: {reason}",
+    "change": "{change} this month",
+    "noChange": "No change this month",
+    "soFar": "so far",
+    "monthSoFar": "{month}, so far",
+    "tiles": {
+      "payingFamilies": {
+        "label": "Paying families"
+      },
+      "revenue": {
+        "label": "Monthly recurring revenue",
+        "subscriptions": "{count, plural, one {# live subscription} other {# live subscriptions}}",
+        "outside": "{count, plural, one {# subscription is not in this figure: it is in another currency, or its club has no euro price.} other {# subscriptions are not in this figure: they are in another currency, or their club has no euro price.}}"
+      },
+      "gamers": {
+        "label": "Gamers in a seat",
+        "municipality": "{count, plural, one {# in a municipality club} other {# in municipality clubs}}"
+      },
+      "signup": {
+        "label": "Sign-up to first seat",
+        "detail": "{seated} of {registered} families who signed up in the last {days} days",
+        "none": "Nobody signed up in the last {days} days.",
+        "change": "{change} points this month"
+      }
+    },
+    "engagement": {
+      "heading": "Families by engagement",
+      "caption": "Every parent account, in the first group it fits.",
+      "chart": "Families by engagement",
+      "total": "{count, plural, one {family} other {families}}",
+      "slices": {
+        "subscriber": "Subscribing now",
+        "paidBefore": "Paid before, not subscribing",
+        "municipalityOnly": "Municipality clubs only",
+        "freeOnly": "Free or uncharged seats only",
+        "neverEnrolled": "Never had a seat"
+      }
+    },
+    "revenue": {
+      "heading": "Revenue by month",
+      "caption": "Money charged each month, before refunds.",
+      "chart": "Revenue by month",
+      "series": {
+        "subscriptionCents": "Subscriptions",
+        "campsAndEventsCents": "Camps and events",
+        "municipalityCents": "Municipality invoices",
+        "unattributedCents": "No product named"
+      },
+      "noData": "No data",
+      "startsFrom": "Payments are recorded from {month}. Earlier months show municipality invoices only.",
+      "none": "No payments are recorded yet, so only municipality invoices are shown.",
+      "nonEur": "{count, plural, one {# payment} other {# payments}} in another currency left out.",
+      "clubsWithoutFee": "{count, plural, one {# club without a fee left out} other {# clubs without a fee left out}}"
+    },
+    "families": {
+      "heading": "Families by month",
+      "caption": "New parent accounts, families taking their first seat, and families whose last paid seat ended.",
+      "chart": "Families by month",
+      "series": {
+        "signups": "New sign-ups",
+        "firstSeats": "First seat taken",
+        "stoppedPaying": "Stopped paying"
+      }
+    },
+    "gedus": {
+      "heading": "Gedu capacity by month",
+      "caption": "Certified Gedus paid for at least one lesson that month, and the seats held during it.",
+      "chart": "Seats per Gedu by month",
+      "month": "Month",
+      "rows": {
+        "teachingGedus": "Gedus who ran lessons",
+        "seatsFilled": "Seats filled",
+        "seatsPerTeachingGedu": "Seats per Gedu"
+      },
+      "noData": "No data",
+      "startsFrom": "Gedu invoicing has records from {month}.",
+      "none": "No Gedu was paid for a lesson in these months."
     }
   },
   "testimonials": {

@@ -128,12 +128,6 @@ function snapshot(
   overrides: Partial<AdminDashboardSnapshot> = {},
 ): AdminDashboardSnapshot {
   return {
-    users: [
-      { role: "admin", total: 4, verified: 4, certified: null },
-      { role: "gedu", total: 19, verified: 17, certified: 12 },
-      { role: "gamer", total: 342, verified: null, certified: null },
-      { role: "customer", total: 214, verified: 191, certified: null },
-    ],
     certification_queue: [],
     attention_products: [],
     schedule_products: [],
@@ -161,18 +155,6 @@ function week(data: ReturnType<typeof build>, weekStart: string) {
   }
   return found;
 }
-
-describe("the users strip", () => {
-  it("reads in the platform's own order, whatever order the RPC aggregated in", () => {
-    const data = build(snapshot());
-    expect(data.users.map((stat) => stat.role)).toEqual([
-      "customer",
-      "gamer",
-      "gedu",
-      "admin",
-    ]);
-  });
-});
 
 describe("the week window", () => {
   const data = build(snapshot());

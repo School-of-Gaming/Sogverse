@@ -29,29 +29,6 @@ const productName = z.object({
 });
 
 /**
- * One role's tile in the users strip. Always four of them (one per `user_role`),
- * including roles nobody holds — a zero tile is a fact, a missing tile is a gap.
- *
- * `verified` is null rather than 0 where the stat has no meaning — and what
- * decides that is the ADDRESS, not the role. A gamer signing in
- * through their parent or by username carries a synthetic
- * `@gamer.sogverse.internal` handle nobody will ever click a link in, so "0
- * verified" would report a problem that does not exist; a gamer whose parent
- * chose sign-in mode `email` holds a real mailbox and counts exactly like
- * everyone else. So null means *this role has accounts and none of them is
- * addressable* — which is every gamer only until one of them is given an email.
- * A role with no accounts at all reports 0, because an empty tile has nothing to
- * say either way. `certified` is the same null-means-no-meaning shape for a
- * simpler reason: only an educator can be certified.
- */
-export const adminDashboardUserStat = z.object({
-  role: z.enum(Constants.public.Enums.user_role),
-  total: z.number(),
-  verified: z.number().nullable(),
-  certified: z.number().nullable(),
-});
-
-/**
  * A gedu account waiting on a certification decision. `created_at` is sent
  * rather than a wait in days because "registered 12 days ago" is relative-time
  * copy, and where the clock for that comes from is the page's business.
@@ -237,7 +214,6 @@ export const adminDashboardScheduleProduct = z.object({
 
 /** The whole document `get_admin_dashboard` returns. */
 export const adminDashboardSnapshot = z.object({
-  users: z.array(adminDashboardUserStat),
   certification_queue: z.array(adminDashboardCertificationCandidate),
   attention_products: z.array(adminDashboardAttentionProduct),
   schedule_products: z.array(adminDashboardScheduleProduct),
@@ -248,7 +224,6 @@ export const adminDashboardSnapshot = z.object({
  * and the types can't drift. Re-exported through `@/types` so consumers keep a
  * single import surface.
  */
-export type AdminDashboardUserStat = z.infer<typeof adminDashboardUserStat>;
 export type AdminDashboardCertificationCandidate = z.infer<
   typeof adminDashboardCertificationCandidate
 >;

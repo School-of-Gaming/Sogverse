@@ -12,12 +12,9 @@ import type {
   AdminDashboardCertificationCandidate,
   AdminDashboardScheduleProduct,
   AdminDashboardSnapshot,
-  AdminDashboardUserStat,
-  UserRole,
 } from "@/types";
 import type {
   AdminDashboardData,
-  AdminUserRoleStat,
   ComingUpCohort,
   ComingUpDay,
   ComingUpItem,
@@ -100,20 +97,6 @@ const WINDOW_MONTHS_AFTER = 4;
 const COMING_UP_MONTHS = 4;
 
 /**
- * The order the users strip reads in: the platform's own hierarchy.
- *
- * **A role added to `user_role` does not arrive on this page by itself.** The
- * RPC drives its tiles off `enum_range`, so a new role is counted and sent the
- * moment the enum has it — but the page still has to be told twice where it
- * goes: here, and in the strip's glyph map. The glyph map is a
- * `Record<UserRole, …>` and so fails to compile until somebody chooses an icon;
- * this list is a plain array and would silently *drop* the tile instead, which
- * is why it is worth saying out loud rather than trusting the type system to
- * catch both halves.
- */
-const ROLE_ORDER: readonly UserRole[] = ["customer", "gamer", "gedu", "admin"];
-
-/**
  * The half of the page that only changes at midnight.
  *
  * Two fields of `AdminDashboardData` are missing because neither is a
@@ -158,32 +141,10 @@ export function buildAdminDashboardData({
     products: snapshot.attention_products.map((product) =>
       toProductAttention(product, locale),
     ),
-    users: orderUsers(snapshot.users),
     weeks,
     currentWeekIndex,
     comingUp: buildComingUp(snapshot.schedule_products, locale, today),
   };
-}
-
-// ---------------------------------------------------------------------------
-// Users
-// ---------------------------------------------------------------------------
-
-/**
- * Four tiles in a fixed order, whatever order the RPC aggregated them in.
- *
- * The order is the platform's own — the people it is for, the children they
- * bring, the educators who teach them, the staff who run it — and reading it off
- * the wire would make the strip's order an accident of a `GROUP BY`.
- */
-function orderUsers(
-  stats: readonly AdminDashboardUserStat[],
-): readonly AdminUserRoleStat[] {
-  const byRole = new Map(stats.map((stat) => [stat.role, stat]));
-  return ROLE_ORDER.flatMap((role) => {
-    const stat = byRole.get(role);
-    return stat === undefined ? [] : [stat];
-  });
 }
 
 // ---------------------------------------------------------------------------

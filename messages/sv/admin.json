@@ -1,20 +1,9 @@
 {
   "dashboard": {
     "title": "Instrumentpanel",
-    "description": "Vad som behöver en administratör i dag, vilka som finns på plattformen och vad som pågår.",
+    "description": "Vad som behöver en administratör i dag och vad som pågår.",
     "loadError": "Det gick inte att läsa in instrumentpanelen. Uppdatera sidan och försök igen.",
     "loadErrorWithReason": "Det gick inte att läsa in instrumentpanelen – {reason}. Uppdatera sidan och försök igen.",
-    "users": {
-      "label": "Användare",
-      "roles": {
-        "customer": "Föräldrar",
-        "gamer": "Spelare",
-        "gedu": "Geduer",
-        "admin": "Administratörer"
-      },
-      "verified": "{count} verifierade",
-      "certified": "{count} certifierade"
-    },
     "attention": {
       "title": "Behöver åtgärd",
       "allClearTitle": "Allt är klart",
@@ -1915,6 +1904,90 @@
         "mobile": "Mobil",
         "tablet": "Surfplatta"
       }
+    }
+  },
+  "business": {
+    "title": "Verksamhet",
+    "description": "Hur det går för School of Gaming, månad för månad. Månaderna är kalendermånader i Helsingfors, och den pågående månaden är inte slut än.",
+    "readAt": "Siffror från {time}.",
+    "loadError": "Verksamhetssiffrorna kunde inte läsas. Ladda om sidan och försök igen.",
+    "loadErrorWithReason": "Verksamhetssiffrorna kunde inte läsas: {reason}",
+    "change": "{change} denna månad",
+    "noChange": "Ingen ändring denna månad",
+    "soFar": "hittills",
+    "monthSoFar": "{month}, hittills",
+    "tiles": {
+      "payingFamilies": {
+        "label": "Betalande familjer"
+      },
+      "revenue": {
+        "label": "Månatliga återkommande intäkter",
+        "subscriptions": "{count, plural, one {# aktiv prenumeration} other {# aktiva prenumerationer}}",
+        "outside": "{count, plural, one {# prenumeration ingår inte i siffran: den är i en annan valuta, eller klubben saknar pris i euro.} other {# prenumerationer ingår inte i siffran: de är i en annan valuta, eller klubben saknar pris i euro.}}"
+      },
+      "gamers": {
+        "label": "Gamers med plats",
+        "municipality": "{count, plural, one {# i en kommunal klubb} other {# i kommunala klubbar}}"
+      },
+      "signup": {
+        "label": "Från registrering till första plats",
+        "detail": "{seated} av {registered} familjer som registrerade sig de senaste {days} dagarna",
+        "none": "Ingen registrerade sig de senaste {days} dagarna.",
+        "change": "{change} procentenheter denna månad"
+      }
+    },
+    "engagement": {
+      "heading": "Familjer efter engagemang",
+      "caption": "Varje föräldrakonto, i den första grupp det passar in i.",
+      "chart": "Familjer efter engagemang",
+      "total": "{count, plural, one {familj} other {familjer}}",
+      "slices": {
+        "subscriber": "Prenumererar nu",
+        "paidBefore": "Har betalat tidigare, ingen prenumeration",
+        "municipalityOnly": "Endast kommunala klubbar",
+        "freeOnly": "Endast gratis eller obetalda platser",
+        "neverEnrolled": "Aldrig haft en plats"
+      }
+    },
+    "revenue": {
+      "heading": "Intäkter per månad",
+      "caption": "Debiterade belopp varje månad, före återbetalningar.",
+      "chart": "Intäkter per månad",
+      "series": {
+        "subscriptionCents": "Prenumerationer",
+        "campsAndEventsCents": "Läger och evenemang",
+        "municipalityCents": "Kommunfakturor",
+        "unattributedCents": "Ingen produkt angiven"
+      },
+      "noData": "Inga uppgifter",
+      "startsFrom": "Betalningar registreras från {month}. Tidigare månader visar bara kommunfakturor.",
+      "none": "Inga betalningar är registrerade än, så bara kommunfakturor visas.",
+      "nonEur": "{count, plural, one {# betalning} other {# betalningar}} i en annan valuta utelämnade.",
+      "clubsWithoutFee": "{count, plural, one {# klubb utan avgift utelämnad} other {# klubbar utan avgift utelämnade}}"
+    },
+    "families": {
+      "heading": "Familjer per månad",
+      "caption": "Nya föräldrakonton, familjer som tar sin första plats och familjer vars sista betalda plats tog slut.",
+      "chart": "Familjer per månad",
+      "series": {
+        "signups": "Nya registreringar",
+        "firstSeats": "Första plats",
+        "stoppedPaying": "Slutade betala"
+      }
+    },
+    "gedus": {
+      "heading": "Gedu-kapacitet per månad",
+      "caption": "Certifierade Gedus som fick betalt för minst en lektion under månaden, och platserna som var fyllda under den.",
+      "chart": "Platser per Gedu per månad",
+      "month": "Månad",
+      "rows": {
+        "teachingGedus": "Gedus som höll lektioner",
+        "seatsFilled": "Fyllda platser",
+        "seatsPerTeachingGedu": "Platser per Gedu"
+      },
+      "noData": "Inga uppgifter",
+      "startsFrom": "Gedu-faktureringen har uppgifter från {month}.",
+      "none": "Ingen Gedu fick betalt för en lektion under dessa månader."
     }
   },
   "testimonials": {
