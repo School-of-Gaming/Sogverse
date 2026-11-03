@@ -66,3 +66,7 @@ Stripe, so nothing here can net them; a refunded payment counts in full.
 **The status changes that leave no timestamp are read as they stand now.** A subscription
 Stripe gave up on, or one never paid, is not live at any instant; one still collecting is
 taken to have been since it was created; a product's billing mode and price are today's.
+The exception, accepted as rare: when such a subscription's seat is later ended, it gains
+an `ended_at` and reads as live from creation to that day, so it adds a stop in the month
+the seat was removed. Telling it apart would need a recorded payment per subscription, and
+a handful of families did not justify the second read.
