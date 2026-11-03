@@ -143,7 +143,7 @@ piece gets a level first:
 | Website and landing pages | School of Gaming | Clear, calm, confident | Hero headline up to 12 words, subhead up to 30, sections 40 to 80 | 1; prices and terms 0 | One primary button |
 | Library and blog | SoG with a named author; Reksi byline for opinion | Expert, calm, warm, sources named | 800 to 1,400 words; a heading every 200 to 300; the first paragraph answers the question | 1 | Free session block |
 | Parent's My SOG, enrolment, schedule | School of Gaming | Plain, calm, specific: a parent here is doing admin, not reading a story | As short as the task allows | 1; money and account 0 | What happens next |
-| Gamer screens (My SOG, voice room, chat, Yty, store) | School of Gaming or the Gedu | Direct, present tense, stakes visible, written to the gamer | Short; one instruction at a time for the youngest | 3; moderation 0 | What to do now |
+| Gamer screens (My SOG, virtual room, chat, Yty, store) | School of Gaming or the Gedu | Direct, present tense, stakes visible, written to the gamer | Short; one instruction at a time for the youngest | 3; moderation 0 | What to do now |
 | Gedu screens and Gedu mail | School of Gaming | Peer to peer, practical, the reason given beside the rule | Short | 0 | The action and its deadline |
 | Admin screens | School of Gaming | Plain; describes what the family will experience, never the platform's steps | Short | 0 | The consequence |
 | Transactional and onboarding email | School of Gaming | Warm, plain, specific | Under 100 words transactional, 120 to 250 routine | 1; money and safety 0 | One thing to do, one way to reach a human |

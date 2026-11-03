@@ -21,6 +21,7 @@ answered by whether the product has the thing. Describe a feature only if it exi
 | **parent** | Lowercase | parents | |
 | **club** | Lowercase; fi kerho | clubs | The ongoing group a gamer belongs to |
 | **lesson** | Lowercase; fi kerhokerta; fr séance | lessons | Each meeting a club holds. A gamer joins a club and attends a lesson: "Aino's club meets on Mondays". Its length comes from the product, never from memory |
+| **virtual room** | Lowercase; fi virtuaalihuone; sv virtuellt rum; fr salle virtuelle | virtual rooms | Where a club meets online, in every surface and button. Never "voice room" in copy, and never fi "äänihuone", which reads as a recording studio (Mikko, 3 Nov 2026) |
 | **camp**, **event** | Lowercase; fi leiri, tapahtuma | | The other two product kinds |
 | **the gamer's oath** | Lowercase, apostrophe s | | The promise to behave kindly and righteously in every game and in everyday life. One of our strongest assets and under used |
 | **Princi-Pal** | Hyphenated, capital P on both halves, "the Princi-Pal" | | English, Swedish, French. Finnish: **Reksi**. Never "principal" |

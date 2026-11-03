@@ -906,11 +906,11 @@
     },
     "voiceRoomModes": {
       "label": "Hur ansluter familjerna?",
-      "sogverse": "Sogverse-röstrum",
-      "sogverseDescription": "Ett röstrum skapas automatiskt och öppnas inför varje träff.",
+      "sogverse": "Sogverses virtuella rum",
+      "sogverseDescription": "Ett virtuellt rum skapas automatiskt och öppnas inför varje träff.",
       "external": "Länk till ett möte någon annanstans",
-      "externalDescription": "Familjerna ansluter till ett möte du håller i en annan tjänst. För publiker som är större än ett Sogverse-röstrum rymmer (50 personer).",
-      "none": "Inget röstrum",
+      "externalDescription": "Familjerna ansluter till ett möte du håller i en annan tjänst. För publiker som är större än ett virtuellt rum i Sogverse rymmer (50 personer).",
+      "none": "Inget virtuellt rum",
       "noneDescription": "Familjerna får i stället se de anslutningsinstruktioner du skriver för varje språk."
     },
     "deliveryModes": {
@@ -967,7 +967,7 @@
       "externalVoiceUrlHint": "Offentlig: vem som helst kan läsa länken, även besökare som inte är inloggade.",
       "municipalityHint": "Kommunklubbar är alltid kopplade till en specifik finländsk kommun — den som betalar. Föräldrar från den kommunen ser den när de bläddrar.",
       "siteHint": "Var tillfällena fysiskt äger rum.",
-      "hybridHint": "Gamers kommer till platsen. Gedun, och de gamers som inte kan komma dit, ansluter via Sogverse-röstrummet.",
+      "hybridHint": "Gamers kommer till platsen. Gedun, och de gamers som inte kan komma dit, ansluter via Sogverses virtuella rum.",
       "eventSingleDay": "Evenemang äger rum ett enda datum.",
       "timezoneEntry": "Tiderna för tillfällena nedan anges i den här tidszonen. Föräldrar ser dem omräknade till sin egen tidszon automatiskt.",
       "timezoneChangeMoves": "Tiderna för tillfällena nedan anges i den här tidszonen. Byter du zon flyttas varje kommande tillfälle till samma klockslag i den nya zonen, medan tillfällen som redan har en rapport eller närvaro registrerad behåller de tider de hölls på.",

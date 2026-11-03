@@ -74,7 +74,7 @@
       },
       "groupOnlyRooms": {
         "title": "Réservé au groupe",
-        "description": "La salle vocale d’un club ouvre cinq minutes avant la séance et ferme cinq minutes après, et seuls le groupe, ses animateurs et notre équipe peuvent y entrer."
+        "description": "La salle virtuelle d’un club ouvre cinq minutes avant la séance et ferme cinq minutes après, et seuls le groupe, ses animateurs et notre équipe peuvent y entrer."
       },
       "notRecorded": {
         "title": "Aucune séance enregistrée",

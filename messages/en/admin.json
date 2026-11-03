@@ -906,11 +906,11 @@
     },
     "voiceRoomModes": {
       "label": "How do families join?",
-      "sogverse": "Sogverse voice room",
-      "sogverseDescription": "A voice room is set up automatically and opens for each session.",
+      "sogverse": "Sogverse virtual room",
+      "sogverseDescription": "A virtual room is set up automatically and opens for each session.",
       "external": "Link to a meeting elsewhere",
       "externalDescription": "Families join a meeting you host on another service. For audiences larger than a Sogverse room holds (50 people).",
-      "none": "No voice room",
+      "none": "No virtual room",
       "noneDescription": "Families are shown the join instructions you write for each language instead."
     },
     "deliveryModes": {
@@ -967,7 +967,7 @@
       "externalVoiceUrlHint": "Public: anyone can read this link, including visitors who are not signed in.",
       "municipalityHint": "Municipality clubs are always tied to a specific Finnish municipality — the one paying for it. Parents from that municipality will see it when they browse.",
       "siteHint": "Where sessions physically happen.",
-      "hybridHint": "Gamers come to the site. The Gedu, and any gamer who can’t make it there, joins through the Sogverse voice room.",
+      "hybridHint": "Gamers come to the site. The Gedu, and any gamer who can’t make it there, joins through the Sogverse virtual room.",
       "eventSingleDay": "Events happen on a single date.",
       "timezoneEntry": "Session times below are entered in this timezone. Parents see them converted to their own automatically.",
       "timezoneChangeMoves": "Session times below are entered in this timezone. Changing it moves every upcoming session to the same clock time in the new zone, while sessions that already have a report or attendance recorded keep the times they were held at.",

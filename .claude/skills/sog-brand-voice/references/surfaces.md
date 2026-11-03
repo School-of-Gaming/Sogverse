@@ -63,7 +63,7 @@ is wrong in the parent's terms and the way out, never the system's internals.
 
 ## The gamer's side
 
-The gamer's My SOG, the voice room, chat, Yty, Quests. **Level 3, written to the gamer.**
+The gamer's My SOG, the virtual room, chat, Yty, Quests. **Level 3, written to the gamer.**
 Full canon, no glossing, no winking at the fiction from outside it. Direct address ("you",
 "your group", "your Gedu"), present tense, stakes visible. Enthusiasm is earned with
 specifics, not adjectives. Never explain a joke; never say "kids" or "children" to their

@@ -10,10 +10,10 @@
   "unlockCamera": "Unlock camera",
   "sharerScreen": "{name}’s screen",
   "stopSharing": "Stop sharing",
-  "voiceRoom": "Voice Room",
+  "voiceRoom": "Virtual room",
   "leave": "Leave",
   "failedToJoinRoom": "Failed to join room",
-  "notASogverseRoom": "This session isn't held in a Sogverse voice room. Go back to see how to join it.",
+  "notASogverseRoom": "This session isn't held in a Sogverse virtual room. Go back to see how to join it.",
   "sessionEnded": "Session has ended",
   "disconnecting": "Disconnecting...",
   "connecting": "Connecting...",
@@ -140,12 +140,12 @@
     },
     "notFound": {
       "title": "Room not found",
-      "body": "We couldn’t find a voice room with this code:",
+      "body": "We couldn’t find a virtual room with this code:",
       "hint": "Double-check the code for typos. Letters and numbers must match exactly.",
-      "createNew": "Create a new voice room"
+      "createNew": "Create a new virtual room"
     },
     "createPage": {
-      "title": "Spin up an instant voice room",
+      "title": "Spin up an instant virtual room",
       "subtitle": "One tap → fresh room & shareable link to send. Use it for impromptu 1-on-1s, or co-gedu coordination outside or in addition to the scheduled session.",
       "createButton": "Start instant room",
       "creating": "Creating…",
