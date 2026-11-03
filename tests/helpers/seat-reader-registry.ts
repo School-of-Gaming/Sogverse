@@ -104,6 +104,10 @@ export const TS_SEAT_READERS: Record<string, readonly TsSeatRead[]> = {
   "src/app/api/admin/products/[id]/participations/[participationId]/route.ts": [
     { in: "PATCH", kind: "by-id-gated", why: "the IDOR check that the seat is on this product; the transition RPC checks status" },
   ],
+  "src/services/admin-business/admin-business.service.ts": [
+    { in: "readSeats", kind: "history", why: "the business figures are counted over time: each seat is a span from sign-up to its end, so ended seats are what last month's figures and the stops are made of" },
+    { in: "readSubscriptions", kind: "history", why: "recurring revenue at the end of last month counts subscriptions that have ended since" },
+  ],
   "src/app/api/gedu/sessions/email-report/route.ts": [
     { in: "POST", kind: "live", why: "the report goes to the group's active seats" },
   ],

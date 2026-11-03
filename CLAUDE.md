@@ -136,6 +136,7 @@ System architecture lives in **colocated `CLAUDE.md` files** next to the code th
 | Testimonials — the store of real words from parents, gamers and gedus, the landing pages that quote them, and the arrangements every page lays them out in | `src/services/testimonials/` |
 | Guides — the PDFs landing pages hand out to signed-in readers, their private bucket and who may download | `src/services/guides/` |
 | Admin analytics — the Web Analytics figures and their consent scope, the hourly cache, how a path is matched | `src/services/admin-analytics/` |
+| Admin business figures — paying families, revenue by Helsinki month, engagement, churn and gedu capacity, and what each counts | `src/services/admin-business/` |
 | WhatsApp | `src/services/whatsapp/` |
 | Klaviyo parent sync — the outboxes' drain, the public property, metric and list contract, the one consent send, deletion and the operator setup | `src/lib/klaviyo-sync/` |
 | Session feeds — shared gedu/family machinery | `src/components/session-feed/` |
