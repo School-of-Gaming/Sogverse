@@ -74,7 +74,8 @@ always deliberate.
   but left out of the snapshot, so the lists and the events are what keep history.
 - `SV Enrolled` is one event per held seat, with no money value: renewals reach Klaviyo
   through Stripe's own integration, and payments are profile totals
-  (`sog_first_payment_at`, `sog_last_payment_at`, `sog_total_paid_eur`), never events. It
+  (`sog_first_payment_at`, `sog_last_payment_at`, `sog_total_paid_eur`), never events.
+  They count money actually charged: a €0 checkout or invoice records nothing. It
   says who holds the seat and, on a gamer's, the child's birth year and gender, and it
   carries the UTM tag the browser's attribution cookie held at booking — stored on the
   booking, read through the seat's link to it, and only under marketing cookie consent, the
@@ -106,9 +107,11 @@ always deliberate.
 **Rule: the contract sends what happened and what is so, and leaves to Klaviyo anything its
 own segment and flow filters can work out from those.** A derived property is a second
 copy of a fact that can only lag it, and every one is another public name to keep. So there
-is no youngest or oldest child (a segment filters the birth years), no first purchase (a
-new customer is `sog_first_payment_at` within the last day, and a first booking of a kind
-is a filter over `SV Enrolled`), and no last-attended date (a filter over `SV Session`).
+is no youngest or oldest child (a segment filters the birth years), no commitment flag (a
+parent committing money is their first `SV Enrolled` whose `billing_mode` is paid, a
+deferred-billing club included; a seat taken on something free, `billing_mode` free or a
+municipality's contract, is the warm lead; a first booking of a kind is a filter over
+`SV Enrolled` too), and no last-attended date (a filter over `SV Session`).
 A new property earns its place only when Klaviyo cannot reach the answer from what is
 already sent.
 

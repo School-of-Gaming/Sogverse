@@ -1,21 +1,24 @@
--- Stripe events are marked processed on their own.
+-- Stripe events are marked processed on their own, and a payment is money.
 --
 -- The products webhook read "a payments row carries this event id" as "this
 -- event is fully processed", which made a payment row double as a commit marker:
 -- a checkout that collected nothing still wrote a €0 payment, only so a
 -- redelivery would find it. The marker now has a table of its own, and a payment
--- row records money and nothing else.
+-- row records money that actually moved and nothing else.
 --
 -- 1. `stripe_processed_events`: one row per Stripe event the webhook finished
 --    handling, written after its last write.
--- 2. Every event id a payments row already carries is copied in, so a
---    redelivery of an event processed before this change is still recognised.
---
--- The €0 payment rows already written as markers are kept. The Klaviyo profile
--- snapshot reads payments for `sog_first_payment_at` and `sog_last_payment_at`,
--- and a segment keys "new customer" on the first of them, so deleting those rows
--- would move or empty both dates for every family whose first checkout cost
--- nothing. Whether to do that is the owner's call, not a side effect of this one.
+-- 2. Every event id a payments row already carries is copied in, €0 rows
+--    included, so a redelivery of an event processed before this change is
+--    still recognised.
+-- 3. The €0 payment rows, which recorded no money, are deleted, and the amount
+--    CHECK tightens from "not negative" to "positive" so none is written again.
+--    Nothing fires on a payments delete. Their parents are filed in the Klaviyo
+--    profile outbox, because the snapshot's first and last payment and lifetime
+--    totals are read from payments and move for every family whose first
+--    checkout cost nothing: `sog_first_payment_at` becomes the first money they
+--    paid. Commitment and a free seat are told apart in Klaviyo by the
+--    `SV Enrolled` event's billing_mode, not by a payment.
 
 CREATE TABLE public.stripe_processed_events (
   stripe_event_id text PRIMARY KEY,
@@ -42,3 +45,18 @@ SELECT pay.stripe_event_id,
        END,
        pay.created_at
   FROM public.payments pay;
+
+-- The parents whose snapshot moves, read before their rows go.
+SELECT public.enqueue_klaviyo_profiles(ARRAY(
+  SELECT DISTINCT pay.customer_id
+    FROM public.payments pay
+   WHERE pay.amount_cents = 0
+));
+
+DELETE FROM public.payments WHERE amount_cents = 0;
+
+ALTER TABLE public.payments
+  DROP CONSTRAINT payments_amount_cents_check,
+  ADD CONSTRAINT payments_amount_cents_check CHECK (amount_cents > 0);
+
+COMMENT ON CONSTRAINT payments_amount_cents_check ON public.payments IS 'A payment is money that moved: a checkout or an invoice settled at €0 records no payment, and the products webhook marks its event processed in stripe_processed_events instead.';

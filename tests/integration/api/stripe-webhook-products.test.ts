@@ -1092,6 +1092,27 @@ describe("POST /api/webhooks/stripe/products", () => {
       expect(inserts.payments).toHaveLength(0);
     });
 
+    it("records no payment for an invoice settled at €0, and still marks the event processed", async () => {
+      // A coupon or a credit balance can settle a renewal at €0. Nothing was
+      // charged, so there is no payment; the processed mark is what stops a
+      // redelivery from running the handler again.
+      mockConstructEvent.mockReturnValue(
+        createInvoicePaidEvent({
+          placement: "parent",
+          id: "evt_invoice_zero",
+          amountPaid: 0,
+        }),
+      );
+      const inserts = mockAdmin({ famSubRow: RENEWAL_FAM_SUB });
+
+      const res = await POST(createWebhookRequest());
+      expect(res.status).toBe(200);
+      expect(inserts.payments).toHaveLength(0);
+      expect(inserts.processedEvents).toEqual([
+        { stripe_event_id: "evt_invoice_zero", event_type: "invoice.paid" },
+      ]);
+    });
+
     it("is a no-op for a subscription we have no row for", async () => {
       mockConstructEvent.mockReturnValue(
         createInvoicePaidEvent({

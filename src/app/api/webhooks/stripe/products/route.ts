@@ -232,7 +232,7 @@ async function handleCheckoutCompleted(
 
     // A duplicate bought no seat, so it names none: the seat the family
     // already held is the metadata's `existingParticipationId`.
-    await recordCheckoutPayment(admin, {
+    await recordPayment(admin, {
       stripeEventId: event.id,
       customerId,
       amountCents: session.amount_total ?? 0,
@@ -279,7 +279,7 @@ async function handleCheckoutCompleted(
         paymentIntent: expandableId(session.payment_intent),
       },
     );
-    await recordCheckoutPayment(admin, {
+    await recordPayment(admin, {
       stripeEventId: event.id,
       customerId,
       amountCents: session.amount_total ?? 0,
@@ -358,7 +358,7 @@ async function handleCheckoutCompleted(
 
   // Confirmed — record the money. A re-run meets the UNIQUE on
   // stripe_event_id and records nothing twice.
-  await recordCheckoutPayment(admin, {
+  await recordPayment(admin, {
     stripeEventId: event.id,
     customerId,
     amountCents: session.amount_total ?? 0,
@@ -597,7 +597,8 @@ async function handleInvoicePaid(admin: Admin, event: Stripe.InvoicePaidEvent) {
   // "subscription_cycle"`, i.e. shaped exactly like a month-2 renewal, so the
   // ordinary renewal path below is the right one to record it. No gate here
   // needs widening for deferred billing: the €0 checkout records no payment,
-  // and this handler writes the first one when the money actually moves.
+  // and this handler writes the first one when the money actually moves. An
+  // invoice settled at €0 (a coupon, a credit balance) records nothing either.
   if (!subId || invoice.billing_reason === "subscription_create") return;
   const { data: famSub, error: famSubErr } = await admin
     .from("family_subscriptions")
@@ -609,7 +610,7 @@ async function handleInvoicePaid(admin: Admin, event: Stripe.InvoicePaidEvent) {
 
   // The seat's product as it stands when the renewal is paid: a club switch
   // moves the seat, and this renewal paid for the club it is in now.
-  await insertPaymentRow(admin, {
+  await recordPayment(admin, {
     stripeEventId: event.id,
     customerId: famSub.customer_id,
     amountCents: invoice.amount_paid,
@@ -880,7 +881,15 @@ interface InsertPaymentParams {
   metadata: Json;
 }
 
-async function insertPaymentRow(admin: Admin, params: InsertPaymentParams) {
+/**
+ * A payment, recorded only when money moved. A club bought before it starts, or
+ * with a 100%-off code, completes Checkout at €0, and a coupon or a credit
+ * balance can settle an invoice at €0: the seat and the subscription are real,
+ * but nothing was charged, so there is no payment. The event is still marked
+ * processed by the route.
+ */
+async function recordPayment(admin: Admin, params: InsertPaymentParams) {
+  if (params.amountCents === 0) return;
   const { error } = await admin.from("payments").insert({
     stripe_event_id: params.stripeEventId,
     customer_id: params.customerId,
@@ -895,20 +904,6 @@ async function insertPaymentRow(admin: Admin, params: InsertPaymentParams) {
   });
   // The re-run of an event that died after its payment landed: recorded once.
   if (error && error.code !== "23505") throw error;
-}
-
-/**
- * A checkout's payment, which is recorded only when money moved. A club bought
- * before it starts, or with a 100%-off code, completes Checkout at €0: the seat
- * and the subscription are real, but nothing was paid, so there is no payment —
- * the first one is the renewal invoice that does charge.
- */
-async function recordCheckoutPayment(
-  admin: Admin,
-  params: InsertPaymentParams,
-) {
-  if (params.amountCents === 0) return;
-  await insertPaymentRow(admin, params);
 }
 
 function paymentPurposeFor(purchaseShape: string): PaymentPurpose {
