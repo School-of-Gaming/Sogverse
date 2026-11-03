@@ -8,11 +8,10 @@ import {
   newsletterProperties,
   subscriptionSourceOnSend,
 } from "@/lib/klaviyo-sync/contract";
-import {
-  klaviyoEventRow,
-  type KlaviyoEventRow,
-  type KlaviyoParentSnapshot,
-  type KlaviyoProduct,
+import type {
+  KlaviyoEventRow,
+  KlaviyoParentSnapshot,
+  KlaviyoProduct,
 } from "@/lib/klaviyo-sync/snapshot.contracts";
 
 // An enrolment's `product_url` is the locale-prefixed, translated address the
@@ -405,10 +404,6 @@ describe("the events", () => {
     },
   ];
 
-  /** A row as the backfill files it, read through the contract the drain reads it through. */
-  const backfill = (row: KlaviyoEventRow, facts: Record<string, unknown> = {}): KlaviyoEventRow =>
-    klaviyoEventRow.parse({ ...row, properties: { ...row.properties, ...facts, backfilled: true } });
-
   it("names every metric", () => {
     expect(EVENT_METRICS).toMatchInlineSnapshot(`
       {
@@ -579,28 +574,6 @@ describe("the events", () => {
     expect(subscriptionSourceOnSend(joined(false), answered(true))).toBeNull();
     expect(subscriptionSourceOnSend(joined(null), answered(true))).toBeNull();
     expect(subscriptionSourceOnSend(session, answered(true))).toBeNull();
-  });
-
-  it("subscribes nobody with a backfilled event, whatever the parent once answered", () => {
-    const ticked: KlaviyoParentSnapshot = {
-      ...FULL,
-      attribution: { ...FULL.attribution, registration_marketing_consent: true },
-    };
-    for (const row of rows) {
-      // Each row as the backfill files it, but carrying the yes that would
-      // subscribe on a live row of its kind, so only the mark can refuse it.
-      const backfilled = backfill(row, { marketing_opt_in: true });
-      expect(subscriptionSourceOnSend(backfilled, ticked)).toBeNull();
-    }
-    expect(rows.map((row) => row.kind)).toEqual(
-      expect.arrayContaining(["account_created", "enrolled", "waitlisted"]),
-    );
-  });
-
-  it("never sends the backfill mark as an event property", () => {
-    for (const row of rows) {
-      expect(klaviyoEventFor(backfill(row), FULL).properties).not.toHaveProperty("backfilled");
-    }
   });
 
   it("never sends the waitlist join's answer as an event property", () => {

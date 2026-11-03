@@ -147,12 +147,11 @@ The profile sync never sends a subscription status, and an unticked or never-ask
 sends nothing, so an unsubscribe in Klaviyo is undone only by a fresh yes the parent gives
 later.
 
-**A backfilled event never subscribes anyone.** History filed after the fact carries
-`backfilled: true` among its facts, and the contract sends no subscription with any such
-event, whatever the registration or the booking answered: the parent may have
-unsubscribed in Klaviyo since, and a resent yes would undo it. A backfill files through
-`enqueue_klaviyo_event` under the unique id the live trigger gives that event, so whatever
-was already filed or sent is skipped or deduplicated.
+**History filed after the fact never subscribes anyone.** It goes through
+`enqueue_klaviyo_event` under the unique id the live trigger gives that event, so nothing
+already filed or sent goes out twice. It stores `marketing_opt_in` null, so whichever
+deployment drains it reads no yes, and it files no account creation, whose consent is read
+from the parent when it is sent.
 
 ## The outboxes and the drain
 

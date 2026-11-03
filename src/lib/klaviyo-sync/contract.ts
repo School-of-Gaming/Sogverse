@@ -459,15 +459,12 @@ export function klaviyoEventFor(
  * registration form's ticked box, sent with the account's creation, and a yes
  * to a product's School of Gaming mailing ask, sent with the event the
  * booking's own insert filed — the seat's enrolment, or the waitlist join.
- * Every other answer — unticked, no, never asked — leaves consent alone, and
- * so does every backfilled event: its yes was given long before it is sent,
- * and the parent may have unsubscribed in Klaviyo since.
+ * Every other answer — unticked, no, never asked — leaves consent alone.
  */
 export function subscriptionSourceOnSend(
   row: KlaviyoEventRow,
   snapshot: KlaviyoParentSnapshot,
 ): string | null {
-  if (row.properties.backfilled === true) return null;
   switch (row.kind) {
     case "account_created":
       return snapshot.attribution.registration_marketing_consent === true
