@@ -38,8 +38,8 @@ import { clickIdFromCookieHeader } from "@/lib/utm";
  * report a seat and a queue place are not told apart by an `outcome`; the
  * missing value on a queue place is the only difference Reddit sees. A page
  * view names nothing but the page; a product view and a checkout start name
- * the product with its price — and, from a signed-in parent, ride beside the
- * two hashes exactly as Meta's do.
+ * the product with its price — and, like Meta's, none of the three carries an
+ * account or its hashes, even from a signed-in parent.
  *
  * **Gated on the request's own consent cookie**, decided here from the cookie
  * the browser actually sent, so a report for someone who refused is impossible

@@ -126,6 +126,8 @@ function signedInAs(role: string, email = "parent@x.test") {
     data: { claims: { sub: PARENT_ID } },
     error: null,
   });
+  // The address is on the profile row so a report that named the parent would
+  // have it to hash; the assertions are that none does.
   mockProfileRead.mockResolvedValue({ data: { role, email }, error: null });
 }
 
@@ -207,7 +209,7 @@ describe("POST /api/page-events — the happy paths", () => {
     });
   });
 
-  it("reports a checkout start, naming a signed-in parent by their hashes", async () => {
+  it("reports a signed-in parent's checkout start without naming the parent", async () => {
     signedInAs("customer");
 
     await send({
@@ -220,17 +222,17 @@ describe("POST /api/page-events — the happy paths", () => {
     const meta = eventSentTo(META_URL);
     expect(meta.event_name).toBe("InitiateCheckout");
     expect(meta.event_id).toBe(EVENT_ID);
-    expect(asObject(meta.user_data).em).toHaveLength(1);
-    expect(asObject(meta.user_data).external_id).toHaveLength(1);
+    expect(asObject(meta.user_data)).not.toHaveProperty("em");
+    expect(asObject(meta.user_data)).not.toHaveProperty("external_id");
 
     const reddit = eventSentTo(REDDIT_URL);
     expect(reddit.type).toEqual({ tracking_type: "ADD_TO_CART" });
     expect(asObject(reddit.metadata).conversion_id).toBe(EVENT_ID);
-    expect(asObject(reddit.user)).toHaveProperty("email");
-    expect(asObject(reddit.user)).toHaveProperty("external_id");
+    expect(asObject(reddit.user)).not.toHaveProperty("email");
+    expect(asObject(reddit.user)).not.toHaveProperty("external_id");
   });
 
-  it.each(["admin", "gedu"])(
+  it.each(["customer", "admin", "gedu"])(
     "reports for a signed-in %s, naming no account",
     async (role) => {
       signedInAs(role);
@@ -238,10 +240,12 @@ describe("POST /api/page-events — the happy paths", () => {
       await send({ event: "page_view", eventId: EVENT_ID, pagePath: SHOP_PAGE });
 
       expect(fetchMock).toHaveBeenCalledTimes(2);
-      expect(asObject(eventSentTo(META_URL).user_data)).not.toHaveProperty("em");
-      expect(asObject(eventSentTo(REDDIT_URL).user)).not.toHaveProperty(
-        "external_id",
-      );
+      const metaUser = asObject(eventSentTo(META_URL).user_data);
+      expect(metaUser).not.toHaveProperty("em");
+      expect(metaUser).not.toHaveProperty("external_id");
+      const redditUser = asObject(eventSentTo(REDDIT_URL).user);
+      expect(redditUser).not.toHaveProperty("email");
+      expect(redditUser).not.toHaveProperty("external_id");
     },
   );
 });

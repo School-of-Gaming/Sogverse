@@ -5,7 +5,6 @@ import {
 } from "@/lib/ad-conversions.server";
 import { advertisedProductFor } from "@/lib/advertised-product.server";
 import { GTM_EVENTS } from "@/lib/gtm-events";
-import type { ConversionAccount } from "@/lib/marketing-events";
 import { reportableMarketingPage } from "@/lib/marketing-pages";
 import {
   pageEventBody,
@@ -51,10 +50,11 @@ import { createClient } from "@/lib/supabase/server";
  * anything was reported, and a malformed body gets the same answer as a
  * refused one. The browser fires this and forgets it.
  *
- * **Who it names.** A signed-in parent's report carries their own account id
- * and address, hashed by the reporters as every other report's are; an
- * anonymous visitor's, and an admin's or a gedu's, carries no account at all —
- * only what the reporters send without one.
+ * **It names nobody.** No report from here carries an account — no hashed
+ * address, no hashed account id — even when a parent is signed in: a twin
+ * tells a platform that this browser reached a page or a product, never that
+ * an identifiable parent did, which the privacy policy does not describe. The
+ * session is read only to refuse a gamer.
  */
 export async function POST(request: Request): Promise<Response> {
   let raw: unknown;
@@ -89,13 +89,12 @@ async function reportPageEvent(
   const page = reportableMarketingPage(body.pagePath);
   if (page === null) return;
 
-  const account = await accountUnlessGamer();
-  if (account === null) return;
+  if (!(await sessionMayBeReported())) return;
 
   const conversion = await conversionFor(body, page.internalPath);
   if (conversion === null) return;
 
-  await reportAdConversion(request, conversion, account);
+  await reportAdConversion(request, conversion, { id: null, email: null });
 }
 
 /**
@@ -131,29 +130,26 @@ async function conversionFor(
 }
 
 /**
- * Who the report may name, or `null` when nothing may be reported at all.
+ * Whether anything may be reported for this session.
  *
  * Read from the session cookie, never the body. No session is an anonymous
- * visitor and names nobody. A session is refused when its claims fail to
+ * visitor and may be reported. A session is refused when its claims fail to
  * verify, when its profile cannot be read, and when it is a gamer's — the
  * browser's gate, which reports nothing for anyone it cannot prove is not a
- * child. A customer names their own account; an admin or a gedu names none,
- * because the report's account is only ever a parent's.
+ * child. Every other role may be reported, and none is named.
  */
-async function accountUnlessGamer(): Promise<ConversionAccount | null> {
+async function sessionMayBeReported(): Promise<boolean> {
   const supabase = await createClient();
   const { data, error } = await supabase.auth.getClaims();
-  if (error) return null;
+  if (error) return false;
   const userId = data?.claims.sub;
-  if (!userId) return { id: null, email: null };
+  if (!userId) return true;
 
   const { data: profile, error: profileError } = await supabase
     .from("profiles")
-    .select("role, email")
+    .select("role")
     .eq("id", userId)
     .maybeSingle();
-  if (profileError || !profile) return null;
-  if (profile.role === "gamer") return null;
-  if (profile.role !== "customer") return { id: null, email: null };
-  return { id: userId, email: profile.email };
+  if (profileError || !profile) return false;
+  return profile.role !== "gamer";
 }

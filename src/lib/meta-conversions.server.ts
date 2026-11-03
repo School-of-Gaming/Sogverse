@@ -64,10 +64,10 @@ import { clickIdFromCookieHeader, type ClickId } from "@/lib/utm";
  *
  * **What is sent about a page view** is nothing but the page; about a product
  * view or a checkout start, the product in the same fields with its price, the
- * facts its public page shows anyone. Most of these come from anonymous
- * visitors and carry no hash at all. A signed-in parent's carry the two hashes
- * like every other report, so Meta learns that an identifiable parent looked
- * at, or stepped into signing up for, that named product.
+ * facts its public page shows anyone. None of these carries an account, even
+ * from a signed-in parent, so neither hash goes with them: Meta learns that a
+ * browser looked at, or stepped into signing up for, that named product, never
+ * that an identifiable parent did.
  *
  * **Gated on the request's own consent cookie.** The send is refused unless the
  * request that triggered it carried marketing consent — decided here, on the
@@ -75,8 +75,8 @@ import { clickIdFromCookieHeader, type ClickId } from "@/lib/utm";
  * refused is impossible rather than merely unlikely. No role check is made on
  * this side: the conversion routes are customer-only, and the page-event route
  * refuses a gamer — or a session whose role it cannot read — before it calls.
- * An anonymous visitor's report carries no account at all, and so neither
- * hash.
+ * A report handed no account — an anonymous visitor's, or any page event —
+ * carries neither hash.
  *
  * **It never throws and never delays anything.** It is reached through the
  * one fan-out to every platform (`@/lib/ad-conversions.server`), which callers

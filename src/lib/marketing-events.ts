@@ -120,10 +120,10 @@ export type ReportedEnrolmentOutcome = Exclude<EnrolmentOutcome, "sent_to_checko
  * The account a server report is about: the one the request acts as — the
  * parent it just registered, or the signed-in customer — and never anyone else.
  * It is always the parent's own address and account id, and never a gamer's or
- * a participant's: the conversion routes are customer-only, and the page-event
- * route names an account only when the session is a customer's. Either is
- * `null` when the caller has none to hand — an anonymous visitor has neither —
- * and the report still goes, without that field's hash.
+ * a participant's: the conversion routes are customer-only. The page-event
+ * route names no account, whoever is signed in. Either is `null` when the
+ * caller has none to hand — an anonymous visitor has neither, and a page event
+ * passes neither — and the report still goes, without that field's hash.
  */
 export interface ConversionAccount {
   /** The parent's own account id — their auth user, which is their profile. */
