@@ -1,12 +1,12 @@
 {
-  "addGamer": "Ajouter un joueur",
+  "addGamer": "Ajouter un gamer",
   "manageGamer": "Gérer",
   "manageGamerAria": "Gérer le profil de {name}",
   "switchFailed": "Échec du changement de compte",
   "loadFailed": "Échec du chargement de la famille",
   "switchToParentToAddGamer": {
-    "title": "Passer au profil de {name} pour ajouter un joueur ?",
-    "oneWayWarning": "Vous serez déconnecté de votre compte joueur."
+    "title": "Passer au profil de {name} pour ajouter un gamer ?",
+    "oneWayWarning": "Vous serez déconnecté de votre compte gamer."
   },
   "switchGate": {
     "pinTitle": "Demande à un parent de saisir son code PIN",
@@ -19,7 +19,7 @@
     "signOutHowViaParent": "Déconnecte-toi, connecte-toi avec le compte de ton parent, puis bascule vers {name} depuis celui-ci."
   },
   "addGamerForm": {
-    "title": "Ajouter un joueur",
+    "title": "Ajouter un gamer",
     "firstNameLabel": "Prénom",
     "firstNamePlaceholder": "ex. Lily",
     "birthMonthLabel": "Mois de naissance",
@@ -30,14 +30,14 @@
     "genderBoy": "Garçon",
     "genderGirl": "Fille",
     "genderNonBinary": "Non binaire",
-    "submit": "Ajouter le joueur",
+    "submit": "Ajouter le gamer",
     "submitting": "Ajout…",
     "firstNameTooShort": "Le prénom doit contenir au moins 2 caractères.",
     "firstNameTooLong": "Le prénom ne doit pas dépasser 32 caractères.",
     "birthMonthRequired": "Choisissez un mois de naissance.",
     "birthYearRequired": "Choisissez une année de naissance.",
-    "genericError": "Impossible d’ajouter ce joueur. Veuillez réessayer.",
+    "genericError": "Impossible d’ajouter ce gamer. Veuillez réessayer.",
     "guardianAttestation": "{name} est mon enfant, ou je suis son représentant légal. J’ai lu la <privacy>politique de confidentialité</privacy>.",
-    "guardianAttestationUnnamed": "Ce joueur est mon enfant, ou je suis son représentant légal. J’ai lu la <privacy>politique de confidentialité</privacy>."
+    "guardianAttestationUnnamed": "Ce gamer est mon enfant, ou je suis son représentant légal. J’ai lu la <privacy>politique de confidentialité</privacy>."
   }
 }

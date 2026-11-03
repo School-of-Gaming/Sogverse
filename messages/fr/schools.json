@@ -16,11 +16,11 @@
     "available": "Clubs disponibles",
     "noClubs": "Aucun club ici"
   },
-  "waitlistNote": "Les places sont limitées et les clubs ont souvent une liste d’attente. Si votre enfant arrête de venir, pensez à annuler l’inscription pour que sa place puisse être proposée au joueur suivant.",
+  "waitlistNote": "Les places sont limitées et les clubs ont souvent une liste d’attente. Si votre enfant arrête de venir, pensez à annuler l’inscription pour que sa place puisse être proposée au gamer suivant.",
   "notListed": {
     "title": "Vous ne voyez pas votre commune ?",
     "body": "Les clubs municipaux sont organisés en partenariat avec chaque commune, et nous en ajoutons régulièrement de nouveaux. Si la vôtre n’en fait pas encore partie, parlez-nous-en :",
-    "openClubs": "Nous proposons aussi des clubs ouverts à tous, qu’un joueur peut rejoindre où qu’il habite."
+    "openClubs": "Nous proposons aussi des clubs ouverts à tous, qu’un gamer peut rejoindre où qu’il habite."
   },
   "municipality": {
     "heading": "Clubs de {name}"

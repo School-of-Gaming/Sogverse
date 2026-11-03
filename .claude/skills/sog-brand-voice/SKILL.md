@@ -228,7 +228,10 @@ the English, and never push the French imagery into the other locales. Sylvie, a
 French speaker on the team, approved these punctuation rules for French (3 Nov 2026) and
 reads the French after a large rewrite. French register:
 `vous` to adults, `tu` in child-facing strings; "clubs municipaux" but "payé par votre
-commune"; never the middle dot (`Prêt·e`) to dodge agreement, reframe instead.
+commune"; never the middle dot (`Prêt·e`) to dodge agreement, reframe instead. The child is
+"gamer" everywhere, buttons and account names included ("Ajouter un gamer", "Compte
+gamer"), never "joueur" (Sylvie, 3 Nov 2026); "joueur" stays only for a player inside a
+game, as on a Minecraft server.
 
 **Klingon (`tlh`)** is the easter egg: fun takes are welcome and accuracy is not the goal,
 except that legal pages are served in English under `tlh` and it renders "School of Gaming"
