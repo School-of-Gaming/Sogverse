@@ -95,7 +95,7 @@ function PreviewSceneIndex({
     <div className="space-y-8">
       <div className="space-y-2">
         <p className="max-w-prose text-muted-foreground">
-          Full-page preview scenes: one fixture-driven page each, served at{" "}
+          Each is served at{" "}
           <code>/preview/{"{surface}"}/{"{scenario}"}</code> inside the same
           header / sidebar / footer shell the real route composes, with no network
           calls behind it. Scenes render the <em>same</em> page body the live

@@ -110,9 +110,10 @@ The sidebar is `position: sticky; top: var(--header-height)` with an explicit `h
 
 **The rail does not scroll, so every entry has to fit the shortest desktop viewport we
 support — a 1366×768 laptop, about 657px under the browser's own chrome.** Its nav is
-`overflow-hidden`: an entry past the bottom is clipped with no way to reach it. Each entry
-is 40px with its gap, so a new page that wants a rail entry of its own is weighed against
-that budget, and joining an existing hub is the usual answer.
+`overflow-hidden`: an entry past the bottom is clipped with no way to reach it. Take off
+the header and the nav's own padding and about 560px is left for entries; each is 40px
+with its gap, so the rail holds 14 at most. A new page that wants a rail entry of its own
+is weighed against that budget, and joining an existing hub is the usual answer.
 
 **A hub is one rail entry over several pages, each a tab in a strip under the hub's title**
 (the clubs, camps and events hub; invoicing). The strip shows only on the hub's list pages,
