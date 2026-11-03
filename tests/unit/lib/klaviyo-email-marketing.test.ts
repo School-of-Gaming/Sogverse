@@ -2,7 +2,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
 import {
   findKlaviyoEmailMarketing,
-  findKlaviyoProfileIdByEmail,
+  findKlaviyoProfileByEmail,
   unsubscribeKlaviyoProfile,
 } from "@/lib/klaviyo";
 
@@ -80,19 +80,36 @@ describe("Klaviyo email marketing", () => {
     expect((await findKlaviyoEmailMarketing({ externalId: "x" }))?.source).toBeNull();
   });
 
-  it("finds a profile's Klaviyo id by its address", async () => {
-    mockFetch.mockResolvedValue(answer(200, { data: [{ id: "kl-3", attributes: {} }] }));
-
-    expect(await findKlaviyoProfileIdByEmail("anna@example.com")).toBe("kl-3");
-    const [url] = mockFetch.mock.calls[0];
-    expect(decodeURIComponent(new URL(url).searchParams.get("filter") ?? "")).toBe(
-      'equals(email,"anna@example.com")',
+  it("finds a profile by its address, with the external id it carries", async () => {
+    mockFetch.mockResolvedValue(
+      answer(200, { data: [{ id: "kl-3", attributes: { external_id: "1234567890" } }] }),
     );
+
+    expect(await findKlaviyoProfileByEmail("anna@example.com")).toEqual({
+      id: "kl-3",
+      externalId: "1234567890",
+    });
+    const [url] = mockFetch.mock.calls[0];
+    const params = new URL(url).searchParams;
+    expect(decodeURIComponent(params.get("filter") ?? "")).toBe('equals(email,"anna@example.com")');
+    expect(params.get("fields[profile]")).toBe("external_id");
+  });
+
+  it.each([
+    ["absent", {}],
+    ["null", { external_id: null }],
+    ["empty", { external_id: "" }],
+  ])("reads no external id when Klaviyo's is %s", async (_, attributes) => {
+    mockFetch.mockResolvedValue(answer(200, { data: [{ id: "kl-4", attributes }] }));
+    expect(await findKlaviyoProfileByEmail("anna@example.com")).toEqual({
+      id: "kl-4",
+      externalId: null,
+    });
   });
 
   it("finds no Klaviyo id for an address Klaviyo does not hold", async () => {
     mockFetch.mockResolvedValue(answer(200, { data: [] }));
-    expect(await findKlaviyoProfileIdByEmail("nobody@example.com")).toBeNull();
+    expect(await findKlaviyoProfileByEmail("nobody@example.com")).toBeNull();
   });
 
   it("unsubscribes the address globally: no list named", async () => {

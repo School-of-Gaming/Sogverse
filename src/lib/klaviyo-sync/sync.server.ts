@@ -2,7 +2,7 @@ import "server-only";
 import {
   addKlaviyoProfileToList,
   createKlaviyoEvent,
-  findKlaviyoProfileIdByEmail,
+  findKlaviyoProfileByEmail,
   findKlaviyoProfileIdByExternalId,
   isKlaviyoConfigured,
   requestKlaviyoProfileDeletion,
@@ -188,7 +188,7 @@ async function syncProfile(
   // id overwritten with ours. An import with no id, matched on an address
   // whose profile carries another external id, creates a second profile.
   // A parent whose address is held twice is already found by their own id.
-  const klaviyoId = ownId ?? (await findKlaviyoProfileIdByEmail(snapshot.profile.email));
+  const klaviyoId = ownId ?? (await adoptableProfileId(snapshot.profile.email));
   const written = await upsertKlaviyoProfile({
     ...(klaviyoId === null ? {} : { id: klaviyoId }),
     ...klaviyoProfileFor(snapshot),
@@ -197,6 +197,27 @@ async function syncProfile(
   if (profileId === null) throw new Error("Klaviyo answered the profile import with no id");
   for (const listId of listIds) await addKlaviyoProfileToList(listId, profileId);
   return "synced";
+}
+
+/** The shape of a Sogverse profile id, which is what the sync writes as an external id. */
+const SOGVERSE_ID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+
+/**
+ * The Klaviyo id of the profile holding this address, for a parent Klaviyo
+ * holds no profile for under their own id — or null when the address is not
+ * held. A profile another source made (no external id, or Eventbrite's
+ * numeric one) is adopted. One carrying a Sogverse id is another account's —
+ * staging and production share the account, and an address can pass from one
+ * account to another — so taking it over would strand that account's profile,
+ * and its erasure would miss it: the row fails instead.
+ */
+async function adoptableProfileId(email: string): Promise<string | null> {
+  const found = await findKlaviyoProfileByEmail(email);
+  if (found === null) return null;
+  if (found.externalId !== null && SOGVERSE_ID.test(found.externalId)) {
+    throw new Error("The address's Klaviyo profile carries another Sogverse account's id");
+  }
+  return found.id;
 }
 
 /** One claim of event jobs, sent and finished. False when nothing was due. */

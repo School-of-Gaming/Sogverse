@@ -5,7 +5,8 @@ import type { KlaviyoParentSnapshot } from "@/lib/klaviyo-sync/snapshot.contract
  * The Klaviyo drain against a scripted outbox and a mocked Klaviyo client.
  * Pinned: an unconfigured environment claims nothing; a parent with a snapshot
  * is upserted onto the profile Klaviyo already holds for their id — or, with
- * none, the one it holds for their address — and added to its lists — production's history lists, or staging's one list — and one
+ * none, the one it holds for their address unless another Sogverse account's id
+ * is on it — and added to its lists — production's history lists, or staging's one list — and one
  * without is deleted; one row's failure is finished with a label and the rest
  * go on; an event whose parent is gone is finished unsent; an event goes
  * under the row's own unique id; and a subscription goes only with a ticked
@@ -16,7 +17,8 @@ import type { KlaviyoParentSnapshot } from "@/lib/klaviyo-sync/snapshot.contract
 const klaviyo = {
   isKlaviyoConfigured: vi.fn(() => true),
   findKlaviyoProfileIdByExternalId: vi.fn<(id: string) => Promise<string | null>>(),
-  findKlaviyoProfileIdByEmail: vi.fn<(email: string) => Promise<string | null>>(),
+  findKlaviyoProfileByEmail:
+    vi.fn<(email: string) => Promise<{ id: string; externalId: string | null } | null>>(),
   upsertKlaviyoProfile: vi.fn<(profile: unknown) => Promise<string | null>>(async () => "kl-id"),
   addKlaviyoProfileToList: vi.fn(async () => undefined),
   requestKlaviyoProfileDeletion: vi.fn(async () => undefined),
@@ -118,7 +120,7 @@ beforeEach(() => {
   vi.clearAllMocks();
   klaviyo.isKlaviyoConfigured.mockReturnValue(true);
   klaviyo.findKlaviyoProfileIdByExternalId.mockResolvedValue(null);
-  klaviyo.findKlaviyoProfileIdByEmail.mockResolvedValue(null);
+  klaviyo.findKlaviyoProfileByEmail.mockResolvedValue(null);
   vi.spyOn(console, "error").mockImplementation(() => undefined);
   vi.spyOn(console, "warn").mockImplementation(() => undefined);
   vi.stubEnv("VERCEL_ENV", "preview");
@@ -168,31 +170,55 @@ describe("drainKlaviyoSync", () => {
   it("updates the profile under the parent's external id without asking by address", async () => {
     outbox({ profiles: [{ customer_id: KEPT, seq: 1 }], snapshots: [snapshot(KEPT)] });
     klaviyo.findKlaviyoProfileIdByExternalId.mockResolvedValue("kl-own");
-    klaviyo.findKlaviyoProfileIdByEmail.mockResolvedValue("kl-other");
+    klaviyo.findKlaviyoProfileByEmail.mockResolvedValue({ id: "kl-other", externalId: null });
 
     await drainKlaviyoSync();
 
-    expect(klaviyo.findKlaviyoProfileIdByEmail).not.toHaveBeenCalled();
+    expect(klaviyo.findKlaviyoProfileByEmail).not.toHaveBeenCalled();
     expect(klaviyo.upsertKlaviyoProfile).toHaveBeenCalledWith(
       expect.objectContaining({ id: "kl-own", externalId: KEPT }),
     );
   });
 
-  it("adopts the profile another source made for the address, writing our external id onto it", async () => {
+  it.each([
+    ["no external id", null],
+    ["Eventbrite's numeric external id", "1234567890"],
+  ])(
+    "adopts the profile another source made for the address (%s), writing our external id onto it",
+    async (_, externalId) => {
+      outbox({ profiles: [{ customer_id: KEPT, seq: 1 }], snapshots: [snapshot(KEPT)] });
+      klaviyo.findKlaviyoProfileByEmail.mockResolvedValue({ id: "kl-eventbrite", externalId });
+
+      const result = await drainKlaviyoSync();
+
+      expect(result).toMatchObject({ profilesSynced: 1, failed: 0 });
+      expect(klaviyo.findKlaviyoProfileByEmail).toHaveBeenCalledWith(`${KEPT}@example.com`);
+      expect(klaviyo.upsertKlaviyoProfile).toHaveBeenCalledWith(
+        expect.objectContaining({
+          id: "kl-eventbrite",
+          externalId: KEPT,
+          email: `${KEPT}@example.com`,
+        }),
+      );
+    },
+  );
+
+  it("fails the row, writing nothing, when the address's profile carries another Sogverse id", async () => {
     outbox({ profiles: [{ customer_id: KEPT, seq: 1 }], snapshots: [snapshot(KEPT)] });
-    klaviyo.findKlaviyoProfileIdByEmail.mockResolvedValue("kl-eventbrite");
+    klaviyo.findKlaviyoProfileByEmail.mockResolvedValue({ id: "kl-prod", externalId: GONE });
 
     const result = await drainKlaviyoSync();
 
-    expect(result).toMatchObject({ profilesSynced: 1, failed: 0 });
-    expect(klaviyo.findKlaviyoProfileIdByEmail).toHaveBeenCalledWith(`${KEPT}@example.com`);
-    expect(klaviyo.upsertKlaviyoProfile).toHaveBeenCalledWith(
-      expect.objectContaining({
-        id: "kl-eventbrite",
-        externalId: KEPT,
-        email: `${KEPT}@example.com`,
-      }),
-    );
+    expect(result).toMatchObject({ profilesSynced: 0, failed: 1 });
+    expect(klaviyo.upsertKlaviyoProfile).not.toHaveBeenCalled();
+    expect(klaviyo.addKlaviyoProfileToList).not.toHaveBeenCalled();
+    expect(finishes("finish_klaviyo_profile_job")).toEqual([
+      {
+        p_customer_id: KEPT,
+        p_seq: 1,
+        p_error: "Error: The address's Klaviyo profile carries another Sogverse account's id",
+      },
+    ]);
   });
 
   it("creates a profile, naming no Klaviyo id, when neither the external id nor the address is held", async () => {
@@ -200,7 +226,7 @@ describe("drainKlaviyoSync", () => {
 
     await drainKlaviyoSync();
 
-    expect(klaviyo.findKlaviyoProfileIdByEmail).toHaveBeenCalledWith(`${KEPT}@example.com`);
+    expect(klaviyo.findKlaviyoProfileByEmail).toHaveBeenCalledWith(`${KEPT}@example.com`);
     const [sent] = klaviyo.upsertKlaviyoProfile.mock.calls[0];
     expect(sent).not.toHaveProperty("id");
     expect(sent).toMatchObject({ externalId: KEPT, email: `${KEPT}@example.com` });
@@ -269,7 +295,7 @@ describe("drainKlaviyoSync", () => {
     await drainKlaviyoSync();
 
     expect(klaviyo.requestKlaviyoProfileDeletion).not.toHaveBeenCalled();
-    expect(klaviyo.findKlaviyoProfileIdByEmail).not.toHaveBeenCalled();
+    expect(klaviyo.findKlaviyoProfileByEmail).not.toHaveBeenCalled();
     expect(finishes("finish_klaviyo_profile_job")).toEqual([{ p_customer_id: GONE, p_seq: 1 }]);
   });
 

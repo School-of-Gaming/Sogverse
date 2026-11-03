@@ -162,9 +162,10 @@ was already filed or sent is skipped or deduplicated.
   changed address moves across rather than splitting the parent into two profiles. When
   no profile carries the parent's external id, the lookup falls back to their address and
   adopts the profile another source made for it — an Eventbrite attendee, a newsletter
-  sign-up — overwriting its external id with ours; only an address Klaviyo does not hold
-  creates a profile. An address change onto an address Klaviyo already holds as another
-  profile is refused by Klaviyo, and that row fails until it parks.
+  sign-up — overwriting its external id with ours; a profile carrying another Sogverse
+  account's id is never adopted, and the row fails instead; only an address Klaviyo does
+  not hold creates a profile. An address change onto an address Klaviyo already holds as
+  another profile is refused by Klaviyo, and that row fails until it parks.
 - **A claim leases rows for two minutes; finishing compares the seq**, so a parent changed
   mid-sync is synced again. A failed row backs off 2^attempts minutes, capped at an hour,
   and after twelve attempts is **parked** (`next_attempt_at` infinity, `last_error` saying

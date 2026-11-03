@@ -42,7 +42,22 @@
  *   which would be a second Sogverse account, not an Eventbrite leftover;
  * - another profile carries an external id that is neither empty nor
  *   Eventbrite's all-digits shape;
- * - Klaviyo answers more profiles than one page holds.
+ * - Klaviyo answers more profiles than one page holds;
+ * - a source's email marketing standing is stricter than the destination's:
+ *   it is `UNSUBSCRIBED` while the destination is not, or it is suppressed
+ *   while the destination is not.
+ *
+ * ## Consent
+ *
+ * How Klaviyo reconciles two profiles' email marketing consent on a merge is
+ * not confirmed: the destination may simply win, as it does for properties.
+ * A merge could then undo an unsubscribe or a suppression the source carried,
+ * so any parent whose merged result could be more permissive than a source is
+ * skipped and left for a person to look at. Equal standings merge, and so does
+ * a source less strict than the destination, whose own standing is then the
+ * stricter one either way. The report prints each profile's standing —
+ * consent, whether it can receive email marketing, whether it is suppressed —
+ * beside its id.
  *
  * ## Pacing
  *
@@ -203,7 +218,8 @@ class Klaviyo {
     const answer = await this.call(
       "GET",
       "/profiles",
-      `?filter=${filter}&fields[profile]=external_id&page[size]=${PAGE_SIZE}`,
+      `?filter=${filter}&fields[profile]=external_id,subscriptions` +
+        `&additional-fields[profile]=subscriptions&page[size]=${PAGE_SIZE}`,
       PROFILES_GET_SPACING_MS,
     );
     const links =
@@ -224,6 +240,7 @@ class Klaviyo {
           typeof externalId === "string" && externalId !== ""
             ? externalId
             : null,
+        marketing: emailMarketing(attributes.subscriptions),
       };
     });
   }
@@ -242,9 +259,62 @@ class Klaviyo {
   }
 }
 
+interface EmailMarketing {
+  /** `SUBSCRIBED`, `UNSUBSCRIBED` or `NEVER_SUBSCRIBED`; null when Klaviyo gave none. */
+  consent: string | null;
+  canReceive: boolean | null;
+  suppressed: boolean;
+}
+
 interface KlaviyoProfile {
   id: string;
   externalId: string | null;
+  marketing: EmailMarketing;
+}
+
+/** The email marketing standing out of a profile's `subscriptions` attribute. */
+function emailMarketing(subscriptions: unknown): EmailMarketing {
+  const email = isRecord(subscriptions) ? subscriptions.email : undefined;
+  const marketing = isRecord(email) ? email.marketing : undefined;
+  if (!isRecord(marketing)) {
+    return { consent: null, canReceive: null, suppressed: false };
+  }
+  const {
+    consent,
+    can_receive_email_marketing: canReceive,
+    suppression,
+  } = marketing;
+  return {
+    consent: typeof consent === "string" ? consent : null,
+    canReceive: typeof canReceive === "boolean" ? canReceive : null,
+    suppressed: Array.isArray(suppression) && suppression.length > 0,
+  };
+}
+
+/** A profile's id with its standing, for the report: no address, no name. */
+function describeProfile(profile: KlaviyoProfile): string {
+  const { consent, canReceive, suppressed } = profile.marketing;
+  const receives = canReceive === null ? "?" : canReceive ? "yes" : "no";
+  return (
+    `${profile.id} (${consent ?? "NO CONSENT"}, can receive ${receives}, ` +
+    `suppressed ${suppressed ? "yes" : "no"})`
+  );
+}
+
+/**
+ * Whether merging `source` into `destination` could leave the merged profile
+ * more permissive than `source` was.
+ */
+function wouldLoosen(
+  source: EmailMarketing,
+  destination: EmailMarketing,
+): boolean {
+  const unsubscribed = (standing: EmailMarketing) =>
+    standing.consent === "UNSUBSCRIBED";
+  return (
+    (unsubscribed(source) && !unsubscribed(destination)) ||
+    (source.suppressed && !destination.suppressed)
+  );
 }
 
 // ---------------------------------------------------------------------------
@@ -259,34 +329,33 @@ interface Parent {
 type Verdict =
   | { kind: "single" }
   | { kind: "absent" }
-  | { kind: "split"; destination: string; sources: string[] }
-  | { kind: "skip"; reason: string; profileIds: string[] };
+  | { kind: "split"; destination: KlaviyoProfile; sources: KlaviyoProfile[] }
+  | { kind: "skip"; reason: string; profiles: KlaviyoProfile[] };
 
 function classify(parent: Parent, profiles: KlaviyoProfile[] | null): Verdict {
   if (profiles === null) {
     return {
       kind: "skip",
       reason: "more profiles than one page",
-      profileIds: [],
+      profiles: [],
     };
   }
   if (profiles.length === 0) return { kind: "absent" };
   if (profiles.length === 1) return { kind: "single" };
 
-  const profileIds = profiles.map((profile) => profile.id);
   const ours = profiles.filter((profile) => profile.externalId === parent.id);
   if (ours.length === 0) {
     return {
       kind: "skip",
       reason: "no profile carries the Sogverse id",
-      profileIds,
+      profiles,
     };
   }
   if (ours.length > 1) {
     return {
       kind: "skip",
       reason: "several profiles carry the Sogverse id",
-      profileIds,
+      profiles,
     };
   }
 
@@ -297,22 +366,29 @@ function classify(parent: Parent, profiles: KlaviyoProfile[] | null): Verdict {
       return {
         kind: "skip",
         reason: "another profile carries a different uuid",
-        profileIds,
+        profiles,
       };
     }
     if (!EVENTBRITE_ID.test(other.externalId)) {
       return {
         kind: "skip",
         reason: "another profile carries an unrecognised external id",
-        profileIds,
+        profiles,
       };
     }
   }
-  return {
-    kind: "split",
-    destination: ours[0].id,
-    sources: others.map((profile) => profile.id),
-  };
+  const [destination] = ours;
+  if (
+    others.some((other) => wouldLoosen(other.marketing, destination.marketing))
+  ) {
+    return {
+      kind: "skip",
+      reason:
+        "a source is unsubscribed or suppressed where the destination is not",
+      profiles,
+    };
+  }
+  return { kind: "split", destination, sources: others };
 }
 
 // ---------------------------------------------------------------------------
@@ -355,8 +431,12 @@ async function main() {
   console.log(`registered parents: ${parents.length}`);
 
   const counts = { single: 0, absent: 0, split: 0, skip: 0 };
-  const splits: (Parent & { destination: string; sources: string[] })[] = [];
-  const skips: { id: string; reason: string; profileIds: string[] }[] = [];
+  const splits: (Parent & {
+    destination: KlaviyoProfile;
+    sources: KlaviyoProfile[];
+  })[] = [];
+  const skips: { id: string; reason: string; profiles: KlaviyoProfile[] }[] =
+    [];
 
   for (const [index, parent] of parents.entries()) {
     if (index > 0 && index % 200 === 0)
@@ -376,7 +456,7 @@ async function main() {
       skips.push({
         id: parent.id,
         reason: verdict.reason,
-        profileIds: verdict.profileIds,
+        profiles: verdict.profiles,
       });
     }
   }
@@ -391,17 +471,19 @@ async function main() {
     console.log("\n--- split (sogverse id: destination <- sources) ---");
     for (const split of splits) {
       console.log(
-        `  ${split.id}: ${split.destination} <- ${split.sources.join(", ")}`,
+        `  ${split.id}: ${describeProfile(split.destination)} <- ` +
+          split.sources.map(describeProfile).join(", "),
       );
     }
   }
   if (skips.length > 0) {
     console.log(
-      "\n--- skipped (sogverse id: reason [klaviyo profile ids]) ---",
+      "\n--- skipped (sogverse id: reason [klaviyo profiles]) ---",
     );
     for (const skip of skips) {
       console.log(
-        `  ${skip.id}: ${skip.reason} [${skip.profileIds.join(", ")}]`,
+        `  ${skip.id}: ${skip.reason} ` +
+          `[${skip.profiles.map(describeProfile).join(", ")}]`,
       );
     }
   }
@@ -420,12 +502,14 @@ async function main() {
   for (const split of splits) {
     for (const source of split.sources) {
       try {
-        await klaviyo.merge(split.destination, source);
-        console.log(`  queued ${split.id}: ${split.destination} <- ${source}`);
+        await klaviyo.merge(split.destination.id, source.id);
+        console.log(
+          `  queued ${split.id}: ${split.destination.id} <- ${source.id}`,
+        );
       } catch (error: unknown) {
         failed.push(split.id);
         console.log(
-          `  FAILED ${split.id}: ${split.destination} <- ${source}: ` +
+          `  FAILED ${split.id}: ${split.destination.id} <- ${source.id}: ` +
             (error instanceof Error ? error.message : String(error)),
         );
       }
@@ -443,7 +527,7 @@ async function main() {
     if (
       profiles === null ||
       profiles.length !== 1 ||
-      profiles[0].id !== split.destination
+      profiles[0].id !== split.destination.id
     ) {
       stillSplit.push(split.id);
     }

@@ -185,8 +185,15 @@ function profileFilter(by: KlaviyoProfileKey): string {
   return encodeURIComponent(condition);
 }
 
-/** The Klaviyo id of the first profile `by` matches, or null when Klaviyo holds none. */
-async function findKlaviyoProfileId(by: KlaviyoProfileKey): Promise<string | null> {
+/** A profile found by a lookup: its Klaviyo id and the external id it carries. */
+export interface KlaviyoProfileMatch {
+  id: string;
+  /** Null when the profile carries none. */
+  externalId: string | null;
+}
+
+/** The first profile `by` matches, or null when Klaviyo holds none. */
+async function findKlaviyoProfile(by: KlaviyoProfileKey): Promise<KlaviyoProfileMatch | null> {
   const answer = await klaviyoCall(
     "GET",
     `/profiles?filter=${profileFilter(by)}&fields[profile]=external_id&page[size]=1`,
@@ -194,8 +201,12 @@ async function findKlaviyoProfileId(by: KlaviyoProfileKey): Promise<string | nul
   const data = isRecord(answer) ? answer.data : undefined;
   if (!Array.isArray(data)) return null;
   const first: unknown = data[0];
-  const id = isRecord(first) ? first.id : undefined;
-  return typeof id === "string" ? id : null;
+  if (!isRecord(first) || typeof first.id !== "string") return null;
+  const externalId = isRecord(first.attributes) ? first.attributes.external_id : undefined;
+  return {
+    id: first.id,
+    externalId: typeof externalId === "string" && externalId !== "" ? externalId : null,
+  };
 }
 
 /**
@@ -206,16 +217,18 @@ async function findKlaviyoProfileId(by: KlaviyoProfileKey): Promise<string | nul
 export async function findKlaviyoProfileIdByExternalId(
   externalId: string,
 ): Promise<string | null> {
-  return findKlaviyoProfileId({ externalId });
+  return (await findKlaviyoProfile({ externalId }))?.id ?? null;
 }
 
 /**
- * The Klaviyo id of a profile holding `email`, or null when Klaviyo holds
- * none: a profile another source made for the address, before the sync knew
- * the parent.
+ * A profile holding `email`, with the external id it carries, or null when
+ * Klaviyo holds none: a profile another source made for the address, before
+ * the sync knew the parent — or one another account's sync wrote.
  */
-export async function findKlaviyoProfileIdByEmail(email: string): Promise<string | null> {
-  return findKlaviyoProfileId({ email });
+export async function findKlaviyoProfileByEmail(
+  email: string,
+): Promise<KlaviyoProfileMatch | null> {
+  return findKlaviyoProfile({ email });
 }
 
 /** A profile's email marketing standing, as Klaviyo holds it. */
