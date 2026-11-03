@@ -117,9 +117,10 @@ export async function reportRedditConversion(
   account: ConversionAccount,
 ): Promise<void> {
   try {
-    // The pixel id is the switch for both halves, as Meta's is: unset, or a
-    // placeholder, and our servers report nothing either. Read at call time so
-    // a deployment's environment decides.
+    // The pixel the reports go to, and the switch for them, as Meta's is:
+    // unset, or a placeholder, and our servers report nothing to Reddit. Read
+    // on the server only, under a name kept from when the browser read it too.
+    // Read at call time so a deployment's environment decides.
     const pixelId = process.env.NEXT_PUBLIC_REDDIT_PIXEL_ID;
     const accessToken = process.env.REDDIT_CONVERSIONS_API_ACCESS_TOKEN;
     if (!isValidRedditPixelId(pixelId) || !accessToken) return;

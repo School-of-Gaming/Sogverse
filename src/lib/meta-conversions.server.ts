@@ -3,7 +3,7 @@ import { cookieValueFromHeader, parseConsentCookieHeader } from "@/lib/consent";
 import { clientIpFrom, sha256Hex } from "@/lib/conversion-request.server";
 import {
   isValidPixelId,
-  PIXEL_EVENTS,
+  META_CONVERSION_EVENTS,
   type ConversionAccount,
   type ReportedEnrolmentOutcome,
   type MetaProductDetails,
@@ -27,7 +27,8 @@ import { clickIdFromCookieHeader, type ClickId } from "@/lib/utm";
  * **Starting a checkout is not one of them.** Meta's `InitiateCheckout` is the
  * parent stepping into the sign-up flow, which is a click on a product page and
  * commits nothing; the browser reports it there, for free products as well as
- * paid ones (see `@/components/consent/meta-pixel`). Handing a parent to Stripe
+ * paid ones, as the `add_to_cart` the container's Meta tag maps to it
+ * (`@/lib/gtm-events`). Handing a parent to Stripe
  * is therefore reported from nowhere on this side, so no attempt is counted
  * twice under one name.
  *
@@ -102,9 +103,9 @@ const REQUEST_TIMEOUT_MS = 10_000;
  * the request's own URL — that is an API route, and on some of these flows it
  * would carry a query string nobody vetted.
  *
- * `product` is built by `metaProductDetails()`, the one builder the browser's
- * product view uses too, so the two sides cannot describe a product
- * differently. On an account creation it is optional: the product page the
+ * `product` is built by `metaProductDetails()`, from the same product facts
+ * the browser's pushes are built from (`gtmEcommerce()`), so the two sides
+ * cannot describe a product differently. On an account creation it is optional: the product page the
  * sign-up started from, when that was an advertised product's page.
  *
  * `eventId` is Meta's `event_id`, the key it deduplicates on: the id the
@@ -158,8 +159,8 @@ function fbcForClick(click: ClickId): string {
 
 function eventNameFor(conversion: MetaConversion): string {
   return conversion.event === "account_created"
-    ? PIXEL_EVENTS.accountCreated
-    : PIXEL_EVENTS.enrolment;
+    ? META_CONVERSION_EVENTS.accountCreated
+    : META_CONVERSION_EVENTS.enrolment;
 }
 
 /** A product's fields without its price. */
@@ -197,10 +198,15 @@ export async function reportMetaConversion(
   account: ConversionAccount,
 ): Promise<void> {
   try {
+    // The dataset the reports go to, and the switch for them: unset, or a
+    // placeholder, and our servers report nothing to Meta. Read on the server
+    // only — the browser's Meta pixel is configured in the Tag Manager
+    // container and reads no variable of ours — so the `NEXT_PUBLIC_` prefix is
+    // a name kept to spare every environment a change, and no client bundle
+    // carries the value. Read at call time rather than at module load, so a
+    // deployment's environment is what decides.
     const pixelId = process.env.NEXT_PUBLIC_META_PIXEL_ID;
     const accessToken = process.env.META_CONVERSIONS_API_ACCESS_TOKEN;
-    // Read at call time rather than at module load, so a deployment's
-    // environment is what decides and no build carries the answer.
     if (!isValidPixelId(pixelId) || !accessToken) return;
 
     const cookieHeader = request.headers.get("cookie");

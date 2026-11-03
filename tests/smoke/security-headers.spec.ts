@@ -25,8 +25,9 @@ test.describe("Security Headers", () => {
   });
 
   // The two directives `strict-dynamic` does not reach. In production the Meta
-  // Pixel's script is admitted by `strict-dynamic` itself — the app's own bundle
-  // inserts it — so nothing in `script-src` names a vendor, which makes it easy
+  // Pixel's script is admitted by `strict-dynamic` itself — the Tag Manager
+  // container, which the app's own bundle inserts, inserts it in turn — so
+  // nothing in `script-src` names a vendor, which makes it easy
   // to read the policy as "the pixel needs no hosts at all" and tidy these away.
   // They are where the pixel actually sends: fbevents.js reports by requesting
   // facebook.com/tr/ as an image and by fetch. Removing either stops marketing

@@ -17,10 +17,11 @@ import { useAuth } from "@/providers/auth-provider";
 import { useConsent } from "./consent-provider";
 
 /**
- * The gates and the counting every browser pixel shares — the Meta Pixel's and
- * the Reddit Pixel's — so a gate added here is a gate on both. What differs
- * per vendor is only which id is configured and how its library is called,
- * and each pixel's component passes those in.
+ * The gates and the counting in front of every report the browser makes to an
+ * advertising platform — all of which now go through the Tag Manager
+ * container, whose Meta and Reddit tags are the browser pixels. Kept apart from
+ * the container's component because they are the policy and it is one caller:
+ * what a caller passes in is only what its loader needs and how it sends.
  */
 
 const subscribeToNothing = () => () => {};

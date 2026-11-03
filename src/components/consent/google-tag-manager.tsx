@@ -44,8 +44,8 @@ function useIsClient(): boolean {
 
 /**
  * Google Tag Manager: a container of tags configured somewhere this repository
- * cannot see, and therefore behind the same six gates the pixel is. All six are
- * decided in the browser:
+ * cannot see — Meta's and Reddit's browser pixels among them — and therefore
+ * behind six gates. All six are decided in the browser:
  *
  *   1. the visitor has said yes to marketing;
  *   2. this is a client render, not the server one or the hydration one;
@@ -58,7 +58,7 @@ function useIsClient(): boolean {
  *      the `redirect` the proxy adds when it bounces a signed-out parent from
  *      a child's page to the login page.
  *
- * **The first gate is marketing, the pixel's gate exactly.** A container mints
+ * **The first gate is marketing.** A container mints
  * a persistent client id and carries advertising tags, so a visitor who took
  * analytics gets none of it: analytics on this site is Vercel's, cookieless,
  * and that is what the strip and the privacy policy describe it as. Google is a
@@ -71,9 +71,11 @@ function useIsClient(): boolean {
  * password-reset link, a PIN reset, an email verification, a seat offer, and
  * the pages that name a child by id. The container is loaded on first need *on
  * a marketing page* and then stays loaded for the rest of the document, so what
- * keeps it quiet afterwards is the loader's blocklist: every one of Google's
+ * keeps it quiet afterwards is the loader's blocklist — every one of Google's
  * automatic triggers is forbidden, so nothing the container could have been
- * configured to fire fires on a client navigation into a private page.
+ * configured to fire fires on a client navigation into a private page — and the
+ * Meta and Reddit globals it installs, which keep those vendors' libraries from
+ * reporting a navigation by themselves (`@/lib/ad-pixel-stubs`).
  *
  * An unset `NEXT_PUBLIC_GTM_CONTAINER_ID` means the container is simply off,
  * which is what every environment but production and preview gets. The id is a
@@ -147,13 +149,12 @@ type ReportedProduct = Parameters<typeof gtmEcommerce>[0] &
 /**
  * A product page's view as `view_item`: once per product page reached, once the
  * product has been read, behind every gate and check the page view goes
- * through — the same hooks the pixels' product views use (`./pixel-gates`), so
- * a gate added there is a gate here.
+ * through — the same hooks (`./pixel-gates`), so a gate added there is a gate
+ * here.
  *
- * **Every product, with `advertised` beside it**, where the pixels report
- * advertised products only: this is analytics' event as well as the
- * advertising tags', and which of them reads which products is decided per tag
- * (`@/lib/gtm-events`). The product view loads the container itself if the
+ * **Every product, with `advertised` beside it**: this is analytics' event as
+ * well as the advertising tags', and which of them reads which products is
+ * decided per tag (`@/lib/gtm-events`). The product view loads the container itself if the
  * page view has not yet: this component sits below the one that reports the
  * page view, so its effect runs first, and a view that merely waited for the
  * container would be dropped on every first page.

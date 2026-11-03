@@ -23,8 +23,6 @@ import {
   AnalyticsScripts,
   ConsentBanner,
   GoogleTagManager,
-  MetaPixel,
-  RedditPixel,
 } from "@/components/consent";
 import "../globals.css";
 
@@ -264,8 +262,6 @@ export default async function LocaleLayout({
               nothing already painted moves when it appears or goes. */}
           <ConsentBanner />
           <AnalyticsScripts />
-          <MetaPixel />
-          <RedditPixel />
           <GoogleTagManager />
         </Providers>
       </body>

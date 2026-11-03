@@ -1,11 +1,12 @@
 /**
  * What we report to an advertising platform, named once for both sides of the
  * wire: the browser reports the page and product views and the start of a
- * checkout, our servers report the conversions, and both have to mean the same
- * thing by the same word.
+ * checkout, through the Tag Manager container's Meta and Reddit tags, our
+ * servers report the conversions, and both have to mean the same thing by the
+ * same word.
  *
- * Client-safe and React-free — the component and the route handlers both import
- * it.
+ * Client-safe and React-free — the components and the route handlers both
+ * import it.
  *
  * **Meta optimises a campaign on the event *name*.** That is the whole reason
  * this is a vocabulary rather than string literals at their call sites: the
@@ -29,11 +30,19 @@
  *   - `ViewContent` — a product page was looked at. Reported from the browser,
  *     because a view commits nothing and no handler of ours sees it happen.
  *
+ * **The browser's three names are set on the container's tags, not here.** The
+ * app pushes `page_view`, `view_item` and `add_to_cart` (`@/lib/gtm-events`),
+ * and each vendor's tag in the container maps them: Meta's to `PageView`,
+ * `ViewContent` and `InitiateCheckout`, Reddit's to `PageVisit`, `ViewContent`
+ * and `AddToCart` — Reddit has no event for stepping into a checkout, and the
+ * closest standard one is putting a product in the basket, which commits
+ * nothing and names one product. Only the servers' names are code.
+ *
  * **Reddit gets every event Meta does, under its own names** — the same
  * moments, the same products, the same gates — because Reddit optimises on the
- * name in the same way. Its vocabulary sits beside Meta's below; the mapping is
- * the one decision in it, and each pair is the closest standard event Reddit
- * has to the moment Meta's name describes.
+ * name in the same way. Its conversion vocabulary sits beside Meta's below; the
+ * mapping is the one decision in it, and each pair is the closest standard
+ * event Reddit has to the moment Meta's name describes.
  *
  * The enrolment outcomes travel beside the name as `outcome`, so a report can
  * separate "took a seat" from "joined the queue" without the name having to
@@ -51,35 +60,16 @@ import { DEFAULT_LOCALE } from "@/lib/constants/locales";
 import { resolveRequiredTranslation } from "@/lib/i18n/resolve-translation";
 import type { BillingMode, ProductTopic, ProductType } from "@/types";
 
-export const PIXEL_EVENTS = {
-  pageView: "PageView",
-  productView: "ViewContent",
+/** Meta's names for the two conversions our servers report. */
+export const META_CONVERSION_EVENTS = {
   accountCreated: "Lead",
   enrolment: "CompleteRegistration",
-  checkout: "InitiateCheckout",
-} as const;
-
-/**
- * Reddit's names for the three browser events, as its pixel's `track` call
- * takes them.
- *
- *   - `PageVisit` and `ViewContent` are the page view and the product view,
- *     one for one.
- *   - `AddToCart` is the checkout start. Reddit has no event for stepping into
- *     a checkout, and the closest standard one is putting a product in the
- *     basket: it commits nothing, it names one product, and it is the step
- *     before the sign-up — which is exactly what the click is.
- */
-export const REDDIT_PIXEL_EVENTS = {
-  pageView: "PageVisit",
-  productView: "ViewContent",
-  checkout: "AddToCart",
 } as const;
 
 /**
  * Reddit's names for the two conversions our servers report, as its
  * Conversions API spells a `tracking_type` — upper snake case, unlike the
- * pixel's.
+ * names its browser pixel takes.
  *
  *   - `LEAD` — an account was created, Meta's `Lead`.
  *   - `SIGN_UP` — an enrolment, a seat or a queue place: Reddit's event for
@@ -353,11 +343,10 @@ export const conversionEventIdValue = z.string().uuid().optional();
 /**
  * A pixel id is a run of digits and nothing else — Meta's advertiser id.
  *
- * Checked rather than assumed on both sides of the wire: an unset variable is
- * the ordinary case (the pixel is off, which is what every environment but
- * production gets), and a variable holding a placeholder like
- * `your-meta-pixel-id` must read as off rather than as a pixel that will 400 on
- * every event.
+ * Checked rather than assumed before a server report: an unset variable is the
+ * ordinary case (the reports are off), and a variable holding a placeholder
+ * like `your-meta-pixel-id` must read as off rather than as a dataset that will
+ * 400 on every event.
  */
 export function isValidPixelId(id: string | undefined): id is string {
   return id !== undefined && /^\d{1,32}$/.test(id);
@@ -369,7 +358,7 @@ export function isValidPixelId(id: string | undefined): id is string {
  * Meta's digits-only check would refuse.
  *
  * Checked rather than assumed for the same reasons as Meta's: unset is the
- * ordinary case and means the pixel is off, and a placeholder like
+ * ordinary case and means the reports are off, and a placeholder like
  * `your-reddit-pixel-id` must read as off rather than as a pixel.
  */
 export function isValidRedditPixelId(id: string | undefined): id is string {

@@ -237,10 +237,13 @@ function buildCspHeader(nonce: string): string {
     "default-src 'self'",
     // Production needs no vendor host here: `strict-dynamic` trusts a script
     // element created by code that was itself trusted, and every advertising
-    // script — the Meta and Reddit pixels and the Tag Manager container — is
-    // inserted by the app's own bundle rather than by an inline snippet. It
-    // also covers what those load in turn, which is what keeps a container's
-    // own tags off this line. Development has no nonce and no `strict-dynamic`,
+    // script is inserted by trusted code rather than by an inline snippet: the
+    // Tag Manager container and Reddit's library by the app's own bundle
+    // (`src/lib/gtm.ts`, `src/lib/ad-pixel-stubs.ts`), Meta's library by the
+    // container's Meta tag. It also covers what those load in turn, which is
+    // what keeps a container's own tags off this line — so what a tag may
+    // inject is fenced by the container's template policy
+    // (`src/lib/gtm-policy.ts`), not here. Development has no nonce and no `strict-dynamic`,
     // so the hosts that serve fbevents.js, pixel.js and gtm.js have to be named.
     isProd
       ? `script-src 'self' 'nonce-${nonce}' 'strict-dynamic'`
@@ -298,7 +301,11 @@ function buildCspHeader(nonce: string): string {
     // web form nobody here reviews, able to make the pixel report private pages
     // after a client navigation or lift form fields — and unlike Meta's
     // `autoConfig` the base code has no switch for it, so refusing the fetch is
-    // the switch. The pixel runs on the calls the app makes and nothing else.
+    // the switch. The pixel runs on the calls the container's Reddit tag makes
+    // and nothing else. That holds only for the generic library: the copy
+    // Reddit's tag asks for, `pixel.js?pixel_id=…`, carries the configuration
+    // inline, so the container's policy refuses it and the app's own stub loads
+    // the generic one (`src/lib/gtm-policy.ts`, `src/lib/ad-pixel-stubs.ts`).
     // The Google side is the same story, host for host:
     // www.googletagmanager.com is where the container fetches its own
     // configuration; *.google-analytics.com and *.analytics.google.com are

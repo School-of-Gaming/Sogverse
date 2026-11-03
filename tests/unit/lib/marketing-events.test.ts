@@ -7,9 +7,8 @@ import {
   isValidPixelId,
   isValidRedditPixelId,
   metaProductDetails,
-  PIXEL_EVENTS,
+  META_CONVERSION_EVENTS,
   REDDIT_CONVERSION_EVENTS,
-  REDDIT_PIXEL_EVENTS,
   redditProductDetails,
 } from "@/lib/marketing-events";
 import { Constants } from "@/types";
@@ -409,22 +408,10 @@ describe("conversionEventIdValue", () => {
  * Reddit name is the closest standard event to the moment Meta's describes.
  */
 describe("the Reddit vocabulary", () => {
-  it("names the three browser events, beside Meta's", () => {
-    expect({
-      pageView: [PIXEL_EVENTS.pageView, REDDIT_PIXEL_EVENTS.pageView],
-      productView: [PIXEL_EVENTS.productView, REDDIT_PIXEL_EVENTS.productView],
-      checkout: [PIXEL_EVENTS.checkout, REDDIT_PIXEL_EVENTS.checkout],
-    }).toEqual({
-      pageView: ["PageView", "PageVisit"],
-      productView: ["ViewContent", "ViewContent"],
-      checkout: ["InitiateCheckout", "AddToCart"],
-    });
-  });
-
   it("names the two server conversions in the Conversions API's spelling", () => {
     expect({
-      accountCreated: [PIXEL_EVENTS.accountCreated, REDDIT_CONVERSION_EVENTS.accountCreated],
-      enrolment: [PIXEL_EVENTS.enrolment, REDDIT_CONVERSION_EVENTS.enrolment],
+      accountCreated: [META_CONVERSION_EVENTS.accountCreated, REDDIT_CONVERSION_EVENTS.accountCreated],
+      enrolment: [META_CONVERSION_EVENTS.enrolment, REDDIT_CONVERSION_EVENTS.enrolment],
     }).toEqual({
       accountCreated: ["Lead", "LEAD"],
       enrolment: ["CompleteRegistration", "SIGN_UP"],

@@ -22,18 +22,21 @@ import { asObject } from "../../helpers/json";
  * allowlist first — so the two halves are split, and what is pinned here is
  * everything the container is told *before* it can act.
  *
- * Three of those things have teeth, and the order they sit in the queue is the
- * assertion for all three: the container reads the queue it finds on arrival
+ * Four of those things have teeth, and the order they sit in the queue is the
+ * assertion for all four: the container reads the queue it finds on arrival
  * from the front, so an entry ahead of its own start signal is state it has
  * before it can fire anything, and an entry behind it is news that arrives too
  * late to constrain it.
  *
- *   - **The blocklist**, which forbids the container from bringing in code or a
- *     third party through the Tag Manager UI, and forbids every one of Google's
- *     automatic trigger listeners — so nothing the visitor does after the page
- *     the container loaded on can fire a tag. It is the only control this
- *     repository keeps over a surface that is edited in a web form, with no
- *     review and no deploy.
+ *   - **The allow- and blocklists**, which forbid the container from bringing
+ *     in code or a third party through the Tag Manager UI other than as a
+ *     template, and forbid every one of Google's automatic trigger listeners —
+ *     so nothing the visitor does after the page the container loaded on can
+ *     fire a tag. They are the only control this repository keeps over a
+ *     surface that is edited in a web form, with no review and no deploy.
+ *   - **The template policy**, which bounds what an admitted template may do.
+ *     Its decisions are pinned in `gtm-policy.test.ts`; what is pinned here is
+ *     that it is registered, as a command, ahead of the container.
  *   - **The denied-by-default consent signals**, which are what a tag firing
  *     before it has seen any consent state would otherwise assume the other way
  *     round.
@@ -111,6 +114,9 @@ function tabIsOn(url: string) {
 beforeEach(async () => {
   vi.resetModules();
   delete window.dataLayer;
+  delete window.fbq;
+  delete window._fbq;
+  delete window.rdt;
   document.head.innerHTML = "";
   tabIsOn("/shop");
   gtm = await import("@/lib/gtm");
@@ -135,10 +141,10 @@ describe("loadGtm", () => {
     void gtm.loadGtm(CONTAINER_ID, GRANTED_BOTH);
 
     expect(queue()[0]).toEqual({
+      "gtm.allowlist": ["google", "sandboxedScripts"],
       "gtm.blocklist": [
         "customScripts",
         "html",
-        "sandboxedScripts",
         "nonGoogleScripts",
         "nonGooglePixels",
         "nonGoogleIframes",
@@ -163,7 +169,7 @@ describe("loadGtm", () => {
   it("blocks every built-in auto-event listener, not just the history one", () => {
     void gtm.loadGtm(CONTAINER_ID, GRANTED_BOTH);
 
-    expect(queue()[0]).toEqual({
+    expect(queue()[0]).toMatchObject({
       "gtm.blocklist": expect.arrayContaining([
         "cl",
         "lcl",
@@ -178,17 +184,18 @@ describe("loadGtm", () => {
     });
   });
 
-  // `customScripts` is the Custom HTML tag and the Custom JavaScript variable;
-  // a custom template and a non-Google tag are neither, and under
-  // `'strict-dynamic'` anything the container inserts is trusted by the policy.
-  it("blocks every class that could bring in code or a third party", () => {
+  // `customScripts` is the Custom HTML tag and the Custom JavaScript variable,
+  // and the four non-Google classes are the built-in tag types that send to a
+  // host the configurer names. Under `'strict-dynamic'` anything the container
+  // inserts is trusted by the CSP, so these are the whole of the fence for
+  // everything that is not a template.
+  it("blocks every class that could bring in code or a third party outside a template", () => {
     void gtm.loadGtm(CONTAINER_ID, GRANTED_BOTH);
 
-    expect(queue()[0]).toEqual({
+    expect(queue()[0]).toMatchObject({
       "gtm.blocklist": expect.arrayContaining([
         "customScripts",
         "html",
-        "sandboxedScripts",
         "nonGoogleScripts",
         "nonGooglePixels",
         "nonGoogleIframes",
@@ -197,10 +204,32 @@ describe("loadGtm", () => {
     });
   });
 
+  // Meta's and Reddit's tags exist only as gallery templates, and a template's
+  // one class is implicitly blocked whenever any class is blocklisted, unless
+  // the allowlist names it. A blocklist wins over an allowlist, so the class
+  // must be absent from the blocklist too — and an allowlist refuses what it
+  // does not name, so Google's own class has to be named beside it.
+  it("admits templates and Google's own tags, and nothing else by class", () => {
+    void gtm.loadGtm(CONTAINER_ID, GRANTED_BOTH);
+
+    const fence = asObject(queue()[0]);
+    expect(fence["gtm.allowlist"]).toEqual(["google", "sandboxedScripts"]);
+    expect(fence["gtm.blocklist"]).not.toContain("sandboxedScripts");
+    expect(fence["gtm.blocklist"]).not.toContain("google");
+  });
+
+  it("registers the template policy, as a command, for every permission", async () => {
+    void gtm.loadGtm(CONTAINER_ID, GRANTED_BOTH);
+    const { containerPolicy } = await import("@/lib/gtm-policy");
+
+    expect(isArgumentsObject(queue()[1])).toBe(true);
+    expect(commandValues(queue()[1])).toEqual(["policy", "all", containerPolicy]);
+  });
+
   it("denies every signal by default, then grants what the visitor gave", () => {
     void gtm.loadGtm(CONTAINER_ID, GRANTED_BOTH);
 
-    expect(commandValues(queue()[1])).toEqual([
+    expect(commandValues(queue()[2])).toEqual([
       "consent",
       "default",
       {
@@ -210,7 +239,7 @@ describe("loadGtm", () => {
         analytics_storage: "denied",
       },
     ]);
-    expect(commandValues(queue()[2])).toEqual([
+    expect(commandValues(queue()[3])).toEqual([
       "consent",
       "update",
       {
@@ -232,7 +261,7 @@ describe("loadGtm", () => {
   it("denies every signal when analytics is granted without marketing", () => {
     void gtm.loadGtm(CONTAINER_ID, ANALYTICS_ONLY);
 
-    expect(commandValues(queue()[2])).toEqual([
+    expect(commandValues(queue()[3])).toEqual([
       "consent",
       "update",
       {
@@ -249,7 +278,7 @@ describe("loadGtm", () => {
   it("grants every signal when marketing is granted without analytics", () => {
     void gtm.loadGtm(CONTAINER_ID, MARKETING_ONLY);
 
-    expect(commandValues(queue()[2])).toEqual([
+    expect(commandValues(queue()[3])).toEqual([
       "consent",
       "update",
       {
@@ -267,7 +296,7 @@ describe("loadGtm", () => {
   it("pushes each consent command as an arguments object, never an array", () => {
     void gtm.loadGtm(CONTAINER_ID, GRANTED_BOTH);
 
-    for (const entry of [queue()[1], queue()[2]]) {
+    for (const entry of [queue()[2], queue()[3]]) {
       expect(isArgumentsObject(entry)).toBe(true);
       expect(Array.isArray(entry)).toBe(false);
     }
@@ -275,7 +304,7 @@ describe("loadGtm", () => {
 
   // The container reads the queue it finds from the front, so everything that
   // constrains it has to be ahead of the signal that starts it.
-  it("puts the fence and the consent state ahead of the container's start", () => {
+  it("puts the fence, the policy and the consent state ahead of the container's start", () => {
     void gtm.loadGtm(CONTAINER_ID, GRANTED_BOTH);
 
     const start = queue().findIndex(
@@ -284,7 +313,28 @@ describe("loadGtm", () => {
         entry !== null &&
         "gtm.start" in entry,
     );
-    expect(start).toBe(3);
+    expect(start).toBe(4);
+  });
+
+  // A vendor template looks for its global and builds its own when it finds
+  // none, without our flags — so the globals must exist before the container
+  // can run a tag, which is before its script is in the document.
+  it("installs the Meta and Reddit globals before inserting the container", () => {
+    const append = document.head.appendChild.bind(document.head);
+    let globalsAtInsert: unknown[] = [];
+    const spy = vi
+      .spyOn(document.head, "appendChild")
+      .mockImplementation(<T extends Node>(node: T): T => {
+        globalsAtInsert = [window.fbq, window.rdt];
+        return append(node);
+      });
+
+    void gtm.loadGtm(CONTAINER_ID, GRANTED_BOTH);
+    spy.mockRestore();
+
+    expect(globalsAtInsert.every((global) => typeof global === "function")).toBe(
+      true,
+    );
   });
 
   it("never reports a page view of its own", () => {
@@ -313,6 +363,9 @@ describe("loadGtm", () => {
 
     vi.resetModules();
     delete window.dataLayer;
+    delete window.fbq;
+    delete window._fbq;
+    delete window.rdt;
     document.head.innerHTML = "";
     const fresh = await import("@/lib/gtm");
     const blocked = fresh.loadGtm(CONTAINER_ID, GRANTED_BOTH);

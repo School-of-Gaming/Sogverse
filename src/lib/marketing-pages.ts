@@ -164,19 +164,3 @@ function isReportableRedirect(value: string): boolean {
   }
   return hasOnlyReportableKeys(target.searchParams);
 }
-
-/**
- * Whether the address bar still shows `pathname` with a query that may travel
- * — the check every pixel makes at the moment of sending, because the URL a
- * pixel's library attaches to an event is the one the tab shows *then*, not
- * the one that authorised the report.
- *
- * Both sides are resolved through the URL parser, so a slug with a non-ASCII
- * character compares the same whether the router hands it over encoded or not.
- * Browser-only: it reads `window.location`.
- */
-export function addressBarStillShows(pathname: string): boolean {
-  const authorised = new URL(pathname, window.location.origin).pathname;
-  if (window.location.pathname !== authorised) return false;
-  return isReportableQuery(window.location.search);
-}
