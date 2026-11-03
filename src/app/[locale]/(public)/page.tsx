@@ -1,12 +1,13 @@
 import type { Metadata } from "next";
 import { Link } from "@/i18n/navigation";
-import { useLocale, useTranslations } from 'next-intl';
+import { useTranslations } from 'next-intl';
 import { getLocale } from "next-intl/server";
 import { localizedPageMetadata } from "@/lib/metadata/localized-page";
 import {
   ArrowRight,
   Check,
   Gamepad2,
+  GraduationCap,
   KeyRound,
   MessageSquareOff,
   Shield,
@@ -30,9 +31,7 @@ import {
   safetyTestimonialKeys,
   type TestimonialKey,
 } from "@/components/home/testimonial-keys";
-import { resolveLocale } from "@/lib/constants/locales";
 import { ROUTES } from "@/lib/constants/routes";
-import { spokenLanguagesPhrase } from "@/lib/i18n/spoken-languages-phrase";
 import { cn } from "@/lib/cn";
 
 /**
@@ -51,12 +50,15 @@ const featureKeys = ["minecraftClubs", "screenTime", "newFriends", "parents"] as
  * The safety facts, in the order a parent asks them: who is with my child,
  * who can reach them, where, what is kept, and what they can spend. Each one
  * is checked against the About FAQ answer and the code before it is written —
- * `src/CLAUDE.md`, "Safety copy: mechanisms, never intentions". Four are
- * mechanisms the product enforces. The record check is not: certification does
- * not wait on it, so that fact is worded as the requirement it is, never as an
- * outcome every Gedu has met.
+ * the `sog-brand-voice` skill's safety copy rule. Four are
+ * mechanisms the product enforces. The first two are not. The interview and
+ * the Gedu training are how we hire, stated on the CEO's word (2026-11-02)
+ * that every Gedu has been through both. Certification does not wait on the record check, so
+ * that fact is worded as the requirement it is, never as an outcome every Gedu
+ * has met.
  */
 const safetyFacts = [
+  { key: "trained", icon: GraduationCap },
   { key: "vetted", icon: ShieldCheck },
   { key: "noDirectMessages", icon: MessageSquareOff },
   { key: "groupOnlyRooms", icon: UsersRound },
@@ -96,7 +98,6 @@ function TrustLine({ className }: { className?: string }) {
 
 export default function HomePage() {
   const t = useTranslations('home');
-  const locale = resolveLocale(useLocale());
 
   const features = featureKeys.map((key, i) => ({
     key,
@@ -346,19 +347,16 @@ export default function HomePage() {
               </Link>
             </div>
             <TrustLine className="mt-4" />
-            {/* The card signs off below the button with where we are: a plain
-                fact a search engine or an assistant can quote (clubs online in
-                the spoken languages we deliver in, for families anywhere), then
-                a smile about our "global headquarters" being a small office in
-                Helsinki, Finland. The joke is about the company's office, never
-                about where clubs are run from: Gedus are not all there. It sits after
-                the ask so the card reads as one pitch rather than two stacked
-                paragraphs, and it matches the subheading's size and ink so it
-                reads as the same voice. The measure is narrowed and balanced
-                so centred lines stay even. The language list is derived, never
-                written into the copy, because it grows as we expand. */}
+            {/* The card signs off below the button with where we are: online,
+                from home, in several languages. It names neither the languages
+                nor an office, by the CEO's ruling (2026-11-02): the languages
+                keep growing and the office may move. It sits after the ask so
+                the card reads as one pitch rather than two stacked paragraphs,
+                and it matches the subheading's size and ink so it reads as the
+                same voice. The measure is narrowed and balanced so centred
+                lines stay even. */}
             <p className="mx-auto mt-8 max-w-xl text-balance text-muted-foreground">
-              {t('cta.whereWeAre', { languages: spokenLanguagesPhrase(locale) })}
+              {t('cta.whereWeAre')}
             </p>
           </CardContent>
         </Card>

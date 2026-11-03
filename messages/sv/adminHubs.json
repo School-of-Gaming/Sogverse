@@ -2,7 +2,8 @@
   "titles": {
     "products": "Klubbar, läger och evenemang",
     "invoicing": "Fakturering",
-    "marketing": "Marknadsföring"
+    "marketing": "Marknadsföring",
+    "developer": "Utvecklare"
   },
   "tabs": {
     "products": "Produkter",
@@ -14,6 +15,9 @@
     "landingPages": "Landningssidor",
     "testimonials": "Omdömen",
     "guides": "Guider",
-    "spotlights": "Spotlights"
+    "spotlights": "Spotlights",
+    "uiComponents": "UI-komponenter",
+    "uiPreviews": "UI-förhandsvisningar",
+    "testing": "Testning"
   }
 }

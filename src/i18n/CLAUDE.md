@@ -79,58 +79,6 @@ Gates for a catalog change: the completeness script under `scripts/`, **plus** a
 
 French typography: U+2019 for apostrophes (never U+0027, outside code samples) and a no-break space only after `n°`. Copy pasted from a person or a spreadsheet always arrives with straight apostrophes; normalise on the way in.
 
-## The role name: `Gedu`, and what to call the role otherwise
-
-**Rule: `Gedu` is a product name — never translated, and never used cold.** It carries the
-signed-in product (dashboards, voice, admin, email), where the reader already knows the
-word, and appears in public prose only where the copy introduces it with a gloss ("a Gedu
-— a Game Educator"). A public string using it cold has leaked in-house vocabulary at the
-one moment the reader cannot decode it.
-
-**One public surface is carved out: `/register-gedu`** (owner ruling, 2026-08). Nobody
-arrives at the Gedu registration page by browsing — they were pointed at it by School of
-Gaming, and anyone who got that far knows us well enough to have already been told what a
-Gedu is — so its title may use the word cold, and the `en` and `fr` titles do. The
-carve-out is that page and nothing adjacent to it: every other public surface still
-introduces the word with a gloss or reaches for the role name instead.
-
-**Rule: wherever `Gedu` is not the word, each locale has exactly one word for the role.**
-Chosen by native speakers, 2026-08-13:
-
-| locale | the role |
-|---|---|
-| `en` | **Game Educator** — capitalised, a defined term rather than a common noun |
-| `fi` | **pelikasvattaja** |
-| `sv` | **spelfostrare** |
-| `fr` | **animateur** / **animatrice** |
-
-**There is no register split**: one word covers marketing copy, product surfaces and legal
-text alike. Earlier catalogues drifted into a second, plainer word for legal pages in every
-locale (and French documented the split deliberately). That is retired — a legal page uses
-the same word as the home page.
-
-**The one exception is the two lawyer-authored Roblox programme documents** (`robloxTerms`,
-`robloxPrivacy`). Their English is Lynx's lawyer's text, carried word for word — the
-owner's ruling is that the legal wording is Lynx's and not ours to fix — and that text
-says `facilitator` where it means a Gedu. So those two namespaces keep the lawyer's word,
-and `fi`/`sv` follow the English with the plain category word (`ohjaaja`, `ledare`)
-rather than the house term; `fr` needs no split, since `animateur` is already both. A
-string in those namespaces that still says *Game Educator* is one the English says it
-in, and stays. The rule is fully in force for `robloxSafeguarding`, which is ours to word
-and uses the house term throughout; a policy that names the role differently from the
-product page is a confusion, and the carve-out is the cost of not editing a signed text.
-
-## French register and glossary
-
-**Rule: French is a transcreation, not a literal mirror of `en`.** Public-page marketing copy — including the slogan, whose French imagery deliberately differs from the English — was rewritten by a native speaker rather than translated. CI enforces key parity and cannot see meaning, so a French string that says something other than its English counterpart on a public page is intentional and must not be "corrected" back.
-
-**The divergence is scoped to French alone.** `fi`, `sv` and `tlh` render the English positioning; French does not. Do not reconcile the two in either direction — neither by pulling French back toward the English source, nor by pushing the French imagery outward into the other locales. Diverging a second locale is a positioning decision for the owner, not a consistency fix.
-
-- **The role name is `animateur` / `animatrice` in every register** — see the glossary section above. French once split this by register, using `éducateur de jeu` in formal copy; that split is retired and the calque is no longer used anywhere.
-- **Municipality: the adjective is `municipal` / `municipaux`, the noun stays `commune`.** "Clubs municipaux", but "payé par votre commune". `municipal` maps to town-funded public services in French; `communal` is correct but less instinctive.
-- **`vous` to adults, `tu` in child-facing strings.**
-- **Never use the middle dot (`Prêt·e`) to dodge gender agreement — reframe instead.** It is visually awkward on screen and contested in France. Open child-facing prompts with a construction that takes no agreement, and where inserting a name would force a participle to inflect, state the event as a noun phrase (an enrolment is confirmed) rather than agreeing with the person.
-
 **Rule: a placeholder never takes a case ending — in Finnish, the case goes on a role noun in front of the name.** A person's name arrives in its basic form and Finnish inflects names by rules a template cannot apply (consonant gradation, stem changes, foreign names), so `{name}:n` is both the wrong form — the colon ending belongs to abbreviations and numerals — and the only one a template can produce. Put the noun the person is there as ahead of the placeholder and let *it* carry the case: the player's settings, the Gedu's request, substituting for the Gedu, each followed by the uninflected name. The same holds for any value a sentence would want to decline — a product, a group, a place.
 
 ## Locale resolution: the URL decides

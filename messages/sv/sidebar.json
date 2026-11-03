@@ -5,14 +5,12 @@
   "analytics": "Analys",
   "marketing": "Marknadsföring",
   "platformVision": "Plattformens vision",
-  "uiComponents": "UI-komponenter",
-  "uiPreviews": "UI-förhandsvisningar",
-  "testing": "Testning",
   "tools": "Verktyg",
   "expandSidebar": "Expandera sidopanel",
   "collapseSidebar": "Minimera sidopanel",
   "substitutions": "Vikariat",
   "feedback": "Feedback",
   "products": "Produkter",
-  "invoicing": "Fakturering"
+  "invoicing": "Fakturering",
+  "developer": "Utvecklare"
 }

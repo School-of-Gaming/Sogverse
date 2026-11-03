@@ -131,7 +131,7 @@ export function siteJsonLd({ siteUrl, description }: SiteJsonLdInput): {
         "@id": organizationId(siteUrl),
         // The brand, not the platform: this is the name a stranger meeting us
         // in a search result or an AI answer has any chance of recognising
-        // (`src/CLAUDE.md` § Brand vs. Platform). `legalName` carries the
+        // (the `sog-brand-voice` skill, on the names). `legalName` carries the
         // registered entity beside it.
         name: "School of Gaming",
         legalName: LEGAL_NAME,

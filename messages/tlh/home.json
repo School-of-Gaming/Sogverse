@@ -60,6 +60,10 @@
   "safety": {
     "heading": "chay’ puqwIj Qanlu’?",
     "facts": {
+      "trained": {
+        "title": "Gedu’pu’ yu’lu’ ’ej ghojmoHlu’",
+        "description": "Hoch Gedu’ Gedu ghojmeH ghom chav. yu’meH poHDaq, puqpu’ QaH’pu’bogh ghot’e’ wIwIv wa’DIch."
+      },
       "vetted": {
         "title": "Gedu’pu’ nuDlu’",
         "description": "Hoch Gedu’ ghe’naQ De’ ’aghlu’ — wa’DIch luQaw’be’lu’."
@@ -106,6 +110,6 @@
   "cta": {
     "heading": "toy’a’ ghojmoH DaneH’a’?",
     "subheading": "Hoch Hogh puqlI’ Quj, ghoj, jup Suq je — Hoch qep Gedu’ tu’lu’, Hoch QIn ghom Hoch Qoy.",
-    "whereWeAre": "De’wI’ ghom’a’meymajDaq qo’ Hoch Daq qorDu’pu’ ghom. De’wI’ ghom’a’mey Hol: {languages}. ’ej yejHaD’a’maj Hoch? Qujmeh pa’ mach, ’ambo’ jot Daq: Lauttasaari, Helsinki, Finland. Qapla’!"
+    "whereWeAre": "juHlIjDaq bIDabtaHvIS, De’wI’ ghom’a’majDaq Hol law’ Dalo’laH. Qujmeh Hol DaghojlaH — DaSovpu’’a’?"
   }
 }

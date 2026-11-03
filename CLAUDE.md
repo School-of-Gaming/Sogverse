@@ -42,8 +42,7 @@ environment, the database tripwires, testing, code style and the documentation r
 read or edited, and it holds everything about the app itself: the roles and their
 dashboards, key conventions, the service layer pattern, the Supabase clients, auth,
 redirects and origin safety, CSP, layout and scrolling, loading and disabled state, button
-order, date and time, the brand and vocabulary rules, partner brands, safety copy, locale
-versus spoken language, styling, authored rich text, the UI component reference and the
+order, date and time, partner logos, locale versus spoken language, styling, authored rich text, the UI component reference and the
 preview scenes. A nested file loads lazily, so the four app rules that fire *before* any
 file is opened are carried here as one-line reminders, with the full rule in the app file:
 
@@ -60,11 +59,14 @@ file is opened are carried here as one-line reminders, with the full rule in the
   navigation that unloads the document; `router.push()` is not enough.
 
 **`packages/sog-ui/CLAUDE.md` — SOG-UI, the UI language package.** Every UI opinion belongs
-to it, and it is the app's brand authority. Read it before any UI work: it does not
+to it, and it is the app's visual brand authority. Read it before any UI work: it does not
 auto-load when working under `src/`. Sogverse follows it one construct at a time
 (`packages/sog-ui/docs/adoption.md`); a construct not yet adopted is still governed by the
 rule written in `src/CLAUDE.md`, and that rule leaves the app file with the adoption that
 retires it.
+
+**How School of Gaming writes is the `sog-brand-voice` skill**, the one source of truth for
+copy in every language, from a button label to a newsletter.
 
 ## Branching
 
@@ -272,6 +274,17 @@ is changing, and changing one half never obliges the other.
 4. **Ship the primitive that makes conforming the cheapest path** — a guard function, a wrapper, a canonical template, giving step 3 a single greppable call site to require.
 
 The first two without the last two is an audit, not a fix: prose decays, a failing test doesn't, and fixing instances leaves the class alive. Keep the scope to one surface and one bug class per pass. Three standing instances show the shape: DB grants + RLS presence (the access-control DB test), DB function bodies (the authorization spine — `docs/architecture/db-authorization.md`), and the HTTP route layer (the posture registry — `docs/architecture/route-boundary.md`).
+
+### A flaw in the model is fixed in the model, not worked around
+
+**Rule: when a problem traces back to a design that is wrong, change the design rather than
+compensating for it.** The repo has one owner and no outside consumers, so no legacy caller,
+migration window or sign-off forces us to build around a model we would not choose today.
+A workaround — a second copy of a fact, a table that makes up for one that throws data
+away, a special case at every reader — is paid by every future reader; a refactor is paid
+once. Before writing one, ask whether the system would be designed this way from scratch.
+If not, propose the refactor and name what it touches. How much code currently depends on
+the old shape informs how the change is written, never whether it is made.
 
 ### A choice that doesn't matter goes to the simplest code, not the smallest diff
 

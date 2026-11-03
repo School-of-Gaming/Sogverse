@@ -5,11 +5,9 @@ import { usePathname } from "@/i18n/navigation";
 import {
   ArrowLeftRight,
   ChartLine,
+  CodeXml,
   House,
   Users,
-  Palette,
-  MonitorPlay,
-  FlaskConical,
   BookOpen,
   ChevronLeft,
   ChevronRight,
@@ -24,7 +22,6 @@ import { useState } from "react";
 import { useTranslations } from "next-intl";
 import { cn } from "@/lib/cn";
 import { useAuth } from "@/providers";
-import { ROLE_LABEL_KEYS } from "@/lib/constants/roles";
 import { ROUTES } from "@/lib/constants/routes";
 import { adminHubPrefixes, isAtOrBeneath } from "@/components/admin/hubs/admin-hubs";
 import type { UserRole } from "@/types";
@@ -32,7 +29,7 @@ import type { StaticAppHref } from "@/lib/constants/routes";
 
 type SidebarKey =
   | "dashboard" | "users"
-  | "uiComponents" | "uiPreviews" | "testing"
+  | "developer"
   | "tools" | "products" | "invoicing"
   | "libraryContent" | "marketing" | "analytics" | "platformVision"
   | "substitutions" | "feedback";
@@ -98,9 +95,14 @@ const navItemsByRole: Partial<Record<UserRole, NavItemDef[]>> = {
     // worked in, and an admin reaches it from a link far more than by habit.
     { href: ROUTES.admin.platformVision, labelKey: "platformVision", icon: <Sparkles className="h-5 w-5" /> },
     { href: ROUTES.admin.tools, labelKey: "tools", icon: <Wrench className="h-5 w-5" /> },
-    { href: ROUTES.admin.uiComponents, labelKey: "uiComponents", icon: <Palette className="h-5 w-5" /> },
-    { href: ROUTES.admin.uiPreviews, labelKey: "uiPreviews", icon: <MonitorPlay className="h-5 w-5" /> },
-    { href: ROUTES.admin.testing, labelKey: "testing", icon: <FlaskConical className="h-5 w-5" /> },
+    // Last: the style guide, the preview scenes and the testing tools, as tabs
+    // of one hub, since only the people building Sogverse open them.
+    {
+      href: ROUTES.admin.uiComponents,
+      labelKey: "developer",
+      icon: <CodeXml className="h-5 w-5" />,
+      matches: adminHubPrefixes("developer"),
+    },
   ],
 };
 
@@ -108,7 +110,6 @@ export function Sidebar() {
   const pathname = usePathname();
   const { profile } = useAuth();
   const t = useTranslations('sidebar');
-  const c = useTranslations('common');
   const [collapsed, setCollapsed] = useState(false);
 
   if (!profile?.role) return null;
@@ -125,8 +126,8 @@ export function Sidebar() {
         // `--header-height` from `globals.css` — the same variable the
         // header itself uses. Height is pinned to the visible viewport
         // between the header and the mobile tab bar (`--tab-bar-height`, zero
-        // from `lg` up) so the user-info section stays anchored to the
-        // bottom, never behind the bar, while the dashboard <main> scrolls with the document.
+        // from `lg` up) so the rail ends above the bar rather than behind it,
+        // while the dashboard <main> scrolls with the document.
         //
         // The rail has no palette of its own: it is chrome, and composes from
         // the general neutrals like every other surface. Its ground is the
@@ -187,18 +188,6 @@ export function Sidebar() {
           );
         })}
       </nav>
-
-      {/* User Info */}
-      <div className="overflow-hidden border-t border-border p-4">
-        <div className="whitespace-nowrap text-sm">
-          <p className="overflow-hidden text-ellipsis font-medium text-foreground">
-            {profile.first_name}
-          </p>
-          <p className="overflow-hidden text-ellipsis text-xs text-muted-foreground">
-            {c(ROLE_LABEL_KEYS[profile.role])}
-          </p>
-        </div>
-      </div>
     </aside>
   );
 }

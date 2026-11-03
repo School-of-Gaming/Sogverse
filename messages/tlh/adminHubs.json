@@ -2,7 +2,8 @@
   "titles": {
     "products": "ghomHom, pa’ Qugh, Qu’mey je",
     "invoicing": "DIlmeH ghItlh",
-    "marketing": "ngev"
+    "marketing": "ngev",
+    "developer": "ngoq chenmoHwI’"
   },
   "tabs": {
     "products": "Doch",
@@ -14,6 +15,9 @@
     "landingPages": "Daq ghItlh",
     "testimonials": "jatlhmey",
     "guides": "ghojmoHwI’ paqmey",
-    "spotlights": "wov"
+    "spotlights": "wov",
+    "uiComponents": "UI ngoQmey",
+    "uiPreviews": "UI cha’ghachmey",
+    "testing": "Qu’ nI’moH"
   }
 }

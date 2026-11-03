@@ -49,9 +49,15 @@ change the plan:
 **Then Klaviyo, read-only.** Every parent account has a Klaviyo profile, kept by the
 account sync whether or not they agreed to marketing. Search the address in the Klaviyo
 dashboard (Audience → Profiles) and note every profile it finds. The account's own
-profile carries the Sogverse profile id as its external ID. Klaviyo keeps one profile per
-address, so a newsletter sign-up made with the account's current address is that same
-profile, and the delete in step 3 takes it with the rest. A separate newsletter-only
+profile carries the Sogverse profile id as its external ID. A profile another source made
+under the same address is usually that same profile, because the sync adopts it on its
+next run and writes the Sogverse id over its external ID, and the delete in step 3 takes it
+with the rest. **An address can still show two profiles**: one Eventbrite made, carrying
+Eventbrite's numeric external ID, beside the account's own. Klaviyo files a second profile
+when an import names a different external ID, and the sync made such pairs before it
+adopted (found 2026-11-03, merged by `scripts/merge-klaviyo-duplicate-parents.ts`). The
+sync deletes only the profile carrying the Sogverse id, so note any other one found under
+the current address as well. A separate newsletter-only
 profile, with no external ID, exists only under a **different** address — typically one
 the parent used before changing their email in Sogverse, or another they signed up with:
 the sync never created it and does not know it exists, so step 3 leaves it standing. So
@@ -164,8 +170,9 @@ profile, and it goes once the deletion is done.
 
 Then search the address in Klaviyo again. The account's profile must be gone; if it is
 still there once the queue row has cleared, the sync failed for it, so find out why before
-deleting it by hand, or the next erasure fails the same way. A newsletter-only profile from
-step 2, under an old or other address, is deleted now, by hand: the profile's **Delete profile** action, or a deletion
+deleting it by hand, or the next erasure fails the same way. Any other profile from
+step 2 — a second one under the current address, or a newsletter-only one under an old or
+other address — is deleted now, by hand: the profile's **Delete profile** action, or a deletion
 request under Klaviyo's data privacy settings. Either removes the profile and its history,
 which is what the request asks for; suppressing or unsubscribing it would keep the data.
 

@@ -9,6 +9,7 @@ import {
   AlertDescription,
   StatusLine,
 } from "@/components/ui/alert";
+import { AdminHub } from "@/components/admin/hubs/admin-hub";
 import { DiscordToolCard } from "@/components/admin/testing/discord-tool-card";
 import { SlackToolCard } from "@/components/admin/testing/slack-tool-card";
 import {
@@ -280,14 +281,7 @@ export default function TestingPage() {
   }
 
   return (
-    <div className="space-y-6">
-      <div>
-        <Heading level={1} step="section">{t('title')}</Heading>
-        <p className="text-muted-foreground">
-          {t('description')}
-        </p>
-      </div>
-
+    <AdminHub hub="developer" description={t('description')}>
       <Card>
         <CardHeader>
           <div className="flex items-center gap-2">
@@ -555,7 +549,7 @@ export default function TestingPage() {
             ))}
         </DialogContent>
       </Dialog>
-    </div>
+    </AdminHub>
   );
 }
 

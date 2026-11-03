@@ -32,7 +32,7 @@ with its demo at `packages/sog-ui/demo` run through Next's directory argument on
 3001, deployed later to Vercel as its own project with the package directory as its root.
 
 **Inputs are not truth.** Two sources are consulted while deciding, and neither is carried
-into the code. The School of Gaming Brand Voice & Identity Guidebook (v2.0, kept beside
+into the code. The visual half of the School of Gaming Brand Voice & Identity Guidebook (v2.0, kept beside
 this file as an excerpt in `guidebook/` until the library covers it) holds the brand's
 stated opinions; the reference branch (`feat/brand-palette-design-pass`, tag
 `ref/brand-palette-design-pass`) holds tokens, a button recipe, two styling tests, a colour

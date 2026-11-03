@@ -1624,7 +1624,6 @@
     "noProducts": "Nothing runs here yet."
   },
   "testing": {
-    "title": "Testing",
     "description": "Internal tools for testing and development",
     "emailTool": "Email testing tool",
     "emailToolDescription": "Send test emails via Brevo (SMTP) to verify delivery and templates.",
