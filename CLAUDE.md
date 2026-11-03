@@ -275,6 +275,17 @@ is changing, and changing one half never obliges the other.
 
 The first two without the last two is an audit, not a fix: prose decays, a failing test doesn't, and fixing instances leaves the class alive. Keep the scope to one surface and one bug class per pass. Three standing instances show the shape: DB grants + RLS presence (the access-control DB test), DB function bodies (the authorization spine — `docs/architecture/db-authorization.md`), and the HTTP route layer (the posture registry — `docs/architecture/route-boundary.md`).
 
+### A flaw in the model is fixed in the model, not worked around
+
+**Rule: when a problem traces back to a design that is wrong, change the design rather than
+compensating for it.** The repo has one owner and no outside consumers, so no legacy caller,
+migration window or sign-off forces us to build around a model we would not choose today.
+A workaround — a second copy of a fact, a table that makes up for one that throws data
+away, a special case at every reader — is paid by every future reader; a refactor is paid
+once. Before writing one, ask whether the system would be designed this way from scratch.
+If not, propose the refactor and name what it touches. How much code currently depends on
+the old shape informs how the change is written, never whether it is made.
+
 ### A choice that doesn't matter goes to the simplest code, not the smallest diff
 
 **Rule: when the owner rules that a behaviour doesn't matter and defers the choice on
