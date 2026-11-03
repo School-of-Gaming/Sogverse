@@ -13,7 +13,7 @@ often been told by other institutions that it is not; many arrive carrying quiet
 fresh from an argument about it. They want four things, in this order: **their child is safe,
 something is being learned, they can stay involved without becoming a gamer, and permission
 to stop feeling bad.** Be calm, specific and adult: never breathless, never defensive. Lead
-with the concrete (who supervises, what happens in 90 minutes, what changes in their child),
+with the concrete (who supervises, what happens in a lesson, what changes in their child),
 and only then open the door to the story.
 
 **Structure that works:** a plain language hero, then the concrete facts (who supervises, how

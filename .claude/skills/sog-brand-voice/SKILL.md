@@ -222,8 +222,9 @@ markets, because the municipality is paying.
 its own readers, so write for them rather than mirroring the English sentence. French is a
 transcreation: its public marketing copy, the slogan included, was rewritten by a native
 speaker and deliberately says something other than the English; never pull it back towards
-the English, and never push the French imagery into the other locales. A French speaker is
-to review how the French reads, and these rules may change after that. French register:
+the English, and never push the French imagery into the other locales. Sylvie, a native
+French speaker on the team, approved these punctuation rules for French (3 Nov 2026) and
+reads the French after a large rewrite. French register:
 `vous` to adults, `tu` in child-facing strings; "clubs municipaux" but "payé par votre
 commune"; never the middle dot (`Prêt·e`) to dodge agreement, reframe instead.
 
@@ -245,10 +246,12 @@ that come up in every piece:
   the word, each language has exactly one word for the role: **Game Educator** (en,
   capitalised), **pelikasvattaja** (fi), **spelfostrare** (sv), **animateur / animatrice**
   (fr).
-- **club** (the ongoing group) and **lesson** (the 90 minute meeting that club holds),
-  fi **kerho** and **kerhokerta**. A gamer joins a club and attends a lesson. They are not
-  synonyms, and no third word is invented. Older copy says "session" for the lesson and is
-  being swept to "lesson" in one pass across every language; until a surface has been swept,
+- **club** (the ongoing group) and **lesson** (each meeting that club holds), fi **kerho**
+  and **kerhokerta**, fr **club** and **séance** (never "leçon" or "cours", which do not
+  work in French: Sylvie, 3 Nov 2026). A gamer joins a club and attends a lesson. They are
+  not synonyms, and no third word is invented. A lesson's length comes from the product,
+  never from memory: lessons are getting longer. Older copy says "session" for the lesson and is
+  being swept to each language's word above in one pass (French already says "séance"); until a surface has been swept,
   an edit to one of its strings keeps the word the surface already uses, so no screen mixes
   the two, and a new surface says "lesson". Code and the database keep "session" as an
   identifier. "Free session" is the fixed name of the trial offer (fi "maksuton

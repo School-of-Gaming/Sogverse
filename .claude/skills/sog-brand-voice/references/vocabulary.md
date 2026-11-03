@@ -20,7 +20,7 @@ answered by whether the product has the thing. Describe a feature only if it exi
 | **Gedumaster** | One word, capital G | Gedumasters | A job title, not a rank: a Gedu's immediate supervisor, who runs the weekly lesson plan meeting. Never "promoted to Gedumaster". Mostly internal |
 | **parent** | Lowercase | parents | |
 | **club** | Lowercase; fi kerho | clubs | The ongoing group a gamer belongs to |
-| **lesson** | Lowercase; fi kerhokerta | lessons | The 90 minute meeting a club holds. A gamer joins a club and attends a lesson: "Aino's club meets on Mondays, and each lesson runs 90 minutes" |
+| **lesson** | Lowercase; fi kerhokerta; fr séance | lessons | Each meeting a club holds. A gamer joins a club and attends a lesson: "Aino's club meets on Mondays". Its length comes from the product, never from memory |
 | **camp**, **event** | Lowercase; fi leiri, tapahtuma | | The other two product kinds |
 | **the gamer's oath** | Lowercase, apostrophe s | | The promise to behave kindly and righteously in every game and in everyday life. One of our strongest assets and under used |
 | **Princi-Pal** | Hyphenated, capital P on both halves, "the Princi-Pal" | | English, Swedish, French. Finnish: **Reksi**. Never "principal" |
