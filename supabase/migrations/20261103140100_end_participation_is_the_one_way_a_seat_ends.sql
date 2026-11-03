@@ -18,11 +18,14 @@
 --
 -- Migrations reach production before the app does, and the app from before
 -- this change calls `cancel_participation(uuid, text)` from the Stripe webhook;
--- this change's webhook calls end_participation. The old function stays, tagged
--- legacy-cancel-participation, as a wrapper over end_participation, only for
--- the app still deployed when these migrations run and for the deliveries
--- Stripe may retry to it over the following three days. A follow-up after that
--- window drops it, and tightens payments_amount_cents_check to positive.
+-- this change's webhook calls end_participation, and the old function is
+-- dropped here. CI applies migrations to production about a minute before the
+-- new app deploys. In that minute the old webhook's call fails, the webhook
+-- answers an error, and Stripe redelivers the event (for up to three days) to
+-- the new app, which ends the seat through end_participation. The only cost is
+-- a seat ending a few minutes late, which the release window accepts as
+-- transient and self-healing. The old admin removal route calls
+-- admin_remove_participation, which survives, so admin removal is unaffected.
 
 -- ---------------------------------------------------------------------------
 -- 1. family_subscriptions.ended_at and its terminal state
@@ -127,25 +130,7 @@ COMMENT ON FUNCTION public.end_participation(p_participation_id uuid, p_reason p
 REVOKE ALL ON FUNCTION public.end_participation(uuid, public.participation_end_reason) FROM PUBLIC;
 GRANT ALL ON FUNCTION public.end_participation(uuid, public.participation_end_reason) TO service_role;
 
-CREATE OR REPLACE FUNCTION public.cancel_participation(p_participation_id uuid, p_reason text) RETURNS jsonb
-    LANGUAGE plpgsql SECURITY DEFINER
-    SET search_path TO ''
-    AS $$
-BEGIN
-  RETURN public.end_participation(
-    p_participation_id,
-    CASE p_reason
-      WHEN 'admin_cancelled' THEN 'admin_removed'
-      ELSE p_reason
-    END::public.participation_end_reason
-  );
-END;
-$$;
-
-COMMENT ON FUNCTION public.cancel_participation(p_participation_id uuid, p_reason text) IS 'legacy-cancel-participation: kept only for the app deployed before seats ended, whose Stripe webhook calls it while the migrations run ahead of the new app, and for Stripe''s three-day redelivery window after that; a follow-up drops it once that window has passed. Delegates to end_participation, reading the old admin_cancelled reason as admin_removed. service_role only.';
-
-REVOKE ALL ON FUNCTION public.cancel_participation(uuid, text) FROM PUBLIC;
-GRANT ALL ON FUNCTION public.cancel_participation(uuid, text) TO service_role;
+DROP FUNCTION public.cancel_participation(uuid, text);
 
 CREATE OR REPLACE FUNCTION public.admin_remove_participation(p_product_id uuid, p_participation_id uuid) RETURNS jsonb
     LANGUAGE plpgsql SECURITY DEFINER

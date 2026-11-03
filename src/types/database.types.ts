@@ -4662,10 +4662,6 @@ export type Database = {
       assert_self: { Args: { p_user_id: string }; Returns: undefined }
       can_edit_team_profile: { Args: { p_user_id: string }; Returns: boolean }
       can_read_product: { Args: { p_product_id: string }; Returns: boolean }
-      cancel_participation: {
-        Args: { p_participation_id: string; p_reason: string }
-        Returns: Json
-      }
       cancel_session: {
         Args: { p_group_id: string; p_reason?: string; p_session_date: string }
         Returns: Json

@@ -54,11 +54,9 @@ SELECT public.enqueue_klaviyo_profiles(ARRAY(
 
 DELETE FROM public.payments WHERE amount_cents = 0;
 
--- payments_amount_cents_check stays "not negative" in this release, though the
--- webhook no longer writes a €0 row. The app deployed before this change runs on
--- the new schema for about a minute before it is replaced, and its webhook still
--- writes a €0 row for a deferred-billing checkout. A check tightened to
--- "positive" would fail that delivery before its confirmation mail, and Stripe's
--- retry, reaching the new app, would find the seat already confirmed and send no
--- mail at all. The check is tightened in the follow-up that drops the legacy
--- cancel_participation wrapper, once no old app can be writing.
+-- payments_amount_cents_check stays "not negative". The app still deployed when
+-- these migrations run writes a €0 row for a deferred-billing checkout, and a
+-- check tightened to "positive" would fail that delivery and lose that family's
+-- confirmation mail. The webhook is the only writer of payments and skips €0, so
+-- "a payment is money that moved" is held by the webhook and its test; a later
+-- migration that touches payments may tighten the check.

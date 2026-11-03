@@ -11,10 +11,9 @@ import {
 import { adminRemoveParticipationRpcResult } from "@/services/participations/participations.contracts";
 
 /**
- * A seat ends instead of disappearing: end_participation, the legacy
- * cancel_participation wrapper over it, the delete guard that keeps a held seat
- * from being deleted outside an erasure, and the terminal state an ended
- * subscription row is held in.
+ * A seat ends instead of disappearing: end_participation, the delete guard that
+ * keeps a held seat from being deleted outside an erasure, and the terminal
+ * state an ended subscription row is held in.
  *
  * Own UUID suffix (…05c2, registered in product-helpers.ts) so rows never
  * collide with another db test file when CI runs the suite in parallel.
@@ -170,19 +169,6 @@ describe("end_participation", () => {
       status: "ended",
     });
     expect(error?.code).toBe("23514");
-  });
-
-  describe("legacy cancel_participation", () => {
-    it("ends the seat, reading admin_cancelled as admin_removed", async () => {
-      const id = await seat("active");
-      const { data, error } = await admin.rpc("cancel_participation", {
-        p_participation_id: id,
-        p_reason: "admin_cancelled",
-      });
-      expect(error).toBeNull();
-      expect(data).toMatchObject({ kind: "cancelled", reason: "admin_removed" });
-      expect((await readSeat(id))?.end_reason).toBe("admin_removed");
-    });
   });
 
   describe("the delete guard", () => {
