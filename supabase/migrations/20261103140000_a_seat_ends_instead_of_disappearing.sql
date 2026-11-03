@@ -2,8 +2,9 @@
 --
 -- WHAT THIS CHANGES
 --
--- 1. `participation_status` loses `completed`, which nothing ever wrote (a seat
---    on a finished product is derived from the product's dates), and gains
+-- 1. `participation_status` loses `completed`, which no code ever wrote (a seat
+--    on a finished product is derived from the product's dates; any row holding
+--    it becomes `active`), and gains
 --    `ended`: a seat that was held and is not any more. PostgreSQL cannot drop
 --    an enum value, so the type is recreated, and with it every object that
 --    names it in a definition: the column, its two CHECKs, its three partial
@@ -19,13 +20,11 @@
 -- 1. The status type
 -- ---------------------------------------------------------------------------
 
-DO $$
-BEGIN
-  IF EXISTS (SELECT 1 FROM public.participations WHERE status::text = 'completed') THEN
-    RAISE EXCEPTION 'participations hold rows with status completed; they must be resolved before the value can go';
-  END IF;
-END;
-$$;
+-- No code ever wrote `completed`, but a hand-made row can hold it (staging had
+-- one, a camp seat from before this change; production had none). Such a seat
+-- was held to the end of its product, which is exactly what an `active` seat on
+-- a product whose dates have passed now means, so it becomes one.
+UPDATE public.participations SET status = 'active' WHERE status::text = 'completed';
 
 DROP TRIGGER participations_klaviyo_changed ON public.participations;
 DROP TRIGGER trg_participations_refresh_counts_upd ON public.participations;
