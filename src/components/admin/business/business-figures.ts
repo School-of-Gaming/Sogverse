@@ -73,7 +73,7 @@ export function seriesStart(
   beginMonth: string | null,
 ): SeriesStart {
   if (beginMonth === null) return { kind: "none" };
-  if (months.length === 0 || beginMonth <= months[0]) return { kind: "covered" };
+  if (beginMonth <= months[0]) return { kind: "covered" };
   return { kind: "from", month: beginMonth };
 }
 

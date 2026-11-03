@@ -1967,7 +1967,7 @@
     },
     "families": {
       "heading": "Familjer per månad",
-      "caption": "Nya föräldrakonton, familjer som tar sin första plats och familjer vars sista betalda plats tog slut.",
+      "caption": "Nya föräldrakonton, familjer som tar sin första plats och familjer vars sista prenumeration tog slut.",
       "chart": "Familjer per månad",
       "series": {
         "signups": "Nya registreringar",

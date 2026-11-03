@@ -1967,7 +1967,7 @@
     },
     "families": {
       "heading": "Perheet kuukausittain",
-      "caption": "Uudet vanhempien tilit, ensimmäisen paikkansa saaneet perheet ja perheet, joiden viimeinen maksullinen paikka päättyi.",
+      "caption": "Uudet vanhempien tilit, ensimmäisen paikkansa saaneet perheet ja perheet, joiden viimeinen tilaus päättyi.",
       "chart": "Perheet kuukausittain",
       "series": {
         "signups": "Uudet rekisteröitymiset",

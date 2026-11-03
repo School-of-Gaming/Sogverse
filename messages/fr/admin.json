@@ -1967,7 +1967,7 @@
     },
     "families": {
       "heading": "Familles par mois",
-      "caption": "Nouveaux comptes parents, familles qui prennent leur première place et familles dont la dernière place payante a pris fin.",
+      "caption": "Nouveaux comptes parents, familles qui prennent leur première place et familles dont le dernier abonnement a pris fin.",
       "chart": "Familles par mois",
       "series": {
         "signups": "Nouvelles inscriptions",

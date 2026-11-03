@@ -1967,7 +1967,7 @@
     },
     "families": {
       "heading": "Families by month",
-      "caption": "New parent accounts, families taking their first seat, and families whose last paid seat ended.",
+      "caption": "New parent accounts, families taking their first seat, and families whose last subscription ended.",
       "chart": "Families by month",
       "series": {
         "signups": "New sign-ups",

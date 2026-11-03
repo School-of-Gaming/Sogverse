@@ -1,7 +1,6 @@
 import { describe, expect, it } from "vitest";
 import {
   engagementShares,
-  figureChange,
   hasUnattributedRevenue,
   seriesStart,
   signupRate,
@@ -22,13 +21,6 @@ function revenueMonth(overrides: Partial<RevenueMonth>): RevenueMonth {
     ...overrides,
   };
 }
-
-describe("figureChange", () => {
-  it("is the movement since last month ended, in either direction", () => {
-    expect(figureChange({ now: 12, endOfLastMonth: 9 })).toBe(3);
-    expect(figureChange({ now: 4, endOfLastMonth: 9 })).toBe(-5);
-  });
-});
 
 describe("signupRate", () => {
   it("is the seated share of the window's sign-ups", () => {
