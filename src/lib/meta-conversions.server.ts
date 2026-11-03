@@ -106,18 +106,25 @@ const REQUEST_TIMEOUT_MS = 10_000;
  * product view uses too, so the two sides cannot describe a product
  * differently. On an account creation it is optional: the product page the
  * sign-up started from, when that was an advertised product's page.
+ *
+ * `eventId` is Meta's `event_id`, the key it deduplicates on: the id the
+ * browser pushed its own event for the same moment under, so a container tag
+ * sending that event and this report are counted once. Untrusted when it came
+ * from a request body, and nothing but this field ever reads it.
  */
 export type MetaConversion =
   | {
       event: "account_created";
       product?: MetaProductDetails;
       sourcePath: string;
+      eventId: string;
     }
   | {
       event: "enrolment";
       outcome: ReportedEnrolmentOutcome;
       product: MetaProductDetails;
       sourcePath: string;
+      eventId: string;
     };
 
 /**
@@ -230,10 +237,10 @@ export async function reportMetaConversion(
     const event = {
       event_name: eventNameFor(conversion),
       event_time: Math.floor(Date.now() / 1000),
-      // A random id per report, which is how Meta deduplicates a retry — and
-      // how it would reconcile a browser event with this one, if we ever sent
-      // both for the same conversion.
-      event_id: crypto.randomUUID(),
+      // Shared with the browser's event for the same moment, which is how
+      // Meta reconciles the two into one conversion — and how it deduplicates
+      // a retry.
+      event_id: conversion.eventId,
       action_source: "website",
       // Built from the TRUSTED origin and a path the caller states, never from
       // the incoming request's URL or a raw Host header.

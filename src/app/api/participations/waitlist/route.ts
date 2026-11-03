@@ -147,6 +147,7 @@ export const POST = defineRoute({
           request,
           supabase,
           body.productId,
+          body.eventId,
           // The signed-in customer's own id and address, never the
           // participant's.
           { id: user.id, email: profile.email },
@@ -180,11 +181,14 @@ export const POST = defineRoute({
  * product they can browse, so the read needs no privilege the join did not
  * already have. **Decided by the product, never by the URL it was reached
  * from.** A read that fails, or a product that has vanished, reports nothing.
+ * `eventId` is the one the panel pushes its own `enrolment` under, when it sent
+ * one, so the two are one conversion to each platform.
  */
 async function reportWaitlistConversion(
   request: Request,
   client: AppSupabaseClient,
   productId: string,
+  eventId: string | undefined,
   account: ConversionAccount,
 ): Promise<void> {
   try {
@@ -205,6 +209,7 @@ async function reportWaitlistConversion(
         // The report drops the price itself: a queue place carries no value.
         product: advertisedProductDetails(product),
         sourcePath: ROUTES.shopProductPath(productId),
+        eventId,
       },
       account,
     );

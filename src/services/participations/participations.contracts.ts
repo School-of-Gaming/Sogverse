@@ -1,6 +1,7 @@
 import { z } from "zod";
 import { SUPPORTED_CURRENCIES } from "@/lib/constants/currency";
 import { Constants, type PurchaseShape } from "@/types";
+import { conversionEventIdValue } from "@/lib/marketing-events";
 import { plannedSessionRow } from "@/lib/planned-sessions";
 
 /**
@@ -63,6 +64,12 @@ const seatAnswersBody = {
    * means the box was not asked, which the row stores as NULL.
    */
   schoolOfGamingMarketingOptIn: z.boolean().optional(),
+  /**
+   * The id the panel pushes its `enrolment` event under, so the route's
+   * conversion report for the same seat or queue place shares it and each
+   * platform counts the two as one.
+   */
+  eventId: conversionEventIdValue,
 };
 
 // Spelled out rather than derived so the compiler checks it against the shared

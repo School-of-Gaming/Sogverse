@@ -1,66 +1,9 @@
 import "server-only";
 import { z } from "zod";
-import { DEFAULT_LOCALE } from "@/lib/constants/locales";
-import { ROUTES } from "@/lib/constants/routes";
-import { resolveInternalPath } from "@/lib/navigation/internal-path";
-import { normalizeExternalPath } from "@/lib/navigation/locale-path";
+import { signUpTargetFrom } from "@/lib/sign-up-target";
 import { createAnonClient } from "@/lib/supabase/anon";
 
-/**
- * What a sign-up set out to reach, read off the `?redirect=` the register page
- * was opened with and carried in the registration body.
- *
- * **The value is untrusted.** Our own forms carry it, so a client can send
- * anything. It is resolved through `resolveInternalPath()` and matched on its
- * locale-stripped, untranslated pathname (`/fi/kauppa/<id>` is `/shop/<id>`),
- * and an id must be a UUID before anything is read with it.
- */
-
-// Any absolute base splits a path from its query; the value has already been
-// proved same-origin by the time it is parsed against this.
-const SENTINEL = "https://internal.invalid";
-
-const SHOP_PRODUCT_TEMPLATE = "/shop/[id]";
-const SCHOOL_PRODUCT_TEMPLATE = "/schools/[municipalityName]/[id]";
-const LANDING_PAGE_TEMPLATE = ROUTES.landingPage("").pathname;
-
 const uuid = z.string().uuid();
-
-/** The page a redirect names, by its shape alone — nothing has been read yet. */
-export type SignUpTarget =
-  /** A product page, from the shop or from a municipality's school listing. */
-  | { kind: "product_page"; via: "shop" | "schools"; productId: string }
-  /** A landing page, at its id or at the slug its version in `locale` stores. */
-  | { kind: "landing_page"; locale: string; idOrSlug: string };
-
-/** The page a redirect names, or `null` when it is none of the sign-up targets. */
-export function signUpTargetFrom(redirect: string | undefined): SignUpTarget | null {
-  const path = resolveInternalPath(redirect, "");
-  if (!path) return null;
-
-  const { locale, pathname, template } = normalizeExternalPath(
-    new URL(path, SENTINEL).pathname,
-  );
-  const segments = pathname.split("/");
-
-  if (template === SHOP_PRODUCT_TEMPLATE) {
-    const id = segments[2];
-    return uuid.safeParse(id).success ? { kind: "product_page", via: "shop", productId: id } : null;
-  }
-  if (template === SCHOOL_PRODUCT_TEMPLATE) {
-    const id = segments[3];
-    return uuid.safeParse(id).success
-      ? { kind: "product_page", via: "schools", productId: id }
-      : null;
-  }
-  if (template === LANDING_PAGE_TEMPLATE) {
-    const idOrSlug = segments[2];
-    return idOrSlug
-      ? { kind: "landing_page", locale: locale ?? DEFAULT_LOCALE, idOrSlug }
-      : null;
-  }
-  return null;
-}
 
 /** The intent a profile stores: what the parent was trying to reach, by its meaning. */
 export interface SignUpIntent {

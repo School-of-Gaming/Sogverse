@@ -40,7 +40,8 @@ vi.mock("@/lib/supabase/anon", () => ({
   }),
 }));
 
-import { resolveSignUpIntent, signUpTargetFrom } from "@/lib/sign-up-intent.server";
+import { resolveSignUpIntent } from "@/lib/sign-up-intent.server";
+import { signUpTargetFrom } from "@/lib/sign-up-target";
 
 beforeEach(() => {
   vi.spyOn(console, "error").mockImplementation(() => {});

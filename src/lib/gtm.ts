@@ -2,10 +2,11 @@
  * Google Tag Manager, loaded from app code rather than from the copy-paste
  * snippet.
  *
- * Client-safe and React-free: one function that installs the container, one
- * that reports a page view through it, and one that pushes an event the app has
- * already decided to send — so the component above it is only the gates and the
- * effect.
+ * Client-safe and React-free: one function that installs the container, the
+ * ones that report a page's own events through it (its view, a product page's
+ * product view and its click into the sign-up flow), and one that pushes an
+ * event the app has already decided to send — so the components above it are
+ * only the gates and the effects.
  *
  * **Why not the official snippet.** Google's base code is an inline `<script>`
  * that builds `dataLayer`, announces the container and downloads it the moment
@@ -28,7 +29,11 @@
  * container itself.
  */
 
-import { GTM_EVENTS, type GtmEvent } from "@/lib/gtm-events";
+import {
+  GTM_EVENTS,
+  type GtmEvent,
+  type GtmProductPageEvent,
+} from "@/lib/gtm-events";
 import { isReportableQuery } from "@/lib/marketing-pages";
 import { normalizeExternalPath } from "@/lib/navigation/locale-path";
 import type { ConsentState } from "@/lib/consent";
@@ -403,12 +408,101 @@ export function loadGtm(
  * Nothing is pushed unless a container is coming. An unarmed push would be a
  * queue that no container will ever drain, and on a page where the gates said
  * no it would be a record of a visit nobody agreed to, sitting in a global for
- * any later script to read.
+ * any later script to read. Answers whether it pushed.
+ *
+ * **Every event is preceded by `{ ecommerce: null }`**, Google's own
+ * instruction for ecommerce pushes and the only correct one here. The container
+ * merges each push into one data model that keeps whatever it was last told, so
+ * without the reset a field one event leaves out reads the previous event's:
+ * a queue place would carry the price of the view before it, and a `sign_up`
+ * from a page with no product would name the product looked at last. Clearing
+ * before every event rather than only before product ones is what makes each
+ * event state its product or none, whatever came before it.
  */
-export function pushGtmEvent(event: GtmEvent): void {
-  if (typeof window === "undefined") return;
-  if (!armed) return;
-  window.dataLayer?.push(event);
+export function pushGtmEvent(event: GtmEvent): boolean {
+  if (typeof window === "undefined") return false;
+  if (!armed || !window.dataLayer) return false;
+  window.dataLayer.push({ ecommerce: null }, event);
+  return true;
+}
+
+/**
+ * Whether this document has a container coming — for a caller with work to do
+ * before it could push (a read, say) that is wasted where nothing will ever
+ * take the push. `pushGtmEvent` still decides for itself; this only lets a
+ * caller skip the preparation.
+ */
+export function isGtmArmed(): boolean {
+  return armed;
+}
+
+/**
+ * What loading the container needs: its id, and the visitor's stored answer
+ * the Consent Mode signals are derived from. A caller holds one only when the
+ * visitor-level gates have all said yes.
+ */
+export interface GtmGate {
+  containerId: string;
+  consent: ConsentState;
+}
+
+/**
+ * Report a product page's own event — the product view — once the container
+ * has arrived, through every check the page view goes through: the query that
+ * may travel, a route of ours, and the address bar re-read at the moment of
+ * sending. The id is minted here, at the push, and the path is the page's own.
+ */
+export async function reportGtmProductEvent(
+  gate: GtmGate,
+  pathname: string,
+  event: GtmProductPageEvent,
+): Promise<void> {
+  await reportOnPage(gate, pathname, (pagePath) => ({
+    ...event,
+    event_id: crypto.randomUUID(),
+    page_path: pagePath,
+  }));
+}
+
+/**
+ * Push a product page's click event now, or not at all — answering whether it
+ * went out, so a click that was dropped leaves the page's once-only report
+ * unspent.
+ *
+ * The click usually navigates, so this never loads the container and never
+ * waits for it. It does not need the pixels' stricter rule of dropping the
+ * event while the library is still downloading: a push states its own page,
+ * so it is safe in the queue (`pushGtmEvent`). What it does need is the same
+ * address-bar check the views get, made now, while the click is still on the
+ * page that authorised it.
+ */
+export function pushGtmProductEventNow(
+  pathname: string,
+  event: GtmProductPageEvent,
+): boolean {
+  if (typeof window === "undefined") return false;
+  const pagePath = authorisedPagePath(pathname);
+  if (pagePath === null) return false;
+  return pushGtmEvent({
+    ...event,
+    event_id: crypto.randomUUID(),
+    page_path: pagePath,
+  });
+}
+
+/**
+ * The internal path of `pathname` if the tab is still on it with a query that
+ * may travel and it is a route of ours — `null` when any of that fails.
+ */
+function authorisedPagePath(pathname: string): string | null {
+  // Both sides resolved through the URL parser, so a slug with a non-ASCII
+  // character compares the same whether the router hands it over encoded or
+  // not.
+  const authorised = new URL(pathname, window.location.origin).pathname;
+  if (window.location.pathname !== authorised) return null;
+  if (!isReportableQuery(window.location.search)) return null;
+  const { pathname: internalPath, template } = normalizeExternalPath(pathname);
+  return template === null ? null : internalPath;
 }
 
 /**
@@ -446,6 +540,23 @@ export async function reportGtmPageView(
   pathname: string,
   consent: ConsentState,
 ): Promise<void> {
+  await reportOnPage({ containerId, consent }, pathname, (pagePath) => ({
+    event: GTM_EVENTS.pageView,
+    event_id: crypto.randomUUID(),
+    page_path: pagePath,
+  }));
+}
+
+/**
+ * The checks every event reported from a page goes through — the page view's
+ * docblock above is the reasoning — with the event built from the page's
+ * internal path once they have all passed.
+ */
+async function reportOnPage(
+  { containerId, consent }: GtmGate,
+  pathname: string,
+  build: (pagePath: string) => GtmEvent,
+): Promise<void> {
   // Checked before loading as well as before sending: a page whose query may
   // not travel gets no container at all, not merely no report. The proxy's
   // bounce to the login page is the case — a marketing page by pathname,
@@ -472,5 +583,5 @@ export async function reportGtmPageView(
   const authorised = new URL(pathname, window.location.origin).pathname;
   if (window.location.pathname !== authorised) return;
   if (!isReportableQuery(window.location.search)) return;
-  pushGtmEvent({ event: GTM_EVENTS.pageView, page_path: internalPath });
+  pushGtmEvent(build(internalPath));
 }

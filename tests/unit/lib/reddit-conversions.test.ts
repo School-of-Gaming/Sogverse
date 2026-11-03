@@ -123,7 +123,14 @@ afterEach(() => {
   vi.restoreAllMocks();
 });
 
-const LEAD = { event: "account_created", sourcePath: "/register" } as const;
+/** The id the browser pushed its own event for the same moment under. */
+const EVENT_ID = "3f2b7c1e-9a4d-4e8b-b6c5-0d1e2f3a4b5c";
+
+const LEAD = {
+  event: "account_created",
+  sourcePath: "/register",
+  eventId: EVENT_ID,
+} as const;
 
 describe("reportRedditConversion — the three gates", () => {
   it("sends nothing without a pixel id", async () => {
@@ -200,8 +207,7 @@ describe("reportRedditConversion — the request", () => {
     expect(event.click_id).toBe("click-123");
     // A lead from no product page names nothing but its own id.
     const metadata = asObject(event.metadata);
-    expect(typeof metadata.conversion_id).toBe("string");
-    expect(Object.keys(metadata)).toEqual(["conversion_id"]);
+    expect(metadata).toEqual({ conversion_id: EVENT_ID });
 
     // The whole of what identifies a person, and nothing else — Meta's cookie
     // on the same request is not Reddit's to read.
@@ -214,9 +220,13 @@ describe("reportRedditConversion — the request", () => {
     });
   });
 
-  it("gives every report its own conversion id", async () => {
+  // The conversion id is Reddit's dedup key: the browser's event for the same
+  // moment went out under it, so a report minting its own would be counted
+  // as a second conversion.
+  it("sends the conversion id it is handed, as each report's own", async () => {
+    const other = "9c8b7a6d-5e4f-4a3b-8c2d-1e0f9a8b7c6d";
     await reportRedditConversion(request(), LEAD, PARENT);
-    await reportRedditConversion(request(), LEAD, PARENT);
+    await reportRedditConversion(request(), { ...LEAD, eventId: other }, PARENT);
 
     const ids = fetchMock.mock.calls.map(([, init]) => {
       const body = asObject(JSON.parse(String(init.body)));
@@ -224,7 +234,7 @@ describe("reportRedditConversion — the request", () => {
       if (!Array.isArray(events)) throw new Error("no event array");
       return asObject(asObject(events[0]).metadata).conversion_id;
     });
-    expect(ids[0]).not.toBe(ids[1]);
+    expect(ids).toEqual([EVENT_ID, other]);
   });
 
   it("falls back to x-real-ip, and omits what the request does not carry", async () => {
@@ -282,6 +292,7 @@ describe("reportRedditConversion — the request", () => {
         outcome: "enrolled",
         product: PRODUCT,
         sourcePath: "/shop/abc-123",
+        eventId: EVENT_ID,
       },
       PARENT,
     );
@@ -315,6 +326,7 @@ describe("reportRedditConversion — the request", () => {
         outcome: "enrolled",
         product: PRODUCT,
         sourcePath: "/shop/abc-123",
+        eventId: EVENT_ID,
       },
       PARENT,
     );
@@ -341,6 +353,7 @@ describe("reportRedditConversion — the request", () => {
         outcome: "enrolled",
         product: { ...PRODUCT, value: 0 },
         sourcePath: "/shop/abc-123",
+        eventId: EVENT_ID,
       },
       PARENT,
     );
@@ -358,6 +371,7 @@ describe("reportRedditConversion — the request", () => {
         outcome: "waitlisted",
         product: PRODUCT,
         sourcePath: "/shop/abc-123",
+        eventId: EVENT_ID,
       },
       PARENT,
     );
@@ -373,7 +387,7 @@ describe("reportRedditConversion — the request", () => {
   it("names the product without a value on a lead from a product page", async () => {
     await reportRedditConversion(
       request(),
-      { event: "account_created", product: PRODUCT, sourcePath: "/register" },
+      { ...LEAD, product: PRODUCT },
       PARENT,
     );
 

@@ -52,19 +52,23 @@ const REQUEST_TIMEOUT_MS = 10_000;
  * What happened, in our own words — the same two moments Meta is told about,
  * with the product already described in Reddit's fields. `sourcePath` is the
  * public path the conversion happened on, stated by the caller and never taken
- * from the request's own URL.
+ * from the request's own URL. `eventId` is Reddit's `conversion_id`, its
+ * dedup key — the id the browser pushed its own event for the same moment
+ * under, untrusted and read by nothing else.
  */
 export type RedditConversion =
   | {
       event: "account_created";
       product?: RedditProductDetails;
       sourcePath: string;
+      eventId: string;
     }
   | {
       event: "enrolment";
       outcome: ReportedEnrolmentOutcome;
       product: RedditProductDetails;
       sourcePath: string;
+      eventId: string;
     };
 
 /**
@@ -165,9 +169,9 @@ export async function reportRedditConversion(
         ...(accountIdHash && { external_id: accountIdHash }),
       },
       metadata: {
-        // A random id per report. The browser never sends these events, so
-        // there is nothing to deduplicate against; Reddit recommends one anyway.
-        conversion_id: crypto.randomUUID(),
+        // Shared with the browser's event for the same moment, so a container
+        // tag's pixel event and this report are deduplicated into one.
+        conversion_id: conversion.eventId,
         ...productMetadataFor(conversion),
       },
     };

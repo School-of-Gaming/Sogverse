@@ -77,6 +77,7 @@ export const POST = defineRoute({
       homeLocationId,
       locale: requestedLocale,
       redirect,
+      eventId,
       marketingConsent,
     } = body;
 
@@ -319,7 +320,9 @@ export const POST = defineRoute({
     // nothing. The source path is the page the parent was on, stated rather than
     // derived from this route's own URL. The product is the advertised product
     // page the sign-up started from, if it did — looked up after the response
-    // too, so it can neither delay nor fail the registration.
+    // too, so it can neither delay nor fail the registration. The event id is
+    // the one the form pushes its own `sign_up` under, so each platform counts
+    // the browser's lead and this one once.
     //
     // No role check, and none is possible to need: the account this just created
     // is an ordinary customer, and a gamer cannot reach a registration form at
@@ -331,6 +334,7 @@ export const POST = defineRoute({
           event: "account_created",
           product: await signUpProductFor(redirect),
           sourcePath: ROUTES.register,
+          eventId,
         },
         // The account this request just created — the parent's own id and
         // address.

@@ -7,7 +7,9 @@
 
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import type { ConsentState } from "@/lib/consent";
+import type { GtmEvent, GtmProductPageEvent } from "@/lib/gtm-events";
 import { commandValues, isArgumentsObject } from "../../helpers/data-layer";
+import { asObject } from "../../helpers/json";
 
 /**
  * ============================================================================
@@ -57,6 +59,14 @@ const GRANTED_BOTH: ConsentState = {
   marketing: true,
   decidedAt: "2026-09-01T08:00:00.000Z",
 };
+
+/** An event as a registration form pushes it. */
+const SIGN_UP = {
+  event: "sign_up",
+  event_id: "3f2b7c1e-9a4d-4e8b-b6c5-0d1e2f3a4b5c",
+  ecommerce: null,
+  page_path: "/register",
+} as const satisfies GtmEvent;
 
 const ANALYTICS_ONLY: ConsentState = { ...GRANTED_BOTH, marketing: false };
 const MARKETING_ONLY: ConsentState = { ...GRANTED_BOTH, analytics: false };
@@ -329,7 +339,7 @@ function hasEventName(entry: unknown, name: string): boolean {
  */
 describe("pushGtmEvent", () => {
   it("pushes nothing until the container has been asked for", () => {
-    gtm.pushGtmEvent({ event: "sign_up", page_path: "/register" });
+    gtm.pushGtmEvent(SIGN_UP);
 
     expect(window.dataLayer).toBeUndefined();
   });
@@ -337,9 +347,9 @@ describe("pushGtmEvent", () => {
   it("pushes while the container is still downloading", () => {
     void gtm.loadGtm(CONTAINER_ID, GRANTED_BOTH);
 
-    gtm.pushGtmEvent({ event: "sign_up", page_path: "/register" });
+    gtm.pushGtmEvent(SIGN_UP);
 
-    expect(queue().at(-1)).toEqual({ event: "sign_up", page_path: "/register" });
+    expect(queue().at(-1)).toEqual(SIGN_UP);
   });
 
   // An ad blocker refused the container, so the queue is a global array nothing
@@ -353,7 +363,7 @@ describe("pushGtmEvent", () => {
     await loading;
     const before = queue().length;
 
-    gtm.pushGtmEvent({ event: "sign_up", page_path: "/register" });
+    gtm.pushGtmEvent(SIGN_UP);
 
     expect(queue()).toHaveLength(before);
   });
@@ -374,6 +384,7 @@ describe("reportGtmPageView", () => {
 
     expect(queue().at(-1)).toEqual({
       event: "page_view",
+      event_id: expect.any(String),
       page_path: "/shop",
     });
   });
@@ -395,6 +406,7 @@ describe("reportGtmPageView", () => {
 
     expect(queue().at(-1)).toEqual({
       event: "page_view",
+      event_id: expect.any(String),
       page_path: "/shop/abc-123",
     });
   });
@@ -449,6 +461,7 @@ describe("reportGtmPageView", () => {
 
     expect(queue().at(-1)).toEqual({
       event: "page_view",
+      event_id: expect.any(String),
       page_path: "/roblox",
     });
   });
@@ -466,6 +479,7 @@ describe("reportGtmPageView", () => {
 
     expect(queue().at(-1)).toEqual({
       event: "page_view",
+      event_id: expect.any(String),
       page_path: "/shop/café-123",
     });
   });
@@ -494,6 +508,152 @@ describe("reportGtmPageView", () => {
     expect(queue().some((entry) => hasEventName(entry, "page_view"))).toBe(
       false,
     );
+  });
+
+  // Each view is its own event to a platform that deduplicates by id: two
+  // views sharing one would have the second discarded.
+  it("gives every page view an id of its own", async () => {
+    const first = gtm.reportGtmPageView(CONTAINER_ID, "/shop", GRANTED_BOTH);
+    containerArrives();
+    await first;
+    await gtm.reportGtmPageView(CONTAINER_ID, "/shop", GRANTED_BOTH);
+
+    const ids = queue()
+      .filter((entry) => hasEventName(entry, "page_view"))
+      .map((entry) => asObject(entry).event_id);
+    expect(ids).toHaveLength(2);
+    expect(ids[0]).not.toBe(ids[1]);
+  });
+});
+
+/** A product page's own events, as the consent components hand them over. */
+const VIEW_ITEM = {
+  event: "view_item",
+  ecommerce: {
+    items: [
+      {
+        item_id: "abc-123",
+        item_name: "Roblox Studio Club",
+        item_category: "roblox_studio",
+        price: 49,
+        quantity: 1,
+      },
+    ],
+    value: 49,
+    currency: "EUR",
+  },
+  advertised: true,
+} as const satisfies GtmProductPageEvent;
+
+const ADD_TO_CART = {
+  ...VIEW_ITEM,
+  event: "add_to_cart",
+} as const satisfies GtmProductPageEvent;
+
+/**
+ * The product view travels the page view's whole road — the container, the
+ * address-bar re-check, the internal path — because it is reported from the
+ * same page on the same terms.
+ */
+describe("reportGtmProductEvent", () => {
+  const GATE = { containerId: CONTAINER_ID, consent: GRANTED_BOTH };
+
+  it("loads the container and reports once it has arrived", async () => {
+    tabIsOn("/fi/kauppa/abc-123");
+    const report = gtm.reportGtmProductEvent(GATE, "/fi/kauppa/abc-123", VIEW_ITEM);
+
+    expect(insertedScripts()).toHaveLength(1);
+    expect(queue().some((entry) => hasEventName(entry, "view_item"))).toBe(
+      false,
+    );
+
+    containerArrives();
+    await report;
+
+    expect(queue().at(-1)).toEqual({
+      ...VIEW_ITEM,
+      event_id: expect.any(String),
+      page_path: "/shop/abc-123",
+    });
+  });
+
+  it("reports nothing when the tab has moved to another page meanwhile", async () => {
+    tabIsOn("/shop/abc-123");
+    const report = gtm.reportGtmProductEvent(GATE, "/shop/abc-123", VIEW_ITEM);
+    tabIsOn("/parent/gamers/abc-123");
+
+    containerArrives();
+    await report;
+
+    expect(queue().some((entry) => hasEventName(entry, "view_item"))).toBe(
+      false,
+    );
+  });
+});
+
+/**
+ * The click into the sign-up flow goes out inside the click or not at all,
+ * with the same address-bar check the views get, made at that moment.
+ */
+describe("pushGtmProductEventNow", () => {
+  it("pushes nothing and says so when no container is coming", () => {
+    tabIsOn("/shop/abc-123");
+
+    expect(gtm.pushGtmProductEventNow("/shop/abc-123", ADD_TO_CART)).toBe(false);
+    expect(window.dataLayer).toBeUndefined();
+  });
+
+  // Unlike a pixel's click, it may sit in the queue: it names its own page.
+  it("pushes while the container is still downloading, naming its page", () => {
+    tabIsOn("/fi/kauppa/abc-123");
+    void gtm.loadGtm(CONTAINER_ID, GRANTED_BOTH);
+
+    expect(gtm.pushGtmProductEventNow("/fi/kauppa/abc-123", ADD_TO_CART)).toBe(
+      true,
+    );
+    expect(queue().at(-1)).toEqual({
+      ...ADD_TO_CART,
+      event_id: expect.any(String),
+      page_path: "/shop/abc-123",
+    });
+  });
+
+  it("pushes nothing when the tab is no longer on the page", () => {
+    tabIsOn("/parent/gamers/abc-123");
+    void gtm.loadGtm(CONTAINER_ID, GRANTED_BOTH);
+
+    expect(gtm.pushGtmProductEventNow("/shop/abc-123", ADD_TO_CART)).toBe(false);
+    expect(queue().some((entry) => hasEventName(entry, "add_to_cart"))).toBe(
+      false,
+    );
+  });
+
+  it("pushes nothing when the query may not travel", () => {
+    tabIsOn("/shop/abc-123?token=secret");
+    void gtm.loadGtm(CONTAINER_ID, GRANTED_BOTH);
+
+    expect(gtm.pushGtmProductEventNow("/shop/abc-123", ADD_TO_CART)).toBe(false);
+  });
+});
+
+/**
+ * The container keeps one data model that every push is merged into, so a
+ * field one event leaves out reads whatever the last event said. The reset is
+ * what makes each event state its own product or none.
+ */
+describe("the ecommerce reset", () => {
+  it("clears the product immediately before every event", () => {
+    void gtm.loadGtm(CONTAINER_ID, GRANTED_BOTH);
+
+    gtm.pushGtmEvent(SIGN_UP);
+
+    expect(queue().slice(-2)).toEqual([{ ecommerce: null }, SIGN_UP]);
+  });
+
+  it("says whether a container is coming", () => {
+    expect(gtm.isGtmArmed()).toBe(false);
+    void gtm.loadGtm(CONTAINER_ID, GRANTED_BOTH);
+    expect(gtm.isGtmArmed()).toBe(true);
   });
 });
 
@@ -649,6 +809,7 @@ describe("the page pinned for gtag's own events", () => {
     });
     expect(queue().at(-1)).toEqual({
       event: "page_view",
+      event_id: expect.any(String),
       page_path: "/register",
     });
   });

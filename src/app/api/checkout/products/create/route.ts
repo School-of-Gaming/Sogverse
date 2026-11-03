@@ -302,6 +302,9 @@ export const POST = defineRoute({
               outcome: "enrolled",
               product: advertisedProductDetails(product, currency),
               sourcePath: ROUTES.shopProductPath(productId),
+              // The id the panel pushes its own `enrolment` under once this
+              // answers, so the two are one conversion to each platform.
+              eventId: body.eventId,
             },
             // The signed-in customer's own id and address, never the
             // participant's.

@@ -14,6 +14,7 @@ import { Card, CardContent, CardDescription, CardFooter, CardHeader } from "@/co
 import { getClient } from "@/lib/supabase/client";
 import { pushGtmEvent } from "@/lib/gtm";
 import { GTM_EVENTS } from "@/lib/gtm-events";
+import { gtmSignUpProduct } from "@/lib/gtm-sign-up";
 import { SUPPORT_EMAIL } from "@/lib/constants/brand";
 import { ROUTES } from "@/lib/constants/routes";
 import { REGISTER_WEAK_PASSWORD } from "@/services/users/parent-registration.contracts";
@@ -126,6 +127,12 @@ export function RegisterForm({ redirect: redirectParam }: { redirect: string | n
       // home location goes with it in the same request rather than becoming a
       // second, client-side write against a session that has not been
       // established yet.
+      //
+      // The id the `sign_up` below is pushed under, sent so the route's lead
+      // shares it; and the product that push names, read beside the post
+      // rather than after it.
+      const eventId = crypto.randomUUID();
+      const signUpProduct = gtmSignUpProduct(safeRedirect);
       const response = await fetch("/api/auth/register", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -141,6 +148,7 @@ export function RegisterForm({ redirect: redirectParam }: { redirect: string | n
           // The product page this visit came from, so the account-creation
           // report can name it. The route re-checks it; nothing navigates on it.
           redirect: safeRedirect ?? undefined,
+          eventId,
           ...account.requestBody,
         }),
       });
@@ -152,8 +160,10 @@ export function RegisterForm({ redirect: redirectParam }: { redirect: string | n
       }
 
       // The account exists and nothing has been signed up *for* — which is
-      // exactly what `sign_up` names, and why it carries nothing but the page
-      // it happened on: nothing else is known at this moment.
+      // exactly what `sign_up` names. It carries the page it happened on, the
+      // id the route's lead went out under, and the product page it started
+      // from when that was an advertised product's — the same product the lead
+      // names.
       //
       // Pushed here rather than after the sign-in because here is where the
       // outcome is certain and the document is certainly still ours. The
@@ -166,6 +176,8 @@ export function RegisterForm({ redirect: redirectParam }: { redirect: string | n
       // could only disagree with it.
       pushGtmEvent({
         event: GTM_EVENTS.accountCreated,
+        event_id: eventId,
+        ecommerce: await signUpProduct,
         page_path: ROUTES.register,
       });
 

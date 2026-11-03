@@ -272,6 +272,35 @@ A completed purchase is reported nowhere today. When it is, it belongs on the sa
 server-side path, from the payment webhook — which is the only place that knows money
 arrived.
 
+## What the container is pushed
+
+**`dataLayer` carries the whole funnel, complete enough that a tag can be built on any step
+without a change here**: `page_view`, `view_item` (the product view), `add_to_cart` (the
+click into the sign-up flow — `begin_checkout` stays the Stripe handoff), `sign_up`,
+`enrolment` and `begin_checkout`, under the same moments and the same once-per-page rules
+as the pixels' events above. The names, and why `add_to_cart`, are in `src/lib/gtm-events.ts`.
+
+- **Every push carries its own `event_id`**, minted per push. For the two moments our
+  servers also report, the browser mints it first, sends it in the body of the request that
+  commits the action, and pushes under it once the route has answered; the route hands it
+  to Meta as `event_id` and to Reddit as `conversion_id`, so a container tag sending the
+  same event is deduplicated against the server's report. The route validates it as a UUID
+  and uses it for nothing else; absent, the server mints its own. A Stripe handoff has no
+  server twin, and neither do the view and the click.
+- **Every product event names its product in GA4's `ecommerce` shape**, built from the same
+  facts as the server reports' fields, and **is pushed for every product with `advertised`
+  beside it** — where the pixels report advertised products only. Analytics counts them all;
+  an advertising tag must fire only where `advertised` is `true`. A `sign_up` carries no
+  `advertised`: it names a product only when the server's lead would, so its tag fires on
+  every one. A queue place and a lead carry no value, on this side as on the server's.
+- **Every push is preceded by `{ ecommerce: null }`.** The container merges pushes into one
+  model that keeps what it was last told, so without the reset an event leaving a field out
+  reads the previous event's — a queue place priced at the view before it.
+- **The product view loads the container itself** and goes through every check the page
+  view does; the click is pushed inside the click or not at all, never loading anything,
+  with the address-bar check made at that moment. Unlike a pixel's click it may sit in the
+  queue while the container downloads, because it states its own page.
+
 ## Withdrawal
 
 Granting a purpose needs nothing beyond the state update: the gated components mount, and
@@ -400,6 +429,9 @@ and each one is load-bearing rather than tidy.
   the tag reports every private page the visitor walks to after the marketing page that
   loaded the container: a child's page by id, a reset link with its single-use token. It
   is the one setting that can undo the whole design from a screen no code here can see.
+- **An advertising tag fires only on `advertised: true`** for the events that carry it.
+  Analytics is pushed every product, municipality clubs included; a campaign optimised on
+  them is optimised on noise.
 - **Every tag takes the page from the pushed field, never from the address bar.** Set
   `page_location` and `page_path` on each tag from the `page_path` the app pushes with the
   event. A tag left to its default reads `document.location` at the moment it fires, and a

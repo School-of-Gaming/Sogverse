@@ -359,6 +359,23 @@ describe("POST /api/participations/waitlist", () => {
     expect(mockRpc).not.toHaveBeenCalled();
   });
 
+  it("returns 400 when the event id is not a UUID, joining nothing", async () => {
+    mockAuthenticatedCustomer();
+
+    const res = await POST(
+      createRequest({
+        productId: PRODUCT_ID,
+        participantId: GAMER_ID,
+        eventId: "not-a-uuid",
+      }),
+    );
+    const data = await res.json();
+
+    expect(res.status).toBe(400);
+    expect(data.error).toContain("eventId");
+    expect(mockRpc).not.toHaveBeenCalled();
+  });
+
   // -- Happy path --
 
   it("returns the new waitlist position when join_waitlist succeeds", async () => {
@@ -932,6 +949,22 @@ describe("POST /api/participations/waitlist", () => {
         },
         sourcePath: `/shop/${PRODUCT_ID}`,
       });
+    });
+
+    // The panel pushes its own `enrolment` under the id it sent, so the report
+    // goes out under the same one and each platform counts the place once.
+    it("reports the place in line under the event id the panel sent", async () => {
+      mockAuthenticatedCustomer();
+      joinsWaitlist();
+      const eventId = "3f2b7c1e-9a4d-4e8b-b6c5-0d1e2f3a4b5c";
+
+      await POST(
+        createRequest({ productId: PRODUCT_ID, participantId: GAMER_ID, eventId }),
+      );
+      await settleDeferred();
+
+      const [, conversion] = mockReportAdConversion.mock.calls[0];
+      expect(conversion).toMatchObject({ outcome: "waitlisted", eventId });
     });
 
     it("reports nothing for a municipality club", async () => {

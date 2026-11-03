@@ -389,6 +389,38 @@ describe("POST /api/auth/register", () => {
     });
   });
 
+  // The form pushes its own `sign_up` under the id it sent, so the lead must go
+  // out under the same one for each platform to count the two as one.
+  it("reports the lead under the event id the form sent", async () => {
+    const eventId = "3f2b7c1e-9a4d-4e8b-b6c5-0d1e2f3a4b5c";
+
+    await POST(
+      registerRequestWithConsent(
+        { analytics: true, marketing: true },
+        { ...validBody, eventId },
+      ),
+    );
+    await runDeferred();
+
+    const [, conversion] = mockReportAdConversion.mock.calls[0];
+    expect(conversion).toMatchObject({ event: "account_created", eventId });
+  });
+
+  // Our own form mints a UUID, so anything else is a malformed request, and the
+  // id is never passed on to a platform in a shape nobody minted.
+  it("refuses an event id that is not a UUID, and creates nothing", async () => {
+    const response = await POST(
+      registerRequestWithConsent(
+        { analytics: true, marketing: true },
+        { ...validBody, eventId: "not-a-uuid" },
+      ),
+    );
+
+    expect(response.status).toBe(400);
+    expect(mockCreateUser).not.toHaveBeenCalled();
+    expect(mockReportAdConversion).not.toHaveBeenCalled();
+  });
+
   // The redirect is a hint for a report, never a reason to refuse an account:
   // whatever a client puts there, the registration goes through.
   it("registers whatever the redirect says", async () => {

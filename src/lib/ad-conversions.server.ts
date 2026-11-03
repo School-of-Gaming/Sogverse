@@ -24,18 +24,26 @@ import { reportRedditConversion } from "@/lib/reddit-conversions.server";
  *
  * The rules for what each event means and carries live in the reporters and
  * in `@/lib/marketing-events`; this type only has the words a route needs.
+ *
+ * `eventId` is the id the browser minted for the same moment and sent in the
+ * request body (`conversionEventIdValue`), which it pushes its own event under
+ * once the route has answered — so a container tag's browser event and this
+ * report are one conversion to each platform. Absent, one is minted here, once
+ * for every platform. It is untrusted input and is only ever a dedup key.
  */
 export type AdConversion =
   | {
       event: "account_created";
       product?: AdvertisedProductDetails;
       sourcePath: string;
+      eventId?: string;
     }
   | {
       event: "enrolment";
       outcome: ReportedEnrolmentOutcome;
       product: AdvertisedProductDetails;
       sourcePath: string;
+      eventId?: string;
     };
 
 export async function reportAdConversion(
@@ -43,9 +51,18 @@ export async function reportAdConversion(
   conversion: AdConversion,
   account: ConversionAccount,
 ): Promise<void> {
+  const eventId = conversion.eventId ?? crypto.randomUUID();
   await Promise.all([
-    reportMetaConversion(request, forPlatform(conversion, "meta"), account),
-    reportRedditConversion(request, forPlatform(conversion, "reddit"), account),
+    reportMetaConversion(
+      request,
+      forPlatform(conversion, "meta", eventId),
+      account,
+    ),
+    reportRedditConversion(
+      request,
+      forPlatform(conversion, "reddit", eventId),
+      account,
+    ),
   ]);
 }
 
@@ -53,6 +70,7 @@ export async function reportAdConversion(
 function forPlatform<Platform extends keyof AdvertisedProductDetails>(
   conversion: AdConversion,
   platform: Platform,
+  eventId: string,
 ) {
   const { sourcePath } = conversion;
   return conversion.event === "account_created"
@@ -60,11 +78,13 @@ function forPlatform<Platform extends keyof AdvertisedProductDetails>(
         event: conversion.event,
         product: conversion.product?.[platform],
         sourcePath,
+        eventId,
       }
     : {
         event: conversion.event,
         outcome: conversion.outcome,
         product: conversion.product[platform],
         sourcePath,
+        eventId,
       };
 }

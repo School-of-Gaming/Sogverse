@@ -74,11 +74,16 @@ export function useMayReachAdvertising(): boolean {
  * `send` is the vendor's awaiting reporter, which loads its library on first
  * need and re-reads the address bar once it has arrived. It must be a stable
  * function — a module-level one — since a new one would be a new effect.
+ *
+ * The gate is whatever the vendor's loader needs once the visitor-level gates
+ * have said yes — a pixel's id, or the container's id with the stored answer —
+ * and `null` otherwise. One that is not a string must be memoised, for the
+ * same reason `send` must be stable.
  */
-export function usePixelReportPerPage<Report>(
-  pixelId: string | null,
+export function usePixelReportPerPage<Gate, Report>(
+  pixelId: Gate | null,
   report: Report | null,
-  send: (pixelId: string, pathname: string, report: Report) => Promise<void>,
+  send: (pixelId: Gate, pathname: string, report: Report) => Promise<void>,
 ): void {
   const pathname = usePathname();
   /** The last pathname this effect has seen, reported or not. */
@@ -111,8 +116,8 @@ export function usePixelReportPerPage<Report>(
  * first four gates is shut; the allowlist is checked here and the address bar
  * by `sendNow`.
  */
-export function usePixelClickReport<Report>(
-  pixelId: string | null,
+export function usePixelClickReport<Gate, Report>(
+  pixelId: Gate | null,
   report: Report | null,
   sendNow: (pathname: string, report: Report) => boolean,
 ): () => void {

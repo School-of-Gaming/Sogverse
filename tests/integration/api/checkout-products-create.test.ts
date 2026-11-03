@@ -541,6 +541,16 @@ describe("POST /api/checkout/products/create", () => {
     expect(data.error).toContain("currency");
   });
 
+  it("returns 400 when the event id is not a UUID", async () => {
+    mockAuthenticatedCustomer();
+    const res = await POST(
+      createRequest({ ...VALID_BODY, eventId: "not-a-uuid" }),
+    );
+    const data = await res.json();
+    expect(res.status).toBe(400);
+    expect(data.error).toContain("eventId");
+  });
+
   // ── Product lookup / shape × billing_mode × product_type guards ───
 
   it("returns 404 when the product is not found", async () => {
@@ -1541,6 +1551,32 @@ describe("POST /api/checkout/products/create", () => {
         },
         sourcePath: `/shop/${PRODUCT_ID}`,
       });
+    });
+
+    // The panel pushes its own `enrolment` under the id it sent, so the report
+    // goes out under the same one and each platform counts the seat once.
+    it("reports the enrolment under the event id the panel sent", async () => {
+      mockAuthenticatedCustomer();
+      mockAdmin({ product: FREE_EVENT });
+      mockAdminRpc.mockResolvedValueOnce({
+        data: { kind: "free_active", participation_id: PARTICIPATION_ID },
+        error: null,
+      });
+      const eventId = "3f2b7c1e-9a4d-4e8b-b6c5-0d1e2f3a4b5c";
+
+      await POST(
+        createRequest({
+          productId: PRODUCT_ID,
+          participantId: GAMER_ID,
+          purchaseShape: "free",
+          currency: "eur",
+          eventId,
+        }),
+      );
+      await settleDeferred();
+
+      const [, conversion] = mockReportAdConversion.mock.calls[0];
+      expect(conversion).toMatchObject({ event: "enrolment", eventId });
     });
 
     // The checkout start is the browser's click on the product page, for free

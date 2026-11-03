@@ -12,6 +12,7 @@ import { Field } from "@/components/ui/field";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader } from "@/components/ui/card";
 import { pushGtmEvent } from "@/lib/gtm";
 import { GTM_EVENTS } from "@/lib/gtm-events";
+import { gtmSignUpProduct } from "@/lib/gtm-sign-up";
 import { ROUTES } from "@/lib/constants/routes";
 import {
   COMPLETE_REGISTRATION_PARENT_QUERY,
@@ -242,6 +243,10 @@ function ParentCompletion({
     setIsLoading(true);
 
     try {
+      // The `sign_up` below and the route's lead share this id, and the product
+      // that push names is read beside the post — as on the register form.
+      const eventId = crypto.randomUUID();
+      const signUpProduct = gtmSignUpProduct(redirect);
       const response = await fetch("/api/auth/complete-registration", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -253,6 +258,7 @@ function ParentCompletion({
           // The product page the sign-up started from, so the account-creation
           // report can name it. The route re-checks it.
           redirect: redirect ?? undefined,
+          eventId,
         }),
       });
 
@@ -272,6 +278,8 @@ function ParentCompletion({
       // same account creation, finished on a second page.
       pushGtmEvent({
         event: GTM_EVENTS.accountCreated,
+        event_id: eventId,
+        ecommerce: await signUpProduct,
         page_path: ROUTES.register,
       });
 

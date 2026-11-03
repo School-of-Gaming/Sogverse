@@ -42,6 +42,7 @@
  * checkout start is the click above.
  */
 
+import { z } from "zod";
 import {
   DEFAULT_CURRENCY,
   type SupportedCurrency,
@@ -232,6 +233,59 @@ export function advertisedProductDetails(
   };
 }
 
+/**
+ * The same product as the browser pushes it into `dataLayer`: GA4's ecommerce
+ * object, read through the same facts as the two platforms' fields, so a
+ * container tag cannot be told anything about a product that Meta's and
+ * Reddit's server reports would describe differently.
+ *
+ * **GA4's shape rather than a flat one of our own**, because it is the one
+ * shape every reader in the container already understands: Google's analytics
+ * tag reads it with no configuration, and a Meta or Reddit tag reads the same
+ * fields through plain Data Layer Variables — `ecommerce.items.0.item_id` for
+ * the content id, `ecommerce.items.0.item_name`, `ecommerce.items.0.item_category`,
+ * and `ecommerce.value` with `ecommerce.currency`. A flat shape would have
+ * served the advertising tags equally and analytics not at all.
+ *
+ * `priced: false` drops the value, the currency and the item's price together,
+ * for the two moments the server reports also leave unpriced — a queue place
+ * and an account creation — so the browser's twin of a server report never
+ * states a value the server report withholds.
+ */
+export interface GtmEcommerce {
+  items: [
+    {
+      item_id: string;
+      item_name: string;
+      item_category: ProductTopic;
+      price?: number;
+      quantity: 1;
+    },
+  ];
+  value?: number;
+  currency?: string;
+}
+
+export function gtmEcommerce(
+  product: ProductFactsSource,
+  { priced, currency = DEFAULT_CURRENCY }: { priced: boolean; currency?: SupportedCurrency },
+): GtmEcommerce {
+  const facts = productFacts(product, currency);
+  const price = priced ? facts.price : undefined;
+  return {
+    items: [
+      {
+        item_id: facts.id,
+        item_name: facts.name,
+        item_category: facts.category,
+        ...(price !== undefined && { price: price.value }),
+        quantity: 1,
+      },
+    ],
+    ...(price !== undefined && price),
+  };
+}
+
 /** What both platforms' product fields are built from. */
 type ProductFactsSource = {
   id: string;
@@ -276,6 +330,25 @@ function productFacts(
     }),
   };
 }
+
+/**
+ * The id one conversion goes by on both sides of the wire, as a request body
+ * carries it: the browser mints it, sends it to the route that commits the
+ * action, and pushes its own `dataLayer` event under the same id once the route
+ * has answered — so a container tag's browser event and our server's report of
+ * the same moment reach each platform as one conversion rather than two.
+ *
+ * **Untrusted, and only ever a deduplication key.** A client can send anything
+ * here; the worst a forged id can do is make a platform discard one of that
+ * client's own conversions as a duplicate of another. It names no row, is
+ * stored nowhere and is never echoed into anything but the platforms'
+ * dedup fields. A UUID because that is what our own forms mint, so anything
+ * else is a malformed request rather than a value to be lenient with.
+ *
+ * **Optional**: absent, the server mints one of its own, and its report goes
+ * out exactly as it did before the browser had a twin to match.
+ */
+export const conversionEventIdValue = z.string().uuid().optional();
 
 /**
  * A pixel id is a run of digits and nothing else — Meta's advertiser id.

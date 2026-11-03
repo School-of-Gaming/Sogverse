@@ -4,6 +4,7 @@ import type {
   CreateParticipationResponse,
   JoinWaitlistResponse,
 } from "@/services/participations/participations.contracts";
+import { asObject } from "../../helpers/json";
 
 /**
  * **Which signup outcomes the panel reports, and what it says about them.**
@@ -129,6 +130,10 @@ const PRODUCT = {
   product_type: "consumer_club" as const,
   billing_mode: "free" as const,
   product_prices: [],
+  topic: "roblox_studio" as const,
+  product_translations: [
+    { locale: "en", name: "Roblox Studio Club", short_description: "" },
+  ],
   for_gamers: true,
   start_date: "2026-01-12",
   timezone: "Europe/Helsinki",
@@ -260,6 +265,43 @@ function answerWaitlist(response: JoinWaitlistResponse) {
 /** The single event the panel pushed. */
 const onlyEvent = () => pushed.mock.calls[0][0];
 
+const UUID =
+  /^[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/;
+
+/** The id the panel sent the route with its first request. */
+function sentEventId(mutate: typeof createMutate | typeof waitlistMutate) {
+  const id = asObject(mutate.mock.calls[0][0]).eventId;
+  expect(id).toMatch(UUID);
+  return id;
+}
+
+/** The free product as an enrolment names it: valued at zero. */
+const PRICED = {
+  items: [
+    {
+      item_id: PRODUCT_ID,
+      item_name: "Roblox Studio Club",
+      item_category: "roblox_studio",
+      price: 0,
+      quantity: 1,
+    },
+  ],
+  value: 0,
+  currency: "EUR",
+};
+
+/** The same product as a queue place names it: no value at all. */
+const UNPRICED = {
+  items: [
+    {
+      item_id: PRODUCT_ID,
+      item_name: "Roblox Studio Club",
+      item_category: "roblox_studio",
+      quantity: 1,
+    },
+  ],
+};
+
 beforeEach(() => {
   createMutate.mockReset();
   waitlistMutate.mockReset();
@@ -284,7 +326,9 @@ describe("a paid signup is a checkout, not an enrolment", () => {
     // paying, and an abandoned checkout would train it as hard as a sale.
     expect(onlyEvent()).toEqual({
       event: "begin_checkout",
+      event_id: sentEventId(createMutate),
       outcome: "sent_to_checkout",
+      ecommerce: PRICED,
       advertised: true,
       page_path: PRODUCT_PATH,
     });
@@ -306,12 +350,31 @@ describe("a seat taken without paying is an enrolment", () => {
       participationId: PARTICIPATION_ID,
     });
 
+    // Under the id the route's report of the same seat went out under, so each
+    // platform counts the browser's event and the server's as one.
     expect(onlyEvent()).toEqual({
       event: "enrolment",
+      event_id: sentEventId(createMutate),
       outcome: "enrolled",
+      ecommerce: PRICED,
       advertised: true,
       page_path: PRODUCT_PATH,
     });
+  });
+
+  it("sends a fresh id with every attempt", () => {
+    const { container } = render(panel());
+    submit(container);
+    const { onError } = createMutate.mock.calls[0][1];
+    act(() => onError(new Error("network down")));
+    fireEvent.click(cta(container));
+
+    const [first, second] = createMutate.mock.calls.map(
+      ([input]) => asObject(input).eventId,
+    );
+    expect(first).toMatch(UUID);
+    expect(second).toMatch(UUID);
+    expect(first).not.toBe(second);
   });
 
   it("pushes a municipality club too, with the flag that says not to bid on it", () => {
@@ -377,9 +440,13 @@ describe("a place in the queue counts once", () => {
       idempotent: false,
     });
 
+    // A queue place carries no value, exactly as the route's report of it
+    // carries none, and it shares that report's id.
     expect(onlyEvent()).toEqual({
       event: "enrolment",
+      event_id: sentEventId(waitlistMutate),
       outcome: "waitlisted",
+      ecommerce: UNPRICED,
       advertised: true,
       page_path: PRODUCT_PATH,
     });
