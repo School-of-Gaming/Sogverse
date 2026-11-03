@@ -33,8 +33,8 @@
     "rocket_league": "Tuomme koneet kerralle, ja Rocket League on niissä valmiina. Jokainen osallistuja tarvitsee silti oman Epic Games -tilin. Käy alla oleva vaihe läpi ennen kertaa.",
     "roblox_studio": "Tuomme tietokoneet kerralle, ja Roblox Studio on niissä valmiina. Jokainen osallistuja tarvitsee silti oman Roblox-tilin. Käy alla oleva vaihe läpi ennen kertaa."
   },
-  "remoteOnlyIntro": "Kerroilla käytetään äänihuonetta. Käy alla oleva vaihe läpi ennen ensimmäistä kertaa.",
-  "hybridIntro": "Kerhoon voi osallistua joko paikan päällä tai etänä. Gedu eli pelikasvattaja ohjaa yhteistä toimintaa etäyhteydellä. Kaikki juttelevat toisilleen yhteisessä äänihuoneessa.",
+  "remoteOnlyIntro": "Kerroilla käytetään virtuaalihuonetta. Käy alla oleva vaihe läpi ennen ensimmäistä kertaa.",
+  "hybridIntro": "Kerhoon voi osallistua joko paikan päällä tai etänä. Gedu eli pelikasvattaja ohjaa yhteistä toimintaa etäyhteydellä. Kaikki juttelevat toisilleen yhteisessä virtuaalihuoneessa.",
   "homeHeading": "Osallistuminen kotoa käsin",
   "suppliedInPersonNote": "Kaikki tarvittava on valmiina. Sinun ei tarvitse tuoda omaa laitetta tai luoda pelitiliä etukäteen. Käyttämme järjestäjän laitteita ja tunnuksia.",
   "steps": {
@@ -130,11 +130,11 @@
     },
     "remoteSession": {
       "title": "Laita mikrofoni ja kamera kuntoon",
-      "body": "Tarvitset mikrofonin, jotta voit keskustella Gedun eli pelikasvattajan ja muiden ryhmäläisten kanssa. Kuulokkeet, joissa on mikrofoni, toimivat parhaiten, sillä ne vähentävät taustahälyä ja estävät pelisi ääniä kiertämästä takaisin muiden osallistujien kuulokkeisiin. Kerta pidetään äänihuoneessa, joka toimii nettiselaimessa. Voit liittyä tietokoneella, jolla pelaat, tai esimerkiksi puhelimella tai tabletilla. Kun liityt, nettiselaimesi pyytää lupaa käyttää mikrofonia. Salli käyttö, jotta muut kuulevat sinut. Sinun ei ole pakko pitää kameraa päällä, mutta saat käyttää sitä, jos haluat."
+      "body": "Tarvitset mikrofonin, jotta voit keskustella Gedun eli pelikasvattajan ja muiden ryhmäläisten kanssa. Kuulokkeet, joissa on mikrofoni, toimivat parhaiten, sillä ne vähentävät taustahälyä ja estävät pelisi ääniä kiertämästä takaisin muiden osallistujien kuulokkeisiin. Kerta pidetään virtuaalihuoneessa, joka toimii nettiselaimessa. Voit liittyä tietokoneella, jolla pelaat, tai esimerkiksi puhelimella tai tabletilla. Kun liityt, nettiselaimesi pyytää lupaa käyttää mikrofonia. Salli käyttö, jotta muut kuulevat sinut. Sinun ei ole pakko pitää kameraa päällä, mutta saat käyttää sitä, jos haluat."
     },
     "venueVoiceRoom": {
-      "title": "Äänihuoneeseen liittyminen paikan päällä",
-      "body": "Paikan päällä olevat osallistujat liittyvät ryhmän äänihuoneeseen Sogversessa joko paikan päällä olevalla tietokoneella tai halutessaan omalla laitteellaan. Kuulokkeita ei tarvita. Jokainen osallistuja tarvitsee keinon kirjautua sisään: jos hänellä ei vielä ole omia tunnuksia, vanhempi voi asettaa ne Oman SOGin Pelaajan asetuksista, jotta kenenkään ei tarvitse jakaa vanhemman tunnuksia."
+      "title": "Virtuaalihuoneeseen liittyminen paikan päällä",
+      "body": "Paikan päällä olevat osallistujat liittyvät ryhmän virtuaalihuoneeseen Sogversessa joko paikan päällä olevalla tietokoneella tai halutessaan omalla laitteellaan. Kuulokkeita ei tarvita. Jokainen osallistuja tarvitsee keinon kirjautua sisään: jos hänellä ei vielä ole omia tunnuksia, vanhempi voi asettaa ne Oman SOGin Pelaajan asetuksista, jotta kenenkään ei tarvitse jakaa vanhemman tunnuksia."
     }
   },
   "platformNotes": {

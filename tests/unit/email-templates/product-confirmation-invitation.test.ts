@@ -720,7 +720,7 @@ describe("where it happens", () => {
     );
     const notes = description(invitation!.ics);
     expect(notes).toContain("Sessions run at Kallion kirjasto.");
-    expect(notes).toContain("also joined online through the voice room");
+    expect(notes).toContain("also joined online through the virtual room");
   });
 
   it("says where an online club happens, which is My SOG", () => {
@@ -869,10 +869,10 @@ describe("what the entry's notes say", () => {
  */
 describe("every locale composes a whole document", () => {
   const PINNED: Record<string, string> = {
-    en: "the voice room opens",
-    fi: "äänihuone avautuu",
-    sv: "röstrummet öppnar",
-    fr: "le salon vocal ouvre",
+    en: "the virtual room opens",
+    fi: "virtuaalihuone avautuu",
+    sv: "virtuella rummet öppnar",
+    fr: "la salle virtuelle ouvre",
     tlh: "ghogh pa’",
   };
 

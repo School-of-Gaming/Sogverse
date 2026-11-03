@@ -10,10 +10,10 @@
   "unlockCamera": "Lås upp kamera",
   "sharerScreen": "{name}s skärm",
   "stopSharing": "Sluta dela",
-  "voiceRoom": "Röstrum",
+  "voiceRoom": "Virtuellt rum",
   "leave": "Lämna",
   "failedToJoinRoom": "Kunde inte gå med i rummet",
-  "notASogverseRoom": "Den här sessionen hålls inte i ett röstrum i Sogverse. Gå tillbaka för att se hur du ansluter.",
+  "notASogverseRoom": "Den här sessionen hålls inte i ett virtuellt rum i Sogverse. Gå tillbaka för att se hur du ansluter.",
   "sessionEnded": "Sessionen har avslutats",
   "disconnecting": "Kopplar från...",
   "connecting": "Ansluter...",
@@ -140,12 +140,12 @@
     },
     "notFound": {
       "title": "Rummet hittades inte",
-      "body": "Vi hittade inget röstrum med den här koden:",
+      "body": "Vi hittade inget virtuellt rum med den här koden:",
       "hint": "Kontrollera koden för stavfel. Bokstäverna och siffrorna måste stämma exakt.",
-      "createNew": "Skapa ett nytt röstrum"
+      "createNew": "Skapa ett nytt virtuellt rum"
     },
     "createPage": {
-      "title": "Starta ett direkt röstrum",
+      "title": "Starta ett direkt virtuellt rum",
       "subtitle": "Ett tryck → nytt rum & delbar länk. Använd för spontana en-mot-en-samtal eller Gedu-samordning utöver det schemalagda mötet.",
       "createButton": "Starta direkt rum",
       "creating": "Skapar…",

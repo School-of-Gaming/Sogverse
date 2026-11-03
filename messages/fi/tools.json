@@ -1,7 +1,7 @@
 {
   "uncertified": {
     "title": "Odottaa hyväksyntää",
-    "body": "Ylläpitäjän on hyväksyttävä Gedu-tilisi, ennen kuin voit avata äänihuoneita tai nollata Minecraft Education -salasanoja. Molemmat työkalut tulevat tähän näkyviin heti, kun tilisi on hyväksytty."
+    "body": "Ylläpitäjän on hyväksyttävä Gedu-tilisi, ennen kuin voit avata virtuaalihuoneita tai nollata Minecraft Education -salasanoja. Molemmat työkalut tulevat tähän näkyviin heti, kun tilisi on hyväksytty."
   },
   "minecraftPasswordReset": {
     "title": "Minecraft Education -salasanat",

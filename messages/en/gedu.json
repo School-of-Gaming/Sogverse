@@ -81,8 +81,8 @@
     "photosWhat": "Adds photos to the session report, or takes them off.",
     "substituteTitle": "Asking for a substitute",
     "substituteWhat": "Asks another Gedu to run this session in your place.",
-    "roomTitle": "Other groups’ voice rooms",
-    "roomWhat": "Joins another group’s voice room, to cover for its Gedu for a while.",
+    "roomTitle": "Other groups’ virtual rooms",
+    "roomWhat": "Joins another group’s virtual room, to cover for its Gedu for a while.",
     "screenShareTitle": "Sharing your screen",
     "screenShareWhat": "Shows your screen to everyone in the room.",
     "broadcastTitle": "Broadcasting",
@@ -310,7 +310,7 @@
     "items": {
       "certification": {
         "question": "What does certification mean, and what can I not do until then?",
-        "answer": "<p>Certification is an admin confirming your account is ready to work with children. Two things come before it: accepting your Gedu contract, and presenting a criminal record extract for working with children (rikosrekisteriote) that is less than six months old. You order the extract yourself from the Legal Register Centre. We keep no copy of it and record nothing out of it — only that an acceptable one was shown, and when. Your contract page shows where both of them stand.</p><p>Until you are certified you cannot be assigned to a group, and your Tools section stays closed: you cannot start an instant voice room, and you cannot reset Minecraft Education passwords. You also cannot email a session report to families or add photos to one.</p><p>Everything else is open now: signing in, My SOG, your profile and coverage areas, and reading and accepting the contract. Help is here whether or not you are certified — use the form above if you are waiting and want to know where you stand.</p>"
+        "answer": "<p>Certification is an admin confirming your account is ready to work with children. Two things come before it: accepting your Gedu contract, and presenting a criminal record extract for working with children (rikosrekisteriote) that is less than six months old. You order the extract yourself from the Legal Register Centre. We keep no copy of it and record nothing out of it — only that an acceptable one was shown, and when. Your contract page shows where both of them stand.</p><p>Until you are certified you cannot be assigned to a group, and your Tools section stays closed: you cannot start an instant virtual room, and you cannot reset Minecraft Education passwords. You also cannot email a session report to families or add photos to one.</p><p>Everything else is open now: signing in, My SOG, your profile and coverage areas, and reading and accepting the contract. Help is here whether or not you are certified — use the form above if you are waiting and want to know where you stand.</p>"
       },
       "groupAssignment": {
         "question": "How do I get assigned to a group?",
@@ -326,7 +326,7 @@
       },
       "safeguardingConcern": {
         "question": "I have a safeguarding concern mid-session — what do I do?",
-        "answer": "<p>Deal with the immediate situation first. In an online session you hold the moderator controls in the voice room: mute a microphone, lock it, or move someone into a private space away from the group. In person the product has no controls for this — you handle it in the room yourself. Either way, put it on record the same day, while it is fresh.</p><p>Every session has a staff note, marked for Gedus and admins, that families never see; it is where an incident, bullying or a worry about a gamer belongs. There is also a per-gamer note on the group roster that stays with that child in that group, session to session, and is likewise Gedu- and admin-only. Neither is visible to any family.</p><p>A note is a record, not an alert: nobody is paged by it, so anything urgent, or anything that needs someone beyond the group, goes to the office at {supportEmail} as well.</p>"
+        "answer": "<p>Deal with the immediate situation first. In an online session you hold the moderator controls in the virtual room: mute a microphone, lock it, or move someone into a private space away from the group. In person the product has no controls for this — you handle it in the room yourself. Either way, put it on record the same day, while it is fresh.</p><p>Every session has a staff note, marked for Gedus and admins, that families never see; it is where an incident, bullying or a worry about a gamer belongs. There is also a per-gamer note on the group roster that stays with that child in that group, session to session, and is likewise Gedu- and admin-only. Neither is visible to any family.</p><p>A note is a record, not an alert: nobody is paged by it, so anything urgent, or anything that needs someone beyond the group, goes to the office at {supportEmail} as well.</p>"
       },
       "gamerNotArrived": {
         "question": "A gamer has not arrived and the session has started — what can I do?",

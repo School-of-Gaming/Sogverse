@@ -211,7 +211,7 @@ describe("buildProductConfirmationEmail", () => {
 
     it("falls back to the sessions line where no first session is named", () => {
       expect(previewText(render(base))).toBe(
-        `Aino joins the sessions online in My SOG. The voice room opens ${VOICE_CONFIG.SESSION_WINDOW_BEFORE_MINUTES} minutes before each session starts.`,
+        `Aino joins the sessions online in My SOG. The virtual room opens ${VOICE_CONFIG.SESSION_WINDOW_BEFORE_MINUTES} minutes before each session starts.`,
       );
     });
 
@@ -561,12 +561,12 @@ describe("buildProductConfirmationEmail", () => {
 
     it("says how a remote seat joins, and when the voice room opens", () => {
       expect(render(base)).toContain(
-        `${styledName("Aino")} joins the sessions online in My SOG. The voice room opens ${minutes} minutes before each session starts.`,
+        `${styledName("Aino")} joins the sessions online in My SOG. The virtual room opens ${minutes} minutes before each session starts.`,
       );
     });
 
     it("takes the second person for the reader who is the participant", () => {
-      const self = `You join the sessions online in My SOG. The voice room opens ${minutes} minutes before each session starts.`;
+      const self = `You join the sessions online in My SOG. The virtual room opens ${minutes} minutes before each session starts.`;
       expect(render({ participantName: "Marja", isSelfSeat: true })).toContain(self);
       expect(render({ gamerCopy: true, priceAmount: null })).toContain(self);
     });
@@ -574,17 +574,17 @@ describe("buildProductConfirmationEmail", () => {
     it("tells a hybrid seat both where it attends and how the room is joined", () => {
       const html = render({ deliveryMode: "hybrid" });
       expect(html).toContain(
-        `${styledName("Aino")} attends the sessions in person at the site. The sessions are also joined online through the voice room in My SOG, which opens ${minutes} minutes before each session starts.`,
+        `${styledName("Aino")} attends the sessions in person at the site. The sessions are also joined online through the virtual room in My SOG, which opens ${minutes} minutes before each session starts.`,
       );
       expect(render({ deliveryMode: "hybrid", isSelfSeat: true })).toContain(
-        `You attend the sessions in person at the site. The sessions are also joined online through the voice room in My SOG, which opens ${minutes} minutes before each session starts.`,
+        `You attend the sessions in person at the site. The sessions are also joined online through the virtual room in My SOG, which opens ${minutes} minutes before each session starts.`,
       );
     });
 
     it("keeps the in-person bullet where the product is not remote", () => {
       const html = render({ deliveryMode: "in_person" });
       expect(html).toContain(`You’ll find ${styledName("Aino")}’s sessions under My SOG.`);
-      expect(html).not.toContain("voice room");
+      expect(html).not.toContain("virtual room");
       expect(render({ deliveryMode: "in_person", isSelfSeat: true })).toContain(
         "You’ll find your sessions under My SOG.",
       );
@@ -1036,7 +1036,7 @@ describe("the plain-text twin", () => {
       "Language: Finnish",
       "Price: €40.00 / month",
       "What happens next",
-      `- Aino joins the sessions online in My SOG. The voice room opens ${VOICE_CONFIG.SESSION_WINDOW_BEFORE_MINUTES} minutes before each session starts.`,
+      `- Aino joins the sessions online in My SOG. The virtual room opens ${VOICE_CONFIG.SESSION_WINDOW_BEFORE_MINUTES} minutes before each session starts.`,
       `Go to My SOG: ${DASHBOARD_URL}`,
       "Before the first session",
       `Questions? Just reply to this email, or write to ${SUPPORT_EMAIL}.`,

@@ -10,10 +10,10 @@
   "unlockCamera": "Déverrouiller la caméra",
   "sharerScreen": "Écran de {name}",
   "stopSharing": "Arrêter le partage",
-  "voiceRoom": "Salle vocale",
+  "voiceRoom": "Salle virtuelle",
   "leave": "Quitter",
   "failedToJoinRoom": "Impossible de rejoindre la salle",
-  "notASogverseRoom": "Cette session ne se tient pas dans une salle vocale Sogverse. Revenez en arrière pour voir comment la rejoindre.",
+  "notASogverseRoom": "Cette session ne se tient pas dans une salle virtuelle Sogverse. Revenez en arrière pour voir comment la rejoindre.",
   "sessionEnded": "La session est terminée",
   "disconnecting": "Déconnexion...",
   "connecting": "Connexion...",
@@ -140,12 +140,12 @@
     },
     "notFound": {
       "title": "Salle introuvable",
-      "body": "Nous n’avons trouvé aucune salle vocale avec ce code :",
+      "body": "Nous n’avons trouvé aucune salle virtuelle avec ce code :",
       "hint": "Vérifiez le code : lettres et chiffres doivent correspondre exactement.",
-      "createNew": "Créer une nouvelle salle vocale"
+      "createNew": "Créer une nouvelle salle virtuelle"
     },
     "createPage": {
-      "title": "Lancez une salle vocale en un clic",
+      "title": "Lancez une salle virtuelle en un clic",
       "subtitle": "Un clic → une salle toute neuve et un lien à partager. Idéal pour des échanges en tête-à-tête improvisés, ou pour la coordination entre gedus en dehors de la session programmée ou en complément.",
       "createButton": "Lancer une salle instantanée",
       "creating": "Création…",

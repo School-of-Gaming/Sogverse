@@ -33,8 +33,8 @@
     "rocket_league": "We bring the machines to the session, with Rocket League already installed. Each participant still needs their own Epic Games account. Please complete the step below before the session.",
     "roblox_studio": "We bring the computers to the session, with Roblox Studio already installed. Each participant still needs their own Roblox account. Please complete the step below before the session."
   },
-  "remoteOnlyIntro": "The sessions use a voice room. Please complete the step below before the first session.",
-  "hybridIntro": "Participants can join the club either at the venue or remotely. The Gedu, our word for a Game Educator, leads the shared activity remotely. Everyone talks to each other in a shared voice room.",
+  "remoteOnlyIntro": "The sessions use a virtual room. Please complete the step below before the first session.",
+  "hybridIntro": "Participants can join the club either at the venue or remotely. The Gedu, our word for a Game Educator, leads the shared activity remotely. Everyone talks to each other in a shared virtual room.",
   "homeHeading": "Joining from home",
   "suppliedInPersonNote": "Everything you need is ready. You do not need to bring your own device or create a game account in advance. We use the organiser’s devices and logins.",
   "steps": {
@@ -130,11 +130,11 @@
     },
     "remoteSession": {
       "title": "Set up the microphone and camera",
-      "body": "You need a microphone to talk with the rest of the group and your Gedu, our word for a Game Educator. A headset with a microphone works best: it reduces background noise and stops your game sound from echoing back into everyone else’s headphones. The session happens in a voice room that runs in a web browser. You can join on the computer you play on, or on another device such as a phone or tablet. When you join, your browser asks for permission to use the microphone. Allow it, so the others can hear you. You do not have to keep your camera on, but you are welcome to use it if you like."
+      "body": "You need a microphone to talk with the rest of the group and your Gedu, our word for a Game Educator. A headset with a microphone works best: it reduces background noise and stops your game sound from echoing back into everyone else’s headphones. The session happens in a virtual room that runs in a web browser. You can join on the computer you play on, or on another device such as a phone or tablet. When you join, your browser asks for permission to use the microphone. Allow it, so the others can hear you. You do not have to keep your camera on, but you are welcome to use it if you like."
     },
     "venueVoiceRoom": {
-      "title": "Join the voice room at the venue",
-      "body": "Participants at the venue join the group’s voice room in Sogverse, on a computer at the venue or on their own device if they prefer. No headset is needed. Each participant needs a way to sign in: if there is no sign-in of their own yet, a parent can set one up under Gamer settings in My SOG, so nobody has to share a parent’s login."
+      "title": "Join the virtual room at the venue",
+      "body": "Participants at the venue join the group’s virtual room in Sogverse, on a computer at the venue or on their own device if they prefer. No headset is needed. Each participant needs a way to sign in: if there is no sign-in of their own yet, a parent can set one up under Gamer settings in My SOG, so nobody has to share a parent’s login."
     }
   },
   "platformNotes": {

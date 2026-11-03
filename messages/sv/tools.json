@@ -1,7 +1,7 @@
 {
   "uncertified": {
     "title": "Inväntar certifiering",
-    "body": "En administratör måste certifiera ditt Gedu-konto innan du kan starta röstrum eller återställa lösenord för Minecraft Education. Båda verktygen dyker upp här så snart du är certifierad."
+    "body": "En administratör måste certifiera ditt Gedu-konto innan du kan starta virtuella rum eller återställa lösenord för Minecraft Education. Båda verktygen dyker upp här så snart du är certifierad."
   },
   "minecraftPasswordReset": {
     "title": "Lösenord för Minecraft Education",
