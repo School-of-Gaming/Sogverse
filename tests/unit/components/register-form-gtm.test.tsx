@@ -63,8 +63,24 @@ vi.mock("@/lib/gtm", () => ({
   pushGtmEvent: (event: unknown) => pushed(event),
 }));
 
+// Which product a redirect names is that helper's own subject; here it is only
+// asked, and answers with whatever the case sets.
+const signUpProduct = vi.hoisted(() => vi.fn());
+vi.mock("@/lib/gtm-sign-up", () => ({
+  gtmSignUpProduct: (redirect: unknown) => signUpProduct(redirect),
+}));
+
 import { RegisterForm } from "@/components/auth/register-form";
 import { ROUTES } from "@/lib/constants/routes";
+
+const UUID =
+  /^[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/;
+
+/** The id the form sent the route with. */
+function sentEventId(): unknown {
+  const [, init] = mockFetch.mock.calls[0];
+  return JSON.parse(String(init.body)).eventId;
+}
 
 const mockFetch = vi.fn();
 
@@ -115,19 +131,69 @@ beforeEach(() => {
     new Response(JSON.stringify({ userId: "u1" }), { status: 200 }),
   );
   mockSupabaseClient.auth.signInWithPassword.mockResolvedValue({ error: null });
+  signUpProduct.mockResolvedValue(null);
 });
 
 describe("a parent account that now exists", () => {
-  it("pushes sign_up naming the page it happened on, and nothing else", async () => {
+  it("pushes sign_up under the id the route was sent, naming no product", async () => {
     const form = renderForm();
 
     await form.submit();
 
-    // Nothing has been signed up *for*, so the event carries nothing but the
-    // page: there is no product, no price and no outcome to name yet.
+    // Nothing has been signed up *for*, and this sign-up started from no
+    // product page, so the event names none — and no price or outcome. Its id
+    // is the one the route's lead went out under, so each platform counts the
+    // account once.
+    const eventId = sentEventId();
+    expect(eventId).toMatch(UUID);
     expect(pushed.mock.calls).toEqual([
-      [{ event: "sign_up", page_path: ROUTES.register }],
+      [
+        {
+          event: "sign_up",
+          event_id: eventId,
+          ecommerce: null,
+          page_path: ROUTES.register,
+        },
+      ],
     ]);
+  });
+
+  it("names the product the sign-up started from when there is one", async () => {
+    const product = {
+      items: [
+        {
+          item_id: "8f0c1c55-6b0e-4a43-9d1a-2f4b8c7e9a10",
+          item_name: "Roblox Studio Club",
+          item_category: "roblox_studio",
+          quantity: 1,
+        },
+      ],
+    };
+    signUpProduct.mockResolvedValue(product);
+    const form = renderForm();
+
+    await form.submit();
+
+    expect(pushed.mock.calls[0][0]).toMatchObject({
+      event: "sign_up",
+      ecommerce: product,
+    });
+  });
+
+  it("sends a fresh id with every attempt", async () => {
+    mockFetch.mockResolvedValueOnce(
+      new Response(JSON.stringify({ error: "nope" }), { status: 400 }),
+    );
+    const form = renderForm();
+
+    await form.submit();
+    await form.submit();
+
+    const ids = mockFetch.mock.calls.map(
+      ([, init]) => JSON.parse(String(init.body)).eventId,
+    );
+    expect(ids).toHaveLength(2);
+    expect(ids[0]).not.toBe(ids[1]);
   });
 
   it("pushes before the sign-in, not after it", async () => {

@@ -1,13 +1,15 @@
 import { describe, expect, it } from "vitest";
 import {
   advertisedProductDetails,
+  conversionEventIdValue,
+  gtmEcommerce,
+  gtmMetaProduct,
   isAdvertisedProduct,
   isValidPixelId,
   isValidRedditPixelId,
   metaProductDetails,
-  PIXEL_EVENTS,
+  META_CONVERSION_EVENTS,
   REDDIT_CONVERSION_EVENTS,
-  REDDIT_PIXEL_EVENTS,
   redditProductDetails,
 } from "@/lib/marketing-events";
 import { Constants } from "@/types";
@@ -306,26 +308,150 @@ describe("advertisedProductDetails", () => {
 });
 
 /**
+ * What the browser pushes into `dataLayer` about a product: GA4's ecommerce
+ * object, stating exactly the facts each platform's own fields state — because
+ * a container tag builds Meta's and Reddit's browser events from it, and those
+ * are deduplicated against the server reports built from the other two.
+ */
+describe("gtmEcommerce", () => {
+  const ROBLOX_CLUB = {
+    id: "8f0c1c55-6b0e-4a43-9d1a-2f4b8c7e9a10",
+    topic: "roblox_studio" as const,
+    billing_mode: "paid" as const,
+    product_translations: [
+      { locale: "fi", name: "Roblox Studio -kerho" },
+      { locale: "en", name: "Roblox Studio Club" },
+    ],
+    product_prices: [{ currency: "eur", price_cents: 4900 }],
+  };
+
+  it("states the product's id, English name, topic and price", () => {
+    expect(gtmEcommerce(ROBLOX_CLUB, { priced: true })).toEqual({
+      items: [
+        {
+          item_id: ROBLOX_CLUB.id,
+          item_name: "Roblox Studio Club",
+          item_category: "roblox_studio",
+          price: 49,
+          quantity: 1,
+        },
+      ],
+      value: 49,
+      currency: "EUR",
+    });
+  });
+
+  it("is the same product each platform's fields describe", () => {
+    const gtm = gtmEcommerce(ROBLOX_CLUB, { priced: true });
+    const meta = metaProductDetails(ROBLOX_CLUB);
+    const reddit = redditProductDetails(ROBLOX_CLUB);
+
+    expect(gtm.items[0].item_id).toBe(meta.content_ids[0]);
+    expect(gtm.items[0].item_id).toBe(reddit.products[0].id);
+    expect(gtm.items[0].item_name).toBe(meta.content_name);
+    expect(gtm.items[0].item_category).toBe(meta.content_category);
+    expect([gtm.value, gtm.currency]).toEqual([meta.value, meta.currency]);
+  });
+
+  // A queue place and a lead: nobody has paid or committed to pay, so the
+  // browser's twin of those server reports must not state a price they drop.
+  it("states no value, currency or item price when unpriced", () => {
+    const unpriced = gtmEcommerce(ROBLOX_CLUB, { priced: false });
+
+    expect(unpriced).not.toHaveProperty("value");
+    expect(unpriced).not.toHaveProperty("currency");
+    expect(unpriced.items[0]).not.toHaveProperty("price");
+    expect(unpriced.items[0].item_id).toBe(ROBLOX_CLUB.id);
+  });
+
+  it("values a free product at zero", () => {
+    expect(
+      gtmEcommerce(
+        { ...ROBLOX_CLUB, billing_mode: "free", product_prices: [] },
+        { priced: true },
+      ),
+    ).toMatchObject({ value: 0, currency: "EUR", items: [{ price: 0 }] });
+  });
+
+  it("states no value for a paid product with no price in the currency", () => {
+    const missing = gtmEcommerce(
+      { ...ROBLOX_CLUB, product_prices: [] },
+      { priced: true },
+    );
+
+    expect(missing).not.toHaveProperty("value");
+    expect(missing.items[0]).not.toHaveProperty("price");
+  });
+});
+
+/**
+ * The object Meta's template takes whole from one variable. Read off the push's
+ * `ecommerce`, it must be exactly what the server's Meta report says about the
+ * same product, or a browser event and its twin describe it two ways.
+ */
+describe("gtmMetaProduct", () => {
+  const ROBLOX_CLUB = {
+    id: "8f0c1c55-6b0e-4a43-9d1a-2f4b8c7e9a10",
+    topic: "roblox_studio" as const,
+    billing_mode: "paid" as const,
+    product_translations: [
+      { locale: "fi", name: "Roblox Studio -kerho" },
+      { locale: "en", name: "Roblox Studio Club" },
+    ],
+    product_prices: [{ currency: "eur", price_cents: 4900 }],
+  };
+
+  it.each([
+    ["a priced club", ROBLOX_CLUB],
+    ["a free product", { ...ROBLOX_CLUB, billing_mode: "free" as const, product_prices: [] }],
+    ["a paid product with no price in the currency", { ...ROBLOX_CLUB, product_prices: [] }],
+  ])("is what the server tells Meta about %s", (_label, product) => {
+    expect(gtmMetaProduct(gtmEcommerce(product, { priced: true }))).toEqual(
+      metaProductDetails(product),
+    );
+  });
+
+  it("states no value or currency when the push is unpriced", () => {
+    const meta = gtmMetaProduct(gtmEcommerce(ROBLOX_CLUB, { priced: false }));
+
+    expect(meta).toEqual({
+      content_ids: [ROBLOX_CLUB.id],
+      content_type: "product",
+      content_name: "Roblox Studio Club",
+      content_category: "roblox_studio",
+    });
+  });
+});
+
+/**
+ * The id a request body carries for a conversion: a UUID or nothing. Anything
+ * else is a malformed request, never a value to pass through to a platform.
+ */
+describe("conversionEventIdValue", () => {
+  it("accepts a UUID and an absent id", () => {
+    expect(
+      conversionEventIdValue.safeParse("3f2b7c1e-9a4d-4e8b-b6c5-0d1e2f3a4b5c")
+        .success,
+    ).toBe(true);
+    expect(conversionEventIdValue.safeParse(undefined).success).toBe(true);
+  });
+
+  it("refuses anything that is not a UUID", () => {
+    for (const value of ["", "event-1", "<script>", 42, null]) {
+      expect(conversionEventIdValue.safeParse(value).success).toBe(false);
+    }
+  });
+});
+
+/**
  * Reddit gets every event Meta has, and the pairing is a decision: each
  * Reddit name is the closest standard event to the moment Meta's describes.
  */
 describe("the Reddit vocabulary", () => {
-  it("names the three browser events, beside Meta's", () => {
-    expect({
-      pageView: [PIXEL_EVENTS.pageView, REDDIT_PIXEL_EVENTS.pageView],
-      productView: [PIXEL_EVENTS.productView, REDDIT_PIXEL_EVENTS.productView],
-      checkout: [PIXEL_EVENTS.checkout, REDDIT_PIXEL_EVENTS.checkout],
-    }).toEqual({
-      pageView: ["PageView", "PageVisit"],
-      productView: ["ViewContent", "ViewContent"],
-      checkout: ["InitiateCheckout", "AddToCart"],
-    });
-  });
-
   it("names the two server conversions in the Conversions API's spelling", () => {
     expect({
-      accountCreated: [PIXEL_EVENTS.accountCreated, REDDIT_CONVERSION_EVENTS.accountCreated],
-      enrolment: [PIXEL_EVENTS.enrolment, REDDIT_CONVERSION_EVENTS.enrolment],
+      accountCreated: [META_CONVERSION_EVENTS.accountCreated, REDDIT_CONVERSION_EVENTS.accountCreated],
+      enrolment: [META_CONVERSION_EVENTS.enrolment, REDDIT_CONVERSION_EVENTS.enrolment],
     }).toEqual({
       accountCreated: ["Lead", "LEAD"],
       enrolment: ["CompleteRegistration", "SIGN_UP"],

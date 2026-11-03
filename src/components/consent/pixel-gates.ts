@@ -17,10 +17,11 @@ import { useAuth } from "@/providers/auth-provider";
 import { useConsent } from "./consent-provider";
 
 /**
- * The gates and the counting every browser pixel shares — the Meta Pixel's and
- * the Reddit Pixel's — so a gate added here is a gate on both. What differs
- * per vendor is only which id is configured and how its library is called,
- * and each pixel's component passes those in.
+ * The gates and the counting in front of every report the browser makes to an
+ * advertising platform — all of which now go through the Tag Manager
+ * container, whose Meta and Reddit tags are the browser pixels. Kept apart from
+ * the container's component because they are the policy and it is one caller:
+ * what a caller passes in is only what its loader needs and how it sends.
  */
 
 const subscribeToNothing = () => () => {};
@@ -74,11 +75,16 @@ export function useMayReachAdvertising(): boolean {
  * `send` is the vendor's awaiting reporter, which loads its library on first
  * need and re-reads the address bar once it has arrived. It must be a stable
  * function — a module-level one — since a new one would be a new effect.
+ *
+ * The gate is whatever the vendor's loader needs once the visitor-level gates
+ * have said yes — a pixel's id, or the container's id with the stored answer —
+ * and `null` otherwise. One that is not a string must be memoised, for the
+ * same reason `send` must be stable.
  */
-export function usePixelReportPerPage<Report>(
-  pixelId: string | null,
+export function usePixelReportPerPage<Gate, Report>(
+  pixelId: Gate | null,
   report: Report | null,
-  send: (pixelId: string, pathname: string, report: Report) => Promise<void>,
+  send: (pixelId: Gate, pathname: string, report: Report) => Promise<void>,
 ): void {
   const pathname = usePathname();
   /** The last pathname this effect has seen, reported or not. */
@@ -111,8 +117,8 @@ export function usePixelReportPerPage<Report>(
  * first four gates is shut; the allowlist is checked here and the address bar
  * by `sendNow`.
  */
-export function usePixelClickReport<Report>(
-  pixelId: string | null,
+export function usePixelClickReport<Gate, Report>(
+  pixelId: Gate | null,
   report: Report | null,
   sendNow: (pathname: string, report: Report) => boolean,
 ): () => void {

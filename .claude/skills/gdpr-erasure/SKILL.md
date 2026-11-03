@@ -59,12 +59,12 @@ dashboard (Audience → Profiles) and note every profile it finds. The account's
 profile carries the Sogverse profile id as its external ID. A profile another source made
 under the same address is usually that same profile, because the sync adopts it on its
 next run and writes the Sogverse id over its external ID, and the delete in step 3 takes it
-with the rest. **An address can still show two profiles**: one Eventbrite made, carrying
-Eventbrite's numeric external ID, beside the account's own. Klaviyo files a second profile
-when an import names a different external ID, and the sync made such pairs before it
-adopted (found 2026-11-03, merged by `scripts/merge-klaviyo-duplicate-parents.ts`). The
-sync deletes only the profile carrying the Sogverse id, so note any other one found under
-the current address as well. A separate newsletter-only
+with the rest. **An address can still show two profiles**: Klaviyo files a second profile
+when an import names a different external ID, and the sync deletes only the one carrying
+the Sogverse id, so note any other one found under the current address as well. Every
+production pair the sync made before it adopted was merged on 2026-11-03; what was left
+then were four profiles a staging account's events made under real addresses, carrying
+that staging account's id and no properties. A separate newsletter-only
 profile, with no external ID, exists only under a **different** address — typically one
 the parent used before changing their email in Sogverse, or another they signed up with:
 the sync never created it and does not know it exists, so step 3 leaves it standing. So

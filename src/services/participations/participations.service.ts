@@ -408,6 +408,12 @@ export type CreateParticipationInput = {
    * a caller has to state it.
    */
   schoolOfGamingMarketingOptIn: boolean | null;
+  /**
+   * The id the caller pushes its `enrolment` event under once this answers,
+   * minted fresh for every attempt — the route's conversion report for the
+   * same seat shares it, so each platform counts the two as one.
+   */
+  eventId: string;
 };
 
 /**
@@ -470,6 +476,8 @@ export type JoinWaitlistInput = {
   consentedDocuments: string[];
   /** The School of Gaming mailing answer — see `CreateParticipationInput`. */
   schoolOfGamingMarketingOptIn: boolean | null;
+  /** The conversion's shared id — see `CreateParticipationInput`. */
+  eventId: string;
 };
 
 /**

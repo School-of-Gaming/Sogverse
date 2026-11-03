@@ -1,6 +1,10 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
-import { cleanup, render } from "@testing-library/react";
+import { cleanup, fireEvent, render } from "@testing-library/react";
 import { ConsentProvider, GoogleTagManager } from "@/components/consent";
+import {
+  GtmProductView,
+  useGtmCheckoutStart,
+} from "@/components/consent/google-tag-manager";
 import type { ConsentState } from "@/lib/consent";
 
 /**
@@ -65,8 +69,14 @@ vi.mock("@/providers/auth-provider", () => ({
 const mockReport = vi.hoisted(() =>
   vi.fn((..._args: unknown[]) => Promise.resolve()),
 );
+const mockProductReport = vi.hoisted(() =>
+  vi.fn((..._args: unknown[]) => Promise.resolve()),
+);
+const mockPushNow = vi.hoisted(() => vi.fn((..._args: unknown[]) => true));
 vi.mock("@/lib/gtm", () => ({
   reportGtmPageView: (...args: unknown[]) => mockReport(...args),
+  reportGtmProductEvent: (...args: unknown[]) => mockProductReport(...args),
+  pushGtmProductEventNow: (...args: unknown[]) => mockPushNow(...args),
 }));
 
 const GRANTED_BOTH: ConsentState = {
@@ -251,5 +261,160 @@ describe("GoogleTagManager — what it loads", () => {
     navigate(rerender, "/shop/abc-123");
 
     expect(mockReport).toHaveBeenCalledTimes(3);
+  });
+});
+
+/**
+ * A product page's two events: the view, once per product page reached, and
+ * the click into the sign-up flow, once per page however often it is pressed.
+ * Both stand behind the same visitor-level gates as the page view, and both
+ * are pushed for every product with the advertising decision beside them.
+ */
+const PRODUCT_ID = "8f0c1c55-6b0e-4a43-9d1a-2f4b8c7e9a10";
+
+interface Product {
+  id: string;
+  product_type: "consumer_club" | "municipality_club";
+  billing_mode: "paid";
+  topic: "roblox_studio";
+  product_translations: { locale: string; name: string }[];
+  product_prices: { currency: string; price_cents: number }[];
+}
+
+const ROBLOX_CLUB: Product = {
+  id: PRODUCT_ID,
+  product_type: "consumer_club",
+  billing_mode: "paid",
+  topic: "roblox_studio",
+  product_translations: [{ locale: "en", name: "Roblox Studio Club" }],
+  product_prices: [{ currency: "eur", price_cents: 4900 }],
+};
+
+const ECOMMERCE = {
+  items: [
+    {
+      item_id: PRODUCT_ID,
+      item_name: "Roblox Studio Club",
+      item_category: "roblox_studio",
+      price: 49,
+      quantity: 1,
+    },
+  ],
+  value: 49,
+  currency: "EUR",
+};
+
+function renderProductView(
+  product: Product | null,
+  consent: ConsentState = GRANTED_BOTH,
+) {
+  const tree = (p: Product | null) => (
+    <ConsentProvider initial={consent}>
+      <GtmProductView product={p} />
+    </ConsentProvider>
+  );
+  const view = render(tree(product));
+  return { ...view, rerenderWith: (p: Product | null) => view.rerender(tree(p)) };
+}
+
+describe("GtmProductView", () => {
+  beforeEach(() => {
+    mockPathname.value = `/fi/kauppa/${PRODUCT_ID}`;
+  });
+
+  it("reports nothing until the product has been read, then reports it once", () => {
+    const { rerenderWith } = renderProductView(null);
+    expect(mockProductReport).not.toHaveBeenCalled();
+
+    rerenderWith(ROBLOX_CLUB);
+    rerenderWith({ ...ROBLOX_CLUB });
+
+    expect(mockProductReport).toHaveBeenCalledTimes(1);
+    expect(mockProductReport).toHaveBeenCalledWith(
+      { containerId: CONTAINER_ID, consent: GRANTED_BOTH },
+      `/fi/kauppa/${PRODUCT_ID}`,
+      { event: "view_item", ecommerce: ECOMMERCE, advertised: true },
+    );
+  });
+
+  // Analytics counts every product; an advertising tag reads the flag.
+  it("reports a product we do not advertise, saying so", () => {
+    renderProductView({ ...ROBLOX_CLUB, product_type: "municipality_club" });
+
+    expect(mockProductReport.mock.calls[0][2]).toMatchObject({
+      event: "view_item",
+      advertised: false,
+    });
+  });
+
+  it("reports nothing for a signed-in gamer", () => {
+    mockAuth.user = { id: "gamer-1" };
+    mockAuth.profile = { role: "gamer" };
+
+    renderProductView(ROBLOX_CLUB);
+
+    expect(mockProductReport).not.toHaveBeenCalled();
+  });
+
+  it("reports nothing without marketing consent", () => {
+    renderProductView(ROBLOX_CLUB, ANALYTICS_ONLY);
+
+    expect(mockProductReport).not.toHaveBeenCalled();
+  });
+});
+
+function CheckoutButton({ product }: { product: Product | null }) {
+  const report = useGtmCheckoutStart(product);
+  return <button onClick={report}>start</button>;
+}
+
+function renderCheckoutButton(product: Product | null = ROBLOX_CLUB) {
+  const view = render(
+    <ConsentProvider initial={GRANTED_BOTH}>
+      <CheckoutButton product={product} />
+    </ConsentProvider>,
+  );
+  const click = () => fireEvent.click(view.getByRole("button"));
+  return { ...view, click };
+}
+
+describe("useGtmCheckoutStart", () => {
+  beforeEach(() => {
+    mockPathname.value = `/shop/${PRODUCT_ID}`;
+  });
+
+  it("pushes add_to_cart from the click, once per page however often it is pressed", () => {
+    const { click } = renderCheckoutButton();
+
+    click();
+    click();
+
+    expect(mockPushNow).toHaveBeenCalledTimes(1);
+    expect(mockPushNow).toHaveBeenCalledWith(`/shop/${PRODUCT_ID}`, {
+      event: "add_to_cart",
+      ecommerce: ECOMMERCE,
+      advertised: true,
+    });
+  });
+
+  // A click that could not go out leaves the page's one report unspent.
+  it("tries again on the next click when the push did not go out", () => {
+    mockPushNow.mockReturnValueOnce(false);
+    const { click } = renderCheckoutButton();
+
+    click();
+    click();
+
+    expect(mockPushNow).toHaveBeenCalledTimes(2);
+  });
+
+  it("pushes nothing for a signed-in gamer", () => {
+    mockAuth.user = { id: "gamer-1" };
+    mockAuth.profile = { role: "gamer" };
+    const { click } = renderCheckoutButton();
+
+    click();
+
+    expect(mockPushNow).not.toHaveBeenCalled();
   });
 });

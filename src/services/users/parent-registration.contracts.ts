@@ -3,6 +3,7 @@ import { DISPLAY_NAME_MIN, DISPLAY_NAME_MAX } from "@/lib/constants/account-limi
 import { trimPersonName } from "@/lib/person-name-trim";
 import { SUPPORTED_LOCALES } from "@/lib/constants/locales";
 import { GAMER_EMAIL_DOMAIN } from "@/lib/gamer-sign-in";
+import { conversionEventIdValue } from "@/lib/marketing-events";
 
 /**
  * Request body for public parent self-registration (`POST /api/auth/register`).
@@ -100,6 +101,11 @@ export const registerParentBody = z.object({
    */
   redirect: z.string().optional(),
   /**
+   * The id the form pushes its `sign_up` event under, so the account-creation
+   * report shares it and each platform counts the two as one lead.
+   */
+  eventId: conversionEventIdValue,
+  /**
    * Whether the parent ticked the optional School of Gaming marketing box.
    *
    * **Optional, and absent means `false`** — a registration must never fail
@@ -177,6 +183,7 @@ export const completeParentRegistrationBody = registerParentBody.pick({
   homeLocationId: true,
   locale: true,
   redirect: true,
+  eventId: true,
   marketingConsent: true,
   acceptedTerms: true,
 });

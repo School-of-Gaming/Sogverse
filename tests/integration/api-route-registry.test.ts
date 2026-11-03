@@ -235,6 +235,7 @@ const TESTS = {
   partnerSessions: "tests/integration/api/partner-sessions.test.ts",
   partnerTraffic: "tests/integration/api/partner-traffic.test.ts",
   oauthConsent: "tests/integration/api/oauth-consent.test.ts",
+  pageEvents: "tests/integration/api/page-events.test.ts",
   pin: "tests/integration/auth/pin.test.ts",
   adminPublication: "tests/integration/api/admin-publication.test.ts",
   indexNowKey: "tests/integration/api/indexnow-key.test.ts",
@@ -1434,6 +1435,22 @@ const ROUTE_REGISTRY: Record<string, RouteEntry> = {
   "src/app/api/partner/v1/traffic/route.ts": {
     handlers: {
       GET: { posture: PARTNER_KEY, body: { kind: "none" }, test: TESTS.partnerTraffic },
+    },
+  },
+
+  // --- Page events (the browser's moments, reported from the server) --------
+
+  "src/app/api/page-events/route.ts": {
+    handlers: {
+      POST: {
+        posture: {
+          kind: "optional-auth",
+          reason:
+            "the server twin of a browser event on a public marketing page, which an anonymous visitor reaches as often as a parent, so no session can be required. The session is read only to refuse a gamer, and fails closed: a gamer's, or one whose claims or profile cannot be read, reports nothing. No report from this route names an account, whoever is signed in. Nothing in the body is trusted: the page is re-checked against the marketing-page allowlist, the product re-read through the anon client and refused unless advertised and on its own page, the source URL built from the trusted origin, and each reporter gates on the request's own consent cookie. It answers 204 to everything, at once, so it reveals nothing; what a forged request can do is send the platforms an event the same visitor's browser pixel could send itself",
+        },
+        body: { kind: "json", schema: "pageEventBody" },
+        test: TESTS.pageEvents,
+      },
     },
   },
 

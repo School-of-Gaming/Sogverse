@@ -14,7 +14,7 @@ import type { LocationPick } from "@/components/locations/location-picker-panel"
 import { ROUTES } from "@/lib/constants/routes";
 import { pushGtmEvent } from "@/lib/gtm";
 import { GTM_EVENTS } from "@/lib/gtm-events";
-import { isAdvertisedProduct } from "@/lib/marketing-events";
+import { gtmEcommerce, isAdvertisedProduct } from "@/lib/marketing-events";
 import { localizedLocationName } from "@/lib/locations/localized-name";
 import { useAuth } from "@/providers/auth-provider";
 import {
@@ -58,6 +58,9 @@ interface SignupPanelProps {
     | "product_type"
     | "billing_mode"
     | "product_prices"
+    // The two the marketing events' product fields need beside the ones above.
+    | "topic"
+    | "product_translations"
     | "for_gamers"
     // The two the deferred-first-charge line is derived from — see
     // `useSignupPanelFields`.
@@ -215,11 +218,10 @@ export function SignupPanel({
    * Where the marketing events say they happened: this product's own page, as a
    * concrete internal path rather than the `/shop/[id]` template.
    *
-   * The event carries no product of its own, so the path is the only place the
-   * product travels — collapsed to the template, every enrolment the shop has
-   * ever taken arrives as one undifferentiated row, and the first question
-   * anyone asks of the numbers ("which products are families signing up for?")
-   * has no answer in them. It is also the shape our servers already state for
+   * The event names its product in its own fields too, but a funnel is drawn
+   * across the pages events name, and collapsed to the template every product
+   * page would be one undifferentiated row — so a view and the enrolment that
+   * followed it could no longer meet. It is also the shape our servers already state for
    * the same moments on the advertising side. And it is the shape `page_path`
    * is defined to carry, which every push obeys — a funnel is only drawn across
    * events that name their page the same way, so it forks at whichever step
@@ -242,6 +244,15 @@ export function SignupPanel({
    * per-tag decision in the container.
    */
   const advertised = isAdvertisedProduct(product);
+
+  /**
+   * The product as every enrolment push names it, in the currency the parent
+   * is paying in — the one the route's own report prices it in. `priced: false`
+   * is a queue place, which carries no value here exactly as it carries none in
+   * the server's report of it.
+   */
+  const ecommerceFor = (priced: boolean) =>
+    gtmEcommerce(product, { priced, currency: fields.currency });
 
   /**
    * The documents the parent agreed to, in the product's own order.
@@ -337,6 +348,9 @@ export function SignupPanel({
     setSubmitError(null);
     setCommitting(true);
     recordConsentAnswers();
+    // One id per attempt, shared by the route's conversion report and the push
+    // below, so each platform counts the seat once; a retry is a new attempt.
+    const eventId = crypto.randomUUID();
     const input: CreateParticipationInput = {
       productId: product.id,
       // The parent's own id when they picked their own row. The route pins
@@ -350,6 +364,7 @@ export function SignupPanel({
       // School of Gaming's own box, which `recordConsentAnswers` above never
       // writes: its answer is stored on the row this request creates.
       schoolOfGamingMarketingOptIn: fields.schoolOfGamingMarketingOptIn,
+      eventId,
     };
     createMutation.mutate(input, {
       onSuccess: (response) => {
@@ -368,7 +383,9 @@ export function SignupPanel({
           // is configured, not something this call site can fix.
           pushGtmEvent({
             event: GTM_EVENTS.checkout,
+            event_id: eventId,
             outcome: "sent_to_checkout",
+            ecommerce: ecommerceFor(true),
             advertised,
             page_path: productPagePath,
           });
@@ -405,7 +422,11 @@ export function SignupPanel({
           // and a tag has as long as it likes.
           pushGtmEvent({
             event: GTM_EVENTS.enrolment,
+            // The id the route's report of this seat went out under, when it
+            // made one — a free seat on an advertised product.
+            event_id: eventId,
             outcome: "enrolled",
+            ecommerce: ecommerceFor(true),
             advertised,
             page_path: productPagePath,
           });
@@ -432,12 +453,16 @@ export function SignupPanel({
     setSubmitError(null);
     setCommitting(true);
     recordConsentAnswers();
+    // Shared with the route's report of the same place in line, as in the
+    // submit handler.
+    const eventId = crypto.randomUUID();
     waitlistMutation.mutate(
       {
         productId: product.id,
         participantId: fields.selectedParticipantId,
         consentedDocuments: consentedDocuments(),
         schoolOfGamingMarketingOptIn: fields.schoolOfGamingMarketingOptIn,
+        eventId,
       },
       {
         onSuccess: (response) => {
@@ -459,7 +484,9 @@ export function SignupPanel({
           if (response.status === "waitlisted" && !response.idempotent) {
             pushGtmEvent({
               event: GTM_EVENTS.enrolment,
+              event_id: eventId,
               outcome: "waitlisted",
+              ecommerce: ecommerceFor(false),
               advertised,
               page_path: productPagePath,
             });
