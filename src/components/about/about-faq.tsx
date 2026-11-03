@@ -63,7 +63,7 @@ interface AboutFaqProps {
  * They carry no links by design. The
  * footer already puts the support address on every public page, and pointing a
  * reader out of an answer is a decision to make per question, not a default.
- * The two answers that *name* that address take it as a `{supportEmail}` value
+ * The answers that *name* that address take it as a `{supportEmail}` value
  * rather than spelling it out — a literal in `messages/` is how the legal pages
  * once ended up with three different addresses across five languages — and it
  * still renders as text, not as a link.

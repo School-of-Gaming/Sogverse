@@ -166,6 +166,10 @@ brand material):
   and year, the family surname, and in some cases the child's own email.
 - That a Gedu can message a parent without seeing their contact details. A Gedu's roster
   shows the parent's address.
+- That report pictures are only ever in-game screenshots, never photos of children. Nothing
+  in the product limits what a Gedu attaches, and in-person clubs meet in rooms, so it is
+  not a rule we can state (Mikko, 3 Nov 2026). Say what is true: the pictures are of the
+  lesson rather than of one child, and only that group's families see them.
 
 **Advertising, said exactly** (checked against the code, 2 Nov 2026). True: nothing about a
 child reaches an advertising platform, and a child's browsing never does: the ad scripts
