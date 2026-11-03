@@ -126,8 +126,8 @@ export class AdminBusinessService {
   private readPrices() {
     return walkPages("businessPrices", (from, to) =>
       this.supabase
-        .from("product_subscription_prices")
-        .select("product_id, currency, unit_amount_cents", { count: "exact" })
+        .from("product_prices")
+        .select("product_id, currency, price_cents", { count: "exact" })
         .order("product_id")
         .order("currency")
         .range(from, to),

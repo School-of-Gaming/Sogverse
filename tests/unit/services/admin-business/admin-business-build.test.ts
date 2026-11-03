@@ -44,8 +44,8 @@ function facts(overrides: Partial<BusinessFacts> = {}): BusinessFacts {
     seats: [],
     subscriptions: [],
     prices: [
-      { product_id: "club", currency: "eur", unit_amount_cents: 4900 },
-      { product_id: "club2", currency: "eur", unit_amount_cents: 3900 },
+      { product_id: "club", currency: "eur", price_cents: 4900 },
+      { product_id: "club2", currency: "eur", price_cents: 3900 },
     ],
     payments: [],
     municipalityMonths: MONTHS.map((month) => ({ month, totalCents: 0, clubsWithoutFee: 0 })),

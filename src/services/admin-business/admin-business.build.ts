@@ -62,7 +62,7 @@ export type BusinessSubscriptionRow = Pick<
 export type BusinessPriceRow = {
   product_id: string;
   currency: string;
-  unit_amount_cents: number;
+  price_cents: number;
 };
 export type BusinessPaymentRow = Pick<
   Payment,
@@ -355,7 +355,7 @@ interface RecurringRevenue {
 function recurringRevenueAt(facts: BusinessFacts, at: number): RecurringRevenue {
   const seatProduct = new Map(facts.seats.map((seat) => [seat.id, seat.product_id]));
   const price = new Map(
-    facts.prices.map((row) => [`${row.product_id}:${row.currency}`, row.unit_amount_cents]),
+    facts.prices.map((row) => [`${row.product_id}:${row.currency}`, row.price_cents]),
   );
   const live = facts.subscriptions.filter((sub) => subscriptionLiveAt(sub, at));
   const priced: number[] = [];
