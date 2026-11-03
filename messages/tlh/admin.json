@@ -1976,18 +1976,27 @@
       }
     },
     "gedus": {
-      "heading": "Gedu HoS jar",
-      "caption": "Gedu wa’ puqpu’ ’ar ghaj jar? jenchoHchugh tlhegh, Gedu wISamlaHbogh law’ Daqmey wInobbogh law’ puS.",
-      "chart": "Gedu wa’vaD puqpu’ jar",
-      "month": "jar",
-      "rows": {
-        "teachingGedus": "Qu’ ta’bogh Gedu",
-        "seatsFilled": "Daq teblu’",
-        "seatsPerTeachingGedu": "Gedu wa’vaD puqpu’"
+      "heading": "Gedu wa’vaD Qujwi’pu’",
+      "caption": "ghom wa’Daq Gedu wa’ tlhop Qujwi’pu’ ’ar tu’lu’? jenchoHchugh tlhegh, Gedu wISamlaHbogh law’ ghommey tebbogh law’ puS.",
+      "chart": "Gedu wa’vaD Qujwi’pu’ jar",
+      "series": "Gedu wa’vaD Qujwi’pu’",
+      "now": {
+        "label": "DaH, Qu’ ta’taHvIS",
+        "detail": "{gamers} Qujwi’pu’, {gedus} Gedu",
+        "none": "Qu’ ta’taHbogh Gedu tu’lu’be’."
       },
+      "tooltip": "{sessions} ghom: {gamers} Qujwi’pu’, {gedus} Gedu",
       "noData": "De’ tu’lu’be’",
-      "startsFrom": "{month} Daqvo’ Gedu DIl qonlu’.",
-      "none": "jarmeyvam Gedu DIllu’be’."
+      "startsFrom": "{month} Daqvo’ ghom qonlu’.",
+      "none": "jarmeyvam ghom qonlu’be’.",
+      "recordedNote": "ghom qonlu’DI’ ghom mI’lu’.",
+      "staffingNote": "DaH Gedu ghom nab, Gedu ghom ghoS je; ghom mejbogh Gedu lIjlu’.",
+      "certified": {
+        "heading": "chaw’ ghajbogh Gedu",
+        "certified": "chaw’ ghaj",
+        "onRunning": "Qu’ ta’taH",
+        "notOnRunning": "Qu’ ta’be’"
+      }
     }
   },
   "testimonials": {

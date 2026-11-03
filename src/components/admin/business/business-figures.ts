@@ -1,7 +1,9 @@
 import type {
   BusinessEngagement,
   BusinessFigure,
+  BusinessGedus,
   EngagementSlice,
+  GeduMonth,
   RevenueMonth,
   SignupConversion,
 } from "@/services/admin-business/admin-business.build";
@@ -56,6 +58,30 @@ export function engagementShares(
  */
 export function hasUnattributedRevenue(months: readonly RevenueMonth[]): boolean {
   return months.some((month) => (month.unattributedCents ?? 0) > 0);
+}
+
+/** One month of the gamers-per-Gedu line, flat for the chart: null draws no point. */
+export interface GamersPerGeduPoint {
+  month: string;
+  gamersPerGedu: number | null;
+  sessions: number | null;
+  gamers: number | null;
+  gedus: number | null;
+}
+
+export function gamersPerGeduPoints(months: readonly GeduMonth[]): GamersPerGeduPoint[] {
+  return months.map(({ month, sessions, ratio }) => ({
+    month,
+    gamersPerGedu: ratio?.ratio ?? null,
+    sessions,
+    gamers: ratio?.gamers ?? null,
+    gedus: ratio?.gedus ?? null,
+  }));
+}
+
+/** Certified Gedus assigned to nothing running now. */
+export function certifiedNotOnRunning(certified: BusinessGedus["certified"]): number {
+  return certified.certified - certified.onRunningProduct;
 }
 
 /**

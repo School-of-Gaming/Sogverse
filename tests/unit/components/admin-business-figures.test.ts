@@ -1,6 +1,8 @@
 import { describe, expect, it } from "vitest";
 import {
+  certifiedNotOnRunning,
   engagementShares,
+  gamersPerGeduPoints,
   hasUnattributedRevenue,
   seriesStart,
   signupRate,
@@ -94,5 +96,25 @@ describe("seriesStart", () => {
 
   it("says there are no records when there is no first month", () => {
     expect(seriesStart(MONTHS, null)).toEqual({ kind: "none" });
+  });
+});
+
+describe("the gamers per Gedu line", () => {
+  it("draws no point for a month before records or with no gedu, and a point for the rest", () => {
+    expect(
+      gamersPerGeduPoints([
+        { month: "2025-12-01", sessions: null, ratio: null },
+        { month: "2026-01-01", sessions: 0, ratio: { gamers: 0, gedus: 0, ratio: null } },
+        { month: "2026-02-01", sessions: 3, ratio: { gamers: 12, gedus: 4, ratio: 3 } },
+      ]),
+    ).toEqual([
+      { month: "2025-12-01", gamersPerGedu: null, sessions: null, gamers: null, gedus: null },
+      { month: "2026-01-01", gamersPerGedu: null, sessions: 0, gamers: 0, gedus: 0 },
+      { month: "2026-02-01", gamersPerGedu: 3, sessions: 3, gamers: 12, gedus: 4 },
+    ]);
+  });
+
+  it("counts the certified Gedus on nothing running", () => {
+    expect(certifiedNotOnRunning({ certified: 9, onRunningProduct: 6 })).toBe(3);
   });
 });

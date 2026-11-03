@@ -1976,18 +1976,27 @@
       }
     },
     "gedus": {
-      "heading": "Gedujen kapasiteetti kuukausittain",
-      "caption": "Suunnilleen kuinka monta lasta kullakin Gedulla oli kuukauden aikana. Nouseva käyrä tarkoittaa, että myymme paikkoja nopeammin kuin saamme Geduja kerhoihin.",
-      "chart": "Lapsia Gedua kohden kuukausittain",
-      "month": "Kuukausi",
-      "rows": {
-        "teachingGedus": "Kerhokertoja pitäneet Gedut",
-        "seatsFilled": "Täytetyt paikat",
-        "seatsPerTeachingGedu": "Lapsia Gedua kohden"
+      "heading": "Gamereita Gedua kohden",
+      "caption": "Kuinka monta gameria yhdellä Gedulla oli keskimäärin kerhokerralla kuukauden aikana. Nouseva käyrä tarkoittaa, että ryhmät täyttyvät nopeammin kuin saamme lisää Geduja.",
+      "chart": "Gamereita Gedua kohden kuukausittain",
+      "series": "Gamereita Gedua kohden",
+      "now": {
+        "label": "Nyt käynnissä olevissa",
+        "detail": "{gamers, plural, one {# gamer} other {# gameria}} ryhmissä, joihin on nimetty {gedus, plural, one {# Gedu} other {# Gedua}}",
+        "none": "Yhtään Gedua ei ole nimetty mihinkään käynnissä olevaan."
       },
+      "tooltip": "{sessions, plural, one {# kerhokerta} other {# kerhokertaa}}: {gamers, plural, one {# gamer} other {# gameria}} ja {gedus, plural, one {# Gedu} other {# Gedua}}",
       "noData": "Ei tietoa",
-      "startsFrom": "Gedujen laskutuksen ensimmäinen kuukausi: {month}.",
-      "none": "Yhdellekään Gedulle ei maksettu kerhokerrasta näinä kuukausina."
+      "startsFrom": "Ensimmäinen kuukausi, jolta kerhokertoja on kirjattu: {month}.",
+      "none": "Näiltä kuukausilta ei ole kirjattu yhtään kerhokertaa.",
+      "recordedNote": "Kerhokerta lasketaan mukaan, kun siitä on kirjattu raportti, muistiinpano tai läsnäolo.",
+      "staffingNote": "Menneen kerhokerran Gedut luetaan ryhmien nykyisistä nimityksistä ja kerralle sovituista sijaisista, joten ryhmästä pois siirretty Gedu putoaa pois niiltä kuukausilta, joina hän piti ryhmää.",
+      "certified": {
+        "heading": "Sertifioidut Gedut",
+        "certified": "Sertifioituja",
+        "onRunning": "Nimetty käynnissä olevaan",
+        "notOnRunning": "Ei nimetty mihinkään käynnissä olevaan"
+      }
     }
   },
   "testimonials": {

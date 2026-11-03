@@ -25,8 +25,17 @@ const PRODUCTS: BusinessProductRow[] = [
   { id: "free", product_type: "camp", billing_mode: "free", start_date: "2026-01-01", end_date: "2026-12-01", timezone: "Europe/Helsinki" },
 ];
 
-function seat(id: string, customer: string, product: string, start: string, ended: string | null = null, participant = `${customer}-kid`): BusinessSeatRow {
-  return { id, customer_id: customer, participant_id: participant, product_id: product, signed_up_at: start, ended_at: ended };
+function seat(id: string, customer: string, product: string, start: string, ended: string | null = null, participant = `${customer}-kid`, group: { id: string; joined: string } | null = null): BusinessSeatRow {
+  return {
+    id,
+    customer_id: customer,
+    participant_id: participant,
+    product_id: product,
+    group_id: group?.id ?? null,
+    group_joined_at: group?.joined ?? null,
+    signed_up_at: start,
+    ended_at: ended,
+  };
 }
 
 function sub(customer: string, seatId: string, created: string, status: string, ended: string | null = null, currency = "eur"): BusinessSubscriptionRow {
@@ -49,7 +58,9 @@ function facts(overrides: Partial<BusinessFacts> = {}): BusinessFacts {
     ],
     payments: [],
     municipalityMonths: MONTHS.map((month) => ({ month, totalCents: 0, clubsWithoutFee: 0 })),
-    geduMonths: MONTHS.map((month) => ({ month, paidGeduIds: [] })),
+    geduMonths: MONTHS.map((month) => ({ month, sessions: [] })),
+    assignments: [],
+    geduProfiles: [],
     ...overrides,
   };
 }
@@ -337,42 +348,113 @@ describe("families by month", () => {
   });
 });
 
-describe("gedu capacity by month", () => {
-  it("counts paid gedus against seats held in the month, from the first month any gedu was paid", () => {
+describe("gamers per gedu", () => {
+  const gA = (joined: string) => ({ id: "gA", joined });
+  const gB = (joined: string) => ({ id: "gB", joined });
+  const SEATS = [
+    seat("a1", "a", "club", "2026-09-01T10:00:00Z", null, "kidA", gA("2026-09-01T10:00:00Z")),
+    // Joined on 10 October and left on 20 October.
+    seat("b1", "b", "club", "2026-10-10T10:00:00Z", "2026-10-20T10:00:00Z", "kidB", gA("2026-10-10T10:00:00Z")),
+    // A parent's own seat is never a gamer in front of a gedu.
+    seat("c1", "c", "club", "2026-09-01T10:00:00Z", null, "c", gA("2026-09-01T10:00:00Z")),
+    seat("d1", "d", "club2", "2026-09-01T10:00:00Z", null, "kidD", gB("2026-09-01T10:00:00Z")),
+    seat("e1", "e", "club2", "2026-09-01T10:00:00Z", null, "kidE", gB("2026-09-01T10:00:00Z")),
+    // Booked onto the club but in no group: in front of nobody.
+    seat("f1", "f", "club", "2026-09-01T10:00:00Z", null, "kidF"),
+  ];
+  const session = (groupId: string, productId: string, date: string, geduIds: string[]) => ({
+    groupId,
+    productId,
+    date,
+    geduIds,
+  });
+  const OCTOBER = [
+    session("gA", "club", "2026-10-05", ["g1"]),
+    session("gA", "club", "2026-10-15", ["g1", "g2"]),
+    session("gB", "club2", "2026-10-15", ["g3"]),
+    session("gA", "club", "2026-10-25", ["g1"]),
+  ];
+
+  it("sums each session's seated gamers over the gedus who ran it, from the first month with a session", () => {
     const overview = buildBusinessOverview(
       facts({
-        families: [family("a")],
-        seats: [
-          seat("a1", "a", "club", "2026-09-20T10:00:00Z", "2026-10-03T10:00:00Z"),
-          seat("a2", "a", "muni", "2026-10-15T10:00:00Z", null, "kid2"),
-        ],
+        seats: SEATS,
         geduMonths: MONTHS.map((month) => ({
           month,
-          paidGeduIds: month === "2026-10-01" ? ["g1", "g2"] : [],
+          sessions: month === "2026-10-01" ? OCTOBER : [],
         })),
       }),
       NOW,
     );
     const byMonth = new Map(overview.gedus.months.map((m) => [m.month, m]));
     expect(overview.gedus.recordsBeginMonth).toBe("2026-10-01");
-    expect(byMonth.get("2026-09-01")).toEqual({
-      month: "2026-09-01",
-      teachingGedus: null,
-      seatsFilled: 1,
-      seatsPerTeachingGedu: null,
-    });
+    expect(byMonth.get("2026-09-01")).toEqual({ month: "2026-09-01", sessions: null, ratio: null });
+    // gA on the 5th: kidA. On the 15th: kidA and kidB, two gedus. gB on the
+    // 15th: kidD and kidE. gA on the 25th: kidA, kidB having left.
     expect(byMonth.get("2026-10-01")).toEqual({
       month: "2026-10-01",
-      teachingGedus: 2,
-      seatsFilled: 2,
-      seatsPerTeachingGedu: 1,
+      sessions: 4,
+      ratio: { gamers: 6, gedus: 5, ratio: 6 / 5 },
     });
+    // After records begin, a month with no session has a count of none and no ratio.
     expect(byMonth.get("2026-11-01")).toEqual({
       month: "2026-11-01",
-      teachingGedus: 0,
-      seatsFilled: 1,
-      seatsPerTeachingGedu: null,
+      sessions: 0,
+      ratio: { gamers: 0, gedus: 0, ratio: null },
     });
+  });
+
+  it("seats a gamer on the session's whole product-local day, from the day they joined the group", () => {
+    const at = (date: string) =>
+      buildBusinessOverview(
+        facts({
+          seats: [
+            // Joined at 00:30 on 10 October in Helsinki, still the 9th in UTC.
+            seat("b1", "b", "club", "2026-10-01T10:00:00Z", null, "kidB", gA("2026-10-09T21:30:00Z")),
+          ],
+          geduMonths: MONTHS.map((month) => ({
+            month,
+            sessions: month === "2026-10-01" ? [session("gA", "club", date, ["g1"])] : [],
+          })),
+        }),
+        NOW,
+      ).gedus.months.find((m) => m.month === "2026-10-01")?.ratio?.gamers;
+    expect(at("2026-10-09")).toBe(0);
+    expect(at("2026-10-10")).toBe(1);
+  });
+
+  it("reads now over the groups of running products that have a gedu, and counts certified gedus on them", () => {
+    const AUTUMN: BusinessProductRow = { id: "autumn", product_type: "camp", billing_mode: "paid", start_date: "2026-11-05", end_date: "2026-11-08", timezone: "Europe/Helsinki" };
+    const overview = buildBusinessOverview(
+      facts({
+        products: [...PRODUCTS, AUTUMN],
+        seats: [
+          ...SEATS,
+          // A group of a running club with nobody assigned is left out.
+          seat("h1", "h", "club2", "2026-09-01T10:00:00Z", null, "kidH", { id: "gUnstaffed", joined: "2026-09-01T10:00:00Z" }),
+        ],
+        assignments: [
+          { gedu_id: "g1", group_id: "gA", product_id: "club" },
+          { gedu_id: "g2", group_id: "gA", product_id: "club" },
+          { gedu_id: "g3", group_id: "gB", product_id: "club2" },
+          // The summer camp is over, and the autumn one has not begun.
+          { gedu_id: "g4", group_id: "gCamp", product_id: "camp" },
+          { gedu_id: "g5", group_id: "gAutumn", product_id: "autumn" },
+        ],
+        geduProfiles: [
+          { user_id: "g1", certified: true },
+          { user_id: "g2", certified: false },
+          { user_id: "g3", certified: true },
+          { user_id: "g4", certified: true },
+          { user_id: "g5", certified: true },
+          { user_id: "g6", certified: false },
+        ],
+      }),
+      NOW,
+    );
+    // gA now: kidA (kidB left, c is a parent). gB: kidD and kidE.
+    expect(overview.gedus.now).toEqual({ gamers: 3, gedus: 3, ratio: 1 });
+    expect(overview.gedus.certified).toEqual({ certified: 4, onRunningProduct: 2 });
   });
 });
 
@@ -395,9 +477,22 @@ describe("a seat's span starts no earlier than its product", () => {
     );
     expect(overview.headline.gamersInSeat).toEqual({ now: 0, endOfLastMonth: 0 });
     expect(overview.headline.payingFamilies).toEqual({ now: 0, endOfLastMonth: 0 });
-    // October, the month it was booked in, staffed nobody for it.
-    const byMonth = new Map(overview.gedus.months.map((m) => [m.month, m.seatsFilled]));
-    expect(byMonth.get("2026-10-01")).toBe(0);
+  });
+
+  it("seats nobody in front of a gedu before the product's first day", () => {
+    const overview = buildBusinessOverview(
+      facts({
+        products,
+        seats: [seat("a1", "a", "autumn", "2026-10-05T10:00:00Z", null, "kidA", { id: "gAutumn", joined: "2026-10-05T10:00:00Z" })],
+        geduMonths: MONTHS.map((month) => ({
+          month,
+          // A session stored ahead of the run, the day before it begins.
+          sessions: month === "2026-11-01" ? [{ groupId: "gAutumn", productId: "autumn", date: "2026-11-04", geduIds: ["g1"] }] : [],
+        })),
+      }),
+      NOW,
+    );
+    expect(overview.gedus.months.at(-1)?.ratio).toEqual({ gamers: 0, gedus: 1, ratio: 0 });
   });
 
   it("holds it from midnight of its first day in the product's zone", () => {
@@ -425,9 +520,6 @@ describe("a seat's span starts no earlier than its product", () => {
       NOW,
     );
     expect(overview.headline.gamersInSeat).toEqual({ now: 1, endOfLastMonth: 0 });
-    const byMonth = new Map(overview.gedus.months.map((m) => [m.month, m.seatsFilled]));
-    expect(byMonth.get("2026-10-01")).toBe(0);
-    expect(byMonth.get("2026-11-01")).toBe(1);
   });
 
   it("counts a club seat from its term's start, and its family's first seat from the booking", () => {
@@ -440,7 +532,6 @@ describe("a seat's span starts no earlier than its product", () => {
       NOW,
     );
     expect(overview.headline.payingFamilies.now).toBe(0);
-    expect(overview.gedus.months.every((m) => m.seatsFilled === 0)).toBe(true);
     const firstSeats = new Map(overview.families.map((m) => [m.month, m.firstSeats]));
     expect(firstSeats.get("2026-10-01")).toBe(1);
     expect(overview.headline.signupToSeat.now).toEqual({ registered: 1, seated: 1 });

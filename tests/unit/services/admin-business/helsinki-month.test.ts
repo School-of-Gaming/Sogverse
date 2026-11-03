@@ -1,6 +1,5 @@
 import { describe, expect, it } from "vitest";
 import {
-  helsinkiMonthEnd,
   helsinkiMonthOf,
   helsinkiMonthStart,
   recentHelsinkiMonths,
@@ -21,14 +20,6 @@ describe("Helsinki months", () => {
     expect(helsinkiMonthStart("2026-04-01").toISOString()).toBe("2026-03-31T21:00:00.000Z");
     // After the autumn change: winter time again.
     expect(helsinkiMonthStart("2026-11-01").toISOString()).toBe("2026-10-31T22:00:00.000Z");
-  });
-
-  it("ends a month where the next begins, so a DST month is an hour short or long", () => {
-    const march = helsinkiMonthEnd("2026-03-01").getTime() - helsinkiMonthStart("2026-03-01").getTime();
-    const october = helsinkiMonthEnd("2026-10-01").getTime() - helsinkiMonthStart("2026-10-01").getTime();
-    const hour = 3_600_000;
-    expect(march).toBe(31 * 24 * hour - hour);
-    expect(october).toBe(31 * 24 * hour + hour);
   });
 
   it("lists the recent months ascending, ending with the one in progress, across a year", () => {

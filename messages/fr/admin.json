@@ -1976,18 +1976,27 @@
       }
     },
     "gedus": {
-      "heading": "Capacité des Gedus par mois",
-      "caption": "Le nombre approximatif d’enfants pris en charge par chaque Gedu ce mois-là. Une courbe qui monte signifie que nous vendons des places plus vite que nous ne trouvons de Gedus pour les encadrer.",
-      "chart": "Enfants par Gedu par mois",
-      "month": "Mois",
-      "rows": {
-        "teachingGedus": "Gedus ayant animé des séances",
-        "seatsFilled": "Places occupées",
-        "seatsPerTeachingGedu": "Enfants par Gedu"
+      "heading": "Joueurs par Gedu",
+      "caption": "En moyenne, le nombre de joueurs qu’un Gedu avait devant lui lors d’une séance ce mois-là. Une courbe qui monte signifie que les groupes se remplissent plus vite que nous n’ajoutons de Gedus.",
+      "chart": "Joueurs par Gedu par mois",
+      "series": "Joueurs par Gedu",
+      "now": {
+        "label": "En ce moment, sur ce qui est en cours",
+        "detail": "{gamers, plural, one {# joueur} other {# joueurs}} dans des groupes avec {gedus, plural, one {# Gedu affecté} other {# Gedus affectés}}",
+        "none": "Aucun Gedu n’est affecté à quoi que ce soit en cours."
       },
+      "tooltip": "{sessions, plural, one {# séance} other {# séances}} : {gamers, plural, one {# joueur} other {# joueurs}} et {gedus, plural, one {# Gedu} other {# Gedus}}",
       "noData": "Aucune donnée",
-      "startsFrom": "La facturation des Gedus a des données depuis {month}.",
-      "none": "Aucun Gedu n’a été payé pour une séance sur ces mois."
+      "startsFrom": "Les séances sont enregistrées depuis {month}.",
+      "none": "Aucune séance n’a été enregistrée sur ces mois.",
+      "recordedNote": "Une séance compte dès qu’un compte rendu, une note ou les présences y ont été enregistrés.",
+      "staffingNote": "Les Gedus d’une séance passée sont lus dans les affectations actuelles des groupes et les remplaçants réservés pour elle : un Gedu retiré d’un groupe disparaît des mois où il l’animait.",
+      "certified": {
+        "heading": "Gedus certifiés",
+        "certified": "Certifiés",
+        "onRunning": "Affectés à ce qui est en cours",
+        "notOnRunning": "Sans affectation en cours"
+      }
     }
   },
   "testimonials": {

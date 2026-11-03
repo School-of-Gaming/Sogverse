@@ -1,16 +1,18 @@
 import { fromZonedTime } from "date-fns-tz";
 import { endDateToCutoff } from "@/lib/session-occurrence";
 import { sumCents } from "@/lib/money";
+import { effectiveStatus } from "@/lib/products/effective-status";
 import type {
   BillingMode,
   FamilySubscription,
+  GeduGroupAssignment,
+  GeduProfile,
   Participation,
   Payment,
   Product,
   ProductType,
 } from "@/types";
 import {
-  helsinkiMonthEnd,
   helsinkiMonthOf,
   helsinkiMonthStart,
   recentHelsinkiMonths,
@@ -54,7 +56,14 @@ export type BusinessProductRow = Pick<
 >;
 export type BusinessSeatRow = Pick<
   Participation,
-  "id" | "customer_id" | "participant_id" | "product_id" | "signed_up_at" | "ended_at"
+  | "id"
+  | "customer_id"
+  | "participant_id"
+  | "product_id"
+  | "group_id"
+  | "group_joined_at"
+  | "signed_up_at"
+  | "ended_at"
 >;
 export type BusinessSubscriptionRow = Pick<
   FamilySubscription,
@@ -77,10 +86,27 @@ export interface MunicipalityMonthTotal {
   clubsWithoutFee: number;
 }
 
-/** One month of the gedu invoicing page's own build: who was paid for a session. */
-export interface GeduMonthTeaching {
+export type BusinessAssignmentRow = Pick<GeduGroupAssignment, "gedu_id" | "group_id" | "product_id">;
+export type BusinessGeduProfileRow = Pick<GeduProfile, "user_id" | "certified">;
+
+/**
+ * A group session that ran, as the gedu invoicing page's own build reads it:
+ * a stored session on a date that has arrived, not cancelled and not on a
+ * holiday, with every gedu that build pays for it.
+ */
+export interface HeldSession {
+  groupId: string;
+  productId: string;
+  /** The product-local calendar date, `YYYY-MM-DD`. */
+  date: string;
+  /** Never empty: a session nobody is paid for names no gedu and is not read. */
+  geduIds: readonly string[];
+}
+
+/** One month of the gedu invoicing build: the sessions held in it. */
+export interface GeduMonthSessions {
   month: string;
-  paidGeduIds: readonly string[];
+  sessions: readonly HeldSession[];
 }
 
 export interface BusinessFacts {
@@ -96,7 +122,11 @@ export interface BusinessFacts {
   /** One per month of the window, from the municipality invoicing build. */
   municipalityMonths: readonly MunicipalityMonthTotal[];
   /** One per month of the window, from the gedu invoicing build. */
-  geduMonths: readonly GeduMonthTeaching[];
+  geduMonths: readonly GeduMonthSessions[];
+  /** Every gedu's group assignment, as it stands now. */
+  assignments: readonly BusinessAssignmentRow[];
+  /** Every gedu's profile, for whether they are certified. */
+  geduProfiles: readonly BusinessGeduProfileRow[];
 }
 
 // ---------------------------------------------------------------------------
@@ -188,20 +218,34 @@ export interface FamilyMonth {
   stoppedPaying: number;
 }
 
+/**
+ * Gamers in front of gedus: a sum of gamers over a sum of gedus, both summed
+ * over the same groups — a month's sessions, or the groups running now.
+ */
+export interface GamersPerGedu {
+  /** Gamers seated in each group, summed over the groups. */
+  gamers: number;
+  /** Gedus on each group, summed over the groups. */
+  gedus: number;
+  /** `gamers / gedus`, null when no gedu is counted. */
+  ratio: number | null;
+}
+
 export interface GeduMonth {
   month: string;
-  /** Gedus paid for at least one session. Null before `recordsBeginMonth`. */
-  teachingGedus: number | null;
-  /** Seats held at any moment of the month. */
-  seatsFilled: number;
-  /** `seatsFilled / teachingGedus`, null when no gedu taught. */
-  seatsPerTeachingGedu: number | null;
+  /** Sessions held. Null before `recordsBeginMonth`, as is `ratio`. */
+  sessions: number | null;
+  ratio: GamersPerGedu | null;
 }
 
 export interface BusinessGedus {
   months: readonly GeduMonth[];
-  /** The first month of the window in which any gedu was paid for a session, or null. */
+  /** The first month of the window in which any session was held, or null. */
   recordsBeginMonth: string | null;
+  /** Over the groups of products running now that have a gedu assigned. */
+  now: GamersPerGedu;
+  /** Certified gedus now, and how many of them are assigned to a product running now. */
+  certified: { certified: number; onRunningProduct: number };
 }
 
 export interface BusinessOverview {
@@ -230,6 +274,10 @@ export interface BusinessOverview {
 export interface SeatSpan {
   customerId: string;
   participantId: string;
+  /** The seat's group now, or the one it ended in; null for a seat in none. */
+  groupId: string | null;
+  /** When the seat entered that group; null exactly when `groupId` is. */
+  groupJoinedAt: number | null;
   productType: ProductType;
   billingMode: BillingMode;
   signedUpAt: number;
@@ -265,6 +313,8 @@ export function seatSpans(
       {
         customerId: seat.customer_id,
         participantId: seat.participant_id,
+        groupId: seat.group_id,
+        groupJoinedAt: seat.group_joined_at === null ? null : Date.parse(seat.group_joined_at),
         productType: product.product_type,
         billingMode: product.billing_mode,
         signedUpAt,
@@ -570,36 +620,128 @@ function familiesByMonth(
 }
 
 // ---------------------------------------------------------------------------
-// Gedu capacity by month
+// Gamers per gedu
 // ---------------------------------------------------------------------------
 
-function gedusByMonth(
+function ratioOf(gamers: number, gedus: number): GamersPerGedu {
+  return { gamers, gedus, ratio: gedus === 0 ? null : gamers / gedus };
+}
+
+/** The calendar day after a `YYYY-MM-DD` date, by UTC-pinned arithmetic. */
+function nextDate(date: string): string {
+  const [year, month, day] = date.split("-").map(Number);
+  const next = new Date(Date.UTC(year, month - 1, day + 1));
+  const pad = (n: number) => String(n).padStart(2, "0");
+  return `${next.getUTCFullYear()}-${pad(next.getUTCMonth() + 1)}-${pad(next.getUTCDate())}`;
+}
+
+/**
+ * The gamers seated in a group on a session's date: a gamer's seat in that
+ * group held at any moment of the product-local day. A seat is in its group
+ * from when it joined it, and a move between groups keeps only the latest, so
+ * a gamer who moved counts in their present group from the day they moved and
+ * in their earlier one not at all.
+ */
+function gamersAtSession(
+  session: HeldSession,
+  spansByGroup: ReadonlyMap<string, readonly SeatSpan[]>,
+  products: ReadonlyMap<string, BusinessProductRow>,
+): number {
+  const product = products.get(session.productId);
+  if (product === undefined) {
+    throw new Error(`A session of group ${session.groupId} names product ${session.productId}, which was not read`);
+  }
+  const from = fromZonedTime(`${session.date}T00:00:00`, product.timezone).getTime();
+  const to = fromZonedTime(`${nextDate(session.date)}T00:00:00`, product.timezone).getTime();
+  const seated = (spansByGroup.get(session.groupId) ?? []).filter(
+    (span) =>
+      span.participantId !== span.customerId &&
+      span.groupJoinedAt !== null &&
+      span.groupJoinedAt < to &&
+      overlaps(span, from, to),
+  );
+  return new Set(seated.map((span) => span.participantId)).size;
+}
+
+/**
+ * The groups of products running now that have a gedu assigned: their gamers
+ * seated now over their assignments. A group nobody is assigned to is left
+ * out, as a session no gedu is paid for is left out of the months.
+ */
+function gamersPerGeduNow(
+  facts: BusinessFacts,
+  spansByGroup: ReadonlyMap<string, readonly SeatSpan[]>,
+  running: ReadonlySet<string>,
+  now: number,
+): GamersPerGedu {
+  const assignedByGroup = groupBy(
+    facts.assignments.filter((row) => running.has(row.product_id)),
+    (row) => row.group_id,
+  );
+  let gamers = 0;
+  let gedus = 0;
+  for (const [groupId, assigned] of assignedByGroup) {
+    gedus += assigned.length;
+    gamers += new Set(
+      (spansByGroup.get(groupId) ?? [])
+        .filter((span) => span.participantId !== span.customerId && heldAt(span, now))
+        .map((span) => span.participantId),
+    ).size;
+  }
+  return ratioOf(gamers, gedus);
+}
+
+function gedusOf(
   facts: BusinessFacts,
   spans: readonly SeatSpan[],
   months: readonly string[],
+  now: Date,
 ): BusinessGedus {
-  const teaching = new Map(facts.geduMonths.map((m) => [m.month, m.paidGeduIds.length]));
-  const anyPaid = new Set(
-    facts.geduMonths.filter((m) => m.paidGeduIds.length > 0).map((m) => m.month),
+  const products = new Map(facts.products.map((product) => [product.id, product]));
+  const spansByGroup = new Map<string, SeatSpan[]>();
+  for (const span of spans) {
+    if (span.groupId === null) continue;
+    const group = spansByGroup.get(span.groupId);
+    if (group === undefined) spansByGroup.set(span.groupId, [span]);
+    else group.push(span);
+  }
+  const sessionsByMonth = new Map(facts.geduMonths.map((m) => [m.month, m.sessions]));
+  const recordsBeginMonth =
+    months.find((month) => (sessionsByMonth.get(month)?.length ?? 0) > 0) ?? null;
+
+  // Running by the app's own derived status: a product not yet begun has
+  // nobody in front of a gedu, and a finished one no longer does.
+  const running = new Set(
+    facts.products
+      .filter((product) => effectiveStatus(product, now) === "running")
+      .map((product) => product.id),
   );
-  const recordsBeginMonth = months.find((month) => anyPaid.has(month)) ?? null;
+  const onRunning = new Set(
+    facts.assignments.filter((row) => running.has(row.product_id)).map((row) => row.gedu_id),
+  );
+  const certified = facts.geduProfiles.filter((profile) => profile.certified);
 
   return {
     months: months.map((month) => {
-      const taught = teaching.get(month);
-      if (taught === undefined) throw new Error(`No gedu invoicing month for ${month}`);
-      const from = helsinkiMonthStart(month).getTime();
-      const to = helsinkiMonthEnd(month).getTime();
-      const seatsFilled = spans.filter((span) => overlaps(span, from, to)).length;
-      const recorded = recordsBeginMonth !== null && month >= recordsBeginMonth;
-      return {
-        month,
-        teachingGedus: recorded ? taught : null,
-        seatsFilled,
-        seatsPerTeachingGedu: recorded && taught > 0 ? seatsFilled / taught : null,
-      };
+      const sessions = sessionsByMonth.get(month);
+      if (sessions === undefined) throw new Error(`No gedu invoicing month for ${month}`);
+      if (recordsBeginMonth === null || month < recordsBeginMonth) {
+        return { month, sessions: null, ratio: null };
+      }
+      let gamers = 0;
+      let gedus = 0;
+      for (const session of sessions) {
+        gamers += gamersAtSession(session, spansByGroup, products);
+        gedus += session.geduIds.length;
+      }
+      return { month, sessions: sessions.length, ratio: ratioOf(gamers, gedus) };
     }),
     recordsBeginMonth,
+    now: gamersPerGeduNow(facts, spansByGroup, running, now.getTime()),
+    certified: {
+      certified: certified.length,
+      onRunningProduct: certified.filter((profile) => onRunning.has(profile.user_id)).length,
+    },
   };
 }
 
@@ -657,6 +799,6 @@ export function buildBusinessOverview(facts: BusinessFacts, now: Date): Business
     engagement: engagementOf(facts, spans, nowMs),
     revenue: revenueOf(facts, months),
     families: familiesByMonth(facts, firstSeatByFamily, months, nowMs),
-    gedus: gedusByMonth(facts, spans, months),
+    gedus: gedusOf(facts, spans, months, now),
   };
 }

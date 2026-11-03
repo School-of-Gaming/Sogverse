@@ -55,10 +55,37 @@ nothing; what it cannot see is a change that leaves no timestamp (below).
   leaving it none — one that subscribes again and leaves again has stopped twice. A camp or
   event ending is never a stop: it is a finished purchase, not a lost family, and counting
   it would make every summer look like churn.
-- **Gedu capacity by month**: the gedus whom that month's gedu
-  invoicing pays for at least one session, beside the seats held at any moment of the month.
-  Gedu invoicing reads today's assignments, so a past month is read against today's
-  staffing, as it is there. Months before the first one in which any gedu is paid are absent.
+- **Gamers per Gedu by month**: over every session held in the month, the gamers seated in
+  its group, summed, over the gedus who ran it, summed — how many gamers one gedu has in
+  front of them on average. Summing before dividing weights each session by its size, so a
+  big group counts for more than a small one, as it does for the gedu standing in it.
+  - *A session held, and who ran it*, are the gedu invoicing page's own build: a session is
+    a (group, date) with a paid line, and its gedus are every gedu paid for it. So a session
+    counts only once something is recorded for it, never on a cancelled or holiday date, and
+    a session no gedu is paid for (its group has nobody assigned today) is left out rather
+    than counted as gamers with nobody in front of them.
+  - *A gamer seated*: a gamer's seat (never a parent's own) in that group, held at any moment
+    of the session's product-local day. A seat is in its group from the moment it joined
+    it; a move between groups keeps only the latest, so a gamer who moved counts in their
+    present group from the day they moved, and in the earlier one not at all.
+  - Months before the first one with a session in the window are absent; a later month with
+    none has no ratio.
+- **Gamers per Gedu now**: over the groups of products running now (the derived product
+  status — begun and not yet ended; not yet begun is not running) that have a gedu
+  assigned, the gamers seated in them now over their assignments. A group nobody is
+  assigned to is left out, as its sessions are in the months.
+- **Certified Gedus**: gedus whose profile is certified now, and of those how many are
+  assigned to a group of a product running now; the page shows the difference too. An
+  uncertified gedu still assigned somewhere is in neither figure.
+
+**Who ran a past session is read against today's assignments.** The database records per
+session who was *expected* only through dated substitutions; standing staffing is the group
+assignment, which keeps no history. Per-session authorship (a session's writer, an
+attendance mark's) is stored, but no admin read reaches it, and the writer of a record is
+not necessarily the gedu who ran the session. So a past month counts a substitute on the
+date they covered, and otherwise the gedus assigned to the group today: a gedu taken off a
+group leaves the months they ran it, and one added later appears in months before they
+joined. The page says so under the chart.
 
 **Revenue is before refunds.** Refunds are credit notes, and credit notes live only in
 Stripe, so nothing here can net them; a refunded payment counts in full.

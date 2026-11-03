@@ -1976,18 +1976,27 @@
       }
     },
     "gedus": {
-      "heading": "Gedu-kapacitet per månad",
-      "caption": "Ungefär hur många barn varje Gedu hade under månaden. En stigande linje betyder att vi säljer platser snabbare än vi hittar Gedus till dem.",
-      "chart": "Barn per Gedu per månad",
-      "month": "Månad",
-      "rows": {
-        "teachingGedus": "Gedus som höll lektioner",
-        "seatsFilled": "Fyllda platser",
-        "seatsPerTeachingGedu": "Barn per Gedu"
+      "heading": "Gamers per Gedu",
+      "caption": "Hur många gamers en Gedu i snitt hade framför sig på en lektion under månaden. En stigande linje betyder att grupperna fylls snabbare än vi hinner få fler Gedus.",
+      "chart": "Gamers per Gedu per månad",
+      "series": "Gamers per Gedu",
+      "now": {
+        "label": "Nu, på det som pågår",
+        "detail": "{gamers, plural, one {# gamer} other {# gamers}} i grupper med {gedus, plural, one {# tilldelad Gedu} other {# tilldelade Gedus}}",
+        "none": "Ingen Gedu är tilldelad något som pågår."
       },
+      "tooltip": "{sessions, plural, one {# lektion} other {# lektioner}}: {gamers, plural, one {# gamer} other {# gamers}} och {gedus, plural, one {# Gedu} other {# Gedus}}",
       "noData": "Inga uppgifter",
-      "startsFrom": "Gedu-faktureringen har uppgifter från {month}.",
-      "none": "Ingen Gedu fick betalt för en lektion under dessa månader."
+      "startsFrom": "Lektionerna har uppgifter från {month}.",
+      "none": "Ingen lektion registrerades under dessa månader.",
+      "recordedNote": "En lektion räknas när en rapport, en anteckning eller närvaro har registrerats för den.",
+      "staffingNote": "Vem som höll en tidigare lektion läses från dagens grupptilldelningar och de vikarier som bokats för den, så en Gedu som flyttats från en grupp försvinner från de månader hen höll den.",
+      "certified": {
+        "heading": "Certifierade Gedus",
+        "certified": "Certifierade",
+        "onRunning": "Tilldelade något som pågår",
+        "notOnRunning": "Inte tilldelade något som pågår"
+      }
     }
   },
   "testimonials": {

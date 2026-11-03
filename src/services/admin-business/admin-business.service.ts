@@ -11,7 +11,8 @@ import {
   buildBusinessOverview,
   type BusinessFacts,
   type BusinessOverview,
-  type GeduMonthTeaching,
+  type GeduMonthSessions,
+  type HeldSession,
   type MunicipalityMonthTotal,
 } from "./admin-business.build";
 import { recentHelsinkiMonths } from "./helsinki-month";
@@ -49,6 +50,8 @@ export class AdminBusinessService {
       payments,
       municipalityMonths,
       geduMonths,
+      assignments,
+      geduProfiles,
     ] = await Promise.all([
       this.readFamilies(),
       this.readProducts(),
@@ -58,6 +61,8 @@ export class AdminBusinessService {
       this.readPayments(),
       Promise.all(months.map((month) => this.readMunicipalityMonth(month, now))),
       Promise.all(months.map((month) => this.readGeduMonth(month, now))),
+      this.readAssignments(),
+      this.readGeduProfiles(),
     ]);
     const facts: BusinessFacts = {
       families,
@@ -68,6 +73,8 @@ export class AdminBusinessService {
       payments,
       municipalityMonths,
       geduMonths,
+      assignments,
+      geduProfiles,
     };
     return buildBusinessOverview(facts, now);
   }
@@ -99,9 +106,10 @@ export class AdminBusinessService {
     return walkPages("businessSeats", (from, to) =>
       this.supabase
         .from("participations")
-        .select("id, customer_id, participant_id, product_id, signed_up_at, ended_at", {
-          count: "exact",
-        })
+        .select(
+          "id, customer_id, participant_id, product_id, group_id, group_joined_at, signed_up_at, ended_at",
+          { count: "exact" },
+        )
         .in("status", [...HELD_SEAT_STATUSES, "ended"])
         .order("id")
         .range(from, to),
@@ -157,13 +165,56 @@ export class AdminBusinessService {
     return { month, totalCents: view.totalCents, clubsWithoutFee: view.clubsWithoutFee };
   }
 
-  /** The gedus that month's gedu invoicing pays for at least one session. */
-  private async readGeduMonth(month: string, now: Date): Promise<GeduMonthTeaching> {
+  /** Every gedu's group assignment now: assignments keep no history. */
+  private readAssignments() {
+    return walkPages("businessAssignments", (from, to) =>
+      this.supabase
+        .from("gedu_group_assignments")
+        .select("gedu_id, group_id, product_id", { count: "exact" })
+        .order("group_id")
+        .order("gedu_id")
+        .range(from, to),
+    );
+  }
+
+  private readGeduProfiles() {
+    return walkPages("businessGeduProfiles", (from, to) =>
+      this.supabase
+        .from("gedu_profiles")
+        .select("user_id, certified", { count: "exact" })
+        .order("user_id")
+        .range(from, to),
+    );
+  }
+
+  /**
+   * The month's sessions held, each with the gedus that month's gedu invoicing
+   * pays for it: one paid line is one gedu who ran one (group, date). The
+   * locale only names the lines, so any one gives the same sessions.
+   */
+  private async readGeduMonth(month: string, now: Date): Promise<GeduMonthSessions> {
     const snapshot = await new GeduInvoicingService(this.supabase).getAdminMonth(month);
     const view = buildGeduInvoicing({ snapshot, locale: DEFAULT_LOCALE, now });
-    return {
-      month,
-      paidGeduIds: view.gedus.filter((gedu) => gedu.paidCount > 0).map((gedu) => gedu.id),
-    };
+    const sessions = new Map<string, HeldSession & { geduIds: string[] }>();
+    for (const gedu of view.gedus) {
+      for (const club of gedu.clubs) {
+        for (const line of club.lines) {
+          if (line.kind !== "paid") continue;
+          const key = `${line.groupId}:${line.date}`;
+          const session = sessions.get(key);
+          if (session === undefined) {
+            sessions.set(key, {
+              groupId: line.groupId,
+              productId: club.productId,
+              date: line.date,
+              geduIds: [gedu.id],
+            });
+          } else if (!session.geduIds.includes(gedu.id)) {
+            session.geduIds.push(gedu.id);
+          }
+        }
+      }
+    }
+    return { month, sessions: [...sessions.values()] };
   }
 }

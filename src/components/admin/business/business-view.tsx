@@ -35,8 +35,10 @@ import type {
   EngagementSlice,
 } from "@/services/admin-business/admin-business.build";
 import {
+  certifiedNotOnRunning,
   engagementShares,
   figureChange,
+  gamersPerGeduPoints,
   hasUnattributedRevenue,
   seriesStart,
   signupRate,
@@ -76,7 +78,7 @@ const SLICE_EDGE = "var(--color-card)";
 const REVENUE_STACK = "revenue";
 
 /** The Gedu ratio line's colour: the one its series is configured with below. */
-const RATIO_STROKE = "var(--series-seatsPerTeachingGedu)";
+const RATIO_STROKE = "var(--series-gamersPerGedu)";
 
 /** A count in the reader's locale. */
 function useCount(): (value: number) => string {
@@ -633,40 +635,70 @@ function FamiliesCard({ overview }: { overview: BusinessOverview }) {
   );
 }
 
+/** A figure inside a card: a quiet label over its number, and a detail line. */
+function CardFigure({ label, value, detail }: { label: string; value: string; detail?: string }) {
+  return (
+    <div className="space-y-0.5">
+      <dt className="text-xs text-muted-foreground">{label}</dt>
+      <dd className="text-2xl font-semibold tabular-nums">{value}</dd>
+      {detail && <dd className="text-xs text-muted-foreground">{detail}</dd>}
+    </div>
+  );
+}
+
 /**
- * Seats per teaching Gedu as the line, with the two counts it divides in a
- * table beneath: the two counts sit on scales far apart, so one axis would
- * flatten the Gedus to the floor and two would invite comparing heights that
- * mean nothing to each other.
+ * The owner's two questions about Gedus in one card: how many gamers one Gedu
+ * has in front of them, now and month by month, and how many certified Gedus
+ * are actually on something running. The ratio leads as a figure over its
+ * line; the certified three sit under it, set off by a divider rather than a
+ * box of their own.
  */
 function GedusCard({ overview }: { overview: BusinessOverview }) {
   const t = useTranslations("admin.business.gedus");
   const count = useCount();
-  const { tick } = useMonthName();
+  const { full } = useMonthName();
   const monthTick = useMonthTick(overview.currentMonth);
   const monthLabel = useMonthLabel(overview.currentMonth);
   const startNote = useStartNote();
+  const describedBy = useId();
   const ratio = new Intl.NumberFormat(formattingLocale(useLocale()), { maximumFractionDigits: 1 });
-  const { months, recordsBeginMonth } = overview.gedus;
+  const { months, recordsBeginMonth, now, certified } = overview.gedus;
+  const points = gamersPerGeduPoints(months);
   const config = {
-    seatsPerTeachingGedu: { label: t("rows.seatsPerTeachingGedu"), color: "var(--color-act)" },
+    gamersPerGedu: { label: t("series"), color: "var(--color-act)" },
   } satisfies ChartConfig;
-  const value = (figure: number | null, format: (n: number) => string) =>
-    figure === null ? t("noData") : format(figure);
+  const pointValue = (point: (typeof points)[number]) =>
+    point.gamersPerGedu === null ? t("noData") : ratio.format(point.gamersPerGedu);
 
-  const notes = startNote(
-    seriesStart(months.map((month) => month.month), recordsBeginMonth),
-    (month) => t("startsFrom", { month }),
-    t("none"),
-  );
+  const notes = [
+    ...startNote(
+      seriesStart(months.map((month) => month.month), recordsBeginMonth),
+      (month) => t("startsFrom", { month }),
+      t("none"),
+    ),
+    t("recordedNote"),
+    t("staffingNote"),
+  ];
 
   return (
     <BusinessCard heading={t("heading")} caption={t("caption")} notes={<Notes lines={notes} />}>
+      <dl>
+        <CardFigure
+          label={t("now.label")}
+          value={now.ratio === null ? t("noData") : ratio.format(now.ratio)}
+          detail={
+            now.ratio === null
+              ? t("now.none")
+              : t("now.detail", { gamers: now.gamers, gedus: now.gedus })
+          }
+        />
+      </dl>
       <ChartContainer config={config} className={MONTHLY_CHART_SIZE}>
         <LineChart
-          data={[...months]}
+          data={points}
           margin={{ top: 8, right: 12, bottom: 0, left: 0 }}
           aria-label={t("chart")}
+          aria-describedby={describedBy}
         >
           <CartesianGrid vertical={false} />
           <XAxis dataKey="month" tick={monthTick} interval={0} height={40} tickLine={false} axisLine={false} />
@@ -675,16 +707,27 @@ function GedusCard({ overview }: { overview: BusinessOverview }) {
             content={
               <ChartTooltipContent
                 labelFormatter={monthLabel}
-                formatter={(figure) =>
-                  typeof figure === "number" ? (
-                    <TooltipRow label={t("rows.seatsPerTeachingGedu")} value={ratio.format(figure)} />
-                  ) : null
-                }
+                formatter={(figure, _name, item) => {
+                  const point = points.find((one) => one.month === item.payload?.month);
+                  if (typeof figure !== "number" || point === undefined) return null;
+                  return (
+                    <div className="w-full">
+                      <TooltipRow label={t("series")} value={ratio.format(figure)} />
+                      <p className="text-muted-foreground">
+                        {t("tooltip", {
+                          sessions: point.sessions ?? 0,
+                          gamers: point.gamers ?? 0,
+                          gedus: point.gedus ?? 0,
+                        })}
+                      </p>
+                    </div>
+                  );
+                }}
               />
             }
           />
           <Line
-            dataKey="seatsPerTeachingGedu"
+            dataKey="gamersPerGedu"
             type="linear"
             stroke={RATIO_STROKE}
             strokeWidth={2}
@@ -693,53 +736,20 @@ function GedusCard({ overview }: { overview: BusinessOverview }) {
           />
         </LineChart>
       </ChartContainer>
-      <div className="overflow-x-auto">
-        <table className="w-full text-xs tabular-nums">
-          <thead>
-            <tr className="border-b border-border text-muted-foreground">
-              <th scope="col" className="py-1.5 pr-3 text-left font-medium">
-                <span className="sr-only">{t("month")}</span>
-              </th>
-              {months.map((month, index) => (
-                <th key={month.month} scope="col" className="px-1.5 py-1.5 text-right font-medium">
-                  {tick(month.month, index)}
-                </th>
-              ))}
-            </tr>
-          </thead>
-          <tbody className="divide-y divide-border">
-            <tr>
-              <th scope="row" className="py-1.5 pr-3 text-left font-medium text-muted-foreground">
-                {t("rows.teachingGedus")}
-              </th>
-              {months.map((month) => (
-                <td key={month.month} className="px-1.5 py-1.5 text-right">
-                  {value(month.teachingGedus, count)}
-                </td>
-              ))}
-            </tr>
-            <tr>
-              <th scope="row" className="py-1.5 pr-3 text-left font-medium text-muted-foreground">
-                {t("rows.seatsFilled")}
-              </th>
-              {months.map((month) => (
-                <td key={month.month} className="px-1.5 py-1.5 text-right">
-                  {count(month.seatsFilled)}
-                </td>
-              ))}
-            </tr>
-            <tr>
-              <th scope="row" className="py-1.5 pr-3 text-left font-medium text-muted-foreground">
-                {t("rows.seatsPerTeachingGedu")}
-              </th>
-              {months.map((month) => (
-                <td key={month.month} className="px-1.5 py-1.5 text-right">
-                  {value(month.seatsPerTeachingGedu, ratio.format)}
-                </td>
-              ))}
-            </tr>
-          </tbody>
-        </table>
+      <ul id={describedBy} className="sr-only">
+        {points.map((point) => (
+          <li key={point.month}>
+            {[full(point.month), `${t("series")} ${pointValue(point)}`].join(SCHEDULE_PART_SEPARATOR)}
+          </li>
+        ))}
+      </ul>
+      <div className="space-y-3 border-t border-border pt-4">
+        <Heading level={3} step="label">{t("certified.heading")}</Heading>
+        <dl className="grid grid-cols-3 gap-4">
+          <CardFigure label={t("certified.certified")} value={count(certified.certified)} />
+          <CardFigure label={t("certified.onRunning")} value={count(certified.onRunningProduct)} />
+          <CardFigure label={t("certified.notOnRunning")} value={count(certifiedNotOnRunning(certified))} />
+        </dl>
       </div>
     </BusinessCard>
   );

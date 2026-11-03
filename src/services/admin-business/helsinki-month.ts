@@ -26,11 +26,6 @@ export function helsinkiMonthStart(month: string): Date {
   return fromZonedTime(`${month}T00:00:00`, BUSINESS_TIME_ZONE);
 }
 
-/** The instant a Helsinki month ends, exclusive: the next month's start. */
-export function helsinkiMonthEnd(month: string): Date {
-  return helsinkiMonthStart(monthsAfter(month, 1));
-}
-
 /**
  * The last `count` Helsinki months, ascending, ending with the month `now` is
  * in — so the last entry is a month still in progress.
