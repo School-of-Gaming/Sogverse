@@ -192,6 +192,15 @@ becomes possible is the template adoption, where a page is composed from templat
 the set of colours it spends is knowable from what it composes. Until then it is judged in
 the demo's template floor, on the page, like every other composition question.
 
+**A staff surface shows; it does not explain.** Admins and gedus are power users on pages
+they open many times, so an admin or gedu page says what a figure or control is through
+its heading, its label and its form, never through a sentence about how to read it. A
+caption is a few words or nothing, a note under a chart survives only where it changes
+what a number on screen means, and two figures that differ for a real reason carry labels
+that make the difference plain rather than a line explaining it. Definitions and caveats
+belong in the code's own docs, not on the page: explanation written for a first visit is
+read past on every visit after it, and it pushes the figures down.
+
 **There is one theme and it is dark.** No light fallback, no switcher, no `dark:` variant.
 Every text-on-ground pairing the library ships is proven in the contrast tests, and a
 consumer trusts the library to have done that arithmetic: a colour the library offers for
