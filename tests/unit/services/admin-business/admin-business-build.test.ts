@@ -223,28 +223,104 @@ describe("revenue by month", () => {
 });
 
 describe("families by month", () => {
-  it("counts sign-ups, first seats and every time a family's paid seats run out", () => {
+  const stopsByMonth = (overview: ReturnType<typeof buildBusinessOverview>) =>
+    new Map(overview.families.map((m) => [m.month, m.stoppedPaying]));
+  const totalStops = (overview: ReturnType<typeof buildBusinessOverview>) =>
+    overview.families.reduce((n, m) => n + m.stoppedPaying, 0);
+
+  it("counts sign-ups and first seats by Helsinki month", () => {
     const overview = buildBusinessOverview(
       facts({
         families: [family("a", "2026-03-10T10:00:00Z"), family("b", "2026-04-02T10:00:00Z")],
         seats: [
-          // a: two overlapping paid seats ending in May, back in July, gone in September.
-          seat("a1", "a", "club", "2026-03-15T10:00:00Z", "2026-05-10T10:00:00Z"),
-          seat("a2", "a", "club2", "2026-04-01T10:00:00Z", "2026-05-20T10:00:00Z"),
-          seat("a3", "a", "camp", "2026-07-01T10:00:00Z"),
-          // b: a free seat never stops anyone paying.
-          seat("b1", "b", "free", "2026-04-05T10:00:00Z", "2026-06-01T10:00:00Z"),
+          seat("a1", "a", "club", "2026-03-15T10:00:00Z"),
+          seat("a2", "a", "club2", "2026-04-01T10:00:00Z"),
+          seat("b1", "b", "free", "2026-04-05T10:00:00Z"),
         ],
       }),
       NOW,
     );
     const byMonth = new Map(overview.families.map((m) => [m.month, m]));
-    expect(byMonth.get("2026-03-01")).toMatchObject({ signups: 1, firstSeats: 1, stoppedPaying: 0 });
-    expect(byMonth.get("2026-04-01")).toMatchObject({ signups: 1, firstSeats: 1, stoppedPaying: 0 });
-    expect(byMonth.get("2026-05-01")?.stoppedPaying).toBe(1);
-    // The camp's run ended on 10 July.
-    expect(byMonth.get("2026-07-01")?.stoppedPaying).toBe(1);
-    expect(overview.families.reduce((n, m) => n + m.stoppedPaying, 0)).toBe(2);
+    expect(byMonth.get("2026-03-01")).toMatchObject({ signups: 1, firstSeats: 1 });
+    expect(byMonth.get("2026-04-01")).toMatchObject({ signups: 1, firstSeats: 1 });
+  });
+
+  it("never counts a camp ending as a stop", () => {
+    const overview = buildBusinessOverview(
+      facts({
+        families: [family("a")],
+        seats: [seat("a1", "a", "camp", "2026-07-01T10:00:00Z", "2026-07-10T10:00:00Z")],
+      }),
+      NOW,
+    );
+    expect(totalStops(overview)).toBe(0);
+  });
+
+  it("counts a stop when a family's last subscription ends", () => {
+    const overview = buildBusinessOverview(
+      facts({
+        families: [family("a")],
+        seats: [seat("a1", "a", "club", "2026-03-15T10:00:00Z", "2026-05-10T10:00:00Z")],
+        subscriptions: [sub("a", "a1", "2026-03-15T10:00:00Z", "cancelled", "2026-05-10T10:00:00Z")],
+      }),
+      NOW,
+    );
+    expect(stopsByMonth(overview).get("2026-05-01")).toBe(1);
+    expect(totalStops(overview)).toBe(1);
+  });
+
+  it("does not count one of two subscriptions ending while the other is live", () => {
+    const overview = buildBusinessOverview(
+      facts({
+        families: [family("a")],
+        seats: [
+          seat("a1", "a", "club", "2026-03-15T10:00:00Z", "2026-05-10T10:00:00Z"),
+          seat("a2", "a", "club2", "2026-04-01T10:00:00Z"),
+        ],
+        subscriptions: [
+          sub("a", "a1", "2026-03-15T10:00:00Z", "cancelled", "2026-05-10T10:00:00Z"),
+          sub("a", "a2", "2026-04-01T10:00:00Z", "active"),
+        ],
+      }),
+      NOW,
+    );
+    expect(totalStops(overview)).toBe(0);
+  });
+
+  it("counts a family that subscribes again and cancels again twice, each in its month", () => {
+    const overview = buildBusinessOverview(
+      facts({
+        families: [family("a")],
+        seats: [
+          seat("a1", "a", "club", "2026-03-15T10:00:00Z", "2026-05-10T10:00:00Z"),
+          seat("a2", "a", "club", "2026-07-01T10:00:00Z", "2026-09-05T10:00:00Z"),
+        ],
+        subscriptions: [
+          sub("a", "a1", "2026-03-15T10:00:00Z", "cancelled", "2026-05-10T10:00:00Z"),
+          sub("a", "a2", "2026-07-01T10:00:00Z", "cancelled", "2026-09-05T10:00:00Z"),
+        ],
+      }),
+      NOW,
+    );
+    const byMonth = stopsByMonth(overview);
+    expect(byMonth.get("2026-05-01")).toBe(1);
+    expect(byMonth.get("2026-09-01")).toBe(1);
+    expect(totalStops(overview)).toBe(2);
+  });
+
+  it("dates a stop by its Helsinki month", () => {
+    const overview = buildBusinessOverview(
+      facts({
+        families: [family("a")],
+        // 00:30 on 1 October in Helsinki, still September in UTC.
+        seats: [seat("a1", "a", "club", "2026-03-15T10:00:00Z", "2026-09-30T21:30:00Z")],
+        subscriptions: [sub("a", "a1", "2026-03-15T10:00:00Z", "cancelled", "2026-09-30T21:30:00Z")],
+      }),
+      NOW,
+    );
+    const byMonth = stopsByMonth(overview);
+    expect(byMonth.get("2026-09-01")).toBe(0);
+    expect(byMonth.get("2026-10-01")).toBe(1);
   });
 
   it("merges touching and open-ended spans", () => {

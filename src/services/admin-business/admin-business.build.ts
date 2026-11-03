@@ -184,7 +184,7 @@ export interface FamilyMonth {
   signups: number;
   /** Families whose first seat ever began. */
   firstSeats: number;
-  /** Families whose last paid seat ended, leaving them none. */
+  /** Families whose last live subscription ended, leaving them none. */
   stoppedPaying: number;
 }
 
@@ -272,7 +272,7 @@ function overlaps(span: SeatSpan, from: number, to: number): boolean {
  * overlap, in order. An open-ended stretch has `end` null and is always last.
  */
 export function mergeSpans(
-  spans: readonly Pick<SeatSpan, "start" | "end">[],
+  spans: readonly { start: number; end: number | null }[],
 ): { start: number; end: number | null }[] {
   const sorted = [...spans].sort((a, b) => a.start - b.start);
   const merged: { start: number; end: number | null }[] = [];
@@ -326,15 +326,20 @@ function gamersAt(spans: readonly SeatSpan[], at: number, municipalityOnly: bool
 }
 
 /**
- * Whether a subscription was live at `at`. Only its end is kept as a moment,
- * so one stored as still collecting is taken to have been collecting since it
- * was created, and one that stopped without its seat ending is taken to have
- * stopped before `at`.
+ * When a subscription was live, or null for one never live. Only its end is
+ * kept as a moment, so one stored as still collecting is taken to have been
+ * collecting since it was created, and one that stopped without its seat
+ * ending is taken never to have been.
  */
+function subscriptionSpan(sub: BusinessSubscriptionRow): { start: number; end: number | null } | null {
+  const start = Date.parse(sub.created_at);
+  if (sub.ended_at !== null) return { start, end: Date.parse(sub.ended_at) };
+  return LIVE_SUBSCRIPTION_STATUSES.includes(sub.status) ? { start, end: null } : null;
+}
+
 function subscriptionLiveAt(sub: BusinessSubscriptionRow, at: number): boolean {
-  if (Date.parse(sub.created_at) > at) return false;
-  if (sub.ended_at !== null) return Date.parse(sub.ended_at) > at;
-  return LIVE_SUBSCRIPTION_STATUSES.includes(sub.status);
+  const span = subscriptionSpan(sub);
+  return span !== null && span.start <= at && (span.end === null || span.end > at);
 }
 
 interface RecurringRevenue {
@@ -514,7 +519,6 @@ function countByMonth(instants: readonly number[], months: readonly string[]): M
 
 function familiesByMonth(
   facts: BusinessFacts,
-  spans: readonly SeatSpan[],
   firstSeatByFamily: ReadonlyMap<string, number>,
   months: readonly string[],
   now: number,
@@ -525,14 +529,17 @@ function familiesByMonth(
   );
   const firstSeats = countByMonth([...firstSeatByFamily.values()], months);
 
-  // Each time a family's paid seats, merged, run out is one stop: a family that
-  // came back and left again stopped twice. A stretch still going has not.
-  const paidByFamily = groupBy(
-    spans.filter((span) => span.billingMode === "paid"),
-    (span) => span.customerId,
-  );
-  const stops = [...paidByFamily.values()].flatMap((familySpans) =>
-    mergeSpans(familySpans).flatMap((stretch) =>
+  // Each time a family's live subscriptions, merged, run out is one stop: a
+  // family that subscribed again and left again stopped twice. A stretch still
+  // going has not. Camps and events are never subscriptions, so never a stop.
+  const subscriptionsByFamily = groupBy(facts.subscriptions, (sub) => sub.customer_id);
+  const stops = [...subscriptionsByFamily.values()].flatMap((familySubs) =>
+    mergeSpans(
+      familySubs.flatMap((sub) => {
+        const span = subscriptionSpan(sub);
+        return span === null ? [] : [span];
+      }),
+    ).flatMap((stretch) =>
       stretch.end !== null && stretch.end <= now ? [stretch.end] : [],
     ),
   );
@@ -632,7 +639,7 @@ export function buildBusinessOverview(facts: BusinessFacts, now: Date): Business
     },
     engagement: engagementOf(facts, spans, nowMs),
     revenue: revenueOf(facts, months),
-    families: familiesByMonth(facts, spans, firstSeatByFamily, months, nowMs),
+    families: familiesByMonth(facts, firstSeatByFamily, months, nowMs),
     gedus: gedusByMonth(facts, spans, months),
   };
 }

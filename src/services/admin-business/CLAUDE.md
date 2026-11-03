@@ -46,8 +46,10 @@ it cannot see is a change that leaves no timestamp (below).
   built by that page's own code, never a second formula — clubs without a fee are outside
   it exactly as they are there. A month that page refuses fails this page too.
 - **Families by month**: sign-ups are parent accounts created; a first seat is the start of
-  a family's earliest seat; a stop is each time a family's paid seats, merged, run out — a
-  family that comes back and leaves again has stopped twice. A camp's end is a stop.
+  a family's earliest seat; a stop is the month a family's last live subscription ended,
+  leaving it none — one that subscribes again and leaves again has stopped twice. A camp or
+  event ending is never a stop: it is a finished purchase, not a lost family, and counting
+  it would make every summer look like churn.
 - **Gedu capacity by month**: certified gedus (certified now) whom that month's gedu
   invoicing pays for at least one session, beside the seats held at any moment of the month.
   Gedu invoicing reads today's assignments, so a past month is read against today's
