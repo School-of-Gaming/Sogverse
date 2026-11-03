@@ -412,8 +412,8 @@ and re-asking would put the banner back up to collect the same answer to the sam
 
 The Tag Manager UI is edited in a web form, with no review, no deploy and nothing in git.
 The fences above are what this repository enforces; everything below is a promise the app
-makes that only the person configuring the container can keep. The marketing team's
-step-by-step guide is `docs/gtm-setup-for-marketing.md`.
+makes that only the person configuring the container can keep, so each one has to reach
+the marketing team in whatever setup instructions they are sent.
 
 - **Only Meta's and Reddit's official gallery templates.** Any template is admitted, a
   hand-written one or a third vendor's included, and the policy bounds what it can load and
