@@ -103,7 +103,9 @@ Two more habits hold everywhere:
    did, read, believed or felt. If a fact is missing, ask.
 5. **Never write a superlative you cannot check.** No "world's safest", "world's best",
    "world class"; write the rule behind the claim instead ("No private messages. No
-   strangers.").
+   strangers."). Humour is still allowed: a superlative nobody could take as a claim is a
+   joke, not a promise ("maailman hauskin koulu" is fine; Mikko, 3 Nov 2026). The ban is on
+   anything a parent might rely on, safety and quality above all.
 
 ## The lore level
 

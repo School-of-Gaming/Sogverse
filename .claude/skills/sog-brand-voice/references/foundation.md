@@ -214,7 +214,9 @@ which is part of why teacher, tutor and coach are banned as substitutes.
 ### Gedu Academy and Tellus
 
 **Gedu Academy**, both capitals, no article ("at Gedu Academy"): where Game Educators are
-trained, at geduacademy.com, in its own adult, professional voice. **Tellus**, capital T, no
+trained, at geduacademy.com, in its own adult, professional voice. It is also where a
+prospective Gedu applies: public copy about becoming a Gedu points there, while the Gedu
+registration page is for applicants we have already accepted (Mikko, 3 Nov 2026). **Tellus**, capital T, no
 article: our word for the physical world, at Levels 2 and 3 only; at Levels 0 and 1 write
 "everyday life" or "at home".
 
@@ -227,13 +229,15 @@ child's four relationships, and how growth is made concrete, badged and measured
 
 | Element | The relationship | What it covers |
 | :-- | :-- | :-- |
-| **Harmony** | With yourself | Balance, emotional control, self acceptance, rest, knowing when to stop |
+| **Harmony** | With yourself | Getting to know yourself, balance, emotional control, self acceptance, rest, knowing when to stop |
 | **Glow** | With others | Empathy, kindness, belonging, friendship, communication |
-| **Valor** | With society | Teamwork, innovation, civic courage, trying the hard thing |
-| **Wit** | With technology | Critical thinking, media literacy, curiosity, finding your way in the digital world |
+| **Valor** | With the world | Teamwork, innovation, civic courage, trying the hard thing |
+| **Wit** | With technology | Critical thinking, media literacy, AI and what new technology does to us, curiosity, finding your way in the digital world |
 
-Valor is the relationship with society and Wit with technology; those are the pair that gets
-swapped. Never reorder the four, never invent a fifth. The element definitions live in two
+Valor is the relationship with the world and Wit with technology; those are the pair that gets
+swapped. Valor says "the world" (fi "maailma"), never "society" or "yhteiskunta": a dull word,
+and the owner thinks in one planet and one human race rather than nation states (Mikko, 3 Nov
+2026). Never reorder the four, never invent a fifth. The element definitions live in two
 places, the `yty` messages namespace and the Yty constants module, and a change to either is
 unfinished until the other matches. Their colours are SOG-UI's.
 
