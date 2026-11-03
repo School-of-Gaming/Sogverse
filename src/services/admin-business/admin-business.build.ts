@@ -1,3 +1,4 @@
+import { fromZonedTime } from "date-fns-tz";
 import { endDateToCutoff } from "@/lib/session-occurrence";
 import { sumCents } from "@/lib/money";
 import type {
@@ -49,7 +50,7 @@ export const LIVE_SUBSCRIPTION_STATUSES: readonly string[] = [
 export type BusinessFamilyRow = { id: string; created_at: string };
 export type BusinessProductRow = Pick<
   Product,
-  "id" | "product_type" | "billing_mode" | "end_date" | "timezone"
+  "id" | "product_type" | "billing_mode" | "start_date" | "end_date" | "timezone"
 >;
 export type BusinessSeatRow = Pick<
   Participation,
@@ -221,41 +222,57 @@ export interface BusinessOverview {
 // ---------------------------------------------------------------------------
 
 /**
- * When a seat was held: from its sign-up until it ended or its product's run
- * did, whichever came first. `end` is null for a seat still open-ended.
+ * When a seat was held: from the later of its sign-up and its product's first
+ * day, until it ended or its product's run did, whichever came first — both
+ * days in the product's zone. `end` is null for a seat still open-ended.
+ * `signedUpAt` is the booking, kept apart for the figures that measure when a
+ * family committed rather than when the seat was in use.
  */
 export interface SeatSpan {
   customerId: string;
   participantId: string;
   productType: ProductType;
   billingMode: BillingMode;
+  signedUpAt: number;
   start: number;
   end: number | null;
 }
 
+/**
+ * A seat that ended before its product began was never held, and has no span:
+ * it is left out rather than kept empty.
+ */
 export function seatSpans(
   seats: readonly BusinessSeatRow[],
   products: readonly BusinessProductRow[],
 ): SeatSpan[] {
   const byId = new Map(products.map((product) => [product.id, product]));
-  return seats.map((seat) => {
+  return seats.flatMap((seat) => {
     const product = byId.get(seat.product_id);
     if (product === undefined) {
       throw new Error(`Seat ${seat.id} names product ${seat.product_id}, which was not read`);
     }
+    const signedUpAt = Date.parse(seat.signed_up_at);
+    const runStart = fromZonedTime(`${product.start_date}T00:00:00`, product.timezone).getTime();
+    const start = Math.max(signedUpAt, runStart);
     const ended = seat.ended_at === null ? null : Date.parse(seat.ended_at);
     const runEnd = endDateToCutoff(product.end_date, product.timezone);
     // The cutoff is the run's last millisecond; the span ends just after it.
     const runEndMs = runEnd === null ? null : runEnd.getTime() + 1;
     const candidates = [ended, runEndMs].filter((ms): ms is number => ms !== null);
-    return {
-      customerId: seat.customer_id,
-      participantId: seat.participant_id,
-      productType: product.product_type,
-      billingMode: product.billing_mode,
-      start: Date.parse(seat.signed_up_at),
-      end: candidates.length === 0 ? null : Math.min(...candidates),
-    };
+    const end = candidates.length === 0 ? null : Math.min(...candidates);
+    if (end !== null && end <= start) return [];
+    return [
+      {
+        customerId: seat.customer_id,
+        participantId: seat.participant_id,
+        productType: product.product_type,
+        billingMode: product.billing_mode,
+        signedUpAt,
+        start,
+        end,
+      },
+    ];
   });
 }
 
@@ -603,10 +620,14 @@ export function buildBusinessOverview(facts: BusinessFacts, now: Date): Business
   const lastMonthEnd = helsinkiMonthStart(currentMonth).getTime() - 1;
 
   const spans = seatSpans(facts.seats, facts.products);
+  // A family's first seat is dated by its booking, not by when the product
+  // began: it measures when the family committed.
   const firstSeatByFamily = new Map<string, number>();
   for (const span of spans) {
     const first = firstSeatByFamily.get(span.customerId);
-    if (first === undefined || span.start < first) firstSeatByFamily.set(span.customerId, span.start);
+    if (first === undefined || span.signedUpAt < first) {
+      firstSeatByFamily.set(span.customerId, span.signedUpAt);
+    }
   }
 
   const mrrNow = recurringRevenueAt(facts, nowMs);

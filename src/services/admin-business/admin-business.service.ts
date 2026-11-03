@@ -91,7 +91,7 @@ export class AdminBusinessService {
     return walkPages("businessProducts", (from, to) =>
       this.supabase
         .from("products")
-        .select("id, product_type, billing_mode, end_date, timezone", { count: "exact" })
+        .select("id, product_type, billing_mode, start_date, end_date, timezone", { count: "exact" })
         .order("id")
         .range(from, to),
     );

@@ -12,14 +12,19 @@ for a month.
 
 ## A seat is a span of time
 
-Each seat held now or once is a span from its sign-up to whichever comes first: its end,
-or the end of its product's run (the last day, in the product's zone). **A seat on a
-product whose run is over is not held**, though its status stays active: camps, events and
-municipality terms keep their seats active after the last day, and counting them would make
-every family that ever bought a camp a paying family. A seat promoted from the waitlist is
-dated from its sign-up, the only start a seat records. Every figure "now" and "at the end
-of last month" asks which spans cover that instant, so the comparison costs nothing; what
-it cannot see is a change that leaves no timestamp (below).
+Each seat held now or once is a span from the later of its sign-up and its product's first
+day to whichever comes first: its end, or the end of its product's run, both days read in
+the product's zone. **A seat is not held before its product begins**: a camp booked months
+ahead is not held, taught or staffed until it runs, so no figure counts it before then, and
+a seat that ended before its product began was never held at all. **A seat on a product
+whose run is over is not held either**, though its status stays active: camps, events and
+municipality terms keep their seats active after the last day, and counting them would
+make every family that ever bought a camp a paying family. A seat promoted from the
+waitlist is dated from its sign-up, the only booking a seat records. The two figures about
+a family's first seat (sign-up → first seat, and first seats by month) take the booking,
+not the span's start, because they measure when the family committed. Every figure "now"
+and "at the end of last month" asks which spans cover that instant, so the comparison costs
+nothing; what it cannot see is a change that leaves no timestamp (below).
 
 ## The figures
 
@@ -32,7 +37,7 @@ it cannot see is a change that leaves no timestamp (below).
 - **Gamers in a seat**: distinct participants in a held seat, never a parent's own seat;
   those in a municipality club counted apart.
 - **Sign-up → first seat**: of the parent accounts created in the last 90 days, how many
-  have held any seat. Every parent account counts, one still owing its registration too.
+  have booked a seat, one not yet begun included. Every parent account counts, one still owing its registration too.
 - **Families by engagement**: every parent account in exactly one slice, the first it
   matches — a live subscription; any payment ever; every seat ever held on a municipality
   club; any other seat (free products, and paid ones nobody was charged for); no seat ever.
@@ -45,8 +50,8 @@ it cannot see is a change that leaves no timestamp (below).
 - **Municipality revenue is the municipality invoicing page's month total**, read and
   built by that page's own code, never a second formula — clubs without a fee are outside
   it exactly as they are there. A month that page refuses fails this page too.
-- **Families by month**: sign-ups are parent accounts created; a first seat is the start of
-  a family's earliest seat; a stop is the month a family's last live subscription ended,
+- **Families by month**: sign-ups are parent accounts created; a first seat is the month a
+  family booked its earliest seat; a stop is the month a family's last live subscription ended,
   leaving it none — one that subscribes again and leaves again has stopped twice. A camp or
   event ending is never a stop: it is a finished purchase, not a lost family, and counting
   it would make every summer look like churn.

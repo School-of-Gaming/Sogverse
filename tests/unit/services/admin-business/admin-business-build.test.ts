@@ -18,11 +18,11 @@ const MONTHS = [
 ];
 
 const PRODUCTS: BusinessProductRow[] = [
-  { id: "club", product_type: "consumer_club", billing_mode: "paid", end_date: null, timezone: "Europe/Helsinki" },
-  { id: "club2", product_type: "consumer_club", billing_mode: "paid", end_date: null, timezone: "Europe/Helsinki" },
-  { id: "camp", product_type: "camp", billing_mode: "paid", end_date: "2026-07-10", timezone: "Europe/Helsinki" },
-  { id: "muni", product_type: "municipality_club", billing_mode: "external_contract", end_date: "2026-12-15", timezone: "Europe/Helsinki" },
-  { id: "free", product_type: "event", billing_mode: "free", end_date: "2026-12-01", timezone: "Europe/Helsinki" },
+  { id: "club", product_type: "consumer_club", billing_mode: "paid", start_date: "2025-01-01", end_date: null, timezone: "Europe/Helsinki" },
+  { id: "club2", product_type: "consumer_club", billing_mode: "paid", start_date: "2025-01-01", end_date: null, timezone: "Europe/Helsinki" },
+  { id: "camp", product_type: "camp", billing_mode: "paid", start_date: "2026-06-01", end_date: "2026-07-10", timezone: "Europe/Helsinki" },
+  { id: "muni", product_type: "municipality_club", billing_mode: "external_contract", start_date: "2026-08-01", end_date: "2026-12-15", timezone: "Europe/Helsinki" },
+  { id: "free", product_type: "camp", billing_mode: "free", start_date: "2026-01-01", end_date: "2026-12-01", timezone: "Europe/Helsinki" },
 ];
 
 function seat(id: string, customer: string, product: string, start: string, ended: string | null = null, participant = `${customer}-kid`): BusinessSeatRow {
@@ -375,5 +375,89 @@ describe("gedu capacity by month", () => {
       seatsFilled: 1,
       seatsPerTeachingGedu: null,
     });
+  });
+});
+
+describe("a seat's span starts no earlier than its product", () => {
+  // A camp booked in early October, running 5-8 November in Helsinki; its
+  // first day begins at 2026-11-04T22:00Z, winter time.
+  const LATER_CAMP: BusinessProductRow = { id: "autumn", product_type: "camp", billing_mode: "paid", start_date: "2026-11-05", end_date: "2026-11-08", timezone: "Europe/Helsinki" };
+  // A club whose term starts on 1 December 2026, booked in October.
+  const LATER_CLUB: BusinessProductRow = { id: "spring", product_type: "consumer_club", billing_mode: "paid", start_date: "2026-12-01", end_date: null, timezone: "Europe/Helsinki" };
+  const products = [...PRODUCTS, LATER_CAMP, LATER_CLUB];
+
+  it("holds a pre-booked camp's seat for nobody before its first day", () => {
+    const overview = buildBusinessOverview(
+      facts({
+        products,
+        families: [family("a")],
+        seats: [seat("a1", "a", "autumn", "2026-10-05T10:00:00Z")],
+      }),
+      NOW,
+    );
+    expect(overview.headline.gamersInSeat).toEqual({ now: 0, endOfLastMonth: 0 });
+    expect(overview.headline.payingFamilies).toEqual({ now: 0, endOfLastMonth: 0 });
+    // October, the month it was booked in, staffed nobody for it.
+    const byMonth = new Map(overview.gedus.months.map((m) => [m.month, m.seatsFilled]));
+    expect(byMonth.get("2026-10-01")).toBe(0);
+  });
+
+  it("holds it from midnight of its first day in the product's zone", () => {
+    const at = (iso: string) =>
+      buildBusinessOverview(
+        facts({
+          products,
+          families: [family("a")],
+          seats: [seat("a1", "a", "autumn", "2026-10-05T10:00:00Z")],
+        }),
+        new Date(iso),
+      ).headline.gamersInSeat.now;
+    // 23:59 on 4 November in Helsinki, then 00:00 on 5 November.
+    expect(at("2026-11-04T21:59:00Z")).toBe(0);
+    expect(at("2026-11-04T22:00:00Z")).toBe(1);
+  });
+
+  it("starts a seat booked after its product began at the booking", () => {
+    const overview = buildBusinessOverview(
+      facts({
+        families: [family("a")],
+        // The club began in 2025; booked on 2 November, after last month ended.
+        seats: [seat("a1", "a", "club", "2026-11-02T10:00:00Z")],
+      }),
+      NOW,
+    );
+    expect(overview.headline.gamersInSeat).toEqual({ now: 1, endOfLastMonth: 0 });
+    const byMonth = new Map(overview.gedus.months.map((m) => [m.month, m.seatsFilled]));
+    expect(byMonth.get("2026-10-01")).toBe(0);
+    expect(byMonth.get("2026-11-01")).toBe(1);
+  });
+
+  it("counts a club seat from its term's start, and its family's first seat from the booking", () => {
+    const overview = buildBusinessOverview(
+      facts({
+        products,
+        families: [family("a", "2026-10-01T10:00:00Z")],
+        seats: [seat("a1", "a", "spring", "2026-10-10T10:00:00Z")],
+      }),
+      NOW,
+    );
+    expect(overview.headline.payingFamilies.now).toBe(0);
+    expect(overview.gedus.months.every((m) => m.seatsFilled === 0)).toBe(true);
+    const firstSeats = new Map(overview.families.map((m) => [m.month, m.firstSeats]));
+    expect(firstSeats.get("2026-10-01")).toBe(1);
+    expect(overview.headline.signupToSeat.now).toEqual({ registered: 1, seated: 1 });
+  });
+
+  it("gives a seat that ended before its product began no span at all", () => {
+    const overview = buildBusinessOverview(
+      facts({
+        products,
+        families: [family("a")],
+        seats: [seat("a1", "a", "autumn", "2026-01-10T10:00:00Z", "2026-03-01T10:00:00Z")],
+      }),
+      NOW,
+    );
+    expect(overview.families.every((m) => m.firstSeats === 0)).toBe(true);
+    expect(overview.engagement.slices.find((s) => s.slice === "neverEnrolled")?.families).toBe(1);
   });
 });
