@@ -126,6 +126,12 @@ const eventProperties = {
   source_id: z.string(),
   /** Null when the event names no product, or the product is gone. */
   product: klaviyoProduct.nullable(),
+  /**
+   * Present on an event filed after the fact, for what happened before the
+   * sync existed. Such an event carries no consent: whatever the parent said
+   * then, they may have unsubscribed in Klaviyo since.
+   */
+  backfilled: z.literal(true).optional(),
 };
 
 /** Who holds the seat an event is about. The gamer facts are null on a parent's own seat. */

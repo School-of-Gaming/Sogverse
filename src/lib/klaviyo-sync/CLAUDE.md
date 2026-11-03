@@ -147,14 +147,24 @@ The profile sync never sends a subscription status, and an unticked or never-ask
 sends nothing, so an unsubscribe in Klaviyo is undone only by a fresh yes the parent gives
 later.
 
+**A backfilled event never subscribes anyone.** History filed after the fact carries
+`backfilled: true` among its facts, and the contract sends no subscription with any such
+event, whatever the registration or the booking answered: the parent may have
+unsubscribed in Klaviyo since, and a resent yes would undo it. A backfill files through
+`enqueue_klaviyo_event` under the unique id the live trigger gives that event, so whatever
+was already filed or sent is skipped or deduplicated.
+
 ## The outboxes and the drain
 
 - **Profiles drain before events**, so an event lands on a profile that already says what
   it is about. Events name their profile by address and external id together.
 - **A profile is updated by its Klaviyo id**, looked up by external id on each sync, so a
-  changed address moves across rather than splitting the parent into two profiles. An
-  address change onto an address Klaviyo already holds as another profile is refused by
-  Klaviyo, and that row fails until it parks.
+  changed address moves across rather than splitting the parent into two profiles. When
+  no profile carries the parent's external id, the lookup falls back to their address and
+  adopts the profile another source made for it — an Eventbrite attendee, a newsletter
+  sign-up — overwriting its external id with ours; only an address Klaviyo does not hold
+  creates a profile. An address change onto an address Klaviyo already holds as another
+  profile is refused by Klaviyo, and that row fails until it parks.
 - **A claim leases rows for two minutes; finishing compares the seq**, so a parent changed
   mid-sync is synced again. A failed row backs off 2^attempts minutes, capped at an hour,
   and after twelve attempts is **parked** (`next_attempt_at` infinity, `last_error` saying
