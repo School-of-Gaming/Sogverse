@@ -40,8 +40,8 @@ import { audienceAdmitsRole, productAudience } from "@/lib/products/product-audi
 import { resolveRegionGate, type RegionGate } from "./region-lock/region-gate";
 import { SignupPanel } from "./signup-panel";
 import {
-  AdvertisingProductView,
-  useAdvertisingCheckoutStart,
+  GtmProductView,
+  useGtmCheckoutStart,
 } from "@/components/consent";
 import type {
   AuthState,
@@ -341,18 +341,18 @@ export function ProductDetailPage({
   // its fail-open branch — which the latch above then makes permanent, so
   // nothing arrives later to contradict what the parent is looking at.
   // The advertising product view: renders nothing, and reports only behind
-  // each pixel's own gates. **It is the first child of every branch below, so it
+  // the container's gates. **It is the first child of every branch below, so it
   // stays mounted for the page's whole life** — its once-per-page guard lives in
   // the component, and a remount (the skeleton giving way to the body, or the
   // page falling back to the skeleton) would count the same page twice. `null`
   // while the read is in flight is its "nothing to report yet", so the view
   // goes out once, when the product lands.
-  const productView = <AdvertisingProductView product={product ?? null} />;
+  const productView = <GtmProductView product={product ?? null} />;
   // The advertising checkout start, handed to the panel to call from the click
   // that starts signing up. Held here rather than in the panel for the same
   // reason the view is: this component outlives the skeleton, so the
   // once-per-page guard does too.
-  const reportCheckoutStart = useAdvertisingCheckoutStart(product ?? null);
+  const reportCheckoutStart = useGtmCheckoutStart(product ?? null);
 
   if (
     productLoading ||

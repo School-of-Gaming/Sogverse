@@ -5,9 +5,11 @@
 // test. Under node there is no `window` to install on, and the loader's own
 // guard would make every case a silent no-op that still passed.
 
-import { beforeEach, describe, expect, it, vi } from "vitest";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import type { ConsentState } from "@/lib/consent";
+import type { GtmEvent, GtmProductPageEvent } from "@/lib/gtm-events";
 import { commandValues, isArgumentsObject } from "../../helpers/data-layer";
+import { asObject } from "../../helpers/json";
 
 /**
  * ============================================================================
@@ -20,18 +22,21 @@ import { commandValues, isArgumentsObject } from "../../helpers/data-layer";
  * allowlist first — so the two halves are split, and what is pinned here is
  * everything the container is told *before* it can act.
  *
- * Three of those things have teeth, and the order they sit in the queue is the
- * assertion for all three: the container reads the queue it finds on arrival
+ * Four of those things have teeth, and the order they sit in the queue is the
+ * assertion for all four: the container reads the queue it finds on arrival
  * from the front, so an entry ahead of its own start signal is state it has
  * before it can fire anything, and an entry behind it is news that arrives too
  * late to constrain it.
  *
- *   - **The blocklist**, which forbids the container from bringing in code or a
- *     third party through the Tag Manager UI, and forbids every one of Google's
- *     automatic trigger listeners — so nothing the visitor does after the page
- *     the container loaded on can fire a tag. It is the only control this
- *     repository keeps over a surface that is edited in a web form, with no
- *     review and no deploy.
+ *   - **The allow- and blocklists**, which forbid the container from bringing
+ *     in code or a third party through the Tag Manager UI other than as a
+ *     template, and forbid every one of Google's automatic trigger listeners —
+ *     so nothing the visitor does after the page the container loaded on can
+ *     fire a tag. They are the only control this repository keeps over a
+ *     surface that is edited in a web form, with no review and no deploy.
+ *   - **The template policy**, which bounds what an admitted template may do.
+ *     Its decisions are pinned in `gtm-policy.test.ts`; what is pinned here is
+ *     that it is registered, as a command, ahead of the container.
  *   - **The denied-by-default consent signals**, which are what a tag firing
  *     before it has seen any consent state would otherwise assume the other way
  *     round.
@@ -57,6 +62,14 @@ const GRANTED_BOTH: ConsentState = {
   marketing: true,
   decidedAt: "2026-09-01T08:00:00.000Z",
 };
+
+/** An event as a registration form pushes it. */
+const SIGN_UP = {
+  event: "sign_up",
+  event_id: "3f2b7c1e-9a4d-4e8b-b6c5-0d1e2f3a4b5c",
+  ecommerce: null,
+  page_path: "/register",
+} as const satisfies GtmEvent;
 
 const ANALYTICS_ONLY: ConsentState = { ...GRANTED_BOTH, marketing: false };
 const MARKETING_ONLY: ConsentState = { ...GRANTED_BOTH, analytics: false };
@@ -101,6 +114,9 @@ function tabIsOn(url: string) {
 beforeEach(async () => {
   vi.resetModules();
   delete window.dataLayer;
+  delete window.fbq;
+  delete window._fbq;
+  delete window.rdt;
   document.head.innerHTML = "";
   tabIsOn("/shop");
   gtm = await import("@/lib/gtm");
@@ -125,14 +141,17 @@ describe("loadGtm", () => {
     void gtm.loadGtm(CONTAINER_ID, GRANTED_BOTH);
 
     expect(queue()[0]).toEqual({
+      "gtm.allowlist": ["google", "sandboxedScripts"],
       "gtm.blocklist": [
         "customScripts",
         "html",
-        "sandboxedScripts",
         "nonGoogleScripts",
         "nonGooglePixels",
         "nonGoogleIframes",
         "customPixels",
+        "k",
+        "j",
+        "d",
         "cl",
         "lcl",
         "fsl",
@@ -146,6 +165,19 @@ describe("loadGtm", () => {
     });
   });
 
+  // Each of these is in the `google` class the allowlist admits, so only its
+  // own id can refuse it. The Supabase session cookies are readable by page
+  // script, and a cookie variable typed into any admitted tag's field would
+  // carry a parent's session to that tag's host; a JavaScript or DOM variable
+  // reaches whatever the page holds.
+  it("blocks the cookie, JavaScript and DOM element variables", () => {
+    void gtm.loadGtm(CONTAINER_ID, GRANTED_BOTH);
+
+    expect(queue()[0]).toMatchObject({
+      "gtm.blocklist": expect.arrayContaining(["k", "j", "d"]),
+    });
+  });
+
   // Every one of Google's built-in auto-event listeners, named as a set rather
   // than read off the line above: a listener quietly dropped from the array is
   // a document-wide trigger back on a platform children sign into, and the
@@ -153,7 +185,7 @@ describe("loadGtm", () => {
   it("blocks every built-in auto-event listener, not just the history one", () => {
     void gtm.loadGtm(CONTAINER_ID, GRANTED_BOTH);
 
-    expect(queue()[0]).toEqual({
+    expect(queue()[0]).toMatchObject({
       "gtm.blocklist": expect.arrayContaining([
         "cl",
         "lcl",
@@ -168,17 +200,18 @@ describe("loadGtm", () => {
     });
   });
 
-  // `customScripts` is the Custom HTML tag and the Custom JavaScript variable;
-  // a custom template and a non-Google tag are neither, and under
-  // `'strict-dynamic'` anything the container inserts is trusted by the policy.
-  it("blocks every class that could bring in code or a third party", () => {
+  // `customScripts` is the Custom HTML tag and the Custom JavaScript variable,
+  // and the four non-Google classes are the built-in tag types that send to a
+  // host the configurer names. Under `'strict-dynamic'` anything the container
+  // inserts is trusted by the CSP, so these are the whole of the fence for
+  // everything that is not a template.
+  it("blocks every class that could bring in code or a third party outside a template", () => {
     void gtm.loadGtm(CONTAINER_ID, GRANTED_BOTH);
 
-    expect(queue()[0]).toEqual({
+    expect(queue()[0]).toMatchObject({
       "gtm.blocklist": expect.arrayContaining([
         "customScripts",
         "html",
-        "sandboxedScripts",
         "nonGoogleScripts",
         "nonGooglePixels",
         "nonGoogleIframes",
@@ -187,10 +220,32 @@ describe("loadGtm", () => {
     });
   });
 
+  // Meta's and Reddit's tags exist only as gallery templates, and a template's
+  // one class is implicitly blocked whenever any class is blocklisted, unless
+  // the allowlist names it. A blocklist wins over an allowlist, so the class
+  // must be absent from the blocklist too — and an allowlist refuses what it
+  // does not name, so Google's own class has to be named beside it.
+  it("admits templates and Google's own tags, and nothing else by class", () => {
+    void gtm.loadGtm(CONTAINER_ID, GRANTED_BOTH);
+
+    const fence = asObject(queue()[0]);
+    expect(fence["gtm.allowlist"]).toEqual(["google", "sandboxedScripts"]);
+    expect(fence["gtm.blocklist"]).not.toContain("sandboxedScripts");
+    expect(fence["gtm.blocklist"]).not.toContain("google");
+  });
+
+  it("registers the template policy, as a command, for every permission", async () => {
+    void gtm.loadGtm(CONTAINER_ID, GRANTED_BOTH);
+    const { containerPolicy } = await import("@/lib/gtm-policy");
+
+    expect(isArgumentsObject(queue()[1])).toBe(true);
+    expect(commandValues(queue()[1])).toEqual(["policy", "all", containerPolicy]);
+  });
+
   it("denies every signal by default, then grants what the visitor gave", () => {
     void gtm.loadGtm(CONTAINER_ID, GRANTED_BOTH);
 
-    expect(commandValues(queue()[1])).toEqual([
+    expect(commandValues(queue()[2])).toEqual([
       "consent",
       "default",
       {
@@ -200,7 +255,7 @@ describe("loadGtm", () => {
         analytics_storage: "denied",
       },
     ]);
-    expect(commandValues(queue()[2])).toEqual([
+    expect(commandValues(queue()[3])).toEqual([
       "consent",
       "update",
       {
@@ -222,7 +277,7 @@ describe("loadGtm", () => {
   it("denies every signal when analytics is granted without marketing", () => {
     void gtm.loadGtm(CONTAINER_ID, ANALYTICS_ONLY);
 
-    expect(commandValues(queue()[2])).toEqual([
+    expect(commandValues(queue()[3])).toEqual([
       "consent",
       "update",
       {
@@ -239,7 +294,7 @@ describe("loadGtm", () => {
   it("grants every signal when marketing is granted without analytics", () => {
     void gtm.loadGtm(CONTAINER_ID, MARKETING_ONLY);
 
-    expect(commandValues(queue()[2])).toEqual([
+    expect(commandValues(queue()[3])).toEqual([
       "consent",
       "update",
       {
@@ -257,7 +312,7 @@ describe("loadGtm", () => {
   it("pushes each consent command as an arguments object, never an array", () => {
     void gtm.loadGtm(CONTAINER_ID, GRANTED_BOTH);
 
-    for (const entry of [queue()[1], queue()[2]]) {
+    for (const entry of [queue()[2], queue()[3]]) {
       expect(isArgumentsObject(entry)).toBe(true);
       expect(Array.isArray(entry)).toBe(false);
     }
@@ -265,7 +320,7 @@ describe("loadGtm", () => {
 
   // The container reads the queue it finds from the front, so everything that
   // constrains it has to be ahead of the signal that starts it.
-  it("puts the fence and the consent state ahead of the container's start", () => {
+  it("puts the fence, the policy and the consent state ahead of the container's start", () => {
     void gtm.loadGtm(CONTAINER_ID, GRANTED_BOTH);
 
     const start = queue().findIndex(
@@ -274,7 +329,28 @@ describe("loadGtm", () => {
         entry !== null &&
         "gtm.start" in entry,
     );
-    expect(start).toBe(3);
+    expect(start).toBe(4);
+  });
+
+  // A vendor template looks for its global and builds its own when it finds
+  // none, without our flags — so the globals must exist before the container
+  // can run a tag, which is before its script is in the document.
+  it("installs the Meta and Reddit globals before inserting the container", () => {
+    const append = document.head.appendChild.bind(document.head);
+    let globalsAtInsert: unknown[] = [];
+    const spy = vi
+      .spyOn(document.head, "appendChild")
+      .mockImplementation(<T extends Node>(node: T): T => {
+        globalsAtInsert = [window.fbq, window.rdt];
+        return append(node);
+      });
+
+    void gtm.loadGtm(CONTAINER_ID, GRANTED_BOTH);
+    spy.mockRestore();
+
+    expect(globalsAtInsert.every((global) => typeof global === "function")).toBe(
+      true,
+    );
   });
 
   it("never reports a page view of its own", () => {
@@ -303,6 +379,9 @@ describe("loadGtm", () => {
 
     vi.resetModules();
     delete window.dataLayer;
+    delete window.fbq;
+    delete window._fbq;
+    delete window.rdt;
     document.head.innerHTML = "";
     const fresh = await import("@/lib/gtm");
     const blocked = fresh.loadGtm(CONTAINER_ID, GRANTED_BOTH);
@@ -329,7 +408,7 @@ function hasEventName(entry: unknown, name: string): boolean {
  */
 describe("pushGtmEvent", () => {
   it("pushes nothing until the container has been asked for", () => {
-    gtm.pushGtmEvent({ event: "sign_up", page_path: "/register" });
+    gtm.pushGtmEvent(SIGN_UP);
 
     expect(window.dataLayer).toBeUndefined();
   });
@@ -337,9 +416,9 @@ describe("pushGtmEvent", () => {
   it("pushes while the container is still downloading", () => {
     void gtm.loadGtm(CONTAINER_ID, GRANTED_BOTH);
 
-    gtm.pushGtmEvent({ event: "sign_up", page_path: "/register" });
+    gtm.pushGtmEvent(SIGN_UP);
 
-    expect(queue().at(-1)).toEqual({ event: "sign_up", page_path: "/register" });
+    expect(queue().at(-1)).toEqual(SIGN_UP);
   });
 
   // An ad blocker refused the container, so the queue is a global array nothing
@@ -353,7 +432,7 @@ describe("pushGtmEvent", () => {
     await loading;
     const before = queue().length;
 
-    gtm.pushGtmEvent({ event: "sign_up", page_path: "/register" });
+    gtm.pushGtmEvent(SIGN_UP);
 
     expect(queue()).toHaveLength(before);
   });
@@ -374,6 +453,7 @@ describe("reportGtmPageView", () => {
 
     expect(queue().at(-1)).toEqual({
       event: "page_view",
+      event_id: expect.any(String),
       page_path: "/shop",
     });
   });
@@ -395,6 +475,7 @@ describe("reportGtmPageView", () => {
 
     expect(queue().at(-1)).toEqual({
       event: "page_view",
+      event_id: expect.any(String),
       page_path: "/shop/abc-123",
     });
   });
@@ -449,6 +530,7 @@ describe("reportGtmPageView", () => {
 
     expect(queue().at(-1)).toEqual({
       event: "page_view",
+      event_id: expect.any(String),
       page_path: "/roblox",
     });
   });
@@ -466,6 +548,7 @@ describe("reportGtmPageView", () => {
 
     expect(queue().at(-1)).toEqual({
       event: "page_view",
+      event_id: expect.any(String),
       page_path: "/shop/café-123",
     });
   });
@@ -494,6 +577,333 @@ describe("reportGtmPageView", () => {
     expect(queue().some((entry) => hasEventName(entry, "page_view"))).toBe(
       false,
     );
+  });
+
+  // Each view is its own event to a platform that deduplicates by id: two
+  // views sharing one would have the second discarded.
+  it("gives every page view an id of its own", async () => {
+    const first = gtm.reportGtmPageView(CONTAINER_ID, "/shop", GRANTED_BOTH);
+    containerArrives();
+    await first;
+    await gtm.reportGtmPageView(CONTAINER_ID, "/shop", GRANTED_BOTH);
+
+    const ids = queue()
+      .filter((entry) => hasEventName(entry, "page_view"))
+      .map((entry) => asObject(entry).event_id);
+    expect(ids).toHaveLength(2);
+    expect(ids[0]).not.toBe(ids[1]);
+  });
+});
+
+/** A product page's own events, as the consent components hand them over. */
+const VIEW_ITEM = {
+  event: "view_item",
+  ecommerce: {
+    items: [
+      {
+        item_id: "abc-123",
+        item_name: "Roblox Studio Club",
+        item_category: "roblox_studio",
+        price: 49,
+        quantity: 1,
+      },
+    ],
+    value: 49,
+    currency: "EUR",
+  },
+  advertised: true,
+} as const satisfies GtmProductPageEvent;
+
+/** The same product in the object Meta's template takes whole. */
+const VIEW_ITEM_META = {
+  content_ids: ["abc-123"],
+  content_type: "product",
+  content_name: "Roblox Studio Club",
+  content_category: "roblox_studio",
+  value: 49,
+  currency: "EUR",
+};
+
+const ADD_TO_CART = {
+  ...VIEW_ITEM,
+  event: "add_to_cart",
+} as const satisfies GtmProductPageEvent;
+
+/**
+ * The product view travels the page view's whole road — the container, the
+ * address-bar re-check, the internal path — because it is reported from the
+ * same page on the same terms.
+ */
+describe("reportGtmProductEvent", () => {
+  const GATE = { containerId: CONTAINER_ID, consent: GRANTED_BOTH };
+
+  it("loads the container and reports once it has arrived", async () => {
+    tabIsOn("/fi/kauppa/abc-123");
+    const report = gtm.reportGtmProductEvent(GATE, "/fi/kauppa/abc-123", VIEW_ITEM);
+
+    expect(insertedScripts()).toHaveLength(1);
+    expect(queue().some((entry) => hasEventName(entry, "view_item"))).toBe(
+      false,
+    );
+
+    containerArrives();
+    await report;
+
+    expect(queue().at(-1)).toEqual({
+      ...VIEW_ITEM,
+      meta: VIEW_ITEM_META,
+      event_id: expect.any(String),
+      page_path: "/shop/abc-123",
+    });
+  });
+
+  it("reports nothing when the tab has moved to another page meanwhile", async () => {
+    tabIsOn("/shop/abc-123");
+    const report = gtm.reportGtmProductEvent(GATE, "/shop/abc-123", VIEW_ITEM);
+    tabIsOn("/parent/gamers/abc-123");
+
+    containerArrives();
+    await report;
+
+    expect(queue().some((entry) => hasEventName(entry, "view_item"))).toBe(
+      false,
+    );
+  });
+});
+
+/**
+ * The click into the sign-up flow goes out inside the click or not at all,
+ * with the same address-bar check the views get, made at that moment.
+ */
+describe("pushGtmProductEventNow", () => {
+  it("pushes nothing and says so when no container is coming", () => {
+    tabIsOn("/shop/abc-123");
+
+    expect(gtm.pushGtmProductEventNow("/shop/abc-123", ADD_TO_CART)).toBe(false);
+    expect(window.dataLayer).toBeUndefined();
+  });
+
+  // Unlike a pixel's click, it may sit in the queue: it names its own page.
+  it("pushes while the container is still downloading, naming its page", () => {
+    tabIsOn("/fi/kauppa/abc-123");
+    void gtm.loadGtm(CONTAINER_ID, GRANTED_BOTH);
+
+    expect(gtm.pushGtmProductEventNow("/fi/kauppa/abc-123", ADD_TO_CART)).toBe(
+      true,
+    );
+    expect(queue().at(-1)).toEqual({
+      ...ADD_TO_CART,
+      meta: VIEW_ITEM_META,
+      event_id: expect.any(String),
+      page_path: "/shop/abc-123",
+    });
+  });
+
+  it("pushes nothing when the tab is no longer on the page", () => {
+    tabIsOn("/parent/gamers/abc-123");
+    void gtm.loadGtm(CONTAINER_ID, GRANTED_BOTH);
+
+    expect(gtm.pushGtmProductEventNow("/shop/abc-123", ADD_TO_CART)).toBe(false);
+    expect(queue().some((entry) => hasEventName(entry, "add_to_cart"))).toBe(
+      false,
+    );
+  });
+
+  it("pushes nothing when the query may not travel", () => {
+    tabIsOn("/shop/abc-123?token=secret");
+    void gtm.loadGtm(CONTAINER_ID, GRANTED_BOTH);
+
+    expect(gtm.pushGtmProductEventNow("/shop/abc-123", ADD_TO_CART)).toBe(false);
+  });
+});
+
+/**
+ * Each of the browser's three moments is posted to our server once its push
+ * has gone out, under the push's own id and with the page as the address bar
+ * held it — and never when the push did not go.
+ */
+describe("the server twin", () => {
+  type FetchCall = (input: string, init: RequestInit) => Promise<Response>;
+  let fetchMock: ReturnType<typeof vi.fn<FetchCall>>;
+
+  beforeEach(() => {
+    fetchMock = vi
+      .fn<FetchCall>()
+      .mockResolvedValue(new Response(null, { status: 204 }));
+    vi.stubGlobal("fetch", fetchMock);
+  });
+
+  afterEach(() => {
+    vi.unstubAllGlobals();
+  });
+
+  /** The bodies posted to the page-event route, in order. */
+  function twins(): Record<string, unknown>[] {
+    return fetchMock.mock.calls.map(([url, init]) => {
+      expect(url).toBe("/api/page-events");
+      expect(init.keepalive).toBe(true);
+      return asObject(JSON.parse(String(init.body)));
+    });
+  }
+
+  /** The id the last push into the queue carried. */
+  function lastPushedId(): unknown {
+    return asObject(queue().at(-1)).event_id;
+  }
+
+  it("posts a page view with its id and the raw page and vetted query", async () => {
+    tabIsOn("/fi/kauppa?utm_source=meta");
+    const report = gtm.reportGtmPageView(
+      CONTAINER_ID,
+      "/fi/kauppa",
+      GRANTED_BOTH,
+    );
+    containerArrives();
+    await report;
+
+    expect(twins()).toEqual([
+      {
+        event: "page_view",
+        eventId: lastPushedId(),
+        pagePath: "/fi/kauppa?utm_source=meta",
+      },
+    ]);
+  });
+
+  it("posts a product view naming its product", async () => {
+    tabIsOn("/fi/kauppa/abc-123");
+    const report = gtm.reportGtmProductEvent(
+      { containerId: CONTAINER_ID, consent: GRANTED_BOTH },
+      "/fi/kauppa/abc-123",
+      VIEW_ITEM,
+    );
+    containerArrives();
+    await report;
+
+    expect(twins()).toEqual([
+      {
+        event: "view_item",
+        eventId: lastPushedId(),
+        pagePath: "/fi/kauppa/abc-123",
+        productId: "abc-123",
+      },
+    ]);
+  });
+
+  it("posts a checkout start inside the click", () => {
+    tabIsOn("/fi/kauppa/abc-123");
+    void gtm.loadGtm(CONTAINER_ID, GRANTED_BOTH);
+
+    gtm.pushGtmProductEventNow("/fi/kauppa/abc-123", ADD_TO_CART);
+
+    expect(twins()).toEqual([
+      {
+        event: "add_to_cart",
+        eventId: lastPushedId(),
+        pagePath: "/fi/kauppa/abc-123",
+        productId: "abc-123",
+      },
+    ]);
+  });
+
+  it("posts nothing for a product we do not advertise", () => {
+    tabIsOn("/shop/abc-123");
+    void gtm.loadGtm(CONTAINER_ID, GRANTED_BOTH);
+
+    expect(
+      gtm.pushGtmProductEventNow("/shop/abc-123", {
+        ...ADD_TO_CART,
+        advertised: false,
+      }),
+    ).toBe(true);
+    expect(fetchMock).not.toHaveBeenCalled();
+  });
+
+  it("posts nothing when the push did not go out", async () => {
+    tabIsOn("/shop/abc-123");
+    gtm.pushGtmProductEventNow("/shop/abc-123", ADD_TO_CART);
+
+    const report = gtm.reportGtmPageView(CONTAINER_ID, "/shop", GRANTED_BOTH);
+    containerFails();
+    await report;
+
+    expect(fetchMock).not.toHaveBeenCalled();
+  });
+
+  it("posts nothing for an event the routes that commit it report", () => {
+    void gtm.loadGtm(CONTAINER_ID, GRANTED_BOTH);
+
+    gtm.pushGtmEvent(SIGN_UP);
+
+    expect(fetchMock).not.toHaveBeenCalled();
+  });
+});
+
+/**
+ * The container keeps one data model that every push is merged into, so a
+ * field one event leaves out reads whatever the last event said. The reset is
+ * what makes each event state its own product or none.
+ */
+describe("the ecommerce reset", () => {
+  it("clears the product immediately before every event", () => {
+    void gtm.loadGtm(CONTAINER_ID, GRANTED_BOTH);
+
+    gtm.pushGtmEvent(SIGN_UP);
+
+    expect(queue().slice(-2)).toEqual([{ ecommerce: null, meta: null }, SIGN_UP]);
+  });
+
+  // Meta's template takes the whole object through one variable, so it is the
+  // product exactly as `ecommerce` names it — and gone again by the next push,
+  // since the data model merges a list index by index.
+  it("names a product for Meta's template beside the ecommerce object", () => {
+    void gtm.loadGtm(CONTAINER_ID, GRANTED_BOTH);
+    const event = { ...VIEW_ITEM, event_id: "e1", page_path: "/shop/abc-123" };
+
+    gtm.pushGtmEvent(event);
+    gtm.pushGtmEvent(SIGN_UP);
+
+    expect(queue().slice(-4)).toEqual([
+      { ecommerce: null, meta: null },
+      {
+        ...event,
+        meta: VIEW_ITEM_META,
+      },
+      { ecommerce: null, meta: null },
+      SIGN_UP,
+    ]);
+  });
+
+  // A lead and a queue place are pushed unpriced, and Meta's object follows.
+  it("leaves Meta's object unpriced when the push is", () => {
+    void gtm.loadGtm(CONTAINER_ID, GRANTED_BOTH);
+
+    gtm.pushGtmEvent({
+      ...SIGN_UP,
+      ecommerce: {
+        items: [
+          {
+            item_id: "abc-123",
+            item_name: "Roblox Studio Club",
+            item_category: "roblox_studio",
+            quantity: 1,
+          },
+        ],
+      },
+    });
+
+    expect(asObject(queue().at(-1)).meta).toEqual({
+      content_ids: ["abc-123"],
+      content_type: "product",
+      content_name: "Roblox Studio Club",
+      content_category: "roblox_studio",
+    });
+  });
+
+  it("says whether a container is coming", () => {
+    expect(gtm.isGtmArmed()).toBe(false);
+    void gtm.loadGtm(CONTAINER_ID, GRANTED_BOTH);
+    expect(gtm.isGtmArmed()).toBe(true);
   });
 });
 
@@ -649,6 +1059,7 @@ describe("the page pinned for gtag's own events", () => {
     });
     expect(queue().at(-1)).toEqual({
       event: "page_view",
+      event_id: expect.any(String),
       page_path: "/register",
     });
   });

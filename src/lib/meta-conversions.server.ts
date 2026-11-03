@@ -3,7 +3,7 @@ import { cookieValueFromHeader, parseConsentCookieHeader } from "@/lib/consent";
 import { clientIpFrom, sha256Hex } from "@/lib/conversion-request.server";
 import {
   isValidPixelId,
-  PIXEL_EVENTS,
+  META_CONVERSION_EVENTS,
   type ConversionAccount,
   type ReportedEnrolmentOutcome,
   type MetaProductDetails,
@@ -24,12 +24,15 @@ import { clickIdFromCookieHeader, type ClickId } from "@/lib/utm";
  * or gained if anything else set the cookie. The handler that committed the
  * outcome is the only place that knows it happened, exactly once.
  *
- * **Starting a checkout is not one of them.** Meta's `InitiateCheckout` is the
- * parent stepping into the sign-up flow, which is a click on a product page and
- * commits nothing; the browser reports it there, for free products as well as
- * paid ones (see `@/components/consent/meta-pixel`). Handing a parent to Stripe
- * is therefore reported from nowhere on this side, so no attempt is counted
- * twice under one name.
+ * **The browser's own moments come here too, as twins.** A page view, a product
+ * view and the click into the sign-up flow (Meta's `InitiateCheckout`, which
+ * commits nothing and is reported for free products as well as paid ones) are
+ * decided in the browser, which pushes them for the container's Meta tag and
+ * then hands each to `/api/page-events` under the same id; that route re-checks
+ * every gate and reports it from here, and Meta counts the pair once. Handing a
+ * parent to Stripe is reported from nowhere on this side, because the
+ * checkout start is that earlier click and a second report would count every
+ * paid attempt twice under one name.
  *
  * **What is sent about a person, exhaustively:** the user agent, the IP address
  * the request arrived from, Meta's own `_fbp` / `_fbc` cookies if this browser
@@ -59,12 +62,21 @@ import { clickIdFromCookieHeader, type ClickId } from "@/lib/utm";
  * without a price, so Meta learns that an identifiable parent opened an
  * account from that named club, camp or event's page.
  *
+ * **What is sent about a page view** is nothing but the page; about a product
+ * view or a checkout start, the product in the same fields with its price, the
+ * facts its public page shows anyone. None of these carries an account, even
+ * from a signed-in parent, so neither hash goes with them: Meta learns that a
+ * browser looked at, or stepped into signing up for, that named product, never
+ * that an identifiable parent did.
+ *
  * **Gated on the request's own consent cookie.** The send is refused unless the
  * request that triggered it carried marketing consent — decided here, on the
  * server, from the cookie the browser actually sent, so a report for someone who
- * refused is impossible rather than merely unlikely. The routes that call this
- * are all customer-only, so a gamer cannot reach one and no role check is needed
- * on this side.
+ * refused is impossible rather than merely unlikely. No role check is made on
+ * this side: the conversion routes are customer-only, and the page-event route
+ * refuses a gamer — or a session whose role it cannot read — before it calls.
+ * A report handed no account — an anonymous visitor's, or any page event —
+ * carries neither hash.
  *
  * **It never throws and never delays anything.** It is reached through the
  * one fan-out to every platform (`@/lib/ad-conversions.server`), which callers
@@ -102,22 +114,36 @@ const REQUEST_TIMEOUT_MS = 10_000;
  * the request's own URL — that is an API route, and on some of these flows it
  * would carry a query string nobody vetted.
  *
- * `product` is built by `metaProductDetails()`, the one builder the browser's
- * product view uses too, so the two sides cannot describe a product
- * differently. On an account creation it is optional: the product page the
+ * `product` is built by `metaProductDetails()`, from the same product facts
+ * the browser's pushes are built from (`gtmEcommerce()`), so the two sides
+ * cannot describe a product differently. On an account creation it is optional: the product page the
  * sign-up started from, when that was an advertised product's page.
+ *
+ * `eventId` is Meta's `event_id`, the key it deduplicates on: the id the
+ * browser pushed its own event for the same moment under, so a container tag
+ * sending that event and this report are counted once. Untrusted when it came
+ * from a request body, and nothing but this field ever reads it.
  */
 export type MetaConversion =
   | {
       event: "account_created";
       product?: MetaProductDetails;
       sourcePath: string;
+      eventId: string;
     }
   | {
       event: "enrolment";
       outcome: ReportedEnrolmentOutcome;
       product: MetaProductDetails;
       sourcePath: string;
+      eventId: string;
+    }
+  | { event: "page_view"; sourcePath: string; eventId: string }
+  | {
+      event: "product_view" | "checkout_start";
+      product: MetaProductDetails;
+      sourcePath: string;
+      eventId: string;
     };
 
 /**
@@ -150,9 +176,18 @@ function fbcForClick(click: ClickId): string {
 }
 
 function eventNameFor(conversion: MetaConversion): string {
-  return conversion.event === "account_created"
-    ? PIXEL_EVENTS.accountCreated
-    : PIXEL_EVENTS.enrolment;
+  switch (conversion.event) {
+    case "account_created":
+      return META_CONVERSION_EVENTS.accountCreated;
+    case "enrolment":
+      return META_CONVERSION_EVENTS.enrolment;
+    case "page_view":
+      return META_CONVERSION_EVENTS.pageView;
+    case "product_view":
+      return META_CONVERSION_EVENTS.productView;
+    case "checkout_start":
+      return META_CONVERSION_EVENTS.checkoutStart;
+  }
 }
 
 /** A product's fields without its price. */
@@ -172,16 +207,28 @@ function unpriced(product: MetaProductDetails): Record<string, unknown> {
  * on either would teach the campaign that a queue place or a new account is
  * revenue. Decided here rather than by each caller, so no route can get it
  * wrong.
+ *
+ * A product view and a checkout start name their product with its price, as
+ * the browser's own pushes of them do — the price the page shows anyone, on a
+ * moment that is not a conversion. A page view names nothing.
  */
 function customDataFor(
   conversion: MetaConversion,
 ): Record<string, unknown> | undefined {
-  if (conversion.event === "account_created") {
-    return conversion.product && unpriced(conversion.product);
+  switch (conversion.event) {
+    case "account_created":
+      return conversion.product && unpriced(conversion.product);
+    case "enrolment": {
+      const { outcome, product } = conversion;
+      if (outcome === "waitlisted") return { outcome, ...unpriced(product) };
+      return { outcome, ...product };
+    }
+    case "page_view":
+      return undefined;
+    case "product_view":
+    case "checkout_start":
+      return { ...conversion.product };
   }
-  const { outcome, product } = conversion;
-  if (outcome === "waitlisted") return { outcome, ...unpriced(product) };
-  return { outcome, ...product };
 }
 
 export async function reportMetaConversion(
@@ -190,10 +237,15 @@ export async function reportMetaConversion(
   account: ConversionAccount,
 ): Promise<void> {
   try {
+    // The dataset the reports go to, and the switch for them: unset, or a
+    // placeholder, and our servers report nothing to Meta. Read on the server
+    // only — the browser's Meta pixel is configured in the Tag Manager
+    // container and reads no variable of ours — so the `NEXT_PUBLIC_` prefix is
+    // a name kept to spare every environment a change, and no client bundle
+    // carries the value. Read at call time rather than at module load, so a
+    // deployment's environment is what decides.
     const pixelId = process.env.NEXT_PUBLIC_META_PIXEL_ID;
     const accessToken = process.env.META_CONVERSIONS_API_ACCESS_TOKEN;
-    // Read at call time rather than at module load, so a deployment's
-    // environment is what decides and no build carries the answer.
     if (!isValidPixelId(pixelId) || !accessToken) return;
 
     const cookieHeader = request.headers.get("cookie");
@@ -230,10 +282,10 @@ export async function reportMetaConversion(
     const event = {
       event_name: eventNameFor(conversion),
       event_time: Math.floor(Date.now() / 1000),
-      // A random id per report, which is how Meta deduplicates a retry — and
-      // how it would reconcile a browser event with this one, if we ever sent
-      // both for the same conversion.
-      event_id: crypto.randomUUID(),
+      // Shared with the browser's event for the same moment, which is how
+      // Meta reconciles the two into one conversion — and how it deduplicates
+      // a retry.
+      event_id: conversion.eventId,
       action_source: "website",
       // Built from the TRUSTED origin and a path the caller states, never from
       // the incoming request's URL or a raw Host header.

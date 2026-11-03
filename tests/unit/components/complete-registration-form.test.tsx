@@ -48,6 +48,10 @@ const mockPushGtmEvent = vi.fn();
 vi.mock("@/lib/gtm", () => ({
   pushGtmEvent: (...args: unknown[]) => mockPushGtmEvent(...args),
 }));
+// Which product the push names is that helper's own subject; here it names none.
+vi.mock("@/lib/gtm-sign-up", () => ({
+  gtmSignUpProduct: () => Promise.resolve(null),
+}));
 
 // Fields whose own dependencies (the locations table, a phone library, the
 // game-account lookups) this file has no use for.
@@ -182,14 +186,29 @@ describe("CompleteRegistrationForm", () => {
 
     expect(mockFetch).toHaveBeenCalledTimes(1);
     expect(mockFetch.mock.calls[0][0]).toBe("/api/auth/complete-registration");
-    expect(sentBody()).toEqual({
+    const { eventId, ...answers } = sentBody();
+    expect(answers).toEqual({
       firstName: "Marja",
       lastName: "Virtanen",
       locale: "fi",
       marketingConsent: false,
       acceptedTerms: true,
     });
-    expect(mockPushGtmEvent).toHaveBeenCalledTimes(1);
+    // The route's lead and the browser's `sign_up` go out under one id, so
+    // each platform counts the account once.
+    expect(eventId).toMatch(
+      /^[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/,
+    );
+    expect(mockPushGtmEvent.mock.calls).toEqual([
+      [
+        {
+          event: "sign_up",
+          event_id: eventId,
+          ecommerce: null,
+          page_path: ROUTES.register,
+        },
+      ],
+    ]);
     expect(mockNavigateAfterAuth).toHaveBeenCalledWith(ROUTES.selectProfile);
     // The document is unloading: the button stays busy.
     expect(submitButton().disabled).toBe(true);

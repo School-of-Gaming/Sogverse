@@ -24,18 +24,43 @@ import { reportRedditConversion } from "@/lib/reddit-conversions.server";
  *
  * The rules for what each event means and carries live in the reporters and
  * in `@/lib/marketing-events`; this type only has the words a route needs.
+ *
+ * `eventId` is the id the browser minted for the same moment and sent in the
+ * request body (`conversionEventIdValue`), which it pushes its own event under
+ * once the route has answered — so a container tag's browser event and this
+ * report are one conversion to each platform. Absent, one is minted here, once
+ * for every platform. It is untrusted input and is only ever a dedup key.
+ *
+ * The last three are the browser's own moments — a marketing page reached, a
+ * product page's product shown, the click into the sign-up flow — reported
+ * here as the server twins of the pushes the browser has already made
+ * (`/api/page-events`). They always carry the browser's id, since a twin with
+ * no browser event to match has nothing to be the twin of.
  */
 export type AdConversion =
   | {
       event: "account_created";
       product?: AdvertisedProductDetails;
       sourcePath: string;
+      eventId?: string;
     }
   | {
       event: "enrolment";
       outcome: ReportedEnrolmentOutcome;
       product: AdvertisedProductDetails;
       sourcePath: string;
+      eventId?: string;
+    }
+  | {
+      event: "page_view";
+      sourcePath: string;
+      eventId: string;
+    }
+  | {
+      event: "product_view" | "checkout_start";
+      product: AdvertisedProductDetails;
+      sourcePath: string;
+      eventId: string;
     };
 
 export async function reportAdConversion(
@@ -43,9 +68,18 @@ export async function reportAdConversion(
   conversion: AdConversion,
   account: ConversionAccount,
 ): Promise<void> {
+  const eventId = conversion.eventId ?? crypto.randomUUID();
   await Promise.all([
-    reportMetaConversion(request, forPlatform(conversion, "meta"), account),
-    reportRedditConversion(request, forPlatform(conversion, "reddit"), account),
+    reportMetaConversion(
+      request,
+      forPlatform(conversion, "meta", eventId),
+      account,
+    ),
+    reportRedditConversion(
+      request,
+      forPlatform(conversion, "reddit", eventId),
+      account,
+    ),
   ]);
 }
 
@@ -53,18 +87,34 @@ export async function reportAdConversion(
 function forPlatform<Platform extends keyof AdvertisedProductDetails>(
   conversion: AdConversion,
   platform: Platform,
+  eventId: string,
 ) {
   const { sourcePath } = conversion;
-  return conversion.event === "account_created"
-    ? {
+  switch (conversion.event) {
+    case "account_created":
+      return {
         event: conversion.event,
         product: conversion.product?.[platform],
         sourcePath,
-      }
-    : {
+        eventId,
+      };
+    case "enrolment":
+      return {
         event: conversion.event,
         outcome: conversion.outcome,
         product: conversion.product[platform],
         sourcePath,
+        eventId,
       };
+    case "page_view":
+      return { event: conversion.event, sourcePath, eventId };
+    case "product_view":
+    case "checkout_start":
+      return {
+        event: conversion.event,
+        product: conversion.product[platform],
+        sourcePath,
+        eventId,
+      };
+  }
 }
