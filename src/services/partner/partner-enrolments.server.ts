@@ -39,8 +39,8 @@ import {
  * does not store. So the query narrows to the stored statuses that can report
  * the asked-for value, and `build` drops the seats whose product decided
  * otherwise: `status=active` fetches active seats and drops those on completed
- * products; `status=completed` fetches active and completed seats and drops the
- * active ones on products that have not completed.
+ * products; `status=completed` fetches active seats and drops those on products
+ * that have not completed.
  */
 
 const EFFECTIVE_PRODUCT_STATUSES = Constants.public.Enums.effective_product_status;

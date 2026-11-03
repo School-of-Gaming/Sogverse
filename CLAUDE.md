@@ -273,7 +273,7 @@ is changing, and changing one half never obliges the other.
 3. **Build the CI completeness check**: every element carries exactly one classification, and every classification names its verifier. This is the load-bearing step — allowlist growth is the failure mode of every allowlist design, and the completeness check is what polices it.
 4. **Ship the primitive that makes conforming the cheapest path** — a guard function, a wrapper, a canonical template, giving step 3 a single greppable call site to require.
 
-The first two without the last two is an audit, not a fix: prose decays, a failing test doesn't, and fixing instances leaves the class alive. Keep the scope to one surface and one bug class per pass. Three standing instances show the shape: DB grants + RLS presence (the access-control DB test), DB function bodies (the authorization spine — `docs/architecture/db-authorization.md`), and the HTTP route layer (the posture registry — `docs/architecture/route-boundary.md`).
+The first two without the last two is an audit, not a fix: prose decays, a failing test doesn't, and fixing instances leaves the class alive. Keep the scope to one surface and one bug class per pass. Four standing instances show the shape: DB grants + RLS presence (the access-control DB test), DB function bodies (the authorization spine — `docs/architecture/db-authorization.md`), the HTTP route layer (the posture registry — `docs/architecture/route-boundary.md`), and the readers of seats, each classified as meaning the seats held now or the history (the seat reader registry — `supabase/CLAUDE.md`).
 
 ### A flaw in the model is fixed in the model, not worked around
 
