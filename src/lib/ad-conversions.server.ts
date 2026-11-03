@@ -30,6 +30,12 @@ import { reportRedditConversion } from "@/lib/reddit-conversions.server";
  * once the route has answered — so a container tag's browser event and this
  * report are one conversion to each platform. Absent, one is minted here, once
  * for every platform. It is untrusted input and is only ever a dedup key.
+ *
+ * The last three are the browser's own moments — a marketing page reached, a
+ * product page's product shown, the click into the sign-up flow — reported
+ * here as the server twins of the pushes the browser has already made
+ * (`/api/page-events`). They always carry the browser's id, since a twin with
+ * no browser event to match has nothing to be the twin of.
  */
 export type AdConversion =
   | {
@@ -44,6 +50,17 @@ export type AdConversion =
       product: AdvertisedProductDetails;
       sourcePath: string;
       eventId?: string;
+    }
+  | {
+      event: "page_view";
+      sourcePath: string;
+      eventId: string;
+    }
+  | {
+      event: "product_view" | "checkout_start";
+      product: AdvertisedProductDetails;
+      sourcePath: string;
+      eventId: string;
     };
 
 export async function reportAdConversion(
@@ -73,18 +90,31 @@ function forPlatform<Platform extends keyof AdvertisedProductDetails>(
   eventId: string,
 ) {
   const { sourcePath } = conversion;
-  return conversion.event === "account_created"
-    ? {
+  switch (conversion.event) {
+    case "account_created":
+      return {
         event: conversion.event,
         product: conversion.product?.[platform],
         sourcePath,
         eventId,
-      }
-    : {
+      };
+    case "enrolment":
+      return {
         event: conversion.event,
         outcome: conversion.outcome,
         product: conversion.product[platform],
         sourcePath,
         eventId,
       };
+    case "page_view":
+      return { event: conversion.event, sourcePath, eventId };
+    case "product_view":
+    case "checkout_start":
+      return {
+        event: conversion.event,
+        product: conversion.product[platform],
+        sourcePath,
+        eventId,
+      };
+  }
 }

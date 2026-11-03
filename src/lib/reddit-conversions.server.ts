@@ -15,9 +15,10 @@ import { clickIdFromCookieHeader } from "@/lib/utm";
  * The conversions we report to Reddit from our own servers, through its
  * Conversions API (v3) — the same moments, the same gates and the same
  * promises as Meta's report (`@/lib/meta-conversions.server`), in Reddit's
- * vocabulary. Why the server rather than the pixel, why a checkout start is
- * not among them, and why a lost report is the safe failure are all reasoned
- * out there and hold here unchanged.
+ * vocabulary. Why the server rather than the pixel, how the browser's own
+ * moments arrive here as twins, why a Stripe handoff is not among them, and
+ * why a lost report is the safe failure are all reasoned out there and hold
+ * here unchanged.
  *
  * **What is sent about a person, exhaustively:** the user agent, the IP address
  * the request arrived from, Reddit's own `_rdt_uuid` (its browser id) and
@@ -35,7 +36,10 @@ import { clickIdFromCookieHeader } from "@/lib/utm";
  * fields — its id, English name and topic — with its price only on a seat
  * taken. Reddit's event has no field for our own words, so unlike Meta's
  * report a seat and a queue place are not told apart by an `outcome`; the
- * missing value on a queue place is the only difference Reddit sees.
+ * missing value on a queue place is the only difference Reddit sees. A page
+ * view names nothing but the page; a product view and a checkout start name
+ * the product with its price — and, from a signed-in parent, ride beside the
+ * two hashes exactly as Meta's do.
  *
  * **Gated on the request's own consent cookie**, decided here from the cookie
  * the browser actually sent, so a report for someone who refused is impossible
@@ -49,8 +53,8 @@ const REDDIT_API_BASE = "https://ads-api.reddit.com/api/v3";
 const REQUEST_TIMEOUT_MS = 10_000;
 
 /**
- * What happened, in our own words — the same two moments Meta is told about,
- * with the product already described in Reddit's fields. `sourcePath` is the
+ * What happened, in our own words — the same moments Meta is told about, with
+ * the product already described in Reddit's fields. `sourcePath` is the
  * public path the conversion happened on, stated by the caller and never taken
  * from the request's own URL. `eventId` is Reddit's `conversion_id`, its
  * dedup key — the id the browser pushed its own event for the same moment
@@ -69,7 +73,29 @@ export type RedditConversion =
       product: RedditProductDetails;
       sourcePath: string;
       eventId: string;
+    }
+  | { event: "page_view"; sourcePath: string; eventId: string }
+  | {
+      event: "product_view" | "checkout_start";
+      product: RedditProductDetails;
+      sourcePath: string;
+      eventId: string;
     };
+
+function trackingTypeFor(conversion: RedditConversion): string {
+  switch (conversion.event) {
+    case "account_created":
+      return REDDIT_CONVERSION_EVENTS.accountCreated;
+    case "enrolment":
+      return REDDIT_CONVERSION_EVENTS.enrolment;
+    case "page_view":
+      return REDDIT_CONVERSION_EVENTS.pageView;
+    case "product_view":
+      return REDDIT_CONVERSION_EVENTS.productView;
+    case "checkout_start":
+      return REDDIT_CONVERSION_EVENTS.checkoutStart;
+  }
+}
 
 /**
  * Reddit's canonical form of an email, which is not Meta's: trimmed and
@@ -94,16 +120,20 @@ function hashAccountIdForReddit(id: string): string {
  * queue place and an account creation name the product but drop the price,
  * whatever the caller passed — the same rule, for the same reason, as Meta's
  * report. An account creation that did not start from a product page names
- * none.
+ * none, and neither does a page view. A product view and a checkout start
+ * carry the price, as the browser's own pushes of them do.
  */
 function productMetadataFor(
   conversion: RedditConversion,
 ): Record<string, unknown> {
+  if (conversion.event === "page_view") return {};
   const { product } = conversion;
   if (!product) return {};
   const unpriced = { item_count: product.itemCount, products: product.products };
   if (conversion.event === "account_created") return unpriced;
-  if (conversion.outcome === "waitlisted") return unpriced;
+  if (conversion.event === "enrolment" && conversion.outcome === "waitlisted") {
+    return unpriced;
+  }
   return {
     ...unpriced,
     ...(product.value !== undefined && { value: product.value }),
@@ -155,12 +185,7 @@ export async function reportRedditConversion(
       // Built from the TRUSTED origin and a path the caller states, never from
       // the incoming request's URL or a raw Host header.
       event_source_url: `${getOrigin(request)}${conversion.sourcePath}`,
-      type: {
-        tracking_type:
-          conversion.event === "account_created"
-            ? REDDIT_CONVERSION_EVENTS.accountCreated
-            : REDDIT_CONVERSION_EVENTS.enrolment,
-      },
+      type: { tracking_type: trackingTypeFor(conversion) },
       ...(clickId && { click_id: clickId }),
       user: {
         ...(userAgent && { user_agent: userAgent }),

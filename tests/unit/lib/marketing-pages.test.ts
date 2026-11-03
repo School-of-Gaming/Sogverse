@@ -4,6 +4,7 @@ import {
   isMarketingPage,
   isReportableQuery,
   MARKETING_PAGES,
+  reportableMarketingPage,
 } from "@/lib/marketing-pages";
 
 /**
@@ -163,5 +164,44 @@ describe("the reportable-query allowlist", () => {
   it("refuses any key it has not heard of", () => {
     expect(isReportableQuery("?token=abc")).toBe(false);
     expect(isReportableQuery("?email=parent%40example.com")).toBe(false);
+  });
+});
+
+/**
+ * The server's half of the browser's page gates: a raw path and query stated
+ * in a request body, accepted only where the browser itself could have
+ * reported it.
+ */
+describe("reportableMarketingPage", () => {
+  it("answers a marketing page's internal path and template", () => {
+    expect(
+      reportableMarketingPage("/fi/kauppa/abc-123?utm_source=meta&fbclid=x"),
+    ).toEqual({ internalPath: "/shop/abc-123", template: "/shop/[id]" });
+    expect(reportableMarketingPage("/")).toEqual({
+      internalPath: "/",
+      template: "/",
+    });
+  });
+
+  it("accepts a redirect back to a marketing page, as the browser does", () => {
+    expect(
+      reportableMarketingPage("/fi/login?redirect=/fi/kauppa/abc-123"),
+    ).toEqual({ internalPath: "/login", template: "/login" });
+  });
+
+  it.each([
+    ["a page off the allowlist", "/fi/parent/gamers/123"],
+    ["a path matching no route", "/fi/nowhere"],
+    ["an unvetted query key", "/fi/kauppa?token=secret"],
+    ["a redirect to a child's page", "/fi/login?redirect=/fi/parent/gamers/1"],
+    ["an absolute URL", "https://evil.test/fi/kauppa"],
+    ["a protocol-relative URL", "//evil.test/fi/kauppa"],
+    ["a dot segment", "/fi/../kauppa"],
+    ["an encoded segment", "/fi/kauppa/a%2Fb"],
+    ["an empty segment", "/fi//kauppa"],
+    ["a fragment", "/fi/kauppa#top"],
+    ["an empty value", ""],
+  ])("refuses %s", (_label, value) => {
+    expect(reportableMarketingPage(value)).toBeNull();
   });
 });

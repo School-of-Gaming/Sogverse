@@ -5,7 +5,7 @@
 // test. Under node there is no `window` to install on, and the loader's own
 // guard would make every case a silent no-op that still passed.
 
-import { beforeEach, describe, expect, it, vi } from "vitest";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import type { ConsentState } from "@/lib/consent";
 import type { GtmEvent, GtmProductPageEvent } from "@/lib/gtm-events";
 import { commandValues, isArgumentsObject } from "../../helpers/data-layer";
@@ -686,6 +686,128 @@ describe("pushGtmProductEventNow", () => {
     void gtm.loadGtm(CONTAINER_ID, GRANTED_BOTH);
 
     expect(gtm.pushGtmProductEventNow("/shop/abc-123", ADD_TO_CART)).toBe(false);
+  });
+});
+
+/**
+ * Each of the browser's three moments is posted to our server once its push
+ * has gone out, under the push's own id and with the page as the address bar
+ * held it — and never when the push did not go.
+ */
+describe("the server twin", () => {
+  type FetchCall = (input: string, init: RequestInit) => Promise<Response>;
+  let fetchMock: ReturnType<typeof vi.fn<FetchCall>>;
+
+  beforeEach(() => {
+    fetchMock = vi
+      .fn<FetchCall>()
+      .mockResolvedValue(new Response(null, { status: 204 }));
+    vi.stubGlobal("fetch", fetchMock);
+  });
+
+  afterEach(() => {
+    vi.unstubAllGlobals();
+  });
+
+  /** The bodies posted to the page-event route, in order. */
+  function twins(): Record<string, unknown>[] {
+    return fetchMock.mock.calls.map(([url, init]) => {
+      expect(url).toBe("/api/page-events");
+      expect(init.keepalive).toBe(true);
+      return asObject(JSON.parse(String(init.body)));
+    });
+  }
+
+  /** The id the last push into the queue carried. */
+  function lastPushedId(): unknown {
+    return asObject(queue().at(-1)).event_id;
+  }
+
+  it("posts a page view with its id and the raw page and vetted query", async () => {
+    tabIsOn("/fi/kauppa?utm_source=meta");
+    const report = gtm.reportGtmPageView(
+      CONTAINER_ID,
+      "/fi/kauppa",
+      GRANTED_BOTH,
+    );
+    containerArrives();
+    await report;
+
+    expect(twins()).toEqual([
+      {
+        event: "page_view",
+        eventId: lastPushedId(),
+        pagePath: "/fi/kauppa?utm_source=meta",
+      },
+    ]);
+  });
+
+  it("posts a product view naming its product", async () => {
+    tabIsOn("/fi/kauppa/abc-123");
+    const report = gtm.reportGtmProductEvent(
+      { containerId: CONTAINER_ID, consent: GRANTED_BOTH },
+      "/fi/kauppa/abc-123",
+      VIEW_ITEM,
+    );
+    containerArrives();
+    await report;
+
+    expect(twins()).toEqual([
+      {
+        event: "view_item",
+        eventId: lastPushedId(),
+        pagePath: "/fi/kauppa/abc-123",
+        productId: "abc-123",
+      },
+    ]);
+  });
+
+  it("posts a checkout start inside the click", () => {
+    tabIsOn("/fi/kauppa/abc-123");
+    void gtm.loadGtm(CONTAINER_ID, GRANTED_BOTH);
+
+    gtm.pushGtmProductEventNow("/fi/kauppa/abc-123", ADD_TO_CART);
+
+    expect(twins()).toEqual([
+      {
+        event: "add_to_cart",
+        eventId: lastPushedId(),
+        pagePath: "/fi/kauppa/abc-123",
+        productId: "abc-123",
+      },
+    ]);
+  });
+
+  it("posts nothing for a product we do not advertise", () => {
+    tabIsOn("/shop/abc-123");
+    void gtm.loadGtm(CONTAINER_ID, GRANTED_BOTH);
+
+    expect(
+      gtm.pushGtmProductEventNow("/shop/abc-123", {
+        ...ADD_TO_CART,
+        advertised: false,
+      }),
+    ).toBe(true);
+    expect(fetchMock).not.toHaveBeenCalled();
+  });
+
+  it("posts nothing when the push did not go out", async () => {
+    tabIsOn("/shop/abc-123");
+    gtm.pushGtmProductEventNow("/shop/abc-123", ADD_TO_CART);
+
+    const report = gtm.reportGtmPageView(CONTAINER_ID, "/shop", GRANTED_BOTH);
+    containerFails();
+    await report;
+
+    expect(fetchMock).not.toHaveBeenCalled();
+  });
+
+  it("posts nothing for an event the routes that commit it report", () => {
+    void gtm.loadGtm(CONTAINER_ID, GRANTED_BOTH);
+
+    gtm.pushGtmEvent(SIGN_UP);
+
+    expect(fetchMock).not.toHaveBeenCalled();
   });
 });
 

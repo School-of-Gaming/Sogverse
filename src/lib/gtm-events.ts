@@ -80,12 +80,15 @@ interface GtmEventBase {
    *
    * **It is what lets one moment be reported twice and counted once.** A
    * platform deduplicates a browser event against a server report of the same
-   * name by this id. For the two moments our servers report — `sign_up` and a
+   * name by this id. For the two moments our servers commit — `sign_up` and a
    * free seat or queue place's `enrolment` — the browser mints it, sends it to
    * the route that commits the action, and pushes under the same id once the
-   * route has answered; the server hands it to each platform as that platform's
-   * dedup key. Every other event carries one too, so a tag built on any of
-   * them has an id to send without anybody deciding which events deserve one.
+   * route has answered. For the browser's own three — `page_view`, `view_item`
+   * and `add_to_cart` — it pushes first and then posts the push, id and all,
+   * to `/api/page-events` (`@/lib/page-events`). Either way the server hands it
+   * to each platform as that platform's dedup key. A `begin_checkout` carries
+   * one too, so a tag built on any event has an id to send without anybody
+   * deciding which events deserve one.
    *
    * Minted per push, never per page or per product: a second view of the same
    * page is a second event, and an id shared with the first would have the

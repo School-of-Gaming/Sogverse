@@ -1,9 +1,9 @@
 /**
  * What we report to an advertising platform, named once for both sides of the
- * wire: the browser reports the page and product views and the start of a
- * checkout, through the Tag Manager container's Meta and Reddit tags, our
- * servers report the conversions, and both have to mean the same thing by the
- * same word.
+ * wire: the browser reports every moment through the Tag Manager container's
+ * Meta and Reddit tags, our servers report the same moments through each
+ * platform's Conversions API, and both have to mean the same thing by the same
+ * word.
  *
  * Client-safe and React-free — the components and the route handlers both
  * import it.
@@ -22,21 +22,28 @@
  *   - `InitiateCheckout` — the parent has stepped into the sign-up flow from a
  *     product's page: clicked to create an account there, or clicked the button
  *     that enrols. It is the top of the flow and commits nothing, which is why
- *     it is reported from the browser at the click, for a free product exactly
- *     as for a paid one — and never as an enrolment, because a name is what
- *     Meta optimises on and an abandoned attempt would train the campaign as
- *     hard as a seat.
+ *     it is reported at the click, for a free product exactly as for a paid
+ *     one — and never as an enrolment, because a name is what Meta optimises
+ *     on and an abandoned attempt would train the campaign as hard as a seat.
  *
- *   - `ViewContent` — a product page was looked at. Reported from the browser,
- *     because a view commits nothing and no handler of ours sees it happen.
+ *   - `ViewContent` — a product page was looked at.
+ *   - `PageView` — a marketing page was reached.
  *
- * **The browser's three names are set on the container's tags, not here.** The
- * app pushes `page_view`, `view_item` and `add_to_cart` (`@/lib/gtm-events`),
- * and each vendor's tag in the container maps them: Meta's to `PageView`,
- * `ViewContent` and `InitiateCheckout`, Reddit's to `PageVisit`, `ViewContent`
- * and `AddToCart` — Reddit has no event for stepping into a checkout, and the
- * closest standard one is putting a product in the basket, which commits
- * nothing and names one product. Only the servers' names are code.
+ * **The browser's three moments — the page view, the product view and the
+ * checkout start — are reported from both sides under one id.** No handler of
+ * ours commits any of them, so the browser decides each: it pushes `page_view`,
+ * `view_item` and `add_to_cart` (`@/lib/gtm-events`), and each vendor's tag in
+ * the container maps them — Meta's to `PageView`, `ViewContent` and
+ * `InitiateCheckout`, Reddit's to `PageVisit`, `ViewContent` and `AddToCart`.
+ * Reddit has no event for stepping into a checkout, and the closest standard
+ * one is putting a product in the basket, which commits nothing and names one
+ * product. The browser then hands the same moment and its id to
+ * `/api/page-events`, which re-checks every gate and reports it through each
+ * platform's Conversions API under the names below — so a tag whose vendor
+ * library a browser blocked still has its event arrive, and one that got
+ * through is counted once. The
+ * container's names are configured there and the servers' are code; the two
+ * must stay the same words.
  *
  * **Reddit gets every event Meta does, under its own names** — the same
  * moments, the same products, the same gates — because Reddit optimises on the
@@ -60,26 +67,36 @@ import { DEFAULT_LOCALE } from "@/lib/constants/locales";
 import { resolveRequiredTranslation } from "@/lib/i18n/resolve-translation";
 import type { BillingMode, ProductTopic, ProductType } from "@/types";
 
-/** Meta's names for the two conversions our servers report. */
+/**
+ * Meta's names for what our servers report: the two conversions, and the
+ * server twins of the browser's page view, product view and checkout start.
+ */
 export const META_CONVERSION_EVENTS = {
   accountCreated: "Lead",
   enrolment: "CompleteRegistration",
+  pageView: "PageView",
+  productView: "ViewContent",
+  checkoutStart: "InitiateCheckout",
 } as const;
 
 /**
- * Reddit's names for the two conversions our servers report, as its
- * Conversions API spells a `tracking_type` — upper snake case, unlike the
- * names its browser pixel takes.
+ * Reddit's names for what our servers report, as its Conversions API spells a
+ * `tracking_type` — upper snake case, unlike the names its browser pixel takes.
  *
  *   - `LEAD` — an account was created, Meta's `Lead`.
  *   - `SIGN_UP` — an enrolment, a seat or a queue place: Reddit's event for
  *     registering through a sign-up form, which reads as registering *for* a
  *     thing exactly as Meta's `CompleteRegistration` does — so it is the
  *     enrolment's name and never the account's.
+ *   - `PAGE_VISIT`, `VIEW_CONTENT` and `ADD_TO_CART` — the server twins of the
+ *     container tag's `PageVisit`, `ViewContent` and `AddToCart`.
  */
 export const REDDIT_CONVERSION_EVENTS = {
   accountCreated: "LEAD",
   enrolment: "SIGN_UP",
+  pageView: "PAGE_VISIT",
+  productView: "VIEW_CONTENT",
+  checkoutStart: "ADD_TO_CART",
 } as const;
 
 /** The three ways a signup attempt can end in something worth reporting. */
@@ -100,12 +117,13 @@ export type EnrolmentOutcome = (typeof ENROLMENT_OUTCOMES)[number];
 export type ReportedEnrolmentOutcome = Exclude<EnrolmentOutcome, "sent_to_checkout">;
 
 /**
- * The account a server conversion is about: the one the request acts as — the
+ * The account a server report is about: the one the request acts as — the
  * parent it just registered, or the signed-in customer — and never anyone else.
- * Every caller is a customer-only route, so this is always the parent's own
- * address and account id, and never a gamer's or a participant's. Either is
- * `null` when the caller has none to hand: the report still goes, without that
- * field's hash.
+ * It is always the parent's own address and account id, and never a gamer's or
+ * a participant's: the conversion routes are customer-only, and the page-event
+ * route names an account only when the session is a customer's. Either is
+ * `null` when the caller has none to hand — an anonymous visitor has neither —
+ * and the report still goes, without that field's hash.
  */
 export interface ConversionAccount {
   /** The parent's own account id — their auth user, which is their profile. */

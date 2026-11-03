@@ -39,6 +39,7 @@ import { installAdPixelStubs } from "@/lib/ad-pixel-stubs";
 import { containerPolicy } from "@/lib/gtm-policy";
 import { isReportableQuery } from "@/lib/marketing-pages";
 import { normalizeExternalPath } from "@/lib/navigation/locale-path";
+import { sendPageEventTwin } from "@/lib/page-events";
 import type { ConsentState } from "@/lib/consent";
 
 const GTM_SRC = "https://www.googletagmanager.com/gtm.js?id=";
@@ -534,11 +535,26 @@ export function pushGtmProductEventNow(
   if (typeof window === "undefined") return false;
   const pagePath = authorisedPagePath(pathname);
   if (pagePath === null) return false;
-  return pushGtmEvent({
+  return pushWithServerTwin({
     ...event,
     event_id: crypto.randomUUID(),
     page_path: pagePath,
   });
+}
+
+/**
+ * Push one of the browser's own moments and, once it has gone out, hand it to
+ * the server for its Conversions API twin (`@/lib/page-events`). Called only
+ * once the caller's address-bar check has passed, so the address bar is still
+ * the page that authorised the push and its query the one that was vetted.
+ */
+function pushWithServerTwin(event: GtmEvent): boolean {
+  if (!pushGtmEvent(event)) return false;
+  sendPageEventTwin(
+    event,
+    `${window.location.pathname}${window.location.search}`,
+  );
+  return true;
 }
 
 /**
@@ -634,5 +650,5 @@ async function reportOnPage(
   const authorised = new URL(pathname, window.location.origin).pathname;
   if (window.location.pathname !== authorised) return;
   if (!isReportableQuery(window.location.search)) return;
-  pushGtmEvent(build(internalPath));
+  pushWithServerTwin(build(internalPath));
 }

@@ -24,13 +24,15 @@ import { clickIdFromCookieHeader, type ClickId } from "@/lib/utm";
  * or gained if anything else set the cookie. The handler that committed the
  * outcome is the only place that knows it happened, exactly once.
  *
- * **Starting a checkout is not one of them.** Meta's `InitiateCheckout` is the
- * parent stepping into the sign-up flow, which is a click on a product page and
- * commits nothing; the browser reports it there, for free products as well as
- * paid ones, as the `add_to_cart` the container's Meta tag maps to it
- * (`@/lib/gtm-events`). Handing a parent to Stripe
- * is therefore reported from nowhere on this side, so no attempt is counted
- * twice under one name.
+ * **The browser's own moments come here too, as twins.** A page view, a product
+ * view and the click into the sign-up flow (Meta's `InitiateCheckout`, which
+ * commits nothing and is reported for free products as well as paid ones) are
+ * decided in the browser, which pushes them for the container's Meta tag and
+ * then hands each to `/api/page-events` under the same id; that route re-checks
+ * every gate and reports it from here, and Meta counts the pair once. Handing a
+ * parent to Stripe is reported from nowhere on this side, because the
+ * checkout start is that earlier click and a second report would count every
+ * paid attempt twice under one name.
  *
  * **What is sent about a person, exhaustively:** the user agent, the IP address
  * the request arrived from, Meta's own `_fbp` / `_fbc` cookies if this browser
@@ -60,12 +62,21 @@ import { clickIdFromCookieHeader, type ClickId } from "@/lib/utm";
  * without a price, so Meta learns that an identifiable parent opened an
  * account from that named club, camp or event's page.
  *
+ * **What is sent about a page view** is nothing but the page; about a product
+ * view or a checkout start, the product in the same fields with its price, the
+ * facts its public page shows anyone. Most of these come from anonymous
+ * visitors and carry no hash at all. A signed-in parent's carry the two hashes
+ * like every other report, so Meta learns that an identifiable parent looked
+ * at, or stepped into signing up for, that named product.
+ *
  * **Gated on the request's own consent cookie.** The send is refused unless the
  * request that triggered it carried marketing consent — decided here, on the
  * server, from the cookie the browser actually sent, so a report for someone who
- * refused is impossible rather than merely unlikely. The routes that call this
- * are all customer-only, so a gamer cannot reach one and no role check is needed
- * on this side.
+ * refused is impossible rather than merely unlikely. No role check is made on
+ * this side: the conversion routes are customer-only, and the page-event route
+ * refuses a gamer — or a session whose role it cannot read — before it calls.
+ * An anonymous visitor's report carries no account at all, and so neither
+ * hash.
  *
  * **It never throws and never delays anything.** It is reached through the
  * one fan-out to every platform (`@/lib/ad-conversions.server`), which callers
@@ -126,6 +137,13 @@ export type MetaConversion =
       product: MetaProductDetails;
       sourcePath: string;
       eventId: string;
+    }
+  | { event: "page_view"; sourcePath: string; eventId: string }
+  | {
+      event: "product_view" | "checkout_start";
+      product: MetaProductDetails;
+      sourcePath: string;
+      eventId: string;
     };
 
 /**
@@ -158,9 +176,18 @@ function fbcForClick(click: ClickId): string {
 }
 
 function eventNameFor(conversion: MetaConversion): string {
-  return conversion.event === "account_created"
-    ? META_CONVERSION_EVENTS.accountCreated
-    : META_CONVERSION_EVENTS.enrolment;
+  switch (conversion.event) {
+    case "account_created":
+      return META_CONVERSION_EVENTS.accountCreated;
+    case "enrolment":
+      return META_CONVERSION_EVENTS.enrolment;
+    case "page_view":
+      return META_CONVERSION_EVENTS.pageView;
+    case "product_view":
+      return META_CONVERSION_EVENTS.productView;
+    case "checkout_start":
+      return META_CONVERSION_EVENTS.checkoutStart;
+  }
 }
 
 /** A product's fields without its price. */
@@ -180,16 +207,28 @@ function unpriced(product: MetaProductDetails): Record<string, unknown> {
  * on either would teach the campaign that a queue place or a new account is
  * revenue. Decided here rather than by each caller, so no route can get it
  * wrong.
+ *
+ * A product view and a checkout start name their product with its price, as
+ * the browser's own pushes of them do — the price the page shows anyone, on a
+ * moment that is not a conversion. A page view names nothing.
  */
 function customDataFor(
   conversion: MetaConversion,
 ): Record<string, unknown> | undefined {
-  if (conversion.event === "account_created") {
-    return conversion.product && unpriced(conversion.product);
+  switch (conversion.event) {
+    case "account_created":
+      return conversion.product && unpriced(conversion.product);
+    case "enrolment": {
+      const { outcome, product } = conversion;
+      if (outcome === "waitlisted") return { outcome, ...unpriced(product) };
+      return { outcome, ...product };
+    }
+    case "page_view":
+      return undefined;
+    case "product_view":
+    case "checkout_start":
+      return { ...conversion.product };
   }
-  const { outcome, product } = conversion;
-  if (outcome === "waitlisted") return { outcome, ...unpriced(product) };
-  return { outcome, ...product };
 }
 
 export async function reportMetaConversion(
