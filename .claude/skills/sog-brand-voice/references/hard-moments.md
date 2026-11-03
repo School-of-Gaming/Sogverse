@@ -167,9 +167,23 @@ brand material):
 - That a Gedu can message a parent without seeing their contact details. A Gedu's roster
   shows the parent's address.
 
-**Check before using:** that no gamer data is used for advertising; that a Gedu is present in
-every kind of product (camps and events as well as club lessons). These may be true; nobody has
-verified them for the copy yet.
+**Advertising, said exactly** (checked against the code, 2 Nov 2026). True: nothing about a
+child reaches an advertising platform, and a child's browsing never does: the ad scripts
+never load for a signed-in gamer, on any page. Also true, so never write the opposite: we do
+use data about parents for advertising (a hashed email and account id, and which product
+they signed up for, when they accepted the cookies), and our marketing email profile of a
+parent carries each child's birth year and gender, never a name. So "no data collection for
+advertising" / "ei datankeräystä mainontaa varten" is not true as a blanket line. Write the
+child half, which is the one that matters to a worried parent: "Nothing about your child is
+ever shared with an advertising platform."
+
+**"A Gedu is in every lesson" is a promise we make to parents** (the owner, 3 Nov 2026), for
+clubs, camps and events alike, and the shortest, strongest safety sentence we own: use it.
+It is a staffing commitment rather than something the product enforces (checked against the
+code, 2 Nov 2026): a group has Gedus assigned, an absent Gedu's lesson is covered by a
+substitute or cancelled, and the admin dashboard flags any group with members and no Gedu.
+So write it as the promise it is ("a Gedu is in every lesson"), never as a technical
+guarantee ("the system ensures", "automatically").
 
 **Tone rules for safety copy**
 - **Never sell fear.** Do not describe what could happen to a child elsewhere to make us look
