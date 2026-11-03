@@ -28,7 +28,7 @@ export default async function AdminBusinessRoute() {
     <div className="space-y-6 pb-12">
       <div className="space-y-1">
         <Heading level={1} step="section">{t("title")}</Heading>
-        <p className="max-w-3xl text-sm text-muted-foreground">{t("description")}</p>
+        <p className="text-sm text-muted-foreground">{t("description")}</p>
       </div>
       <Suspense fallback={<BusinessOverviewSkeleton />}>
         <BusinessOverviewSection now={now} />

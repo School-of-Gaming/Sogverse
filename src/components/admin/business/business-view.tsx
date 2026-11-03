@@ -66,6 +66,9 @@ import {
 /** Each chart's height: fixed, so the box is held while it measures. */
 const CHART_HEIGHT = "h-64";
 
+/** A monthly chart grows to fill its card when the card beside it is taller. */
+const MONTHLY_CHART_SIZE = "min-h-64 w-full flex-1";
+
 /** The gap between a donut's slices: the card's own ground, so each slice stands apart. */
 const SLICE_EDGE = "var(--color-card)";
 
@@ -165,7 +168,8 @@ function BusinessCard({
   children: ReactNode;
 }) {
   return (
-    <Card className="space-y-4 p-5">
+    // Fills its grid row, so cards side by side end level; a monthly chart takes the slack.
+    <Card className="flex h-full flex-col gap-4 p-5">
       <div className="space-y-1">
         <Heading level={2} step="card-title">{heading}</Heading>
         <p className="text-xs text-muted-foreground">{caption}</p>
@@ -494,7 +498,7 @@ function RevenueCard({ overview }: { overview: BusinessOverview }) {
 
   return (
     <BusinessCard heading={t("heading")} caption={t("caption")} notes={<Notes lines={notes} />}>
-      <ChartContainer config={config} className={`${CHART_HEIGHT} w-full`}>
+      <ChartContainer config={config} className={MONTHLY_CHART_SIZE}>
         <BarChart
           data={[...months]}
           margin={{ top: 8, right: 12, bottom: 0, left: 0 }}
@@ -586,7 +590,7 @@ function FamiliesCard({ overview }: { overview: BusinessOverview }) {
 
   return (
     <BusinessCard heading={t("heading")} caption={t("caption")}>
-      <ChartContainer config={config} className={`${CHART_HEIGHT} w-full`}>
+      <ChartContainer config={config} className={MONTHLY_CHART_SIZE}>
         <BarChart
           data={[...overview.families]}
           margin={{ top: 8, right: 12, bottom: 0, left: 0 }}
@@ -658,7 +662,7 @@ function GedusCard({ overview }: { overview: BusinessOverview }) {
 
   return (
     <BusinessCard heading={t("heading")} caption={t("caption")} notes={<Notes lines={notes} />}>
-      <ChartContainer config={config} className={`${CHART_HEIGHT} w-full`}>
+      <ChartContainer config={config} className={MONTHLY_CHART_SIZE}>
         <LineChart
           data={[...months]}
           margin={{ top: 8, right: 12, bottom: 0, left: 0 }}
