@@ -1,11 +1,7 @@
 import "server-only";
-import {
-  advertisedProductDetails,
-  isAdvertisedProduct,
-  type AdvertisedProductDetails,
-} from "@/lib/marketing-events";
-import { signUpTargetFrom } from "@/lib/sign-up-intent.server";
-import { createAnonClient } from "@/lib/supabase/anon";
+import { advertisedProductFor } from "@/lib/advertised-product.server";
+import type { AdvertisedProductDetails } from "@/lib/marketing-events";
+import { signUpShopProductId } from "@/lib/sign-up-target";
 
 /**
  * The product a parent's sign-up started from, in every advertising
@@ -20,10 +16,8 @@ import { createAnonClient } from "@/lib/supabase/anon";
  * anything is read with it.
  *
  * **Decided by the product row, never by the URL**, exactly as for an
- * enrolment: a product we do not advertise names nothing. The row is read with
- * the anon client, so only a product the public shop would show anyone can be
- * named, and the fields are the ones `advertisedProductDetails()` builds for
- * the enrolment — one product, described one way.
+ * enrolment, through `advertisedProductFor()`: a product we do not advertise
+ * names nothing.
  *
  * **It never throws.** No redirect, another page, an unknown or unadvertised
  * product and a failed read all answer `undefined`: the lead goes out as it
@@ -33,31 +27,7 @@ import { createAnonClient } from "@/lib/supabase/anon";
 export async function signUpProductFor(
   redirect: string | undefined,
 ): Promise<AdvertisedProductDetails | undefined> {
-  try {
-    const productId = shopProductIdFrom(redirect);
-    if (!productId) return undefined;
-
-    const { data: product, error } = await createAnonClient()
-      .from("products")
-      .select(
-        "id, product_type, billing_mode, topic, product_translations(locale, name), product_prices(currency, price_cents)",
-      )
-      .eq("id", productId)
-      .maybeSingle();
-    if (error) throw error;
-    if (!product || !isAdvertisedProduct(product)) return undefined;
-
-    return advertisedProductDetails(product);
-  } catch (error) {
-    console.error("[sign-up-product] could not read the product", error);
-    return undefined;
-  }
-}
-
-/** The product id a redirect names, when it is a shop product page. */
-function shopProductIdFrom(redirect: string | undefined): string | null {
-  const target = signUpTargetFrom(redirect);
-  return target?.kind === "product_page" && target.via === "shop"
-    ? target.productId
-    : null;
+  const productId = signUpShopProductId(redirect);
+  if (!productId) return undefined;
+  return advertisedProductFor(productId);
 }

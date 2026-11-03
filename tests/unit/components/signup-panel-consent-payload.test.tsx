@@ -101,6 +101,10 @@ const PRODUCT = {
   product_type: "consumer_club" as const,
   billing_mode: "free" as const,
   product_prices: [],
+  topic: "roblox_studio" as const,
+  product_translations: [
+    { locale: "en", name: "Roblox Studio Club", short_description: "" },
+  ],
   for_gamers: true,
   start_date: "2026-01-12",
   timezone: "Europe/Helsinki",

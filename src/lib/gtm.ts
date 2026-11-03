@@ -2,10 +2,11 @@
  * Google Tag Manager, loaded from app code rather than from the copy-paste
  * snippet.
  *
- * Client-safe and React-free: one function that installs the container, one
- * that reports a page view through it, and one that pushes an event the app has
- * already decided to send — so the component above it is only the gates and the
- * effect.
+ * Client-safe and React-free: one function that installs the container, the
+ * ones that report a page's own events through it (its view, a product page's
+ * product view and its click into the sign-up flow), and one that pushes an
+ * event the app has already decided to send — so the components above it are
+ * only the gates and the effects.
  *
  * **Why not the official snippet.** Google's base code is an inline `<script>`
  * that builds `dataLayer`, announces the container and downloads it the moment
@@ -19,32 +20,59 @@
  * named in `script-src`.
  *
  * **A container is not a vendor library, and that is what the fencing is for.**
- * The pixel is one company's code doing one company's job. This is a loader for
- * whatever tags somebody configures in the Tag Manager UI — a surface outside
+ * A vendor's library is one company's code doing one company's job. This is a
+ * loader for whatever tags somebody configures in the Tag Manager UI — a surface outside
  * this repository, outside code review and outside the deploy. So the order of
- * the four pushes below is the design: the blocklist that forbids arbitrary
- * JavaScript and every automatic trigger, then the denied-by-default consent
- * signals, then the signals the visitor actually granted, and only then the
- * container itself.
+ * what happens below is the design: the allow- and blocklists that forbid
+ * arbitrary JavaScript and every automatic trigger, then the policy that bounds
+ * what a template may do, then the denied-by-default consent signals, then the
+ * signals the visitor actually granted, then the Meta and Reddit globals the
+ * container's tags will find, and only then the container itself.
  */
 
-import { GTM_EVENTS, type GtmEvent } from "@/lib/gtm-events";
+import {
+  GTM_EVENTS,
+  type GtmEvent,
+  type GtmProductPageEvent,
+} from "@/lib/gtm-events";
+import { installAdPixelStubs } from "@/lib/ad-pixel-stubs";
+import { containerPolicy } from "@/lib/gtm-policy";
 import { isReportableQuery } from "@/lib/marketing-pages";
+import { gtmMetaProduct, type MetaProductDetails } from "@/lib/marketing-events";
 import { normalizeExternalPath } from "@/lib/navigation/locale-path";
+import { sendPageEventTwin } from "@/lib/page-events";
 import type { ConsentState } from "@/lib/consent";
 
 const GTM_SRC = "https://www.googletagmanager.com/gtm.js?id=";
 
 /**
- * **The most important line in this file.**
+ * **The most important lines in this file.**
  *
- * `gtm.blocklist` is read by the container as it starts and a container cannot
- * lift it from the inside, so it is the one control this repository keeps over
- * a surface anybody with Tag Manager access can edit. Every id below is one of
- * Google's own restrict-deployment ids, and they fall into two groups.
+ * `gtm.allowlist` and `gtm.blocklist` are read by the container as it starts,
+ * and a container cannot lift them from the inside, so they are the one
+ * control this repository keeps over a surface anybody with Tag Manager access
+ * can edit. Every id below is one of Google's own restrict-deployment ids, and
+ * how the two lists combine is Google's, read off `gtm.js` itself as well as
+ * its documentation (developers.google.com/tag-platform/tag-manager/web/restrict):
+ * a blocklist wins over an allowlist; an allowlist admits an item only if its
+ * own id is listed or *every* class it belongs to is; and a custom template —
+ * every gallery template, Meta's and Reddit's included — belongs to exactly
+ * one class, `sandboxedScripts`, which is blocked implicitly the moment any
+ * other class is blocklisted unless the allowlist names it.
  *
- * **Everything capable of bringing in code or a third party.** A blocked class
- * covers every tag, variable and template in it, present and future:
+ * **The allowlist: Google's own, and templates.** `google` is the class every
+ * built-in Google tag, trigger and variable belongs to, and it has to be named
+ * because an allowlist that exists refuses whatever it does not name.
+ * `sandboxedScripts` is what lets the container run Meta's and Reddit's tags:
+ * the owner's ruling is that the container is the one place Lynx runs browser
+ * ad tags, and both vendors ship theirs only as gallery templates. Admitting
+ * the class admits every template, a hand-written one included, and Google has
+ * no per-template id — so what a template may *do* is fenced separately, by the
+ * policy pushed beside these lists (`@/lib/gtm-policy`).
+ *
+ * **The blocklist: everything capable of bringing in code or a third party
+ * outside a template.** A blocked class covers every tag and variable in it,
+ * present and future:
  *
  *   - `customScripts` — capable of running JavaScript supplied through the
  *     container. Without it, adding a tag in a web form is enough to run
@@ -53,49 +81,72 @@ const GTM_SRC = "https://www.googletagmanager.com/gtm.js?id=";
  *   - `html` — Google documents this as an alias of `customScripts`, and it is
  *     also the id of the Custom HTML tag itself. Named anyway, because the
  *     alias is resolved in Google's table rather than in ours.
- *   - `sandboxedScripts` — the sandboxed JavaScript a *custom template* runs. A
- *     template from the gallery is neither a Custom HTML tag nor a Custom
- *     JavaScript variable, and one holding the `inject_script` permission pulls
- *     in third-party code as freely as either.
  *   - `nonGoogleScripts`, `nonGooglePixels`, `nonGoogleIframes`, `customPixels`
- *     — capable of running a script, requesting a pixel, or injecting a frame
- *     from a domain the configurer names. What this container is for is
- *     Google's own analytics and Ads tags, which are in none of these classes,
- *     so blocking all four costs nothing we want.
+ *     — the built-in non-Google tag types (Google's own LinkedIn, Hotjar and
+ *     similar tags, and the Custom Image tag), each able to run a script,
+ *     request a pixel or inject a frame from a domain the configurer names.
+ *     They stay blocked because a template does not belong to any of them, so
+ *     blocking them costs Meta's and Reddit's templates nothing: only Meta and
+ *     Reddit are admitted, and they arrive as templates.
  *
- * The production CSP is `'strict-dynamic'`, which is what makes this list the
- * whole control rather than half of one: anything `gtm.js` inserts is
- * transitively trusted by the policy, so a script the container is allowed to
- * add is a script the browser will run.
+ *   - `k`, `j` and `d` — the 1st-Party Cookie, JavaScript Variable and DOM
+ *     Element variables. Each is in the `google` class the allowlist admits,
+ *     and each reads something no tag here needs and a tag could carry away:
+ *     the Supabase session cookies are readable by page script, so a cookie
+ *     variable fed into any field of an admitted tag sends a parent's session
+ *     to that tag's host, and a JavaScript or DOM variable reaches whatever the
+ *     page holds, a child's name on a private page included. The policy's
+ *     cookie narrowing covers templates; these ids cover the built-ins, which
+ *     are fenced only here.
  *
- * **Every automatic trigger**, which is the other group: `cl` click, `lcl` link
- * click, `fsl` form submit, `tl` timer, `hl` history, `sdl` scroll depth, `evl`
- * element visibility, `jel` JavaScript error and `ytl` YouTube. Each installs a
- * document-wide listener, and each fires with whatever `document.location`
- * holds at that moment. The container is loaded only from a marketing page, but
- * once loaded it stays loaded for every page the visitor reaches afterwards —
- * so a tag on any of these would report the child pages and single-use-token
- * URLs the marketing-page allowlist exists to keep out. A click-tracked call to
- * action is a nice-to-have; a scroll trigger firing on a child's page URL is a
- * breach, so all nine are blocked and a future need for one argues its way back
- * in.
+ * `sandboxedScripts` is deliberately *not* here: a blocklist wins, so naming
+ * it would undo the allowlist above.
  *
- * **What this list does not reach.** An analytics tag's *own* enhanced
+ * The production CSP is `'strict-dynamic'`, which is what makes these lists and
+ * the policy the whole control rather than half of one: anything `gtm.js`
+ * inserts is transitively trusted by the policy, so a script the container is
+ * allowed to add is a script the browser will run.
+ *
+ * **Every automatic trigger**, the blocklist's other group: `cl` click, `lcl`
+ * link click, `fsl` form submit, `tl` timer, `hl` history, `sdl` scroll depth,
+ * `evl` element visibility, `jel` JavaScript error and `ytl` YouTube. Each
+ * installs a document-wide listener, and each fires with whatever
+ * `document.location` holds at that moment. The container is loaded only from a
+ * marketing page, but once loaded it stays loaded for every page the visitor
+ * reaches afterwards — so a tag on any of these would report the child pages
+ * and single-use-token URLs the marketing-page allowlist exists to keep out. A
+ * click-tracked call to action is a nice-to-have; a scroll trigger firing on a
+ * child's page URL is a breach, so all nine are blocked and a future need for
+ * one argues its way back in.
+ *
+ * **What the browser enforces, and what it does not.** Enforced here: no
+ * Custom HTML or Custom JavaScript, no built-in non-Google tag, no cookie,
+ * JavaScript or DOM element variable, no automatic trigger; templates only
+ * within the policy — scripts only from Google, Meta's `fbevents.js` and
+ * Reddit's generic library, beacons and frames only to Google's hosts and the
+ * two vendors' transports, globals only the vendors' and Google's, cookies only
+ * the vendors' and Google's own ad and analytics ids. Not enforced, and so a constraint on whoever configures
+ * the container: *which* templates are added (any template is admitted — a
+ * third vendor's can load no library of its own, but one that only reads the
+ * page and beacons to an admitted host would run); what each tag's fields
+ * send; an analytics tag's *own* enhanced
  * measurement — its page views on history changes, its outbound-click and
- * scroll events — runs inside the tag rather than on a container trigger, and
- * the switch for it lives in the Analytics property where no code here can
- * touch it. Turning it off there is part of configuring this container, and the
- * constraints section of this directory's `CLAUDE.md` is where that is written
- * down for whoever configures it.
+ * scroll events — which runs inside the tag rather than on a container
+ * trigger, and whose switch lives in the Analytics property where no code here
+ * can touch it.
  */
+const GTM_ALLOWLIST = ["google", "sandboxedScripts"] as const;
+
 const GTM_BLOCKLIST = [
   "customScripts",
   "html",
-  "sandboxedScripts",
   "nonGoogleScripts",
   "nonGooglePixels",
   "nonGoogleIframes",
   "customPixels",
+  "k",
+  "j",
+  "d",
   "cl",
   "lcl",
   "fsl",
@@ -228,6 +279,18 @@ const gtagCommand: (
   signals: ConsentSignals,
 ) => IArguments = gtagArguments;
 
+/**
+ * The same typed front door for the `policy` command, which registers a check
+ * the container runs before every permissioned call a template makes. `'all'`
+ * rather than one registration per permission, so the decisions sit in one
+ * function the tests can call directly (`@/lib/gtm-policy`).
+ */
+const gtagPolicy: (
+  command: "policy",
+  permission: "all",
+  check: typeof containerPolicy,
+) => IArguments = gtagArguments;
+
 /** The two fields gtag reads for the page when it builds an event of its own. */
 interface PinnedPage {
   page_location: string;
@@ -333,9 +396,11 @@ function pinGtmPage(internalPath: string, search: string): void {
  * on.
  *
  * **Every push happens before the script element is appended**, and the order
- * is load-bearing twice over: the blocklist has to be in the queue before the
- * container reads it, and the consent defaults have to be in the queue before
- * the container can fire a tag that would otherwise assume it may store.
+ * is load-bearing three times over: the lists and the policy have to be in the
+ * queue before the container reads them, the consent defaults have to be in
+ * the queue before the container can fire a tag that would otherwise assume it
+ * may store, and the vendor globals have to exist before a tag looks for one
+ * and, finding none, builds its own without our flags.
  *
  * **The answer travels with the load and is never sent again.** A container
  * loads only for a visitor who granted marketing, and marketing is the only
@@ -353,9 +418,14 @@ export function loadGtm(
 
   const dataLayer = (window.dataLayer ??= []);
 
-  dataLayer.push({ "gtm.blocklist": [...GTM_BLOCKLIST] });
+  dataLayer.push({
+    "gtm.allowlist": [...GTM_ALLOWLIST],
+    "gtm.blocklist": [...GTM_BLOCKLIST],
+  });
+  dataLayer.push(gtagPolicy("policy", "all", containerPolicy));
   dataLayer.push(gtagCommand("consent", "default", ALL_DENIED));
   dataLayer.push(gtagCommand("consent", "update", signalsFor(consent)));
+  installAdPixelStubs();
   // The container's own start signal, which the official snippet pushes and
   // which the container's initialisation triggers key on. It says the container
   // is starting and nothing about which page it started on: the page view is a
@@ -403,12 +473,130 @@ export function loadGtm(
  * Nothing is pushed unless a container is coming. An unarmed push would be a
  * queue that no container will ever drain, and on a page where the gates said
  * no it would be a record of a visit nobody agreed to, sitting in a global for
- * any later script to read.
+ * any later script to read. Answers whether it pushed.
+ *
+ * **Every event is preceded by `{ ecommerce: null }`**, Google's own
+ * instruction for ecommerce pushes and the only correct one here. The container
+ * merges each push into one data model that keeps whatever it was last told, so
+ * without the reset a field one event leaves out reads the previous event's:
+ * a queue place would carry the price of the view before it, and a `sign_up`
+ * from a page with no product would name the product looked at last. Clearing
+ * before every event rather than only before product ones is what makes each
+ * event state its product or none, whatever came before it.
+ *
+ * **A product event also carries `meta`**, the same product in the object
+ * Meta's template takes whole (`gtmMetaProduct()` says why there is no Reddit
+ * twin). It is reset beside `ecommerce` for the same reason: the data model
+ * merges objects and lists key by key, so a `meta` left standing would lend a
+ * page view the previous product.
  */
-export function pushGtmEvent(event: GtmEvent): void {
-  if (typeof window === "undefined") return;
-  if (!armed) return;
-  window.dataLayer?.push(event);
+export function pushGtmEvent(event: GtmEvent): boolean {
+  if (typeof window === "undefined") return false;
+  if (!armed || !window.dataLayer) return false;
+  window.dataLayer.push({ ecommerce: null, meta: null }, withVendorFields(event));
+  return true;
+}
+
+/** The event as pushed: with `meta` beside a product, unchanged without one. */
+function withVendorFields(event: GtmEvent): GtmEvent & { meta?: MetaProductDetails } {
+  if (!("ecommerce" in event) || event.ecommerce === null) return event;
+  return { ...event, meta: gtmMetaProduct(event.ecommerce) };
+}
+
+/**
+ * Whether this document has a container coming — for a caller with work to do
+ * before it could push (a read, say) that is wasted where nothing will ever
+ * take the push. `pushGtmEvent` still decides for itself; this only lets a
+ * caller skip the preparation.
+ */
+export function isGtmArmed(): boolean {
+  return armed;
+}
+
+/**
+ * What loading the container needs: its id, and the visitor's stored answer
+ * the Consent Mode signals are derived from. A caller holds one only when the
+ * visitor-level gates have all said yes.
+ */
+export interface GtmGate {
+  containerId: string;
+  consent: ConsentState;
+}
+
+/**
+ * Report a product page's own event — the product view — once the container
+ * has arrived, through every check the page view goes through: the query that
+ * may travel, a route of ours, and the address bar re-read at the moment of
+ * sending. The id is minted here, at the push, and the path is the page's own.
+ */
+export async function reportGtmProductEvent(
+  gate: GtmGate,
+  pathname: string,
+  event: GtmProductPageEvent,
+): Promise<void> {
+  await reportOnPage(gate, pathname, (pagePath) => ({
+    ...event,
+    event_id: crypto.randomUUID(),
+    page_path: pagePath,
+  }));
+}
+
+/**
+ * Push a product page's click event now, or not at all — answering whether it
+ * went out, so a click that was dropped leaves the page's once-only report
+ * unspent.
+ *
+ * The click usually navigates, so this never loads the container and never
+ * waits for it. The push itself does not need a vendor library's stricter rule
+ * of dropping the event while the library is still downloading — a push states
+ * its own page, so it is safe in the queue (`pushGtmEvent`), and the Meta and
+ * Reddit globals apply that rule to whatever a tag hands them
+ * (`@/lib/ad-pixel-stubs`). What it does need is the same
+ * address-bar check the views get, made now, while the click is still on the
+ * page that authorised it.
+ */
+export function pushGtmProductEventNow(
+  pathname: string,
+  event: GtmProductPageEvent,
+): boolean {
+  if (typeof window === "undefined") return false;
+  const pagePath = authorisedPagePath(pathname);
+  if (pagePath === null) return false;
+  return pushWithServerTwin({
+    ...event,
+    event_id: crypto.randomUUID(),
+    page_path: pagePath,
+  });
+}
+
+/**
+ * Push one of the browser's own moments and, once it has gone out, hand it to
+ * the server for its Conversions API twin (`@/lib/page-events`). Called only
+ * once the caller's address-bar check has passed, so the address bar is still
+ * the page that authorised the push and its query the one that was vetted.
+ */
+function pushWithServerTwin(event: GtmEvent): boolean {
+  if (!pushGtmEvent(event)) return false;
+  sendPageEventTwin(
+    event,
+    `${window.location.pathname}${window.location.search}`,
+  );
+  return true;
+}
+
+/**
+ * The internal path of `pathname` if the tab is still on it with a query that
+ * may travel and it is a route of ours — `null` when any of that fails.
+ */
+function authorisedPagePath(pathname: string): string | null {
+  // Both sides resolved through the URL parser, so a slug with a non-ASCII
+  // character compares the same whether the router hands it over encoded or
+  // not.
+  const authorised = new URL(pathname, window.location.origin).pathname;
+  if (window.location.pathname !== authorised) return null;
+  if (!isReportableQuery(window.location.search)) return null;
+  const { pathname: internalPath, template } = normalizeExternalPath(pathname);
+  return template === null ? null : internalPath;
 }
 
 /**
@@ -446,6 +634,23 @@ export async function reportGtmPageView(
   pathname: string,
   consent: ConsentState,
 ): Promise<void> {
+  await reportOnPage({ containerId, consent }, pathname, (pagePath) => ({
+    event: GTM_EVENTS.pageView,
+    event_id: crypto.randomUUID(),
+    page_path: pagePath,
+  }));
+}
+
+/**
+ * The checks every event reported from a page goes through — the page view's
+ * docblock above is the reasoning — with the event built from the page's
+ * internal path once they have all passed.
+ */
+async function reportOnPage(
+  { containerId, consent }: GtmGate,
+  pathname: string,
+  build: (pagePath: string) => GtmEvent,
+): Promise<void> {
   // Checked before loading as well as before sending: a page whose query may
   // not travel gets no container at all, not merely no report. The proxy's
   // bounce to the login page is the case — a marketing page by pathname,
@@ -472,5 +677,5 @@ export async function reportGtmPageView(
   const authorised = new URL(pathname, window.location.origin).pathname;
   if (window.location.pathname !== authorised) return;
   if (!isReportableQuery(window.location.search)) return;
-  pushGtmEvent({ event: GTM_EVENTS.pageView, page_path: internalPath });
+  pushWithServerTwin(build(internalPath));
 }

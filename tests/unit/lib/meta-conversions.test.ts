@@ -47,6 +47,9 @@ const PRODUCT: MetaProductDetails = {
 };
 
 /** The parent's own account id. */
+/** The id the browser pushed its own event for the same moment under. */
+const EVENT_ID = "3f2b7c1e-9a4d-4e8b-b6c5-0d1e2f3a4b5c";
+
 const PARENT_ID = "6f1c2a4e-3b5d-4c7e-8f90-1a2b3c4d5e6f";
 
 /** The parent the request acts as. */
@@ -137,7 +140,7 @@ describe("reportMetaConversion — the three gates", () => {
 
     await reportMetaConversion(
       request(),
-      { event: "account_created", sourcePath: "/register" },
+      { event: "account_created", sourcePath: "/register", eventId: EVENT_ID },
       PARENT,
     );
 
@@ -151,7 +154,7 @@ describe("reportMetaConversion — the three gates", () => {
 
     await reportMetaConversion(
       request(),
-      { event: "account_created", sourcePath: "/register" },
+      { event: "account_created", sourcePath: "/register", eventId: EVENT_ID },
       PARENT,
     );
 
@@ -163,7 +166,7 @@ describe("reportMetaConversion — the three gates", () => {
 
     await reportMetaConversion(
       request(),
-      { event: "account_created", sourcePath: "/register" },
+      { event: "account_created", sourcePath: "/register", eventId: EVENT_ID },
       PARENT,
     );
 
@@ -180,7 +183,7 @@ describe("reportMetaConversion — the three gates", () => {
   ])("sends nothing for %s", async (_label, cookie) => {
     await reportMetaConversion(
       request({ cookie }),
-      { event: "account_created", sourcePath: "/register" },
+      { event: "account_created", sourcePath: "/register", eventId: EVENT_ID },
       PARENT,
     );
 
@@ -198,7 +201,7 @@ describe("reportMetaConversion — the request", () => {
         },
         cookie: `${cookieHeaderFor(GRANTED)}; _fbp=fb.1.123.456; _fbc=fb.1.123.IwAR`,
       }),
-      { event: "account_created", sourcePath: "/register" },
+      { event: "account_created", sourcePath: "/register", eventId: EVENT_ID },
       PARENT,
     );
 
@@ -221,7 +224,9 @@ describe("reportMetaConversion — the request", () => {
     expect(event.event_source_url).toBe(
       `${SITE_ORIGIN}/register`,
     );
-    expect(typeof event.event_id).toBe("string");
+    // Shared with the browser's event for the same moment, which is what
+    // lets Meta count the two as one conversion.
+    expect(event.event_id).toBe(EVENT_ID);
     // Seconds, not milliseconds: Meta rejects a timestamp more than seven days
     // out, and a millisecond value is fifty years out.
     expect(event.event_time).toBeLessThanOrEqual(Math.floor(Date.now() / 1000));
@@ -246,7 +251,7 @@ describe("reportMetaConversion — the request", () => {
   it("falls back to x-real-ip, and omits the address when there is none", async () => {
     await reportMetaConversion(
       request({ headers: { "x-real-ip": "198.51.100.9" } }),
-      { event: "account_created", sourcePath: "/register" },
+      { event: "account_created", sourcePath: "/register", eventId: EVENT_ID },
       PARENT,
     );
     expect(asObject(sentEvent().user_data).client_ip_address).toBe(
@@ -256,7 +261,7 @@ describe("reportMetaConversion — the request", () => {
     fetchMock.mockClear();
     await reportMetaConversion(
       request(),
-      { event: "account_created", sourcePath: "/register" },
+      { event: "account_created", sourcePath: "/register", eventId: EVENT_ID },
       PARENT,
     );
     expect(sentEvent().user_data).toEqual({
@@ -272,7 +277,7 @@ describe("reportMetaConversion — the request", () => {
   it("hashes the email the way Meta normalises it, in an array", async () => {
     await reportMetaConversion(
       request(),
-      { event: "account_created", sourcePath: "/register" },
+      { event: "account_created", sourcePath: "/register", eventId: EVENT_ID },
       { id: PARENT_ID, email: "  Parent.Example@Sogverse.TEST \n" },
     );
 
@@ -287,6 +292,7 @@ describe("reportMetaConversion — the request", () => {
         outcome: "enrolled",
         product: PRODUCT,
         sourcePath: "/shop/abc-123",
+        eventId: EVENT_ID,
       },
       PARENT,
     );
@@ -306,7 +312,7 @@ describe("reportMetaConversion — the request", () => {
   it("sends the account id as a SHA-256 hash under `external_id`", async () => {
     await reportMetaConversion(
       request(),
-      { event: "account_created", sourcePath: "/register" },
+      { event: "account_created", sourcePath: "/register", eventId: EVENT_ID },
       PARENT,
     );
 
@@ -324,7 +330,7 @@ describe("reportMetaConversion — the request", () => {
   ])("sends the report without `external_id` for %s", async (_label, id) => {
     await reportMetaConversion(
       request(),
-      { event: "account_created", sourcePath: "/register" },
+      { event: "account_created", sourcePath: "/register", eventId: EVENT_ID },
       { id, email: PARENT.email },
     );
 
@@ -343,7 +349,7 @@ describe("reportMetaConversion — the request", () => {
   ])("sends the report without `em` for %s", async (_label, email) => {
     await reportMetaConversion(
       request(),
-      { event: "account_created", sourcePath: "/register" },
+      { event: "account_created", sourcePath: "/register", eventId: EVENT_ID },
       { id: null, email },
     );
 
@@ -370,6 +376,7 @@ describe("reportMetaConversion — the request", () => {
         outcome,
         product: PRODUCT,
         sourcePath: "/shop/abc-123",
+        eventId: EVENT_ID,
       },
       PARENT,
     );
@@ -395,6 +402,7 @@ describe("reportMetaConversion — the request", () => {
         outcome: "enrolled",
         product: PRODUCT,
         sourcePath: "/shop/abc-123",
+        eventId: EVENT_ID,
       },
       PARENT,
     );
@@ -415,6 +423,7 @@ describe("reportMetaConversion — the request", () => {
         outcome: "waitlisted",
         product: PRODUCT,
         sourcePath: "/shop/abc-123",
+        eventId: EVENT_ID,
       },
       PARENT,
     );
@@ -435,7 +444,7 @@ describe("reportMetaConversion — the request", () => {
   it("names the product without a value on a lead from a product page", async () => {
     await reportMetaConversion(
       request(),
-      { event: "account_created", product: PRODUCT, sourcePath: "/register" },
+      { event: "account_created", product: PRODUCT, sourcePath: "/register", eventId: EVENT_ID },
       PARENT,
     );
 
@@ -456,7 +465,7 @@ describe("reportMetaConversion — the request", () => {
   it("names nothing on a lead that did not start from a product page", async () => {
     await reportMetaConversion(
       request(),
-      { event: "account_created", product: undefined, sourcePath: "/register" },
+      { event: "account_created", product: undefined, sourcePath: "/register", eventId: EVENT_ID },
       PARENT,
     );
 
@@ -473,6 +482,7 @@ describe("reportMetaConversion — the request", () => {
         outcome: "enrolled",
         product: PRODUCT,
         sourcePath: "/shop/abc-123",
+        eventId: EVENT_ID,
       },
       PARENT,
     );
@@ -492,7 +502,7 @@ describe("reportMetaConversion — failure", () => {
     await expect(
       reportMetaConversion(
         request(),
-        { event: "account_created", sourcePath: "/register" },
+        { event: "account_created", sourcePath: "/register", eventId: EVENT_ID },
         PARENT,
       ),
     ).resolves.toBeUndefined();
@@ -512,7 +522,7 @@ describe("reportMetaConversion — failure", () => {
     await expect(
       reportMetaConversion(
         request(),
-        { event: "account_created", sourcePath: "/register" },
+        { event: "account_created", sourcePath: "/register", eventId: EVENT_ID },
         PARENT,
       ),
     ).resolves.toBeUndefined();
@@ -543,7 +553,7 @@ describe("reportMetaConversion — the kept click", () => {
       request({
         cookie: cookieHeaderFor(GRANTED, kept(`campaign=c&at=${LANDED}&fbclid=${LANDED}.${FBCLID}`)),
       }),
-      { event: "account_created", sourcePath: "/register" },
+      { event: "account_created", sourcePath: "/register", eventId: EVENT_ID },
       PARENT,
     );
 
@@ -558,7 +568,7 @@ describe("reportMetaConversion — the kept click", () => {
           `; _fbc=fb.1.123.IwAR${kept(`fbclid=${LANDED}.${FBCLID}`)}`,
         ),
       }),
-      { event: "account_created", sourcePath: "/register" },
+      { event: "account_created", sourcePath: "/register", eventId: EVENT_ID },
       PARENT,
     );
 
@@ -568,7 +578,7 @@ describe("reportMetaConversion — the kept click", () => {
   it("never sends Reddit's kept click id to Meta", async () => {
     await reportMetaConversion(
       request({ cookie: cookieHeaderFor(GRANTED, kept(`rdt_cid=${LANDED}.reddit_1`)) }),
-      { event: "account_created", sourcePath: "/register" },
+      { event: "account_created", sourcePath: "/register", eventId: EVENT_ID },
       PARENT,
     );
 
@@ -584,7 +594,7 @@ describe("reportMetaConversion — the kept click", () => {
           kept(`fbclid=${LANDED}.${FBCLID}`),
         ),
       }),
-      { event: "account_created", sourcePath: "/register" },
+      { event: "account_created", sourcePath: "/register", eventId: EVENT_ID },
       PARENT,
     );
 

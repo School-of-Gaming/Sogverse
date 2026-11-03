@@ -134,6 +134,46 @@ describe("reportAdConversion", () => {
     );
   });
 
+  // The id is each platform's dedup key against the browser's event for the
+  // same moment, so both platforms must carry the one the browser pushed.
+  it("hands every platform the event id the browser sent", async () => {
+    const eventId = "3f2b7c1e-9a4d-4e8b-b6c5-0d1e2f3a4b5c";
+    await reportAdConversion(
+      request(),
+      {
+        event: "enrolment",
+        outcome: "waitlisted",
+        product: PRODUCT,
+        sourcePath: "/shop/abc-123",
+        eventId,
+      },
+      PARENT,
+    );
+
+    expect(eventSentTo(META_URL).event_id).toBe(eventId);
+    expect(asObject(eventSentTo(REDDIT_URL).metadata).conversion_id).toBe(
+      eventId,
+    );
+  });
+
+  // A request from a client that sent no id still reports — under one id of
+  // our own, the same on both platforms rather than one per platform.
+  it("mints one id for every platform when none was sent", async () => {
+    await reportAdConversion(
+      request(),
+      { event: "account_created", sourcePath: "/register" },
+      PARENT,
+    );
+
+    const metaId = eventSentTo(META_URL).event_id;
+    expect(metaId).toMatch(
+      /^[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/,
+    );
+    expect(asObject(eventSentTo(REDDIT_URL).metadata).conversion_id).toBe(
+      metaId,
+    );
+  });
+
   // One platform's failure is that platform's lost report, and nothing more.
   it.each([
     ["Reddit", REDDIT_URL, META_URL],

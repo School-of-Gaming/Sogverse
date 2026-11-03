@@ -150,33 +150,52 @@ const PARSE_BASE = "https://internal.invalid";
  * one: route slugs, landing page slugs and product ids are all plain ASCII.
  */
 function isReportableRedirect(value: string): boolean {
-  // The empty fallback would equal an empty value, so that refuses first.
-  if (value === "" || resolveInternalPath(value, "") !== value) return false;
-  const target = new URL(value, PARSE_BASE);
-  const { pathname } = target;
-  if (pathname.includes("%")) return false;
-  if (pathname !== "/" && pathname.slice(1).split("/").includes("")) {
-    return false;
-  }
-  if (target.hash !== "") return false;
-  if (!isMarketingPage(normalizeExternalPath(target.pathname).template)) {
-    return false;
-  }
-  return hasOnlyReportableKeys(target.searchParams);
+  const page = canonicalMarketingPage(value);
+  return page !== null && hasOnlyReportableKeys(page.target.searchParams);
 }
 
 /**
- * Whether the address bar still shows `pathname` with a query that may travel
- * — the check every pixel makes at the moment of sending, because the URL a
- * pixel's library attaches to an event is the one the tab shows *then*, not
- * the one that authorised the report.
- *
- * Both sides are resolved through the URL parser, so a slug with a non-ASCII
- * character compares the same whether the router hands it over encoded or not.
- * Browser-only: it reads `window.location`.
+ * A raw path and query — what the address bar held — that is already
+ * canonical and names a marketing page, split into its parts; `null`
+ * otherwise. The query is not judged here: each caller has its own rule for it.
  */
-export function addressBarStillShows(pathname: string): boolean {
-  const authorised = new URL(pathname, window.location.origin).pathname;
-  if (window.location.pathname !== authorised) return false;
-  return isReportableQuery(window.location.search);
+function canonicalMarketingPage(
+  value: string,
+): { target: URL; internalPath: string; template: InternalPathname } | null {
+  // The empty fallback would equal an empty value, so that refuses first.
+  if (value === "" || resolveInternalPath(value, "") !== value) return null;
+  const target = new URL(value, PARSE_BASE);
+  const { pathname } = target;
+  if (pathname.includes("%")) return null;
+  if (pathname !== "/" && pathname.slice(1).split("/").includes("")) {
+    return null;
+  }
+  if (target.hash !== "") return null;
+  const { pathname: internalPath, template } = normalizeExternalPath(pathname);
+  if (template === null || !isMarketingPage(template)) return null;
+  return { target, internalPath, template };
+}
+
+/** A page a report may name, as `reportableMarketingPage` vets it. */
+export interface ReportablePage {
+  /** The internal path — locale stripped, slug untranslated, ids kept. */
+  internalPath: string;
+  /** The marketing page's route template. */
+  template: InternalPathname;
+}
+
+/**
+ * Whether a raw path and query sent from elsewhere — a request body stating
+ * the page a browser event happened on — names a page the browser could have
+ * reported: a marketing page, in canonical form (the same refusals as a
+ * `redirect` value above), whose query passes `isReportableQuery`. Answers the
+ * page's internal path and template, or `null`.
+ *
+ * The server's half of the browser's gates, made from the same pieces, so a
+ * page the browser would refuse to report the server refuses too.
+ */
+export function reportableMarketingPage(value: string): ReportablePage | null {
+  const page = canonicalMarketingPage(value);
+  if (page === null || !isReportableQuery(page.target.search)) return null;
+  return { internalPath: page.internalPath, template: page.template };
 }

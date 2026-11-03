@@ -305,6 +305,28 @@ describe("POST /api/auth/complete-registration", () => {
     expect(writes).toEqual([]);
   });
 
+  it("refuses an event id that is not a UUID, writing nothing", async () => {
+    const response = await POST(
+      request({ ...validBody, eventId: "not-a-uuid" }, { marketing: true }),
+    );
+
+    expect(response.status).toBe(400);
+    expect(writes).toEqual([]);
+    expect(mockReportAdConversion).not.toHaveBeenCalled();
+  });
+
+  // The finish form pushes its own `sign_up` under the id it sent, so the lead
+  // goes out under the same one and each platform counts the two as one.
+  it("reports the lead under the event id the form sent", async () => {
+    const eventId = "3f2b7c1e-9a4d-4e8b-b6c5-0d1e2f3a4b5c";
+
+    await POST(request({ ...validBody, eventId }, { marketing: true }));
+    await runDeferred();
+
+    const [, conversion] = mockReportAdConversion.mock.calls[0];
+    expect(conversion).toMatchObject({ event: "account_created", eventId });
+  });
+
   it("refuses a first name below the display-name minimum", async () => {
     const response = await POST(request({ ...validBody, firstName: "A" }));
 

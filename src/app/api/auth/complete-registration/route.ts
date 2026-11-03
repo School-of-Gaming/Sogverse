@@ -67,6 +67,7 @@ export const POST = defineRoute({
       homeLocationId,
       locale: requestedLocale,
       redirect,
+      eventId,
       marketingConsent,
     } = body;
 
@@ -241,6 +242,7 @@ export const POST = defineRoute({
           event: "account_created",
           product: await signUpProductFor(redirect),
           sourcePath: ROUTES.register,
+          eventId,
         },
         { id: userId, email: profile.email },
       ),
