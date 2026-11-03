@@ -3,6 +3,7 @@ import type { z } from "zod";
 import { ApiError } from "@/lib/api/api-error";
 import { isSubscriptionShaped } from "@/lib/constants/billing";
 import { DEFAULT_CURRENCY } from "@/lib/constants/currency";
+import { OCCUPYING_STATUSES } from "@/lib/constants/participations";
 import type { AppSupabaseClient, BillingMode } from "@/types";
 import { adminMoveUnsubscribedParticipationRpcResult } from "@/services/participations/participations.contracts";
 import {
@@ -22,9 +23,6 @@ import type { SwitchClubRefusal } from "@/services/participations/switch-club.co
  * raises is pre-flighted with a plain read, so the commit's RPC can fail only on
  * a race or an outage. Nothing has moved anywhere when it does.
  */
-
-/** The statuses the participations unique index covers. */
-const OCCUPIED_STATUSES = ["active", "waitlisted"] as const;
 
 /**
  * Whether a live subscription stands behind the seat, in exactly the sense both
@@ -149,7 +147,7 @@ export async function checkNoSubscriptionMove({
     .select("id")
     .eq("product_id", targetProductId)
     .eq("participant_id", participation.participant_id)
-    .in("status", OCCUPIED_STATUSES)
+    .in("status", OCCUPYING_STATUSES)
     .neq("id", participationId)
     .maybeSingle();
   if (occupiedError) throw occupiedError;

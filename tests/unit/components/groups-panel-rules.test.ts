@@ -829,24 +829,22 @@ describe("heldProductIds", () => {
   });
 
   it("covers exactly the statuses the unique index does", () => {
-    // active | waitlisted | completed is the set the (product, participant)
-    // index enforces, and therefore the set the switch would be refused for.
+    // active | waitlisted is the set the (product, participant) index
+    // enforces, and therefore the set the switch would be refused for.
     expect([
       ...heldProductIds([
         row("active", "club-a"),
         row("waitlisted", "club-b"),
-        row("completed", "club-c"),
       ]),
-    ]).toEqual(["club-a", "club-b", "club-c"]);
+    ]).toEqual(["club-a", "club-b"]);
   });
 
   it("ignores every other status", () => {
-    // A cancelled seat or a lapsed queue place leaves the pair free, so the
-    // club stays pressable.
+    // An ended seat leaves the pair free, so the club stays pressable.
     expect(
       heldProductIds([
-        row("cancelled", "club-a"),
-        row("offered", "club-b"),
+        row("ended", "club-a"),
+        row("reserving", "club-b"),
       ]).size,
     ).toBe(0);
   });

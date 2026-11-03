@@ -157,8 +157,8 @@ the sub id, so that seat would never be freed). This is a finite migration cost,
 defect.
 
 **Split procedure — the order is destructive if wrong. Never cancel the bundle first**:
-cancelling fires `customer.subscription.deleted`, and the webhook hard-deletes the seat
-bound to it.
+cancelling fires `customer.subscription.deleted`, and the webhook ends the seat bound to
+it (status `ended`, its subscription row cancelled and final — nothing un-ends it).
 
 1. One price per club at the divided amount, on **that club's own Stripe product**.
 2. One sub per club on the **same customer** (a second customer breaks the parent's billing
@@ -248,7 +248,7 @@ the clipboard UTF-8-safely (€, –, ä reach a real person).
   price with `trial_end` = the end of the visit and **`cancel_at_period_end: true`** (the
   portal's Renew toggles that flag), with their card as default payment method; seat it
   with status `canceling`. Re-read immediately and cancel on the spot if the flag did not
-  stick — it is the only thing between the family and a real charge. The seat then deletes
+  stick — it is the only thing between the family and a real charge. The seat then ends
   itself at trial end unless the parent renews.
 
 ## Reading subscriptions correctly

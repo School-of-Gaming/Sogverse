@@ -1,6 +1,7 @@
 import { CONSENT_DOCUMENT_BUNDLES } from "@/lib/constants/consent-documents";
+import { OCCUPYING_STATUSES } from "@/lib/constants/participations";
 import type { EffectiveProductStatus } from "@/lib/products/effective-status";
-import type { DeliveryMode, ParticipationStatus } from "@/types";
+import type { DeliveryMode } from "@/types";
 import type {
   LocationChainNode,
   LocationWithChain,
@@ -64,14 +65,11 @@ export const PROGRAMME_AGE_RANGE = { min: 13, max: 17 } as const;
 
 /**
  * The stored seat states that put a seat in scope: a seat a family holds or a
- * place it waits in — never `reserving`, and never `ended`. The `satisfies`
- * keeps it honest: a rename in the generated enum fails to compile here rather
- * than silently leaving the API reading a state that no longer exists.
+ * place it waits in — never `reserving`, and never `ended`, so a seat that has
+ * ended is not reported to a partner. The app's one occupying set, which is
+ * held to the generated enum where it is declared.
  */
-export const LIVE_SEAT_STATUSES = [
-  "active",
-  "waitlisted",
-] as const satisfies readonly ParticipationStatus[];
+export const LIVE_SEAT_STATUSES = OCCUPYING_STATUSES;
 
 /**
  * Narrow a stored seat status to a live one. A read that filters on
@@ -85,7 +83,7 @@ export function isLiveStatus(status: string): status is PartnerEnrolmentStatus {
 /**
  * The status an enrolment reports. A seat keeps `active` in storage after
  * its product has run its course — nothing flips it — so an active seat on a
- * completed product reports `completed`, as does a stored `completed`. A
+ * completed product reports `completed`. A
  * waitlisted seat stays `waitlisted` whatever the product did: it never held a
  * place to complete. Filters on the reported value, never the stored one.
  */

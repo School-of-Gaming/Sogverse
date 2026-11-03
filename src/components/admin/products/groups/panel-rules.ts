@@ -4,6 +4,7 @@ import {
   isSubscriptionShaped,
 } from "@/lib/constants/billing";
 import type { GamePlatform } from "@/lib/constants/game-platforms";
+import { isOccupyingStatus } from "@/lib/constants/participations";
 import type { EffectiveProductStatus } from "@/lib/products/effective-status";
 import type { RobloxRenderMap } from "@/services/roblox/roblox.contracts";
 import { formatInTimeZone } from "date-fns-tz";
@@ -247,9 +248,9 @@ export interface SeatMenuItem {
  *
  * Read off the same subject a drop is resolved from, so the menu and the drag
  * cannot disagree about a seat. A live subscription is what makes removal
- * impossible and the paid switch possible: removal CASCADEs
- * family_subscriptions, so a live subscription would go on billing a family
- * with nothing left in the database to cancel it — and
+ * impossible and the paid switch possible: removal ends the seat and marks its
+ * family_subscriptions row cancelled, so a live subscription would go on
+ * billing a family the database says has left — and
  * `admin_remove_participation` refuses exactly this, whatever the product type.
  *
  * A waitlisted row offers removal alone. It holds no seat to move, and the
@@ -817,9 +818,8 @@ export interface HeldPlaceRow {
 
 /**
  * The products the gamer already holds a place on, in the sense the unique
- * index means it: one row per (product, participant) covering `active`,
- * `waitlisted` and `completed`. Every other status — a row that was cancelled,
- * a queue place that lapsed — leaves the pair free and is ignored.
+ * index means it: one row per (product, participant) covering
+ * `OCCUPYING_STATUSES`. An ended seat leaves the pair free and is ignored.
  *
  * The switch picker draws these clubs disabled, so an admin never reaches the
  * second stage on a club the move is bound to refuse. The route's refusal stays
@@ -829,13 +829,7 @@ export function heldProductIds(rows: readonly HeldPlaceRow[]): Set<string> {
   const held = new Set<string>();
   for (const row of rows) {
     if (row.product === null) continue;
-    if (
-      row.status === "active" ||
-      row.status === "waitlisted" ||
-      row.status === "completed"
-    ) {
-      held.add(row.product.id);
-    }
+    if (isOccupyingStatus(row.status)) held.add(row.product.id);
   }
   return held;
 }

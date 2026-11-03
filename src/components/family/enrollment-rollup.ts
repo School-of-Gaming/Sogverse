@@ -1,3 +1,4 @@
+import { formatInTimeZone } from "date-fns-tz";
 import {
   formatProductSchedule,
   scheduleCardLines,
@@ -132,6 +133,15 @@ export interface FamilyEnrollmentSummary {
   openHref: MaybeInertHref;
   /** The product's last day as a bare `YYYY-MM-DD`, or `null` when open-ended. */
   endDate: string | null;
+  /**
+   * The day this seat ended, as a bare `YYYY-MM-DD` in the product's zone, or
+   * `null` on a seat still held (and on every waitlist place).
+   *
+   * An ended seat is a finished card whatever the product's own dates say: it
+   * sorts into the finished band, says when it ended, and opens its page, whose
+   * feed stops at the end. See `enrollmentEndedOn`.
+   */
+  seatEndedOn: string | null;
   /** The zone `endDate` is a date **in** — the product's own. */
   timezone: string;
   /**
@@ -201,11 +211,17 @@ export interface FamilyEnrollmentSummary {
 export function enrollmentEndedOn(
   enrollment: Pick<
     FamilyEnrollmentSummary,
-    "endDate" | "timezone" | "nextSessionStart"
+    "endDate" | "timezone" | "nextSessionStart" | "seatEndedOn"
   >,
   now: Date,
 ): string | null {
-  return runEndedOn(enrollment, now);
+  // An ended seat is over from its own last day, or from the run's if the run
+  // finished first — a seat removed after its camp ran ended with the camp.
+  const runEnded = runEndedOn(enrollment, now);
+  const { seatEndedOn } = enrollment;
+  if (seatEndedOn === null) return runEnded;
+  if (runEnded === null) return seatEndedOn;
+  return runEnded < seatEndedOn ? runEnded : seatEndedOn;
 }
 
 /**
@@ -441,7 +457,7 @@ export function sortFamilyEnrollments(
  * fixed once on the gedu side.
  */
 export interface FamilyRollUpArgs {
-  /** `status='active'` rows — placed and unplaced alike. */
+  /** Held seats, placed and unplaced alike, and ended ones. */
   sessionRows: readonly MyUpcomingSessionRow[];
   /** `status='waitlisted'` rows, each with its live place in line. */
   waitlistRows: readonly MyWaitlistRow[];
@@ -791,7 +807,8 @@ function sessionsAhead<T extends PlannedSession>(
 }
 
 /**
- * An `status='active'` row — a seat the family holds, placed or not.
+ * A seat the family holds, placed or not — or held until it ended, which is a
+ * finished card with nothing ahead of it.
  *
  * **Everything the card shows stops at the paid window.** When a parent has
  * cancelled, the card reads only the planned sessions starting by the instant
@@ -809,6 +826,10 @@ function sessionSummary(
   const awaiting = row.groupId === null;
   const hasVoiceRoom = modeHasVoiceRoom(product.deliveryMode);
   const subEnd = row.subscriptionEndsAt;
+  // An ended seat has nothing ahead of it: no session to name, none cancelled
+  // before it, no room to join and no winding-down line — the card is a
+  // finished one, and its page holds the sessions up to the end.
+  const ended = row.endedAt !== null;
 
   const closeMarginMs = VOICE_CONFIG.SESSION_WINDOW_AFTER_MINUTES * 60_000;
   const covered =
@@ -818,10 +839,12 @@ function sessionSummary(
           (session) => session.startsAt.getTime() <= subEnd.getTime(),
         );
   const lockedJoin = awaiting && hasVoiceRoom;
-  const { next, cancelledAhead } = nextSessionFor(covered, now, lockedJoin);
+  const { next, cancelledAhead } = ended
+    ? { next: null, cancelledAhead: [] }
+    : nextSessionFor(covered, now, lockedJoin);
   // What the paid window still covers, for the winding-down line: the family
   // does not attend a cancelled session, so it cannot be their last one.
-  const running = sessionsAhead(covered, now, lockedJoin).filter(
+  const running = sessionsAhead(ended ? [] : covered, now, lockedJoin).filter(
     (session) =>
       !session.cancelled &&
       session.endsAt.getTime() + closeMarginMs > now.getTime(),
@@ -858,7 +881,7 @@ function sessionSummary(
     // there is nothing to navigate to. An unplaced seat's Join is never lit,
     // so the href is never followed.
     voiceHref:
-      hasVoiceRoom && row.groupId !== null
+      hasVoiceRoom && row.groupId !== null && !ended
         ? ROUTES.voice.groupSession(row.groupId)
         : INERT_HREF,
     // Named exactly where the gamers attend a site — in person or hybrid — so
@@ -880,18 +903,22 @@ function sessionSummary(
           }),
     endDate: product.endDate,
     timezone: product.timezone,
+    seatEndedOn:
+      row.endedAt === null
+        ? null
+        : formatInTimeZone(row.endedAt, product.timezone, "yyyy-MM-dd"),
     waitlistPosition: null,
     // A seat is not a queue place, and the offer stamp is forbidden on any
     // status but `waitlisted` — so there is nothing here to carry, ever.
     seatOfferSentAt: null,
     awaiting,
-    paymentProblem: row.paymentProblem,
+    paymentProblem: !ended && row.paymentProblem,
     // Emitted for the whole of a winding-down membership's life, including the
     // stretch after its last session has run — that is when a parent is most
     // likely to be looking. What varies is whether it carries a date: only a
     // session still to come is one this surface is entitled to state. See
     // `cancellationFor`.
-    cancellation: cancellationFor(subEnd, running),
+    cancellation: ended ? null : cancellationFor(subEnd, running),
     scheduleLines: scheduleLinesFor(
       {
         type: product.type,
@@ -942,6 +969,7 @@ function waitlistSummary(
     openHref: INERT_HREF,
     endDate: product.endDate,
     timezone: product.timezone,
+    seatEndedOn: null,
     waitlistPosition: row.position,
     seatOfferSentAt: row.seatOfferSentAt,
     awaiting: false,

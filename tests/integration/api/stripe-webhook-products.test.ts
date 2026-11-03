@@ -941,7 +941,7 @@ describe("POST /api/webhooks/stripe/products", () => {
       };
     }
 
-    it("tears the participation down via cancel_participation when we own the sub", async () => {
+    it("ends the seat via end_participation when we own the sub", async () => {
       mockConstructEvent.mockReturnValue(createDeletedEvent("sub_live_1"));
       mockAdmin({ famSubRow: { participation_id: PARTICIPATION_ID } });
       mockAdminRpc.mockResolvedValue({
@@ -952,15 +952,27 @@ describe("POST /api/webhooks/stripe/products", () => {
       const res = await POST(createWebhookRequest());
       expect(res.status).toBe(200);
 
-      // Stripe already cancelled the sub — we only tear down our DB. Deleting
-      // the participation CASCADEs the family_subscriptions row away.
-      expect(mockAdminRpc).toHaveBeenCalledWith("cancel_participation", {
+      // Stripe already cancelled the sub — we only end the seat in our DB,
+      // which keeps it and its family_subscriptions row.
+      expect(mockAdminRpc).toHaveBeenCalledWith("end_participation", {
         p_participation_id: PARTICIPATION_ID,
         p_reason: "subscription_cancelled",
       });
     });
 
-    it("is a no-op for a sub we don't have a row for (e.g. a replayed deletion)", async () => {
+    it("answers a replayed deletion with a clean 200 once the seat has ended", async () => {
+      // The ended seat's row is still there, so the replay reaches the RPC
+      // again; end_participation answers noop for a seat already ended.
+      mockConstructEvent.mockReturnValue(createDeletedEvent("sub_live_1"));
+      mockAdmin({ famSubRow: { participation_id: PARTICIPATION_ID } });
+      mockAdminRpc.mockResolvedValue({ data: { kind: "noop" }, error: null });
+
+      const res = await POST(createWebhookRequest());
+      expect(res.status).toBe(200);
+      expect(mockAdminRpc).toHaveBeenCalledTimes(1);
+    });
+
+    it("is a no-op for a sub we don't have a row for", async () => {
       mockConstructEvent.mockReturnValue(createDeletedEvent("sub_unknown"));
       mockAdmin({ famSubRow: null });
 
@@ -1111,7 +1123,22 @@ describe("POST /api/webhooks/stripe/products", () => {
     // translated before it is written. Passing one through verbatim used to
     // produce a rejected write whose error was dropped: the row kept its old
     // status and the route answered 200.
-    const OURS = { id: FAM_SUB_ROW_ID };
+    const OURS = { id: FAM_SUB_ROW_ID, ended_at: null };
+
+    it("never writes a subscription that ended with its seat", async () => {
+      // A late update must not revive an ended subscription: the row's trigger
+      // would refuse the write, so the handler leaves it alone instead.
+      mockConstructEvent.mockReturnValue(
+        createSubscriptionUpdatedEvent({ status: "active" }),
+      );
+      const inserts = mockAdmin({
+        famSubRow: { ...OURS, ended_at: "2026-03-01T10:00:00Z" },
+      });
+
+      const res = await POST(createWebhookRequest());
+      expect(res.status).toBe(200);
+      expect(inserts.familySubscriptionUpdates).toEqual([]);
+    });
 
     it("maps trialing onto active", async () => {
       mockConstructEvent.mockReturnValue(
@@ -1863,7 +1890,7 @@ describe("POST /api/webhooks/stripe/products — a Session with a booking", () =
     consoleError.mockRestore();
   });
 
-  it("makes no seat-dependent write when the seat has since been cancelled", async () => {
+  it("makes no seat-dependent write when the seat has since ended", async () => {
     const inserts = mockAdmin();
     const consoleError = vi.spyOn(console, "error").mockImplementation(() => {});
     mockAdminRpc.mockResolvedValueOnce({
@@ -1884,7 +1911,7 @@ describe("POST /api/webhooks/stripe/products — a Session with a booking", () =
       }),
     ]);
     expect(consoleError).toHaveBeenCalledWith(
-      expect.stringContaining("since been cancelled"),
+      expect.stringContaining("since ended"),
       expect.objectContaining({ subscription: SUB_ID }),
     );
     consoleError.mockRestore();

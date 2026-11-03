@@ -70,7 +70,7 @@ export async function resolveBillingAccountsViaRls(
       .from("family_subscriptions")
       .select(
         `
-          stripe_customer_id,
+          stripe_customer_id, ended_at,
           participation:participations!inner(
             participant:profiles!participations_participant_id_fkey!inner(first_name),
             product:products!inner(product_translations(locale, name))
@@ -103,6 +103,9 @@ export async function resolveBillingAccountsViaRls(
       account = { stripeCustomerId: row.stripe_customer_id, covers: [] };
       accounts.set(row.stripe_customer_id, account);
     }
+    // A subscription that ended with its seat covers nobody now; its customer
+    // stays, because its invoices and cards are still the family's to manage.
+    if (row.ended_at !== null) continue;
     account.covers.push({
       participantFirstName: row.participation.participant.first_name,
       productTranslations: row.participation.product.product_translations,

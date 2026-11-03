@@ -10,6 +10,7 @@ import {
   type SupportedCurrency,
 } from "@/lib/constants/currency";
 import { DEFAULT_LOCALE, resolveLocale } from "@/lib/constants/locales";
+import { OCCUPYING_STATUSES } from "@/lib/constants/participations";
 import { ROUTES } from "@/lib/constants/routes";
 import { getOrigin } from "@/lib/url";
 import { resolveRequiredTranslation } from "@/lib/i18n/resolve-translation";
@@ -48,9 +49,6 @@ import type {
  * Both halves live here rather than in the route file so the sequence reads as
  * one module and the route stays a declaration of its posture.
  */
-
-/** The statuses the participations unique index covers. */
-const OCCUPIED_STATUSES = ["active", "waitlisted"] as const;
 
 /** The target product columns every step of the switch needs. */
 const TARGET_PRODUCT_COLUMNS =
@@ -274,7 +272,7 @@ export async function checkSwitchClub({
     .select("id")
     .eq("product_id", targetProductId)
     .eq("participant_id", participation.participant_id)
-    .in("status", OCCUPIED_STATUSES)
+    .in("status", OCCUPYING_STATUSES)
     .neq("id", participationId)
     .maybeSingle();
   if (occupiedError) throw occupiedError;

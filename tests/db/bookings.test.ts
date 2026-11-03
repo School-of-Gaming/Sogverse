@@ -822,6 +822,18 @@ describe("bookings", () => {
       });
     });
 
+    it("reads a seat that has since ended as gone, never as enrolled", async () => {
+      const session = await settledBooking();
+      const [seat] = await seatsOn(PAID_CAMP);
+      await endSeatsOn(PAID_CAMP);
+      const service = new ParticipationsService(customer);
+
+      expect(await service.getConfirmationByCheckoutSession(session)).toEqual({
+        state: "seat_gone",
+      });
+      expect(await service.getConfirmation(seat.id)).toBeNull();
+    });
+
     it("hands a different parent nothing", async () => {
       const session = await settledBooking();
 

@@ -3,6 +3,7 @@ import { isValidPhoneNumber } from "libphonenumber-js";
 import { getPathname } from "@/i18n/navigation";
 import { SUPPORTED_CURRENCIES } from "@/lib/constants/currency";
 import { DEFAULT_LOCALE, isSupportedLocale, type SupportedLocale } from "@/lib/constants/locales";
+import { isHeldSeatStatus } from "@/lib/constants/participations";
 import { ROUTES } from "@/lib/constants/routes";
 import { resolveTranslation } from "@/lib/i18n/resolve-translation";
 import type { KlaviyoEvent, KlaviyoPropertyValue } from "@/lib/klaviyo";
@@ -223,9 +224,13 @@ function distinctSorted<T extends string | number>(values: Iterable<T>): T[] {
   return [...new Set(values)].sort();
 }
 
-/** The seats held, as opposed to waited for. */
+/**
+ * The seats held now — not a waitlist place, and not a seat that has ended. The
+ * snapshot already leaves ended seats out; naming the held set here keeps a
+ * status the snapshot might one day carry from counting by default.
+ */
 function heldSeats(snapshot: KlaviyoParentSnapshot) {
-  return snapshot.participations.filter((p) => p.status !== "waitlisted");
+  return snapshot.participations.filter((p) => isHeldSeatStatus(p.status));
 }
 
 /**

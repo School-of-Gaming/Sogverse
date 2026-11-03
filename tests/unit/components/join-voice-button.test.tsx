@@ -214,6 +214,7 @@ describe("a parent's card for their child's seat, mid-session", () => {
       openHref: INERT_HREF,
       endDate: null,
       timezone: "Europe/Helsinki",
+      seatEndedOn: null,
       waitlistPosition: null,
       seatOfferSentAt: null,
       awaiting: false,

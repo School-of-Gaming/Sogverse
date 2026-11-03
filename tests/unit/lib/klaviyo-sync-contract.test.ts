@@ -320,6 +320,17 @@ describe("the lists", () => {
       }),
     ).toEqual(["account"]);
   });
+
+  it("does not count a seat that has ended", () => {
+    // The snapshot leaves ended seats out; were one to arrive, it is not a
+    // seat held now.
+    expect(
+      klaviyoListsFor({
+        ...FULL,
+        participations: [{ id: "p2", status: "ended", product: CAMP }],
+      }),
+    ).toEqual(["account"]);
+  });
 });
 
 describe("the events", () => {

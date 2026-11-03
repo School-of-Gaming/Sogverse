@@ -545,7 +545,7 @@ export function useAdminAddParticipantToProduct(productId: string) {
 }
 
 /**
- * Admin un-enrollment mutation — hard-deletes a participation (inverse of
+ * Admin un-enrollment mutation — ends a participation (inverse of
  * useAdminAddParticipantToProduct). Destructive, so no optimistic removal: the chip
  * greys via the pending registry (`removes`) while in flight and disappears on
  * the settle refetch, matching the delete-group / remove-Gedu model (shared

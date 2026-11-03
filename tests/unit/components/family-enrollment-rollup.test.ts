@@ -1,5 +1,6 @@
 import { describe, expect, it } from "vitest";
 import {
+  enrollmentEndedOn,
   enrollmentLiveness,
   rollUpFamilyEnrollments,
   rollUpGamerEnrollments,
@@ -82,6 +83,7 @@ function enrollment(
     openHref: INERT_HREF,
     endDate: fields.endDate ?? null,
     timezone: TZ,
+    seatEndedOn: null,
     waitlistPosition: null,
     seatOfferSentAt: null,
     awaiting: false,
@@ -295,6 +297,7 @@ function sessionRow(
     // without the other cases caring.
     signedUpAt: new Date("2026-01-28T09:00:00.000Z"),
     groupJoinedAt: new Date("2026-01-28T09:00:00.000Z"),
+    endedAt: null,
     slots,
     paymentProblem: false,
     subscriptionEndsAt: null,
@@ -663,6 +666,56 @@ describe("toFamilyEnrollments — a place in line", () => {
       mapOne({ waitlistRows: [waitlistRow({ product: { deliveryMode: "in_person" } })] })
         .hasVoiceRoom,
     ).toBe(false);
+  });
+});
+
+describe("toFamilyEnrollments — an ended seat", () => {
+  // Ended on Monday 9 Feb, product-local; the club itself runs on.
+  const ENDED_AT = new Date("2026-02-09T10:00:00Z");
+
+  it("is a finished card: nothing ahead, no Join, and the day it ended", () => {
+    const summary = mapOne({
+      sessionRows: [
+        sessionRow({
+          endedAt: ENDED_AT,
+          paymentProblem: true,
+          subscriptionEndsAt: new Date("2026-02-20T00:00:00Z"),
+        }),
+      ],
+      openHref: (e) => ({
+        pathname: "/parent/clubs/[id]",
+        params: { id: e.participationId },
+      }),
+    });
+    expect(summary.seatEndedOn).toBe("2026-02-09");
+    expect(summary.nextSessionStart).toBeNull();
+    expect(summary.cancelledAhead).toEqual([]);
+    expect(summary.voiceHref).toBe(INERT_HREF);
+    expect(summary.cancellation).toBeNull();
+    expect(summary.paymentProblem).toBe(false);
+    // Its page stays open: the feed serves it up to the end.
+    expect(summary.openHref).toEqual({
+      pathname: "/parent/clubs/[id]",
+      params: { id: "participation-1" },
+    });
+  });
+
+  it("sorts into the finished band on the day it ended", () => {
+    const ended = { ...enrollment("ended"), seatEndedOn: "2026-02-09" };
+    expect(sortedIds([ended, FINISHED, WAITING, RUNNING])).toEqual([
+      "running",
+      "waiting",
+      "ended",
+      "finished",
+    ]);
+  });
+
+  it("ended with its run when the run finished first", () => {
+    const ended = {
+      ...enrollment("ended", { endDate: "2026-01-31" }),
+      seatEndedOn: "2026-02-09",
+    };
+    expect(enrollmentEndedOn(ended, NOW)).toBe("2026-01-31");
   });
 });
 

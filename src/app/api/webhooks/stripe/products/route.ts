@@ -222,15 +222,16 @@ async function handleCheckoutCompleted(
     return;
   }
 
-  // A redelivery after the seat this session bought was cancelled. It can only
-  // get this far when the first delivery died before its payment row, so nothing
-  // recorded the money. The seat stays cancelled, which rules out every
+  // A redelivery after the seat this session bought has ended: confirm_booking
+  // answers a settled booking whose seat ended with no participation id. It can
+  // only get this far when the first delivery died before its payment row, so
+  // nothing recorded the money. The seat stays ended, which rules out every
   // seat-dependent write below: no subscription row and no mail. The payment
   // still lands, as the commit marker and the record of the charge, and a live
   // subscription now has nothing tracking it, so the log names it for a person.
   if (confirmed.participationId === null) {
     console.error(
-      "[stripe/products webhook] completed session for a seat that has since been cancelled — check the subscription and refund by hand",
+      "[stripe/products webhook] completed session for a seat that has since ended — check the subscription and refund by hand",
       {
         eventId: event.id,
         customerId,
@@ -602,10 +603,14 @@ async function handleSubscriptionUpdated(
   // the account; "do we have a row for this stripe_subscription_id" is the gate.
   const { data: ours } = await admin
     .from("family_subscriptions")
-    .select("id, updated_at")
+    .select("id, updated_at, ended_at")
     .eq("stripe_subscription_id", sub.id)
     .maybeSingle();
   if (!ours) return;
+  // A subscription that ended with its seat is final: a late or out-of-order
+  // update describing it must never revive it, and the row's trigger refuses
+  // the write (55000) if one tries. Stripe has nothing left to tell us here.
+  if (ours.ended_at) return;
 
   const periodEnd = currentPeriodEndOf(sub);
   const priceId = sub.items.data[0]?.price.id;
@@ -810,20 +815,17 @@ async function handleSubscriptionDeleted(
     .select("participation_id")
     .eq("stripe_subscription_id", sub.id)
     .maybeSingle();
-  // No row → nothing to do. The normal way to hit this is a *replayed*
-  // deletion: the first delivery already tore the participation down (which
-  // CASCADE-removed this row), so a redelivery finds nothing. Returning here
-  // keeps the replay a clean 200 instead of a null-deref 500 that Stripe would
-  // retry forever. (Also covers any sub on the account not created by this flow.)
+  // No row → nothing to do: a sub on the account this flow never created.
   if (!famSub) return;
 
   // Portal-only cancellation (§4.5c): the parent cancelled this club's sub in
-  // Stripe's hosted portal, Stripe fired this event, and now we tear the
-  // participation down. Stripe has ALREADY cancelled the sub, so this path must
-  // not call Stripe again — `cancel_participation` only touches our DB.
-  // Hard-deleting the participation CASCADEs the family_subscriptions row away.
-  // Idempotent: a replay finds no row (already gone) and returns kind='noop'.
-  const { error } = await admin.rpc("cancel_participation", {
+  // Stripe's hosted portal, Stripe fired this event, and now the seat ends.
+  // Stripe has ALREADY cancelled the sub, so this path must not call Stripe
+  // again — `end_participation` only touches our DB. The seat is kept, ended,
+  // with its family_subscriptions row cancelled and stamped. A replayed
+  // deletion finds that row again and end_participation answers kind='noop'
+  // for a seat already ended, so the redelivery writes nothing.
+  const { error } = await admin.rpc("end_participation", {
     p_participation_id: famSub.participation_id,
     p_reason: "subscription_cancelled",
   });

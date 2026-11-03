@@ -425,9 +425,10 @@ export const adminEnrollParticipantRpcResult = z.object({
 });
 
 /**
- * `admin_remove_participation` RPC result. It delegates to
- * `cancel_participation`, so the shape is that function's: `cancelled` with the
- * details the audit line needs, or `noop` when the row had already gone.
+ * `admin_remove_participation` RPC result. It delegates to `end_participation`
+ * with reason `admin_removed`, so the shape is that function's: `cancelled`
+ * with the details the audit line needs (the seat is ended and kept, a
+ * waitlisted row deleted), or `noop` when the seat had already ended or gone.
  */
 export const adminRemoveParticipationRpcResult = z.discriminatedUnion("kind", [
   z.object({
