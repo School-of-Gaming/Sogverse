@@ -227,3 +227,72 @@ describe("the Reddit global", () => {
     expect(window.rdt?.callQueue).toEqual([]);
   });
 });
+
+/**
+ * Everything above rests on each library announcing itself by assigning its
+ * dispatcher. A library that loads and never does leaves every call held and
+ * reports nothing, with no error anywhere — so outside production the stub
+ * says so in the console.
+ */
+describe("a library the stub never notices", () => {
+  /** A script element's load, the way the browser announces it. */
+  function scriptLoads(script: HTMLScriptElement) {
+    script.dispatchEvent(new Event("load"));
+  }
+
+  /** Meta's template inserting its library, as it does under the container. */
+  function metaScript(): HTMLScriptElement {
+    const script = document.createElement("script");
+    script.src = "https://connect.facebook.net/en_US/fbevents.js";
+    document.head.appendChild(script);
+    return script;
+  }
+
+  /** Let the check that follows a load run. */
+  async function nextTick() {
+    await new Promise((resolve) => setTimeout(resolve, 0));
+  }
+
+  it("warns when Meta's library loads and never installs its dispatcher", async () => {
+    const warn = vi.spyOn(console, "warn").mockImplementation(() => {});
+    scriptLoads(metaScript());
+    await nextTick();
+
+    expect(warn).toHaveBeenCalledTimes(1);
+    expect(String(warn.mock.calls[0][0])).toContain("Meta");
+    warn.mockRestore();
+  });
+
+  it("says nothing when Meta's library announces itself", async () => {
+    const warn = vi.spyOn(console, "warn").mockImplementation(() => {});
+    const script = metaScript();
+    metaLibraryArrives();
+    scriptLoads(script);
+    await nextTick();
+
+    expect(warn).not.toHaveBeenCalled();
+    warn.mockRestore();
+  });
+
+  it("warns when Reddit's library loads and never installs its dispatcher", async () => {
+    const warn = vi.spyOn(console, "warn").mockImplementation(() => {});
+    rdt("track", "PageVisit");
+    scriptLoads(redditScripts()[0]);
+    await nextTick();
+
+    expect(warn).toHaveBeenCalledTimes(1);
+    expect(String(warn.mock.calls[0][0])).toContain("Reddit");
+    warn.mockRestore();
+  });
+
+  it("says nothing when Reddit's library announces itself", async () => {
+    const warn = vi.spyOn(console, "warn").mockImplementation(() => {});
+    rdt("track", "PageVisit");
+    redditLibraryArrives();
+    scriptLoads(redditScripts()[0]);
+    await nextTick();
+
+    expect(warn).not.toHaveBeenCalled();
+    warn.mockRestore();
+  });
+});

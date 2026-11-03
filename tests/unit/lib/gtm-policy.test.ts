@@ -215,14 +215,69 @@ describe("access_globals", () => {
   it("refuses a call with no key", () => {
     expect(allows("access_globals", { read: true })).toBe(false);
   });
+
+  // Seen in a published container's permission table: the item a Google tag
+  // carries when its GA4 property is linked to Google Ads.
+  it("admits the one global Google's GA4-to-Ads link item calls", () => {
+    expect(
+      allows("access_globals", {
+        key: "__gsaExp.id",
+        read: false,
+        write: false,
+        execute: true,
+      }),
+    ).toBe(true);
+  });
+});
+
+describe("get_cookies", () => {
+  // The container hands the policy `{ name }`, the cookie being read.
+  it("admits the vendors' ids and Google's analytics and click cookies", () => {
+    for (const name of [
+      "_fbp",
+      "_fbc",
+      "_rdt_uuid",
+      "_ga",
+      "_ga_ABC123XYZ",
+      "_gcl_aw",
+      "_gcl_au",
+      "_gac_UA-1234-1",
+    ]) {
+      expect(allows("get_cookies", { name })).toBe(true);
+    }
+  });
+
+  // The Supabase session cookies are readable by page script, and an admitted
+  // beacon host is somewhere a template could send one.
+  it("refuses every other cookie, the session first among them", () => {
+    for (const name of [
+      "sb-abcdefghijklmnop-auth-token",
+      "sb-abcdefghijklmnop-auth-token.0",
+      "sog_consent",
+      "sog_attribution",
+      "_gat",
+      "_gaxyz",
+      "_fbp_extra",
+      "_rdt_cid",
+      "",
+    ]) {
+      expect(allows("get_cookies", { name })).toBe(false);
+    }
+  });
+
+  it("refuses a call with no name", () => {
+    expect(allows("get_cookies", {})).toBe(false);
+    expect(allows("get_cookies", null)).toBe(false);
+  });
 });
 
 describe("everything else", () => {
-  // Only the Custom JavaScript variable and the Custom HTML tag hold these, and
-  // both are blocklisted already.
-  it("refuses the two permissions that run arbitrary code", () => {
+  // Only the Custom JavaScript variable, the Custom HTML tag and the JavaScript
+  // Variable hold these, and all three are blocklisted already.
+  it("refuses the three unsafe permissions", () => {
     expect(allows("unsafe_run_arbitrary_javascript", {})).toBe(false);
     expect(allows("unsafe_inject_arbitrary_html", {})).toBe(false);
+    expect(allows("unsafe_access_globals", { key: "fbq" })).toBe(false);
   });
 
   // Google's own tags exercise these, and a policy that refused them would stop

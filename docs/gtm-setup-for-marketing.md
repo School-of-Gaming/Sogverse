@@ -4,8 +4,8 @@ For the marketing team running School of Gaming's campaigns. This explains what 
 Sogverse site tells the Tag Manager container, how to build the Meta and Reddit tags from
 it, and what the container will refuse to do.
 
-You do not need a developer to change a tag. You do need one for anything in "What will
-never fire" below: ask Kyle at School of Gaming.
+You do not need a developer to change a tag. You do need one for anything in "What the
+site blocks" below: ask Kyle at School of Gaming.
 
 ## How it works in one paragraph
 
@@ -55,6 +55,12 @@ when `advertised` is `true`, or campaigns learn from families an ad never reache
 
 A waiting list place and a `sign_up` have no `value` or `currency`, because nobody has paid.
 
+**`meta`** is the same product again, ready for Meta's tag: `content_ids` (a list holding the
+product's id), `content_name`, `content_category`, `content_type` (always `product`), and
+`value` and `currency` where the event has a price. It is on every event that has an
+`ecommerce` object, and absent otherwise. Reddit's tag needs no object of its own: it reads
+`ecommerce` directly.
+
 ### Examples
 
 ```js
@@ -72,6 +78,11 @@ A waiting list place and a `sign_up` have no `value` or `currency`, because nobo
               item_category: "roblox_studio", price: 49, quantity: 1 }],
     value: 49,
     currency: "EUR"
+  },
+  meta: {
+    content_ids: ["8c41f0d2-…"], content_name: "Roblox Studio Club",
+    content_category: "roblox_studio", content_type: "product",
+    value: 49, currency: "EUR"
   }
 }
 ```
@@ -84,7 +95,8 @@ A waiting list place and a `sign_up` have no `value` or `currency`, because nobo
   ecommerce: {                   // null when they did not come from a product page
     items: [{ item_id: "8c41f0d2-…", item_name: "Roblox Studio Club",
               item_category: "roblox_studio", quantity: 1 }]
-  }
+  },
+  meta: { … }                    // the same product, without value or currency
 }
 ```
 
@@ -98,15 +110,15 @@ A waiting list place and a `sign_up` have no `value` or `currency`, because nobo
   ecommerce: {
     items: [{ item_id: "8c41f0d2-…", item_name: "Roblox Studio Club",
               item_category: "roblox_studio", quantity: 1 }]
-  }
+  },
+  meta: { … }                    // the same product, without value or currency
 }
 ```
 
 ## Variables and triggers to create first
 
-Data Layer Variables (version 2): `event_id`, `page_path`, `advertised`, `outcome`,
-`ecommerce.items.0.item_id`, `ecommerce.items.0.item_name`,
-`ecommerce.items.0.item_category`, `ecommerce.value`, `ecommerce.currency`.
+Data Layer Variables (version 2): `event_id`, `page_path`, `advertised`, `outcome` and
+`meta`. Google's own tags read `ecommerce` by themselves, and so does Reddit's.
 
 One **Custom Event** trigger per event name: `page_view`, `view_item`, `add_to_cart`,
 `sign_up`, `enrolment`. On `view_item`, `add_to_cart` and `enrolment`, set the trigger to
@@ -127,12 +139,12 @@ works.
 - **Event name**: from the mapping table above (PageView, ViewContent, InitiateCheckout,
   Lead, CompleteRegistration).
 - **Event ID**: the `event_id` variable. This is the setting that stops double counting.
-- **Object properties** for the product events (ViewContent, InitiateCheckout, Lead,
-  CompleteRegistration): `content_ids` from `item_id`, `content_name` from `item_name`,
-  `content_category` from `item_category`, `content_type` set to `product`, `value` and
-  `currency` from the two `ecommerce` variables. On CompleteRegistration you may also send
-  `outcome`. If Test Events warns about `content_ids`, tell Kyle and we will push it as a
-  list.
+- **Object Properties, "Load Properties From Variable"**: the `meta` variable, on every
+  tag. It holds the product on ViewContent, InitiateCheckout, Lead and
+  CompleteRegistration and is empty on PageView, so one setting serves them all. On
+  CompleteRegistration you may also add `outcome` as a row in the table below it.
+- **Leave unticked**: "Enable Enhanced Ecommerce" and "GA4 ecommerce". Neither reads the
+  way the site pushes; `meta` already carries the product.
 - **Trigger**: the matching Custom Event trigger above.
 - **Leave empty or unticked**: every advanced matching field (email, phone, name and so
   on), and the **Meta-enabled CAPI** opt-in box. Our servers already send Meta the
@@ -157,7 +169,10 @@ Use the official **Reddit Pixel** template by Reddit from the Community Template
 - **Pixel ID**: the same `a2_…` id our servers report to.
 - **Event**: from the mapping table (PageVisit, ViewContent, AddToCart, Lead, SignUp).
 - **Conversion ID**: the `event_id` variable. This is Reddit's name for the matching id.
-- **Products, value and currency**: from the same `ecommerce` variables as Meta's.
+- **Product Information**: tick **Use Ecommerce Product Data**. The template then reads
+  the product, its price and the item count from the `ecommerce` object the site pushes.
+  Leave Transaction Value, Currency and Item Count empty: the template fills them from the
+  same object.
 - **Trigger**: the matching Custom Event trigger.
 - **Leave empty**: any advanced matching fields (email, phone).
 
@@ -168,18 +183,39 @@ loads Reddit's standard script instead, and the events are sent. Check them in R
 Events Manager, not in Tag Manager's status.
 
 **Never use Reddit's "link your GTM container" option.** Build the tag by hand as above.
+Linking gives Reddit the right to publish changes to our container, so a company outside
+School of Gaming could add or change tags without anyone here reviewing them.
 
-## What will never fire
+## If you also edit the Google tags
 
-The site blocks these, so a tag or trigger built on one silently does nothing:
+Two settings on the Google side keep private pages out of Google's reports. Both live
+outside the site, so only whoever configures Google can keep them:
+
+- **Turn off enhanced measurement's page views** in the Google Analytics property. Left
+  on, Google's tag reports a page view every time the address changes, including the
+  private pages a visitor walks to after the public page that loaded the container.
+- **Set `page_location` and `page_path` on every Google tag from the `page_path`
+  variable.** A tag left to its default reads the browser's address bar when it fires,
+  which may by then be showing a different page from the one the event happened on.
+
+## What the site blocks
+
+These never fire, so a tag, variable or trigger built on one silently does nothing:
 
 - Custom HTML tags and Custom JavaScript variables
+- The 1st-Party Cookie, JavaScript Variable and DOM Element variable types. A cookie
+  variable could read a signed-in parent's login, and the other two can read anything on
+  the page.
 - Custom Image tags, and Google's built-in tags for other vendors (LinkedIn, Hotjar and
   similar)
-- Templates from any vendor other than Meta, Reddit and Google: they cannot load their own
-  script or send anywhere new
 - All the automatic triggers: Click, Link Click, Form Submission, Timer, History Change,
   Scroll Depth, Element Visibility, JavaScript Error and YouTube Video
+
+**Do not add a template from any vendor other than Meta, Reddit and Google.** The site
+cannot stop another vendor's template from running. It can only stop it loading its own
+script or sending data anywhere new, and what it reads from the page could still leave
+through a host the site allows. Adding a vendor is a change to the site and to the privacy
+policy, so ask Kyle.
 
 Why: Sogverse is a platform children sign into, and these are the ways a tag could run code
 nobody has reviewed or report a private page such as a child's profile. If you need one of

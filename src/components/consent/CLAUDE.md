@@ -63,7 +63,10 @@ hold the promise, and all six are load-bearing:
   - an **allowlist** admitting Google's own tags and templates — Meta and Reddit ship
     their tags only as templates;
   - a **blocklist** refusing Custom HTML, Custom JavaScript variables, Custom Image tags,
-    Google's built-in non-Google tag types, and **all nine automatic trigger listeners** —
+    Google's built-in non-Google tag types, the 1st-Party Cookie, JavaScript Variable and
+    DOM Element variables (the Supabase session cookies are readable by page script, and
+    any of the three could feed a session or a child's name into an admitted tag's field),
+    and **all nine automatic trigger listeners** —
     click, link click, form submit, timer, history, scroll depth, element visibility,
     JavaScript error and YouTube — each of which would fire with whatever page the tab
     shows by then;
@@ -71,7 +74,8 @@ hold the promise, and all six are load-bearing:
     template and not another: any template, a hand-written one included, may load scripts
     only from Google, Meta's `fbevents.js` and Reddit's generic `pixel.js`, send beacons
     and frames only to Google's hosts and the two vendors' transports, touch only the
-    vendors' globals and Google's queue, and never run arbitrary JavaScript or HTML.
+    vendors' globals and Google's, read only the vendors' and Google's own ad and
+    analytics cookies, and never run arbitrary JavaScript or HTML.
 
   Under the production CSP's `'strict-dynamic'`, anything the container inserts is
   trusted transitively, which is why the fences, not the CSP's host list, decide what a
@@ -172,14 +176,16 @@ without a change here** (`src/lib/gtm-events.ts` has the names and why each):
   event against its server twin by (next section). Minted per push, never per page: a
   second view of a page is a second event.
 - **Every product event names its product in GA4's `ecommerce` shape**, built from the same
-  facts as the server reports' fields, and **is pushed for every product with `advertised`
-  beside it**. Analytics counts them all; an advertising tag fires only where `advertised`
+  facts as the server reports' fields, plus the same product as `meta`, the object Meta's
+  template takes whole (Reddit's reads `ecommerce` itself), and **is pushed for every
+  product with `advertised` beside it**. Analytics counts them all; an advertising tag fires only where `advertised`
   is `true`. A `sign_up` carries no `advertised`: it names a product only when the
   server's lead would, so its tag fires on every one. A queue place and a lead carry no
   value, on this side as on the server's.
-- **Every push is preceded by `{ ecommerce: null }`.** The container merges pushes into one
-  model that keeps what it was last told, so without the reset an event leaving a field out
-  reads the previous event's — a queue place priced at the view before it.
+- **Every push is preceded by `{ ecommerce: null, meta: null }`.** The container merges
+  pushes into one model that keeps what it was last told, so without the reset an event
+  leaving a field out reads the previous event's — a queue place priced at the view before
+  it.
 
 **The checkout start is a click.** A parent on a product's page who clicks into the sign-up
 flow — the create-an-account link while signed out, or the button that enrols while signed
@@ -433,7 +439,8 @@ step-by-step guide is `docs/gtm-setup-for-marketing.md`.
 - **Reddit's tag shows as failed in Tag Manager, and that is expected.** Its template's own
   script injection is the request the policy refuses; the events still go out through the
   generic library our Reddit global loads. Never use Reddit's "link your GTM container"
-  flow; build the tag by hand from the template.
+  flow; build the tag by hand from the template. Linking grants Reddit publish rights on
+  the container, so a third party could change tags outside anyone's review.
 - **Turn off enhanced measurement's page views in the Analytics property.** Enhanced
   measurement reports a page view on every history change from inside the analytics tag,
   which the blocklist cannot reach. Left on, it reports every private page the visitor

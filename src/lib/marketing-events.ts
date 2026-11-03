@@ -247,13 +247,11 @@ export function advertisedProductDetails(
  * container tag cannot be told anything about a product that Meta's and
  * Reddit's server reports would describe differently.
  *
- * **GA4's shape rather than a flat one of our own**, because it is the one
- * shape every reader in the container already understands: Google's analytics
- * tag reads it with no configuration, and a Meta or Reddit tag reads the same
- * fields through plain Data Layer Variables — `ecommerce.items.0.item_id` for
- * the content id, `ecommerce.items.0.item_name`, `ecommerce.items.0.item_category`,
- * and `ecommerce.value` with `ecommerce.currency`. A flat shape would have
- * served the advertising tags equally and analytics not at all.
+ * **GA4's shape rather than a flat one of our own**, because it is the shape
+ * two of the container's three readers already understand: Google's analytics
+ * tag and Reddit's template both read it with no configuration. Meta's
+ * template does not, so each product push also carries the same product as
+ * `meta`, built from this object (`gtmMetaProduct()`).
  *
  * `priced: false` drops the value, the currency and the item's price together,
  * for the two moments the server reports also leave unpriced — a queue place
@@ -291,6 +289,37 @@ export function gtmEcommerce(
       },
     ],
     ...(price !== undefined && price),
+  };
+}
+
+/**
+ * The product a push names, in the object Meta's gallery template takes whole
+ * through its "Load Properties From Variable" field — so its tag is one Data
+ * Layer Variable, `meta`, rather than six rows a configurer could get wrong.
+ *
+ * Read off the push's own `ecommerce`, which `gtmEcommerce()` built from the
+ * product's facts, so it states exactly what that states: the id as a
+ * one-element `content_ids` list (Meta's field is a list, and a bare string
+ * there is what Test Events warns about), the English name, the topic, and the
+ * value and currency only where the push is priced.
+ *
+ * **Reddit gets no object of its own, because its template needs none.** Read
+ * from its source (v1.0.4, `useEcommerceProductData`): it takes the products,
+ * the item count, the value and the currency straight from GA4's `ecommerce`
+ * — `item_id`, `item_name`, `item_category`, `price` and `quantity` — which is
+ * the shape every push already carries. Its product fields take only a typed
+ * table or a JSON string, so a ready-made list here could not be wired into
+ * them anyway.
+ */
+export function gtmMetaProduct(ecommerce: GtmEcommerce): MetaProductDetails {
+  const [item] = ecommerce.items;
+  return {
+    content_ids: [item.item_id],
+    content_type: "product",
+    content_name: item.item_name,
+    content_category: item.item_category,
+    ...(ecommerce.value !== undefined && { value: ecommerce.value }),
+    ...(ecommerce.currency !== undefined && { currency: ecommerce.currency }),
   };
 }
 

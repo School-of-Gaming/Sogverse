@@ -149,6 +149,9 @@ describe("loadGtm", () => {
         "nonGooglePixels",
         "nonGoogleIframes",
         "customPixels",
+        "k",
+        "j",
+        "d",
         "cl",
         "lcl",
         "fsl",
@@ -159,6 +162,19 @@ describe("loadGtm", () => {
         "jel",
         "ytl",
       ],
+    });
+  });
+
+  // Each of these is in the `google` class the allowlist admits, so only its
+  // own id can refuse it. The Supabase session cookies are readable by page
+  // script, and a cookie variable typed into any admitted tag's field would
+  // carry a parent's session to that tag's host; a JavaScript or DOM variable
+  // reaches whatever the page holds.
+  it("blocks the cookie, JavaScript and DOM element variables", () => {
+    void gtm.loadGtm(CONTAINER_ID, GRANTED_BOTH);
+
+    expect(queue()[0]).toMatchObject({
+      "gtm.blocklist": expect.arrayContaining(["k", "j", "d"]),
     });
   });
 
@@ -598,6 +614,16 @@ const VIEW_ITEM = {
   advertised: true,
 } as const satisfies GtmProductPageEvent;
 
+/** The same product in the object Meta's template takes whole. */
+const VIEW_ITEM_META = {
+  content_ids: ["abc-123"],
+  content_type: "product",
+  content_name: "Roblox Studio Club",
+  content_category: "roblox_studio",
+  value: 49,
+  currency: "EUR",
+};
+
 const ADD_TO_CART = {
   ...VIEW_ITEM,
   event: "add_to_cart",
@@ -625,6 +651,7 @@ describe("reportGtmProductEvent", () => {
 
     expect(queue().at(-1)).toEqual({
       ...VIEW_ITEM,
+      meta: VIEW_ITEM_META,
       event_id: expect.any(String),
       page_path: "/shop/abc-123",
     });
@@ -666,6 +693,7 @@ describe("pushGtmProductEventNow", () => {
     );
     expect(queue().at(-1)).toEqual({
       ...ADD_TO_CART,
+      meta: VIEW_ITEM_META,
       event_id: expect.any(String),
       page_path: "/shop/abc-123",
     });
@@ -822,7 +850,54 @@ describe("the ecommerce reset", () => {
 
     gtm.pushGtmEvent(SIGN_UP);
 
-    expect(queue().slice(-2)).toEqual([{ ecommerce: null }, SIGN_UP]);
+    expect(queue().slice(-2)).toEqual([{ ecommerce: null, meta: null }, SIGN_UP]);
+  });
+
+  // Meta's template takes the whole object through one variable, so it is the
+  // product exactly as `ecommerce` names it — and gone again by the next push,
+  // since the data model merges a list index by index.
+  it("names a product for Meta's template beside the ecommerce object", () => {
+    void gtm.loadGtm(CONTAINER_ID, GRANTED_BOTH);
+    const event = { ...VIEW_ITEM, event_id: "e1", page_path: "/shop/abc-123" };
+
+    gtm.pushGtmEvent(event);
+    gtm.pushGtmEvent(SIGN_UP);
+
+    expect(queue().slice(-4)).toEqual([
+      { ecommerce: null, meta: null },
+      {
+        ...event,
+        meta: VIEW_ITEM_META,
+      },
+      { ecommerce: null, meta: null },
+      SIGN_UP,
+    ]);
+  });
+
+  // A lead and a queue place are pushed unpriced, and Meta's object follows.
+  it("leaves Meta's object unpriced when the push is", () => {
+    void gtm.loadGtm(CONTAINER_ID, GRANTED_BOTH);
+
+    gtm.pushGtmEvent({
+      ...SIGN_UP,
+      ecommerce: {
+        items: [
+          {
+            item_id: "abc-123",
+            item_name: "Roblox Studio Club",
+            item_category: "roblox_studio",
+            quantity: 1,
+          },
+        ],
+      },
+    });
+
+    expect(asObject(queue().at(-1)).meta).toEqual({
+      content_ids: ["abc-123"],
+      content_type: "product",
+      content_name: "Roblox Studio Club",
+      content_category: "roblox_studio",
+    });
   });
 
   it("says whether a container is coming", () => {

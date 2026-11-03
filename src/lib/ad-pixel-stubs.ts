@@ -44,6 +44,21 @@
  *     the global (`callMethod` for Meta, `sendEvent` for Reddit), which both
  *     do by plain assignment, read from their sources.
  *
+ * **A library that arrives without the stub noticing fails silently in
+ * production.** Everything above rests on one observation about two files we
+ * do not control: that each library announces itself by assigning its
+ * dispatcher to the global it found. If a vendor renames that dispatcher, or
+ * starts replacing the global rather than filling it in, the library loads, the
+ * stub never sees it, and every held call — every report — stays held: nothing
+ * is sent, nothing errors, and the only sign is a platform's event count going
+ * flat. Outside production builds, each stub therefore warns in the console
+ * when its vendor's script has finished loading and no dispatcher has arrived
+ * by the next tick — on the element the stub inserts for Reddit, and on any
+ * `fbevents.js` element for Meta, whose template inserts it. A production build
+ * folds the check away, so there the risk stays silent; the first place it
+ * shows is a developer's console, and the next is the platforms' own event
+ * screens.
+ *
  * **What the stubs cannot hold.** Meta's library locks itself while it fetches
  * a pixel's configuration and queues calls made meanwhile, replaying them when
  * it unlocks — the same window existed when the app loaded the pixel itself.
@@ -159,6 +174,24 @@ function holdUntilArrival(
   return { call, arrive, dispatcher: () => dispatch };
 }
 
+/** Meta's library at the path its template injects it from, any locale. */
+const META_LIBRARY = /^https:\/\/connect\.facebook\.net\/[a-z]{2}_[A-Z]{2}\/fbevents\.js$/;
+
+/**
+ * Outside production builds: once a vendor's script has loaded, warn on the
+ * next tick if its dispatcher still has not arrived — the silent failure the
+ * module docblock describes. The library runs before its element's `load`
+ * fires, so by then a library that announces itself has done so.
+ */
+function warnIfUnnoticed(vendor: string, arrived: () => boolean): void {
+  setTimeout(() => {
+    if (arrived()) return;
+    console.warn(
+      `[ad-pixel-stubs] ${vendor}'s library loaded but never installed its dispatcher on our global, so every call the stub holds stays held and nothing is reported. The vendor has likely changed how its library announces itself.`,
+    );
+  }, 0);
+}
+
 /** A property every assignment to is ignored, reading `true` for good. */
 function pinnedTrue(target: object, key: string): void {
   Object.defineProperty(target, key, {
@@ -216,6 +249,24 @@ function installMetaStub(): void {
   // The legacy alias the library still looks for, set only when absent as
   // Meta's own snippet does.
   window._fbq ??= stub;
+
+  if (process.env.NODE_ENV !== "production") {
+    // Meta's template inserts the library, so its element is caught as its
+    // `load` passes the document: the event does not bubble, but capture sees
+    // it. Checked only while this stub is still the page's global, so a stub
+    // some later install replaced says nothing.
+    const onLoad = (event: Event) => {
+      const { target } = event;
+      if (!(target instanceof HTMLScriptElement)) return;
+      if (!META_LIBRARY.test(target.src)) return;
+      document.removeEventListener("load", onLoad, true);
+      warnIfUnnoticed(
+        "Meta",
+        () => window.fbq !== stub || gate.dispatcher() !== undefined,
+      );
+    };
+    document.addEventListener("load", onLoad, true);
+  }
 }
 
 function installRedditStub(): void {
@@ -237,6 +288,11 @@ function installRedditStub(): void {
     const script = document.createElement("script");
     script.async = true;
     script.src = REDDIT_LIBRARY;
+    if (process.env.NODE_ENV !== "production") {
+      script.addEventListener("load", () => {
+        warnIfUnnoticed("Reddit", () => gate.dispatcher() !== undefined);
+      });
+    }
     document.head.appendChild(script);
   };
   const stub: Rdt = Object.assign(rdt, { callQueue: [] });

@@ -38,6 +38,7 @@ import {
 import { installAdPixelStubs } from "@/lib/ad-pixel-stubs";
 import { containerPolicy } from "@/lib/gtm-policy";
 import { isReportableQuery } from "@/lib/marketing-pages";
+import { gtmMetaProduct, type MetaProductDetails } from "@/lib/marketing-events";
 import { normalizeExternalPath } from "@/lib/navigation/locale-path";
 import { sendPageEventTwin } from "@/lib/page-events";
 import type { ConsentState } from "@/lib/consent";
@@ -88,6 +89,16 @@ const GTM_SRC = "https://www.googletagmanager.com/gtm.js?id=";
  *     blocking them costs Meta's and Reddit's templates nothing: only Meta and
  *     Reddit are admitted, and they arrive as templates.
  *
+ *   - `k`, `j` and `d` — the 1st-Party Cookie, JavaScript Variable and DOM
+ *     Element variables. Each is in the `google` class the allowlist admits,
+ *     and each reads something no tag here needs and a tag could carry away:
+ *     the Supabase session cookies are readable by page script, so a cookie
+ *     variable fed into any field of an admitted tag sends a parent's session
+ *     to that tag's host, and a JavaScript or DOM variable reaches whatever the
+ *     page holds, a child's name on a private page included. The policy's
+ *     cookie narrowing covers templates; these ids cover the built-ins, which
+ *     are fenced only here.
+ *
  * `sandboxedScripts` is deliberately *not* here: a blocklist wins, so naming
  * it would undo the allowlist above.
  *
@@ -109,11 +120,12 @@ const GTM_SRC = "https://www.googletagmanager.com/gtm.js?id=";
  * one argues its way back in.
  *
  * **What the browser enforces, and what it does not.** Enforced here: no
- * Custom HTML or Custom JavaScript, no built-in non-Google tag, no automatic
- * trigger; templates only within the policy — scripts only from Google, Meta's
- * `fbevents.js` and Reddit's generic library, beacons and frames only to
- * Google's hosts and the two vendors' transports, globals only the vendors'
- * and Google's queue. Not enforced, and so a constraint on whoever configures
+ * Custom HTML or Custom JavaScript, no built-in non-Google tag, no cookie,
+ * JavaScript or DOM element variable, no automatic trigger; templates only
+ * within the policy — scripts only from Google, Meta's `fbevents.js` and
+ * Reddit's generic library, beacons and frames only to Google's hosts and the
+ * two vendors' transports, globals only the vendors' and Google's, cookies only
+ * the vendors' and Google's own ad and analytics ids. Not enforced, and so a constraint on whoever configures
  * the container: *which* templates are added (any template is admitted — a
  * third vendor's can load no library of its own, but one that only reads the
  * page and beacons to an admitted host would run); what each tag's fields
@@ -132,6 +144,9 @@ const GTM_BLOCKLIST = [
   "nonGooglePixels",
   "nonGoogleIframes",
   "customPixels",
+  "k",
+  "j",
+  "d",
   "cl",
   "lcl",
   "fsl",
@@ -468,12 +483,24 @@ export function loadGtm(
  * from a page with no product would name the product looked at last. Clearing
  * before every event rather than only before product ones is what makes each
  * event state its product or none, whatever came before it.
+ *
+ * **A product event also carries `meta`**, the same product in the object
+ * Meta's template takes whole (`gtmMetaProduct()` says why there is no Reddit
+ * twin). It is reset beside `ecommerce` for the same reason: the data model
+ * merges objects and lists key by key, so a `meta` left standing would lend a
+ * page view the previous product.
  */
 export function pushGtmEvent(event: GtmEvent): boolean {
   if (typeof window === "undefined") return false;
   if (!armed || !window.dataLayer) return false;
-  window.dataLayer.push({ ecommerce: null }, event);
+  window.dataLayer.push({ ecommerce: null, meta: null }, withVendorFields(event));
   return true;
+}
+
+/** The event as pushed: with `meta` beside a product, unchanged without one. */
+function withVendorFields(event: GtmEvent): GtmEvent & { meta?: MetaProductDetails } {
+  if (!("ecommerce" in event) || event.ecommerce === null) return event;
+  return { ...event, meta: gtmMetaProduct(event.ecommerce) };
 }
 
 /**

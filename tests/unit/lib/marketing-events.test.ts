@@ -3,6 +3,7 @@ import {
   advertisedProductDetails,
   conversionEventIdValue,
   gtmEcommerce,
+  gtmMetaProduct,
   isAdvertisedProduct,
   isValidPixelId,
   isValidRedditPixelId,
@@ -380,6 +381,45 @@ describe("gtmEcommerce", () => {
 
     expect(missing).not.toHaveProperty("value");
     expect(missing.items[0]).not.toHaveProperty("price");
+  });
+});
+
+/**
+ * The object Meta's template takes whole from one variable. Read off the push's
+ * `ecommerce`, it must be exactly what the server's Meta report says about the
+ * same product, or a browser event and its twin describe it two ways.
+ */
+describe("gtmMetaProduct", () => {
+  const ROBLOX_CLUB = {
+    id: "8f0c1c55-6b0e-4a43-9d1a-2f4b8c7e9a10",
+    topic: "roblox_studio" as const,
+    billing_mode: "paid" as const,
+    product_translations: [
+      { locale: "fi", name: "Roblox Studio -kerho" },
+      { locale: "en", name: "Roblox Studio Club" },
+    ],
+    product_prices: [{ currency: "eur", price_cents: 4900 }],
+  };
+
+  it.each([
+    ["a priced club", ROBLOX_CLUB],
+    ["a free product", { ...ROBLOX_CLUB, billing_mode: "free" as const, product_prices: [] }],
+    ["a paid product with no price in the currency", { ...ROBLOX_CLUB, product_prices: [] }],
+  ])("is what the server tells Meta about %s", (_label, product) => {
+    expect(gtmMetaProduct(gtmEcommerce(product, { priced: true }))).toEqual(
+      metaProductDetails(product),
+    );
+  });
+
+  it("states no value or currency when the push is unpriced", () => {
+    const meta = gtmMetaProduct(gtmEcommerce(ROBLOX_CLUB, { priced: false }));
+
+    expect(meta).toEqual({
+      content_ids: [ROBLOX_CLUB.id],
+      content_type: "product",
+      content_name: "Roblox Studio Club",
+      content_category: "roblox_studio",
+    });
   });
 });
 
