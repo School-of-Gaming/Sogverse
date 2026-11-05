@@ -183,14 +183,15 @@ function GeduRow({
         {certification !== null && (
           <CertificationStandings certification={certification} />
         )}
-        {/* Muted like a met standing, never tinted: a profile waiting to go
-            public is something to get to, not something wrong, and the warning
-            colour on this row belongs to the standings an admin is certifying
-            against. */}
+        {/* Info, the status that asks for attention without saying anything is
+            wrong: a profile waiting to go public is something to get to, not a
+            problem, and the warning colour on this row belongs to the standings
+            an admin is certifying against. The profile's own status panel on
+            the user page shows the same waiting state in info. */}
         {gedu.teamProfileAwaitingReview && (
-          <span className="flex shrink-0 items-center gap-1 text-xs text-muted-foreground">
+          <span className="flex shrink-0 items-center gap-1 text-xs text-info">
             <IdCard className="h-3 w-3" aria-hidden />
-            {t("teamProfileReady")}
+            {t("profileReady")}
           </span>
         )}
       </Link>

@@ -40,7 +40,7 @@
       "certify": "Certifiera",
       "certifying": "Certifierar…",
       "failed": "Certifieringen misslyckades – försök igen.",
-      "teamProfileReady": "Teamprofil redo att granskas"
+      "profileReady": "Profil redo att granskas"
     },
     "schedule": {
       "title": "Schema",

@@ -19,7 +19,9 @@ import { GeduTasksList } from "./gedu-tasks-list";
  * do — and an admin who has been told that a few times stops reading the count
  * above, which is the cost that lands on the rows that genuinely do need them.
  * A team profile waiting to be made public is the same kind of fact: nobody is
- * harmed by it sitting a day, so it reads at the same calm as the rest.
+ * harmed by it sitting a day. It is the one thing here only an admin can move,
+ * so its marker is drawn in info, which catches the eye without reading as a
+ * problem.
  *
  * **One row per Gedu, carrying whatever is open for them.** An admin reads this
  * section by person, and a person listed once per task reads as two people.

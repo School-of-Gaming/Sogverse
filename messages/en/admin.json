@@ -40,7 +40,7 @@
       "certify": "Certify",
       "certifying": "Certifying…",
       "failed": "Could not certify — try again.",
-      "teamProfileReady": "Team profile ready to review"
+      "profileReady": "Profile ready to review"
     },
     "schedule": {
       "title": "Schedule",

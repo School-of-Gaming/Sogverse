@@ -40,7 +40,7 @@
       "certify": "Hyväksy",
       "certifying": "Hyväksytään…",
       "failed": "Hyväksyntä epäonnistui – yritä uudelleen.",
-      "teamProfileReady": "Tiimiprofiili valmis tarkistettavaksi"
+      "profileReady": "Profiili valmis tarkistettavaksi"
     },
     "schedule": {
       "title": "Aikataulu",
