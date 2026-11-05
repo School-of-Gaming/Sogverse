@@ -112,7 +112,7 @@
 -- family feed, the gedu's workspace and both Invoicing pages show the breaks
 -- (section 15).
 --
--- THE BUSINESS HAS A YEAR BEHIND IT. Forty-six more families, signed up over
+-- THE BUSINESS HAS A YEAR BEHIND IT. Forty-eight more families, signed up over
 -- the fourteen months before the build, subscribe to clubs, leave them, buy
 -- camps and fill a municipality's school-year club, and every sign-up above
 -- is moved back to when it would have happened, so /admin/business draws
@@ -1133,7 +1133,9 @@ BEGIN
   -- 16. An online municipality club with NO FEE, for a quarterly customer. It
   --     ran from six weeks before the last finished quarter into that
   --     quarter's first month and stopped, so the quarter's file is refused
-  --     naming that month.
+  --     naming that month. Hidden, and without a seat: the city kept its
+  --     roster outside Sogverse, as a couple of real municipality clubs do, so
+  --     its sessions are written up and paid with nobody seated in them.
   PERFORM public.create_product(
     'municipality_club', 'external_contract',
     jsonb_build_array(
@@ -1146,7 +1148,7 @@ BEGIN
     ),
     'minecraft_education', 'fi', 'online', v_tz,
     v_quarter - interval '60 days', true, false,
-    p_min_age => 9, p_max_age => 12, p_is_visible => true,
+    p_min_age => 9, p_max_age => 12, p_is_visible => false,
     p_location_id => v_muni_turku,
     p_start_date => v_quarter - 42,
     p_end_date => v_quarter + 27,
@@ -1215,7 +1217,8 @@ BEGIN
   );
 
   -- 19. A running online municipality club nobody has named a customer for
-  --     yet, which blocks its own file and nothing else.
+  --     yet, which blocks its own file and nothing else. Its seats come with
+  --     the year's families (section 16).
   PERFORM public.create_product(
     'municipality_club', 'external_contract',
     jsonb_build_array(
@@ -3230,10 +3233,11 @@ COMMIT;
 --
 -- WHAT IT ADDS:
 --
---   * Forty-six more parent accounts, created over the fourteen months before
---     the build, a few more each month as it goes on. Most enrol; some never
---     do, four only join a waitlist, and nine are the families of a
---     municipality's club and hold nothing else.
+--   * Forty-eight more parent accounts, created over the fourteen months
+--     before the build, a few more each month as it goes on. Most enrol, and
+--     most of those within a week of signing up; some never do, two of them
+--     after adding a child, four only join a waitlist, and nine are the
+--     families of a municipality's club and hold nothing else.
 --   * Two consumer clubs running all year, the Minecraft Survival Club and the
 --     Roblox Obby Club, which families subscribe to and leave from across the
 --     year — seven families stop, one keeps a second child's subscription
@@ -3253,8 +3257,17 @@ COMMIT;
 -- would have happened — a paid club's seats spread from its first weeks
 -- onward, a free or municipality seat near its product's start, a camp's in
 -- the weeks before it — and each parent account to a few days before the
--- family's first booking. Group joins, reports and everything else above keep
--- the times they were written at.
+-- family's first booking. Every seat's group join follows its booking: most
+-- the same moment, the rest a few days later, as an admin places them, and a
+-- municipality's seats more often late than not. Reports and everything else
+-- above keep the times they were written at.
+--
+-- THE GROUPS ARE THE SIZE A REAL GROUP IS. The year's children also fill
+-- section 6's free and municipality clubs, and some of them hold two clubs at
+-- once, so a gedu has six to ten gamers in front of them in most sessions, and
+-- the Gamers per Gedu line runs level across the year. The Library Game
+-- Club (section 6) is part of that picture too: hidden and rostered outside
+-- Sogverse, its sessions count with nobody in them.
 --
 -- MONEY. Every paid seat booked through checkout gets what the Stripe webhook
 -- would have written for it: a club seat its `family_subscriptions` row and
@@ -3291,10 +3304,11 @@ CREATE TEMP TABLE history_child (
   age integer
 );
 -- One seat: what it was on, whose, when it was booked and, if it has ended,
--- when. `sub_status` is the subscription's status while it is live.
+-- when. `sub_status` is the subscription's status while it is live; `grp` the
+-- group it is placed in, when not its product's first.
 CREATE TEMP TABLE history_seat (
   product text, participant text, booked_days integer, ended_days integer,
-  sub_status text NOT NULL DEFAULT 'active'
+  sub_status text NOT NULL DEFAULT 'active', grp text
 );
 GRANT SELECT ON history_family, history_child, history_seat
    TO service_role, authenticated;
@@ -3315,6 +3329,7 @@ INSERT INTO history_family VALUES
   ('jari.manninen@example.com',     'Jari',     'Manninen',   'fi', 330),
   ('markus.toivonen@example.com',   'Markus',   'Toivonen',   'fi', 300),
   ('paula.saarela@example.com',     'Paula',    'Saarela',    'fi', 290),
+  ('tuomo.heikkinen@example.com',   'Tuomo',    'Heikkinen',  'fi', 260),
   ('ville.karjalainen@example.com', 'Ville',    'Karjalainen','fi', 270),
   ('johanna.miettinen@example.com', 'Johanna',  'Miettinen',  'fi', 255),
   ('harri.kettunen@example.com',    'Harri',    'Kettunen',   'fi', 240),
@@ -3330,6 +3345,7 @@ INSERT INTO history_family VALUES
   ('olli.jokinen@example.com',      'Olli',     'Jokinen',    'fi', 125),
   ('tiina.nyman@example.com',       'Tiina',    'Nyman',      'fi', 110),
   ('marko.heino@example.com',       'Marko',    'Heino',      'fi', 95),
+  ('jaana.ruotsalainen@example.com','Jaana',    'Ruotsalainen','fi', 92),
   ('katja.ojala@example.com',       'Katja',    'Ojala',      'fi', 85),
   ('milla.aho@example.com',         'Milla',    'Aho',        'fi', 85),
   ('timo.parkkinen@example.com',    'Timo',     'Parkkinen',  'fi', 80),
@@ -3338,10 +3354,10 @@ INSERT INTO history_family VALUES
   ('eveliina.rinne@example.com',    'Eveliina', 'Rinne',      'fi', 62),
   ('mathias.berg@example.com',      'Mathias',  'Berg',       'sv', 50),
   ('jenni.vuorinen@example.com',    'Jenni',    'Vuorinen',   'fi', 40),
-  ('lauri.mustonen@example.com',    'Lauri',    'Mustonen',   'fi', 30),
+  ('lauri.mustonen@example.com',    'Lauri',    'Mustonen',   'fi', 15),
   ('reetta.salo@example.com',       'Reetta',   'Salo',       'fi', 22),
-  ('laura.kangas@example.com',      'Laura',    'Kangas',     'fi', 18),
-  ('petteri.oksanen@example.com',   'Petteri',  'Oksanen',    'fi', 15),
+  ('laura.kangas@example.com',      'Laura',    'Kangas',     'fi', 14),
+  ('petteri.oksanen@example.com',   'Petteri',  'Oksanen',    'fi', 10),
   ('maria.lindqvist@example.com',   'Maria',    'Lindqvist',  'sv', 9),
   ('jussi.ylinen@example.com',      'Jussi',    'Ylinen',     'fi', 6),
   ('eero.hamalainen@example.com',   'Eero',     'Hämäläinen', 'fi', 4),
@@ -3393,7 +3409,16 @@ INSERT INTO history_child VALUES
   ('taimi@gamer.example.com',    'petteri.oksanen@example.com',   'Taimi',    'Oksanen',    9),
   ('kasper@gamer.example.com',   'eero.hamalainen@example.com',   'Kasper',   'Hämäläinen', 12),
   ('wilma@gamer.example.com',    'laura.kangas@example.com',      'Wilma',    'Kangas',     10),
-  ('minja@gamer.example.com',    'jussi.ylinen@example.com',      'Minja',    'Ylinen',     11);
+  ('minja@gamer.example.com',    'jussi.ylinen@example.com',      'Minja',    'Ylinen',     11),
+  -- Younger brothers and sisters in the municipality's club.
+  ('kalle@gamer.example.com',    'tarja.aaltonen@example.com',    'Kalle',    'Aaltonen',   8),
+  ('pinja@gamer.example.com',    'kimmo.laakso@example.com',      'Pinja',    'Laakso',     11),
+  ('eevi@gamer.example.com',     'rami.suominen@example.com',     'Eevi',     'Suominen',   11),
+  ('tuukka@gamer.example.com',   'krista.virta@example.com',      'Tuukka',   'Virta',      8),
+  ('aapo@gamer.example.com',     'janne.holopainen@example.com',  'Aapo',     'Holopainen', 10),
+  -- Two families who added a child and never booked anything.
+  ('veikko@gamer.example.com',   'tuomo.heikkinen@example.com',   'Veikko',   'Heikkinen',  9),
+  ('aava@gamer.example.com',     'jaana.ruotsalainen@example.com','Aava',     'Ruotsalainen', 10);
 
 -- Section 8's children appear here too (Milo, Nea, Elias, Venla, Väinö, Eino):
 -- families already on the platform buying the year's camps.
@@ -3457,23 +3482,101 @@ INSERT INTO history_seat (product, participant, booked_days, ended_days, sub_sta
   ('After-School Esports Club', 'inka',     72,  NULL, 'active'),
   ('After-School Esports Club', 'patrik',   72,  NULL, 'active'),
   ('After-School Esports Club', 'oona',     70,  NULL, 'active'),
-  ('After-School Esports Club', 'lenni',    70,  NULL, 'active');
+  ('After-School Esports Club', 'lenni',    70,  NULL, 'active'),
+  -- Their brothers and sisters, in both terms.
+  ('School Year Game Club',     'kalle',    403, NULL, 'active'),
+  ('School Year Game Club',     'pinja',    403, NULL, 'active'),
+  ('School Year Game Club',     'eevi',     403, NULL, 'active'),
+  ('School Year Game Club',     'tuukka',   403, NULL, 'active'),
+  ('School Year Game Club',     'aapo',     403, NULL, 'active'),
+  ('After-School Esports Club', 'kalle',    72,  NULL, 'active'),
+  ('After-School Esports Club', 'pinja',    72,  NULL, 'active'),
+  ('After-School Esports Club', 'eevi',     72,  NULL, 'active'),
+  ('After-School Esports Club', 'tuukka',   72,  NULL, 'active'),
+  ('After-School Esports Club', 'sisu',     72,  NULL, 'active'),
+  ('After-School Esports Club', 'roope',    72,  NULL, 'active');
+
+-- Children already in a club taking another, so the groups are the size real
+-- ones are: more seats on the year-long clubs, the Java club and the summer
+-- camps, and section 6's free and municipality clubs topped up from the
+-- year's families. Every family here already pays, or only ever held a
+-- municipality's seat, so none of them changes what kind of family it is.
+INSERT INTO history_seat (product, participant, booked_days, ended_days, sub_status, grp) VALUES
+  ('Minecraft Survival Club', 'kerttu',  340, 230,  'active', NULL),
+  ('Minecraft Survival Club', 'helmi',   318, 110,  'active', NULL),
+  ('Minecraft Survival Club', 'vilja',   300, NULL, 'active', NULL),
+  ('Minecraft Survival Club', 'joel',    208, 75,   'active', NULL),
+  ('Minecraft Survival Club', 'lilja',   195, 85,   'active', NULL),
+  ('Roblox Obby Club',        'ilmari',  370, 260,  'active', NULL),
+  ('Roblox Obby Club',        'topias',  330, 180,  'active', NULL),
+  ('Roblox Obby Club',        'kaapo',   150, NULL, 'active', NULL),
+  ('Roblox Obby Club',        'vilja',   212, 100,  'active', NULL),
+  ('Creator Studio Club',     'aatu',    215, NULL, 'active', 'Ryhmä B'),
+  ('Creator Studio Club',     'emilia',  206, NULL, 'active', 'Ryhmä B'),
+  ('Creator Studio Club',     'joel',    200, NULL, 'active', 'Ryhmä B'),
+  ('Creator Studio Club',     'vilho',   185, NULL, 'active', 'Ryhmä B'),
+  ('Creator Studio Club',     'luka',    115, NULL, 'active', 'Ryhmä B'),
+  ('Minecraft Build Club',    'eetu',    40,  NULL, 'active', NULL),
+  ('Minecraft Build Club',    'veeti',   38,  NULL, 'active', NULL),
+  ('Minecraft Build Club',    'siiri',   36,  NULL, 'active', NULL),
+  ('Minecraft Redstone Club', 'niilo',   30,  NULL, 'active', NULL),
+  ('Minecraft Redstone Club', 'aliisa',  28,  NULL, 'active', NULL),
+  ('Minecraft Redstone Club', 'ella',    26,  NULL, 'active', NULL),
+  ('Minecraft Redstone Club', 'kerttu',  24,  NULL, 'active', NULL),
+  ('Minecraft Java Club',     'kerttu',  205, NULL, 'active', 'Ryhmä B'),
+  ('Roblox Obby Club',        'eetu',    240, 70,   'active', NULL),
+  ('Roblox Obby Club',        'aliisa',  170, NULL, 'active', NULL),
+  ('Game Design Summer Camp', 'lilja',   160, NULL, 'active', NULL),
+  ('Game Design Summer Camp', 'topias',  158, NULL, 'active', NULL),
+  ('Game Design Summer Camp', 'joel',    154, NULL, 'active', NULL),
+  ('Game Design Summer Camp', 'siiri',   149, NULL, 'active', NULL),
+  ('Game Design Summer Camp', 'emilia',  145, NULL, 'active', NULL),
+  ('Game Design Summer Camp', 'aliisa',  160, NULL, 'active', NULL),
+  ('Game Design Summer Camp', 'ella',    152, NULL, 'active', NULL),
+  ('Game Design Summer Camp', 'helmi',   150, NULL, 'active', NULL),
+  ('Game Design Summer Camp', 'niilo',   148, NULL, 'active', NULL),
+  ('Roblox Summer Camp',      'veeti',   128, NULL, 'active', NULL),
+  ('Roblox Summer Camp',      'iiris',   126, NULL, 'active', NULL),
+  ('Roblox Summer Camp',      'kerttu',  122, NULL, 'active', NULL),
+  ('Roblox Summer Camp',      'aleksi',  119, NULL, 'active', NULL),
+  ('Roblox Summer Camp',      'ella',    116, NULL, 'active', NULL),
+  ('Roblox Summer Camp',      'vilja',   121, NULL, 'active', NULL),
+  ('Roblox Summer Camp',      'kaapo',   124, NULL, 'active', NULL),
+  ('Roblox Summer Camp',      'eetu',    120, NULL, 'active', NULL),
+  ('Roblox Summer Camp',      'aatu',    118, NULL, 'active', NULL),
+  -- Two more of section 6's municipality clubs, whose terms are dated from
+  -- the quarter: their seats are booked in the weeks before each starts.
+  ('Autumn Term Game Club',   'valtteri', NULL, NULL, 'active', NULL),
+  ('Autumn Term Game Club',   'jenna',    NULL, NULL, 'active', NULL),
+  ('Autumn Term Game Club',   'aapo',     NULL, NULL, 'active', NULL),
+  ('Autumn Term Game Club',   'minea',    NULL, NULL, 'active', NULL),
+  ('Youth Centre Game Club',  'miro',     NULL, NULL, 'active', NULL),
+  ('Youth Centre Game Club',  'roope',    NULL, NULL, 'active', NULL),
+  ('Youth Centre Game Club',  'sisu',     NULL, NULL, 'active', NULL),
+  ('Youth Centre Game Club',  'inka',     NULL, NULL, 'active', NULL),
+  ('Youth Centre Game Club',  'minea',    NULL, NULL, 'active', NULL),
+  ('Youth Centre Game Club',  'pinja',    NULL, NULL, 'active', NULL),
+  ('Youth Centre Game Club',  'eevi',     NULL, NULL, 'active', NULL),
+  ('Youth Centre Game Club',  'lilja',    NULL, NULL, 'active', NULL),
+  ('Youth Centre Game Club',  'emilia',   NULL, NULL, 'active', NULL);
 
 -- 16.1 The sign-ups that are already here, moved back. Done before this
 -- section books anything, so "already here" is every seat that exists now.
 -- The paid clubs' seats are placed by hand, a family at a time from each
 -- club's first weeks, because each is a subscription whose months show on the
--- page; every other seat falls somewhere between its product's registration
--- opening and a few months into its run, never later than an hour ago.
+-- page. Every other seat falls somewhere after its product's registration
+-- opens, never later than an hour ago: a municipality's before its first day,
+-- as the city hands its roster over; a free club's within its first month; a
+-- camp's or event's up to a few months into its run.
 BEGIN;
 DO $$
 DECLARE r record;
 BEGIN
   FOR r IN SELECT * FROM (VALUES
-    ('Minecraft Java Club',  'milo',   224), ('Minecraft Java Club',  'elias',  218),
-    ('Minecraft Java Club',  'onni',   212), ('Minecraft Java Club',  'sanni',  180),
-    ('Minecraft Java Club',  'oskari', 150), ('Minecraft Java Club',  'hugo',   120),
-    ('Minecraft Java Club',  'aada',   75),  ('Minecraft Java Club',  'leevi',  40),
+    ('Minecraft Java Club',  'milo',   226), ('Minecraft Java Club',  'elias',  223),
+    ('Minecraft Java Club',  'onni',   219), ('Minecraft Java Club',  'sanni',  214),
+    ('Minecraft Java Club',  'oskari', 204), ('Minecraft Java Club',  'hugo',   190),
+    ('Minecraft Java Club',  'aada',   150), ('Minecraft Java Club',  'leevi',  60),
     ('Roblox Builders Club', 'venla',  160), ('Roblox Builders Club', 'vaino',  155),
     ('Roblox Builders Club', 'lea',    140), ('Roblox Builders Club', 'olivia', 100),
     ('Roblox Builders Club', 'aarne',  60),  ('Roblox Builders Club', 'rasmus', 20),
@@ -3504,7 +3607,10 @@ BEGIN
           SELECT GREATEST(p.registration_opens_at,
                           (p.start_date - 21)::timestamp AT TIME ZONE p.timezone) AS opens,
                  LEAST(now() - interval '1 hour',
-                       (p.start_date + 120)::timestamp AT TIME ZONE p.timezone) AS closes
+                       (p.start_date + CASE p.product_type
+                                         WHEN 'municipality_club' THEN 0
+                                         WHEN 'consumer_club'     THEN 30
+                                         ELSE 120 END)::timestamp AT TIME ZONE p.timezone) AS closes
         ) w
        WHERE pa2.status <> 'waitlisted'
          AND (p.product_type <> 'consumer_club' OR p.billing_mode <> 'paid')
@@ -3793,6 +3899,9 @@ BEGIN
              WHEN r.product_type = 'consumer_club' THEN 'subscription_monthly'
              ELSE 'single_payment' END,
         'eur', v_consents);
+      IF v_result->>'kind' = 'full' THEN
+        RAISE EXCEPTION 'rich-seed: % is full before % could book', r.product, r.participant;
+      END IF;
       IF v_result->>'kind' = 'pending' THEN
         UPDATE public.bookings
            SET stripe_checkout_session_id = v_session
@@ -3807,8 +3916,9 @@ $$;
 COMMIT;
 
 -- The municipality seats, arranged by an admin as section 8's are; the four
--- families who only ever joined a waitlist; and the paid seats placed in
--- their product's one group, as section 8 places its own.
+-- families who only ever joined a waitlist; and every seat still waiting for
+-- a group placed in the one its row names, or else its product's first, as
+-- section 8 places its own.
 BEGIN;
 SELECT set_config('request.jwt.claims',
   json_build_object('sub', (SELECT id::text FROM public.profiles
@@ -3854,8 +3964,16 @@ BEGIN
   LOOP
     SELECT jsonb_agg(jsonb_build_object(
              'participationId', pa.id,
-             'toGroupId', (SELECT g.id FROM public.product_groups g
-                            WHERE g.product_id = r.product_id ORDER BY g.name LIMIT 1)))
+             'toGroupId', COALESCE(
+               (SELECT g.id FROM history_seat s
+                  JOIN public.product_translations t
+                    ON t.locale = 'en' AND t.name = s.product AND t.product_id = r.product_id
+                  JOIN public.product_groups g
+                    ON g.product_id = r.product_id AND g.name = s.grp
+                  JOIN public.profiles pr ON pr.email = s.participant || '@gamer.example.com'
+                 WHERE pr.id = pa.participant_id),
+               (SELECT g.id FROM public.product_groups g
+                 WHERE g.product_id = r.product_id ORDER BY g.name LIMIT 1))))
       INTO v_moves
       FROM public.participations pa
      WHERE pa.product_id = r.product_id AND pa.group_id IS NULL AND pa.status = 'active';
@@ -3899,19 +4017,28 @@ DECLARE
   v_until   timestamptz;
   v_n       integer;
 BEGIN
-  -- The new seats' bookings, ends and group joins.
-  FOR r IN SELECT pa.id, pa.booking_id, s.booked_days, s.ended_days
+  -- The new seats' bookings and ends. A seat with no day of its own is on a
+  -- section 6 club dated from the quarter rather than from today, and is
+  -- booked as 16.1 books a municipality's: in the weeks before its first day.
+  FOR r IN SELECT pa.id, pa.booking_id, s.booked_days, s.ended_days,
+                  GREATEST(p.registration_opens_at,
+                           (p.start_date - 21)::timestamp AT TIME ZONE p.timezone) AS opens,
+                  LEAST(now() - interval '1 hour',
+                        p.start_date::timestamp AT TIME ZONE p.timezone) AS closes
              FROM history_seat s
              JOIN public.product_translations t ON t.locale = 'en' AND t.name = s.product
+             JOIN public.products p ON p.id = t.product_id
              JOIN public.profiles g ON g.email = s.participant || '@gamer.example.com'
              JOIN public.participations pa
                ON pa.product_id = t.product_id AND pa.participant_id = g.id
   LOOP
-    v_at := now() - make_interval(days => r.booked_days,
-                                  mins => abs(hashtext(r.id::text)) % 600);
+    v_at := CASE WHEN r.booked_days IS NULL
+                 THEN LEAST(r.closes, r.opens + (r.closes - r.opens)
+                                      * ((abs(hashtext('booked' || r.id::text)) % 1000) / 1000.0))
+                 ELSE now() - make_interval(days => r.booked_days,
+                                            mins => abs(hashtext(r.id::text)) % 600) END;
     UPDATE public.participations
        SET signed_up_at = v_at, created_at = v_at,
-           group_joined_at = CASE WHEN group_id IS NULL THEN NULL ELSE v_at END,
            ended_at = CASE WHEN r.ended_days IS NULL THEN NULL
                            ELSE now() - make_interval(days => r.ended_days,
                                                       mins => abs(hashtext('ended' || r.id::text)) % 600)
@@ -3935,6 +4062,26 @@ BEGIN
      WHERE id = (SELECT product_id FROM public.product_translations
                   WHERE locale = 'en' AND name = r.product_name);
   END LOOP;
+
+  -- Every seat's group join, this section's and the sections' above alike,
+  -- which the trigger stamped when the seed placed it. Seven seats in ten
+  -- joined the moment they were booked, the rest a few days later, when an
+  -- admin got round to placing them — a municipality's more often than not,
+  -- since its roster arrives as a list. Never after the seat ended, and never
+  -- later than a minute ago. Written as the owner, the only way past the
+  -- trigger: an UPDATE that leaves group_id alone does not fire it.
+  UPDATE public.participations pa
+     SET group_joined_at = LEAST(
+           now() - interval '1 minute',
+           COALESCE(pa.ended_at - interval '1 minute', 'infinity'),
+           pa.signed_up_at
+             + CASE WHEN abs(hashtext('placed' || pa.id::text)) % 100
+                         < CASE p.product_type WHEN 'municipality_club' THEN 55 ELSE 20 END
+                    THEN make_interval(days => 1 + abs(hashtext('late' || pa.id::text)) % 6,
+                                       hours => abs(hashtext('hour' || pa.id::text)) % 10)
+                    ELSE interval '0' END)
+    FROM public.products p
+   WHERE p.id = pa.product_id AND pa.group_id IS NOT NULL;
 
   -- The money, for every paid seat a family checked out — this section's and
   -- section 8's alike.
@@ -4009,6 +4156,20 @@ BEGIN
                                             mins => abs(hashtext(p.email)) % 600)
     FROM history_family f
    WHERE f.email = p.email;
+
+  -- The four families' waitlist places, joined a day or two after the account
+  -- was opened, or when the camp's registration opened if that came later.
+  -- Only the booking moves: `waitlisted_at` is the place in the line, and the
+  -- line stays in the order section 8 and this section joined it.
+  UPDATE public.participations pa
+     SET signed_up_at = LEAST(now() - interval '1 hour',
+                              GREATEST(pr.registration_opens_at,
+                                       c.created_at + make_interval(days => 1,
+                                         hours => abs(hashtext('line' || pa.id::text)) % 20)))
+    FROM public.profiles c, public.products pr, history_family f
+   WHERE pa.status = 'waitlisted'
+     AND c.id = pa.customer_id AND c.email = f.email
+     AND pr.id = pa.product_id;
 
   UPDATE public.profiles p
      SET created_at = v.first_booking
