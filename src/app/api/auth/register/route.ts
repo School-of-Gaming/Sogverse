@@ -60,8 +60,8 @@ import {
  * A customer profile is exactly what the signup trigger already produces, so
  * there is no second write to unwind and no orphaned auth user to compensate
  * for. The optional extras — the phone number and the home location — are
- * deliberately not fatal (see below), so this route has no rollback path at all. That is a property of
- * the flow, not an omission.
+ * deliberately not fatal (see below), so this route has no rollback path at
+ * all. That is a property of the flow, not an omission.
  */
 export const POST = defineRoute({
   posture: "public",
@@ -202,12 +202,13 @@ export const POST = defineRoute({
     const storedEmail = authData.user.email ?? email;
 
     // The optional phone number and home location, written here rather than
-    // passed through signup metadata. The alternative was to have `handle_new_user` resolve it
-    // — and that trigger is the one function in the schema that assigns roles,
-    // runs SECURITY DEFINER past RLS, and has a test suite whose whole subject
-    // is that client-supplied metadata cannot influence what it grants. Teaching
-    // it to read a caller-supplied foreign key is real surface added to the most
-    // sensitive object here, to save one statement.
+    // passed through signup metadata for `handle_new_user` to store. That
+    // trigger is the one function in the schema that assigns roles, runs
+    // SECURITY DEFINER past RLS, and has a test suite whose whole subject is
+    // that client-supplied metadata cannot influence what it grants. Teaching
+    // it to read more caller-supplied values — the home location a foreign key
+    // at that — is real surface added to the most sensitive object here, to
+    // save one statement.
     //
     // NEVER FATAL. The account exists, these fields are optional, and all are
     // re-pickable from settings — deleting a working account over either, or
