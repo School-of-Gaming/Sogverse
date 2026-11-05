@@ -34,7 +34,7 @@ export class AdminBusinessService {
    * Every figure on the page, as of `now` — which the caller fixes once per
    * request so the invoicing builds and this one share a clock.
    *
-   * A perceptibly slow read: every parent, seat, subscription and payment,
+   * A perceptibly slow read: every parent, gamer link, seat, subscription and payment,
    * plus twelve months of each invoicing document. A refusal from either
    * invoicing read (a municipality club whose location reaches no
    * municipality) fails the whole read, as it fails that page.
@@ -43,6 +43,7 @@ export class AdminBusinessService {
     const months = recentHelsinkiMonths(now, BUSINESS_MONTH_COUNT);
     const [
       families,
+      gamerLinks,
       products,
       seats,
       subscriptions,
@@ -54,6 +55,7 @@ export class AdminBusinessService {
       geduProfiles,
     ] = await Promise.all([
       this.readFamilies(),
+      this.readGamerLinks(),
       this.readProducts(),
       this.readSeats(),
       this.readSubscriptions(),
@@ -66,6 +68,7 @@ export class AdminBusinessService {
     ]);
     const facts: BusinessFacts = {
       families,
+      gamerLinks,
       products,
       seats,
       subscriptions,
@@ -86,6 +89,17 @@ export class AdminBusinessService {
         .select("id, created_at", { count: "exact" })
         .eq("role", "customer")
         .order("created_at")
+        .order("id")
+        .range(from, to),
+    );
+  }
+
+  /** Every parent–gamer link as it stands now: links keep no history. */
+  private readGamerLinks() {
+    return walkPages("businessGamerLinks", (from, to) =>
+      this.supabase
+        .from("parent_gamer")
+        .select("parent_id", { count: "exact" })
         .order("id")
         .range(from, to),
     );

@@ -1954,7 +1954,8 @@
         "paidBefore": "nobpu’, ghItlhbe’",
         "municipalityOnly": "veng ghom neH",
         "freeOnly": "Daq Huchbe’ neH",
-        "neverEnrolled": "Daq ghajbe’ not"
+        "neverEnrolled": "gamer chel, Daq ghajbe’ not",
+        "noGamer": "gamer ghajbe’, Daq ghajbe’ not"
       }
     },
     "revenue": {

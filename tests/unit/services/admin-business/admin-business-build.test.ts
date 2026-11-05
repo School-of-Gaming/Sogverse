@@ -49,6 +49,7 @@ function payment(customer: string, cents: number, at: string, product: string | 
 function facts(overrides: Partial<BusinessFacts> = {}): BusinessFacts {
   return {
     families: [],
+    gamerLinks: [],
     products: PRODUCTS,
     seats: [],
     subscriptions: [],
@@ -154,6 +155,7 @@ describe("families by engagement", () => {
     const overview = buildBusinessOverview(
       facts({
         families: ["sub", "paid", "muni", "mixed", "never", "waitlistOnly"].map((id) => family(id)),
+        gamerLinks: [{ parent_id: "never" }, { parent_id: "waitlistOnly" }],
         seats: [
           seat("s1", "sub", "club", "2026-09-01T10:00:00Z"),
           seat("p1", "paid", "camp", "2026-06-01T10:00:00Z"),
@@ -175,9 +177,37 @@ describe("families by engagement", () => {
       { slice: "municipalityOnly", families: 1 },
       { slice: "freeOnly", families: 1 },
       { slice: "neverEnrolled", families: 2 },
+      { slice: "noGamer", families: 0 },
     ]);
     expect(overview.engagement.totalFamilies).toBe(6);
     expect(overview.engagement.subscribersNotYetBegun).toBe(0);
+  });
+
+  it("splits the families with no seat by whether they have linked a gamer, and only them", () => {
+    const overview = buildBusinessOverview(
+      facts({
+        families: ["withGamer", "twoGamers", "noGamer", "ownSeat", "ownSub"].map((id) => family(id)),
+        gamerLinks: [{ parent_id: "withGamer" }, { parent_id: "twoGamers" }, { parent_id: "twoGamers" }],
+        seats: [
+          // Gamerless parents holding a seat themselves stay in the earlier slices.
+          seat("o1", "ownSeat", "free", "2026-09-01T10:00:00Z", null, "ownSeat"),
+          seat("o2", "ownSub", "club", "2026-09-01T10:00:00Z", null, "ownSub"),
+        ],
+        subscriptions: [sub("ownSub", "o2", "2026-09-01T10:00:00Z", "active")],
+      }),
+      NOW,
+    );
+    expect(overview.engagement.slices).toEqual([
+      { slice: "subscriber", families: 1 },
+      { slice: "paidBefore", families: 0 },
+      { slice: "municipalityOnly", families: 0 },
+      { slice: "freeOnly", families: 1 },
+      { slice: "neverEnrolled", families: 2 },
+      { slice: "noGamer", families: 1 },
+    ]);
+    const sum = overview.engagement.slices.reduce((total, s) => total + s.families, 0);
+    expect(sum).toBe(overview.engagement.totalFamilies);
+    expect(sum).toBe(5);
   });
 
   it("counts the subscribers whose club has not begun, who are not paying families yet", () => {
@@ -619,6 +649,7 @@ describe("a seat's span starts no earlier than its product", () => {
       facts({
         products,
         families: [family("a")],
+        gamerLinks: [{ parent_id: "a" }],
         seats: [seat("a1", "a", "autumn", "2026-01-10T10:00:00Z", "2026-03-01T10:00:00Z")],
       }),
       NOW,

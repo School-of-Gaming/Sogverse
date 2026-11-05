@@ -50,6 +50,8 @@ export const LIVE_SUBSCRIPTION_STATUSES: readonly string[] = [
 // ---------------------------------------------------------------------------
 
 export type BusinessFamilyRow = { id: string; created_at: string };
+/** A parent's link to one gamer, as it stands now. */
+export type BusinessGamerLinkRow = { parent_id: string };
 export type BusinessProductRow = Pick<
   Product,
   "id" | "product_type" | "billing_mode" | "start_date" | "end_date" | "timezone"
@@ -112,6 +114,8 @@ export interface GeduMonthSessions {
 export interface BusinessFacts {
   /** Every parent account. */
   families: readonly BusinessFamilyRow[];
+  /** Every parent–gamer link. */
+  gamerLinks: readonly BusinessGamerLinkRow[];
   products: readonly BusinessProductRow[];
   /** Every seat held now or once — active and ended, never waitlisted. */
   seats: readonly BusinessSeatRow[];
@@ -175,7 +179,8 @@ export type EngagementSlice =
   | "paidBefore"
   | "municipalityOnly"
   | "freeOnly"
-  | "neverEnrolled";
+  | "neverEnrolled"
+  | "noGamer";
 
 /** The slices in the order they are decided: a family is in the first it matches. */
 export const ENGAGEMENT_SLICES: readonly EngagementSlice[] = [
@@ -184,6 +189,7 @@ export const ENGAGEMENT_SLICES: readonly EngagementSlice[] = [
   "municipalityOnly",
   "freeOnly",
   "neverEnrolled",
+  "noGamer",
 ];
 
 export interface BusinessEngagement {
@@ -501,6 +507,7 @@ function engagementOf(
     facts.payments.filter((p) => p.amount_cents > 0).map((p) => p.customer_id),
   );
   const seatsByFamily = groupBy(spans, (span) => span.customerId);
+  const withGamer = new Set(facts.gamerLinks.map((link) => link.parent_id));
   const spanBySeat = new Map(spans.map((span) => [span.seatId, span]));
   const paying = payingFamilySet(spans, now);
   // A live subscription whose seat's club has not begun: its span starts later.
@@ -523,7 +530,9 @@ function engagementOf(
       : payers.has(family.id)
         ? "paidBefore"
         : seats.length === 0
-          ? "neverEnrolled"
+          ? withGamer.has(family.id)
+            ? "neverEnrolled"
+            : "noGamer"
           : seats.every((seat) => seat.productType === "municipality_club")
             ? "municipalityOnly"
             : "freeOnly";

@@ -1954,7 +1954,8 @@
         "paidBefore": "Paid before, not subscribing",
         "municipalityOnly": "Municipality clubs only",
         "freeOnly": "Free or uncharged seats only",
-        "neverEnrolled": "Never had a seat"
+        "neverEnrolled": "Gamer added, never booked",
+        "noGamer": "No gamer, never booked"
       }
     },
     "revenue": {

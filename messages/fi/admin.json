@@ -1954,7 +1954,8 @@
         "paidBefore": "Maksanut aiemmin, ei tilausta",
         "municipalityOnly": "Vain kuntakerhoja",
         "freeOnly": "Vain maksuttomia tai veloittamattomia paikkoja",
-        "neverEnrolled": "Ei koskaan paikkaa"
+        "neverEnrolled": "Gameri lisätty, ei varauksia",
+        "noGamer": "Ei gameria, ei varauksia"
       }
     },
     "revenue": {

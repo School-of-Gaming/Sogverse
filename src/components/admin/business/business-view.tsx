@@ -379,6 +379,7 @@ const SLICE_COLOUR: Record<EngagementSlice, { color: ChartColor; swatch: string 
   municipalityOnly: { color: "var(--color-yty-wit)", swatch: "bg-yty-wit" },
   freeOnly: { color: "var(--color-foreground)", swatch: "bg-foreground" },
   neverEnrolled: { color: "var(--color-muted-foreground)", swatch: "bg-muted-foreground" },
+  noGamer: { color: "var(--color-border)", swatch: "bg-border" },
 };
 
 function EngagementCard({ overview }: { overview: BusinessOverview }) {

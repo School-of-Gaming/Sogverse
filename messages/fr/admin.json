@@ -1954,7 +1954,8 @@
         "paidBefore": "Ont déjà payé, sans abonnement",
         "municipalityOnly": "Clubs municipaux uniquement",
         "freeOnly": "Places gratuites ou non facturées uniquement",
-        "neverEnrolled": "Jamais eu de place"
+        "neverEnrolled": "Gamer ajouté, jamais réservé",
+        "noGamer": "Aucun gamer, jamais réservé"
       }
     },
     "revenue": {
