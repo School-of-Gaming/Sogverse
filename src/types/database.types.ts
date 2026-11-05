@@ -5565,13 +5565,6 @@ export type Database = {
         Args: { p_discord_user_id: string; p_request_id: string }
         Returns: Json
       }
-      participation_state: {
-        Args: {
-          p_group_id: string
-          p_status: Database["public"]["Enums"]["participation_status"]
-        }
-        Returns: string
-      }
       pin_is_set: { Args: never; Returns: boolean }
       planned_group_sessions: {
         Args: { p_from: string; p_product_id: string; p_to: string }

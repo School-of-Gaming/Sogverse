@@ -238,6 +238,11 @@ type AdminMockOptions = {
    */
   famSubRow?: Record<string, unknown> | null;
   /**
+   * Error returned from that `family_subscriptions` lookup. A failed read must
+   * reach the caller as a 500, never read as "not ours" and get marked processed.
+   */
+  famSubSelectError?: { code: string; message: string } | null;
+  /**
    * Error returned from the `family_subscriptions` INSERT. `23505` is the
    * swallowed duplicate (replay); anything else bubbles to a 500 so Stripe
    * retries. When set, the row is not captured in `inserts`.
@@ -302,7 +307,11 @@ function mockAdmin(opts: AdminMockOptions = {}) {
         select: () => ({
           eq: () => ({
             maybeSingle: () =>
-              Promise.resolve({ data: opts.famSubRow ?? null, error: null }),
+              Promise.resolve(
+                opts.famSubSelectError
+                  ? { data: null, error: opts.famSubSelectError }
+                  : { data: opts.famSubRow ?? null, error: null },
+              ),
           }),
         }),
         // One per-participation row per subscription; the route inserts and
@@ -870,12 +879,14 @@ describe("POST /api/webhooks/stripe/products", () => {
       );
       const inserts = mockAdmin();
       duplicatePayment();
+      mockSubscriptionsRetrieve.mockResolvedValueOnce({ status: "active" });
       const errorSpy = vi.spyOn(console, "error").mockImplementation(() => {});
 
       const res = await POST(createWebhookRequest());
       expect(res.status).toBe(200);
 
       expect(mockSubscriptionsCancel).toHaveBeenCalledWith("sub_duplicate_1");
+      expect(inserts.processedEvents).toHaveLength(1);
       // The duplicate charge is still recorded for the manual refund, and no
       // subscription row is written — the sub is going away.
       expect(inserts.payments).toHaveLength(1);
@@ -887,11 +898,9 @@ describe("POST /api/webhooks/stripe/products", () => {
       errorSpy.mockRestore();
     });
 
-    it("still records the duplicate charge, loudly, when the cancel fails", async () => {
-      // A cancel is not safely repeatable, so this branch must not throw for a
-      // free Stripe retry: it would loop, and nothing would ever be recorded.
-      // The charge lands either way and the failure joins the log the admin is
-      // already reading.
+    it("records the duplicate charge and answers 500 when the cancel fails, so Stripe retries the cancel", async () => {
+      // The event is left unmarked, so Stripe redelivers it and the cancel is
+      // tried again. The charge is recorded first, so it lands either way.
       mockConstructEvent.mockReturnValue(
         createCompletedEvent({
           id: "evt_completed_dup_sub_fail",
@@ -903,19 +912,50 @@ describe("POST /api/webhooks/stripe/products", () => {
       );
       const inserts = mockAdmin();
       duplicatePayment();
+      mockSubscriptionsRetrieve.mockResolvedValueOnce({ status: "active" });
       mockSubscriptionsCancel.mockRejectedValueOnce(
         new Error("Stripe is unreachable"),
       );
       const errorSpy = vi.spyOn(console, "error").mockImplementation(() => {});
 
       const res = await POST(createWebhookRequest());
-      expect(res.status).toBe(200);
+      expect(res.status).toBe(500);
 
       expect(inserts.payments).toHaveLength(1);
+      expect(inserts.processedEvents).toHaveLength(0);
       expect(errorSpy).toHaveBeenCalledWith(
         expect.stringContaining("could not cancel the duplicate subscription"),
         expect.objectContaining({ subscription: "sub_duplicate_2" }),
       );
+
+      errorSpy.mockRestore();
+    });
+
+    it("finishes a re-run whose earlier cancel succeeded, without cancelling again", async () => {
+      // The first delivery's cancel went through and only its answer was lost.
+      // Stripe refuses to cancel an ended subscription, so cancelling again
+      // would fail on every retry; an ended subscription is the cancel done.
+      mockConstructEvent.mockReturnValue(
+        createCompletedEvent({
+          id: "evt_completed_dup_sub_rerun",
+          paymentIntent: null,
+          subscription: "sub_duplicate_3",
+          invoice: "in_dup_3",
+          purchaseShape: "subscription_monthly",
+        }),
+      );
+      const inserts = mockAdmin({
+        paymentInsertError: { code: "23505", message: "duplicate key" },
+      });
+      duplicatePayment();
+      mockSubscriptionsRetrieve.mockResolvedValueOnce({ status: "canceled" });
+      const errorSpy = vi.spyOn(console, "error").mockImplementation(() => {});
+
+      const res = await POST(createWebhookRequest());
+      expect(res.status).toBe(200);
+
+      expect(mockSubscriptionsCancel).not.toHaveBeenCalled();
+      expect(inserts.processedEvents).toHaveLength(1);
 
       errorSpy.mockRestore();
     });
@@ -1010,6 +1050,20 @@ describe("POST /api/webhooks/stripe/products", () => {
       const res = await POST(createWebhookRequest());
       expect(res.status).toBe(200);
       expect(mockAdminRpc).not.toHaveBeenCalled();
+    });
+
+    it("answers 500 and marks nothing when the subscription lookup fails", async () => {
+      // A failed read is not "not ours": marking it processed would leave the
+      // seat held after Stripe stopped billing it.
+      mockConstructEvent.mockReturnValue(createDeletedEvent("sub_live_1"));
+      const inserts = mockAdmin({
+        famSubSelectError: { code: "08006", message: "connection failure" },
+      });
+
+      const res = await POST(createWebhookRequest());
+      expect(res.status).toBe(500);
+      expect(mockAdminRpc).not.toHaveBeenCalled();
+      expect(inserts.processedEvents).toHaveLength(0);
     });
   });
 
@@ -1198,6 +1252,20 @@ describe("POST /api/webhooks/stripe/products", () => {
       const res = await POST(createWebhookRequest());
       expect(res.status).toBe(200);
       expect(inserts.familySubscriptionUpdates).toEqual([]);
+    });
+
+    it("answers 500 and marks nothing when the subscription lookup fails", async () => {
+      mockConstructEvent.mockReturnValue(
+        createSubscriptionUpdatedEvent({ status: "past_due" }),
+      );
+      const inserts = mockAdmin({
+        famSubSelectError: { code: "08006", message: "connection failure" },
+      });
+
+      const res = await POST(createWebhookRequest());
+      expect(res.status).toBe(500);
+      expect(inserts.familySubscriptionUpdates).toEqual([]);
+      expect(inserts.processedEvents).toHaveLength(0);
     });
 
     it("maps trialing onto active", async () => {
@@ -1916,6 +1984,7 @@ describe("POST /api/webhooks/stripe/products — a Session with a booking", () =
       },
       error: null,
     });
+    mockSubscriptionsRetrieve.mockResolvedValueOnce({ status: "active" });
 
     const res = await POST(createWebhookRequest());
     expect(res.status).toBe(200);
