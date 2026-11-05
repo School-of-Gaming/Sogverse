@@ -9,6 +9,10 @@
 -- 2. participation_state: nothing calls it.
 -- 3. is_live_seat: a live reader may ask it or filter on status = 'active'
 --    itself; the comment no longer claims every reader asks it.
+-- 4. end_participation and leave_my_waitlist_spot: a waitlisted row can be a
+--    seat an admin demoted, so their comments no longer say it never held one.
+--    Deleting it is the owner's ruling of 2026-11-05: the demote already gave
+--    up its placement.
 
 
 -- 1. The family product feed
@@ -363,3 +367,10 @@ DROP FUNCTION public.participation_state(public.participation_status, uuid);
 -- 3. is_live_seat
 
 COMMENT ON FUNCTION public.is_live_seat(p_status public.participation_status) IS 'Whether a participation in this status holds a seat now: active, and nothing else. waitlisted is a place in line, and ended held a seat once. A reader that means "who is in the club" filters on status = ''active'' or asks this; either way it names the live status alone and never lists the others.';
+
+
+-- 4. A waitlisted row is a place in line
+
+COMMENT ON FUNCTION public.end_participation(p_participation_id uuid, p_reason public.participation_end_reason) IS 'The one way a seat ends. Under the product lock: an active seat becomes ended with ended_at now() and end_reason p_reason, keeping its group so the family reads the feed up to that day, and its family_subscriptions row becomes cancelled with ended_at now(), after which that row is terminal. A waitlisted row is a place in line, not a seat, and is deleted instead — including one an admin demoted from a seat, whose placement the demote already gave up; a payment that named it keeps its product. A row already ended, or not there at all, answers kind=noop and writes nothing, so a redelivered Stripe deletion is harmless. Otherwise answers kind=cancelled with product_id, previous_status, the stripe_subscription_id the row carried (NULL when none) and reason. Touches only the database: whoever calls it has already dealt with Stripe, or Stripe is the one telling us. service_role only.';
+
+COMMENT ON FUNCTION public.leave_my_waitlist_spot(p_participation_id uuid) IS 'Give up a waitlist spot. Authorized to the purchasing parent (customer_id = auth.uid()); refuses any row that is not still waitlisted, under the product gate lock. Deletes the row: a place in line is not a seat, so there is no history to keep — including one an admin demoted from a seat — which is what end_participation does with a waitlisted row too.';

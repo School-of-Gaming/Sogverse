@@ -557,8 +557,11 @@ status constants in TypeScript; an ended seat
 leaves the participant free to enrol on the product again. Each reader — a function, view
 or policy in `schema/`, or a read under `src/` — is classified in
 `tests/helpers/seat-reader-registry.ts`, and a unit test fails on one that is missing and
-on an entry whose read is gone. The only deletion of a held seat is
-`erase_participations()`, for erasure; a trigger refuses any other.
+on an entry whose read is gone. The only deletion of a seat that is held or ended is
+`erase_participations()`, for erasure; a trigger refuses any other. A waitlisted row is
+deleted when it leaves the line, and that includes a seat an admin demoted to the
+waitlist: the demote already gave up its placement, and its history goes with it when it
+leaves (owner ruling, 2026-11-05). A payment that named it keeps its product.
 
 ## `now()` is frozen at transaction start
 

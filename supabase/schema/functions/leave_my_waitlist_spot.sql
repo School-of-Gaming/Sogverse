@@ -69,7 +69,7 @@ $$;
 -- Name: FUNCTION leave_my_waitlist_spot(p_participation_id uuid); Type: COMMENT; Schema: public; Owner: -
 --
 
-COMMENT ON FUNCTION public.leave_my_waitlist_spot(p_participation_id uuid) IS 'Give up a waitlist spot. Authorized to the purchasing parent (customer_id = auth.uid()); refuses any row that is not still waitlisted, under the product gate lock. Deletes the row: a place in line never held a seat, so there is no history to keep, which is what end_participation does with a waitlisted row too.';
+COMMENT ON FUNCTION public.leave_my_waitlist_spot(p_participation_id uuid) IS 'Give up a waitlist spot. Authorized to the purchasing parent (customer_id = auth.uid()); refuses any row that is not still waitlisted, under the product gate lock. Deletes the row: a place in line is not a seat, so there is no history to keep — including one an admin demoted from a seat — which is what end_participation does with a waitlisted row too.';
 
 
 --

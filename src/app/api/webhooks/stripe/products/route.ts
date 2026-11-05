@@ -636,11 +636,14 @@ async function handleSubscriptionUpdated(
   // Only act on subs we have a row for. The webhook subscribes to
   // customer.subscription.* at the account level, so it fires for every sub on
   // the account; "do we have a row for this stripe_subscription_id" is the gate.
-  const { data: ours } = await admin
+  // A failed read throws: answering "not ours" would mark the event processed
+  // with the update never written.
+  const { data: ours, error: oursErr } = await admin
     .from("family_subscriptions")
     .select("id, updated_at, ended_at")
     .eq("stripe_subscription_id", sub.id)
     .maybeSingle();
+  if (oursErr) throw oursErr;
   if (!ours) return;
   // A subscription that ended with its seat is final: a late or out-of-order
   // update describing it must never revive it, and the row's trigger refuses
@@ -845,11 +848,14 @@ async function handleSubscriptionDeleted(
 ) {
   const sub = event.data.object;
 
-  const { data: famSub } = await admin
+  // A failed read throws: answering "not ours" would mark the event processed
+  // and leave the seat held after Stripe stopped billing it.
+  const { data: famSub, error: famSubErr } = await admin
     .from("family_subscriptions")
     .select("participation_id")
     .eq("stripe_subscription_id", sub.id)
     .maybeSingle();
+  if (famSubErr) throw famSubErr;
   // No row → nothing to do: a sub on the account this flow never created.
   if (!famSub) return;
 

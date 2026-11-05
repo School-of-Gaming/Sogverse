@@ -238,6 +238,11 @@ type AdminMockOptions = {
    */
   famSubRow?: Record<string, unknown> | null;
   /**
+   * Error returned from that `family_subscriptions` lookup. A failed read must
+   * reach the caller as a 500, never read as "not ours" and get marked processed.
+   */
+  famSubSelectError?: { code: string; message: string } | null;
+  /**
    * Error returned from the `family_subscriptions` INSERT. `23505` is the
    * swallowed duplicate (replay); anything else bubbles to a 500 so Stripe
    * retries. When set, the row is not captured in `inserts`.
@@ -302,7 +307,11 @@ function mockAdmin(opts: AdminMockOptions = {}) {
         select: () => ({
           eq: () => ({
             maybeSingle: () =>
-              Promise.resolve({ data: opts.famSubRow ?? null, error: null }),
+              Promise.resolve(
+                opts.famSubSelectError
+                  ? { data: null, error: opts.famSubSelectError }
+                  : { data: opts.famSubRow ?? null, error: null },
+              ),
           }),
         }),
         // One per-participation row per subscription; the route inserts and
@@ -1011,6 +1020,20 @@ describe("POST /api/webhooks/stripe/products", () => {
       expect(res.status).toBe(200);
       expect(mockAdminRpc).not.toHaveBeenCalled();
     });
+
+    it("answers 500 and marks nothing when the subscription lookup fails", async () => {
+      // A failed read is not "not ours": marking it processed would leave the
+      // seat held after Stripe stopped billing it.
+      mockConstructEvent.mockReturnValue(createDeletedEvent("sub_live_1"));
+      const inserts = mockAdmin({
+        famSubSelectError: { code: "08006", message: "connection failure" },
+      });
+
+      const res = await POST(createWebhookRequest());
+      expect(res.status).toBe(500);
+      expect(mockAdminRpc).not.toHaveBeenCalled();
+      expect(inserts.processedEvents).toHaveLength(0);
+    });
   });
 
   describe("invoice.paid — renewals, from either field placement", () => {
@@ -1198,6 +1221,20 @@ describe("POST /api/webhooks/stripe/products", () => {
       const res = await POST(createWebhookRequest());
       expect(res.status).toBe(200);
       expect(inserts.familySubscriptionUpdates).toEqual([]);
+    });
+
+    it("answers 500 and marks nothing when the subscription lookup fails", async () => {
+      mockConstructEvent.mockReturnValue(
+        createSubscriptionUpdatedEvent({ status: "past_due" }),
+      );
+      const inserts = mockAdmin({
+        famSubSelectError: { code: "08006", message: "connection failure" },
+      });
+
+      const res = await POST(createWebhookRequest());
+      expect(res.status).toBe(500);
+      expect(inserts.familySubscriptionUpdates).toEqual([]);
+      expect(inserts.processedEvents).toHaveLength(0);
     });
 
     it("maps trialing onto active", async () => {
