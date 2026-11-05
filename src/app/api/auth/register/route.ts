@@ -7,6 +7,7 @@ import { SENDER_EMAIL, SENDER_NAME, SUPPORT_EMAIL } from "@/lib/constants/brand"
 import { ROUTES } from "@/lib/constants/routes";
 import { REGISTRATION_CONSENT_DOCUMENTS } from "@/lib/constants/consent-documents";
 import { detectLocaleFromHeader } from "@/lib/constants/locales";
+import { phoneDigitsForStorage } from "@/lib/constants/phone";
 import { buildWelcomeParentEmail } from "@/lib/email-templates/welcome";
 import { getEmailTranslator } from "@/lib/email-templates/translator";
 import { createEmailVerificationToken } from "@/lib/email-verification";
@@ -58,9 +59,9 @@ import {
  * What the parent path does NOT need, and the gedu path does: a promotion RPC.
  * A customer profile is exactly what the signup trigger already produces, so
  * there is no second write to unwind and no orphaned auth user to compensate
- * for. The one optional extra — the home location — is deliberately not fatal
- * (see below), so this route has no rollback path at all. That is a property of
- * the flow, not an omission.
+ * for. The optional extras — the phone number and the home location — are
+ * deliberately not fatal (see below), so this route has no rollback path at
+ * all. That is a property of the flow, not an omission.
  */
 export const POST = defineRoute({
   posture: "public",
@@ -74,12 +75,24 @@ export const POST = defineRoute({
       password,
       firstName,
       lastName,
+      phone,
       homeLocationId,
       locale: requestedLocale,
       redirect,
       eventId,
       marketingConsent,
     } = body;
+
+    // Refused before the account exists, since a number the column's CHECK
+    // would reject can only be told to the parent while the form is still
+    // theirs to correct. `""` is no number.
+    const phoneDigits = phoneDigitsForStorage(phone);
+    if (phoneDigits === null) {
+      return NextResponse.json(
+        { error: "Invalid phone number" },
+        { status: 400 },
+      );
+    }
 
     // The attribution cookie, re-sanitised on the way out of it. A malformed
     // value degrades to null and the account is created without that field; the
@@ -188,15 +201,16 @@ export const POST = defineRoute({
     // verify.
     const storedEmail = authData.user.email ?? email;
 
-    // The optional home location, written here rather than passed through
-    // signup metadata. The alternative was to have `handle_new_user` resolve it
-    // — and that trigger is the one function in the schema that assigns roles,
-    // runs SECURITY DEFINER past RLS, and has a test suite whose whole subject
-    // is that client-supplied metadata cannot influence what it grants. Teaching
-    // it to read a caller-supplied foreign key is real surface added to the most
-    // sensitive object here, to save one statement.
+    // The optional phone number and home location, written here rather than
+    // passed through signup metadata for `handle_new_user` to store. That
+    // trigger is the one function in the schema that assigns roles, runs
+    // SECURITY DEFINER past RLS, and has a test suite whose whole subject is
+    // that client-supplied metadata cannot influence what it grants. Teaching
+    // it to read more caller-supplied values — the home location a foreign key
+    // at that — is real surface added to the most sensitive object here, to
+    // save one statement.
     //
-    // NEVER FATAL. The account exists, both fields are optional, and both are
+    // NEVER FATAL. The account exists, these fields are optional, and all are
     // re-pickable from settings — deleting a working account over either, or
     // stranding the parent on the registration form, would both be strictly
     // worse than losing the value.
@@ -219,10 +233,12 @@ export const POST = defineRoute({
     // sends one: see the contract. Losing it under-markets, which is the safe
     // direction to fail in, so it shares the extras' never-fatal handling.
     const profileExtras: {
+      phone?: string;
       home_location_id?: string;
       locale?: string;
       registration_marketing_consent: boolean;
     } = { registration_marketing_consent: marketingConsent ?? false };
+    if (phoneDigits) profileExtras.phone = phoneDigits;
     if (homeLocationId) profileExtras.home_location_id = homeLocationId;
     if (requestedLocale) profileExtras.locale = requestedLocale;
     const { error: extrasError } = await admin

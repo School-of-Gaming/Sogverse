@@ -2,9 +2,9 @@ import { NextResponse } from "next/server";
 import { defineRoute } from "@/lib/api/define-route";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { detectLocaleFromHeader, resolveLocale } from "@/lib/constants/locales";
+import { phoneDigitsForStorage } from "@/lib/constants/phone";
 import { registerGeduBody } from "@/services/gedu/gedu-registration.contracts";
 import {
-  geduPhoneDigits,
   promoteToGedu,
   resolveGeduGameHandles,
 } from "@/services/gedu/gedu-registration.server";
@@ -72,7 +72,7 @@ export const POST = defineRoute({
 
     // Phone → digits to match the profiles.phone CHECK. Empty or absent stays
     // "" and the RPC NULLIFs it.
-    const phoneDigits = geduPhoneDigits(phone);
+    const phoneDigits = phoneDigitsForStorage(phone);
     if (phoneDigits === null) {
       return NextResponse.json(
         { error: "Invalid phone number" },

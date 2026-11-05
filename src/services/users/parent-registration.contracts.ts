@@ -78,6 +78,11 @@ export const registerParentBody = z.object({
     .transform(trimPersonName)
     .pipe(z.string().min(NAME_MIN_LENGTH).max(NAME_MAX_LENGTH)),
   /**
+   * Optional phone number, E.164 as the form's input emits it. The route turns
+   * it into the digits `profiles.phone` stores and refuses one it cannot store.
+   */
+  phone: z.string().optional(),
+  /**
    * Optional home location, as a `locations.id`. Written to the profile after
    * the account exists; a failure there is never fatal (see the route).
    */
@@ -180,6 +185,7 @@ export const REGISTER_WEAK_PASSWORD = "WEAK_PASSWORD";
 export const completeParentRegistrationBody = registerParentBody.pick({
   firstName: true,
   lastName: true,
+  phone: true,
   homeLocationId: true,
   locale: true,
   redirect: true,

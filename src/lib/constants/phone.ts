@@ -34,3 +34,15 @@ export const PHONE_COUNTRIES = [
 export function toE164Digits(phone: string): string | null {
   return phone ? phone.replace(/^\+/, "") : null;
 }
+
+/**
+ * A phone number a registration form sent, as the `profiles.phone` CHECK
+ * stores it (`^\d{7,15}$`): its digits, `""` for no number, or `null` for a
+ * number that cannot be stored, which the caller refuses with a 400.
+ */
+export function phoneDigitsForStorage(phone: string | undefined): string | null {
+  if (!phone || !phone.trim()) return "";
+  const digits = toE164Digits(phone);
+  if (!digits || !/^\d{7,15}$/.test(digits)) return null;
+  return digits;
+}
