@@ -11,10 +11,7 @@ import type {
   SessionAudience,
 } from "@/types";
 import type { SupportedCurrency } from "@/lib/constants/currency";
-import {
-  HELD_SEAT_STATUSES,
-  OCCUPYING_STATUSES,
-} from "@/lib/constants/participations";
+import { HELD_SEAT_STATUSES } from "@/lib/constants/participations";
 import { gamersAttendSite } from "@/lib/products/delivery-mode";
 import type { QueryData } from "@supabase/supabase-js";
 import {
@@ -822,9 +819,7 @@ export class ParticipationsService {
    * built. The booking records the Session and the seat records the booking.
    *
    * `bookings` is readable only by the customer who booked, so a session id
-   * belonging to someone else reads as null rather than as anyone's order. Null
-   * also covers a legacy-checkout-session Session the webhook has not reached yet,
-   * which has no booking until then; the page falls back to Stripe for those.
+   * belonging to someone else reads as null rather than as anyone's order.
    */
   async getConfirmationByCheckoutSession(
     checkoutSessionId: string,
@@ -858,35 +853,6 @@ export class ParticipationsService {
         isSelfSeat: data.participant_id === data.customer_id,
       },
     };
-  }
-
-  /**
-   * legacy-checkout-session: does this participant — a child, or the buyer
-   * themselves on a for-parents product — already hold a spot on this product?
-   * Asked by the paid confirmation page when a Session from before bookings has
-   * no booking yet, to tell the two reasons for that apart: the webhook has not landed yet (wait), or
-   * the payment was refused as a duplicate because the seat was already taken
-   * (there will never be a row for this session, so waiting is a dead end).
-   *
-   * Mirrors the status set the confirmation RPC conflicts on, so the page's
-   * answer and the database's decision cannot drift. RLS-scoped like every read
-   * here — the caller has already been checked to be the session's purchaser, so
-   * the row is theirs to see.
-   */
-  async hasSeatOnProduct(
-    productId: string,
-    participantId: string,
-  ): Promise<boolean> {
-    const { data, error } = await this.supabase
-      .from("participations")
-      .select("id")
-      .eq("product_id", productId)
-      .eq("participant_id", participantId)
-      .in("status", OCCUPYING_STATUSES)
-      .maybeSingle();
-
-    if (error) throw error;
-    return data !== null;
   }
 
   /**

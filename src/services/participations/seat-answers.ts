@@ -6,10 +6,6 @@ import {
   type UtmField,
   type UtmInput,
 } from "@/lib/utm";
-import {
-  seatAnswersSessionMetadata,
-  type SeatAnswersSessionMetadata,
-} from "./participations.contracts";
 
 /**
  * What a booking records beyond who and what — the visit's UTM tag and the
@@ -21,15 +17,6 @@ import {
 export type SeatAnswerArgs = Partial<
   Record<`p_${(typeof UTM_QUERY_PARAMS)[UtmField]}`, string>
 > & { p_school_of_gaming_marketing_opt_in?: boolean };
-
-/** legacy-checkout-session: the metadata key each UTM field travels under on a Session created before bookings. */
-const UTM_SESSION_KEYS = {
-  source: "utmSource",
-  medium: "utmMedium",
-  campaign: "utmCampaign",
-  content: "utmContent",
-  term: "utmTerm",
-} as const satisfies Record<UtmField, keyof SeatAnswersSessionMetadata>;
 
 /**
  * The seat answers for one booking request.
@@ -54,33 +41,6 @@ export function seatAnswerArgs(
   }
   if (schoolOfGamingMarketingOptIn !== undefined) {
     args.p_school_of_gaming_marketing_opt_in = schoolOfGamingMarketingOptIn;
-  }
-  return args;
-}
-
-/**
- * legacy-checkout-session: read the answers back off the metadata of a completed
- * Session created before bookings, as the RPC parameters. Throws when a key holds something the checkout route never
- * writes, so the webhook answers 500 and the mismatch is seen rather than a
- * seat being written with an answer nobody gave.
- */
-export function seatAnswerArgsFromSessionMetadata(
-  metadata: Record<string, string> | null,
-): SeatAnswerArgs {
-  const parsed = seatAnswersSessionMetadata.safeParse(metadata ?? {});
-  if (!parsed.success) {
-    throw new Error(
-      `Checkout Session seat answers have an unexpected shape: ${parsed.error.message}`,
-    );
-  }
-  const args: SeatAnswerArgs = {};
-  for (const field of UTM_FIELDS) {
-    const value = parsed.data[UTM_SESSION_KEYS[field]];
-    if (value !== undefined) args[`p_${UTM_QUERY_PARAMS[field]}`] = value;
-  }
-  const optIn = parsed.data.schoolOfGamingMarketingOptIn;
-  if (optIn !== undefined) {
-    args.p_school_of_gaming_marketing_opt_in = optIn === "true";
   }
   return args;
 }
