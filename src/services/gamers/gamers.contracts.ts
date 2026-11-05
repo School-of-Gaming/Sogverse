@@ -1,6 +1,6 @@
 import { z } from "zod";
 import { Constants } from "@/types";
-import { DISPLAY_NAME_MIN, DISPLAY_NAME_MAX } from "@/lib/constants/account-limits";
+import { NAME_MIN_LENGTH, NAME_MAX_LENGTH } from "@/lib/constants/account-limits";
 import { trimPersonName } from "@/lib/person-name-trim";
 import {
   GAMER_USERNAME_PATTERN,
@@ -10,6 +10,7 @@ import {
   accountPasswordValue,
   realEmailValue,
 } from "@/services/users/parent-registration.contracts";
+import { conversionEventIdValue } from "@/lib/marketing-events";
 import { minecraftUsernameValue } from "@/services/minecraft/minecraft.contracts";
 import { robloxUsernameValue } from "@/services/roblox/roblox.contracts";
 
@@ -26,12 +27,12 @@ const firstName = z
     z
       .string()
       .min(
-        DISPLAY_NAME_MIN,
-        `First name must be between ${DISPLAY_NAME_MIN} and ${DISPLAY_NAME_MAX} characters`,
+        NAME_MIN_LENGTH,
+        `First name must be between ${NAME_MIN_LENGTH} and ${NAME_MAX_LENGTH} characters`,
       )
       .max(
-        DISPLAY_NAME_MAX,
-        `First name must be between ${DISPLAY_NAME_MIN} and ${DISPLAY_NAME_MAX} characters`,
+        NAME_MAX_LENGTH,
+        `First name must be between ${NAME_MIN_LENGTH} and ${NAME_MAX_LENGTH} characters`,
       ),
   );
 
@@ -183,6 +184,22 @@ export const createGamerBody = z
      * by reloading, and that is the correct outcome.
      */
     guardianAttested: guardianAttestedValue,
+    /**
+     * The product whose sign-up panel the child is being added from, sent only
+     * from that panel — an add anywhere else (the family's own pages) sends
+     * none, and is reported under the dashboard's fixed path. It decides
+     * nothing about the child and names no row the route writes: it is read
+     * only to say, after the answer, which page the child-added conversion
+     * happened on and which product to name in it. Untrusted, so the report
+     * names the product only when the row it names is one we advertise.
+     */
+    productId: z.string().uuid().optional(),
+    /**
+     * The id the child-added report goes out under, minted by the dialog per
+     * attempt — the one a sign-up panel pushes its own `child_added` under once
+     * this answers. Absent, the server mints its own.
+     */
+    eventId: conversionEventIdValue,
   })
   .refine(signInFieldsAreConsistent, { message: SIGN_IN_FIELDS_MESSAGE });
 

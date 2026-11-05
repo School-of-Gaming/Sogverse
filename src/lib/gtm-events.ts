@@ -5,8 +5,8 @@
  * **The container is where every browser advertising tag is built**, so these
  * events are the whole funnel, each one complete enough for a tag to be made
  * from it without asking the app for anything: the page, the product view, the
- * click into the sign-up flow, the account, the enrolment and the Stripe
- * handoff, each with its own id and, where there is one, the product.
+ * click into the sign-up flow, the account, a child added, the enrolment and
+ * the Stripe handoff, each with its own id and, where there is one, the product.
  *
  * **These are Google's names, not Meta's, and the difference is deliberate.**
  * `marketing-events.ts` holds Meta's vocabulary, where the platform optimises a
@@ -54,6 +54,12 @@ import type { EnrolmentOutcome, GtmEcommerce } from "./marketing-events";
  *     A custom name would have cost GA4's funnel report its middle step.
  *   - `sign_up` — a parent account now exists and nothing has been signed up
  *     *for*. GA4's recommended name for exactly that.
+ *   - `child_added` — a parent added a child from a product's sign-up panel.
+ *     Custom, as GA4's list has nothing between an account and a purchase;
+ *     Meta's and Reddit's `ChildProfileCreated`. A child added outside a
+ *     product's sign-up panel — on the family's own pages — pushes nothing:
+ *     the container never loads on a private page, so that one is reported by
+ *     our servers alone, under the dashboard's fixed path.
  *   - `enrolment` — a seat or a queue place was taken. Custom rather than
  *     recommended: GA4's list has no word for registering for a thing, and
  *     `purchase` would be a lie about the free ones.
@@ -66,6 +72,7 @@ export const GTM_EVENTS = {
   productView: "view_item",
   checkoutStart: "add_to_cart",
   accountCreated: "sign_up",
+  childAdded: "child_added",
   enrolment: "enrolment",
   checkout: "begin_checkout",
 } as const;
@@ -80,8 +87,9 @@ interface GtmEventBase {
    *
    * **It is what lets one moment be reported twice and counted once.** A
    * platform deduplicates a browser event against a server report of the same
-   * name by this id. For the two moments our servers commit — `sign_up` and a
-   * free seat or queue place's `enrolment` — the browser mints it, sends it to
+   * name by this id. For the moments our servers commit — `sign_up`,
+   * `child_added` and a free seat or queue place's `enrolment` — the browser
+   * mints it, sends it to
    * the route that commits the action, and pushes under the same id once the
    * route has answered. For the browser's own three — `page_view`, `view_item`
    * and `add_to_cart` — it pushes first and then posts the push, id and all,
@@ -171,6 +179,23 @@ export interface GtmSignUpEvent extends GtmEventBase {
 }
 
 /**
+ * A parent added a child from a product's sign-up panel. `ecommerce` names that
+ * product when it is an advertised one — exactly the product the server's
+ * report names, and unpriced as it is, since adding a child commits no money —
+ * and is `null` otherwise. Nothing about the child is in it: not their name,
+ * age, id or how many the family now has.
+ *
+ * No `advertised` here, for the reason `sign_up` has none: the server reports
+ * every child added, so the browser twin of it has to fire on every
+ * `child_added`, and the product rule has already decided which product, if
+ * any, it names.
+ */
+export interface GtmChildAddedEvent extends GtmEventBase {
+  event: typeof GTM_EVENTS.childAdded;
+  ecommerce: GtmEcommerce | null;
+}
+
+/**
  * A signup attempt ended in something worth reporting.
  *
  * `outcome` is drawn from the same three words the Meta side uses, so a reader
@@ -189,6 +214,7 @@ export type GtmEvent =
   | GtmProductViewEvent
   | GtmCheckoutStartEvent
   | GtmSignUpEvent
+  | GtmChildAddedEvent
   | GtmEnrolmentEvent;
 
 /**

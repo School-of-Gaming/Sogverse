@@ -10,7 +10,8 @@ import { Card, CardContent, CardDescription, CardHeader } from "@/components/ui/
 import { Identicon } from "@/components/ui/identicon";
 import { Input } from "@/components/ui/input";
 import { cn } from "@/lib/cn";
-import { DISPLAY_NAME_MIN, DISPLAY_NAME_MAX } from "@/lib/constants/account-limits";
+import { NAME_MIN_LENGTH, NAME_MAX_LENGTH } from "@/lib/constants/account-limits";
+import { trimPersonName } from "@/lib/person-name-trim";
 import { useLocalStreamGlow } from "@/components/voice/hooks/use-local-stream-glow";
 import { MicToggleButton, CameraToggleButton } from "@/components/voice/MediaToggleButtons";
 import { MicSettingsPopover } from "@/components/voice/MicSettingsPopover";
@@ -216,10 +217,10 @@ export function InstantVoiceLobby({ code, onJoin, viewer, joining, joinFailed }:
     }
   };
 
-  const trimmedName = name.trim();
+  const trimmedName = trimPersonName(name);
   const nameValid =
-    trimmedName.length >= DISPLAY_NAME_MIN &&
-    trimmedName.length <= DISPLAY_NAME_MAX;
+    trimmedName.length >= NAME_MIN_LENGTH &&
+    trimmedName.length <= NAME_MAX_LENGTH;
   const canJoin = viewer !== null || nameValid;
 
   // Display name shown under the avatar — mirrors what the in-call avatar
@@ -324,7 +325,7 @@ export function InstantVoiceLobby({ code, onJoin, viewer, joining, joinFailed }:
                   type="text"
                   value={name}
                   onChange={(e) => setName(e.target.value)}
-                  maxLength={DISPLAY_NAME_MAX}
+                  maxLength={NAME_MAX_LENGTH}
                   required
                   autoFocus
                   placeholder={t("namePlaceholder")}

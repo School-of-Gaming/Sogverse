@@ -32,7 +32,7 @@
     "genderNonBinary": "Non binaire",
     "submit": "Ajouter le gamer",
     "submitting": "Ajout…",
-    "firstNameTooShort": "Le prénom doit contenir au moins 2 caractères.",
+    "firstNameRequired": "Saisissez un prénom.",
     "firstNameTooLong": "Le prénom ne doit pas dépasser 32 caractères.",
     "birthMonthRequired": "Choisissez un mois de naissance.",
     "birthYearRequired": "Choisissez une année de naissance.",

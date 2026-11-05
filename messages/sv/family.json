@@ -32,7 +32,7 @@
     "genderNonBinary": "Icke-binär",
     "submit": "Lägg till gamer",
     "submitting": "Lägger till…",
-    "firstNameTooShort": "Förnamnet måste vara minst 2 tecken.",
+    "firstNameRequired": "Ange ett förnamn.",
     "firstNameTooLong": "Förnamnet får vara högst 32 tecken.",
     "birthMonthRequired": "Välj en födelsemånad.",
     "birthYearRequired": "Välj ett födelseår.",

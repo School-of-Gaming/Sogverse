@@ -71,7 +71,22 @@ vi.mock("@/providers/auth-provider", () => ({
   }),
 }));
 
-vi.mock("@/components/family", () => ({ AddGamerDialog: () => null }));
+// The dialog renders nothing here; what the panel hands it is recorded, since
+// the child-added push is the callback the panel gives it.
+const addGamerProps = vi.hoisted(() =>
+  vi.fn<
+    (props: {
+      productId?: string;
+      onCreated?: (gamerId: string, eventId: string) => void;
+    }) => void
+  >(),
+);
+vi.mock("@/components/family", () => ({
+  AddGamerDialog: (props: Parameters<typeof addGamerProps>[0]) => {
+    addGamerProps(props);
+    return null;
+  },
+}));
 vi.mock("@/components/public/products/region-lock/set-location-dialog", () => ({
   SetLocationDialog: () => null,
 }));
@@ -307,6 +322,7 @@ beforeEach(() => {
   waitlistMutate.mockReset();
   pushed.mockReset();
   checkoutStart.mockReset();
+  addGamerProps.mockReset();
   href = "http://localhost/";
   navigations.length = 0;
 });
@@ -538,5 +554,59 @@ describe("the click into the flow is the checkout start", () => {
     submit(container);
 
     expect(checkoutStart).not.toHaveBeenCalled();
+  });
+});
+
+describe("a child added from the panel is its own step", () => {
+  const GAMER_ID = "1a8e1e2a-32f6-4c6f-9a6a-9d0f2a1b7c44";
+  const EVENT_ID = "3f2b7c1e-9a4d-4e8b-b6c5-0d1e2f3a4b5c";
+
+  /** What the panel handed the dialog. */
+  function dialogProps() {
+    const props = addGamerProps.mock.calls.at(-1)?.[0];
+    if (!props) throw new Error("the dialog was never rendered");
+    return props;
+  }
+
+  /** The dialog reporting a child created under the route's event id. */
+  function childCreated() {
+    const { onCreated } = dialogProps();
+    if (!onCreated) throw new Error("the dialog was given no onCreated");
+    act(() => onCreated(GAMER_ID, EVENT_ID));
+  }
+
+  it("hands the dialog this page's product, so the route can report it", () => {
+    render(panel());
+
+    expect(dialogProps().productId).toBe(PRODUCT_ID);
+  });
+
+  it("pushes child_added under the route's id, unpriced and with nothing about the child", () => {
+    render(panel());
+
+    childCreated();
+
+    // Adding a child commits no money, so it carries no value, as the route's
+    // report of it carries none. No `advertised`: like `sign_up`, it fires on
+    // every one, naming the product the route's report names.
+    expect(onlyEvent()).toEqual({
+      event: "child_added",
+      event_id: EVENT_ID,
+      ecommerce: UNPRICED,
+      page_path: PRODUCT_PATH,
+    });
+  });
+
+  it("pushes a municipality club's too, naming no product, as the route's report names none", () => {
+    render(panel({ product: MUNICIPALITY_PRODUCT }));
+
+    childCreated();
+
+    expect(onlyEvent()).toEqual({
+      event: "child_added",
+      event_id: EVENT_ID,
+      ecommerce: null,
+      page_path: `/shop/${MUNICIPALITY_PRODUCT.id}`,
+    });
   });
 });
