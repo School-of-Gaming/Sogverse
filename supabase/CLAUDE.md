@@ -552,7 +552,8 @@ a lot of functions.
 subscription beside it — so every read of either table says whether it means the seats
 held now or the history.** A read that never asks about status sees the families who left
 as well as the ones still there, and treats a left family as a current one. Live means
-`is_live_seat()` in SQL or the participation status constants in TypeScript; an ended seat
+an explicit `status = 'active'` filter or `is_live_seat()` in SQL, and the participation
+status constants in TypeScript; an ended seat
 leaves the participant free to enrol on the product again. Each reader — a function, view
 or policy in `schema/`, or a read under `src/` — is classified in
 `tests/helpers/seat-reader-registry.ts`, and a unit test fails on one that is missing and

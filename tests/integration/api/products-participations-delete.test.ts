@@ -72,7 +72,7 @@ beforeEach(() => {
       product_id: PRODUCT_ID,
       previous_status: "active",
       stripe_subscription_id: null,
-      reason: "admin_cancelled",
+      reason: "admin_removed",
     },
     error: null,
   });

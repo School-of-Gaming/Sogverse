@@ -463,7 +463,47 @@ describe("family product feed", () => {
           LONG_AGO,
         ]);
         for (const planned of feed.planned_sessions) {
-          expect(planned.date <= TWO_DAYS_AGO).toBe(true);
+          expect(planned.startsAt.getTime()).toBeLessThan(Date.parse(endedAt));
+        }
+      } finally {
+        await admin
+          .from("participations")
+          .update({ status: "active", ended_at: null, end_reason: null })
+          .eq("id", siblingPlaced);
+        await admin
+          .from("family_subscriptions")
+          .delete()
+          .eq("participation_id", siblingPlaced);
+      }
+    });
+
+    it("stops an ended seat's plan at the instant it ended, not at the end of that day", async () => {
+      // Ended at noon on a day whose session starts at 17:00: that evening's
+      // session is past the seat's end and must not be offered, while the day
+      // before, which started earlier, stays.
+      const endedAt = `${YESTERDAY}T12:00:00.000Z`;
+      const ended = await admin
+        .from("participations")
+        .update({
+          status: "ended",
+          ended_at: endedAt,
+          end_reason: "admin_removed",
+        })
+        .eq("id", siblingPlaced);
+      expect(ended.error).toBeNull();
+
+      try {
+        const { data, error } = await customerAuth.rpc(
+          "get_my_family_product_feed",
+          { p_participation_id: siblingPlaced },
+        );
+        expect(error).toBeNull();
+        const feed = familyProductFeed.parse(data);
+        const dates = feed.planned_sessions.map((p) => p.date);
+        expect(dates).toContain(TWO_DAYS_AGO);
+        expect(dates).not.toContain(YESTERDAY);
+        for (const planned of feed.planned_sessions) {
+          expect(planned.startsAt.getTime()).toBeLessThan(Date.parse(endedAt));
         }
       } finally {
         await admin
