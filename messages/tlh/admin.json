@@ -1914,8 +1914,6 @@
     "loadErrorWithReason": "Qu’ Huch mI’mey laDlaHbe’: {reason}",
     "change": "{change} DaH jar",
     "noChange": "DaH jar choHbe’",
-    "soFar": "wej rIn",
-    "monthSoFar": "{month}, wej rIn",
     "tiles": {
       "revenueTotal": {
         "label": "jar vorgh Huch",

@@ -1914,8 +1914,6 @@
     "loadErrorWithReason": "The business figures could not be read: {reason}",
     "change": "{change} this month",
     "noChange": "No change this month",
-    "soFar": "so far",
-    "monthSoFar": "{month}, so far",
     "tiles": {
       "revenueTotal": {
         "label": "Revenue last month",

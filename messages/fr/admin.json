@@ -1914,8 +1914,6 @@
     "loadErrorWithReason": "Impossible de lire les chiffres d’activité : {reason}",
     "change": "{change} ce mois-ci",
     "noChange": "Aucun changement ce mois-ci",
-    "soFar": "en cours",
-    "monthSoFar": "{month}, en cours",
     "tiles": {
       "revenueTotal": {
         "label": "Revenus du mois dernier",

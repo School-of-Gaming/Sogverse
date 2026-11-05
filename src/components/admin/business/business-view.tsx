@@ -84,8 +84,9 @@ const RATIO_STROKE = "var(--series-gamersPerGedu)";
 /** The paying families line's colour: the one its series is configured with below. */
 const PAYING_STROKE = "var(--series-payingFamilies)";
 
-/** The month axis: room for the month, its year where shown, and "so far". */
+/** The month axis: a line for the month, and one for its year where shown. */
 const AXIS_LINE_HEIGHT = 14;
+const MONTH_AXIS_HEIGHT = 40;
 
 /** A count in the reader's locale. */
 function useCount(): (value: number) => string {
@@ -442,12 +443,8 @@ function EngagementCard({ overview }: { overview: BusinessOverview }) {
 // The monthly charts
 // ---------------------------------------------------------------------------
 
-/**
- * The month axis, with the month in progress marked "so far" under its name:
- * its figures are partial, and a short last bar must not read as a bad month.
- */
-function useMonthTick(currentMonth: string): (props: XAxisTickContentProps) => ReactNode {
-  const t = useTranslations("admin.business");
+/** The month axis: each month's short name, and its year where `year` gives one. */
+function useMonthTick(): (props: XAxisTickContentProps) => ReactNode {
   const { short, year } = useMonthName();
   return function renderTick({ x, y, payload }: XAxisTickContentProps) {
     const month = String(payload.value);
@@ -462,37 +459,20 @@ function useMonthTick(currentMonth: string): (props: XAxisTickContentProps) => R
             {yearLine}
           </tspan>
         )}
-        {month === currentMonth && (
-          <tspan x={x} dy={AXIS_LINE_HEIGHT}>
-            {t("soFar")}
-          </tspan>
-        )}
       </text>
     );
   };
 }
 
-/**
- * The month axis's height: one line for the month and one for whichever of
- * the year or "so far" sits under it, and a third when the month in progress
- * is a January and carries both.
- */
-function monthAxisHeight(currentMonth: string): number {
-  return currentMonth.slice(5, 7) === "01" ? 40 + AXIS_LINE_HEIGHT : 40;
-}
-
-/** The tooltip's heading: the month in full, and "so far" for the month in progress. */
-function useMonthLabel(currentMonth: string) {
-  const t = useTranslations("admin.business");
+/** The tooltip's heading: the month in full. */
+function useMonthLabel() {
   const { full } = useMonthName();
   return (_: unknown, payload: readonly { payload?: unknown }[]) => {
     const row = payload[0]?.payload;
     if (typeof row !== "object" || row === null || !("month" in row) || typeof row.month !== "string") {
       return null;
     }
-    return row.month === currentMonth
-      ? t("monthSoFar", { month: full(row.month) })
-      : full(row.month);
+    return full(row.month);
   };
 }
 
@@ -543,8 +523,8 @@ function RevenueCard({ overview }: { overview: BusinessOverview }) {
   const t = useTranslations("admin.business.revenue");
   const euros = useEuros();
   const { full } = useMonthName();
-  const monthTick = useMonthTick(overview.currentMonth);
-  const monthLabel = useMonthLabel(overview.currentMonth);
+  const monthTick = useMonthTick();
+  const monthLabel = useMonthLabel();
   const startNote = useStartNote();
   const describedBy = useId();
   const compact = new Intl.NumberFormat(formattingLocale(useLocale()), {
@@ -582,7 +562,7 @@ function RevenueCard({ overview }: { overview: BusinessOverview }) {
           aria-describedby={describedBy}
         >
           <CartesianGrid vertical={false} />
-          <XAxis dataKey="month" tick={monthTick} interval={0} height={monthAxisHeight(overview.currentMonth)} tickLine={false} axisLine={false} />
+          <XAxis dataKey="month" tick={monthTick} interval={0} height={MONTH_AXIS_HEIGHT} tickLine={false} axisLine={false} />
           <YAxis
             tickFormatter={(cents: number) => compact.format(cents / 100)}
             tickLine={false}
@@ -651,8 +631,8 @@ function FamiliesCard({ overview }: { overview: BusinessOverview }) {
   const t = useTranslations("admin.business.families");
   const count = useCount();
   const { full } = useMonthName();
-  const monthTick = useMonthTick(overview.currentMonth);
-  const monthLabel = useMonthLabel(overview.currentMonth);
+  const monthTick = useMonthTick();
+  const monthLabel = useMonthLabel();
   const describedBy = useId();
   const config = {
     payingFamilies: { label: t("series.payingFamilies"), color: "var(--color-act)" },
@@ -669,7 +649,7 @@ function FamiliesCard({ overview }: { overview: BusinessOverview }) {
           aria-describedby={describedBy}
         >
           <CartesianGrid vertical={false} />
-          <XAxis dataKey="month" tick={monthTick} interval={0} height={monthAxisHeight(overview.currentMonth)} tickLine={false} axisLine={false} />
+          <XAxis dataKey="month" tick={monthTick} interval={0} height={MONTH_AXIS_HEIGHT} tickLine={false} axisLine={false} />
           <YAxis allowDecimals={false} tickFormatter={count} tickLine={false} axisLine={false} width={40} />
           <ChartTooltip
             content={
@@ -738,8 +718,8 @@ function GedusCard({ overview }: { overview: BusinessOverview }) {
   const t = useTranslations("admin.business.gedus");
   const count = useCount();
   const { full } = useMonthName();
-  const monthTick = useMonthTick(overview.currentMonth);
-  const monthLabel = useMonthLabel(overview.currentMonth);
+  const monthTick = useMonthTick();
+  const monthLabel = useMonthLabel();
   const startNote = useStartNote();
   const describedBy = useId();
   const ratio = new Intl.NumberFormat(formattingLocale(useLocale()), { maximumFractionDigits: 1 });
@@ -779,7 +759,7 @@ function GedusCard({ overview }: { overview: BusinessOverview }) {
           aria-describedby={describedBy}
         >
           <CartesianGrid vertical={false} />
-          <XAxis dataKey="month" tick={monthTick} interval={0} height={monthAxisHeight(overview.currentMonth)} tickLine={false} axisLine={false} />
+          <XAxis dataKey="month" tick={monthTick} interval={0} height={MONTH_AXIS_HEIGHT} tickLine={false} axisLine={false} />
           <YAxis tickFormatter={ratio.format} tickLine={false} axisLine={false} width={40} />
           <ChartTooltip
             content={

@@ -1914,8 +1914,6 @@
     "loadErrorWithReason": "Liiketoiminnan lukuja ei saatu luettua: {reason}",
     "change": "{change} tässä kuussa",
     "noChange": "Ei muutosta tässä kuussa",
-    "soFar": "kesken",
-    "monthSoFar": "{month}, kesken",
     "tiles": {
       "revenueTotal": {
         "label": "Viime kuun tulot",
