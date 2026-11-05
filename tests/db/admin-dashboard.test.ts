@@ -652,6 +652,14 @@ describe("get_admin_dashboard", () => {
     expect(error?.code).toBe("42501");
   });
 
+  it("counts no users", async () => {
+    // The contract schema strips unknown keys, so only the raw document can show
+    // a recreated function bringing the per-role counts back.
+    const { data, error } = await adminUser.rpc("get_admin_dashboard");
+    expect(error).toBeNull();
+    expect(data).not.toHaveProperty("users");
+  });
+
   describe("Gedu tasks", () => {
     /** Every entry for one Gedu — a list, so that listing one twice fails. */
     function entries(geduId: string | null) {

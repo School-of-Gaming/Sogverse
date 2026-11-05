@@ -110,8 +110,12 @@ describe("last month's revenue", () => {
   });
 
   it("moves on the month before, or has no change when either has no total", () => {
-    expect(revenueChange({ month: "2026-10-01", totalCents: 900, monthBeforeCents: 1000 })).toBe(-100);
-    expect(revenueChange({ month: "2026-10-01", totalCents: 900, monthBeforeCents: null })).toBeNull();
+    expect(revenueChange({ ...revenueMonth({ totalCents: 900 }), monthBeforeCents: 1000 })).toBe(
+      -100,
+    );
+    expect(
+      revenueChange({ ...revenueMonth({ totalCents: 900 }), monthBeforeCents: null }),
+    ).toBeNull();
   });
 });
 

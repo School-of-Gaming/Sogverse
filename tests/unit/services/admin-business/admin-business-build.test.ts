@@ -358,10 +358,9 @@ describe("revenue by month", () => {
     });
     expect(overview.revenue.nonEurPayments).toBe(1);
     expect(overview.revenue.months.map((m) => m.month)).toEqual(MONTHS);
-    // The headline reads the last complete month, every band summed, beside the one before.
+    // The headline carries the last complete month's row, beside the one before's total.
     expect(overview.headline.revenueLastMonth).toEqual({
-      month: "2026-10-01",
-      totalCents: 90800,
+      ...byMonth.get("2026-10-01"),
       monthBeforeCents: 4900,
     });
   });
@@ -376,7 +375,12 @@ describe("revenue by month", () => {
     );
     expect(overview.headline.revenueLastMonth).toEqual({
       month: "2026-10-01",
+      subscriptionCents: 4900,
+      campsAndEventsCents: 0,
+      unattributedCents: 0,
+      municipalityCents: 1000,
       totalCents: 5900,
+      municipalityClubsWithoutFee: 0,
       monthBeforeCents: null,
     });
   });

@@ -164,13 +164,9 @@ export interface FirstWeekEngagement {
   engaged: number;
 }
 
-/** One complete month's revenue, every band summed, beside the month before's. */
-export interface MonthRevenueTotal {
-  /** The last complete Helsinki month, `YYYY-MM-01`. */
-  month: string;
-  /** In EUR cents; null when no payments were recorded yet that month. */
-  totalCents: number | null;
-  /** The total of the month before it, null on the same terms. */
+/** The last complete Helsinki month's revenue, band by band, beside the month before's total. */
+export interface MonthRevenueTotal extends RevenueMonth {
+  /** The total of the month before it, null on the same terms as `totalCents`. */
   monthBeforeCents: number | null;
 }
 
@@ -860,11 +856,7 @@ export function buildBusinessOverview(facts: BusinessFacts, now: Date): Business
     readAt: now.toISOString(),
     currentMonth,
     headline: {
-      revenueLastMonth: {
-        month: lastComplete.month,
-        totalCents: lastComplete.totalCents,
-        monthBeforeCents: monthBefore.totalCents,
-      },
+      revenueLastMonth: { ...lastComplete, monthBeforeCents: monthBefore.totalCents },
       payingFamilies: {
         now: payingFamiliesAt(spans, nowMs),
         endOfLastMonth: payingFamiliesAt(spans, lastMonthEnd),

@@ -247,8 +247,7 @@ function HeadlineTiles({ overview }: { overview: BusinessOverview }) {
     headline.firstWeekEngagement.endOfLastMonth,
   );
   const lastMonth = headline.revenueLastMonth;
-  const lastMonthRow = overview.revenue.months.find((month) => month.month === lastMonth.month);
-  const largest = lastMonthRow === undefined ? null : largestRevenueBand(lastMonthRow);
+  const largest = largestRevenueBand(lastMonth);
   const totalChange = revenueChange(lastMonth);
 
   return (
@@ -593,16 +592,9 @@ function RevenueCard({ overview }: { overview: BusinessOverview }) {
               <ChartTooltipContent
                 labelFormatter={monthLabel}
                 formatter={(value, name, item) => {
-                  if (!isRevenueSeries(name)) return null;
-                  const row: unknown = item.payload;
-                  const clubs =
-                    name === "municipalityCents" &&
-                    typeof row === "object" &&
-                    row !== null &&
-                    "municipalityClubsWithoutFee" in row &&
-                    typeof row.municipalityClubsWithoutFee === "number"
-                      ? row.municipalityClubsWithoutFee
-                      : 0;
+                  const month = months.find((one) => one.month === item.payload?.month);
+                  if (!isRevenueSeries(name) || month === undefined) return null;
+                  const clubs = name === "municipalityCents" ? month.municipalityClubsWithoutFee : 0;
                   return (
                     <div className="w-full">
                       <TooltipRow
