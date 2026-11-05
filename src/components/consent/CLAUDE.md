@@ -441,6 +441,11 @@ the marketing team in whatever setup instructions they are sent.
   (`NEXT_PUBLIC_META_PIXEL_ID`, `NEXT_PUBLIC_REDDIT_PIXEL_ID`). A platform deduplicates
   only an event with the same id on the same pixel; either one wrong and every event
   counts twice.
+- **`child_added` is a custom event on both tags, named exactly `ChildProfileCreated`** —
+  Meta's tag as a custom event, Reddit's as `Custom` with that custom event name. Every
+  other event is a standard one whose name the vendor fixes; this one is named by whoever
+  builds the tag, and a platform deduplicates only on the same name as well as the same
+  id, so any other spelling counts every child added twice.
 - **No advanced matching fields** on either tag — no email, phone or name. The policy's
   promise is that only the lead, the child added and the enrolment carry an identifier, hashed on our
   server; a tag sending one would put it on every page view. The globals keep the vendors'
