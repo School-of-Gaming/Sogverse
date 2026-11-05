@@ -37,7 +37,7 @@ import { GamerPhotoConsentNotice } from "@/components/settings/gamer-photo-conse
 import { McpServerCard } from "@/components/settings/mcp-server-card";
 import { NotificationPreferencesCard } from "@/components/settings/notification-preferences-card";
 import type { LocationPick } from "@/components/locations/location-picker-panel";
-import { DISPLAY_NAME_MIN, DISPLAY_NAME_MAX } from "@/lib/constants/account-limits";
+import { NAME_MIN_LENGTH, NAME_MAX_LENGTH } from "@/lib/constants/account-limits";
 import { ROUTES } from "@/lib/constants/routes";
 import { useAuth } from "@/providers";
 import { isValidPhoneNumber } from "react-phone-number-input";
@@ -471,7 +471,7 @@ export function SettingsSectionContent({
 
       // The profiles CHECK refuses a first name that is empty once trimmed;
       // saying so here keeps a refusal from reading as a failed save.
-      if (trimPersonName(firstName).length < DISPLAY_NAME_MIN) {
+      if (trimPersonName(firstName).length < NAME_MIN_LENGTH) {
         setSaveError("firstNameRequired");
         setIsSaving(false);
         return;
@@ -480,7 +480,7 @@ export function SettingsSectionContent({
       // Last name is required for non-gamers (gamers don't render the field and
       // keep their inherited name). This also gradually backfills legacy rows
       // that hold an empty last name from before it was required.
-      if (!isGamer && trimPersonName(lastName).length < DISPLAY_NAME_MIN) {
+      if (!isGamer && trimPersonName(lastName).length < NAME_MIN_LENGTH) {
         setSaveError("lastNameRequired");
         setIsSaving(false);
         return;
@@ -635,7 +635,7 @@ export function SettingsSectionContent({
               value={firstName}
               onChange={(e) => setFirstName(e.target.value)}
               placeholder={t('firstNamePlaceholder')}
-              maxLength={DISPLAY_NAME_MAX}
+              maxLength={NAME_MAX_LENGTH}
               autoComplete="given-name"
             />
           </Field>
@@ -647,7 +647,7 @@ export function SettingsSectionContent({
                 value={lastName}
                 onChange={(e) => setLastName(e.target.value)}
                 placeholder={t('lastNamePlaceholder')}
-                maxLength={DISPLAY_NAME_MAX}
+                maxLength={NAME_MAX_LENGTH}
                 autoComplete="family-name"
               />
             </Field>

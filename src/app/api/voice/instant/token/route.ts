@@ -5,7 +5,7 @@ import { getUserWithProfile } from "@/lib/supabase/server";
 import { instantRoomModerator } from "@/lib/voice/instant-room-moderator";
 import { createMeetingToken, getDailyRoom, buildUserName } from "@/lib/daily";
 import { normalizeVoiceRoomCode } from "@/lib/voice-room-code";
-import { DISPLAY_NAME_MIN, DISPLAY_NAME_MAX } from "@/lib/constants/account-limits";
+import { NAME_MIN_LENGTH, NAME_MAX_LENGTH } from "@/lib/constants/account-limits";
 import { trimPersonName } from "@/lib/person-name-trim";
 import { VOICE_CONFIG } from "@/lib/constants/voice";
 
@@ -134,15 +134,15 @@ export async function POST(request: Request) {
       userId = crypto.randomUUID();
 
       // Validate display name shape. Use the same rules as everywhere else
-      // (DISPLAY_NAME_MIN/MAX) so the constraint is consistent across the
+      // (NAME_MIN_LENGTH/MAX) so the constraint is consistent across the
       // app. We trim before checking, with the same whitespace class as
       // every other name, so a name of nothing but invisible characters is
       // empty rather than one character long.
       const trimmed = trimPersonName(body.displayName ?? "");
-      if (trimmed.length < DISPLAY_NAME_MIN || trimmed.length > DISPLAY_NAME_MAX) {
+      if (trimmed.length < NAME_MIN_LENGTH || trimmed.length > NAME_MAX_LENGTH) {
         return NextResponse.json(
           {
-            error: `Display name must be between ${DISPLAY_NAME_MIN} and ${DISPLAY_NAME_MAX} characters`,
+            error: `Display name must be between ${NAME_MIN_LENGTH} and ${NAME_MAX_LENGTH} characters`,
           },
           { status: 400 },
         );

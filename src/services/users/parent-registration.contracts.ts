@@ -1,5 +1,5 @@
 import { z } from "zod";
-import { DISPLAY_NAME_MIN, DISPLAY_NAME_MAX } from "@/lib/constants/account-limits";
+import { NAME_MIN_LENGTH, NAME_MAX_LENGTH } from "@/lib/constants/account-limits";
 import { trimPersonName } from "@/lib/person-name-trim";
 import { SUPPORTED_LOCALES } from "@/lib/constants/locales";
 import { GAMER_EMAIL_DOMAIN } from "@/lib/gamer-sign-in";
@@ -72,11 +72,11 @@ export const registerParentBody = z.object({
   firstName: z
     .string()
     .transform(trimPersonName)
-    .pipe(z.string().min(DISPLAY_NAME_MIN).max(DISPLAY_NAME_MAX)),
+    .pipe(z.string().min(NAME_MIN_LENGTH).max(NAME_MAX_LENGTH)),
   lastName: z
     .string()
     .transform(trimPersonName)
-    .pipe(z.string().min(DISPLAY_NAME_MIN).max(DISPLAY_NAME_MAX)),
+    .pipe(z.string().min(NAME_MIN_LENGTH).max(NAME_MAX_LENGTH)),
   /**
    * Optional home location, as a `locations.id`. Written to the profile after
    * the account exists; a failure there is never fatal (see the route).
