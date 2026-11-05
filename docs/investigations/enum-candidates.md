@@ -71,11 +71,12 @@ ranking, not a new ask.
 
 ### 2. `purchase_shape` — qualifies (size S/M)
 
-Not a column: a `text` parameter of `create_participation`, closed by a plpgsql
-`NOT IN (...)` guard (`subscription_monthly | single_payment | free | external`). The
-set is spelled out three times — the SQL guard, a `PurchaseShape` union in
+A `text` column of `bookings`, closed by a CHECK, and a `text` parameter of
+`create_booking`, closed by a plpgsql `NOT IN (...)` guard
+(`subscription_monthly | single_payment | free | external`). The set is spelled out
+four times — the CHECK, the SQL guard, a `PurchaseShape` union in
 `src/types/index.ts`, and a zod tuple in the participations contracts that already
-fights the duplication with `as const satisfies readonly PurchaseShape[]`. Three
+fights the duplication with `as const satisfies readonly PurchaseShape[]`. Four
 copies with a compile-time brace between two of them is the shape that wants codegen.
 No admin UI; the value is chosen from the product's billing mode.
 

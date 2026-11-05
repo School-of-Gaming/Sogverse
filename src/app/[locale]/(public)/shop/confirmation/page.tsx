@@ -1,10 +1,5 @@
 import type { Metadata } from "next";
-import type Stripe from "stripe";
-import {
-  createClient,
-  getUser,
-  getUserWithProfile,
-} from "@/lib/supabase/server";
+import { createClient, getUserWithProfile } from "@/lib/supabase/server";
 import {
   ParticipationsService,
   type CheckoutConfirmation,
@@ -17,7 +12,6 @@ import {
   type SignupOutcome,
 } from "@/components/public/products/purchase-confirmation-view";
 import { PurchaseConfirmationFinalizing } from "@/components/public/products/purchase-confirmation-finalizing";
-import { stripe } from "@/lib/stripe/client";
 import type {
   ParticipationConfirmation,
 } from "@/services/participations/participations.service";
@@ -92,10 +86,9 @@ export default async function ShopConfirmationPage({
  * who booked, so a session id someone else pasted returns nothing, and its status
  * says what happened without a round trip to Stripe.
  *
- * No booking means someone else's session id, a stale link, or a
- * legacy-checkout-session Session the webhook has not reached yet, and only the
- * last of those is answered differently. A transient read failure lands here too:
- * the same accepted edge case as the participation path, cured by a reload.
+ * No booking means someone else's session id or a stale link. A transient read
+ * failure lands there too: the same accepted edge case as the participation path,
+ * cured by a reload.
  */
 async function renderPaidConfirmation(
   supabase: AppSupabaseClient,
@@ -107,7 +100,7 @@ async function renderPaidConfirmation(
     booking =
       await participations.getConfirmationByCheckoutSession(checkoutSessionId);
   } catch {
-    // Falls through to the Stripe gates below rather than to a 500.
+    // Falls through to the fallback below rather than to a 500.
   }
 
   switch (booking?.state) {
@@ -123,80 +116,10 @@ async function renderPaidConfirmation(
       return (
         <PurchaseConfirmationFinalizing checkoutSessionId={checkoutSessionId} />
       );
-    case "seat_gone":
-      return <PurchaseConfirmationFallback />;
   }
 
-  // legacy-checkout-session: everything from here to the end of this function. A
-  // Session created before bookings has no booking until its webhook lands, so
-  // Stripe's own answer stands in. All three gates are load-bearing: Stripe must
-  // recognise the session, it must actually have bought something, and its
-  // metadata must name the signed-in user as the purchaser. Without them a
-  // stranger's pasted session id would be answered "Payment received", which is
-  // both a lie and a leak.
-  const user = await getUser();
-  if (!user) return <PurchaseConfirmationFallback />;
-
-  let session: Stripe.Checkout.Session;
-  try {
-    session = await stripe.checkout.sessions.retrieve(checkoutSessionId);
-  } catch {
-    // Unknown or malformed session id — a stale or hand-edited link.
-    return <PurchaseConfirmationFallback />;
-  }
-
-  // "It was actually bought" — which for a subscription does not mean money
-  // moved today. A club whose first charge is deferred to a future start date
-  // (and a 100%-off promotion code) completes at €0, which Stripe reports as
-  // `no_payment_required`; the subscription is live and will bill later, so
-  // requiring `"paid"` here would answer a real purchaser with "we couldn't find
-  // that order". Payment-mode sessions (camps, events) still require `"paid"`:
-  // a one-off that collected nothing bought nothing.
-  const boughtSomething =
-    session.payment_status === "paid" ||
-    (session.mode === "subscription" &&
-      session.payment_status === "no_payment_required");
-  if (!boughtSomething || session.metadata?.customerId !== user.id) {
-    return <PurchaseConfirmationFallback />;
-  }
-
-  // Bought, and no row. Two very different reasons, and the parent deserves to be
-  // told which: the webhook hasn't landed yet (wait), or the payment was refused
-  // as a duplicate because this gamer already holds a spot on this product. In
-  // the second case no row will *ever* carry this session id, so waiting would
-  // spin forever under copy promising it only takes a moment.
-  // `metadata` is non-null past the check above: a session without it can't have
-  // matched the signed-in user's id.
-  //
-  // `|| undefined` rather than a bare read: Stripe types metadata as a total
-  // string map, so a session that somehow lacks the key reads as `undefined` at
-  // runtime while the compiler believes it is a string. Falsiness is the honest
-  // test — a blank id is as unusable here as a missing one.
-  const participantId = session.metadata.participantId || undefined;
-  const productId = session.metadata.productId;
-  if (participantId && productId) {
-    let alreadySeated = false;
-    try {
-      alreadySeated = await participations.hasSeatOnProduct(
-        productId,
-        participantId,
-      );
-    } catch {
-      // Unreadable → treat as "not a duplicate" and wait. The waiting state is
-      // bounded, so a wrong guess here costs a delay, not a dead end.
-    }
-    if (alreadySeated) {
-      return <PurchaseConfirmationNotice kind="duplicatePayment" />;
-    }
-  }
-
-  // Stripe waits up to ten seconds on our webhook before redirecting, so getting
-  // here needs the endpoint to have failed or run long. Show that the payment
-  // worked and wait for the row — telling a parent who has just been charged
-  // that we can't find their order would be both alarming and wrong.
-  return (
-    <PurchaseConfirmationFinalizing checkoutSessionId={checkoutSessionId} />
-  );
+  // No booking, or one whose seat has since ended.
+  return <PurchaseConfirmationFallback />;
 }
 
 /** The shared tail: resolve the product, then render the summary. */
