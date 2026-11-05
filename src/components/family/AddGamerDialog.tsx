@@ -87,7 +87,19 @@ const CREDENTIAL_FIELD_ID_PREFIX = "add-gamer";
 interface AddGamerDialogProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
-  onCreated?: (gamerId: string) => void;
+  /**
+   * Handed the new child's id and the id the route's child-added report went
+   * out under, so a caller that can push the browser twin of that report — a
+   * product's sign-up panel — pushes it under the same one.
+   */
+  onCreated?: (gamerId: string, eventId: string) => void;
+  /**
+   * The product whose sign-up panel the dialog was opened from, passed only by
+   * that panel, so the route's report can name it. Any add outside a product's
+   * sign-up panel — the family's own pages — passes none, and the child is
+   * reported without a product, under the dashboard's fixed path.
+   */
+  productId?: string;
 }
 
 /**
@@ -107,9 +119,9 @@ interface AddGamerDialogProps {
  * single chokepoint that enforces it: it never renders the form for a locked
  * session. Every call site gets the gate for free — see `AddGamerGate`.
  */
-export function AddGamerDialog({ open, onOpenChange, onCreated }: AddGamerDialogProps) {
+export function AddGamerDialog({ open, ...props }: AddGamerDialogProps) {
   if (!open) return null;
-  return <AddGamerGate onOpenChange={onOpenChange} onCreated={onCreated} />;
+  return <AddGamerGate {...props} />;
 }
 
 /**
@@ -127,7 +139,7 @@ export function AddGamerDialog({ open, onOpenChange, onCreated }: AddGamerDialog
  * We seed the status cache so the view swaps to the form and a reopen stays
  * unlocked rather than re-prompting.
  */
-function AddGamerGate({ onOpenChange, onCreated }: Omit<AddGamerDialogProps, "open">) {
+function AddGamerGate({ onOpenChange, ...props }: Omit<AddGamerDialogProps, "open">) {
   const queryClient = useQueryClient();
   const { data: status, isError } = usePinStatus();
 
@@ -143,7 +155,7 @@ function AddGamerGate({ onOpenChange, onCreated }: Omit<AddGamerDialogProps, "op
   }
 
   if (status.unlocked) {
-    return <AddGamerForm onOpenChange={onOpenChange} onCreated={onCreated} />;
+    return <AddGamerForm onOpenChange={onOpenChange} {...props} />;
   }
 
   return (
@@ -203,17 +215,30 @@ function GatePlaceholder({ error, onClose }: { error: boolean; onClose: () => vo
 function AddGamerForm({
   onOpenChange,
   onCreated,
+  productId,
 }: Omit<AddGamerDialogProps, "open">) {
   const { user } = useRequiredAuth();
   const createGamer = useCreateGamer();
 
+  // Every create reports a child added, so every attempt mints its own id:
+  // shared by the route's report and whatever the caller pushes, a failed
+  // attempt reports nothing, and a retry is a new attempt. The caller hears of
+  // the child here rather than through the card, because only here is the id
+  // known.
+  const create = async (input: CreateGamerInput) => {
+    const eventId = crypto.randomUUID();
+    const result = await createGamer.mutateAsync({
+      parentId: user.id,
+      input,
+      conversion: { productId, eventId },
+    });
+    onCreated?.(result.gamerId, eventId);
+    return result;
+  };
+
   return (
     <Dialog open onOpenChange={onOpenChange}>
-      <AddGamerFormCard
-        onOpenChange={onOpenChange}
-        onCreated={onCreated}
-        onCreate={(input) => createGamer.mutateAsync({ parentId: user.id, input })}
-      />
+      <AddGamerFormCard onOpenChange={onOpenChange} onCreate={create} />
     </Dialog>
   );
 }
@@ -243,14 +268,12 @@ function AddGamerForm({
 export function AddGamerFormCard({
   onCreate,
   onOpenChange,
-  onCreated,
   className,
   initial,
   idPrefix = CREDENTIAL_FIELD_ID_PREFIX,
 }: {
   onCreate: (input: CreateGamerInput) => Promise<{ gamerId: string }>;
   onOpenChange: (open: boolean) => void;
-  onCreated?: (gamerId: string) => void;
   className?: string;
   initial?: InitialState;
   /**
@@ -364,7 +387,7 @@ export function AddGamerFormCard({
     setCommitting(true);
 
     try {
-      const result = await onCreate({
+      await onCreate({
         firstName: trimmedName,
         birth: { year: Number(year), month: Number(month) },
         gender,
@@ -382,7 +405,6 @@ export function AddGamerFormCard({
         // route's schema refuses anything else regardless.
         guardianAttested: true,
       });
-      onCreated?.(result.gamerId);
       onOpenChange(false);
       // Intentionally not clearing `committing` — the dialog unmounts.
     } catch (caught) {

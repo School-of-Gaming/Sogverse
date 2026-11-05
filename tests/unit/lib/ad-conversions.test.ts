@@ -134,6 +134,29 @@ describe("reportAdConversion", () => {
     );
   });
 
+  it("tells each platform about a child added, unpriced, under its custom name", async () => {
+    await reportAdConversion(
+      request(),
+      { event: "child_added", product: PRODUCT, sourcePath: "/shop/abc-123" },
+      PARENT,
+    );
+
+    expect(fetchMock).toHaveBeenCalledTimes(2);
+    const meta = eventSentTo(META_URL);
+    expect(meta.event_name).toBe("ChildProfileCreated");
+    const { value: _value, currency: _currency, ...unpricedMeta } = PRODUCT.meta;
+    expect(meta.custom_data).toEqual(unpricedMeta);
+    const reddit = eventSentTo(REDDIT_URL);
+    expect(reddit.type).toEqual({
+      tracking_type: "CUSTOM",
+      custom_event_name: "ChildProfileCreated",
+    });
+    const metadata = asObject(reddit.metadata);
+    expect(metadata.products).toEqual(PRODUCT.reddit.products);
+    expect(metadata).not.toHaveProperty("value");
+    expect(metadata).not.toHaveProperty("currency");
+  });
+
   // The id is each platform's dedup key against the browser's event for the
   // same moment, so both platforms must carry the one the browser pushed.
   it("hands every platform the event id the browser sent", async () => {

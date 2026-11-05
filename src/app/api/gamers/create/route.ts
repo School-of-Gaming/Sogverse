@@ -1,8 +1,11 @@
-import { NextResponse } from "next/server";
+import { NextResponse, after } from "next/server";
 import { defineRoute } from "@/lib/api/define-route";
 import { ApiError } from "@/lib/api/api-error";
 import { isEmailAlreadyRegistered } from "@/lib/auth-email.server";
 import { createAdminClient } from "@/lib/supabase/admin";
+import { reportAdConversion } from "@/lib/ad-conversions.server";
+import { advertisedProductFor } from "@/lib/advertised-product.server";
+import { ROUTES } from "@/lib/constants/routes";
 import {
   randomSyntheticGamerEmail,
   usernameToSyntheticEmail,
@@ -68,6 +71,8 @@ export const POST = defineRoute({
       email,
       password,
       guardianAttested,
+      productId,
+      eventId,
     } = body;
 
     // Against the month the database's own CHECK compares with: its
@@ -261,6 +266,54 @@ export const POST = defineRoute({
         console.error("gamer creation: welcome email failed", mailError);
       }
     }
+
+    // The child-added conversion, reported to the advertising platforms from
+    // here, the handler that committed it, for every child a parent adds —
+    // modelled on the lead, which reports every new account.
+    //
+    // AFTER the response, so a platform's round trip cannot delay or fail a
+    // child's account that already exists. The reporters decide for themselves
+    // whether to send anything: they refuse without this request's marketing
+    // consent, and the route is customer-only, so a gamer can never reach this.
+    //
+    // **The product is optional, and decided by the product row, never by the
+    // id alone.** Only a product's sign-up panel sends one; the id is untrusted,
+    // so the product is read after the response and named only when it is one
+    // we advertise, since a product nobody advertises is noise a campaign would
+    // optimise against. No id (any add outside a product's sign-up panel — the
+    // family's own pages), or an unknown, unadvertised or unreadable product:
+    // the report goes out naming none.
+    //
+    // **The source path is stated, never taken from this route's own URL:** the
+    // product's public page whenever the panel sent an id, advertised or not —
+    // that is where the parent was, and a product id is not sensitive — and
+    // otherwise the parent dashboard's fixed path, which names nobody.
+    //
+    // The report carries the parent and, at most, the product — nothing about
+    // the child: not the name, the birth month, the new account's id or how
+    // many children the family has. The reporters drop the price. The event id
+    // is the one the dialog minted for this attempt; the panel pushes its own
+    // `child_added` under it once this answers, so each platform counts the
+    // two once.
+    after(async () =>
+      reportAdConversion(
+        request,
+        {
+          event: "child_added",
+          product:
+            productId === undefined
+              ? undefined
+              : await advertisedProductFor(productId),
+          sourcePath:
+            productId === undefined
+              ? ROUTES.customer.dashboard
+              : ROUTES.shopProductPath(productId),
+          eventId,
+        },
+        // The signed-in parent's own id and address, never the child's.
+        { id: user.id, email: profile.email },
+      ),
+    );
 
     // The RPC committed, so the gamer exists. Return only its id — the sole
     // thing callers consume (to pre-select the new gamer). The client

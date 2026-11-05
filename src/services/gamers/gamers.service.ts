@@ -59,6 +59,16 @@ export interface GamerProfileEdit {
   gender: GenderType | null;
 }
 
+/**
+ * What the route's child-added report needs from the caller: the id this
+ * attempt's report goes out under, and the product whose sign-up panel the
+ * child is being added from, when it is.
+ */
+export interface ChildAddedConversion {
+  productId?: string;
+  eventId: string;
+}
+
 export class GamerService {
   constructor(private supabase: AppSupabaseClient) {}
 
@@ -204,7 +214,8 @@ export class GamerService {
 
   async createGamerAccount(
     _parentId: string,
-    input: CreateGamerInput
+    input: CreateGamerInput,
+    conversion: ChildAddedConversion,
   ): Promise<{ gamerId: string }> {
     const response = await fetch("/api/gamers/create", {
       method: "POST",
@@ -226,6 +237,11 @@ export class GamerService {
         // on the parent's behalf: the value has to arrive from a caller, and the
         // form that makes this call refuses to submit until the box is ticked.
         guardianAttested: input.guardianAttested,
+        // For the route's child-added report, never about the child: the id
+        // it goes out under, and the product whose sign-up panel the child is
+        // being added from, when it is.
+        productId: conversion.productId,
+        eventId: conversion.eventId,
       }),
     });
 
