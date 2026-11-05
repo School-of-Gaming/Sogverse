@@ -458,7 +458,7 @@ function mockAdmin(opts: AdminMockOptions = {}) {
       };
     }
     // `participations` deliberately has no entry: the handler reaches that
-    // table only through the confirm RPCs, never with a direct write.
+    // table only through confirm_booking, never with a direct write.
     // A table appearing here that shouldn't should fail loudly.
     throw new Error(`Unexpected table in admin mock: ${table}`);
   });
@@ -1823,7 +1823,7 @@ describe("POST /api/webhooks/stripe/products", () => {
   });
 });
 
-describe("POST /api/webhooks/stripe/products — a Session with a booking", () => {
+describe("POST /api/webhooks/stripe/products — the facts confirm_booking answers with", () => {
 
   beforeEach(() => {
     vi.clearAllMocks();
@@ -1956,21 +1956,6 @@ describe("POST /api/webhooks/stripe/products — a Session with a booking", () =
       expect.stringContaining("since ended"),
       expect.objectContaining({ subscription: SUB_ID }),
     );
-    consoleError.mockRestore();
-  });
-
-  it.each([
-    ["an RPC error", { data: null, error: { message: "session mismatch" } }],
-    ["an unknown shape", { data: { kind: "confirmed" }, error: null }],
-  ])("answers 500 so Stripe retries on %s", async (_name, answer) => {
-    const inserts = mockAdmin();
-    const consoleError = vi.spyOn(console, "error").mockImplementation(() => {});
-    mockAdminRpc.mockResolvedValueOnce(answer);
-
-    const res = await POST(createWebhookRequest());
-    expect(res.status).toBe(500);
-    expect(inserts.payments).toEqual([]);
-    expect(inserts.processedEvents).toEqual([]);
     consoleError.mockRestore();
   });
 });

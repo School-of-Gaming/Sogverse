@@ -169,8 +169,13 @@ async function handleCheckoutCompleted(
   //   duplicate_payment — a different payment already put this participant on
   //                       this product. Handled below.
   const confirmed = await confirmBooking(admin, bookingId, session.id);
-  const { customerId, participantId, productId, purchaseShape, currency } =
-    confirmed.facts;
+  const {
+    customer_id: customerId,
+    participant_id: participantId,
+    product_id: productId,
+    purchase_shape: purchaseShape,
+    currency,
+  } = confirmed;
   const isSubscription = purchaseShape.startsWith("subscription_");
 
   if (confirmed.kind === "duplicate_payment") {
@@ -184,7 +189,7 @@ async function handleCheckoutCompleted(
     console.error(
       "[stripe/products webhook] duplicate payment detected — admin must refund manually",
       {
-        existingParticipationId: confirmed.existingParticipationId,
+        existingParticipationId: confirmed.existing_participation_id,
         eventId: event.id,
         customerId,
         participantId,
@@ -220,7 +225,7 @@ async function handleCheckoutCompleted(
         gamerId: participantId,
         productId,
         purchaseShape,
-        existingParticipationId: confirmed.existingParticipationId,
+        existingParticipationId: confirmed.existing_participation_id,
       },
     });
 
@@ -251,7 +256,7 @@ async function handleCheckoutCompleted(
   // payment still lands, as the record of the charge, naming the product but no
   // seat (the answer carries none), and a live subscription now has nothing
   // tracking it, so the log names it for a person.
-  if (confirmed.participationId === null) {
+  if (confirmed.participation_id === null) {
     console.error(
       "[stripe/products webhook] completed session for a seat that has since ended — check the subscription and refund by hand",
       {
@@ -314,7 +319,7 @@ async function handleCheckoutCompleted(
 
     const { error: subErr } = await admin.from("family_subscriptions").insert({
       customer_id: customerId,
-      participation_id: confirmed.participationId,
+      participation_id: confirmed.participation_id,
       stripe_subscription_id: subId,
       stripe_customer_id: stripeCustomerId,
       stripe_price_id: sub.items.data[0]?.price.id ?? null,
@@ -348,7 +353,7 @@ async function handleCheckoutCompleted(
     amountCents: session.amount_total ?? 0,
     currency,
     purpose: paymentPurposeFor(purchaseShape),
-    participationId: confirmed.participationId,
+    participationId: confirmed.participation_id,
     productId,
     stripePaymentIntentId: expandableId(session.payment_intent),
     stripeInvoiceId: expandableId(session.invoice),
@@ -357,7 +362,7 @@ async function handleCheckoutCompleted(
       gamerId: participantId,
       productId,
       purchaseShape,
-      participationId: confirmed.participationId,
+      participationId: confirmed.participation_id,
     },
   });
 
@@ -391,7 +396,7 @@ async function handleCheckoutCompleted(
       customerId,
       participantId,
       productId,
-      participationId: confirmed.participationId,
+      participationId: confirmed.participation_id,
       // The price shape, from the shape that was bought: a club is a monthly
       // subscription, a camp or event is paid once.
       mode: isSubscription ? "subscription" : "upfront",
@@ -428,26 +433,11 @@ async function cancelDuplicateSubscription(subId: string, eventId: string) {
   }
 }
 
-/** What every write after the confirm takes its facts from. */
-interface ConfirmedFacts {
-  customerId: string;
-  participantId: string;
-  productId: string;
-  purchaseShape: string;
-  currency: string;
-}
-
-/** A confirm's answer. */
-type ConfirmOutcome = { facts: ConfirmedFacts } & (
-  | { kind: "settled"; participationId: string | null; idempotent: boolean }
-  | { kind: "duplicate_payment"; existingParticipationId: string | null }
-);
-
 async function confirmBooking(
   admin: Admin,
   bookingId: string,
   checkoutSessionId: string,
-): Promise<ConfirmOutcome> {
+) {
   const { data, error } = await admin.rpc("confirm_booking", {
     p_booking_id: bookingId,
     p_checkout_session_id: checkoutSessionId,
@@ -461,26 +451,7 @@ async function confirmBooking(
       `confirm_booking returned an unexpected shape: ${parsed.error.message}`,
     );
   }
-  const result = parsed.data;
-  const facts: ConfirmedFacts = {
-    customerId: result.customer_id,
-    participantId: result.participant_id,
-    productId: result.product_id,
-    purchaseShape: result.purchase_shape,
-    currency: result.currency,
-  };
-  return result.kind === "settled"
-    ? {
-        facts,
-        kind: "settled",
-        participationId: result.participation_id,
-        idempotent: result.idempotent,
-      }
-    : {
-        facts,
-        kind: "duplicate_payment",
-        existingParticipationId: result.existing_participation_id,
-      };
+  return parsed.data;
 }
 
 /**
