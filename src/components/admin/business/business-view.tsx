@@ -25,6 +25,7 @@ import {
   type ChartColor,
   type ChartConfig,
 } from "@/components/ui/chart";
+import { cn } from "@/lib/cn";
 import { formattingLocale } from "@/lib/constants/locales";
 import { formatDate, formatDateOnly } from "@/lib/date-format";
 import { formatCurrencyFromCents } from "@/lib/money";
@@ -272,6 +273,7 @@ function HeadlineTiles({ overview }: { overview: BusinessOverview }) {
               ? t("revenueTotal.same")
               : t("revenueTotal.change", { change: signedEuros(totalChange) })
         }
+        trend={totalChange ?? 0}
       />
       <Tile
         label={t("subscriptions.label")}
@@ -284,6 +286,7 @@ function HeadlineTiles({ overview }: { overview: BusinessOverview }) {
                 change: signedEuros(figureChange(headline.monthlyRecurringRevenueCents)),
               })
         }
+        trend={figureChange(headline.monthlyRecurringRevenueCents)}
         note={
           headline.subscriptionsOutsideRevenue > 0
             ? t("subscriptions.outside", { count: headline.subscriptionsOutsideRevenue })
@@ -301,12 +304,14 @@ function HeadlineTiles({ overview }: { overview: BusinessOverview }) {
             : undefined
         }
         change={<CountChange change={figureChange(headline.payingFamilies)} />}
+        trend={figureChange(headline.payingFamilies)}
       />
       <Tile
         label={t("gamers.label")}
         value={count(headline.gamersInSeat.now)}
         detail={t("gamers.municipality", { count: headline.gamersInMunicipalitySeat.now })}
         change={<CountChange change={figureChange(headline.gamersInSeat)} />}
+        trend={figureChange(headline.gamersInSeat)}
       />
       <Tile
         label={t("firstWeek.label")}
@@ -320,9 +325,19 @@ function HeadlineTiles({ overview }: { overview: BusinessOverview }) {
               })
         }
         change={ratePoints === null ? undefined : <PointsChange points={ratePoints} />}
+        trend={ratePoints ?? 0}
       />
     </dl>
   );
+}
+
+/**
+ * A change's colour: every tile reads higher as better, so up is good news and
+ * down is bad. The sign in the text says the same, so the colour is never the
+ * only cue.
+ */
+function trendClass(trend: number): string {
+  return trend > 0 ? "text-success" : trend < 0 ? "text-destructive" : "text-muted-foreground";
 }
 
 function Tile({
@@ -330,6 +345,7 @@ function Tile({
   value,
   detail,
   change,
+  trend,
   note,
 }: {
   label: string;
@@ -337,6 +353,8 @@ function Tile({
   value: string | null;
   detail?: string;
   change?: ReactNode;
+  /** The change's direction, which colours its line. */
+  trend?: number;
   note?: string;
 }) {
   return (
@@ -347,7 +365,7 @@ function Tile({
           <p className="text-3xl font-semibold tabular-nums">{value}</p>
         )}
         {detail && <p className="text-sm text-muted-foreground">{detail}</p>}
-        {change && <p className="text-xs text-muted-foreground">{change}</p>}
+        {change && <p className={cn("text-xs", trendClass(trend ?? 0))}>{change}</p>}
         {note && <p className="text-xs text-muted-foreground">{note}</p>}
       </dd>
     </Card>
