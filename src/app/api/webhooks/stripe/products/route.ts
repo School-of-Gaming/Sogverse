@@ -203,35 +203,10 @@ async function handleCheckoutCompleted(
       },
     );
 
-    // A duplicate *subscription* is live and recurring by the time this event
-    // fires, and nothing else will ever stop it: no family_subscriptions row is
-    // written, so renewals drop in the invoice handler and a cancellation finds
-    // no row to tear down. Refunding one invoice does not stop the next one —
-    // the subscription itself has to be cancelled, here. Single-payment
-    // duplicates need no equivalent: one charge, refunded by hand.
-    //
-    // A failed cancel is logged rather than thrown, deliberately. Throwing
-    // would win a free Stripe retry, but it would also stop the payment row
-    // landing — the record an admin queries when the customer reports the
-    // double charge — and the event being marked processed. Worse, a
-    // cancel is not safely repeatable: if the first one succeeded and only its
-    // response was lost, the retry asks Stripe to cancel an already-cancelled
-    // subscription and fails again, looping until Stripe gives up with nothing
-    // recorded. So: record everything, and put the failure in the same log the
-    // admin is already reading, naming the subscription they must cancel.
-    if (isSubscription && typeof session.subscription === "string") {
-      try {
-        await stripe.subscriptions.cancel(session.subscription);
-      } catch (cancelErr) {
-        console.error(
-          "[stripe/products webhook] could not cancel the duplicate subscription — cancel it by hand or it keeps billing",
-          { subscription: session.subscription, eventId: event.id, cancelErr },
-        );
-      }
-    }
-
     // A duplicate bought no seat, so it names none: the seat the family
-    // already held is the metadata's `existingParticipationId`.
+    // already held is the metadata's `existingParticipationId`. Recorded before
+    // the cancel below, so a cancel that keeps failing still leaves the money
+    // on record; a re-run meets the UNIQUE on stripe_event_id.
     await recordPayment(admin, {
       stripeEventId: event.id,
       customerId,
@@ -255,6 +230,22 @@ async function handleCheckoutCompleted(
         existingParticipationId: confirmed.existingParticipationId,
       },
     });
+
+    // A duplicate *subscription* is live and recurring by the time this event
+    // fires, and nothing else will ever stop it: no family_subscriptions row is
+    // written, so renewals drop in the invoice handler and a cancellation finds
+    // no row to tear down. Refunding one invoice does not stop the next one —
+    // the subscription itself has to be cancelled, here. Single-payment
+    // duplicates need no equivalent: one charge, refunded by hand.
+    //
+    // A failed cancel throws, so the event is not marked processed and Stripe's
+    // retry cancels again — for days, where a log line waits for someone to
+    // read it. The re-run is safe: confirm_booking answers duplicate_payment
+    // again, the payment is recorded once, and the cancel skips a subscription
+    // already cancelled (see the helper).
+    if (isSubscription && typeof session.subscription === "string") {
+      await cancelDuplicateSubscription(session.subscription, event.id);
+    }
 
     return;
   }
@@ -417,6 +408,30 @@ async function handleCheckoutCompleted(
       // Null on everything but a club bought before it starts — see above.
       firstChargeAt,
     });
+  }
+}
+
+/**
+ * Cancels a duplicate checkout's subscription, and throws when it cannot.
+ *
+ * Read first, because a cancel is not repeatable on its own: Stripe refuses to
+ * cancel a subscription that has already ended, so a re-run after a cancel that
+ * succeeded (only its response lost) would fail on every retry. A subscription
+ * already ended is the cancel having happened, and there is nothing to do.
+ */
+async function cancelDuplicateSubscription(subId: string, eventId: string) {
+  try {
+    const sub = await stripe.subscriptions.retrieve(subId);
+    if (sub.status === "canceled" || sub.status === "incomplete_expired") {
+      return;
+    }
+    await stripe.subscriptions.cancel(subId);
+  } catch (cancelErr) {
+    console.error(
+      "[stripe/products webhook] could not cancel the duplicate subscription — Stripe retries this event; if it keeps failing, cancel it by hand or it keeps billing",
+      { subscription: subId, eventId, cancelErr },
+    );
+    throw cancelErr;
   }
 }
 
