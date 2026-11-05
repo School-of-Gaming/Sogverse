@@ -29,7 +29,7 @@ import {
 } from "@/services/gamer-photo-consents/gamer-photo-consents.queries";
 import { useMinecraftAccount } from "@/services/minecraft/minecraft.queries";
 import { useRobloxAccount } from "@/services/roblox/roblox.queries";
-import { DISPLAY_NAME_MAX } from "@/lib/constants/account-limits";
+import { DISPLAY_NAME_MAX, DISPLAY_NAME_MIN } from "@/lib/constants/account-limits";
 import { ROUTES } from "@/lib/constants/routes";
 import { computeAge } from "@/lib/gamer-age-eligibility";
 import { trimPersonName } from "@/lib/person-name-trim";
@@ -232,7 +232,7 @@ export default function GamerDetailsPage() {
 
             <Button
               type="submit"
-              disabled={isSavingProfile || trimPersonName(firstName).length < 2}
+              disabled={isSavingProfile || trimPersonName(firstName).length < DISPLAY_NAME_MIN}
             >
               {isSavingProfile ? c('saving') : c('saveChanges')}
             </Button>

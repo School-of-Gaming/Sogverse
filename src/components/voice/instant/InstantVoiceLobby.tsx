@@ -11,6 +11,7 @@ import { Identicon } from "@/components/ui/identicon";
 import { Input } from "@/components/ui/input";
 import { cn } from "@/lib/cn";
 import { DISPLAY_NAME_MIN, DISPLAY_NAME_MAX } from "@/lib/constants/account-limits";
+import { trimPersonName } from "@/lib/person-name-trim";
 import { useLocalStreamGlow } from "@/components/voice/hooks/use-local-stream-glow";
 import { MicToggleButton, CameraToggleButton } from "@/components/voice/MediaToggleButtons";
 import { MicSettingsPopover } from "@/components/voice/MicSettingsPopover";
@@ -216,7 +217,7 @@ export function InstantVoiceLobby({ code, onJoin, viewer, joining, joinFailed }:
     }
   };
 
-  const trimmedName = name.trim();
+  const trimmedName = trimPersonName(name);
   const nameValid =
     trimmedName.length >= DISPLAY_NAME_MIN &&
     trimmedName.length <= DISPLAY_NAME_MAX;

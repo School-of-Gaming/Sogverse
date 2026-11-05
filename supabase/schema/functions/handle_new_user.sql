@@ -60,9 +60,11 @@ BEGIN
 
     -- A provider's name is not ours to shape, and a CHECK refusing it would
     -- fail the person's sign-in. No name, or one the profiles CHECKs would
-    -- refuse, gives the stand-in whole, never half of each.
+    -- refuse, gives the stand-in whole, never half of each. A part is never
+    -- empty, because the whole name was trimmed before the split, so length
+    -- is the only rule a part can break.
     IF profile_first_name IS NULL
-       OR char_length(profile_first_name) NOT BETWEEN 1 AND 32
+       OR char_length(profile_first_name) > 32
        OR char_length(profile_last_name) > 32 THEN
       profile_first_name := 'New User';
       profile_last_name  := '';

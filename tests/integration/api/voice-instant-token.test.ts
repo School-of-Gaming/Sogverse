@@ -115,6 +115,14 @@ describe("POST /api/voice/instant/token", () => {
       expect(response.status).toBe(400);
     });
 
+    it("returns 400 when displayName is a lone zero-width space", async () => {
+      unauthenticated();
+      const response = await POST(
+        createTokenRequest({ code: "K7P2", displayName: "​" }),
+      );
+      expect(response.status).toBe(400);
+    });
+
     it("accepts a one-character displayName", async () => {
       unauthenticated();
       const response = await POST(

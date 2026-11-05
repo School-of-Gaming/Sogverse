@@ -6,6 +6,7 @@ import { instantRoomModerator } from "@/lib/voice/instant-room-moderator";
 import { createMeetingToken, getDailyRoom, buildUserName } from "@/lib/daily";
 import { normalizeVoiceRoomCode } from "@/lib/voice-room-code";
 import { DISPLAY_NAME_MIN, DISPLAY_NAME_MAX } from "@/lib/constants/account-limits";
+import { trimPersonName } from "@/lib/person-name-trim";
 import { VOICE_CONFIG } from "@/lib/constants/voice";
 
 /**
@@ -134,9 +135,10 @@ export async function POST(request: Request) {
 
       // Validate display name shape. Use the same rules as everywhere else
       // (DISPLAY_NAME_MIN/MAX) so the constraint is consistent across the
-      // app. We trim before checking because trailing whitespace is just
-      // noise in display names.
-      const trimmed = body.displayName?.trim() ?? "";
+      // app. We trim before checking, with the same whitespace class as
+      // every other name, so a name of nothing but invisible characters is
+      // empty rather than one character long.
+      const trimmed = trimPersonName(body.displayName ?? "");
       if (trimmed.length < DISPLAY_NAME_MIN || trimmed.length > DISPLAY_NAME_MAX) {
         return NextResponse.json(
           {
