@@ -1,7 +1,7 @@
 {
   "uncertified": {
     "title": "En attente de certification",
-    "body": "Un administrateur doit certifier votre compte Gedu avant que vous puissiez lancer des salles vocales ou réinitialiser des mots de passe Minecraft Education. Les deux outils apparaîtront ici dès que vous serez certifié."
+    "body": "Un administrateur doit certifier votre compte Gedu avant que vous puissiez lancer des salles virtuelles ou réinitialiser des mots de passe Minecraft Education. Les deux outils apparaîtront ici dès que vous serez certifié."
   },
   "minecraftPasswordReset": {
     "title": "Mots de passe Minecraft Education",

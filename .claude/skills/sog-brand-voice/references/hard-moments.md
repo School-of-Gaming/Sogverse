@@ -114,15 +114,6 @@ closing line is allowed after the substance, never instead of it, and never when
 work, money or a lesson they were counting on: "Some of you are already blaming the Toxies.
 We are not ruling it out." About once a year.
 
-## Admin screens: the family's experience, never our steps
-
-An admin reads a confirm step to answer a parent, so it describes what the family will
-experience. "The same card is charged on the same date, the next invoice corrects for the
-rest of this month, and from then on they pay the new club's price" is usable; "we put the
-subscription on the new price and Stripe settles the difference" is not, though both are
-true. The test: could the sentence be repeated to the family unchanged? The exception is a
-refusal that genuinely sends the admin to Stripe or another system, which names it.
-
 ## Saying what keeps a child safe
 
 **Level 0 or 1, never higher.** No safety claim is improved by the word Yty.

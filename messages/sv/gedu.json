@@ -81,8 +81,8 @@
     "photosWhat": "Lägger till bilder i tillfällets rapport, eller tar bort dem.",
     "substituteTitle": "Be om en vikarie",
     "substituteWhat": "Ber en annan Gedu att hålla tillfället i ditt ställe.",
-    "roomTitle": "Andra gruppers röstrum",
-    "roomWhat": "Går med i en annan grupps röstrum för att täcka upp för dess Gedu en stund.",
+    "roomTitle": "Andra gruppers virtuella rum",
+    "roomWhat": "Går med i en annan grupps virtuella rum för att täcka upp för dess Gedu en stund.",
     "screenShareTitle": "Dela din skärm",
     "screenShareWhat": "Visar din skärm för alla i rummet.",
     "broadcastTitle": "Sändning",
@@ -310,7 +310,7 @@
     "items": {
       "certification": {
         "question": "Vad innebär certifiering, och vad kan jag inte göra fram till dess?",
-        "answer": "<p>Certifiering är att en administratör bekräftar att ditt konto är redo att arbeta med barn. Två saker kommer före den: att godkänna ditt Gedu-avtal, och att uppvisa ett straffregisterutdrag för arbete med barn (rikosrekisteriote) som är högst sex månader gammalt. Utdraget beställer du själv från Rättsregistercentralen. Vi behåller ingen kopia av det och antecknar ingenting ur det — bara att ett godtagbart utdrag har visats, och när. Din avtalssida visar hur det står till med båda.</p><p>Tills du är certifierad kan du inte tilldelas en grupp, och din Verktyg-sektion förblir stängd: du kan inte starta ett direkt röstrum, och du kan inte återställa lösenord för Minecraft Education. Du kan inte heller mejla en rapport om ett tillfälle till familjerna eller lägga till bilder i en.</p><p>Allt annat är öppet redan nu: att logga in, Min SOG, din profil och dina områden, och att läsa och godkänna avtalet. Hjälp finns här oavsett om du är certifierad eller inte — använd formuläret ovan om du väntar och vill veta var du står.</p>"
+        "answer": "<p>Certifiering är att en administratör bekräftar att ditt konto är redo att arbeta med barn. Två saker kommer före den: att godkänna ditt Gedu-avtal, och att uppvisa ett straffregisterutdrag för arbete med barn (rikosrekisteriote) som är högst sex månader gammalt. Utdraget beställer du själv från Rättsregistercentralen. Vi behåller ingen kopia av det och antecknar ingenting ur det — bara att ett godtagbart utdrag har visats, och när. Din avtalssida visar hur det står till med båda.</p><p>Tills du är certifierad kan du inte tilldelas en grupp, och din Verktyg-sektion förblir stängd: du kan inte starta ett direkt virtuellt rum, och du kan inte återställa lösenord för Minecraft Education. Du kan inte heller mejla en rapport om ett tillfälle till familjerna eller lägga till bilder i en.</p><p>Allt annat är öppet redan nu: att logga in, Min SOG, din profil och dina områden, och att läsa och godkänna avtalet. Hjälp finns här oavsett om du är certifierad eller inte — använd formuläret ovan om du väntar och vill veta var du står.</p>"
       },
       "groupAssignment": {
         "question": "Hur blir jag tilldelad en grupp?",
@@ -326,7 +326,7 @@
       },
       "safeguardingConcern": {
         "question": "Jag har en oro för ett barns trygghet mitt i ett tillfälle — vad gör jag?",
-        "answer": "<p>Ta hand om den akuta situationen först. Vid ett tillfälle online har du moderatorkontrollerna i röstrummet: tysta en mikrofon, lås den, eller flytta någon till ett eget utrymme bort från gruppen. På plats har produkten inga kontroller för det här — där hanterar du det själv i rummet. Skriv i båda fallen ner det samma dag, medan det är färskt.</p><p>Varje tillfälle har en personalanteckning, märkt för Geduer och administratörer, som familjer aldrig ser; det är där en incident, mobbning eller en oro för en spelare hör hemma. Det finns också en anteckning per spelare på gruppens deltagarlista, som följer med det barnet i den gruppen, tillfälle för tillfälle, och som likaså bara Geduer och administratörer ser. Ingen av dem är synlig för någon familj.</p><p>En anteckning är en notering, inte ett larm: ingen blir uppringd av den, så allt som är brådskande, eller allt som behöver någon utanför gruppen, går även till kontoret på {supportEmail}.</p>"
+        "answer": "<p>Ta hand om den akuta situationen först. Vid ett tillfälle online har du moderatorkontrollerna i det virtuella rummet: tysta en mikrofon, lås den, eller flytta någon till ett eget utrymme bort från gruppen. På plats har produkten inga kontroller för det här — där hanterar du det själv i rummet. Skriv i båda fallen ner det samma dag, medan det är färskt.</p><p>Varje tillfälle har en personalanteckning, märkt för Geduer och administratörer, som familjer aldrig ser; det är där en incident, mobbning eller en oro för en spelare hör hemma. Det finns också en anteckning per spelare på gruppens deltagarlista, som följer med det barnet i den gruppen, tillfälle för tillfälle, och som likaså bara Geduer och administratörer ser. Ingen av dem är synlig för någon familj.</p><p>En anteckning är en notering, inte ett larm: ingen blir uppringd av den, så allt som är brådskande, eller allt som behöver någon utanför gruppen, går även till kontoret på {supportEmail}.</p>"
       },
       "gamerNotArrived": {
         "question": "En spelare har inte kommit och tillfället har börjat — vad kan jag göra?",

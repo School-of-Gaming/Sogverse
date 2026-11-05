@@ -17,6 +17,11 @@ drift; when they differ, this one is right. A change to the voice is a change to
 made through the owner (Kyle), who takes brand questions to Mikko. When this skill says
 "ask", it means ask the owner; never invent the answer.
 
+**This skill is how School of Gaming sounds, wherever it speaks**, so every rule in it holds
+for a newsletter or an ad as much as for a screen. How the Sogverse app's copy behaves (what
+a page says about the feature behind it, errors and empty states, staff surfaces, the
+string catalogs) is the repo's, in `messages/CLAUDE.md` and `src/CLAUDE.md`.
+
 ## How to use this skill
 
 Read this file whole before writing. It carries the voice, the registers, the words and the
@@ -143,9 +148,9 @@ piece gets a level first:
 | Website and landing pages | School of Gaming | Clear, calm, confident | Hero headline up to 12 words, subhead up to 30, sections 40 to 80 | 1; prices and terms 0 | One primary button |
 | Library and blog | SoG with a named author; Reksi byline for opinion | Expert, calm, warm, sources named | 800 to 1,400 words; a heading every 200 to 300; the first paragraph answers the question | 1 | Free session block |
 | Parent's My SOG, enrolment, schedule | School of Gaming | Plain, calm, specific: a parent here is doing admin, not reading a story | As short as the task allows | 1; money and account 0 | What happens next |
-| Gamer screens (My SOG, voice room, chat, Yty, store) | School of Gaming or the Gedu | Direct, present tense, stakes visible, written to the gamer | Short; one instruction at a time for the youngest | 3; moderation 0 | What to do now |
+| Gamer screens (My SOG, virtual room, chat, Yty, store) | School of Gaming or the Gedu | Direct, present tense, stakes visible, written to the gamer | Short; one instruction at a time for the youngest | 3; moderation 0 | What to do now |
 | Gedu screens and Gedu mail | School of Gaming | Peer to peer, practical, the reason given beside the rule | Short | 0 | The action and its deadline |
-| Admin screens | School of Gaming | Plain; describes what the family will experience, never the platform's steps | Short | 0 | The consequence |
+| Admin screens | School of Gaming | Plain | Short | 0 | The consequence |
 | Transactional and onboarding email | School of Gaming | Warm, plain, specific | Under 100 words transactional, 120 to 250 routine | 1; money and safety 0 | One thing to do, one way to reach a human |
 | Weekly Gedu message (the lesson report) | The club's Gedu | Service tone, friendly, never selling | 120 to 200 words: what we did, what it practised, one tip | 1; 0 for practical or safety information | A Library article or a free community event; never prices, codes or trials |
 | Safety, billing, incidents | School of Gaming, named signer | Plain, no jokes | As short as the facts allow | 0 | What happens next, who to contact |
@@ -176,12 +181,8 @@ markets, because the municipality is paying.
 - **Few exclamation marks.** None in safety, service or Library headlines, and none in
   slogans.
 - **Sentence case headings**, bold for emphasis.
-- **Dates and times the app shows come from the shared formatters**, in the viewer's
-  locale and zone, never typed into a string; a string takes the value as a placeholder.
-  The forms under each language below are for prose a person writes.
-- **No emoji** in anything a family, a Gedu or an admin reads. In `messages/` it is also a
-  rendering rule: emoji cannot be translated or themed, so a glyph is an icon beside the
-  text. Gamer-facing social media outside the app may use them.
+- **No emoji** in anything a family, a Gedu or an admin reads. Gamer-facing social media
+  outside the app may use them.
 
 ## Writing in each language
 
@@ -208,8 +209,7 @@ markets, because the municipality is paying.
   and a length in words ("klo 18 alkaen, 90 minuuttia").
 
 **English**
-- UK English (behaviour, favourite, mum, enrol, colour) in every reader-facing string;
-  code identifiers stay American, and the two may name one thing with two spellings.
+- UK English (behaviour, favourite, mum, enrol, colour) in everything a reader sees.
 - For UK and expat families: dry understatement, sentences of about 10 to 12 words.
 - There is no English Reksi to copy yet. Write in the same spirit as the Finnish, never
   word for word, and do not translate Finnish jokes: find English ones.
@@ -228,11 +228,13 @@ the English, and never push the French imagery into the other locales. Sylvie, a
 French speaker on the team, approved these punctuation rules for French (3 Nov 2026) and
 reads the French after a large rewrite. French register:
 `vous` to adults, `tu` in child-facing strings; "clubs municipaux" but "payé par votre
-commune"; never the middle dot (`Prêt·e`) to dodge agreement, reframe instead.
+commune"; never the middle dot (`Prêt·e`) to dodge agreement, reframe instead. The child is
+"gamer" everywhere, buttons and account names included ("Ajouter un gamer", "Compte
+gamer"), never "joueur" (Sylvie, 3 Nov 2026); "joueur" stays only for a player inside a
+game, as on a Minecraft server.
 
 **Klingon (`tlh`)** is the easter egg: fun takes are welcome and accuracy is not the goal,
-except that legal pages are served in English under `tlh` and it renders "School of Gaming"
-as its own calque on purpose.
+and it renders "School of Gaming" as its own calque on purpose.
 
 ## Words
 
@@ -252,11 +254,7 @@ that come up in every piece:
   and **kerhokerta**, fr **club** and **séance** (never "leçon" or "cours", which do not
   work in French: Sylvie, 3 Nov 2026). A gamer joins a club and attends a lesson. They are
   not synonyms, and no third word is invented. A lesson's length comes from the product,
-  never from memory: lessons are getting longer. Older copy says "session" for the lesson and is
-  being swept to each language's word above in one pass (French already says "séance"); until a surface has been swept,
-  an edit to one of its strings keeps the word the surface already uses, so no screen mixes
-  the two, and a new surface says "lesson". Code and the database keep "session" as an
-  identifier. "Free session" is the fixed name of the trial offer (fi "maksuton
+  never from memory: lessons are getting longer. "Free session" is the fixed name of the trial offer (fi "maksuton
   kokeilukerta"), not a word for the meeting.
 - **camp** / leiri, **event** / tapahtuma.
 - **Sogverse**, never "the Sogverse" (the article may belong to a following noun: "the
@@ -340,9 +338,8 @@ over; `references/examples.md` example 21 shows his edit of one.
 - Every lore term at Levels 1 and 2 is glossed in its sentence; at Level 0 there are none.
 - A whole piece (a page, an email, a letter, an ad) has at least one flat, factual sentence
   with a date, a time, a duration or a price, and one clear next step.
-- A UI string (a button, a label, an error, a toast) is as short as its job: an error says
-  what went wrong in the reader's terms and the way out, and nothing is padded to meet the
-  line above.
+- A UI string (a button, a label, an error, a toast) is as short as its job, and nothing is
+  padded to meet the line above.
 - No banned words, no AI words, no dashes or semicolons as joints, no emoji.
 - Gedu, gamer, Sogverse, Princi-Pal / Reksi, Yty and the slogans are cased and spelled as
   written here.

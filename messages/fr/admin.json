@@ -11,7 +11,7 @@
       "productsLabel": "Produits à traiter",
       "productsHeading": "Produits",
       "issues": {
-        "unassignedGamers": "{count, plural, one {# joueur non placé} other {# joueurs non placés}}",
+        "unassignedGamers": "{count, plural, one {# gamer non placé} other {# gamers non placés}}",
         "groupWithoutGedu": "Le groupe {group} n’a pas de Gedu",
         "emptyGroupWithoutGedu": "Le groupe vide {group} n’a pas de Gedu",
         "waitlistOpenSeats": "{waiting} en liste d’attente · {open, plural, one {# place libre} other {# places libres}}",
@@ -712,7 +712,7 @@
         "tag": "Conçu pour",
         "regionLock": "Restriction par pays",
         "requiredConsents": "Consentements obligatoires",
-        "requiresGamerCreations": "Créations des joueurs",
+        "requiresGamerCreations": "Créations des gamers",
         "visibility": "Visibilité",
         "gamerPhotoConsents": "Questions photo",
         "marketingConsents": "Questions marketing",
@@ -796,11 +796,11 @@
       "topic": "Thème",
       "materialUrl": "URL du matériel pédagogique",
       "externalVoiceUrl": "Lien de la réunion",
-      "requiresGamerCreations": "Chaque joueur doit avoir un lien vers sa création",
+      "requiresGamerCreations": "Chaque gamer doit avoir un lien vers sa création",
       "seatAudience": "Qui peut occuper une place",
       "tag": "Conçu pour",
       "regionLock": "Restriction par pays",
-      "forGamers": "Pour les joueurs",
+      "forGamers": "Pour les gamers",
       "forParents": "Pour les parents",
       "minAge": "Âge min.",
       "maxAge": "Âge max.",
@@ -895,11 +895,11 @@
     },
     "voiceRoomModes": {
       "label": "Comment les familles rejoignent-elles les séances ?",
-      "sogverse": "Salle vocale Sogverse",
-      "sogverseDescription": "Une salle vocale est créée automatiquement et s’ouvre pour chaque séance.",
+      "sogverse": "Salle virtuelle Sogverse",
+      "sogverseDescription": "Une salle virtuelle est créée automatiquement et s’ouvre pour chaque séance.",
       "external": "Lien vers une réunion ailleurs",
-      "externalDescription": "Les familles rejoignent une réunion que vous organisez sur un autre service. Pour les publics plus nombreux qu’une salle vocale Sogverse ne peut accueillir (50 personnes).",
-      "none": "Pas de salle vocale",
+      "externalDescription": "Les familles rejoignent une réunion que vous organisez sur un autre service. Pour les publics plus nombreux qu’une salle virtuelle Sogverse ne peut accueillir (50 personnes).",
+      "none": "Pas de salle virtuelle",
       "noneDescription": "Les familles voient à la place les instructions de connexion que vous rédigez pour chaque langue."
     },
     "deliveryModes": {
@@ -946,9 +946,9 @@
       "voiceJoinInstructionsHint": "Comment les familles rejoignent les séances, rédigé pour cette langue. Public : n’importe qui peut le lire, y compris les visiteurs non connectés.",
       "topicHint": "Ce dont parle ce produit. Les familles le voient comme filtre « Univers » dans la boutique et sur la carte d’info de la page produit.",
       "materialUrlHint": "Facultatif. Réservé aux Gedus — les familles ne le voient jamais.",
-      "requiresGamerCreationsHint": "Pour les produits dont un contrat l’exige. La dernière séance reste signalée comme nécessitant une action tant que chaque joueur du groupe n’a pas de création enregistrée. Les familles ne voient aucune différence.",
-      "seatAudienceHint": "Choisissez-en au moins un. Les deux désignent un produit auquel un parent et son joueur participent ensemble — la boutique l'affiche « Pour les familles ».",
-      "forGamersHint": "Un parent inscrit son joueur et le joueur occupe la place. Nécessite une tranche d’âge.",
+      "requiresGamerCreationsHint": "Pour les produits dont un contrat l’exige. La dernière séance reste signalée comme nécessitant une action tant que chaque gamer du groupe n’a pas de création enregistrée. Les familles ne voient aucune différence.",
+      "seatAudienceHint": "Choisissez-en au moins un. Les deux désignent un produit auquel un parent et son gamer participent ensemble — la boutique l'affiche « Pour les familles ».",
+      "forGamersHint": "Un parent inscrit son gamer et le gamer occupe la place. Nécessite une tranche d’âge.",
       "forParentsHint": "Un parent occupe une place pour lui-même et y participe. Pas de tranche d’âge — l’âge décrit les enfants, pas les adultes.",
       "tagHint": "Facultatif. Les familles la voient comme une étiquette sur la carte de la boutique et la page du produit. Elle indique pour qui les séances ont été conçues, pas qui peut occuper une place.",
       "regionLockHint": "Seules les familles du pays choisi peuvent s’inscrire. Le lieu est celui que la famille a elle-même déclaré : c’est donc une indication dans la boutique plutôt qu’un blocage strict, et toute personne déjà inscrite conserve sa place même si elle déménage.",
@@ -956,7 +956,7 @@
       "externalVoiceUrlHint": "Public : n’importe qui peut lire ce lien, y compris les visiteurs non connectés.",
       "municipalityHint": "Les clubs municipaux sont toujours rattachés à une commune finlandaise précise — celle qui les finance. Les parents de cette commune le verront en parcourant le catalogue.",
       "siteHint": "Où les sessions se déroulent physiquement.",
-      "hybridHint": "Les gamers viennent sur le site. Le Gedu, et tout gamer qui ne peut pas s’y rendre, rejoint la salle vocale Sogverse.",
+      "hybridHint": "Les gamers viennent sur le site. Le Gedu, et tout gamer qui ne peut pas s’y rendre, rejoint la salle virtuelle Sogverse.",
       "eventSingleDay": "Les événements ont lieu à une seule date.",
       "timezoneEntry": "Les horaires des séances ci-dessous sont saisis dans ce fuseau horaire. Les parents les voient automatiquement convertis dans le leur.",
       "timezoneChangeMoves": "Les horaires des séances ci-dessous sont saisis dans ce fuseau horaire. En changer déplace chaque séance à venir au même horaire dans le nouveau fuseau, tandis que les séances dont un compte rendu ou une présence est déjà enregistré conservent les horaires auxquels elles se sont tenues.",
@@ -970,7 +970,7 @@
       "pricingUpfront": "Prélevé une seule fois à l’inscription. Même montant total quelle que soit la durée.",
       "seatHintWaitlist": "Une fois complet, les nouvelles inscriptions passent en liste d’attente.",
       "seatHintNoWaitlist": "Une fois complet, les nouvelles inscriptions sont refusées.",
-      "visibleHint": "Sans la case cochée, le produit n’apparaît sur aucune page publique, mais toute personne disposant du lien direct peut l’ouvrir et acheter une place. C’est précisément ce qui le rend adapté aux produits non annoncés, réservés sur invitation ou liés à une campagne. Ce n’est pas un moyen d’arrêter les inscriptions, et cela n’affecte jamais les parents et les joueurs déjà inscrits.",
+      "visibleHint": "Sans la case cochée, le produit n’apparaît sur aucune page publique, mais toute personne disposant du lien direct peut l’ouvrir et acheter une place. C’est précisément ce qui le rend adapté aux produits non annoncés, réservés sur invitation ou liés à une campagne. Ce n’est pas un moyen d’arrêter les inscriptions, et cela n’affecte jamais les parents et les gamers déjà inscrits.",
       "seatLimitHint": "Plafonnez le nombre de participants, ou fonctionnez sans limite.",
       "startDateBillingAnchor": "La date de début du club, et celle du premier prélèvement pour les familles. La modifier ensuite ne déplace pas le premier prélèvement des familles déjà inscrites — corrigez ces abonnements dans Stripe.",
       "startNotSessionDay": "Aucune séance ne tombe à cette date. La première séance est le {date}.",
@@ -981,7 +981,7 @@
       "translationIncomplete": "Renseignez le nom et la description de l’onglet {locale}, ou retirez-le.",
       "topicRequired": "Le thème est obligatoire",
       "spokenLanguageRequired": "La langue parlée est obligatoire",
-      "audienceRequired": "Choisissez au moins un public — joueurs, parents ou les deux",
+      "audienceRequired": "Choisissez au moins un public — gamers, parents ou les deux",
       "minAgeRequired": "L’âge minimum est obligatoire",
       "maxAgeRequired": "L’âge maximum est obligatoire",
       "minAgeInvalid": "L’âge minimum doit être un entier positif ou nul",
@@ -1207,10 +1207,10 @@
     "participantPicker": {
       "title": "Ajouter un participant",
       "description": "Ajoutez un enfant ou un parent directement à ce produit, sans passer par le paiement. Un parent ne peut prendre une place que sur un produit ouvert aux parents.",
-      "searchPlaceholder": "Rechercher un parent ou un joueur par nom, e-mail, téléphone ou nom d’utilisateur de jeu…",
+      "searchPlaceholder": "Rechercher un parent ou un gamer par nom, e-mail, téléphone ou nom d’utilisateur de jeu…",
       "searchHint": "Saisissez au moins 2 caractères pour lancer la recherche.",
       "noParents": "Aucun parent pour l’instant.",
-      "noSearchResults": "Aucun parent ni joueur ne correspond à votre recherche.",
+      "noSearchResults": "Aucun parent ni gamer ne correspond à votre recherche.",
       "add": "Ajouter",
       "adding": "Ajout…",
       "added": "Ajouté",
@@ -1320,7 +1320,7 @@
           "noMatch": "Aucun club ne correspond à cette recherche. Essayez un autre nom.",
           "alreadyHolds": "A déjà une place",
           "needsSubscription": "Abonnement requis",
-          "gamersOnly": "Joueurs uniquement",
+          "gamersOnly": "Gamers uniquement",
           "parentsOnly": "Parents uniquement"
         },
         "facts": {
@@ -1343,24 +1343,24 @@
         "group": {
           "label": "Groupe",
           "unassigned": "Laisser sans groupe",
-          "members": "{count, plural, one {# joueur} other {# joueurs}}"
+          "members": "{count, plural, one {# gamer} other {# gamers}}"
         },
         "refusals": {
           "latestInvoiceNotPaid": "La dernière facture de la famille n’est pas payée, il n’y a donc pas de temps payé à déplacer. Réglez cela dans Stripe d’abord.",
           "subscriptionNotSingleItem": "L’abonnement comporte plus d’une ligne, il n’y a donc pas de prix unique à échanger. Réglez cela dans Stripe d’abord.",
           "noTargetPriceInCurrency": "Ce club n’a pas de prix dans la devise de facturation de l’abonnement. Les clubs sont tarifés en euros, donc un abonnement créé par Stripe dans une autre devise ne peut pas être basculé ici — réglez cela dans Stripe d’abord.",
           "participationNotActive": "Cette place n’est pas active, il n’y a donc rien à déplacer.",
-          "noLiveSubscription": "Aucun abonnement actif ne se trouve derrière cette place : ce n’est pas le bon outil. Retirez la place et inscrivez le joueur sur l’autre club.",
+          "noLiveSubscription": "Aucun abonnement actif ne se trouve derrière cette place : ce n’est pas le bon outil. Retirez la place et inscrivez le gamer sur l’autre club.",
           "targetNotPaidSubscriptionClub": "Ce produit n’est pas un club facturé chaque mois, un abonnement ne peut donc pas suivre la place jusque-là.",
-          "sameProduct": "C’est le club où le joueur se trouve déjà.",
+          "sameProduct": "C’est le club où le gamer se trouve déjà.",
           "alreadyOnTarget": "{name} a déjà une place dans ce produit.",
           "targetIsSubscriptionClub": "Ce club est facturé chaque mois : une place y exige un abonnement, que ce déplacement ne peut pas créer.",
           "targetNotOpenToParents": "Ce produit n’est pas ouvert aux parents, la place d’un parent ne peut donc pas y être déplacée.",
-          "targetNotOpenToGamers": "Ce produit n’est pas ouvert aux joueurs, la place de ce joueur ne peut donc pas y être déplacée."
+          "targetNotOpenToGamers": "Ce produit n’est pas ouvert aux gamers, la place de ce gamer ne peut donc pas y être déplacée."
         },
         "commit": {
           "stripeUpdated": "L’abonnement est déjà au prix du nouveau club, mais la place n’a pas bougé. Appuyez de nouveau sur Changer de club pour terminer — appuyer une seconde fois ne facture pas la famille deux fois.",
-          "stripeUpdatedStuck": "L’abonnement est déjà au prix du nouveau club alors que la place n’a pas pu être déplacée : la famille est donc facturée pour un club où le joueur n’a aucune place. Réglez cela dans Stripe d’abord.",
+          "stripeUpdatedStuck": "L’abonnement est déjà au prix du nouveau club alors que la place n’a pas pu être déplacée : la famille est donc facturée pour un club où le gamer n’a aucune place. Réglez cela dans Stripe d’abord.",
           "failed": "Le changement n’est pas allé jusqu’au bout. Appuyez de nouveau sur Changer de club — un nouvel appui rejoue la même requête, la famille n’est donc jamais facturée deux fois."
         },
         "confirm": "Changer de club",
@@ -1402,7 +1402,7 @@
     },
     "seatLimitModes": {
       "limited": "Places limitées",
-      "limitedDescription": "Limitez le nombre de joueurs pouvant participer. Une fois complet, les nouvelles inscriptions peuvent aller en liste d’attente.",
+      "limitedDescription": "Limitez le nombre de gamers pouvant participer. Une fois complet, les nouvelles inscriptions peuvent aller en liste d’attente.",
       "unlimited": "Aucune limite de places",
       "unlimitedDescription": "Toute personne qui s’inscrit peut participer — il n’y a pas de plafond."
     },
@@ -1499,9 +1499,9 @@
     "userNotFound": "Utilisateur introuvable.",
     "joined": "Inscrit le",
     "unknown": "Inconnu",
-    "linkedGamers": "Joueurs associés",
+    "linkedGamers": "Gamers associés",
     "linkedParents": "Parents associés",
-    "noConnectedGamers": "Aucun joueur associé",
+    "noConnectedGamers": "Aucun gamer associé",
     "assignedProducts": "Produits affectés",
     "noAssignedProducts": "Aucun produit affecté",
     "unassignedGroup": "Aucun groupe attribué",
@@ -2003,7 +2003,7 @@
     }
   },
   "testimonials": {
-    "subtitle": "Les mots des parents, des joueurs et des gedus, réunis en un seul endroit. Les pages d’atterrissage citent ceux qui y sont placés.",
+    "subtitle": "Les mots des parents, des gamers et des gedus, réunis en un seul endroit. Les pages d’atterrissage citent ceux qui y sont placés.",
     "newTestimonial": "Nouveau témoignage",
     "backToList": "Retour aux témoignages",
     "newPage": {

@@ -59,7 +59,7 @@ describe("profiles names are stored trimmed", () => {
     expect(error?.code).toBe("23514");
   });
 
-  it("refuses a first name that is one character once trimmed", async () => {
+  it("refuses a one-character first name padded with a space", async () => {
     const { error } = await updateOwn({ first_name: "A " });
 
     expect(error?.code).toBe("23514");

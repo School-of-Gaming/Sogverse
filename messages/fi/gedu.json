@@ -81,8 +81,8 @@
     "photosWhat": "Lisää kuvia kerran raporttiin tai poistaa niitä.",
     "substituteTitle": "Tuuraajan pyytäminen",
     "substituteWhat": "Pyytää toista Gedua pitämään kerran puolestasi.",
-    "roomTitle": "Muiden ryhmien äänihuoneet",
-    "roomWhat": "Liittyy toisen ryhmän äänihuoneeseen, jotta voit tuurata sen Gedua hetken.",
+    "roomTitle": "Muiden ryhmien virtuaalihuoneet",
+    "roomWhat": "Liittyy toisen ryhmän virtuaalihuoneeseen, jotta voit tuurata sen Gedua hetken.",
     "screenShareTitle": "Näytön jakaminen",
     "screenShareWhat": "Näyttää näyttösi kaikille huoneessa oleville.",
     "broadcastTitle": "Kuulutus",
@@ -310,7 +310,7 @@
     "items": {
       "certification": {
         "question": "Mitä hyväksyntä tarkoittaa, ja mitä en voi tehdä ennen sitä?",
-        "answer": "<p>Hyväksyntä tarkoittaa, että ylläpitäjä vahvistaa tilisi olevan valmis lasten kanssa työskentelyyn. Sitä edeltää kaksi asiaa: Gedu-sopimuksesi hyväksyminen ja lasten kanssa työskentelyä varten annettavan rikosrekisteriotteen esittäminen alle kuusi kuukautta vanhana. Tilaat otteen itse Oikeusrekisterikeskuksesta. Emme säilytä siitä kopiota emmekä kirjaa siitä mitään – ainoastaan sen, että asianmukainen ote on näytetty ja milloin. Molempien tilanteen näet sopimussivultasi.</p><p>Ennen hyväksyntää sinua ei voi liittää ryhmään, ja Työkalut-osio pysyy suljettuna: et voi avata pikaäänihuonetta etkä nollata Minecraft Education -salasanoja. Et voi myöskään lähettää kertaraporttia perheille sähköpostitse etkä lisätä siihen kuvia.</p><p>Kaikki muu on jo auki: kirjautuminen, Oma SOG, profiilisi ja kattamasi alueet sekä sopimuksen lukeminen ja hyväksyminen. Apua saat riippumatta siitä, onko sinut hyväksytty – käytä yllä olevaa lomaketta, jos odotat ja haluat tietää, missä mennään.</p>"
+        "answer": "<p>Hyväksyntä tarkoittaa, että ylläpitäjä vahvistaa tilisi olevan valmis lasten kanssa työskentelyyn. Sitä edeltää kaksi asiaa: Gedu-sopimuksesi hyväksyminen ja lasten kanssa työskentelyä varten annettavan rikosrekisteriotteen esittäminen alle kuusi kuukautta vanhana. Tilaat otteen itse Oikeusrekisterikeskuksesta. Emme säilytä siitä kopiota emmekä kirjaa siitä mitään – ainoastaan sen, että asianmukainen ote on näytetty ja milloin. Molempien tilanteen näet sopimussivultasi.</p><p>Ennen hyväksyntää sinua ei voi liittää ryhmään, ja Työkalut-osio pysyy suljettuna: et voi avata pikavirtuaalihuonetta etkä nollata Minecraft Education -salasanoja. Et voi myöskään lähettää kertaraporttia perheille sähköpostitse etkä lisätä siihen kuvia.</p><p>Kaikki muu on jo auki: kirjautuminen, Oma SOG, profiilisi ja kattamasi alueet sekä sopimuksen lukeminen ja hyväksyminen. Apua saat riippumatta siitä, onko sinut hyväksytty – käytä yllä olevaa lomaketta, jos odotat ja haluat tietää, missä mennään.</p>"
       },
       "groupAssignment": {
         "question": "Miten minut liitetään ryhmään?",
@@ -326,7 +326,7 @@
       },
       "safeguardingConcern": {
         "question": "Minulla herää huoli lapsen turvallisuudesta kesken kerran – mitä teen?",
-        "answer": "<p>Hoida ensin välitön tilanne. Verkkokerralla moderaattorin hallintapainikkeet ovat sinulla äänihuoneessa: mykistä mikrofoni, lukitse se tai siirrä joku erilliseen tilaan pois ryhmästä. Paikan päällä tuotteessa ei ole tähän hallintapainikkeita – hoidat tilanteen itse huoneessa. Kirjaa asia joka tapauksessa samana päivänä, kun se on tuoreena mielessä.</p><p>Jokaisella kerralla on henkilökunnan muistiinpano, joka on merkitty Geduille ja ylläpitäjille eikä näy perheille koskaan; sinne kuuluvat välikohtaus, kiusaaminen tai huoli pelaajasta. Lisäksi ryhmälistalla on pelaajakohtainen muistiinpano, joka seuraa lasta siinä ryhmässä kerrasta toiseen ja on niin ikään vain Gedujen ja ylläpitäjien nähtävissä. Kumpikaan ei näy millekään perheelle.</p><p>Muistiinpano on kirjaus, ei hälytys: se ei herätä ketään, joten kaikki kiireellinen ja kaikki, mikä vaatii jonkun ryhmän ulkopuolelta, menee lisäksi toimistolle osoitteeseen {supportEmail}.</p>"
+        "answer": "<p>Hoida ensin välitön tilanne. Verkkokerralla moderaattorin hallintapainikkeet ovat sinulla virtuaalihuoneessa: mykistä mikrofoni, lukitse se tai siirrä joku erilliseen tilaan pois ryhmästä. Paikan päällä tuotteessa ei ole tähän hallintapainikkeita – hoidat tilanteen itse huoneessa. Kirjaa asia joka tapauksessa samana päivänä, kun se on tuoreena mielessä.</p><p>Jokaisella kerralla on henkilökunnan muistiinpano, joka on merkitty Geduille ja ylläpitäjille eikä näy perheille koskaan; sinne kuuluvat välikohtaus, kiusaaminen tai huoli pelaajasta. Lisäksi ryhmälistalla on pelaajakohtainen muistiinpano, joka seuraa lasta siinä ryhmässä kerrasta toiseen ja on niin ikään vain Gedujen ja ylläpitäjien nähtävissä. Kumpikaan ei näy millekään perheelle.</p><p>Muistiinpano on kirjaus, ei hälytys: se ei herätä ketään, joten kaikki kiireellinen ja kaikki, mikä vaatii jonkun ryhmän ulkopuolelta, menee lisäksi toimistolle osoitteeseen {supportEmail}.</p>"
       },
       "gamerNotArrived": {
         "question": "Pelaaja ei ole saapunut ja kerta on jo alkanut – mitä voin tehdä?",

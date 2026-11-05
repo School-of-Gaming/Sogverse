@@ -895,11 +895,11 @@
     },
     "voiceRoomModes": {
       "label": "Miten perheet liittyvät mukaan?",
-      "sogverse": "Sogversen äänihuone",
-      "sogverseDescription": "Äänihuone luodaan automaattisesti, ja se avautuu jokaista kertaa varten.",
+      "sogverse": "Sogversen virtuaalihuone",
+      "sogverseDescription": "Virtuaalihuone luodaan automaattisesti, ja se avautuu jokaista kertaa varten.",
       "external": "Linkki muualla pidettävään kokoukseen",
-      "externalDescription": "Perheet liittyvät kokoukseen, jonka järjestät toisessa palvelussa. Suuremmalle yleisölle kuin Sogversen äänihuoneeseen mahtuu (50 henkeä).",
-      "none": "Ei äänihuonetta",
+      "externalDescription": "Perheet liittyvät kokoukseen, jonka järjestät toisessa palvelussa. Suuremmalle yleisölle kuin Sogversen virtuaalihuoneeseen mahtuu (50 henkeä).",
+      "none": "Ei virtuaalihuonetta",
       "noneDescription": "Perheille näytetään sen sijaan liittymisohjeet, jotka kirjoitat kullekin kielelle."
     },
     "deliveryModes": {
@@ -956,7 +956,7 @@
       "externalVoiceUrlHint": "Julkinen: kuka tahansa voi lukea linkin, myös kirjautumattomat vierailijat.",
       "municipalityHint": "Kuntakerhot on aina sidottu tiettyyn Suomen kuntaan — siihen, joka sen maksaa. Sen kunnan vanhemmat näkevät kerhon selatessaan.",
       "siteHint": "Missä kerrat fyysisesti tapahtuvat.",
-      "hybridHint": "Pelaajat tulevat paikan päälle. Gedu ja pelaajat, jotka eivät pääse paikalle, liittyvät Sogversen äänihuoneeseen.",
+      "hybridHint": "Pelaajat tulevat paikan päälle. Gedu ja pelaajat, jotka eivät pääse paikalle, liittyvät Sogversen virtuaalihuoneeseen.",
       "eventSingleDay": "Tapahtumat ovat yhden päivän mittaisia.",
       "timezoneEntry": "Alla olevat kertojen ajat syötetään tällä aikavyöhykkeellä. Vanhemmat näkevät ne automaattisesti omalla aikavyöhykkeellään.",
       "timezoneChangeMoves": "Alla olevat kertojen ajat syötetään tällä aikavyöhykkeellä. Vaihto siirtää jokaisen tulevan kerran samaan kellonaikaan uudella aikavyöhykkeellä, mutta kerrat, joille on jo kirjattu raportti tai läsnäolot, säilyttävät ajat, joina ne pidettiin.",

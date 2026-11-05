@@ -32,7 +32,7 @@
     "genderNonBinary": "Muu",
     "submit": "Lisää pelaaja",
     "submitting": "Lisätään…",
-    "firstNameTooShort": "Etunimessä on oltava vähintään 2 merkkiä.",
+    "firstNameRequired": "Anna etunimi.",
     "firstNameTooLong": "Etunimessä saa olla enintään 32 merkkiä.",
     "birthMonthRequired": "Valitse syntymäkuukausi.",
     "birthYearRequired": "Valitse syntymävuosi.",

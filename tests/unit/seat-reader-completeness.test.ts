@@ -1,4 +1,4 @@
-import { describe, it, expect } from "vitest";
+import { beforeAll, describe, it, expect } from "vitest";
 import { readFileSync, readdirSync } from "node:fs";
 import { join, relative, sep } from "node:path";
 import {
@@ -103,21 +103,30 @@ function tsReaders(): Map<string, string[]> {
 }
 
 describe("seat readers", () => {
+  // Each scan walks a whole tree, so it runs once and every test reads the
+  // result; its time is the hook's, not any one test's.
+  let db: Set<string>;
+  let ts: Map<string, string[]>;
+  beforeAll(() => {
+    db = dbReaders();
+    ts = tsReaders();
+  }, 60_000);
+
   it("the scans see the readers they are known to have", () => {
     // A scan whose pattern stopped matching would pass on an empty set.
-    expect(dbReaders()).toContain("function:end_participation");
-    expect(tsReaders().has("src/services/participations/switch-club.server.ts")).toBe(true);
+    expect(db).toContain("function:end_participation");
+    expect(ts.has("src/services/participations/switch-club.server.ts")).toBe(true);
   });
 
   it("every database reader is classified, and every entry still reads", () => {
-    const found = dbReaders();
+    const found = db;
     const registered = new Set(Object.keys(DB_SEAT_READERS));
     expect([...found].filter((k) => !registered.has(k)).sort()).toEqual([]);
     expect([...registered].filter((k) => !found.has(k)).sort()).toEqual([]);
   });
 
   it("every TypeScript reader is classified, in order, inside the code it names", () => {
-    const found = tsReaders();
+    const found = ts;
     const problems: string[] = [];
     for (const [file, reads] of found) {
       const entries = TS_SEAT_READERS[file] ?? [];

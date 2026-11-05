@@ -24,7 +24,7 @@ describe("trimPersonName", () => {
   });
 
   it("lets a contract measure the name, not the zero-width space", () => {
-    const parsed = registerParentBody.shape.firstName.safeParse("E​");
+    const parsed = registerParentBody.shape.firstName.safeParse("​");
     expect(parsed.success).toBe(false);
     expect(registerParentBody.shape.firstName.parse("Emma​")).toBe("Emma");
   });

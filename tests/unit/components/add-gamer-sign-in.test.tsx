@@ -213,7 +213,7 @@ describe("the flow is the same two pages for everyone", () => {
     // No name, so the parent never reaches a page asking how a child the first
     // page was going to refuse will sign in.
     expect(
-      screen.getByText(messages.family.addGamerForm.firstNameTooShort),
+      screen.getByText(messages.family.addGamerForm.firstNameRequired),
     ).toBeTruthy();
     expect(
       view.container.querySelector('input[name="add-gamer-sign-in"]'),

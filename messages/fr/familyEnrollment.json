@@ -3,6 +3,6 @@
   "wontRenew": "Non renouvelé — dernière session le {date}",
   "wontRenewLastSession": "Non renouvelé — c’est la dernière session, le {date}",
   "wontRenewAccessEnds": "Non renouvelé — accès jusqu’au {date}",
-  "noGamers": "Pas encore de joueur ici. Ajoutez votre premier joueur, puis choisissez ensemble un club ou un stage.",
+  "noGamers": "Pas encore de gamer ici. Ajoutez votre premier gamer, puis choisissez ensemble un club ou un stage.",
   "emptyStateCta": "Voir les clubs et les stages"
 }
