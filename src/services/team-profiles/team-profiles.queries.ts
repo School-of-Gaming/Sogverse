@@ -91,7 +91,11 @@ export function useSetTeamProfileApproval() {
       ]),
     onError: (error, { userId }) =>
       isTeamProfileNotReadyError(error)
-        ? queryClient.invalidateQueries({ queryKey: teamProfileKeys.detail(userId) })
+        ? Promise.all([
+            queryClient.invalidateQueries({ queryKey: teamProfileKeys.detail(userId) }),
+            // The refusal means ready was unticked, so the dashboard's marker is stale.
+            queryClient.invalidateQueries({ queryKey: adminDashboardKeys.all }),
+          ])
         : undefined,
   });
 }

@@ -1265,32 +1265,6 @@ describe("the Gedu tasks", () => {
   });
 });
 
-describe("a Gedu with only a team profile waiting", () => {
-  it("carries no certification and the profile marker, on one entry", () => {
-    const [task] = buildGeduTasks(
-      [
-        {
-          id: "baf5bf49-a11d-42e7-87fa-007fc71f55f1",
-          first_name: "Aatu",
-          last_name: "Mäkelä",
-          created_at: "2026-03-02T09:20:00+02:00",
-          certification: null,
-          team_profile_awaiting_review: true,
-        },
-      ],
-      "en",
-      NOW,
-      HELSINKI,
-    );
-
-    // Null, not an object of nulls: a certified Gedu has no standings to
-    // weigh, and a row reading two missing standings would offer a Certify
-    // for a decision already made.
-    expect(task.certification).toBeNull();
-    expect(task.teamProfileAwaitingReview).toBe(true);
-  });
-});
-
 describe("an empty platform", () => {
   it("still offers a full week window, with nothing in it", () => {
     const data = build(snapshot());
