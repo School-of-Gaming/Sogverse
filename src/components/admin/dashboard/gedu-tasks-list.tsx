@@ -173,7 +173,7 @@ function GeduRow({
     <div className="flex flex-wrap items-center gap-x-3 gap-y-2 rounded-md border border-border px-3 py-2">
       <Link
         href={ROUTES.admin.user(gedu.id)}
-        className="flex min-w-0 flex-1 flex-wrap items-center gap-2 rounded-md transition-opacity hover:opacity-80"
+        className="-mx-1.5 -my-1 flex min-w-0 flex-1 flex-wrap items-center gap-2 rounded-md px-1.5 py-1 transition-colors hover:bg-hover"
       >
         <PersonChip id={gedu.id} name={gedu.name} />
         <span className="truncate text-xs text-muted-foreground">
