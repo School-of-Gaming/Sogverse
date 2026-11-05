@@ -68,6 +68,7 @@ function facts(overrides: Partial<BusinessFacts> = {}): BusinessFacts {
 }
 
 const family = (id: string, created = "2025-01-01T10:00:00Z") => ({ id, created_at: created });
+const place = (customer: string, joined = "2026-09-01T10:00:00Z") => ({ customer_id: customer, signed_up_at: joined });
 
 describe("the headline", () => {
   it("counts a family as paying only while a paid seat is held, and a seat ends with its product's run", () => {
@@ -129,25 +130,55 @@ describe("the headline", () => {
     expect(overview.headline.gamersInMunicipalitySeat).toEqual({ now: 2, endOfLastMonth: 1 });
   });
 
-  it("measures sign-up to first seat over the 90 days before each instant", () => {
+  it("takes the accounts created 37 to 7 days before now, each with its whole week", () => {
     const overview = buildBusinessOverview(
       facts({
         families: [
-          family("old", "2026-01-01T10:00:00Z"),
-          family("a", "2026-10-01T10:00:00Z"),
-          family("b", "2026-10-15T10:00:00Z"),
-          family("c", "2026-11-02T10:00:00Z"),
-        ],
-        seats: [
-          seat("o1", "old", "club", "2026-10-02T10:00:00Z"),
-          seat("a1", "a", "free", "2026-11-01T10:00:00Z"),
-          seat("b1", "b", "muni", "2026-10-20T10:00:00Z"),
+          // NOW is 3 November 10:00Z.
+          family("sixDays", "2026-10-28T10:00:00Z"),
+          family("eightDays", "2026-10-26T10:00:00Z"),
+          family("thirtySixDays", "2026-09-28T10:00:00Z"),
+          family("thirtyEightDays", "2026-09-26T10:00:00Z"),
         ],
       }),
       NOW,
     );
-    expect(overview.headline.signupToSeat.now).toEqual({ registered: 3, seated: 2 });
-    expect(overview.headline.signupToSeat.endOfLastMonth).toEqual({ registered: 2, seated: 1 });
+    expect(overview.headline.firstWeekEngagement.now).toEqual({ signups: 2, engaged: 0 });
+  });
+
+  it("counts an account engaged when it booked any seat or joined a line within its first week", () => {
+    const created = "2026-10-01T10:00:00Z";
+    const overview = buildBusinessOverview(
+      facts({
+        families: ["day6", "day8", "ended", "waits", "nothing"].map((id) => family(id, created)),
+        seats: [
+          seat("s6", "day6", "free", "2026-10-07T10:00:00Z"),
+          seat("s8", "day8", "club", "2026-10-09T10:00:00Z"),
+          // Booked within the week and since ended: still engaged.
+          seat("se", "ended", "club", "2026-10-03T10:00:00Z", "2026-10-20T10:00:00Z"),
+        ],
+        waitlistPlaces: [place("waits", "2026-10-05T10:00:00Z")],
+      }),
+      NOW,
+    );
+    expect(overview.headline.firstWeekEngagement.now).toEqual({ signups: 5, engaged: 3 });
+  });
+
+  it("measures last month's figure over the same window at the end of last month", () => {
+    // Last month ended 2026-10-31T22:00Z: its cohort was created 24 Sep to 24 Oct.
+    const overview = buildBusinessOverview(
+      facts({
+        families: [
+          family("before", "2026-09-25T10:00:00Z"),
+          family("both", "2026-10-10T10:00:00Z"),
+          family("now", "2026-10-26T10:00:00Z"),
+        ],
+        seats: [seat("b1", "before", "club", "2026-09-26T10:00:00Z")],
+      }),
+      NOW,
+    );
+    expect(overview.headline.firstWeekEngagement.endOfLastMonth).toEqual({ signups: 2, engaged: 1 });
+    expect(overview.headline.firstWeekEngagement.now).toEqual({ signups: 2, engaged: 0 });
   });
 });
 
@@ -229,11 +260,11 @@ describe("families by engagement", () => {
         subscriptions: [sub("subAndWaits", "w2", "2026-09-01T10:00:00Z", "active")],
         // "dropped" left the line, and a place that leaves it is deleted.
         waitlistPlaces: [
-          { customer_id: "waits" },
-          { customer_id: "waits" },
-          { customer_id: "waitsNoGamer" },
-          { customer_id: "seatedAndWaits" },
-          { customer_id: "subAndWaits" },
+          place("waits"),
+          place("waits"),
+          place("waitsNoGamer"),
+          place("seatedAndWaits"),
+          place("subAndWaits"),
         ],
       }),
       NOW,
@@ -252,7 +283,6 @@ describe("families by engagement", () => {
     expect(sum).toBe(6);
     // A waitlist place is not a seat for any other figure.
     expect(overview.headline.gamersInSeat.now).toBe(3);
-    expect(overview.headline.signupToSeat.now.seated).toBe(0);
   });
 
   it("counts the subscribers whose club has not begun, who are not paying families yet", () => {
@@ -679,14 +709,14 @@ describe("a seat's span starts no earlier than its product", () => {
       facts({
         products,
         families: [family("a", "2026-10-01T10:00:00Z")],
-        seats: [seat("a1", "a", "spring", "2026-10-10T10:00:00Z")],
+        seats: [seat("a1", "a", "spring", "2026-10-05T10:00:00Z")],
       }),
       NOW,
     );
     expect(overview.headline.payingFamilies.now).toBe(0);
     const firstSeats = new Map(overview.families.map((m) => [m.month, m.firstSeats]));
     expect(firstSeats.get("2026-10-01")).toBe(1);
-    expect(overview.headline.signupToSeat.now).toEqual({ registered: 1, seated: 1 });
+    expect(overview.headline.firstWeekEngagement.now).toEqual({ signups: 1, engaged: 1 });
   });
 
   it("gives a seat that ended before its product began no span at all", () => {

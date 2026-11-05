@@ -44,8 +44,8 @@ import {
   lastCompletePoint,
   revenueChange,
   seriesStart,
-  signupRate,
-  signupRateChangePoints,
+  firstWeekRate,
+  firstWeekRateChangePoints,
   type SeriesStart,
 } from "./business-figures";
 
@@ -240,10 +240,10 @@ function HeadlineTiles({ overview }: { overview: BusinessOverview }) {
     style: "percent",
     maximumFractionDigits: 0,
   });
-  const rate = signupRate(headline.signupToSeat.now);
-  const ratePoints = signupRateChangePoints(
-    headline.signupToSeat.now,
-    headline.signupToSeat.endOfLastMonth,
+  const rate = firstWeekRate(headline.firstWeekEngagement.now);
+  const ratePoints = firstWeekRateChangePoints(
+    headline.firstWeekEngagement.now,
+    headline.firstWeekEngagement.endOfLastMonth,
   );
   const lastMonth = headline.revenueLastMonth;
   const lastMonthRow = overview.revenue.months.find((month) => month.month === lastMonth.month);
@@ -309,15 +309,14 @@ function HeadlineTiles({ overview }: { overview: BusinessOverview }) {
         change={<CountChange change={figureChange(headline.gamersInSeat)} />}
       />
       <Tile
-        label={t("signup.label")}
+        label={t("firstWeek.label")}
         value={rate === null ? null : percent.format(rate)}
         detail={
           rate === null
-            ? t("signup.none", { days: headline.signupToSeat.windowDays })
-            : t("signup.detail", {
-                seated: headline.signupToSeat.now.seated,
-                registered: headline.signupToSeat.now.registered,
-                days: headline.signupToSeat.windowDays,
+            ? t("firstWeek.none")
+            : t("firstWeek.detail", {
+                engaged: headline.firstWeekEngagement.now.engaged,
+                total: headline.firstWeekEngagement.now.signups,
               })
         }
         change={ratePoints === null ? undefined : <PointsChange points={ratePoints} />}
@@ -365,7 +364,7 @@ function PointsChange({ points }: { points: number }) {
   const t = useTranslations("admin.business");
   const signed = useSignedCount();
   return (
-    <>{points === 0 ? t("noChange") : t("tiles.signup.change", { change: signed(points) })}</>
+    <>{points === 0 ? t("noChange") : t("tiles.firstWeek.change", { change: signed(points) })}</>
   );
 }
 

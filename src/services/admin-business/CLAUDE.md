@@ -20,9 +20,9 @@ a seat that ended before its product began was never held at all. **A seat on a 
 whose run is over is not held either**, though its status stays active: camps, events and
 municipality terms keep their seats active after the last day, and counting them would
 make every family that ever bought a camp a paying family. A seat promoted from the
-waitlist is dated from its sign-up, the only booking a seat records. The two figures about
-a family's first seat (sign-up → first seat, and first seats by month) take the booking,
-not the span's start, because they measure when the family committed. Every figure "now"
+waitlist is dated from its sign-up, the only booking a seat records. The figures about
+when a family committed (engaged in first week, and first seats by month) take the
+booking, not the span's start. Every figure "now"
 and "at the end of last month" asks which spans cover that instant, so the comparison costs
 nothing; what it cannot see is a change that leaves no timestamp (below).
 
@@ -45,8 +45,13 @@ nothing; what it cannot see is a change that leaves no timestamp (below).
   whose product has no EUR price, is counted beside the figure rather than in it.
 - **Gamers in a seat**: distinct participants in a held seat, never a parent's own seat;
   those in a municipality club counted apart.
-- **Sign-up → first seat**: of the parent accounts created in the last 90 days, how many
-  have booked a seat, one not yet begun included. Every parent account counts, one still owing its registration too.
+- **Engaged in first week**: of the parent accounts created 37 to 7 days ago, so each has
+  had its whole week, how many booked any seat (held now or ended, any product, any
+  participant) or joined a waitlist within 7 days of creation. A seat counts from its
+  booking, a place from its row's `signed_up_at` (the line position, `waitlisted_at`,
+  moves); a place since left is deleted, so it is not seen. Last month's figure is the
+  same window measured at its end. Every parent account counts, one still owing its
+  registration too.
 - **Families by engagement**: every parent account in exactly one slice, the first it
   matches — a live subscription; any payment ever; every seat ever held on a municipality
   club; any other seat (free products, and paid ones nobody was charged for); no seat ever

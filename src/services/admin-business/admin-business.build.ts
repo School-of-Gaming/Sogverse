@@ -29,8 +29,14 @@ import {
 /** How many Helsinki months the monthly charts cover, the current one included. */
 export const BUSINESS_MONTH_COUNT = 12;
 
-/** The window the sign-up → first seat figure looks back over. */
-export const SIGNUP_WINDOW_DAYS = 90;
+/** The days after an account's creation in which it counts as engaged. */
+export const FIRST_WEEK_DAYS = 7;
+
+/**
+ * How far back the first-week cohort reaches: accounts created in the 30 days
+ * before the last full week, so every one counted has had its whole week.
+ */
+export const FIRST_WEEK_COHORT_DAYS = 30;
 
 const DAY_MS = 86_400_000;
 
@@ -67,8 +73,12 @@ export type BusinessSeatRow = Pick<
   | "signed_up_at"
   | "ended_at"
 >;
-/** A waitlist place held now: the family waiting, on any product, for any gamer. */
-export type BusinessWaitlistPlaceRow = Pick<Participation, "customer_id">;
+/**
+ * A waitlist place held now: the family waiting, on any product, for any gamer,
+ * and when it joined the line — `signed_up_at` is stamped when the row is
+ * written and never moved, unlike the line position.
+ */
+export type BusinessWaitlistPlaceRow = Pick<Participation, "customer_id" | "signed_up_at">;
 export type BusinessSubscriptionRow = Pick<
   FamilySubscription,
   "customer_id" | "participation_id" | "currency" | "status" | "created_at" | "ended_at"
@@ -147,11 +157,11 @@ export interface BusinessFigure {
   endOfLastMonth: number;
 }
 
-export interface SignupConversion {
-  /** Parent accounts created in the window. */
-  registered: number;
-  /** Of those, how many have taken a seat. */
-  seated: number;
+export interface FirstWeekEngagement {
+  /** Parent accounts created in the cohort window. */
+  signups: number;
+  /** Of those, how many booked a seat or joined a waitlist within their first week. */
+  engaged: number;
 }
 
 /** One complete month's revenue, every band summed, beside the month before's. */
@@ -174,8 +184,8 @@ export interface BusinessHeadline {
   subscriptionsOutsideRevenue: number;
   gamersInSeat: BusinessFigure;
   gamersInMunicipalitySeat: BusinessFigure;
-  /** The window ends now, and at the end of last month for the comparison. */
-  signupToSeat: { now: SignupConversion; endOfLastMonth: SignupConversion; windowDays: number };
+  /** The cohort measured now, and at the end of last month for the comparison. */
+  firstWeekEngagement: { now: FirstWeekEngagement; endOfLastMonth: FirstWeekEngagement };
 }
 
 export type EngagementSlice =
@@ -478,21 +488,28 @@ function recurringRevenueAt(facts: BusinessFacts, at: number): RecurringRevenue 
   return { cents: sumCents(priced), live: live.length, outside };
 }
 
-function signupConversionAt(
+/**
+ * The accounts created between 37 and 7 days before `at`, and how many of them
+ * booked or joined a line within a week of being created. Every such week ends
+ * by `at`, so nothing booked after the instant measured can count.
+ */
+function firstWeekEngagementAt(
   families: readonly BusinessFamilyRow[],
-  firstSeatByFamily: ReadonlyMap<string, number>,
+  firstCommitByFamily: ReadonlyMap<string, number>,
   at: number,
-): SignupConversion {
-  const from = at - SIGNUP_WINDOW_DAYS * DAY_MS;
-  const registered = families.filter((family) => {
+): FirstWeekEngagement {
+  const week = FIRST_WEEK_DAYS * DAY_MS;
+  const to = at - week;
+  const from = to - FIRST_WEEK_COHORT_DAYS * DAY_MS;
+  const cohort = families.filter((family) => {
     const created = Date.parse(family.created_at);
-    return created > from && created <= at;
+    return created > from && created <= to;
   });
-  const seated = registered.filter((family) => {
-    const first = firstSeatByFamily.get(family.id);
-    return first !== undefined && first <= at;
+  const engaged = cohort.filter((family) => {
+    const first = firstCommitByFamily.get(family.id);
+    return first !== undefined && first <= Date.parse(family.created_at) + week;
   });
-  return { registered: registered.length, seated: seated.length };
+  return { signups: cohort.length, engaged: engaged.length };
 }
 
 // ---------------------------------------------------------------------------
@@ -818,6 +835,15 @@ export function buildBusinessOverview(facts: BusinessFacts, now: Date): Business
     }
   }
 
+  // A family's first booking or line joined, by when it was made. Every seat
+  // row counts, one with no span included: booking it was the commitment.
+  const firstCommitByFamily = new Map<string, number>();
+  for (const row of [...facts.seats, ...facts.waitlistPlaces]) {
+    const at = Date.parse(row.signed_up_at);
+    const first = firstCommitByFamily.get(row.customer_id);
+    if (first === undefined || at < first) firstCommitByFamily.set(row.customer_id, at);
+  }
+
   const revenue = revenueOf(facts, months);
   // The window ends with the month in progress, so the last complete month is
   // the one before it.
@@ -854,10 +880,9 @@ export function buildBusinessOverview(facts: BusinessFacts, now: Date): Business
         now: gamersAt(spans, nowMs, true),
         endOfLastMonth: gamersAt(spans, lastMonthEnd, true),
       },
-      signupToSeat: {
-        now: signupConversionAt(facts.families, firstSeatByFamily, nowMs),
-        endOfLastMonth: signupConversionAt(facts.families, firstSeatByFamily, lastMonthEnd),
-        windowDays: SIGNUP_WINDOW_DAYS,
+      firstWeekEngagement: {
+        now: firstWeekEngagementAt(facts.families, firstCommitByFamily, nowMs),
+        endOfLastMonth: firstWeekEngagementAt(facts.families, firstCommitByFamily, lastMonthEnd),
       },
     },
     engagement: engagementOf(facts, spans, nowMs),

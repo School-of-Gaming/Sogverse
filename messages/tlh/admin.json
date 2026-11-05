@@ -1935,10 +1935,10 @@
         "label": "Daq ghajbogh gamer",
         "municipality": "{count, plural, other {# veng ghommeyDaq}}"
       },
-      "signup": {
-        "label": "qon mo’ Daq wa’DIch",
-        "detail": "{seated}/{registered} qon, {days} jaj",
-        "none": "{days} jaj qonbe’ pagh.",
+      "firstWeek": {
+        "label": "wa’DIch Hogh vang",
+        "detail": "{engaged}/{total} qon",
+        "none": "qon pagh.",
         "change": "{change} DaH jar"
       }
     },

@@ -1935,10 +1935,10 @@
         "label": "Gamerit, joilla on paikka",
         "municipality": "{count, plural, one {# kuntakerhossa} other {# kuntakerhoissa}}"
       },
-      "signup": {
-        "label": "Rekisteröitymisestä ensimmäiseen paikkaan",
-        "detail": "{seated} / {registered} rekisteröityneestä, {days} päivää",
-        "none": "Kukaan ei rekisteröitynyt viimeisten {days} päivän aikana.",
+      "firstWeek": {
+        "label": "Aktiivisia ensimmäisellä viikolla",
+        "detail": "{engaged} / {total} rekisteröityneestä",
+        "none": "Ei vielä mitattavia rekisteröitymisiä.",
         "change": "{change} %-yksikköä tässä kuussa"
       }
     },

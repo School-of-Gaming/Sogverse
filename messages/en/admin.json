@@ -1935,10 +1935,10 @@
         "label": "Gamers in a seat",
         "municipality": "{count, plural, one {# in a municipality club} other {# in municipality clubs}}"
       },
-      "signup": {
-        "label": "Sign-up to first seat",
-        "detail": "{seated} of {registered} sign-ups, last {days} days",
-        "none": "Nobody signed up in the last {days} days.",
+      "firstWeek": {
+        "label": "Engaged in first week",
+        "detail": "{engaged} of {total} sign-ups",
+        "none": "No sign-ups to measure yet.",
         "change": "{change} points this month"
       }
     },

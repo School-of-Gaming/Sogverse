@@ -1935,10 +1935,10 @@
         "label": "Gamers med plats",
         "municipality": "{count, plural, one {# i en kommunal klubb} other {# i kommunala klubbar}}"
       },
-      "signup": {
-        "label": "Från registrering till första plats",
-        "detail": "{seated} av {registered} registreringar, senaste {days} dagarna",
-        "none": "Ingen registrerade sig de senaste {days} dagarna.",
+      "firstWeek": {
+        "label": "Aktiva första veckan",
+        "detail": "{engaged} av {total} registreringar",
+        "none": "Inga registreringar att mäta än.",
         "change": "{change} procentenheter denna månad"
       }
     },

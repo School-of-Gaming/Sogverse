@@ -8,8 +8,8 @@ import {
   lastCompletePoint,
   revenueChange,
   seriesStart,
-  signupRate,
-  signupRateChangePoints,
+  firstWeekRate,
+  firstWeekRateChangePoints,
 } from "@/components/admin/business/business-figures";
 import type { RevenueMonth } from "@/services/admin-business/admin-business.build";
 
@@ -28,26 +28,26 @@ function revenueMonth(overrides: Partial<RevenueMonth>): RevenueMonth {
   };
 }
 
-describe("signupRate", () => {
-  it("is the seated share of the window's sign-ups", () => {
-    expect(signupRate({ registered: 8, seated: 2 })).toBe(0.25);
+describe("firstWeekRate", () => {
+  it("is the engaged share of the cohort's sign-ups", () => {
+    expect(firstWeekRate({ signups: 8, engaged: 2 })).toBe(0.25);
   });
 
   it("has no rate when nobody signed up, rather than a rate of nought", () => {
-    expect(signupRate({ registered: 0, seated: 0 })).toBeNull();
+    expect(firstWeekRate({ signups: 0, engaged: 0 })).toBeNull();
   });
 });
 
-describe("signupRateChangePoints", () => {
+describe("firstWeekRateChangePoints", () => {
   it("compares the two rates in whole percentage points", () => {
     expect(
-      signupRateChangePoints({ registered: 3, seated: 1 }, { registered: 4, seated: 1 }),
+      firstWeekRateChangePoints({ signups: 3, engaged: 1 }, { signups: 4, engaged: 1 }),
     ).toBe(8);
   });
 
   it("has no change when either end has no rate", () => {
     expect(
-      signupRateChangePoints({ registered: 4, seated: 1 }, { registered: 0, seated: 0 }),
+      firstWeekRateChangePoints({ signups: 4, engaged: 1 }, { signups: 0, engaged: 0 }),
     ).toBeNull();
   });
 });

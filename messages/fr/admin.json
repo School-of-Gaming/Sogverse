@@ -1935,10 +1935,10 @@
         "label": "Gamers ayant une place",
         "municipality": "{count, plural, one {# dans un club municipal} other {# dans des clubs municipaux}}"
       },
-      "signup": {
-        "label": "De l’inscription à la première place",
-        "detail": "{seated} sur {registered} inscriptions, {days} derniers jours",
-        "none": "Aucune inscription ces {days} derniers jours.",
+      "firstWeek": {
+        "label": "Actifs la première semaine",
+        "detail": "{engaged} sur {total} inscriptions",
+        "none": "Aucune inscription à mesurer pour l’instant.",
         "change": "{change} points ce mois-ci"
       }
     },

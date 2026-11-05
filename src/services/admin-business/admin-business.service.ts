@@ -138,7 +138,7 @@ export class AdminBusinessService {
     return walkPages("businessWaitlistPlaces", (from, to) =>
       this.supabase
         .from("participations")
-        .select("customer_id", { count: "exact" })
+        .select("customer_id, signed_up_at", { count: "exact" })
         .eq("status", "waitlisted")
         .order("id")
         .range(from, to),

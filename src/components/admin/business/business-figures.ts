@@ -6,7 +6,7 @@ import type {
   GeduMonth,
   MonthRevenueTotal,
   RevenueMonth,
-  SignupConversion,
+  FirstWeekEngagement,
 } from "@/services/admin-business/admin-business.build";
 
 /**
@@ -28,23 +28,23 @@ export function revenueChange(revenue: MonthRevenueTotal): number | null {
 }
 
 /**
- * The share of a window's sign-ups who took a seat, or `null` when nobody
- * signed up in it: no sign-ups is not a rate of nought.
+ * The share of a cohort's sign-ups engaged in their first week, or `null` when
+ * nobody signed up in it: no sign-ups is not a rate of nought.
  */
-export function signupRate(conversion: SignupConversion): number | null {
-  return conversion.registered === 0 ? null : conversion.seated / conversion.registered;
+export function firstWeekRate(engagement: FirstWeekEngagement): number | null {
+  return engagement.signups === 0 ? null : engagement.engaged / engagement.signups;
 }
 
 /**
- * How many percentage points the sign-up rate moved, as whole points. `null`
- * when either end has no rate to compare.
+ * How many percentage points the first-week rate moved, as whole points.
+ * `null` when either end has no rate to compare.
  */
-export function signupRateChangePoints(
-  now: SignupConversion,
-  endOfLastMonth: SignupConversion,
+export function firstWeekRateChangePoints(
+  now: FirstWeekEngagement,
+  endOfLastMonth: FirstWeekEngagement,
 ): number | null {
-  const current = signupRate(now);
-  const before = signupRate(endOfLastMonth);
+  const current = firstWeekRate(now);
+  const before = firstWeekRate(endOfLastMonth);
   if (current === null || before === null) return null;
   return Math.round(current * 100) - Math.round(before * 100);
 }
