@@ -2,6 +2,7 @@ import { describe, it, expect, vi, beforeEach } from "vitest";
 import { z } from "zod";
 import { POST } from "@/app/api/gamers/create/route";
 import { NextResponse } from "next/server";
+import { advertisedProductDetails } from "@/lib/marketing-events";
 
 // --- Mocks ---
 
@@ -29,6 +30,43 @@ const mockSendGamerWelcomeEmail = vi.fn();
 vi.mock("@/lib/gamer-welcome.server", () => ({
   sendGamerWelcomeEmail: (...args: unknown[]) => mockSendGamerWelcomeEmail(...args),
 }));
+
+// The child-added conversion, mocked at its own module boundary: what this
+// suite pins is WHETHER the route reports and with what. What each platform is
+// sent, and the consent gate, are the reporters' own suites' subject.
+const mockReportAdConversion = vi.fn();
+vi.mock("@/lib/ad-conversions.server", () => ({
+  reportAdConversion: (...args: unknown[]) => mockReportAdConversion(...args),
+}));
+
+// Whether a product is advertised is decided by its row, read by its own
+// module; here only what the route hands it and does with its answer.
+const mockAdvertisedProductFor = vi.fn();
+vi.mock("@/lib/advertised-product.server", () => ({
+  advertisedProductFor: (...args: unknown[]) => mockAdvertisedProductFor(...args),
+}));
+
+// The report is handed to the post-response hook. Capture the deferred work
+// instead of letting the hook run it — outside a request scope there is
+// nothing to keep alive.
+const deferred: unknown[] = [];
+vi.mock("next/server", async (importOriginal) => {
+  const actual = await importOriginal<typeof import("next/server")>();
+  return {
+    ...actual,
+    after: (work: unknown) => {
+      deferred.push(work);
+    },
+  };
+});
+
+/** Run the work handed to the post-response hook, as the platform would. */
+async function runDeferred(): Promise<void> {
+  for (const work of deferred) {
+    if (typeof work === "function") await work();
+    else await work;
+  }
+}
 
 // --- Helpers ---
 
@@ -560,5 +598,119 @@ describe("POST /api/gamers/create — the sign-in modes", () => {
     // The RPC is transactional, so the database is untouched — but the auth
     // user created a step earlier would be orphaned without this.
     expect(mockDeleteUser).toHaveBeenCalledWith("new-gamer-id");
+  });
+});
+
+describe("POST /api/gamers/create — the child-added conversion", () => {
+  const PRODUCT_ID = "0f8b6c1e-3c2a-4d5e-9f60-7a8b9c0d1e2f";
+  const EVENT_ID = "3f2b7c1e-9a4d-4e8b-b6c5-0d1e2f3a4b5c";
+  const PRODUCT = advertisedProductDetails({
+    id: PRODUCT_ID,
+    topic: "roblox_studio",
+    billing_mode: "paid",
+    product_translations: [{ locale: "en", name: "Roblox Studio Club" }],
+    product_prices: [{ currency: "eur", price_cents: 4900 }],
+  });
+
+  beforeEach(() => {
+    vi.clearAllMocks();
+    deferred.length = 0;
+    mockRequireRole.mockResolvedValue({
+      user: { id: "customer-123" },
+      profile: {
+        role: "customer",
+        last_name: "Parentson",
+        email: "parent@example.test",
+      },
+      supabase: {},
+    });
+    mockCreateUser.mockResolvedValue({
+      data: { user: { id: "new-gamer-id" } },
+      error: null,
+    });
+    mockDeleteUser.mockResolvedValue({ error: null });
+    mockRpc.mockResolvedValue({ error: null });
+  });
+
+  // Added from an advertised product's sign-up panel: reported after the
+  // response, naming that product on its own page, under the panel's id, as
+  // the signed-in parent — and nothing about the child.
+  it("reports a child added from an advertised product's panel, after the response", async () => {
+    mockAdvertisedProductFor.mockResolvedValue(PRODUCT);
+
+    const response = await POST(
+      createRequest({ ...validBody, productId: PRODUCT_ID, eventId: EVENT_ID }),
+    );
+
+    expect(response.status).toBe(200);
+    expect(await response.json()).toEqual({ gamerId: "new-gamer-id" });
+    expect(deferred).toHaveLength(1);
+    expect(mockAdvertisedProductFor).not.toHaveBeenCalled();
+    expect(mockReportAdConversion).not.toHaveBeenCalled();
+
+    await runDeferred();
+
+    expect(mockAdvertisedProductFor).toHaveBeenCalledWith(PRODUCT_ID);
+    expect(mockReportAdConversion).toHaveBeenCalledTimes(1);
+    const [request, conversion, account] = mockReportAdConversion.mock.calls[0];
+    expect(request).toBeInstanceOf(Request);
+    expect(conversion).toEqual({
+      event: "child_added",
+      product: PRODUCT,
+      sourcePath: `/shop/${PRODUCT_ID}`,
+      eventId: EVENT_ID,
+    });
+    // The parent's own id and address, never the new child's.
+    expect(account).toEqual({ id: "customer-123", email: "parent@example.test" });
+  });
+
+  // The family's own dashboard sends no product: a child added off the funnel
+  // is not something we report, so nothing is even looked up.
+  it("reports nothing when no product id is sent", async () => {
+    const response = await POST(createRequest(validBody));
+
+    expect(response.status).toBe(200);
+    expect(deferred).toHaveLength(0);
+    expect(mockAdvertisedProductFor).not.toHaveBeenCalled();
+    expect(mockReportAdConversion).not.toHaveBeenCalled();
+  });
+
+  // Decided by the product row: an unadvertised, unknown or unreadable product
+  // all answer undefined, and then nothing is reported at all.
+  it("reports nothing when the product is not one we advertise", async () => {
+    mockAdvertisedProductFor.mockResolvedValue(undefined);
+
+    const response = await POST(
+      createRequest({ ...validBody, productId: PRODUCT_ID, eventId: EVENT_ID }),
+    );
+    await runDeferred();
+
+    expect(response.status).toBe(200);
+    expect(mockAdvertisedProductFor).toHaveBeenCalledWith(PRODUCT_ID);
+    expect(mockReportAdConversion).not.toHaveBeenCalled();
+  });
+
+  it("reports nothing when the child was not created", async () => {
+    mockRpc.mockResolvedValue({ error: { code: "XX000", message: "boom" } });
+    vi.spyOn(console, "error").mockImplementation(() => {});
+
+    const response = await POST(
+      createRequest({ ...validBody, productId: PRODUCT_ID, eventId: EVENT_ID }),
+    );
+
+    expect(response.status).toBe(500);
+    expect(deferred).toHaveLength(0);
+  });
+
+  it.each([
+    ["a product id", { productId: "not-a-uuid" }],
+    ["an event id", { eventId: "not-a-uuid" }],
+  ])("refuses %s that is not a UUID, and creates nothing", async (_, extra) => {
+    const response = await POST(
+      createRequest({ ...validBody, productId: PRODUCT_ID, ...extra }),
+    );
+
+    expect(response.status).toBe(400);
+    expect(mockCreateUser).not.toHaveBeenCalled();
   });
 });

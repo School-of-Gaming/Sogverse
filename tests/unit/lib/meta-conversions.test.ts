@@ -462,6 +462,32 @@ describe("reportMetaConversion — the request", () => {
     );
   });
 
+  // A child added from an advertised product's sign-up panel goes out under
+  // Meta's custom name, unpriced, on the product's own page, beside the
+  // parent's hashes — and with nothing about the child, which the conversion
+  // type has no field for.
+  it("reports a child added as ChildProfileCreated, unpriced, with the parent's hashes", async () => {
+    await reportMetaConversion(
+      request(),
+      { event: "child_added", product: PRODUCT, sourcePath: "/shop/abc-123", eventId: EVENT_ID },
+      PARENT,
+    );
+
+    const event = sentEvent();
+    expect(event.event_name).toBe("ChildProfileCreated");
+    expect(event.event_id).toBe(EVENT_ID);
+    expect(event.event_source_url).toBe(`${SITE_ORIGIN}/shop/abc-123`);
+    expect(event.custom_data).toEqual({
+      content_ids: ["abc-123"],
+      content_type: "product",
+      content_name: "Roblox Studio Club",
+      content_category: "roblox_studio",
+    });
+    const userData = asObject(event.user_data);
+    expect(userData.em).toEqual([PARENT_EMAIL_SHA256]);
+    expect(userData.external_id).toEqual([PARENT_ID_SHA256]);
+  });
+
   it("names nothing on a lead that did not start from a product page", async () => {
     await reportMetaConversion(
       request(),

@@ -45,6 +45,12 @@ export type AdConversion =
       eventId?: string;
     }
   | {
+      event: "child_added";
+      product: AdvertisedProductDetails;
+      sourcePath: string;
+      eventId?: string;
+    }
+  | {
       event: "enrolment";
       outcome: ReportedEnrolmentOutcome;
       product: AdvertisedProductDetails;
@@ -108,6 +114,7 @@ function forPlatform<Platform extends keyof AdvertisedProductDetails>(
       };
     case "page_view":
       return { event: conversion.event, sourcePath, eventId };
+    case "child_added":
     case "product_view":
     case "checkout_start":
       return {

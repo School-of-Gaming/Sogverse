@@ -10,6 +10,7 @@ import {
   accountPasswordValue,
   realEmailValue,
 } from "@/services/users/parent-registration.contracts";
+import { conversionEventIdValue } from "@/lib/marketing-events";
 import { minecraftUsernameValue } from "@/services/minecraft/minecraft.contracts";
 import { robloxUsernameValue } from "@/services/roblox/roblox.contracts";
 
@@ -183,6 +184,17 @@ export const createGamerBody = z
      * by reloading, and that is the correct outcome.
      */
     guardianAttested: guardianAttestedValue,
+    /**
+     * The product whose sign-up panel the child is being added from, sent only
+     * from that panel — the family's own dashboard sends none. It decides
+     * nothing about the child and names no row the route writes: it is read
+     * only to say, after the answer, which advertised product's page a
+     * child-added conversion happened on. Untrusted, so the route reports only
+     * when the product row it names is one we advertise.
+     */
+    productId: z.string().uuid().optional(),
+    /** The id the panel pushes its own `child_added` under once this answers. */
+    eventId: conversionEventIdValue,
   })
   .refine(signInFieldsAreConsistent, { message: SIGN_IN_FIELDS_MESSAGE });
 

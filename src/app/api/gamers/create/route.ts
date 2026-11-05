@@ -1,8 +1,11 @@
-import { NextResponse } from "next/server";
+import { NextResponse, after } from "next/server";
 import { defineRoute } from "@/lib/api/define-route";
 import { ApiError } from "@/lib/api/api-error";
 import { isEmailAlreadyRegistered } from "@/lib/auth-email.server";
 import { createAdminClient } from "@/lib/supabase/admin";
+import { reportAdConversion } from "@/lib/ad-conversions.server";
+import { advertisedProductFor } from "@/lib/advertised-product.server";
+import { ROUTES } from "@/lib/constants/routes";
 import {
   randomSyntheticGamerEmail,
   usernameToSyntheticEmail,
@@ -68,6 +71,8 @@ export const POST = defineRoute({
       email,
       password,
       guardianAttested,
+      productId,
+      eventId,
     } = body;
 
     // Against the month the database's own CHECK compares with: its
@@ -260,6 +265,42 @@ export const POST = defineRoute({
       } catch (mailError) {
         console.error("gamer creation: welcome email failed", mailError);
       }
+    }
+
+    // The child-added conversion, reported to the advertising platforms from
+    // here, the handler that committed it — and only when the child was added
+    // from a product's sign-up panel, which is the one caller that sends a
+    // product id. Added from the family's own dashboard, nothing is reported.
+    //
+    // **Decided by the product row, never by the id alone.** The id is
+    // untrusted; the product is read after the response and reported only when
+    // it is one we advertise, so an unknown, unadvertised or unreadable product
+    // reports nothing at all. The source path is that product's public page,
+    // stated rather than taken from this route's own URL.
+    //
+    // The report carries the parent and the product, and nothing about the
+    // child: not the name, the birth month, the new account's id or how many
+    // children the family has. The reporters drop the price and refuse to send
+    // without this request's marketing consent; the route is customer-only, so
+    // a gamer can never reach this.
+    if (productId !== undefined) {
+      after(async () => {
+        const product = await advertisedProductFor(productId);
+        if (!product) return;
+        await reportAdConversion(
+          request,
+          {
+            event: "child_added",
+            product,
+            sourcePath: ROUTES.shopProductPath(productId),
+            // The id the panel pushes its own `child_added` under once this
+            // answers, so the two are one conversion to each platform.
+            eventId,
+          },
+          // The signed-in parent's own id and address, never the child's.
+          { id: user.id, email: profile.email },
+        );
+      });
     }
 
     // The RPC committed, so the gamer exists. Return only its id — the sole

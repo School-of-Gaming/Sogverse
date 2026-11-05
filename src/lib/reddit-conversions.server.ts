@@ -4,6 +4,7 @@ import { clientIpFrom, sha256Hex } from "@/lib/conversion-request.server";
 import {
   isValidRedditPixelId,
   REDDIT_CONVERSION_EVENTS,
+  REDDIT_CUSTOM_CONVERSION_EVENTS,
   type ConversionAccount,
   type ReportedEnrolmentOutcome,
   type RedditProductDetails,
@@ -28,7 +29,9 @@ import { clickIdFromCookieHeader } from "@/lib/utm";
  * canonical form, and a SHA-256 hash of the parent's own account id
  * (`external_id`). Neither the address nor the id itself is ever sent or
  * logged. No phone number, no name, no participation id, and nothing about a
- * child beyond the product named — not their name, age, account or its id.
+ * child beyond the product named and, on the child-added event, the fact that
+ * one was added — not their name, age, account or its id, nor how many there
+ * are.
  * This list is the promise the privacy policy makes; a field added here is a
  * policy edit.
  *
@@ -40,6 +43,11 @@ import { clickIdFromCookieHeader } from "@/lib/utm";
  * view names nothing but the page; a product view and a checkout start name
  * the product with its price — and, like Meta's, none of the three carries an
  * account or its hashes, even from a signed-in parent.
+ *
+ * **A child added** goes out as Reddit's custom event `ChildProfileCreated`
+ * (`tracking_type` `CUSTOM`), naming the product whose sign-up panel the parent
+ * added the child from, without a price, beside the parent's hashes — only for
+ * an advertised product's panel, and with nothing about the child.
  *
  * **Gated on the request's own consent cookie**, decided here from the cookie
  * the browser actually sent, so a report for someone who refused is impossible
@@ -68,6 +76,12 @@ export type RedditConversion =
       eventId: string;
     }
   | {
+      event: "child_added";
+      product: RedditProductDetails;
+      sourcePath: string;
+      eventId: string;
+    }
+  | {
       event: "enrolment";
       outcome: ReportedEnrolmentOutcome;
       product: RedditProductDetails;
@@ -82,18 +96,29 @@ export type RedditConversion =
       eventId: string;
     };
 
-function trackingTypeFor(conversion: RedditConversion): string {
+/**
+ * The event's `type`: a standard event is its `tracking_type` alone, and a
+ * custom one is `CUSTOM` with its own name beside it.
+ */
+function eventTypeFor(
+  conversion: RedditConversion,
+): { tracking_type: string; custom_event_name?: string } {
   switch (conversion.event) {
     case "account_created":
-      return REDDIT_CONVERSION_EVENTS.accountCreated;
+      return { tracking_type: REDDIT_CONVERSION_EVENTS.accountCreated };
+    case "child_added":
+      return {
+        tracking_type: "CUSTOM",
+        custom_event_name: REDDIT_CUSTOM_CONVERSION_EVENTS.childAdded,
+      };
     case "enrolment":
-      return REDDIT_CONVERSION_EVENTS.enrolment;
+      return { tracking_type: REDDIT_CONVERSION_EVENTS.enrolment };
     case "page_view":
-      return REDDIT_CONVERSION_EVENTS.pageView;
+      return { tracking_type: REDDIT_CONVERSION_EVENTS.pageView };
     case "product_view":
-      return REDDIT_CONVERSION_EVENTS.productView;
+      return { tracking_type: REDDIT_CONVERSION_EVENTS.productView };
     case "checkout_start":
-      return REDDIT_CONVERSION_EVENTS.checkoutStart;
+      return { tracking_type: REDDIT_CONVERSION_EVENTS.checkoutStart };
   }
 }
 
@@ -117,7 +142,7 @@ function hashAccountIdForReddit(id: string): string {
 
 /**
  * The event's `metadata` product fields. **Only a seat carries a value**: a
- * queue place and an account creation name the product but drop the price,
+ * queue place, an account creation and a child added name the product but drop the price,
  * whatever the caller passed — the same rule, for the same reason, as Meta's
  * report. An account creation that did not start from a product page names
  * none, and neither does a page view. A product view and a checkout start
@@ -130,7 +155,12 @@ function productMetadataFor(
   const { product } = conversion;
   if (!product) return {};
   const unpriced = { item_count: product.itemCount, products: product.products };
-  if (conversion.event === "account_created") return unpriced;
+  if (
+    conversion.event === "account_created" ||
+    conversion.event === "child_added"
+  ) {
+    return unpriced;
+  }
   if (conversion.event === "enrolment" && conversion.outcome === "waitlisted") {
     return unpriced;
   }
@@ -185,7 +215,7 @@ export async function reportRedditConversion(
       // Built from the TRUSTED origin and a path the caller states, never from
       // the incoming request's URL or a raw Host header.
       event_source_url: `${getOrigin(request)}${conversion.sourcePath}`,
-      type: { tracking_type: trackingTypeFor(conversion) },
+      type: eventTypeFor(conversion),
       ...(clickId && { click_id: clickId }),
       user: {
         ...(userAgent && { user_agent: userAgent }),

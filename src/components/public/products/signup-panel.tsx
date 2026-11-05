@@ -339,6 +339,23 @@ export function SignupPanel({
     }
   };
 
+  /**
+   * A child was added from this panel: past the account, short of a seat. The
+   * route has already reported it under this id when the product is one we
+   * advertise; the push goes out for every product with `advertised` beside
+   * it, as every other push here does. Unpriced, as the route's report is —
+   * adding a child commits no money — and with nothing about the child.
+   */
+  const onChildAdded = (eventId: string) => {
+    pushGtmEvent({
+      event: GTM_EVENTS.childAdded,
+      event_id: eventId,
+      ecommerce: ecommerceFor(false),
+      advertised,
+      page_path: productPagePath,
+    });
+  };
+
   const handleSubmit = () => {
     if (!fields.selectedParticipantId || !purchaseShape) return;
     // First, before anything can navigate: the click into the flow is the
@@ -584,6 +601,7 @@ export function SignupPanel({
         open={addGamerOpen}
         onOpenChange={setAddGamerOpen}
         onCreated={fields.onSelectParticipant}
+        signUp={{ productId: product.id, onChildAdded }}
       />
     </>
   );

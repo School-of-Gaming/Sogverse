@@ -59,6 +59,17 @@ export interface GamerProfileEdit {
   gender: GenderType | null;
 }
 
+/**
+ * Where a child is being added from, when that is a product's sign-up panel:
+ * the product, and the id the panel's `child_added` push and the route's
+ * conversion report share. Absent everywhere else, and then nothing is
+ * reported.
+ */
+export interface ChildAddedSignUp {
+  productId: string;
+  eventId: string;
+}
+
 export class GamerService {
   constructor(private supabase: AppSupabaseClient) {}
 
@@ -204,7 +215,8 @@ export class GamerService {
 
   async createGamerAccount(
     _parentId: string,
-    input: CreateGamerInput
+    input: CreateGamerInput,
+    signUp?: ChildAddedSignUp,
   ): Promise<{ gamerId: string }> {
     const response = await fetch("/api/gamers/create", {
       method: "POST",
@@ -226,6 +238,11 @@ export class GamerService {
         // on the parent's behalf: the value has to arrive from a caller, and the
         // form that makes this call refuses to submit until the box is ticked.
         guardianAttested: input.guardianAttested,
+        // Present only when the child is added from a product's sign-up panel:
+        // the product its page is about, and the id that panel pushes its own
+        // `child_added` under. Nothing about the child rides with them.
+        productId: signUp?.productId,
+        eventId: signUp?.eventId,
       }),
     });
 

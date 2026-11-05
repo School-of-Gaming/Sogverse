@@ -71,7 +71,21 @@ vi.mock("@/providers/auth-provider", () => ({
   }),
 }));
 
-vi.mock("@/components/family", () => ({ AddGamerDialog: () => null }));
+// The dialog renders nothing here; what the panel hands it is recorded, since
+// the child-added push is the callback the panel gives it.
+const addGamerProps = vi.hoisted(() =>
+  vi.fn<
+    (props: {
+      signUp?: { productId: string; onChildAdded: (eventId: string) => void };
+    }) => void
+  >(),
+);
+vi.mock("@/components/family", () => ({
+  AddGamerDialog: (props: Parameters<typeof addGamerProps>[0]) => {
+    addGamerProps(props);
+    return null;
+  },
+}));
 vi.mock("@/components/public/products/region-lock/set-location-dialog", () => ({
   SetLocationDialog: () => null,
 }));
@@ -307,6 +321,7 @@ beforeEach(() => {
   waitlistMutate.mockReset();
   pushed.mockReset();
   checkoutStart.mockReset();
+  addGamerProps.mockReset();
   href = "http://localhost/";
   navigations.length = 0;
 });
@@ -538,5 +553,45 @@ describe("the click into the flow is the checkout start", () => {
     submit(container);
 
     expect(checkoutStart).not.toHaveBeenCalled();
+  });
+});
+
+describe("a child added from the panel is its own step", () => {
+  /** What the panel handed the dialog for a child added from this page. */
+  function signUpProp() {
+    const props = addGamerProps.mock.calls.at(-1)?.[0];
+    if (!props?.signUp) throw new Error("the dialog was given no sign-up context");
+    return props.signUp;
+  }
+
+  it("hands the dialog this page's product, so the route can report it", () => {
+    render(panel());
+
+    expect(signUpProp().productId).toBe(PRODUCT_ID);
+  });
+
+  it("pushes child_added under the route's id, unpriced and with nothing about the child", () => {
+    render(panel());
+    const eventId = "3f2b7c1e-9a4d-4e8b-b6c5-0d1e2f3a4b5c";
+
+    act(() => signUpProp().onChildAdded(eventId));
+
+    // Adding a child commits no money, so it carries no value, as the route's
+    // report of it carries none.
+    expect(onlyEvent()).toEqual({
+      event: "child_added",
+      event_id: eventId,
+      ecommerce: UNPRICED,
+      advertised: true,
+      page_path: PRODUCT_PATH,
+    });
+  });
+
+  it("pushes a municipality club's too, with the flag that says not to bid on it", () => {
+    render(panel({ product: MUNICIPALITY_PRODUCT }));
+
+    act(() => signUpProp().onChildAdded("3f2b7c1e-9a4d-4e8b-b6c5-0d1e2f3a4b5c"));
+
+    expect(onlyEvent()).toMatchObject({ event: "child_added", advertised: false });
   });
 });

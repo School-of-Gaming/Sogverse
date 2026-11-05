@@ -88,6 +88,17 @@ interface AddGamerDialogProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   onCreated?: (gamerId: string) => void;
+  /**
+   * Passed only by a product's sign-up panel, the one place a child added is a
+   * step in the sign-up funnel: the product the page is about, and what to do
+   * once the child exists, handed the id the route's child-added report went
+   * out under so the caller can push its browser twin. Absent — the family's
+   * own dashboard — the create reports nothing.
+   */
+  signUp?: {
+    productId: string;
+    onChildAdded: (eventId: string) => void;
+  };
 }
 
 /**
@@ -107,9 +118,9 @@ interface AddGamerDialogProps {
  * single chokepoint that enforces it: it never renders the form for a locked
  * session. Every call site gets the gate for free — see `AddGamerGate`.
  */
-export function AddGamerDialog({ open, onOpenChange, onCreated }: AddGamerDialogProps) {
+export function AddGamerDialog({ open, ...props }: AddGamerDialogProps) {
   if (!open) return null;
-  return <AddGamerGate onOpenChange={onOpenChange} onCreated={onCreated} />;
+  return <AddGamerGate {...props} />;
 }
 
 /**
@@ -127,7 +138,7 @@ export function AddGamerDialog({ open, onOpenChange, onCreated }: AddGamerDialog
  * We seed the status cache so the view swaps to the form and a reopen stays
  * unlocked rather than re-prompting.
  */
-function AddGamerGate({ onOpenChange, onCreated }: Omit<AddGamerDialogProps, "open">) {
+function AddGamerGate({ onOpenChange, onCreated, signUp }: Omit<AddGamerDialogProps, "open">) {
   const queryClient = useQueryClient();
   const { data: status, isError } = usePinStatus();
 
@@ -143,7 +154,7 @@ function AddGamerGate({ onOpenChange, onCreated }: Omit<AddGamerDialogProps, "op
   }
 
   if (status.unlocked) {
-    return <AddGamerForm onOpenChange={onOpenChange} onCreated={onCreated} />;
+    return <AddGamerForm onOpenChange={onOpenChange} onCreated={onCreated} signUp={signUp} />;
   }
 
   return (
@@ -203,16 +214,31 @@ function GatePlaceholder({ error, onClose }: { error: boolean; onClose: () => vo
 function AddGamerForm({
   onOpenChange,
   onCreated,
+  signUp,
 }: Omit<AddGamerDialogProps, "open">) {
   const { user } = useRequiredAuth();
   const createGamer = useCreateGamer();
+
+  const create = async (input: CreateGamerInput) => {
+    if (!signUp) return createGamer.mutateAsync({ parentId: user.id, input });
+    // One id per attempt, shared by the route's report and the caller's push;
+    // a failed attempt reports nothing, and a retry is a new attempt.
+    const eventId = crypto.randomUUID();
+    const result = await createGamer.mutateAsync({
+      parentId: user.id,
+      input,
+      signUp: { productId: signUp.productId, eventId },
+    });
+    signUp.onChildAdded(eventId);
+    return result;
+  };
 
   return (
     <Dialog open onOpenChange={onOpenChange}>
       <AddGamerFormCard
         onOpenChange={onOpenChange}
         onCreated={onCreated}
-        onCreate={(input) => createGamer.mutateAsync({ parentId: user.id, input })}
+        onCreate={create}
       />
     </Dialog>
   );

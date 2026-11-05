@@ -398,6 +398,35 @@ describe("reportRedditConversion — the request", () => {
     expect(event.event_source_url).toBe(`${SITE_ORIGIN}/register`);
   });
 
+  // A child added has no standard event on Reddit, so it is a custom one,
+  // named as Meta's is — unpriced, on the product's page, with the parent's
+  // hashes and nothing about the child.
+  it("reports a child added as the custom event ChildProfileCreated, unpriced", async () => {
+    await reportRedditConversion(
+      request(),
+      {
+        event: "child_added",
+        product: PRODUCT,
+        sourcePath: "/shop/abc-123",
+        eventId: EVENT_ID,
+      },
+      PARENT,
+    );
+
+    const event = sentEvent();
+    expect(event.type).toEqual({
+      tracking_type: "CUSTOM",
+      custom_event_name: "ChildProfileCreated",
+    });
+    expect(event.event_source_url).toBe(`${SITE_ORIGIN}/shop/abc-123`);
+    const { conversion_id: conversionId, ...metadata } = asObject(event.metadata);
+    expect(conversionId).toBe(EVENT_ID);
+    expect(metadata).toEqual(UNPRICED_PRODUCT);
+    const user = asObject(event.user);
+    expect(user.email).toBe(PARENT_EMAIL_SHA256);
+    expect(user.external_id).toBe(PARENT_ID_SHA256);
+  });
+
   it("carries the test id only when one is configured", async () => {
     vi.stubEnv("REDDIT_CONVERSIONS_API_TEST_ID", "t2_testing");
 

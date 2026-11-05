@@ -45,8 +45,9 @@ import { clickIdFromCookieHeader, type ClickId } from "@/lib/utm";
  * accepted as such). The id hash is stable for the account, which is what lets
  * Meta recognise the same parent across visits and devices. No phone number,
  * no name, no participation id, and nothing about a child beyond the product
- * named below — not their name, not their age, not their account or its id,
- * not their address. This list is the promise the privacy policy makes; a
+ * named below and, on the child-added event, the fact that one was added — not
+ * their name, not their age, not their account or its id, not their address,
+ * not how many children the family has. This list is the promise the privacy policy makes; a
  * field added here is a policy edit.
  *
  * **What is sent about the enrolment** is `outcome`, one of two fixed words,
@@ -61,6 +62,14 @@ import { clickIdFromCookieHeader, type ClickId } from "@/lib/utm";
  * started from an advertised product's page: then the same product fields,
  * without a price, so Meta learns that an identifiable parent opened an
  * account from that named club, camp or event's page.
+ *
+ * **What is sent about a child added** is the product whose sign-up panel the
+ * parent added the child from, in the same fields without a price, under the
+ * custom name `ChildProfileCreated` — so Meta learns that an identifiable
+ * parent added a child while signing up for that named club, camp or event.
+ * Only for an advertised product's panel; a child added anywhere else is not
+ * reported. Nothing about the child goes with it: not their name, age, account
+ * or its id, not how many there now are.
  *
  * **What is sent about a page view** is nothing but the page; about a product
  * view or a checkout start, the product in the same fields with its price, the
@@ -132,6 +141,12 @@ export type MetaConversion =
       eventId: string;
     }
   | {
+      event: "child_added";
+      product: MetaProductDetails;
+      sourcePath: string;
+      eventId: string;
+    }
+  | {
       event: "enrolment";
       outcome: ReportedEnrolmentOutcome;
       product: MetaProductDetails;
@@ -179,6 +194,8 @@ function eventNameFor(conversion: MetaConversion): string {
   switch (conversion.event) {
     case "account_created":
       return META_CONVERSION_EVENTS.accountCreated;
+    case "child_added":
+      return META_CONVERSION_EVENTS.childAdded;
     case "enrolment":
       return META_CONVERSION_EVENTS.enrolment;
     case "page_view":
@@ -199,13 +216,14 @@ function unpriced(product: MetaProductDetails): Record<string, unknown> {
 /**
  * The event's `custom_data`: for an enrolment its outcome and the product it
  * was for; for an account creation the product its sign-up started from, if
- * any, and otherwise none at all.
+ * any, and otherwise none at all; for a child added the product whose panel it
+ * was added from.
  *
- * **Only a seat carries a value.** A waitlisted report and an account creation
- * keep the product's id, name, topic and type but drop `value` and `currency`,
+ * **Only a seat carries a value.** A waitlisted report, an account creation and
+ * a child added keep the product's id, name, topic and type but drop `value` and `currency`,
  * whatever the caller passed: nobody has paid or committed to pay, and a price
- * on either would teach the campaign that a queue place or a new account is
- * revenue. Decided here rather than by each caller, so no route can get it
+ * on any of them would teach the campaign that a queue place, a new account or
+ * a new child is revenue. Decided here rather than by each caller, so no route can get it
  * wrong.
  *
  * A product view and a checkout start name their product with its price, as
@@ -218,6 +236,8 @@ function customDataFor(
   switch (conversion.event) {
     case "account_created":
       return conversion.product && unpriced(conversion.product);
+    case "child_added":
+      return unpriced(conversion.product);
     case "enrolment": {
       const { outcome, product } = conversion;
       if (outcome === "waitlisted") return { outcome, ...unpriced(product) };

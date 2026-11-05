@@ -26,6 +26,14 @@
  *     one — and never as an enrolment, because a name is what Meta optimises
  *     on and an abandoned attempt would train the campaign as hard as a seat.
  *
+ *   - `ChildProfileCreated` — a parent added a child from a product's sign-up
+ *     panel: past the account, short of a seat. A custom name, because Meta's
+ *     taxonomy has no word for it and borrowing one would train a campaign on
+ *     the wrong thing — `Lead` is the account, `CompleteRegistration` the seat.
+ *     Reported only for an advertised product's page, and never when a child is
+ *     added from the family's own dashboard: a child added off the funnel is not
+ *     a step in it.
+ *
  *   - `ViewContent` — a product page was looked at.
  *   - `PageView` — a marketing page was reached.
  *
@@ -68,11 +76,12 @@ import { resolveRequiredTranslation } from "@/lib/i18n/resolve-translation";
 import type { BillingMode, ProductTopic, ProductType } from "@/types";
 
 /**
- * Meta's names for what our servers report: the two conversions, and the
+ * Meta's names for what our servers report: the three conversions, and the
  * server twins of the browser's page view, product view and checkout start.
  */
 export const META_CONVERSION_EVENTS = {
   accountCreated: "Lead",
+  childAdded: "ChildProfileCreated",
   enrolment: "CompleteRegistration",
   pageView: "PageView",
   productView: "ViewContent",
@@ -90,6 +99,9 @@ export const META_CONVERSION_EVENTS = {
  *     enrolment's name and never the account's.
  *   - `PAGE_VISIT`, `VIEW_CONTENT` and `ADD_TO_CART` — the server twins of the
  *     container tag's `PageVisit`, `ViewContent` and `AddToCart`.
+ *
+ * A child added has no standard event on Reddit either, so it goes out as one
+ * of Reddit's custom events — `tracking_type` `CUSTOM`, named below.
  */
 export const REDDIT_CONVERSION_EVENTS = {
   accountCreated: "LEAD",
@@ -97,6 +109,15 @@ export const REDDIT_CONVERSION_EVENTS = {
   pageView: "PAGE_VISIT",
   productView: "VIEW_CONTENT",
   checkoutStart: "ADD_TO_CART",
+} as const;
+
+/**
+ * Reddit's custom events, by the `custom_event_name` its Conversions API takes
+ * beside `tracking_type: "CUSTOM"`. Spelled exactly as Meta's name for the same
+ * moment, so a report reading both platforms reads one word.
+ */
+export const REDDIT_CUSTOM_CONVERSION_EVENTS = {
+  childAdded: META_CONVERSION_EVENTS.childAdded,
 } as const;
 
 /** The three ways a signup attempt can end in something worth reporting. */
@@ -254,8 +275,8 @@ export function advertisedProductDetails(
  * `meta`, built from this object (`gtmMetaProduct()`).
  *
  * `priced: false` drops the value, the currency and the item's price together,
- * for the two moments the server reports also leave unpriced — a queue place
- * and an account creation — so the browser's twin of a server report never
+ * for the moments the server reports also leave unpriced — a queue place, an
+ * account creation and a child added — so the browser's twin of a server report never
  * states a value the server report withholds.
  */
 export interface GtmEcommerce {
