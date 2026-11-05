@@ -32,7 +32,7 @@
     "genderNonBinary": "Non-binary",
     "submit": "Add gamer",
     "submitting": "Adding…",
-    "firstNameTooShort": "First name must be at least 2 characters.",
+    "firstNameRequired": "Enter a first name.",
     "firstNameTooLong": "First name must be 32 characters or fewer.",
     "birthMonthRequired": "Pick a birth month.",
     "birthYearRequired": "Pick a birth year.",

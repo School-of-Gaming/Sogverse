@@ -107,12 +107,20 @@ describe("POST /api/voice/instant/token", () => {
   });
 
   describe("signed-out guest path", () => {
-    it("returns 400 when displayName is too short", async () => {
+    it("returns 400 when displayName is only whitespace", async () => {
       unauthenticated();
       const response = await POST(
-        createTokenRequest({ code: "K7P2", displayName: "x" }),
+        createTokenRequest({ code: "K7P2", displayName: "   " }),
       );
       expect(response.status).toBe(400);
+    });
+
+    it("accepts a one-character displayName", async () => {
+      unauthenticated();
+      const response = await POST(
+        createTokenRequest({ code: "K7P2", displayName: "J" }),
+      );
+      expect(response.status).toBe(200);
     });
 
     it("returns 400 when displayName is too long (over 32 chars)", async () => {

@@ -344,7 +344,7 @@ export function AddGamerFormCard({
    * a child the first page was going to refuse anyway.
    */
   function findDetailsError(): string | null {
-    if (trimmedName.length < DISPLAY_NAME_MIN) return t("firstNameTooShort");
+    if (trimmedName.length < DISPLAY_NAME_MIN) return t("firstNameRequired");
     if (trimmedName.length > DISPLAY_NAME_MAX) return t("firstNameTooLong");
     if (!month) return t("birthMonthRequired");
     if (!year) return t("birthYearRequired");

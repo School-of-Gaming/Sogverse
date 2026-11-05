@@ -129,6 +129,19 @@ describe("handle_new_user() role assignment", () => {
     expect(profile.last_name).toBe("Name");
   });
 
+  it("stores a one-character first name as it was sent", async () => {
+    // The profiles CHECK's floor is one character, so a person who goes by an
+    // initial, or a one-character name, keeps it.
+    const user = await createTestUser({
+      email: "one-character-name@test.local",
+      user_metadata: { first_name: "J", last_name: "Smith" },
+    });
+
+    const profile = await getProfile(user.id);
+    expect(profile.first_name).toBe("J");
+    expect(profile.last_name).toBe("Smith");
+  });
+
   it("names an account whose first name is only whitespace as a new user", async () => {
     const user = await createTestUser({
       email: "tab-only-name@test.local",
@@ -194,10 +207,10 @@ describe("handle_new_user() role assignment", () => {
       ).toEqual({ first_name: "Grace", last_name: "Hopper" });
     });
 
-    it("gives the stand-in whole when the first part is one character", async () => {
+    it("keeps a one-character first part as the first name", async () => {
       expect(
         await namesOf("google-short-first@test.local", { full_name: "J Smith" }),
-      ).toEqual({ first_name: "New User", last_name: "" });
+      ).toEqual({ first_name: "J", last_name: "Smith" });
     });
 
     it("gives the stand-in whole when a part is over 32 characters", async () => {

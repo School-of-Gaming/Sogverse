@@ -469,8 +469,8 @@ export function SettingsSectionContent({
         return;
       }
 
-      // The profiles CHECK holds a first name to at least two characters once
-      // trimmed; saying so here keeps a refusal from reading as a failed save.
+      // The profiles CHECK refuses a first name that is empty once trimmed;
+      // saying so here keeps a refusal from reading as a failed save.
       if (trimPersonName(firstName).length < DISPLAY_NAME_MIN) {
         setSaveError("firstNameRequired");
         setIsSaving(false);
@@ -624,9 +624,7 @@ export function SettingsSectionContent({
           {saveError && (
             <Alert variant="destructive">
               <AlertDescription>
-                {saveError === "firstNameRequired" || saveError === "lastNameRequired"
-                  ? t(saveError, { min: DISPLAY_NAME_MIN })
-                  : t(saveError)}
+                {t(saveError)}
               </AlertDescription>
             </Alert>
           )}

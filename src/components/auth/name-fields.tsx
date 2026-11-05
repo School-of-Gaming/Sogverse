@@ -14,7 +14,7 @@ import { trimPersonName } from "@/lib/person-name-trim";
  * reader's language.
  *
  * Trimmed before the length checks, so they measure the name rather than
- * the whitespace around it — " A" is not a two-character first name. The
+ * the whitespace around it — "   " is not a first name at all. The
  * routes' own contracts trim again for the same reason: they are the ones
  * that have to hold, because the name goes from there into the profile. This
  * copy exists so the message a reader sees is the form's, before a round trip.
@@ -28,7 +28,7 @@ export function useNameSchemaFields() {
       .pipe(
         z
           .string()
-          .min(DISPLAY_NAME_MIN, t("firstNameTooShort", { min: DISPLAY_NAME_MIN }))
+          .min(DISPLAY_NAME_MIN, t("firstNameRequired"))
           .max(DISPLAY_NAME_MAX, t("firstNameTooLong", { max: DISPLAY_NAME_MAX })),
       ),
     lastName: z
@@ -37,7 +37,7 @@ export function useNameSchemaFields() {
       .pipe(
         z
           .string()
-          .min(DISPLAY_NAME_MIN, t("lastNameTooShort", { min: DISPLAY_NAME_MIN }))
+          .min(DISPLAY_NAME_MIN, t("lastNameRequired"))
           .max(DISPLAY_NAME_MAX, t("lastNameTooLong", { max: DISPLAY_NAME_MAX })),
       ),
   };

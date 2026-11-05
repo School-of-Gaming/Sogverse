@@ -62,7 +62,7 @@ BEGIN
     -- fail the person's sign-in. No name, or one the profiles CHECKs would
     -- refuse, gives the stand-in whole, never half of each.
     IF profile_first_name IS NULL
-       OR char_length(profile_first_name) NOT BETWEEN 2 AND 32
+       OR char_length(profile_first_name) NOT BETWEEN 1 AND 32
        OR char_length(profile_last_name) > 32 THEN
       profile_first_name := 'New User';
       profile_last_name  := '';
