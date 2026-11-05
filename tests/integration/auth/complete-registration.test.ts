@@ -327,8 +327,8 @@ describe("POST /api/auth/complete-registration", () => {
     expect(conversion).toMatchObject({ event: "account_created", eventId });
   });
 
-  it("refuses a first name below the display-name minimum", async () => {
-    const response = await POST(request({ ...validBody, firstName: "A" }));
+  it("refuses a first name that is only whitespace", async () => {
+    const response = await POST(request({ ...validBody, firstName: "   " }));
 
     expect(response.status).toBe(400);
     expect(writes).toEqual([]);

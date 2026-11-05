@@ -1,6 +1,6 @@
 import { z } from "zod";
 import { Constants } from "@/types";
-import { DISPLAY_NAME_MIN, DISPLAY_NAME_MAX } from "@/lib/constants/account-limits";
+import { NAME_MIN_LENGTH, NAME_MAX_LENGTH } from "@/lib/constants/account-limits";
 import { trimPersonName } from "@/lib/person-name-trim";
 import {
   GAMER_USERNAME_PATTERN,
@@ -27,12 +27,12 @@ const firstName = z
     z
       .string()
       .min(
-        DISPLAY_NAME_MIN,
-        `First name must be between ${DISPLAY_NAME_MIN} and ${DISPLAY_NAME_MAX} characters`,
+        NAME_MIN_LENGTH,
+        `First name must be between ${NAME_MIN_LENGTH} and ${NAME_MAX_LENGTH} characters`,
       )
       .max(
-        DISPLAY_NAME_MAX,
-        `First name must be between ${DISPLAY_NAME_MIN} and ${DISPLAY_NAME_MAX} characters`,
+        NAME_MAX_LENGTH,
+        `First name must be between ${NAME_MIN_LENGTH} and ${NAME_MAX_LENGTH} characters`,
       ),
   );
 

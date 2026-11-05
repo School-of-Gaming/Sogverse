@@ -29,7 +29,7 @@ import {
 } from "@/services/gamer-photo-consents/gamer-photo-consents.queries";
 import { useMinecraftAccount } from "@/services/minecraft/minecraft.queries";
 import { useRobloxAccount } from "@/services/roblox/roblox.queries";
-import { DISPLAY_NAME_MAX } from "@/lib/constants/account-limits";
+import { NAME_MAX_LENGTH, NAME_MIN_LENGTH } from "@/lib/constants/account-limits";
 import { ROUTES } from "@/lib/constants/routes";
 import { computeAge } from "@/lib/gamer-age-eligibility";
 import { trimPersonName } from "@/lib/person-name-trim";
@@ -226,13 +226,13 @@ export default function GamerDetailsPage() {
                 value={firstName}
                 onChange={(e) => setFirstName(e.target.value)}
                 placeholder={c('firstName')}
-                maxLength={DISPLAY_NAME_MAX}
+                maxLength={NAME_MAX_LENGTH}
               />
             </Field>
 
             <Button
               type="submit"
-              disabled={isSavingProfile || trimPersonName(firstName).length < 2}
+              disabled={isSavingProfile || trimPersonName(firstName).length < NAME_MIN_LENGTH}
             >
               {isSavingProfile ? c('saving') : c('saveChanges')}
             </Button>

@@ -5,7 +5,7 @@ import { z } from "zod";
 import { Input } from "@/components/ui/input";
 import { Field } from "@/components/ui/field";
 import { cn } from "@/lib/cn";
-import { DISPLAY_NAME_MIN, DISPLAY_NAME_MAX } from "@/lib/constants/account-limits";
+import { NAME_MIN_LENGTH, NAME_MAX_LENGTH } from "@/lib/constants/account-limits";
 import { trimPersonName } from "@/lib/person-name-trim";
 
 /**
@@ -14,7 +14,7 @@ import { trimPersonName } from "@/lib/person-name-trim";
  * reader's language.
  *
  * Trimmed before the length checks, so they measure the name rather than
- * the whitespace around it — " A" is not a two-character first name. The
+ * the whitespace around it — "   " is not a first name at all. The
  * routes' own contracts trim again for the same reason: they are the ones
  * that have to hold, because the name goes from there into the profile. This
  * copy exists so the message a reader sees is the form's, before a round trip.
@@ -28,8 +28,8 @@ export function useNameSchemaFields() {
       .pipe(
         z
           .string()
-          .min(DISPLAY_NAME_MIN, t("firstNameTooShort", { min: DISPLAY_NAME_MIN }))
-          .max(DISPLAY_NAME_MAX, t("firstNameTooLong", { max: DISPLAY_NAME_MAX })),
+          .min(NAME_MIN_LENGTH, t("firstNameRequired"))
+          .max(NAME_MAX_LENGTH, t("firstNameTooLong", { max: NAME_MAX_LENGTH })),
       ),
     lastName: z
       .string()
@@ -37,8 +37,8 @@ export function useNameSchemaFields() {
       .pipe(
         z
           .string()
-          .min(DISPLAY_NAME_MIN, t("lastNameTooShort", { min: DISPLAY_NAME_MIN }))
-          .max(DISPLAY_NAME_MAX, t("lastNameTooLong", { max: DISPLAY_NAME_MAX })),
+          .min(NAME_MIN_LENGTH, t("lastNameRequired"))
+          .max(NAME_MAX_LENGTH, t("lastNameTooLong", { max: NAME_MAX_LENGTH })),
       ),
   };
 }
@@ -68,8 +68,8 @@ export function NameFields({
   optional = false,
   stackFrom,
   idPrefix = "",
-  firstMaxLength = DISPLAY_NAME_MAX,
-  lastMaxLength = DISPLAY_NAME_MAX,
+  firstMaxLength = NAME_MAX_LENGTH,
+  lastMaxLength = NAME_MAX_LENGTH,
 }: {
   firstLabel: string;
   lastLabel: string;

@@ -1,5 +1,5 @@
-export const DISPLAY_NAME_MIN = 2;
-export const DISPLAY_NAME_MAX = 32;
+export const NAME_MIN_LENGTH = 1;
+export const NAME_MAX_LENGTH = 32;
 
 /**
  * The Steven Brown Rule: a beloved family friend of Chief Engineer Kyle's who

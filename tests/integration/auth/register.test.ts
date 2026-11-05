@@ -290,8 +290,8 @@ describe("POST /api/auth/register", () => {
     expect(mockCreateUser).not.toHaveBeenCalled();
   });
 
-  it("returns 400 for a first name shorter than the display-name minimum", async () => {
-    const response = await POST(registerRequest({ ...validBody, firstName: "A" }));
+  it("returns 400 for a first name that is only whitespace", async () => {
+    const response = await POST(registerRequest({ ...validBody, firstName: "   " }));
 
     expect(response.status).toBe(400);
     expect(mockCreateUser).not.toHaveBeenCalled();

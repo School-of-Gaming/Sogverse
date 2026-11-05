@@ -25,7 +25,7 @@ import { useCreateGamer } from "@/services/gamers/gamers.queries";
 import { usePinStatus, pinKeys } from "@/services/pin/pin.queries";
 import { PinUnlockFlow } from "@/components/pin";
 import { useRequiredAuth } from "@/providers/auth-provider";
-import { DISPLAY_NAME_MIN, DISPLAY_NAME_MAX } from "@/lib/constants/account-limits";
+import { NAME_MIN_LENGTH, NAME_MAX_LENGTH } from "@/lib/constants/account-limits";
 import { ROUTES } from "@/lib/constants/routes";
 import { ApiError } from "@/lib/api/api-error";
 import { normalizeGamerUsername } from "@/lib/gamer-sign-in";
@@ -367,8 +367,8 @@ export function AddGamerFormCard({
    * a child the first page was going to refuse anyway.
    */
   function findDetailsError(): string | null {
-    if (trimmedName.length < DISPLAY_NAME_MIN) return t("firstNameTooShort");
-    if (trimmedName.length > DISPLAY_NAME_MAX) return t("firstNameTooLong");
+    if (trimmedName.length < NAME_MIN_LENGTH) return t("firstNameRequired");
+    if (trimmedName.length > NAME_MAX_LENGTH) return t("firstNameTooLong");
     if (!month) return t("birthMonthRequired");
     if (!year) return t("birthYearRequired");
     return null;
@@ -586,8 +586,8 @@ export function AddGamerFormCard({
                 autoFocus
                 autoComplete="off"
                 required
-                minLength={DISPLAY_NAME_MIN}
-                maxLength={DISPLAY_NAME_MAX}
+                minLength={NAME_MIN_LENGTH}
+                maxLength={NAME_MAX_LENGTH}
               />
             </Field>
 
