@@ -186,7 +186,8 @@ export const createGamerBody = z
     guardianAttested: guardianAttestedValue,
     /**
      * The product whose sign-up panel the child is being added from, sent only
-     * from that panel — the family's own dashboard sends none. It decides
+     * from that panel — an add anywhere else (the family's own pages) sends
+     * none, and is reported under the dashboard's fixed path. It decides
      * nothing about the child and names no row the route writes: it is read
      * only to say, after the answer, which page the child-added conversion
      * happened on and which product to name in it. Untrusted, so the report

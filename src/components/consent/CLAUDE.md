@@ -165,9 +165,9 @@ without a change here** (`src/lib/gtm-events.ts` has the names and why each):
   product has been read; it loads the container itself if the page view has not yet;
 - `add_to_cart` — the click into the sign-up flow from a product's page (below);
 - `sign_up` — a parent account was created;
-- `child_added` — a parent added a child from a product's sign-up panel; one added from
-  the family's own dashboard pushes nothing, since the container never loads there, and
-  is reported by our servers alone;
+- `child_added` — a parent added a child from a product's sign-up panel, advertised or
+  not; one added anywhere else — the family's own pages — pushes nothing, since the
+  container never loads there, and is reported by our servers alone;
 - `enrolment` — a seat or a queue place was taken, with `outcome` saying which;
 - `begin_checkout` — the parent was handed to Stripe.
 
@@ -218,9 +218,9 @@ it can neither delay nor fail what the family asked for:
   `ChildProfileCreated`, and Reddit's custom event of the same name): past the account,
   short of a seat. Like the lead, it names a product only when there is an advertised one
   to name: a product's sign-up panel sends the product's id with the create, and the
-  report names that product, unpriced, when its row is one we advertise; no id (the
-  family's own dashboard), an unknown product or an unadvertised one sends the report
-  without a product. It says nothing about the child;
+  report names that product, unpriced, when its row is one we advertise; no id (any add
+  outside a product's sign-up panel, on the family's own pages), an unknown product or an
+  unadvertised one sends the report without a product. It says nothing about the child;
 - **an enrolment** — a seat or a place in a queue (Meta's `CompleteRegistration`, Reddit's
   `SIGN_UP`), carrying which of the two it was to Meta. Reddit's event has no field for
   it, so Reddit tells the two apart only by the missing value on a queue place;
@@ -234,7 +234,7 @@ it can neither delay nor fail what the family asked for:
 **Every server report shares its id with the browser's push.** For the lead, the child
 added and the enrolment, the browser mints the id, sends it in the body of the request that commits the
 action, and pushes under it once the route has answered; absent, the server mints its own.
-A child added from the family's own dashboard still sends one — the dialog mints it on
+A child added outside a product's sign-up panel still sends one — the dialog mints it on
 every create — though no push shares it there. For the three twins it is required, since a
 twin with no push to match is nothing. The
 server hands it to Meta as `event_id` and to Reddit as `conversion_id`. It is validated as
@@ -283,7 +283,11 @@ read — sends the lead without a product, and never touches the registration. T
 
 **A child added is reported from the page the dialog was opened on, stated by the caller.**
 From a product's sign-up panel, that product's public page, whether or not the report
-names the product. From the family's own dashboard, the dashboard's fixed path — **the one
+names the product — so an unadvertised product's id still reaches a platform in the
+source path, as it does in the panel's `child_added` push, which fires for every panel
+add. That is accepted: a product id is not sensitive, and the product's fields are
+withheld for campaign noise, not secrecy. Any add outside a panel — the family's own
+pages — is reported under the dashboard's fixed path — **the one
 private path a server report may name**: a fixed path with no id in it names nobody,
 where a private page's address in general can name a child, so it is never one derived
 from a request or carrying a record. The browser side keeps the stricter rule: the
@@ -291,8 +295,10 @@ container never loads on a private page, so it never reports one.
 
 Each server report is gated on the **request's own consent cookie**, so a report for
 someone who refused marketing is impossible rather than unlikely. Products we do not
-advertise — a municipality club, or anything invoiced off-platform — are refused **by the
-product row, never by the URL it was reached from**. The lead, child-added and enrolment
+advertise — a municipality club, or anything invoiced off-platform — have their product
+fields refused **by the product row, never by the URL it was reached from**, because a
+campaign optimised on them is optimised on noise; their id may still travel in a child
+added's source path, as above. The lead, child-added and enrolment
 routes are customer-only, so a gamer cannot reach one; the page-event route makes its own gamer check.
 
 **What identifies a person in a server report, exhaustively:** the user agent, the IP the

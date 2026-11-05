@@ -95,8 +95,9 @@ interface AddGamerDialogProps {
   onCreated?: (gamerId: string, eventId: string) => void;
   /**
    * The product whose sign-up panel the dialog was opened from, passed only by
-   * that panel, so the route's report can name it. The family's own dashboard
-   * passes none, and the child is reported without a product.
+   * that panel, so the route's report can name it. Any add outside a product's
+   * sign-up panel — the family's own pages — passes none, and the child is
+   * reported without a product, under the dashboard's fixed path.
    */
   productId?: string;
 }
@@ -267,14 +268,12 @@ function AddGamerForm({
 export function AddGamerFormCard({
   onCreate,
   onOpenChange,
-  onCreated,
   className,
   initial,
   idPrefix = CREDENTIAL_FIELD_ID_PREFIX,
 }: {
   onCreate: (input: CreateGamerInput) => Promise<{ gamerId: string }>;
   onOpenChange: (open: boolean) => void;
-  onCreated?: (gamerId: string) => void;
   className?: string;
   initial?: InitialState;
   /**
@@ -388,7 +387,7 @@ export function AddGamerFormCard({
     setCommitting(true);
 
     try {
-      const result = await onCreate({
+      await onCreate({
         firstName: trimmedName,
         birth: { year: Number(year), month: Number(month) },
         gender,
@@ -406,7 +405,6 @@ export function AddGamerFormCard({
         // route's schema refuses anything else regardless.
         guardianAttested: true,
       });
-      onCreated?.(result.gamerId);
       onOpenChange(false);
       // Intentionally not clearing `committing` — the dialog unmounts.
     } catch (caught) {

@@ -56,9 +56,10 @@ import type { EnrolmentOutcome, GtmEcommerce } from "./marketing-events";
  *     *for*. GA4's recommended name for exactly that.
  *   - `child_added` — a parent added a child from a product's sign-up panel.
  *     Custom, as GA4's list has nothing between an account and a purchase;
- *     Meta's and Reddit's `ChildProfileCreated`. A child added from the
- *     family's own dashboard pushes nothing: the container never loads on a
- *     private page, so that one is reported by our servers alone.
+ *     Meta's and Reddit's `ChildProfileCreated`. A child added outside a
+ *     product's sign-up panel — on the family's own pages — pushes nothing:
+ *     the container never loads on a private page, so that one is reported by
+ *     our servers alone, under the dashboard's fixed path.
  *   - `enrolment` — a seat or a queue place was taken. Custom rather than
  *     recommended: GA4's list has no word for registering for a thing, and
  *     `purchase` would be a lie about the free ones.

@@ -279,12 +279,15 @@ export const POST = defineRoute({
     // **The product is optional, and decided by the product row, never by the
     // id alone.** Only a product's sign-up panel sends one; the id is untrusted,
     // so the product is read after the response and named only when it is one
-    // we advertise. No id (the family's own dashboard), or an unknown,
-    // unadvertised or unreadable product: the report goes out naming none.
+    // we advertise, since a product nobody advertises is noise a campaign would
+    // optimise against. No id (any add outside a product's sign-up panel — the
+    // family's own pages), or an unknown, unadvertised or unreadable product:
+    // the report goes out naming none.
     //
     // **The source path is stated, never taken from this route's own URL:** the
-    // product's public page when the panel sent one, which is where the parent
-    // was, and otherwise the parent dashboard's fixed path, which names nobody.
+    // product's public page whenever the panel sent an id, advertised or not —
+    // that is where the parent was, and a product id is not sensitive — and
+    // otherwise the parent dashboard's fixed path, which names nobody.
     //
     // The report carries the parent and, at most, the product — nothing about
     // the child: not the name, the birth month, the new account's id or how
