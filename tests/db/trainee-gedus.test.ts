@@ -15,6 +15,7 @@ import {
   createScheduleSlot,
   createTestProduct,
   deleteTestProducts,
+  eraseParticipations,
 } from "./product-helpers";
 
 /**
@@ -271,7 +272,7 @@ describe("trainee gedus", () => {
     await admin.from("group_sessions").delete().in("group_id", ALL_GROUPS);
     await admin.from("gedu_group_trainees").delete().in("product_id", ALL_PRODUCTS);
     await admin.from("gedu_group_assignments").delete().in("product_id", ALL_PRODUCTS);
-    await admin.from("participations").delete().in("product_id", ALL_PRODUCTS);
+    await eraseParticipations(admin, (q) => q.in("product_id", ALL_PRODUCTS));
     await deleteTestProducts(admin, ALL_PRODUCTS);
     if (traineeId) await admin.auth.admin.deleteUser(traineeId);
   });

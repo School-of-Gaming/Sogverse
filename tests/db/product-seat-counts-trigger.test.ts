@@ -3,7 +3,7 @@ import type { SupabaseClient } from "@supabase/supabase-js";
 import type { Database } from "@/types/database.types";
 import { createAdminTestClient } from "./helpers";
 import { TEST_IDS } from "./constants";
-import { createTestProduct, deleteTestProducts } from "./product-helpers";
+import { createTestProduct, deleteTestProducts, eraseParticipations } from "./product-helpers";
 
 /**
  * The product_seat_counts rollup is the single source of truth for
@@ -59,10 +59,7 @@ describe("product_seat_counts trigger", () => {
   });
 
   beforeEach(async () => {
-    await admin
-      .from("participations")
-      .delete()
-      .eq("product_id", PRODUCT_TRIG);
+    await eraseParticipations(admin, (q) => q.eq("product_id", PRODUCT_TRIG));
   });
 
   it("seeds the rollup row at product creation with all-zero counts", async () => {
@@ -135,7 +132,7 @@ describe("product_seat_counts trigger", () => {
     });
   });
 
-  it("transition active → completed drops active_count", async () => {
+  it("transition active → ended drops active_count", async () => {
     const { data: inserted } = await admin
       .from("participations")
       .insert({
@@ -149,7 +146,11 @@ describe("product_seat_counts trigger", () => {
 
     await admin
       .from("participations")
-      .update({ status: "completed" })
+      .update({
+        status: "ended",
+        ended_at: new Date().toISOString(),
+        end_reason: "admin_removed",
+      })
       .eq("id", inserted!.id);
 
     expect(await readRollup(admin, PRODUCT_TRIG)).toEqual({
@@ -172,7 +173,7 @@ describe("product_seat_counts trigger", () => {
 
     expect((await readRollup(admin, PRODUCT_TRIG)).active_count).toBe(1);
 
-    await admin.from("participations").delete().eq("id", inserted!.id);
+    await eraseParticipations(admin, (q) => q.eq("id", inserted!.id));
 
     expect(await readRollup(admin, PRODUCT_TRIG)).toEqual({
       active_count: 0,

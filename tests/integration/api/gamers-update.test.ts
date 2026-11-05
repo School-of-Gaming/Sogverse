@@ -272,15 +272,15 @@ describe("PATCH /api/gamers/[id]", () => {
     expect(data.error).toContain("minecraftUsername");
   });
 
-  it("should return 400 when firstName is too short", async () => {
+  it("should return 400 when firstName is only whitespace", async () => {
     mockAuthenticated();
 
-    const [req, ctx] = createRequest(GAMER_ID, { firstName: "A" });
+    const [req, ctx] = createRequest(GAMER_ID, { firstName: "   " });
     const response = await PATCH(req, ctx);
     const data = await response.json();
 
     expect(response.status).toBe(400);
-    expect(data.error).toContain("between 2 and 32 characters");
+    expect(data.error).toContain("between 1 and 32 characters");
   });
 
   it("holds a child's password to the same bar as their parent's", async () => {

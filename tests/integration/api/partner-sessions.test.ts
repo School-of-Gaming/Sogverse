@@ -301,7 +301,7 @@ describe("GET /api/partner/v1/sessions", () => {
     // One batched seat read per fetch, scoped to live Programme seats.
     const seatReads = readsOf(db.fetch, "participations");
     expect(seatReads).toHaveLength(1);
-    expect(seatReads[0].searchParams.get("status")).toBe("in.(active,waitlisted,completed)");
+    expect(seatReads[0].searchParams.get("status")).toBe("in.(active,waitlisted)");
     expect(seatReads[0].searchParams.get("programme.programme_terms.document_slug")).toBe(
       "eq.roblox-programme-terms",
     );

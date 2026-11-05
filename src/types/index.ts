@@ -509,17 +509,6 @@ export type Participation = Database["public"]["Tables"]["participations"]["Row"
 export type ParticipationInsert = Database["public"]["Tables"]["participations"]["Insert"];
 
 /**
- * Derived 3-state placement vocabulary for participations.
- * See docs/architecture/products.md §3 "Participation state vocabulary":
- *   - 'waitlisted'  — `status = 'waitlisted'`
- *   - 'unassigned'  — `status = 'active' AND group_id IS NULL`
- *   - 'assigned'    — `status = 'active' AND group_id IS NOT NULL`
- *
- * Use `participationStateOf()` (src/lib/participation-state.ts) to derive.
- */
-export type ParticipationState = "waitlisted" | "unassigned" | "assigned";
-
-/**
  * Purchase shape selectors the client sends to the create-participation route.
  * Server recomputes prices from the product's stored base price + the
  * pricing constants — clients never send amounts.
@@ -792,12 +781,11 @@ export type {
 // the service and the db test both parse through.
 export type {
   AdminDashboardAttentionProduct,
-  AdminDashboardCertificationCandidate,
+  AdminDashboardGeduTask,
   AdminDashboardGroupWithoutGedu,
   AdminDashboardScheduleProduct,
   AdminDashboardScheduleSlot,
   AdminDashboardSnapshot,
-  AdminDashboardUserStat,
   AdminDashboardWaitlistPressure,
 } from "@/services/admin-dashboard/admin-dashboard.contracts";
 

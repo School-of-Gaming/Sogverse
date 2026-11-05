@@ -2,7 +2,6 @@ import "server-only";
 
 import { lookupMinecraftUser } from "@/lib/mojang";
 import { lookupRobloxProfile } from "@/lib/roblox";
-import { toE164Digits } from "@/lib/constants/phone";
 import type { AppSupabaseClient, SpokenLanguageCode } from "@/types";
 import type { CompleteGeduRegistrationBody } from "./gedu-registration.contracts";
 
@@ -13,18 +12,6 @@ import type { CompleteGeduRegistrationBody } from "./gedu-registration.contracts
  * by the register route, already signed in through Google for the completion
  * route — and what a failed promotion means for it.
  */
-
-/**
- * The phone number as the `profiles.phone` CHECK stores it (`^\d{7,15}$`), `""`
- * for no number (the RPC NULLIFs it), or `null` for a number that cannot be
- * stored, which the caller refuses with a 400.
- */
-export function geduPhoneDigits(phone: string | undefined): string | null {
-  if (!phone || !phone.trim()) return "";
-  const digits = toE164Digits(phone);
-  if (!digits || !/^\d{7,15}$/.test(digits)) return null;
-  return digits;
-}
 
 /** Each handle the educator gave, with the platform's account key if it has one. */
 export interface ResolvedGeduHandles {

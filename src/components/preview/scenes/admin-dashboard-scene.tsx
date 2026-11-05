@@ -20,16 +20,15 @@ import { resolveLocale } from "@/lib/constants/locales";
  * for a link whose whole purpose is to be the way out of the queue.
  *
  * **Certify works, against local state, and it has to be this shell that makes
- * it work.** The queue drops a row once the write resolves *and* the list it was
- * given stops offering that id — the second half is what protects it from a
- * receipt that outlives the fact, when somebody un-certifies an account from the
- * users list while this page is open. Live, the mutation awaits its own
- * invalidation, so the refetched snapshot has already dropped the id by the time
- * the promise resolves. A scene that resolved an untouched fixture would satisfy
- * the first half and fail the second, and the row would sit at "Certifying…"
- * for the rest of the sitting — the button is deliberately never re-enabled on
- * success, because live the row is about to disappear. So the certified ids are
- * held here and filtered out of the list, which is the same two-part shape the
+ * it work.** The Gedu section renders exactly the entries it is given, and an
+ * entry's own certification decides whether its row offers Certify. Live, the
+ * mutation awaits its own invalidation, so the refetched snapshot has already
+ * taken the certification off the entry by the time the promise resolves — and
+ * dropped the entry, unless their team profile is still waiting. A scene that
+ * resolved an untouched fixture would leave the row at "Certifying…" for the
+ * rest of the sitting — the button is deliberately never re-enabled on success,
+ * because live it is about to go. So the certified ids are held here and the
+ * entries reshaped the way the snapshot would be, which is the same shape the
  * live path has, with a `Set` where the RPC is.
  *
  * The fixture is memoised rather than rebuilt per render. Nothing in it depends
@@ -59,7 +58,7 @@ export function AdminDashboardScene({
    * are the same component at the same position in the tree, so React keeps
    * this state across a step between them unless it is told not to — and
    * without the reset, certifying somebody in `busy`, stepping to `quiet` and
-   * stepping back would show `busy` already missing a row nobody touched there:
+   * stepping back would show `busy` already missing a Certify nobody pressed there:
    * a preview lying about its own starting state.
    */
   const [shownScenario, setShownScenario] = useState(scenario);
@@ -71,9 +70,14 @@ export function AdminDashboardScene({
   const data = useMemo(
     () => ({
       ...fixture,
-      uncertifiedGedus: fixture.uncertifiedGedus.filter(
-        (gedu) => !certified.has(gedu.id),
-      ),
+      geduTasks: fixture.geduTasks.flatMap((gedu) => {
+        if (!certified.has(gedu.id)) return [gedu];
+        // Certified: what the refetched snapshot would hold — the entry with
+        // its certification gone, or no entry once nothing else is open.
+        return gedu.teamProfileAwaitingReview
+          ? [{ ...gedu, certification: null }]
+          : [];
+      }),
     }),
     [fixture, certified],
   );

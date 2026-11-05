@@ -143,6 +143,12 @@ export interface EnrollmentFixtureSpec {
    * line — the same split the live roll-up makes.
    */
   cancelledUpcomingSessions?: number;
+  /**
+   * Days ago the seat ended — a cancelled membership that has run out, or a
+   * seat an admin removed. The card is then a finished one whatever the
+   * product's own dates say: nothing ahead, no Join, and the day it ended.
+   */
+  seatEndedDaysAgo?: number;
 }
 
 export function buildEnrollmentFixture(
@@ -163,8 +169,16 @@ export function buildEnrollmentFixture(
   // A waitlisted family holds no seat, so no occurrence of this product is
   // theirs to turn up to — the schedule still renders (it is a fact about the
   // product), but the next session does not.
+  const seatEndedOn =
+    spec.seatEndedDaysAgo === undefined
+      ? null
+      : calendarDate(now, -spec.seatEndedDaysAgo, FIXTURE_TIMEZONE);
+
+  // A waitlisted family holds no seat, and an ended seat holds one no longer, so
+  // no occurrence of this product is theirs to turn up to — the schedule still
+  // renders (it is a fact about the product), but the next session does not.
   const { next, cancelledAhead } =
-    waitlistPosition !== null
+    waitlistPosition !== null || seatEndedOn !== null
       ? { next: null, cancelledAhead: [] }
       : nextOccurrence({
           now,
@@ -242,6 +256,7 @@ export function buildEnrollmentFixture(
     openHref: INERT_HREF,
     endDate,
     timezone: FIXTURE_TIMEZONE,
+    seatEndedOn,
     waitlistPosition,
     seatOfferSentAt,
     awaiting: spec.awaiting ?? false,

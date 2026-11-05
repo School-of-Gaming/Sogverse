@@ -39,7 +39,7 @@ import { reportRedditConversion } from "@/lib/reddit-conversions.server";
  */
 export type AdConversion =
   | {
-      event: "account_created";
+      event: "account_created" | "child_added";
       product?: AdvertisedProductDetails;
       sourcePath: string;
       eventId?: string;
@@ -92,6 +92,7 @@ function forPlatform<Platform extends keyof AdvertisedProductDetails>(
   const { sourcePath } = conversion;
   switch (conversion.event) {
     case "account_created":
+    case "child_added":
       return {
         event: conversion.event,
         product: conversion.product?.[platform],

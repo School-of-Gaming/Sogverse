@@ -274,7 +274,7 @@ export const confirmPaidParticipationRpcResult = z.discriminatedUnion("kind", [
  *
  * `idempotent` is the same axis, with the same polarity, as
  * `confirm_booking`'s above, and for the same reason: the RPC returns
- * an existing waitlisted/reserving/active row shape-identically to a fresh
+ * an existing waitlisted or active row shape-identically to a fresh
  * insert, so this flag is the only thing that tells a replay apart. False only
  * on the call that ran the INSERT. Required rather than optional — an optional
  * flag would let `!idempotent` pass vacuously on a shape that had lost it.
@@ -432,9 +432,10 @@ export const adminEnrollParticipantRpcResult = z.object({
 });
 
 /**
- * `admin_remove_participation` RPC result. It delegates to
- * `cancel_participation`, so the shape is that function's: `cancelled` with the
- * details the audit line needs, or `noop` when the row had already gone.
+ * `admin_remove_participation` RPC result. It delegates to `end_participation`
+ * with reason `admin_removed`, so the shape is that function's: `cancelled`
+ * with the details the audit line needs (the seat is ended and kept, a
+ * waitlisted row deleted), or `noop` when the seat had already ended or gone.
  */
 export const adminRemoveParticipationRpcResult = z.discriminatedUnion("kind", [
   z.object({

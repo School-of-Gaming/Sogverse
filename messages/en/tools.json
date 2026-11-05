@@ -1,7 +1,7 @@
 {
   "uncertified": {
     "title": "Awaiting certification",
-    "body": "An admin needs to certify your Gedu account before you can start voice rooms or reset Minecraft Education passwords. Both tools appear here as soon as you’re certified."
+    "body": "An admin needs to certify your Gedu account before you can start virtual rooms or reset Minecraft Education passwords. Both tools appear here as soon as you’re certified."
   },
   "minecraftPasswordReset": {
     "title": "Minecraft Education passwords",

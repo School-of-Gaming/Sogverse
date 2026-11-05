@@ -106,7 +106,7 @@ const SEATS = [
     participant_id: PARENT_B,
     customer_id: PARENT_B,
     group_id: null,
-    status: "completed",
+    status: "active",
   }),
   // Not a Programme product: the inner embed finds no requirement.
   {
@@ -119,13 +119,13 @@ const SEATS = [
     }),
     programme: { programme_terms: [] },
   },
-  // Mid-checkout: never a seat anyone holds.
+  // Ended: held once, and never reported to a partner.
   seat(E6, {
     product_id: P_RUNNING,
     participant_id: GAMER_B,
     customer_id: PARENT_B,
     group_id: null,
-    status: "reserving",
+    status: "ended",
   }),
 ];
 
@@ -301,7 +301,7 @@ describe("GET /api/partner/v1/enrolments", () => {
     expect(url.searchParams.get("programme.programme_terms.document_slug")).toBe(
       "eq.roblox-programme-terms",
     );
-    expect(url.searchParams.get("status")).toBe("in.(active,waitlisted,completed)");
+    expect(url.searchParams.get("status")).toBe("in.(active,waitlisted)");
     expect(url.searchParams.get("order")).toBe("id.asc");
   });
 
@@ -350,9 +350,7 @@ describe("GET /api/partner/v1/enrolments", () => {
     it("status=completed includes a held seat on a completed product", async () => {
       const { body } = await get("?status=completed");
       expect(body.data.map((record: { id: string }) => record.id)).toEqual([E2, E4]);
-      expect(participationsUrls()[0].searchParams.get("status")).toBe(
-        "in.(active,completed)",
-      );
+      expect(participationsUrls()[0].searchParams.get("status")).toBe("in.(active)");
     });
 
     it("status=waitlisted reads only waitlisted seats", async () => {

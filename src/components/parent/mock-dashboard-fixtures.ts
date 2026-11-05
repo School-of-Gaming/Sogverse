@@ -370,6 +370,21 @@ export function buildParentDashboardFixture(
               endsInDays: -12,
               siteName: CAMP_SITE_NAME,
             },
+            {
+              participationId: "mock-enrollment-ended-fortnite-club",
+              productName: "Fortnite Creative Club",
+              productType: "consumer_club",
+              deliveryMode: "online",
+              topic: "fortnite",
+              slots: [futureSlot(now, 3, "17:00", 90, FIXTURE_TIMEZONE)],
+              // A club still running for everybody else, on a seat that ended
+              // when the family's cancelled membership ran out: a finished card
+              // all the same, sorting above the camp because it ended later.
+              startedDaysAgo: 120,
+              enrolledDaysAgo: 120,
+              endsInDays: null,
+              seatEndedDaysAgo: 4,
+            },
           ]),
         ],
         // The reader's own section — two children and one of these is exactly

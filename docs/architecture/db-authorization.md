@@ -684,9 +684,9 @@ src/lib/supabase/admin.ts,-,-,the client factory itself
   the admin-facing entry point wraps it — which is also what lets the wrapper hold
   admin-specific preconditions the webhook must not have.
 - **Moving route logic into an RPC closed a real race, not just a layer.** The
-  admin un-enroll path refuses to delete a participation that still has a live Stripe
-  subscription, because the CASCADE would orphan a subscription that keeps billing with
-  no DB row behind it. In the route that check and the delete were separate statements;
+  admin un-enroll path refuses to end a participation that still has a live Stripe
+  subscription, because ending it would leave a subscription billing for a seat nobody
+  holds. In the route that check and the write were separate statements;
   in the RPC they share a transaction and the product lock.
 - **The locale route's admin client was not a typing problem.** It carried a comment
   blaming a `@supabase/ssr` version whose bug made `.update()` resolve as `never`. That

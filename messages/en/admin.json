@@ -1,20 +1,9 @@
 {
   "dashboard": {
     "title": "Dashboard",
-    "description": "What needs an admin today, who is on the platform, and what is running.",
+    "description": "What needs an admin today, and what is running.",
     "loadError": "Could not load the dashboard. Refresh to try again.",
     "loadErrorWithReason": "Could not load the dashboard — {reason}. Refresh to try again.",
-    "users": {
-      "label": "Users",
-      "roles": {
-        "customer": "Parents",
-        "gamer": "Gamers",
-        "gedu": "Gedus",
-        "admin": "Admins"
-      },
-      "verified": "{count} verified",
-      "certified": "{count} certified"
-    },
     "attention": {
       "title": "Needs attention",
       "allClearTitle": "All clear",
@@ -32,14 +21,15 @@
         "waitlistOpenSeatsWithOffers": "{waiting} waitlisted · {open, plural, one {# seat} other {# seats}} open · {offers} awaiting an answer"
       }
     },
-    "certification": {
-      "title": "Gedu certification",
+    "gedus": {
+      "title": "Gedus",
       "justNow": "{count} certified just now",
-      "empty": "No Gedus are awaiting certification.",
+      "empty": "No Gedus are waiting on you.",
       "registered": "registered {when}",
       "certify": "Certify",
       "certifying": "Certifying…",
-      "failed": "Could not certify — try again."
+      "failed": "Could not certify — try again.",
+      "profileReady": "Profile ready to review"
     },
     "schedule": {
       "title": "Schedule",
@@ -906,11 +896,11 @@
     },
     "voiceRoomModes": {
       "label": "How do families join?",
-      "sogverse": "Sogverse voice room",
-      "sogverseDescription": "A voice room is set up automatically and opens for each session.",
+      "sogverse": "Sogverse virtual room",
+      "sogverseDescription": "A virtual room is set up automatically and opens for each session.",
       "external": "Link to a meeting elsewhere",
       "externalDescription": "Families join a meeting you host on another service. For audiences larger than a Sogverse room holds (50 people).",
-      "none": "No voice room",
+      "none": "No virtual room",
       "noneDescription": "Families are shown the join instructions you write for each language instead."
     },
     "deliveryModes": {
@@ -967,7 +957,7 @@
       "externalVoiceUrlHint": "Public: anyone can read this link, including visitors who are not signed in.",
       "municipalityHint": "Municipality clubs are always tied to a specific Finnish municipality — the one paying for it. Parents from that municipality will see it when they browse.",
       "siteHint": "Where sessions physically happen.",
-      "hybridHint": "Gamers come to the site. The Gedu, and any gamer who can’t make it there, joins through the Sogverse voice room.",
+      "hybridHint": "Gamers come to the site. The Gedu, and any gamer who can’t make it there, joins through the Sogverse virtual room.",
       "eventSingleDay": "Events happen on a single date.",
       "timezoneEntry": "Session times below are entered in this timezone. Parents see them converted to their own automatically.",
       "timezoneChangeMoves": "Session times below are entered in this timezone. Changing it moves every upcoming session to the same clock time in the new zone, while sessions that already have a report or attendance recorded keep the times they were held at.",
@@ -1575,8 +1565,7 @@
     "participationStatus": {
       "active": "Active",
       "waitlisted": "Waitlisted",
-      "reserving": "Awaiting payment",
-      "completed": "Completed"
+      "ended": "Ended"
     },
     "emailVerified": "Email verified",
     "emailNotVerified": "Email not verified",
@@ -1915,6 +1904,101 @@
         "desktop": "Desktop",
         "mobile": "Mobile",
         "tablet": "Tablet"
+      }
+    }
+  },
+  "business": {
+    "title": "Business",
+    "description": "How School of Gaming is doing, month by month.",
+    "readAt": "Figures as of {time}.",
+    "loadError": "The business figures could not be read. Reload the page to try again.",
+    "loadErrorWithReason": "The business figures could not be read: {reason}",
+    "change": "{change} this month",
+    "noChange": "No change this month",
+    "tiles": {
+      "revenueTotal": {
+        "label": "Revenue last month",
+        "largest": "{share} from {band, select, subscription {subscriptions} campsAndEvents {camps and events} municipality {municipalities} other {no named product}}",
+        "none": "No payments recorded",
+        "change": "{change} on the month before",
+        "same": "Same as the month before"
+      },
+      "subscriptions": {
+        "label": "Subscriptions per month",
+        "live": "{count, plural, one {# live subscription} other {# live subscriptions}}",
+        "outside": "{count, plural, other {# not counted: no euro price}}"
+      },
+      "payingFamilies": {
+        "label": "Paying families",
+        "startingLater": "{count, plural, one {+# starts a club later} other {+# start a club later}}"
+      },
+      "gamers": {
+        "label": "Gamers in a seat",
+        "municipality": "{count, plural, one {# in a municipality club} other {# in municipality clubs}}"
+      },
+      "firstWeek": {
+        "label": "Engaged in first week",
+        "detail": "{engaged} of {total} sign-ups",
+        "none": "No sign-ups to measure yet.",
+        "change": "{change} points this month"
+      }
+    },
+    "engagement": {
+      "heading": "Families by engagement",
+      "caption": "Every parent account.",
+      "chart": "Families by engagement",
+      "total": "{count, plural, one {family} other {families}}",
+      "slices": {
+        "subscriber": "Subscribing now",
+        "paidBefore": "Paid before, not subscribing",
+        "municipalityOnly": "Municipality clubs only",
+        "freeOnly": "Free or uncharged seats only",
+        "waiting": "Waiting for a place",
+        "neverEnrolled": "Gamer added, never booked",
+        "noGamer": "No gamer, never booked"
+      }
+    },
+    "revenue": {
+      "heading": "Revenue by month",
+      "caption": "Before refunds.",
+      "chart": "Revenue by month",
+      "series": {
+        "subscriptionCents": "Subscriptions",
+        "campsAndEventsCents": "Camps and events",
+        "municipalityCents": "Municipality invoices",
+        "unattributedCents": "No product named"
+      },
+      "noData": "No data",
+      "startsFrom": "Payments are recorded from {month}.",
+      "none": "No payments recorded yet.",
+      "nonEur": "{count, plural, one {# payment} other {# payments}} in another currency left out.",
+      "clubsWithoutFee": "{count, plural, one {# club without a fee left out} other {# clubs without a fee left out}}"
+    },
+    "families": {
+      "heading": "Paying families by month",
+      "caption": "At each month’s end.",
+      "chart": "Paying families by month",
+      "series": {
+        "payingFamilies": "Paying families",
+        "signups": "New sign-ups",
+        "firstSeats": "First seat taken",
+        "stoppedPaying": "Stopped paying"
+      }
+    },
+    "gedus": {
+      "heading": "Gamers per Gedu",
+      "caption": "Per lesson, on average.",
+      "chart": "Gamers per Gedu by month",
+      "series": "Gamers per Gedu",
+      "ranBy": "{sessions, plural, one {# lesson} other {# lessons}}, {gedus, plural, one {# Gedu} other {# Gedus}}",
+      "noData": "No data",
+      "startsFrom": "Lesson records start in {month}.",
+      "none": "No lesson was recorded in these months.",
+      "certified": {
+        "heading": "Certified Gedus",
+        "certified": "Certified",
+        "onRunning": "Assigned to something running",
+        "notOnRunning": "Not assigned to anything running"
       }
     }
   },

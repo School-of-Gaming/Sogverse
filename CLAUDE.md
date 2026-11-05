@@ -136,6 +136,7 @@ System architecture lives in **colocated `CLAUDE.md` files** next to the code th
 | Testimonials — the store of real words from parents, gamers and gedus, the landing pages that quote them, and the arrangements every page lays them out in | `src/services/testimonials/` |
 | Guides — the PDFs landing pages hand out to signed-in readers, their private bucket and who may download | `src/services/guides/` |
 | Admin analytics — the Web Analytics figures and their consent scope, the hourly cache, how a path is matched | `src/services/admin-analytics/` |
+| Admin business figures — paying families, revenue by Helsinki month, engagement, churn and gedu capacity, and what each counts | `src/services/admin-business/` |
 | WhatsApp | `src/services/whatsapp/` |
 | Klaviyo parent sync — the outboxes' drain, the public property, metric and list contract, the one consent send, deletion and the operator setup | `src/lib/klaviyo-sync/` |
 | Session feeds — shared gedu/family machinery | `src/components/session-feed/` |
@@ -273,7 +274,7 @@ is changing, and changing one half never obliges the other.
 3. **Build the CI completeness check**: every element carries exactly one classification, and every classification names its verifier. This is the load-bearing step — allowlist growth is the failure mode of every allowlist design, and the completeness check is what polices it.
 4. **Ship the primitive that makes conforming the cheapest path** — a guard function, a wrapper, a canonical template, giving step 3 a single greppable call site to require.
 
-The first two without the last two is an audit, not a fix: prose decays, a failing test doesn't, and fixing instances leaves the class alive. Keep the scope to one surface and one bug class per pass. Three standing instances show the shape: DB grants + RLS presence (the access-control DB test), DB function bodies (the authorization spine — `docs/architecture/db-authorization.md`), and the HTTP route layer (the posture registry — `docs/architecture/route-boundary.md`).
+The first two without the last two is an audit, not a fix: prose decays, a failing test doesn't, and fixing instances leaves the class alive. Keep the scope to one surface and one bug class per pass. Four standing instances show the shape: DB grants + RLS presence (the access-control DB test), DB function bodies (the authorization spine — `docs/architecture/db-authorization.md`), the HTTP route layer (the posture registry — `docs/architecture/route-boundary.md`), and the readers of seats, each classified as meaning the seats held now or the history (the seat reader registry — `supabase/CLAUDE.md`).
 
 ### A flaw in the model is fixed in the model, not worked around
 

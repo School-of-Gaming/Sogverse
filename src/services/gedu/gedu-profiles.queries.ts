@@ -90,8 +90,8 @@ export function useSetGeduCertified() {
  * claiming no extract has been seen, minutes after an admin recorded one.
  *
  * **And the admin dashboard's key alongside it.** Recording a check moves
- * nobody in or out of the certification queue — it is a list of *uncertified*
- * educators and this write does not certify anybody — but the queue renders the
+ * nobody in or out of the dashboard's Gedu section — this write does not
+ * certify anybody or touch a team profile — but the section renders the
  * fact itself: each row carries a standing chip for the check, and whether the
  * certify button raises the missing-prerequisite confirmation is decided by the
  * same stamp. Left stale, the admin who ticks the box on a user page and

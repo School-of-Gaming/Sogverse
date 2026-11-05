@@ -75,21 +75,15 @@ import type { GeduContractAcceptance, ParticipationStatus } from "@/types";
  * A participation's state, on the lifecycle chip's one shape: a neutral edge,
  * no fill, and the word in the state's own colour.
  *
- * This map used to say four things in four unrelated languages — a status fill
- * for `active`, another for `waitlisted`, a grey fill for `reserving` and the
- * brand's world colour for `completed`. That last one is the reason the map was
- * rewritten rather than trimmed: world carries lore, display and identity in
- * SOG-UI's tone grammar, so spending it on "this participation has finished"
- * says the world where the row means a lifecycle. A state is not a place in the
- * world, and a chip that changes shape between states is one a reader has to
- * re-learn per row.
- *
  * Per state, on the same reading the product lifecycle chip takes: `active` is
- * success, the state where the thing is working; `waitlisted` and `reserving`
- * are info — facts an admin needs and did not ask for, where a warning on every
- * unfinished row would be table noise rather than a nudge; `completed` spends no
- * colour at all, because it is the quiet end and a green tick on every finished
- * seat would be the loudest thing in a long list.
+ * success, the state where the thing is working; `waitlisted` is info — a fact
+ * an admin needs and did not ask for, where a warning on every queued row would
+ * be table noise rather than a nudge; `ended` spends no colour at all, because
+ * it is the quiet end and a mark on every finished seat would be the loudest
+ * thing in a long list. None of them spends the brand's world colour: world
+ * carries lore, display and identity in SOG-UI's tone grammar, and a lifecycle
+ * state is not a place in the world. One shape for every state, so a reader
+ * never re-learns the chip per row.
  *
  * The colour never carries the meaning alone: the word is the state's name and
  * the hue reinforces it, so removing the colour loses nothing.
@@ -97,8 +91,7 @@ import type { GeduContractAcceptance, ParticipationStatus } from "@/types";
 const STATUS_BADGE_STYLES: Record<ParticipationStatus, string> = {
   active: "border border-border bg-transparent text-success",
   waitlisted: "border border-border bg-transparent text-info",
-  reserving: "border border-border bg-transparent text-info",
-  completed: "border border-border bg-transparent text-muted-foreground",
+  ended: "border border-border bg-transparent text-muted-foreground",
 };
 
 /**
@@ -388,8 +381,7 @@ export default async function AdminUserDetailPage({
   const statusLabels: Record<ParticipationStatus, string> = {
     active: t("participationStatus.active"),
     waitlisted: t("participationStatus.waitlisted"),
-    reserving: t("participationStatus.reserving"),
-    completed: t("participationStatus.completed"),
+    ended: t("participationStatus.ended"),
   };
 
   const renderAssignedProducts = (rows: AdminGamerParticipationRow[]) =>

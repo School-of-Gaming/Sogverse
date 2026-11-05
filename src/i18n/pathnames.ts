@@ -270,6 +270,7 @@ export const PATHNAMES = {
   "/admin/landing-pages": "/admin/landing-pages",
   "/admin/landing-pages/[id]": "/admin/landing-pages/[id]",
   "/admin/analytics": "/admin/analytics",
+  "/admin/business": "/admin/business",
   "/admin/sites": "/admin/sites",
   "/admin/sites/[id]": "/admin/sites/[id]",
   "/admin/testimonials": "/admin/testimonials",

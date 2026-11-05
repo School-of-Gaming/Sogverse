@@ -18,7 +18,7 @@ import {
   createAuthenticatedClient,
 } from "./helpers";
 import { TEST_IDS, TEST_CREDENTIALS } from "./constants";
-import { deleteTestProducts } from "./product-helpers";
+import { deleteTestProducts, eraseParticipations } from "./product-helpers";
 import { productRequiredQualifications } from "@/lib/products/session-requirements";
 
 /**
@@ -481,7 +481,7 @@ describe("session substitutions", () => {
   });
 
   afterAll(async () => {
-    await admin.from("participations").delete().in("product_id", ALL_PRODUCTS);
+    await eraseParticipations(admin, (q) => q.in("product_id", ALL_PRODUCTS));
     // Assignments hold ON DELETE RESTRICT onto profiles, and so do a substitution
     // request's two people — but requests cascade with their group, which
     // cascades with its product, so deleting the products is the whole of the

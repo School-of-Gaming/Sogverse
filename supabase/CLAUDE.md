@@ -546,6 +546,23 @@ spine, and each browser read re-routed through a server route. Reopen it only on
 fact, such as reads no longer being browser-direct, not on the observation that there are
 a lot of functions.
 
+## A seat ends; it is not deleted
+
+**Rule: a seat (a `participations` row) that a participant held ends and stays, with its
+subscription beside it — so every read of either table says whether it means the seats
+held now or the history.** A read that never asks about status sees the families who left
+as well as the ones still there, and treats a left family as a current one. Live means
+an explicit `status = 'active'` filter or `is_live_seat()` in SQL, and the participation
+status constants in TypeScript; an ended seat
+leaves the participant free to enrol on the product again. Each reader — a function, view
+or policy in `schema/`, or a read under `src/` — is classified in
+`tests/helpers/seat-reader-registry.ts`, and a unit test fails on one that is missing and
+on an entry whose read is gone. The only deletion of a seat that is held or ended is
+`erase_participations()`, for erasure; a trigger refuses any other. A waitlisted row is
+deleted when it leaves the line, and that includes a seat an admin demoted to the
+waitlist: the demote already gave up its placement, and its history goes with it when it
+leaves (owner ruling, 2026-11-05). A payment that named it keeps its product.
+
 ## `now()` is frozen at transaction start
 
 **Rule: When a timestamp is an ordering/sequence key compared across concurrent

@@ -641,6 +641,7 @@ export type Database = {
           currency: string
           current_period_end: string | null
           customer_id: string
+          ended_at: string | null
           id: string
           participation_id: string
           status: string
@@ -654,6 +655,7 @@ export type Database = {
           currency: string
           current_period_end?: string | null
           customer_id: string
+          ended_at?: string | null
           id?: string
           participation_id: string
           status: string
@@ -667,6 +669,7 @@ export type Database = {
           currency?: string
           current_period_end?: string | null
           customer_id?: string
+          ended_at?: string | null
           id?: string
           participation_id?: string
           status?: string
@@ -2470,6 +2473,10 @@ export type Database = {
           booking_id: string | null
           created_at: string
           customer_id: string
+          end_reason:
+            | Database["public"]["Enums"]["participation_end_reason"]
+            | null
+          ended_at: string | null
           group_id: string | null
           group_joined_at: string | null
           id: string
@@ -2487,6 +2494,10 @@ export type Database = {
           booking_id?: string | null
           created_at?: string
           customer_id: string
+          end_reason?:
+            | Database["public"]["Enums"]["participation_end_reason"]
+            | null
+          ended_at?: string | null
           group_id?: string | null
           group_joined_at?: string | null
           id?: string
@@ -2504,6 +2515,10 @@ export type Database = {
           booking_id?: string | null
           created_at?: string
           customer_id?: string
+          end_reason?:
+            | Database["public"]["Enums"]["participation_end_reason"]
+            | null
+          ended_at?: string | null
           group_id?: string | null
           group_joined_at?: string | null
           id?: string
@@ -2577,6 +2592,8 @@ export type Database = {
           customer_id: string
           id: string
           metadata: Json
+          participation_id: string | null
+          product_id: string | null
           purpose: Database["public"]["Enums"]["payment_purpose"]
           stripe_event_id: string
           stripe_invoice_id: string | null
@@ -2589,6 +2606,8 @@ export type Database = {
           customer_id: string
           id?: string
           metadata?: Json
+          participation_id?: string | null
+          product_id?: string | null
           purpose: Database["public"]["Enums"]["payment_purpose"]
           stripe_event_id: string
           stripe_invoice_id?: string | null
@@ -2601,6 +2620,8 @@ export type Database = {
           customer_id?: string
           id?: string
           metadata?: Json
+          participation_id?: string | null
+          product_id?: string | null
           purpose?: Database["public"]["Enums"]["payment_purpose"]
           stripe_event_id?: string
           stripe_invoice_id?: string | null
@@ -2619,6 +2640,20 @@ export type Database = {
             columns: ["customer_id"]
             isOneToOne: false
             referencedRelation: "user_list_entries"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "payments_participation_id_fkey"
+            columns: ["participation_id"]
+            isOneToOne: false
+            referencedRelation: "participations"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "payments_product_id_fkey"
+            columns: ["product_id"]
+            isOneToOne: false
+            referencedRelation: "products"
             referencedColumns: ["id"]
           },
         ]
@@ -3747,6 +3782,24 @@ export type Database = {
           },
         ]
       }
+      stripe_processed_events: {
+        Row: {
+          event_type: string
+          processed_at: string
+          stripe_event_id: string
+        }
+        Insert: {
+          event_type: string
+          processed_at?: string
+          stripe_event_id: string
+        }
+        Update: {
+          event_type?: string
+          processed_at?: string
+          stripe_event_id?: string
+        }
+        Relationships: []
+      }
       substitution_notification_dms: {
         Row: {
           accepted_dm_claimed_at: string | null
@@ -4609,10 +4662,6 @@ export type Database = {
       assert_self: { Args: { p_user_id: string }; Returns: undefined }
       can_edit_team_profile: { Args: { p_user_id: string }; Returns: boolean }
       can_read_product: { Args: { p_product_id: string }; Returns: boolean }
-      cancel_participation: {
-        Args: { p_participation_id: string; p_reason: string }
-        Returns: Json
-      }
       cancel_session: {
         Args: { p_group_id: string; p_reason?: string; p_session_date: string }
         Returns: Json
@@ -4866,6 +4915,13 @@ export type Database = {
         Args: { p_product_id: string }
         Returns: Database["public"]["Enums"]["effective_product_status"]
       }
+      end_participation: {
+        Args: {
+          p_participation_id: string
+          p_reason: Database["public"]["Enums"]["participation_end_reason"]
+        }
+        Returns: Json
+      }
       enqueue_klaviyo_event: {
         Args: {
           p_customer_id: string
@@ -4922,6 +4978,10 @@ export type Database = {
       ensure_group_session: {
         Args: { p_group_id: string; p_session_date: string }
         Returns: string
+      }
+      erase_participations: {
+        Args: { p_participation_ids: string[] }
+        Returns: number
       }
       file_klaviyo_profiles: {
         Args: { p_customer_ids: string[] }
@@ -5348,6 +5408,10 @@ export type Database = {
         Args: { p_channel_id: string }
         Returns: boolean
       }
+      is_live_seat: {
+        Args: { p_status: Database["public"]["Enums"]["participation_status"] }
+        Returns: boolean
+      }
       is_no_charge: {
         Args: { p_mode: Database["public"]["Enums"]["billing_mode"] }
         Returns: boolean
@@ -5500,13 +5564,6 @@ export type Database = {
       offer_session_substitution_for_discord_user: {
         Args: { p_discord_user_id: string; p_request_id: string }
         Returns: Json
-      }
-      participation_state: {
-        Args: {
-          p_group_id: string
-          p_status: Database["public"]["Enums"]["participation_status"]
-        }
-        Returns: string
       }
       pin_is_set: { Args: never; Returns: boolean }
       planned_group_sessions: {
@@ -6102,7 +6159,8 @@ export type Database = {
       marketing_consent_type: "school_of_gaming" | "lynx_educate"
       notification_channel: "email"
       notification_kind: "session_report_copy"
-      participation_status: "reserving" | "active" | "waitlisted" | "completed"
+      participation_end_reason: "subscription_cancelled" | "admin_removed"
+      participation_status: "active" | "waitlisted" | "ended"
       payment_purpose:
         | "bundle"
         | "subscription_invoice"
@@ -6301,7 +6359,8 @@ export const Constants = {
       marketing_consent_type: ["school_of_gaming", "lynx_educate"],
       notification_channel: ["email"],
       notification_kind: ["session_report_copy"],
-      participation_status: ["reserving", "active", "waitlisted", "completed"],
+      participation_end_reason: ["subscription_cancelled", "admin_removed"],
+      participation_status: ["active", "waitlisted", "ended"],
       payment_purpose: [
         "bundle",
         "subscription_invoice",

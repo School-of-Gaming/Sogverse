@@ -339,6 +339,24 @@ export function SignupPanel({
     }
   };
 
+  /**
+   * A child was added from this panel: past the account, short of a seat. The
+   * route has already reported it under this id, naming the product only when
+   * it is one we advertise — so this push names exactly that, and fires on
+   * every child added as `sign_up` fires on every account. Unpriced, as the
+   * route's report is, and with nothing about the child. Pushed before the new
+   * child is selected, while nothing about the panel has moved yet.
+   */
+  const onGamerCreated = (gamerId: string, eventId: string) => {
+    pushGtmEvent({
+      event: GTM_EVENTS.childAdded,
+      event_id: eventId,
+      ecommerce: advertised ? ecommerceFor(false) : null,
+      page_path: productPagePath,
+    });
+    fields.onSelectParticipant(gamerId);
+  };
+
   const handleSubmit = () => {
     if (!fields.selectedParticipantId || !purchaseShape) return;
     // First, before anything can navigate: the click into the flow is the
@@ -583,7 +601,8 @@ export function SignupPanel({
       <AddGamerDialog
         open={addGamerOpen}
         onOpenChange={setAddGamerOpen}
-        onCreated={fields.onSelectParticipant}
+        productId={product.id}
+        onCreated={onGamerCreated}
       />
     </>
   );

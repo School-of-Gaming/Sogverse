@@ -287,14 +287,30 @@ COMMENT ON TYPE public.notification_kind IS 'What a notification a person can op
 
 
 --
+-- Name: participation_end_reason; Type: TYPE; Schema: public; Owner: -
+--
+
+CREATE TYPE public.participation_end_reason AS ENUM (
+    'subscription_cancelled',
+    'admin_removed'
+);
+
+
+--
+-- Name: TYPE participation_end_reason; Type: COMMENT; Schema: public; Owner: -
+--
+
+COMMENT ON TYPE public.participation_end_reason IS 'Why a seat ended. subscription_cancelled: its Stripe subscription was deleted (customer.subscription.deleted), whether the family cancelled in the portal or Stripe gave up on the payments. admin_removed: an admin took the seat away (admin_remove_participation).';
+
+
+--
 -- Name: participation_status; Type: TYPE; Schema: public; Owner: -
 --
 
 CREATE TYPE public.participation_status AS ENUM (
-    'reserving',
     'active',
     'waitlisted',
-    'completed'
+    'ended'
 );
 
 
@@ -302,7 +318,7 @@ CREATE TYPE public.participation_status AS ENUM (
 -- Name: TYPE participation_status; Type: COMMENT; Schema: public; Owner: -
 --
 
-COMMENT ON TYPE public.participation_status IS 'Participation lifecycle. ''reserving'' is RETIRED (2026-08): paid participations are created at payment confirmation, so nothing writes it. PostgreSQL cannot drop an enum value, hence it remains listed.';
+COMMENT ON TYPE public.participation_status IS 'Where a participation stands. active: it holds a seat now. waitlisted: a place in line, not a seat; leaving the line deletes the row. ended: it held a seat and does not any more, kept so who was in which club, when, and why they left survives, with ended_at and end_reason saying when and why (end_participation is the one writer). Whether the product itself has finished is derived from its dates and never stored here.';
 
 
 --

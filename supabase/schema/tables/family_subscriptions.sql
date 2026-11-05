@@ -14,9 +14,18 @@ CREATE TABLE public.family_subscriptions (
     updated_at timestamp with time zone DEFAULT now() NOT NULL,
     participation_id uuid NOT NULL,
     stripe_price_id text,
+    ended_at timestamp with time zone,
+    CONSTRAINT chk_family_subscriptions_ended_is_cancelled CHECK (((ended_at IS NULL) OR (status = 'cancelled'::text))),
     CONSTRAINT family_subscriptions_currency_check CHECK ((currency = ANY (ARRAY['eur'::text, 'gbp'::text, 'usd'::text]))),
     CONSTRAINT family_subscriptions_status_check CHECK ((status = ANY (ARRAY['active'::text, 'past_due'::text, 'cancelled'::text, 'incomplete'::text, 'canceling'::text])))
 );
+
+
+--
+-- Name: COLUMN family_subscriptions.ended_at; Type: COMMENT; Schema: public; Owner: -
+--
+
+COMMENT ON COLUMN public.family_subscriptions.ended_at IS 'When this subscription ended together with its seat, set by end_participation alongside status cancelled (chk_family_subscriptions_ended_is_cancelled). A row with it set is terminal: trg_family_subscriptions_ended_is_terminal refuses any update moving it off cancelled or changing the stamp, so a late Stripe event cannot revive it. NULL on every other row, including a cancelled one whose seat is still held — a subscription Stripe gave up on after failed payments is stored cancelled while its seat lives on until an admin removes it, and that row stays updatable.';
 
 
 --
@@ -76,6 +85,13 @@ CREATE TRIGGER family_subscriptions_klaviyo_written AFTER INSERT OR DELETE ON pu
 --
 
 CREATE TRIGGER family_subscriptions_updated_at BEFORE UPDATE ON public.family_subscriptions FOR EACH ROW EXECUTE FUNCTION public.update_updated_at_column();
+
+
+--
+-- Name: family_subscriptions trg_family_subscriptions_ended_is_terminal; Type: TRIGGER; Schema: public; Owner: -
+--
+
+CREATE TRIGGER trg_family_subscriptions_ended_is_terminal BEFORE UPDATE ON public.family_subscriptions FOR EACH ROW EXECUTE FUNCTION public.family_subscription_ended_is_terminal();
 
 
 --

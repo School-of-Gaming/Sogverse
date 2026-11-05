@@ -121,7 +121,7 @@ export function FamilyProductPage({
   const feed = result?.status === "ok" ? result.feed : null;
 
   /**
-   * This enrollment's row among the viewer's active participations.
+   * This enrollment's row among the viewer's held and ended participations.
    *
    * `undefined` is a real and harmless answer: a waitlisted or unplaced
    * participation is not in this read at all (and has no page behind it

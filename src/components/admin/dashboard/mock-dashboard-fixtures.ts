@@ -8,12 +8,12 @@ import type {
   ComingUpDay,
   ComingUpItem,
   DateCancellation,
+  GeduTask,
   ProductAttention,
   ProductIssue,
   ProductIssueFact,
   ScheduleChip,
   ScheduleWeek,
-  UncertifiedGedu,
 } from "./admin-dashboard-data";
 import {
   compareComingUpCohorts,
@@ -129,6 +129,7 @@ const PERSON_IDS = {
   iidaLehtonen: "e979b9eb-39a2-4b71-9aa1-3d991969dadc",
   onniRantanen: "66076d29-cdcb-4337-aa06-6cbb8e1b39de",
   helmiKoskinen: "4889fea4-0602-438f-adfe-2cef72d485ff",
+  aatuMakela: "baf5bf49-a11d-42e7-87fa-007fc71f55f1",
 } as const;
 
 /** One product row, in the vocabulary the database actually stores. */
@@ -757,12 +758,12 @@ const PRODUCT_ISSUE_SPECS: readonly {
 ];
 
 /**
- * Gedus waiting on a decision, oldest wait last.
+ * Gedus with something open for an admin, oldest registration last.
  *
- * Five, and spread from two days to two months on purpose: the wait is the only
- * thing distinguishing one row from another, and a queue where every row had
- * waited the same length would say nothing about whether the design makes a
- * two-month-old registration stand out from this morning's.
+ * Five uncertified, and spread from two days to two months on purpose: the
+ * wait is the only thing distinguishing one row from another, and a list where
+ * every row had waited the same length would say nothing about whether the
+ * design makes a two-month-old registration stand out from this morning's.
  *
  * **Both contract standings are present, and the mix is not even.** Two rows
  * have accepted the terms in force and three have not, because the unsigned
@@ -772,90 +773,110 @@ const PRODUCT_ISSUE_SPECS: readonly {
  *
  * **The record check varies independently of the contract, and every
  * combination of the two appears.** The confirm dialog names whichever
- * standings are missing, so a queue where the two always agreed would never
+ * standings are missing, so a list where the two always agreed would never
  * raise the one-warning shapes at all — and the row a reader has to be able to
  * scan is precisely the one that is fine on one count and not the other.
+ *
+ * **Every shape a row can take appears: certification only, a waiting team
+ * profile only, and both.** Iida is uncertified with her profile waiting, so
+ * certifying her shows the row staying with only its marker; Aatu is certified
+ * long since and listed for his profile alone, with no Certify.
  */
-const UNCERTIFIED_GEDU_SPECS: readonly {
+const GEDU_TASK_SPECS: readonly {
   id: string;
   name: string;
   /** When they registered — aged against the pinned clock, never pre-worded. */
   registeredAt: string;
-  /**
-   * When they accepted the version in force, or `null` for the ones who have
-   * not. Never later than the pinned clock: an acceptance dated in the scene's
-   * own future would be a fact the live page could not produce.
-   */
-  acceptedAt: string | null;
-  /**
-   * When an admin recorded seeing their criminal record extract, or `null`.
-   * Same clock discipline as the acceptance above, and never before the
-   * registration: nobody presents an extract to a platform they have not
-   * joined.
-   */
-  checkedAt: string | null;
+  /** `null` once certified; otherwise the standings, as instants. */
+  certification: {
+    /**
+     * When they accepted the version in force, or `null` for the ones who
+     * have not. Never later than the pinned clock: an acceptance dated in the
+     * scene's own future would be a fact the live page could not produce.
+     */
+    acceptedAt: string | null;
+    /**
+     * When an admin recorded seeing their criminal record extract, or
+     * `null`. Same clock discipline as the acceptance above, and never before
+     * the registration: nobody presents an extract to a platform they have not
+     * joined.
+     */
+    checkedAt: string | null;
+  } | null;
+  teamProfileAwaitingReview: boolean;
 }[] = [
   {
     id: PERSON_IDS.venlaSalminen,
     name: "Venla Salminen",
     registeredAt: "2026-08-15T09:20:00+03:00",
-    acceptedAt: "2026-08-16T18:40:00+03:00",
-    checkedAt: null,
+    certification: { acceptedAt: "2026-08-16T18:40:00+03:00", checkedAt: null },
+    teamProfileAwaitingReview: false,
   },
   {
     id: PERSON_IDS.topiasJarvinen,
     name: "Topias Järvinen",
     registeredAt: "2026-08-12T09:20:00+03:00",
-    acceptedAt: null,
-    checkedAt: "2026-08-14T13:15:00+03:00",
+    certification: { acceptedAt: null, checkedAt: "2026-08-14T13:15:00+03:00" },
+    teamProfileAwaitingReview: false,
   },
   {
     id: PERSON_IDS.iidaLehtonen,
     name: "Iida Lehtonen",
     registeredAt: "2026-08-08T09:20:00+03:00",
-    acceptedAt: "2026-08-08T11:05:00+03:00",
-    checkedAt: "2026-08-11T09:50:00+03:00",
+    certification: {
+      acceptedAt: "2026-08-08T11:05:00+03:00",
+      checkedAt: "2026-08-11T09:50:00+03:00",
+    },
+    teamProfileAwaitingReview: true,
   },
   {
     id: PERSON_IDS.onniRantanen,
     name: "Onni Rantanen",
     registeredAt: "2026-07-27T09:20:00+03:00",
-    acceptedAt: null,
-    checkedAt: null,
+    certification: { acceptedAt: null, checkedAt: null },
+    teamProfileAwaitingReview: false,
   },
   {
     id: PERSON_IDS.helmiKoskinen,
     name: "Helmi Koskinen",
     registeredAt: "2026-06-17T09:20:00+03:00",
-    acceptedAt: null,
-    checkedAt: null,
+    certification: { acceptedAt: null, checkedAt: null },
+    teamProfileAwaitingReview: false,
+  },
+  {
+    id: PERSON_IDS.aatuMakela,
+    name: "Aatu Mäkelä",
+    registeredAt: "2026-03-02T09:20:00+02:00",
+    certification: null,
+    teamProfileAwaitingReview: true,
   },
 ];
 
-function uncertifiedGedus(locale: SupportedLocale): UncertifiedGedu[] {
-  return UNCERTIFIED_GEDU_SPECS.map((spec) => ({
+function geduTasks(locale: SupportedLocale): GeduTask[] {
+  // Formatted the same way the live mapping formats them, in the one zone this
+  // fixture is both authored and read in.
+  const date = (instant: string | null) =>
+    instant === null
+      ? null
+      : formatDate(instant, locale, {
+          dateStyle: "medium",
+          timeZone: ADMIN_DASHBOARD_TIMEZONE,
+        });
+  return GEDU_TASK_SPECS.map((spec) => ({
     id: spec.id,
     name: spec.name,
     // The same `Intl.RelativeTimeFormat` walk the live mapping runs, against
     // the same pinned instant — so the wait reads in the previewer's own
     // language rather than in whatever language the fixture was typed in.
     registeredAgo: relativeWait(spec.registeredAt, ADMIN_DASHBOARD_NOW, locale),
-    // Formatted the same way and for the same reason, in the one zone this
-    // fixture is both authored and read in.
-    contractAcceptedOn:
-      spec.acceptedAt === null
+    certification:
+      spec.certification === null
         ? null
-        : formatDate(spec.acceptedAt, locale, {
-            dateStyle: "medium",
-            timeZone: ADMIN_DASHBOARD_TIMEZONE,
-          }),
-    criminalRecordCheckOn:
-      spec.checkedAt === null
-        ? null
-        : formatDate(spec.checkedAt, locale, {
-            dateStyle: "medium",
-            timeZone: ADMIN_DASHBOARD_TIMEZONE,
-          }),
+        : {
+            contractAcceptedOn: date(spec.certification.acceptedAt),
+            criminalRecordCheckOn: date(spec.certification.checkedAt),
+          },
+    teamProfileAwaitingReview: spec.teamProfileAwaitingReview,
   }));
 }
 
@@ -1137,41 +1158,15 @@ export function buildAdminDashboardFixture(
     // no adjustment to disclose. The live page decides this per snapshot.
     timeZoneAbbrev: null,
     products,
-    // Empty on both sides in `quiet`: certification is its own section now, so
+    // Empty on both sides in `quiet`: the Gedu section is its own section, so
     // it needs its own empty state, and this is the only scenario that can show
     // one.
-    uncertifiedGedus: quiet ? [] : uncertifiedGedus(locale),
-    users: quiet ? QUIET_USER_STATS : BUSY_USER_STATS,
+    geduTasks: quiet ? [] : geduTasks(locale),
     weeks,
     currentWeekIndex,
     comingUp: buildComingUp(specs),
   };
 }
-
-/**
- * Plausible platform numbers — one parent to roughly one and a half gamers, most
- * addresses verified, and rather more gedus registered than certified, which is
- * the whole reason the certification section above exists.
- *
- * Both rows agree with the certification list the same scenario builds: `busy`
- * is nineteen gedus with fourteen certified against its five listed, `quiet` is
- * five with all five certified against an empty list. A strip claiming an
- * uncertified gedu the card below it says nothing about is the drift a fixture
- * exists to make impossible.
- */
-const BUSY_USER_STATS: AdminDashboardData["users"] = [
-  { role: "customer", total: 214, verified: 191, certified: null },
-  { role: "gamer", total: 342, verified: null, certified: null },
-  { role: "gedu", total: 19, verified: 17, certified: 14 },
-  { role: "admin", total: 4, verified: 4, certified: null },
-];
-
-const QUIET_USER_STATS: AdminDashboardData["users"] = [
-  { role: "customer", total: 12, verified: 9, certified: null },
-  { role: "gamer", total: 18, verified: null, certified: null },
-  { role: "gedu", total: 5, verified: 5, certified: 5 },
-  { role: "admin", total: 2, verified: 2, certified: null },
-];
 
 function slot(
   weekday: number,

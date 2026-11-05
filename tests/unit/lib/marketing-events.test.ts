@@ -10,6 +10,7 @@ import {
   metaProductDetails,
   META_CONVERSION_EVENTS,
   REDDIT_CONVERSION_EVENTS,
+  REDDIT_CUSTOM_CONVERSION_EVENTS,
   redditProductDetails,
 } from "@/lib/marketing-events";
 import { Constants } from "@/types";
@@ -456,6 +457,15 @@ describe("the Reddit vocabulary", () => {
       accountCreated: ["Lead", "LEAD"],
       enrolment: ["CompleteRegistration", "SIGN_UP"],
     });
+  });
+
+  // No platform has a standard word for a child added, so both take a custom
+  // one — and the same one, so a report reading both reads one name.
+  it("names a child added with one custom name on both platforms", () => {
+    expect(META_CONVERSION_EVENTS.childAdded).toBe("ChildProfileCreated");
+    expect(REDDIT_CUSTOM_CONVERSION_EVENTS.childAdded).toBe(
+      META_CONVERSION_EVENTS.childAdded,
+    );
   });
 });
 

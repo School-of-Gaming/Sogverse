@@ -3,7 +3,7 @@ import type { SupabaseClient } from "@supabase/supabase-js";
 import type { Database } from "@/types/database.types";
 import { createAdminTestClient, createAuthenticatedClient } from "./helpers";
 import { TEST_IDS, TEST_CREDENTIALS } from "./constants";
-import { createTestProduct, deleteTestProducts, insertPaidBooking } from "./product-helpers";
+import { createTestProduct, deleteTestProducts, insertPaidBooking, eraseParticipations } from "./product-helpers";
 import {
   createBookingRpcResult,
   demoteToWaitlistRpcResult,
@@ -91,10 +91,9 @@ describe("waitlist — admin read + promote/demote + self position", () => {
     // Deleting the participations takes any family_subscriptions rows with them
     // (participation_id is ON DELETE CASCADE), which is what the subscribed-
     // demote test below relies on for cleanup.
-    await admin
-      .from("participations")
-      .delete()
-      .in("product_id", [PRODUCT_MUNI, PRODUCT_FREE_CLUB]);
+    await eraseParticipations(admin, (q) =>
+      q.in("product_id", [PRODUCT_MUNI, PRODUCT_FREE_CLUB]),
+    );
     await admin.from("product_groups").delete().eq("product_id", PRODUCT_MUNI);
     await admin
       .from("products")

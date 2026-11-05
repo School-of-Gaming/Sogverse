@@ -74,7 +74,7 @@
       },
       "groupOnlyRooms": {
         "title": "Bara gruppen kommer in",
-        "description": "En klubbs röstrum öppnar fem minuter innan tillfället och stänger fem minuter efter det, och bara gruppen, dess Geduer och vår personal kan komma in."
+        "description": "En klubbs virtuella rum öppnar fem minuter innan tillfället och stänger fem minuter efter det, och bara gruppen, dess Geduer och vår personal kan komma in."
       },
       "notRecorded": {
         "title": "Tillfällena spelas inte in",

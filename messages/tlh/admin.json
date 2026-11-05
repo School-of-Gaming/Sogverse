@@ -1,20 +1,9 @@
 {
   "dashboard": {
     "title": "QaD",
-    "description": "DaHjaj nuq poQ la’, ’Iv tu’lu’ Daq, je nuq qaSlI’.",
+    "description": "DaHjaj nuq poQ la’, nuq qaSlI’ je.",
     "loadError": "QaD laDlaHbe’. yIchu’qa’ ’ej yInID.",
     "loadErrorWithReason": "QaD laDlaHbe’ – {reason}. yIchu’qa’ ’ej yInID.",
-    "users": {
-      "label": "lo’wI’pu’",
-      "roles": {
-        "customer": "vav/SoSpu’",
-        "gamer": "toy’wI’pu’",
-        "gedu": "Gedupu’",
-        "admin": "Adminpu’"
-      },
-      "verified": "{count} ngu’lu’pu’",
-      "certified": "{count} patlh ghaj"
-    },
     "attention": {
       "title": "poQ Qu’",
       "allClearTitle": "Hoch QaQ",
@@ -32,14 +21,15 @@
         "waitlistOpenSeatsWithOffers": "{waiting} loStaH · {open, plural, one {# quS} other {# quSmey}} poSmoH · {offers} jang loStaH"
       }
     },
-    "certification": {
-      "title": "Gedu patlh",
+    "gedus": {
+      "title": "Gedupu’",
       "justNow": "DaH patlh nobta’: {count}",
-      "empty": "patlh ghaj Hoch Gedupu’.",
+      "empty": "SoH loSbe’ Gedu.",
       "registered": "ghItlhta’ {when}",
       "certify": "patlh yInob",
       "certifying": "patlh noblI’…",
-      "failed": "patlh nobbe’lu’ – yInID."
+      "failed": "patlh nobbe’lu’ – yInID.",
+      "profileReady": "Del’a’ ghuHmoHlu’, yIlegh"
     },
     "schedule": {
       "title": "poH ngoQ",
@@ -1575,8 +1565,7 @@
     "participationStatus": {
       "active": "vangtaH",
       "waitlisted": "loStaH",
-      "reserving": "DIl loStaH",
-      "completed": "rInpu’"
+      "ended": "rInpu’"
     },
     "emailVerified": "ngu’lu’pu’ QIn Daq",
     "emailNotVerified": "ngu’be’lu’ QIn Daq",
@@ -1915,6 +1904,101 @@
         "desktop": "De'wI' tIn",
         "mobile": "ghogh HablI'",
         "tablet": "De'wI' mach"
+      }
+    }
+  },
+  "business": {
+    "title": "Qu’ Huch",
+    "description": "chay’ Qu’ School of Gaming, jar jar.",
+    "readAt": "mI’mey: {time}.",
+    "loadError": "Qu’ Huch mI’mey laDlaHbe’. nav yIchu’qa’.",
+    "loadErrorWithReason": "Qu’ Huch mI’mey laDlaHbe’: {reason}",
+    "change": "{change} DaH jar",
+    "noChange": "DaH jar choHbe’",
+    "tiles": {
+      "revenueTotal": {
+        "label": "jar vorgh Huch",
+        "largest": "{share} {band, select, subscription {ghItlhmey} campsAndEvents {raQ ’ej wanI’} municipality {veng} other {Doch pagh}}",
+        "none": "Huch qonlu’be’",
+        "change": "{change} jar vorgh vorgh",
+        "same": "jar vorgh vorgh rur"
+      },
+      "subscriptions": {
+        "label": "jar ghItlhmey",
+        "live": "{count, plural, other {# ghItlh yIn}}",
+        "outside": "{count, plural, other {# mI’be’lu’, Huch ghajbe’}}"
+      },
+      "payingFamilies": {
+        "label": "Huch nobbogh qorDu’",
+        "startingLater": "{count, plural, other {+# ghom tagh tugh}}"
+      },
+      "gamers": {
+        "label": "Daq ghajbogh gamer",
+        "municipality": "{count, plural, other {# veng ghommeyDaq}}"
+      },
+      "firstWeek": {
+        "label": "wa’DIch Hogh vang",
+        "detail": "{engaged}/{total} qon",
+        "none": "qon pagh.",
+        "change": "{change} DaH jar"
+      }
+    },
+    "engagement": {
+      "heading": "qorDu’ Qu’ rur",
+      "caption": "vavnI’ ghItlh Hoch.",
+      "chart": "qorDu’ Qu’ rur",
+      "total": "{count, plural, other {qorDu’}}",
+      "slices": {
+        "subscriber": "DaH ghItlh",
+        "paidBefore": "nobpu’, ghItlhbe’",
+        "municipalityOnly": "veng ghom neH",
+        "freeOnly": "Daq Huchbe’ neH",
+        "waiting": "Daq loS",
+        "neverEnrolled": "gamer chel, Daq ghajbe’ not",
+        "noGamer": "gamer ghajbe’, Daq ghajbe’ not"
+      }
+    },
+    "revenue": {
+      "heading": "jar Huch",
+      "caption": "Huch nobHa’ wej boqlu’.",
+      "chart": "jar Huch",
+      "series": {
+        "subscriptionCents": "ghItlhmey",
+        "campsAndEventsCents": "raQ ’ej wanI’",
+        "municipalityCents": "veng DIlmeH ghItlh",
+        "unattributedCents": "Doch pongbe’lu’"
+      },
+      "noData": "De’ tu’lu’be’",
+      "startsFrom": "{month} Daqvo’ Huch qonlu’.",
+      "none": "Huch qonlu’be’ wej.",
+      "nonEur": "{count, plural, other {# Huch latlh Huch Segh lajbe’lu’.}}",
+      "clubsWithoutFee": "{count, plural, other {# ghom DIlbe’lu’}}"
+    },
+    "families": {
+      "heading": "jar Huch nobbogh qorDu’",
+      "caption": "jar Qav.",
+      "chart": "jar Huch nobbogh qorDu’",
+      "series": {
+        "payingFamilies": "Huch nobbogh qorDu’",
+        "signups": "qon chu’",
+        "firstSeats": "Daq wa’DIch",
+        "stoppedPaying": "nobmeH mev"
+      }
+    },
+    "gedus": {
+      "heading": "Gedu wa’vaD Qujwi’pu’",
+      "caption": "ghom wa’vaD.",
+      "chart": "Gedu wa’vaD Qujwi’pu’ jar",
+      "series": "Gedu wa’vaD Qujwi’pu’",
+      "ranBy": "{sessions} ghom, {gedus} Gedu",
+      "noData": "De’ tu’lu’be’",
+      "startsFrom": "{month} Daqvo’ ghom qonlu’.",
+      "none": "jarmeyvam ghom qonlu’be’.",
+      "certified": {
+        "heading": "chaw’ ghajbogh Gedu",
+        "certified": "chaw’ ghaj",
+        "onRunning": "Qu’ ta’taH",
+        "notOnRunning": "Qu’ ta’be’"
       }
     }
   },

@@ -327,8 +327,8 @@ describe("POST /api/auth/complete-registration", () => {
     expect(conversion).toMatchObject({ event: "account_created", eventId });
   });
 
-  it("refuses a first name below the display-name minimum", async () => {
-    const response = await POST(request({ ...validBody, firstName: "A" }));
+  it("refuses a first name that is only whitespace", async () => {
+    const response = await POST(request({ ...validBody, firstName: "   " }));
 
     expect(response.status).toBe(400);
     expect(writes).toEqual([]);
@@ -382,6 +382,34 @@ describe("POST /api/auth/complete-registration", () => {
       p_customer_id: USER_ID,
       p_document_slugs: [...REGISTRATION_CONSENT_DOCUMENTS],
     });
+  });
+
+  // -- Phone number --
+
+  it("writes the phone as the digits the column stores", async () => {
+    const response = await POST(
+      request({ ...validBody, phone: "+358401234567" }),
+    );
+
+    expect(response.status).toBe(200);
+    expect(profileRow()).toMatchObject({ phone: "358401234567" });
+  });
+
+  it.each([
+    ["absent", undefined],
+    ["empty", ""],
+  ])("writes no phone when it is %s", async (_label, phone) => {
+    const response = await POST(request({ ...validBody, phone }));
+
+    expect(response.status).toBe(200);
+    expect(profileRow()).not.toHaveProperty("phone");
+  });
+
+  it("refuses a phone the column cannot store, writing nothing", async () => {
+    const response = await POST(request({ ...validBody, phone: "+12" }));
+
+    expect(response.status).toBe(400);
+    expect(writes).toEqual([]);
   });
 
   it("records a marketing refusal when the box was left unticked", async () => {

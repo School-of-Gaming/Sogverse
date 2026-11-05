@@ -3,7 +3,7 @@ import type { SupabaseClient } from "@supabase/supabase-js";
 import type { Database } from "@/types/database.types";
 import { createAdminTestClient, createAuthenticatedClient } from "./helpers";
 import { TEST_IDS, TEST_CREDENTIALS } from "./constants";
-import { createTestProduct, deleteTestProducts } from "./product-helpers";
+import { createTestProduct, deleteTestProducts, eraseParticipations } from "./product-helpers";
 import { getStringRecord } from "../helpers/json";
 import { productGroupsSnapshot } from "@/services/groups/groups.contracts";
 import { z } from "zod";
@@ -184,10 +184,9 @@ describe("apply_group_changes", () => {
 
   describe("deleting groups", () => {
     afterEach(async () => {
-      await admin
-        .from("participations")
-        .delete()
-        .eq("product_id", PRODUCT_DELETE);
+      await eraseParticipations(admin, (q) =>
+        q.eq("product_id", PRODUCT_DELETE),
+      );
       await admin
         .from("product_groups")
         .delete()
@@ -383,10 +382,9 @@ describe("apply_group_changes", () => {
     });
 
     afterAll(async () => {
-      await admin
-        .from("participations")
-        .delete()
-        .eq("product_id", PRODUCT_MOVES);
+      await eraseParticipations(admin, (q) =>
+        q.eq("product_id", PRODUCT_MOVES),
+      );
       await admin
         .from("product_groups")
         .delete()
@@ -488,6 +486,41 @@ describe("apply_group_changes", () => {
         .delete()
         .eq("group_id", groupA)
         .eq("gedu_id", GEDU_A);
+    });
+
+    it("leaves an ended seat in the group it ended in", async () => {
+      // A panel loaded before the seat ended still offers to move it.
+      const { data: seat, error: seatError } = await admin
+        .from("participations")
+        .insert({
+          product_id: PRODUCT_MOVES,
+          participant_id: TEST_IDS.GAMER_2,
+          customer_id: TEST_IDS.CUSTOMER,
+          status: "active",
+          group_id: groupA,
+        })
+        .select("id")
+        .single();
+      expect(seatError).toBeNull();
+      const endedId = seat!.id;
+      const ended = await admin.rpc("end_participation", {
+        p_participation_id: endedId,
+        p_reason: "admin_removed",
+      });
+      expect(ended.error).toBeNull();
+
+      const { error } = await adminAuth.rpc("apply_group_changes", {
+        p_product_id: PRODUCT_MOVES,
+        p_participation_moves: [{ participationId: endedId, toGroupId: groupB }],
+      });
+      expect(error).toBeNull();
+
+      const { data: row } = await admin
+        .from("participations")
+        .select("status, group_id")
+        .eq("id", endedId)
+        .single();
+      expect(row).toEqual({ status: "ended", group_id: groupA });
     });
   });
 
@@ -631,10 +664,9 @@ describe("get_product_groups_with_details", () => {
     expect(result.unassigned[0].has_payment_marker).toBe(false);
 
     // Cleanup.
-    await admin
-      .from("participations")
-      .delete()
-      .eq("product_id", PRODUCT_DETAILS);
+    await eraseParticipations(admin, (q) =>
+      q.eq("product_id", PRODUCT_DETAILS),
+    );
   });
 
   it("orders participations by updated_at (most recently moved last)", async () => {
@@ -686,10 +718,9 @@ describe("get_product_groups_with_details", () => {
     ]);
 
     // Cleanup.
-    await admin
-      .from("participations")
-      .delete()
-      .eq("product_id", PRODUCT_DETAILS);
+    await eraseParticipations(admin, (q) =>
+      q.eq("product_id", PRODUCT_DETAILS),
+    );
   });
 
   it("carries the staff-only flair identically on the grouped and group-less arms", async () => {
@@ -756,10 +787,9 @@ describe("get_product_groups_with_details", () => {
     expect(unassigned?.group_joined_at).toBeNull();
 
     // Cleanup. The note row goes with the group, which goes with the product.
-    await admin
-      .from("participations")
-      .delete()
-      .eq("product_id", PRODUCT_DETAILS);
+    await eraseParticipations(admin, (q) =>
+      q.eq("product_id", PRODUCT_DETAILS),
+    );
   });
 
   it("returns Forbidden when called by a non-admin", async () => {

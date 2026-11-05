@@ -7,7 +7,7 @@ import {
   createAuthenticatedClient,
 } from "./helpers";
 import { TEST_IDS, TEST_CREDENTIALS } from "./constants";
-import { createTestProduct, deleteTestProducts } from "./product-helpers";
+import { createTestProduct, deleteTestProducts, eraseParticipations } from "./product-helpers";
 import { SEAT_OFFER_WINDOW_MS } from "@/lib/constants/seat-offer";
 import { promoteFromWaitlistRpcResult } from "@/services/participations/participations.contracts";
 import {
@@ -135,7 +135,7 @@ describe("seat offers", () => {
   });
 
   afterEach(async () => {
-    await admin.from("participations").delete().in("product_id", ALL_PRODUCTS);
+    await eraseParticipations(admin, (q) => q.in("product_id", ALL_PRODUCTS));
   });
 
   // -------------------------------------------------------------------------

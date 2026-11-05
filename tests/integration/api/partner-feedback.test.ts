@@ -119,9 +119,9 @@ function seatRow(n: number, seat: SeatRow) {
 /** Every seat on file, live or not: the read has to narrow to the live ones itself. */
 const SEATS: SeatRow[] = [
   { participant_id: GAMER, product_id: PRODUCT, status: "active" },
-  { participant_id: GAMER, product_id: OTHER_PRODUCT, status: "completed" },
+  { participant_id: GAMER, product_id: OTHER_PRODUCT, status: "active" },
   { participant_id: GAMER_2, product_id: PRODUCT, status: "waitlisted" },
-  { participant_id: CANCELLED_GAMER, product_id: PRODUCT, status: "cancelled" },
+  { participant_id: CANCELLED_GAMER, product_id: PRODUCT, status: "ended" },
   { participant_id: MOVED_GAMER, product_id: OTHER_PRODUCT, status: "active" },
 ];
 
@@ -348,7 +348,7 @@ describe("GET /api/partner/v1/feedback", () => {
 
     // One batched seat read per fetch, scoped to live Programme seats.
     const seatRead = readsOf(db.fetch, "participations")[0];
-    expect(seatRead.searchParams.get("status")).toBe("in.(active,waitlisted,completed)");
+    expect(seatRead.searchParams.get("status")).toBe("in.(active,waitlisted)");
     expect(seatRead.searchParams.get("programme.programme_terms.document_slug")).toBe(
       "eq.roblox-programme-terms",
     );

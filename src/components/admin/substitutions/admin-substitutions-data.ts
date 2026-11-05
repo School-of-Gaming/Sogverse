@@ -18,7 +18,7 @@ import type { SessionFacts } from "@/lib/substitution-session-facts";
  * behind it.
  *
  * **No standings.** It carried `certified` and the criminal-record stamp so the
- * row could draw the certification queue's chips, and both are gone: the
+ * row could draw the dashboard Gedu section's chips, and both are gone: the
  * database refuses an offer from anybody who may not substitute, certification
  * included, so a "certified" chip said something that was true by construction,
  * and an extract date is children's-safety data about a contractor that this

@@ -53,7 +53,7 @@ describe("FAQ answer blocks render", () => {
         <AboutFaq />
       </NextIntlClientProvider>,
     );
-    const heading = screen.getByText("Can strangers talk to my child, and is anything recorded?");
-    expect(heading.closest("details")?.querySelectorAll("p").length).toBe(4);
+    const heading = screen.getByText("Can strangers contact my child, and is anything recorded?");
+    expect(heading.closest("details")?.querySelectorAll("p").length).toBe(6);
   });
 });

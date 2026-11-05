@@ -64,7 +64,7 @@ export interface SessionFeedbackItemDefinition {
   /**
    * The Yty-Element this statement reports into once there is an instrument
    * behind the screen — harmony is the relationship with yourself, glow with
-   * others, valor with society, wit with technology.
+   * others, valor with the world, wit with technology.
    *
    * **Internal, and never surfaced to the gamer.** The screen draws no element
    * mark, name or colour: a child answering "I had fun" is answering that

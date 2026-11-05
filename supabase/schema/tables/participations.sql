@@ -18,6 +18,10 @@ CREATE TABLE public.participations (
     seat_offer_sent_at timestamp with time zone,
     seat_offer_expiry_notified_at timestamp with time zone,
     booking_id uuid,
+    ended_at timestamp with time zone,
+    end_reason public.participation_end_reason,
+    CONSTRAINT chk_participations_ended_iff_end_reason CHECK (((status = 'ended'::public.participation_status) = (end_reason IS NOT NULL))),
+    CONSTRAINT chk_participations_ended_iff_ended_at CHECK (((status = 'ended'::public.participation_status) = (ended_at IS NOT NULL))),
     CONSTRAINT chk_participations_group_joined_at_iff_group CHECK (((group_id IS NULL) = (group_joined_at IS NULL))),
     CONSTRAINT chk_participations_offer_notice_needs_offer CHECK (((seat_offer_expiry_notified_at IS NULL) OR (seat_offer_sent_at IS NOT NULL))),
     CONSTRAINT chk_participations_offer_only_when_waitlisted CHECK (((seat_offer_sent_at IS NULL) OR (status = 'waitlisted'::public.participation_status))),
@@ -29,7 +33,7 @@ CREATE TABLE public.participations (
 -- Name: TABLE participations; Type: COMMENT; Schema: public; Owner: -
 --
 
-COMMENT ON TABLE public.participations IS 'One row per seat on a product: who holds it, who pays for it, which group they sit in and what state the seat is in. Some of its columns are settled by triggers rather than by any caller, and are therefore invisible at the call site: updated_at is touched on every write, a group_id naming a group of another product is rejected by trg_validate_participations_group, and group_joined_at is stamped by trg_participations_stamp_group_joined_at whenever group_id is set, changed or cleared — group_id has at least five writers, including the ON DELETE SET NULL cascade from product_groups, which is why the stamp lives in a trigger and not in an RPC. Do not set group_joined_at by hand: chk_participations_group_joined_at_iff_group refuses a stamp out of step with group_id.';
+COMMENT ON TABLE public.participations IS 'One row per seat on a product, held now or held once: who holds it, who pays for it, which group they sit in and what state the seat is in. A seat that ends is kept with status ended (end_participation), never deleted, so the history of who was in which club survives; only a waitlisted row, which never held a seat, is deleted when it leaves the line, and trg_participations_guard_delete refuses any other delete outside an erasure. Some of its columns are settled by triggers rather than by any caller, and are therefore invisible at the call site: updated_at is touched on every write, a group_id naming a group of another product is rejected by trg_validate_participations_group, and group_joined_at is stamped by trg_participations_stamp_group_joined_at whenever group_id is set, changed or cleared — group_id has at least five writers, including the ON DELETE SET NULL cascade from product_groups, which is why the stamp lives in a trigger and not in an RPC. Do not set group_joined_at by hand: chk_participations_group_joined_at_iff_group refuses a stamp out of step with group_id.';
 
 
 --
@@ -72,6 +76,20 @@ COMMENT ON COLUMN public.participations.seat_offer_expiry_notified_at IS 'When s
 --
 
 COMMENT ON COLUMN public.participations.booking_id IS 'The booking this seat came from, where the UTM tag and the School of Gaming answer live and which says whether money was involved. NULL for a seat an admin or a partner created. Promotion, a seat offer''s acceptance, demotion and an admin''s move all keep it, so after a move the booking''s product_id can differ from the seat''s.';
+
+
+--
+-- Name: COLUMN participations.ended_at; Type: COMMENT; Schema: public; Owner: -
+--
+
+COMMENT ON COLUMN public.participations.ended_at IS 'When the seat ended, set by end_participation; NULL exactly when the status is not ended (chk_participations_ended_iff_ended_at). An ended seat keeps its group_id and group_joined_at, so its family reads the group''s feed and reports up to this instant and no further, never raised to the date its subscription had paid through.';
+
+
+--
+-- Name: COLUMN participations.end_reason; Type: COMMENT; Schema: public; Owner: -
+--
+
+COMMENT ON COLUMN public.participations.end_reason IS 'Why the seat ended, set with ended_at by end_participation; NULL exactly when the status is not ended (chk_participations_ended_iff_end_reason).';
 
 
 --
@@ -136,7 +154,7 @@ CREATE INDEX idx_participations_waitlisted ON public.participations USING btree 
 -- Name: uq_participations_active_or_waitlisted; Type: INDEX; Schema: public; Owner: -
 --
 
-CREATE UNIQUE INDEX uq_participations_active_or_waitlisted ON public.participations USING btree (product_id, participant_id) WHERE (status = ANY (ARRAY['active'::public.participation_status, 'waitlisted'::public.participation_status, 'completed'::public.participation_status]));
+CREATE UNIQUE INDEX uq_participations_active_or_waitlisted ON public.participations USING btree (product_id, participant_id) WHERE (status = ANY (ARRAY['active'::public.participation_status, 'waitlisted'::public.participation_status]));
 
 
 --
@@ -150,7 +168,7 @@ CREATE UNIQUE INDEX uq_participations_checkout_session ON public.participations 
 -- Name: participations participations_klaviyo_changed; Type: TRIGGER; Schema: public; Owner: -
 --
 
-CREATE TRIGGER participations_klaviyo_changed AFTER UPDATE OF status, product_id, seat_offer_sent_at ON public.participations FOR EACH ROW WHEN ((((old.status IS DISTINCT FROM new.status) OR (old.product_id IS DISTINCT FROM new.product_id)) OR (old.seat_offer_sent_at IS DISTINCT FROM new.seat_offer_sent_at))) EXECUTE FUNCTION public.klaviyo_participation_changed();
+CREATE TRIGGER participations_klaviyo_changed AFTER UPDATE OF status, product_id, seat_offer_sent_at ON public.participations FOR EACH ROW WHEN (((old.status IS DISTINCT FROM new.status) OR (old.product_id IS DISTINCT FROM new.product_id) OR (old.seat_offer_sent_at IS DISTINCT FROM new.seat_offer_sent_at))) EXECUTE FUNCTION public.klaviyo_participation_changed();
 
 
 --
@@ -165,6 +183,13 @@ CREATE TRIGGER participations_klaviyo_written AFTER INSERT OR DELETE ON public.p
 --
 
 CREATE TRIGGER participations_updated_at BEFORE UPDATE ON public.participations FOR EACH ROW EXECUTE FUNCTION public.update_updated_at_column();
+
+
+--
+-- Name: participations trg_participations_guard_delete; Type: TRIGGER; Schema: public; Owner: -
+--
+
+CREATE TRIGGER trg_participations_guard_delete BEFORE DELETE ON public.participations FOR EACH ROW EXECUTE FUNCTION public.guard_participation_delete();
 
 
 --

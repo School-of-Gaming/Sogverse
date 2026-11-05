@@ -165,6 +165,9 @@ without a change here** (`src/lib/gtm-events.ts` has the names and why each):
   product has been read; it loads the container itself if the page view has not yet;
 - `add_to_cart` — the click into the sign-up flow from a product's page (below);
 - `sign_up` — a parent account was created;
+- `child_added` — a parent added a child from a product's sign-up panel, advertised or
+  not; one added anywhere else — the family's own pages — pushes nothing, since the
+  container never loads there, and is reported by our servers alone;
 - `enrolment` — a seat or a queue place was taken, with `outcome` saying which;
 - `begin_checkout` — the parent was handed to Stripe.
 
@@ -179,9 +182,9 @@ without a change here** (`src/lib/gtm-events.ts` has the names and why each):
   facts as the server reports' fields, plus the same product as `meta`, the object Meta's
   template takes whole (Reddit's reads `ecommerce` itself), and **is pushed for every
   product with `advertised` beside it**. Analytics counts them all; an advertising tag fires only where `advertised`
-  is `true`. A `sign_up` carries no `advertised`: it names a product only when the
-  server's lead would, so its tag fires on every one. A queue place and a lead carry no
-  value, on this side as on the server's.
+  is `true`. A `sign_up` and a `child_added` carry no `advertised`: each names a product
+  only when the server's report of it would, so its tag fires on every one. A queue place, a lead and a child
+  added carry no value, on this side as on the server's.
 - **Every push is preceded by `{ ecommerce: null, meta: null }`.** The container merges
   pushes into one model that keeps what it was last told, so without the reset an event
   leaving a field out reads the previous event's — a queue place priced at the view before
@@ -211,6 +214,13 @@ it can neither delay nor fail what the family asked for:
 - **an account was created** — a lead (Meta's `Lead`, Reddit's `LEAD`): someone reachable
   who has committed to nothing, naming the product whose page the sign-up started from
   when that was an advertised product's page;
+- **a child was added** — every child a parent adds, from wherever (Meta's custom
+  `ChildProfileCreated`, and Reddit's custom event of the same name): past the account,
+  short of a seat. Like the lead, it names a product only when there is an advertised one
+  to name: a product's sign-up panel sends the product's id with the create, and the
+  report names that product, unpriced, when its row is one we advertise; no id (any add
+  outside a product's sign-up panel, on the family's own pages), an unknown product or an
+  unadvertised one sends the report without a product. It says nothing about the child;
 - **an enrolment** — a seat or a place in a queue (Meta's `CompleteRegistration`, Reddit's
   `SIGN_UP`), carrying which of the two it was to Meta. Reddit's event has no field for
   it, so Reddit tells the two apart only by the missing value on a queue place;
@@ -221,10 +231,12 @@ it can neither delay nor fail what the family asked for:
   advertised product — so a browser that blocked a vendor's library still has the event
   arrive, and one that let it through is counted once.
 
-**Every server report shares its id with the browser's push.** For the lead and the
-enrolment, the browser mints the id, sends it in the body of the request that commits the
+**Every server report shares its id with the browser's push.** For the lead, the child
+added and the enrolment, the browser mints the id, sends it in the body of the request that commits the
 action, and pushes under it once the route has answered; absent, the server mints its own.
-For the three twins it is required, since a twin with no push to match is nothing. The
+A child added outside a product's sign-up panel still sends one — the dialog mints it on
+every create — though no push shares it there. For the three twins it is required, since a
+twin with no push to match is nothing. The
 server hands it to Meta as `event_id` and to Reddit as `conversion_id`. It is validated as
 a UUID and used for nothing else: the worst a forged one can do is make a platform discard
 one of that client's own events.
@@ -253,7 +265,8 @@ built from one place so they cannot describe one product two ways: its id, its E
 whatever the visitor's locale, its topic as the category — an enum value, stable across
 renames, and the axis a campaign is run per — and the price the family pays with its
 currency, zero for a free product. A paid product with no price in the currency states no
-value at all rather than a guessed one. **A queue place and a lead carry no value**, dropped
+value at all rather than a guessed one. **A queue place, a lead and a child added carry
+no value**, dropped
 in the server report itself whatever the caller passed, because nobody has paid or committed
 to pay and a priced queue would train a campaign to count a full product's waitlist as
 revenue.
@@ -268,18 +281,33 @@ Anything else — no redirect, another page, an unknown or unadvertised product,
 read — sends the lead without a product, and never touches the registration. The lead's
 `event_source_url` stays the register page, which is where the account was created.
 
+**A child added is reported from the page the dialog was opened on, stated by the caller.**
+From a product's sign-up panel, that product's public page, whether or not the report
+names the product — so an unadvertised product's id still reaches a platform in the
+source path, as it does in the panel's `child_added` push, which fires for every panel
+add. That is accepted: a product id is not sensitive, and the product's fields are
+withheld for campaign noise, not secrecy. Any add outside a panel — the family's own
+pages — is reported under the dashboard's fixed path — **the one
+private path a server report may name**: a fixed path with no id in it names nobody,
+where a private page's address in general can name a child, so it is never one derived
+from a request or carrying a record. The browser side keeps the stricter rule: the
+container never loads on a private page, so it never reports one.
+
 Each server report is gated on the **request's own consent cookie**, so a report for
 someone who refused marketing is impossible rather than unlikely. Products we do not
-advertise — a municipality club, or anything invoiced off-platform — are refused **by the
-product row, never by the URL it was reached from**. The lead and enrolment routes are
-customer-only, so a gamer cannot reach one; the page-event route makes its own gamer check.
+advertise — a municipality club, or anything invoiced off-platform — have their product
+fields refused **by the product row, never by the URL it was reached from**, because a
+campaign optimised on them is optimised on noise; their id may still travel in a child
+added's source path, as above. The lead, child-added and enrolment
+routes are customer-only, so a gamer cannot reach one; the page-event route makes its own gamer check.
 
 **What identifies a person in a server report, exhaustively:** the user agent, the IP the
 request arrived from, the platform's own browser and click cookies if the browser carries
 them (Meta's `_fbp` and `_fbc`, Reddit's `_rdt_uuid` and `_rdt_cid` — each platform is sent
 only its own) or, where the click cookie is missing, that platform's click id kept in our
 attribution cookie (Meta's in the `_fbc` format, `fb.1.<landing ms>.<fbclid>`; Reddit's as
-the link carried it) — and, **on the lead and the enrolment only**, a SHA-256 hash of the
+the link carried it) — and, **on the lead, the child added and the enrolment only**, a
+SHA-256 hash of the
 parent's own account email and a SHA-256 hash of the parent's own account id
 (`external_id`), both hashed on our server, so neither the address nor the id is ever sent
 or logged, and never a gamer's. **The three page-event twins carry no account, even from a
@@ -291,10 +319,13 @@ lowercases; Reddit also removes every dot from the local part and drops everythi
 `+` on, so one address hashes to two different values and neither may be "fixed" to match
 the other. The address is sent whether or not it has been verified; that is standard
 practice and accepted as such. The id hash is the same on every report for that account, so
-each platform can join one parent's leads and enrolments across visits and devices. With the
-product fields, that tells the platform which product an identifiable parent signed up for,
-or opened an account from. No name, and nothing about a child beyond that — not their name,
-age, account or its id, or anything else. The privacy policy's entry for each platform says
+each platform can join one parent's leads, children added and enrolments across visits and
+devices. With the product fields, that tells the platform which product an identifiable
+parent signed up for, opened an account from, or was signing up for when they added a
+child. No
+name, and nothing about a child beyond that — the child-added event says only that this
+parent added one, never their name, age, account or its id, how many there are, or
+anything else. The privacy policy's entry for each platform says
 this in plain words; adding a field is a privacy-policy edit.
 
 ## Withdrawal
@@ -420,7 +451,7 @@ the marketing team in whatever setup instructions they are sent.
   where it can send, not what it reads off the page. A further vendor is a privacy-policy
   edit and a change to the policy, never a tag added in the UI.
 - **Each ad tag fires only on our Custom Event triggers** — `page_view`, `view_item`,
-  `add_to_cart`, `sign_up`, `enrolment` — **with `advertised` equal to `true`** on every
+  `add_to_cart`, `sign_up`, `child_added`, `enrolment` — **with `advertised` equal to `true`** on every
   event that carries it. Analytics is pushed every product, municipality clubs included; a
   campaign optimised on them is optimised on noise. `begin_checkout` feeds no ad tag: the
   checkout start is `add_to_cart`.
@@ -429,8 +460,13 @@ the marketing team in whatever setup instructions they are sent.
   (`NEXT_PUBLIC_META_PIXEL_ID`, `NEXT_PUBLIC_REDDIT_PIXEL_ID`). A platform deduplicates
   only an event with the same id on the same pixel; either one wrong and every event
   counts twice.
+- **`child_added` is a custom event on both tags, named exactly `ChildProfileCreated`** —
+  Meta's tag as a custom event, Reddit's as `Custom` with that custom event name. Every
+  other event is a standard one whose name the vendor fixes; this one is named by whoever
+  builds the tag, and a platform deduplicates only on the same name as well as the same
+  id, so any other spelling counts every child added twice.
 - **No advanced matching fields** on either tag — no email, phone or name. The policy's
-  promise is that only the lead and the enrolment carry an identifier, hashed on our
+  promise is that only the lead, the child added and the enrolment carry an identifier, hashed on our
   server; a tag sending one would put it on every page view. The globals keep the vendors'
   *automatic* matching off; they cannot vet a field typed into a tag.
 - **Meta's "Meta-enabled CAPI" opt-in box stays unticked.** Our servers already report

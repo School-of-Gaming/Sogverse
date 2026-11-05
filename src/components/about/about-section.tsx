@@ -155,6 +155,7 @@ export function AboutSection({ id }: AboutSectionProps) {
         <div className="mt-8 space-y-6 text-muted-foreground">
           <p>{t("forParents.paragraph1")}</p>
           <p>{t("forParents.paragraph2")}</p>
+          <p>{t("forParents.paragraph3")}</p>
         </div>
       </div>
 

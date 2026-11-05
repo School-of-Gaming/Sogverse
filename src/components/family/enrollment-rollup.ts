@@ -1,3 +1,4 @@
+import { formatInTimeZone } from "date-fns-tz";
 import {
   formatProductSchedule,
   scheduleCardLines,
@@ -132,6 +133,15 @@ export interface FamilyEnrollmentSummary {
   openHref: MaybeInertHref;
   /** The product's last day as a bare `YYYY-MM-DD`, or `null` when open-ended. */
   endDate: string | null;
+  /**
+   * The day this seat ended, as a bare `YYYY-MM-DD` in the product's zone, or
+   * `null` on a seat still held (and on every waitlist place).
+   *
+   * An ended seat is a finished card whatever the product's own dates say: it
+   * sorts into the finished band, says when it ended, and opens its page, whose
+   * feed stops at the end. See `enrollmentEndedOn`.
+   */
+  seatEndedOn: string | null;
   /** The zone `endDate` is a date **in** — the product's own. */
   timezone: string;
   /**
@@ -201,11 +211,17 @@ export interface FamilyEnrollmentSummary {
 export function enrollmentEndedOn(
   enrollment: Pick<
     FamilyEnrollmentSummary,
-    "endDate" | "timezone" | "nextSessionStart"
+    "endDate" | "timezone" | "nextSessionStart" | "seatEndedOn"
   >,
   now: Date,
 ): string | null {
-  return runEndedOn(enrollment, now);
+  // An ended seat is over from its own last day, or from the run's if the run
+  // finished first — a seat removed after its camp ran ended with the camp.
+  const runEnded = runEndedOn(enrollment, now);
+  const { seatEndedOn } = enrollment;
+  if (seatEndedOn === null) return runEnded;
+  if (runEnded === null) return seatEndedOn;
+  return runEnded < seatEndedOn ? runEnded : seatEndedOn;
 }
 
 /**
@@ -441,7 +457,7 @@ export function sortFamilyEnrollments(
  * fixed once on the gedu side.
  */
 export interface FamilyRollUpArgs {
-  /** `status='active'` rows — placed and unplaced alike. */
+  /** Held seats, placed and unplaced alike, and ended ones. */
   sessionRows: readonly MyUpcomingSessionRow[];
   /** `status='waitlisted'` rows, each with its live place in line. */
   waitlistRows: readonly MyWaitlistRow[];
@@ -791,7 +807,8 @@ function sessionsAhead<T extends PlannedSession>(
 }
 
 /**
- * An `status='active'` row — a seat the family holds, placed or not.
+ * A seat the family holds, placed or not — or held until it ended, which is a
+ * finished card with nothing ahead of it.
  *
  * **Everything the card shows stops at the paid window.** When a parent has
  * cancelled, the card reads only the planned sessions starting by the instant
@@ -809,6 +826,13 @@ function sessionSummary(
   const awaiting = row.groupId === null;
   const hasVoiceRoom = modeHasVoiceRoom(product.deliveryMode);
   const subEnd = row.subscriptionEndsAt;
+  // An ended seat has nothing ahead of it, and the reads already say so: its
+  // plan is empty (sessions are planned for active seats only) and its
+  // subscription, cancelled with the seat, is neither past due nor
+  // canceling — so no session, no badge and no winding-down line reach it
+  // from here. Its group survives the end, though, so the room is the one
+  // thing the card has to withhold itself.
+  const ended = row.endedAt !== null;
 
   const closeMarginMs = VOICE_CONFIG.SESSION_WINDOW_AFTER_MINUTES * 60_000;
   const covered =
@@ -856,9 +880,10 @@ function sessionSummary(
     // The room is keyed by group, so an unplaced seat has no destination —
     // the same inert `"#"` an in-person product gets, and for the same reason:
     // there is nothing to navigate to. An unplaced seat's Join is never lit,
-    // so the href is never followed.
+    // so the href is never followed. An ended seat keeps its group_id, so it
+    // is withheld here by status: the family no longer belongs in that room.
     voiceHref:
-      hasVoiceRoom && row.groupId !== null
+      hasVoiceRoom && row.groupId !== null && !ended
         ? ROUTES.voice.groupSession(row.groupId)
         : INERT_HREF,
     // Named exactly where the gamers attend a site — in person or hybrid — so
@@ -880,6 +905,10 @@ function sessionSummary(
           }),
     endDate: product.endDate,
     timezone: product.timezone,
+    seatEndedOn:
+      row.endedAt === null
+        ? null
+        : formatInTimeZone(row.endedAt, product.timezone, "yyyy-MM-dd"),
     waitlistPosition: null,
     // A seat is not a queue place, and the offer stamp is forbidden on any
     // status but `waitlisted` — so there is nothing here to carry, ever.
@@ -942,6 +971,7 @@ function waitlistSummary(
     openHref: INERT_HREF,
     endDate: product.endDate,
     timezone: product.timezone,
+    seatEndedOn: null,
     waitlistPosition: row.position,
     seatOfferSentAt: row.seatOfferSentAt,
     awaiting: false,

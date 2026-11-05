@@ -239,7 +239,7 @@ describe("POST /api/gedu/complete-registration", () => {
   // -- Input --
 
   it("refuses a body that fails the contract, writing nothing", async () => {
-    const response = await POST(request({ ...validBody, firstName: "A" }));
+    const response = await POST(request({ ...validBody, firstName: "   " }));
 
     expect(response.status).toBe(400);
     expect(writes).toEqual([]);

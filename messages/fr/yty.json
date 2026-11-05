@@ -1,41 +1,41 @@
 {
   "hero": {
     "title": "Qu’est-ce que l’Yty ?",
-    "subtitle": "L’Yty est la force qui maintient l’équilibre de Sogverse. Apprendre quelque chose de nouveau, se faire un ami, se comporter avec bienveillance, participer à la communauté : chaque bonne action fait grandir l’Yty de chaque joueur et celle de Sogverse tout entier."
+    "subtitle": "L’Yty est la force qui maintient l’équilibre de Sogverse, l’univers de jeu de School of Gaming. En faisant de bonnes actions, en apprenant de nouvelles compétences, en se faisant des amis, en se comportant bien et en participant à la communauté, les gamers gagnent de l’Yty pour la cagnotte commune, mais aussi pour eux-mêmes."
   },
   "overview": {
     "heading": "Comment fonctionne l’Yty",
-    "paragraph1": "Chaque joueur part de zéro. Séances suivies, quêtes accomplies, gestes de bienveillance : tout se transforme en points d’Yty. Ces points se répartissent sur les quatre éléments de l’Yty, chacun reflétant une dimension de la croissance personnelle.",
-    "paragraph2": "En accumulant de l’Yty pour eux-mêmes, les joueurs font aussi grandir celle de Sogverse tout entier, influençant l’histoire et ouvrant de nouvelles possibilités pour toute la communauté."
+    "paragraph1": "Chaque gamer part de zéro point d’Yty. À chaque séance, chaque quête accomplie et chaque geste de bienveillance, les gamers gagnent des points d’Yty. Ces points s’accumulent dans les quatre éléments de l’Yty, chacun représentant une facette différente de la croissance personnelle.",
+    "paragraph2": "En récoltant de l’Yty pour eux-mêmes, les gamers font aussi grandir l’Yty de toute la communauté. C’est ainsi qu’ils façonnent l’histoire commune et ouvrent de nouvelles possibilités pour tous."
   },
   "elements": {
     "heading": "Les quatre éléments de l’Yty",
-    "subheading": "Chaque élément de l’Yty est une relation que le joueur fait grandir : à lui-même, aux autres, à la société et à la technologie",
+    "subheading": "Chaque élément de l’Yty est une relation que le gamer fait grandir : à lui-même, aux autres, au monde et à la technologie",
     "harmony": {
       "name": "Harmonie",
-      "description": "Ta relation à toi-même",
-      "detail": "Qui suis-je vraiment ? L’Harmonie, c’est apprendre à se connaître : ses forces, ses limites, ses émotions. C’est savoir prendre soin de soi, faire de bons choix, et comprendre pourquoi la confiance et les règles ont du sens."
+      "description": "La relation à soi",
+      "detail": "Qui suis-je ? L’Harmonie, c’est s’accepter tel qu’on est, avec ses forces et ses faiblesses. C’est apprendre à se connaître, prendre soin de son bien-être, exprimer ses émotions, faire de bons choix et comprendre pourquoi les règles et la confiance comptent."
     },
     "glow": {
       "name": "Éclat",
-      "description": "Ta relation aux autres",
-      "detail": "Comment est-ce que j’aide les autres ? L’Éclat, c’est l’empathie et la bienveillance. C’est écouter, respecter les différences, faire de la place aux autres et être le genre de personne qui tire les autres vers le haut."
+      "description": "La relation aux autres",
+      "detail": "Comment puis-je aider les autres ? Comment être un bon ami ? L’Éclat, c’est l’empathie, la gentillesse et des liens qui comptent vraiment. C’est respecter les différences, laisser de la place aux autres, bien communiquer et être le genre de personne qui tire les autres vers le haut."
     },
     "valor": {
       "name": "Bravoure",
-      "description": "Ta relation à la société",
-      "detail": "Comment est-ce que je fais une différence ? La Bravoure, c’est trouver sa place dans la société et avoir le cran d’y contribuer. Travailler en équipe, porter ses idées, utiliser son imagination pour construire quelque chose qui compte."
+      "description": "La relation au monde",
+      "detail": "Comment puis-je faire la différence ? La Bravoure, c’est trouver sa place dans le monde qui nous entoure et avoir le courage d’y prendre part. C’est travailler en équipe, exprimer ses idées, utiliser son imagination et œuvrer pour un avenir meilleur, près de chez soi comme à l’autre bout du monde."
     },
     "wit": {
       "name": "Discernement",
-      "description": "Ta relation à la technologie",
-      "detail": "Comment bien utiliser la technologie ? Le Discernement, c’est avoir un rapport sain et critique aux jeux, aux médias et aux outils qui les entourent. Comprendre les dynamiques en ligne, reconnaître une fausse info, et trouver le bon équilibre entre l’écran et le reste de la vie."
+      "description": "La relation à la technologie",
+      "detail": "Comment bien utiliser la technologie ? Le Discernement, c’est un rapport sain et critique aux jeux, aux médias, à l’IA et aux outils qui les entourent. C’est adopter un bon comportement en ligne, comprendre ce que font les nouvelles technologies, porter un regard critique sur l’information et trouver un équilibre entre le temps d’écran et le reste de la vie."
     }
   },
   "earning": {
-    "heading": "Comment les joueurs gagnent de l’Yty",
-    "paragraph1": "L’Yty se gagne en participant. Séances hebdomadaires, quêtes accomplies, bienveillance envers les autres joueurs, événements communautaires, stages : tout compte.",
-    "paragraph2": "Au fil des points accumulés, les joueurs font progresser leurs badges de réussite, du bronze à l’argent, l’or, le platine et le diamant. Chaque point alimente à la fois leur niveau d’Yty global et l’élément auquel il correspond.",
-    "paragraph3": "Et ce n’est pas réservé aux joueurs. Les Gedus, les parents, toute la communauté peuvent contribuer à l’Yty de Sogverse à travers les événements et les activités partagées."
+    "heading": "Comment les gamers gagnent de l’Yty",
+    "paragraph1": "Les points d’Yty se gagnent en participant activement à ce que nous faisons. Les séances de chaque semaine, les quêtes accomplies, la gentillesse envers les autres, les événements communautaires et les stages font tous grandir l’Yty d’un gamer.",
+    "paragraph2": "Quand suffisamment de points s’accumulent sous un badge de réussite, le badge monte de niveau sur le profil du gamer, jusqu’au diamant. Chaque point d’Yty s’ajoute aussi au niveau d’Yty global du gamer et à l’élément de l’Yty auquel il appartient.",
+    "paragraph3": "Les Gedus, les parents et toute la communauté peuvent eux aussi contribuer à l’Yty de Sogverse, à travers les événements et les activités partagées."
   }
 }

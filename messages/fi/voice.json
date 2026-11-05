@@ -10,10 +10,10 @@
   "unlockCamera": "Vapauta kamera",
   "sharerScreen": "{name} näyttö",
   "stopSharing": "Lopeta jakaminen",
-  "voiceRoom": "Äänihuone",
+  "voiceRoom": "Virtuaalihuone",
   "leave": "Poistu",
   "failedToJoinRoom": "Huoneeseen liittyminen epäonnistui",
-  "notASogverseRoom": "Tätä kertaa ei pidetä Sogversen äänihuoneessa. Palaa takaisin, niin näet, miten siihen liitytään.",
+  "notASogverseRoom": "Tätä kertaa ei pidetä Sogversen virtuaalihuoneessa. Palaa takaisin, niin näet, miten siihen liitytään.",
   "sessionEnded": "Kerta on päättynyt",
   "disconnecting": "Katkaistaan yhteyttä...",
   "connecting": "Yhdistetään...",
@@ -140,12 +140,12 @@
     },
     "notFound": {
       "title": "Huonetta ei löytynyt",
-      "body": "Tällä koodilla ei löytynyt äänihuonetta:",
+      "body": "Tällä koodilla ei löytynyt virtuaalihuonetta:",
       "hint": "Tarkista koodi kirjoitusvirheiden varalta. Kirjainten ja numeroiden on täsmättävä tarkasti.",
-      "createNew": "Luo uusi äänihuone"
+      "createNew": "Luo uusi virtuaalihuone"
     },
     "createPage": {
-      "title": "Luo pikaäänihuone",
+      "title": "Luo pikavirtuaalihuone",
       "subtitle": "Yhdellä napsautuksella → uusi huone ja jaettava linkki. Käytä spontaaneihin kahdenkeskisiin keskusteluihin tai Gedujen väliseen koordinointiin ajastetun tapaamisen ulkopuolella tai sen lisäksi.",
       "createButton": "Käynnistä pikahuone",
       "creating": "Luodaan…",

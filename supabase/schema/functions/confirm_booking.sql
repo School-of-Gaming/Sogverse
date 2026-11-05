@@ -42,11 +42,13 @@ BEGIN
   );
 
   -- A settled booking answers as it did and writes nothing: a redelivered
-  -- event after the seat was cancelled must not put the seat back.
-  -- participation_id is NULL then, because cancelling deletes the seat.
+  -- event after the seat ended must not put the seat back. participation_id is
+  -- NULL then: an ended seat is kept as history, but it is not one to confirm.
   IF v_booking.status = 'settled' THEN
     SELECT id INTO v_participation_id
-      FROM public.participations WHERE booking_id = p_booking_id;
+      FROM public.participations
+     WHERE booking_id = p_booking_id
+       AND status <> 'ended';
     RETURN v_facts || jsonb_build_object(
       'kind', 'settled',
       'participation_id', v_participation_id,
@@ -59,7 +61,7 @@ BEGIN
     FROM public.participations
     WHERE product_id = v_booking.product_id
       AND participant_id = v_booking.participant_id
-      AND status IN ('active', 'waitlisted', 'completed')
+      AND status IN ('active', 'waitlisted')
     LIMIT 1;
 
   v_duplicate := v_facts || jsonb_build_object(
@@ -133,7 +135,7 @@ $$;
 -- Name: FUNCTION confirm_booking(p_booking_id uuid, p_checkout_session_id text); Type: COMMENT; Schema: public; Owner: -
 --
 
-COMMENT ON FUNCTION public.confirm_booking(p_booking_id uuid, p_checkout_session_id text) IS 'Turns a booking into a seat: the one path, called in the same transaction for a free or external booking and from the Stripe webhook for a paid one. Locks the product, then the booking. A booking already settled returns kind=settled with idempotent=true and the seat''s id, which is NULL if the seat has since been cancelled, and writes nothing, so a redelivered event never puts a seat back. A booking already duplicate returns kind=duplicate_payment again. A session id other than the one the booking stores raises check_violation, and that includes passing one to a booking that stores none. If the participant already holds an active, waitlisted or completed seat on the product the booking becomes duplicate and returns kind=duplicate_payment with existing_participation_id and existing_status, both NULL on a repeat if that seat has since gone. Otherwise it inserts the active seat, placed automatically when the product charges nothing and has exactly one group, and returns kind=settled with idempotent=false. Every return carries the booking''s booking_id, customer_id, participant_id, product_id, purchase_shape and currency, so the webhook reads nothing from Stripe metadata. Deliberately audience-ungated: validation happened before the money, and an after-money recorder refusing would strand a charge with no seat. service_role only: it has no auth.uid() and trusts the calling route.';
+COMMENT ON FUNCTION public.confirm_booking(p_booking_id uuid, p_checkout_session_id text) IS 'Turns a booking into a seat: the one path, called in the same transaction for a free or external booking and from the Stripe webhook for a paid one. Locks the product, then the booking. A booking already settled returns kind=settled with idempotent=true and the seat''s id, which is NULL if the seat has since ended, and writes nothing, so a redelivered event never puts a seat back. A booking already duplicate returns kind=duplicate_payment again. A session id other than the one the booking stores raises check_violation, and that includes passing one to a booking that stores none. If the participant already holds an active seat or a waitlisted place on the product the booking becomes duplicate and returns kind=duplicate_payment with existing_participation_id and existing_status, both NULL on a repeat if that seat has since gone. Otherwise it inserts the active seat, placed automatically when the product charges nothing and has exactly one group, and returns kind=settled with idempotent=false. Every return carries the booking''s booking_id, customer_id, participant_id, product_id, purchase_shape and currency, so the webhook reads nothing from Stripe metadata. Deliberately audience-ungated: validation happened before the money, and an after-money recorder refusing would strand a charge with no seat. service_role only: it has no auth.uid() and trusts the calling route.';
 
 
 --

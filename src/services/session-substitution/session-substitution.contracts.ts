@@ -272,7 +272,7 @@ export const openSubstitutionRequests = z.array(openSubstitutionRequest);
 /**
  * One gedu who has offered to stand in, on the admin queue.
  *
- * **Their name and nothing else.** It carried the certification queue's two
+ * **Their name and nothing else.** It carried the dashboard Gedu section's two
  * standings — `certified` and the criminal-record stamp — so the page could
  * draw the same chips; both are gone, and the reason is about the data rather
  * than the design. An uncertified gedu cannot hold an offer: the database's

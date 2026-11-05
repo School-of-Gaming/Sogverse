@@ -114,15 +114,6 @@ closing line is allowed after the substance, never instead of it, and never when
 work, money or a lesson they were counting on: "Some of you are already blaming the Toxies.
 We are not ruling it out." About once a year.
 
-## Admin screens: the family's experience, never our steps
-
-An admin reads a confirm step to answer a parent, so it describes what the family will
-experience. "The same card is charged on the same date, the next invoice corrects for the
-rest of this month, and from then on they pay the new club's price" is usable; "we put the
-subscription on the new price and Stripe settles the difference" is not, though both are
-true. The test: could the sentence be repeated to the family unchanged? The exception is a
-refusal that genuinely sends the admin to Stripe or another system, which names it.
-
 ## Saying what keeps a child safe
 
 **Level 0 or 1, never higher.** No safety claim is improved by the word Yty.
@@ -166,6 +157,10 @@ brand material):
   and year, the family surname, and in some cases the child's own email.
 - That a Gedu can message a parent without seeing their contact details. A Gedu's roster
   shows the parent's address.
+- That report pictures are only ever in-game screenshots, never photos of children. Nothing
+  in the product limits what a Gedu attaches, and in-person clubs meet in rooms, so it is
+  not a rule we can state (Mikko, 3 Nov 2026). Say what is true: the pictures are of the
+  lesson rather than of one child, and only that group's families see them.
 
 **Advertising, said exactly** (checked against the code, 2 Nov 2026). True: nothing about a
 child reaches an advertising platform, and a child's browsing never does: the ad scripts

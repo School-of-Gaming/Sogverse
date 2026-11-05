@@ -9,7 +9,7 @@ import {
   createAuthenticatedClient,
 } from "./helpers";
 import { TEST_IDS, TEST_CREDENTIALS } from "./constants";
-import { createTestProduct, deleteTestProducts } from "./product-helpers";
+import { createTestProduct, deleteTestProducts, eraseParticipations } from "./product-helpers";
 
 /**
  * Gamer photo consents: the marketing-consent system with the
@@ -241,10 +241,9 @@ describe("gamer photo consents", () => {
 
   async function deleteOutsiderGamer() {
     if (!outsiderGamerId) return;
-    await admin
-      .from("participations")
-      .delete()
-      .eq("participant_id", outsiderGamerId);
+    await eraseParticipations(admin, (q) =>
+      q.eq("participant_id", outsiderGamerId),
+    );
     await admin.from("parent_gamer").delete().eq("gamer_id", outsiderGamerId);
     await admin.from("gamer_profiles").delete().eq("user_id", outsiderGamerId);
     await admin.from("profiles").delete().eq("id", outsiderGamerId);
@@ -586,7 +585,11 @@ describe("gamer photo consents", () => {
 
         const ended = await admin
           .from("participations")
-          .update({ status: "completed" })
+          .update({
+            status: "ended",
+            ended_at: new Date().toISOString(),
+            end_reason: "admin_removed",
+          })
           .eq("group_id", GROUP_TAUGHT)
           .eq("participant_id", outsiderGamerId);
         expect(ended.error).toBeNull();
@@ -601,11 +604,9 @@ describe("gamer photo consents", () => {
         expect(left.error).toBeNull();
         expect(left.data).toEqual([]);
       } finally {
-        await admin
-          .from("participations")
-          .delete()
-          .eq("group_id", GROUP_TAUGHT)
-          .eq("participant_id", outsiderGamerId);
+        await eraseParticipations(admin, (q) =>
+          q.eq("group_id", GROUP_TAUGHT).eq("participant_id", outsiderGamerId),
+        );
       }
     });
 

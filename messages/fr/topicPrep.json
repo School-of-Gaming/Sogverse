@@ -33,8 +33,8 @@
     "rocket_league": "Nous apportons les machines à la séance, avec Rocket League déjà installé. Chaque participant a tout de même besoin de son propre compte Epic Games. Merci de suivre l’étape ci-dessous avant la séance.",
     "roblox_studio": "Nous apportons les ordinateurs à la séance, avec Roblox Studio déjà installé. Chaque participant a tout de même besoin de son propre compte Roblox. Merci de suivre l’étape ci-dessous avant la séance."
   },
-  "remoteOnlyIntro": "Les séances passent par un salon vocal. Merci de suivre l’étape ci-dessous avant la première séance.",
-  "hybridIntro": "Les participants peuvent suivre le club soit sur place, soit à distance. Le Gedu, notre mot pour un animateur, anime l’activité commune à distance. Tout le monde se parle dans un salon vocal commun.",
+  "remoteOnlyIntro": "Les séances passent par une salle virtuelle. Merci de suivre l’étape ci-dessous avant la première séance.",
+  "hybridIntro": "Les participants peuvent suivre le club soit sur place, soit à distance. Le Gedu, notre mot pour un animateur, anime l’activité commune à distance. Tout le monde se parle dans une salle virtuelle commune.",
   "homeHeading": "Participer depuis chez soi",
   "suppliedInPersonNote": "Tout ce qu’il vous faut est prêt. Vous n’avez pas besoin d’apporter votre propre appareil ni de créer un compte de jeu à l’avance. Nous utilisons les appareils et les identifiants de l’organisateur.",
   "steps": {
@@ -130,11 +130,11 @@
     },
     "remoteSession": {
       "title": "Configurer le microphone et la caméra",
-      "body": "Il vous faut un microphone pour parler avec le reste du groupe et le Gedu, notre mot pour un animateur. Un casque avec micro fonctionne le mieux : il réduit les bruits de fond et empêche le son de votre jeu de revenir en écho dans les écouteurs des autres. La séance se déroule dans un salon vocal qui fonctionne dans un navigateur web. Vous pouvez vous connecter depuis l’ordinateur sur lequel vous jouez, ou depuis un autre appareil, comme un téléphone ou une tablette. À la connexion, votre navigateur demande l’autorisation d’utiliser le microphone. Acceptez, pour que les autres vous entendent. La caméra n’est pas obligatoire, mais vous pouvez l’utiliser si vous le souhaitez."
+      "body": "Il vous faut un microphone pour parler avec le reste du groupe et le Gedu, notre mot pour un animateur. Un casque avec micro fonctionne le mieux : il réduit les bruits de fond et empêche le son de votre jeu de revenir en écho dans les écouteurs des autres. La séance se déroule dans une salle virtuelle qui fonctionne dans un navigateur web. Vous pouvez vous connecter depuis l’ordinateur sur lequel vous jouez, ou depuis un autre appareil, comme un téléphone ou une tablette. À la connexion, votre navigateur demande l’autorisation d’utiliser le microphone. Acceptez, pour que les autres vous entendent. La caméra n’est pas obligatoire, mais vous pouvez l’utiliser si vous le souhaitez."
     },
     "venueVoiceRoom": {
-      "title": "Rejoindre le salon vocal sur place",
-      "body": "Les participants sur place rejoignent le salon vocal du groupe dans Sogverse, sur un ordinateur sur place ou sur leur propre appareil s’ils le préfèrent. Aucun casque n’est nécessaire. Chaque participant a besoin d’un moyen de se connecter : s’il n’a pas encore de connexion à lui, un parent peut lui en créer une dans Paramètres du joueur, sur Mon SOG, pour que personne n’ait à partager les identifiants d’un parent."
+      "title": "Rejoindre la salle virtuelle sur place",
+      "body": "Les participants sur place rejoignent la salle virtuelle du groupe dans Sogverse, sur un ordinateur sur place ou sur leur propre appareil s’ils le préfèrent. Aucun casque n’est nécessaire. Chaque participant a besoin d’un moyen de se connecter : s’il n’a pas encore de connexion à lui, un parent peut lui en créer une dans Paramètres du gamer, sur Mon SOG, pour que personne n’ait à partager les identifiants d’un parent."
     }
   },
   "platformNotes": {

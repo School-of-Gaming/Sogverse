@@ -7,7 +7,7 @@ import {
 } from "@/services/member-flair/member-flair.contracts";
 import { createAdminTestClient, createAuthenticatedClient } from "./helpers";
 import { TEST_IDS, TEST_CREDENTIALS } from "./constants";
-import { createTestProduct, deleteTestProducts } from "./product-helpers";
+import { createTestProduct, deleteTestProducts, eraseParticipations } from "./product-helpers";
 
 /**
  * The two staff-only marks a gedu meets before a session starts: the
@@ -211,7 +211,7 @@ describe("member flair", () => {
   });
 
   afterAll(async () => {
-    await admin.from("participations").delete().in("product_id", ALL_PRODUCTS);
+    await eraseParticipations(admin, (q) => q.in("product_id", ALL_PRODUCTS));
     // The assignment FK onto profiles is ON DELETE RESTRICT, so the row has to
     // go before the account does.
     await admin
@@ -230,10 +230,9 @@ describe("member flair", () => {
 
   describe("trg_participations_stamp_group_joined_at", () => {
     afterEach(async () => {
-      await admin
-        .from("participations")
-        .delete()
-        .eq("product_id", PRODUCT_TRIGGER);
+      await eraseParticipations(admin, (q) =>
+        q.eq("product_id", PRODUCT_TRIGGER),
+      );
       // GROUP_T3 exists only inside the cascade case, which deletes it itself;
       // this is the belt to that braces, so a failure mid-test cannot leave a
       // third group behind for the next one to trip over.
@@ -368,7 +367,11 @@ describe("member flair", () => {
 
       await admin
         .from("participations")
-        .update({ status: "completed" })
+        .update({
+          status: "ended",
+          ended_at: new Date().toISOString(),
+          end_reason: "admin_removed",
+        })
         .eq("id", row.id);
 
       expect(await stampOf(row.id)).toBe(before);
@@ -466,7 +469,11 @@ describe("member flair", () => {
     it("drops a member from the map once their seat is no longer active", async () => {
       await admin
         .from("participations")
-        .update({ status: "completed" })
+        .update({
+          status: "ended",
+          ended_at: new Date().toISOString(),
+          end_reason: "admin_removed",
+        })
         .eq("product_id", PRODUCT_FLAIR)
         .eq("participant_id", TEST_IDS.GAMER);
 
@@ -477,7 +484,7 @@ describe("member flair", () => {
 
       await admin
         .from("participations")
-        .update({ status: "active" })
+        .update({ status: "active", ended_at: null, end_reason: null })
         .eq("product_id", PRODUCT_FLAIR)
         .eq("participant_id", TEST_IDS.GAMER);
     });
@@ -677,6 +684,35 @@ describe("member flair", () => {
       });
       expect(error).toBeNull();
       expect(gamerGroupNoteResult.parse(data).note).toHaveLength(2000);
+    });
+
+    it("refuses a note about a member whose seat has ended, though the seat keeps the group", async () => {
+      const ended = await admin
+        .from("participations")
+        .update({
+          status: "ended",
+          ended_at: new Date().toISOString(),
+          end_reason: "admin_removed",
+        })
+        .eq("product_id", PRODUCT_FLAIR)
+        .eq("participant_id", TEST_IDS.GAMER)
+        .select("group_id")
+        .single();
+      expect(ended.data?.group_id).toBe(GROUP_A);
+
+      const { error } = await geduAuth.rpc("set_gamer_group_note", {
+        p_group_id: GROUP_A,
+        p_participant_id: TEST_IDS.GAMER,
+        p_note: "Written after they left.",
+      });
+      expect(error?.code).toBe("42501");
+
+      const restored = await admin
+        .from("participations")
+        .update({ status: "active", ended_at: null, end_reason: null })
+        .eq("product_id", PRODUCT_FLAIR)
+        .eq("participant_id", TEST_IDS.GAMER);
+      expect(restored.error).toBeNull();
     });
   });
 

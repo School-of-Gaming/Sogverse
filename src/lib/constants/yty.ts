@@ -41,7 +41,7 @@ export const YTY_ELEMENTS = [
   {
     id: "harmony",
     name: "Harmony",
-    description: "Your relationship with yourself",
+    description: "Relationship with yourself",
     icon: YTY_ELEMENT_GRAMMAR.harmony.glyph,
     color: {
       accent: "text-yty-harmony",
@@ -52,7 +52,7 @@ export const YTY_ELEMENTS = [
   {
     id: "glow",
     name: "Glow",
-    description: "Your relationship with others",
+    description: "Relationship with others",
     icon: YTY_ELEMENT_GRAMMAR.glow.glyph,
     color: {
       accent: "text-yty-glow",
@@ -63,7 +63,7 @@ export const YTY_ELEMENTS = [
   {
     id: "valor",
     name: "Valor",
-    description: "Your relationship with society",
+    description: "Relationship with the world",
     icon: YTY_ELEMENT_GRAMMAR.valor.glyph,
     color: {
       accent: "text-yty-valor",
@@ -74,7 +74,7 @@ export const YTY_ELEMENTS = [
   {
     id: "wit",
     name: "Wit",
-    description: "Your relationship with technology",
+    description: "Relationship with technology",
     icon: YTY_ELEMENT_GRAMMAR.wit.glyph,
     color: {
       accent: "text-yty-wit",

@@ -22,6 +22,10 @@ DECLARE
   v_paid_through   date;
   v_start_date     date;
   v_horizon        date;
+  v_status         public.participation_status;
+  v_ended_at       timestamptz;
+  v_access_end     timestamptz;
+  v_planned        jsonb;
 BEGIN
   -- No caller, no answer. This function is scoped entirely to auth.uid(); with
   -- no uid there is nobody for it to be scoped TO, so there is no correct
@@ -32,8 +36,8 @@ BEGIN
     RAISE EXCEPTION 'Forbidden' USING ERRCODE = '42501';
   END IF;
 
-  SELECT part.participant_id, part.group_id, part.product_id
-    INTO v_participant_id, v_group_id, v_product_id
+  SELECT part.participant_id, part.group_id, part.product_id, part.status, part.ended_at
+    INTO v_participant_id, v_group_id, v_product_id, v_status, v_ended_at
     FROM public.participations part
    WHERE part.id = p_participation_id;
 
@@ -66,6 +70,16 @@ BEGIN
   IF v_group_id IS NULL THEN
     RAISE EXCEPTION 'Participation % is not placed in a group', p_participation_id
       USING ERRCODE = 'no_data_found';
+  END IF;
+
+  -- An ended seat keeps its page as far as the seat went: up to the instant it
+  -- ended, and no further (owner ruling, 2026-11-03: reports up to the day they
+  -- left). Not raised to a subscription's paid-through date: a seat Stripe
+  -- cancels ends at its period end anyway, and an admin's removal is immediate,
+  -- so its page must not go on listing sessions the child no longer attends.
+  -- NULL on a seat that has not ended, which leaves every list below as it was.
+  IF v_status = 'ended' THEN
+    v_access_end := v_ended_at;
   END IF;
 
   -- Whoever holds the seat. The page is participant-scoped and reachable by
@@ -234,6 +248,8 @@ BEGIN
          -- family is told the session is off, and a report on it would say
          -- otherwise; a restore brings the row back here as it was.
          AND NOT public.group_session_is_cancelled(s.group_id, s.session_date)
+         -- An ended seat: nothing that started after its access ended.
+         AND (v_access_end IS NULL OR s.starts_at < v_access_end)
     ) AS session_rows;
 
   -- Cancellation: the group's cancelled sessions in effect, newest first, as a
@@ -255,7 +271,11 @@ BEGIN
     FROM public.session_cancellations sc
    WHERE sc.group_id = v_group_id
      AND public.group_session_is_cancelled(sc.group_id, sc.session_date)
-     AND NOT public.group_session_date_is_holiday(sc.group_id, sc.session_date);
+     AND NOT public.group_session_date_is_holiday(sc.group_id, sc.session_date)
+     AND (v_access_end IS NULL
+          OR sc.session_date <= (v_access_end AT TIME ZONE (
+               SELECT p.timezone FROM public.products p WHERE p.id = v_product_id
+             ))::date);
 
   -- The product-local date a cancelled membership is paid through: the
   -- `canceling` subscription's current_period_end, the instant the family's
@@ -268,11 +288,34 @@ BEGIN
    WHERE fs.participation_id = p_participation_id
      AND fs.status = 'canceling';
 
+  -- An ended seat's access stops at the product-local date it ended.
+  IF v_access_end IS NOT NULL THEN
+    SELECT (v_access_end AT TIME ZONE p.timezone)::date
+      INTO v_paid_through
+      FROM public.products p WHERE p.id = v_product_id;
+  END IF;
+
   -- The plan's span, which the holiday breaks share: the product's start to
   -- its horizon for THIS group, raised to the paid-through date.
   SELECT p.start_date INTO v_start_date
     FROM public.products p WHERE p.id = v_product_id;
   v_horizon := public.session_plan_horizon(v_product_id, v_group_id, v_paid_through);
+  -- For an ended seat the paid-through date is a ceiling as well as a floor:
+  -- the plan stops where the seat's access did.
+  IF v_access_end IS NOT NULL THEN
+    v_horizon := LEAST(v_horizon, v_paid_through);
+  END IF;
+
+  v_planned := public.planned_sessions_document(v_product_id, v_horizon);
+  -- The horizon is a date, and an ended seat's access ended at an instant: a
+  -- session later on the day it ended is not the family's to join. The plan
+  -- keeps only what started before that instant, in its own order.
+  IF v_access_end IS NOT NULL THEN
+    SELECT COALESCE(jsonb_agg(planned.entry ORDER BY planned.ord), '[]'::jsonb)
+      INTO v_planned
+      FROM jsonb_array_elements(v_planned) WITH ORDINALITY AS planned(entry, ord)
+     WHERE (planned.entry->>'starts_at')::timestamptz < v_access_end;
+  END IF;
 
   RETURN jsonb_build_object(
     'participant', v_participant,
@@ -287,8 +330,9 @@ BEGIN
     -- eighth session that has not ended and that the group has not cancelled,
     -- on an open-ended product — raised to the paid-through date, so a cancelled membership's
     -- plan reaches the last session the family may still attend. Plain plan
-    -- rows; the cancellations above are laid over them by date.
-    'planned_sessions', public.planned_sessions_document(v_product_id, v_horizon),
+    -- rows; the cancellations above are laid over them by date. An ended
+    -- seat's plan stops at the instant the seat ended.
+    'planned_sessions', v_planned,
     -- The holiday breaks over the same span, each with the sessions it
     -- withdrew from the plan above.
     'holiday_breaks',   public.holiday_breaks_document(v_product_id, v_start_date, v_horizon)
@@ -301,7 +345,7 @@ $$;
 -- Name: FUNCTION get_my_family_product_feed(p_participation_id uuid); Type: COMMENT; Schema: public; Owner: -
 --
 
-COMMENT ON FUNCTION public.get_my_family_product_feed(p_participation_id uuid) IS 'One round trip for a family club/camp/event page, scoped to ONE participation: the product shell, the group name and its family-facing note, the venue on in-person and hybrid products, the teaching gedus'' first names, the group''s full stored session history with reports and PHOTOS, the named participant''s own attendance marks, and that participant''s own creations. Each session carries updated_by and the last editor''s first name — last editor of the SESSION, not author of the report: an attendance mark or a staff-note edit moves it. The name travels per session because a past session''s editor may no longer teach the group. Each session also carries `images`: {id, width, height} per photo, ordered by (created_at, id), the same shape the gedu and admin documents carry because one shared gallery renders all three, and never the uploader, which is safeguarding audit. That key rides on this strict family document under no versioned twin of its own, on the severity paragraph in docs/plans/CLAUDE.md: transient read-side breakage inside a release window is accepted. `creations` is a TOP-LEVEL array of {title, url} — this participant''s own, in this group, and structurally incapable of holding anybody else''s because it is not a map keyed by participant. It is the one staff-authored family-facing field that carries links, an owner-approved exception to the link-free rule session reports follow, and the render side parses each URL and degrades to the title as plain text when it is not http(s). Empty array when there is nothing, so the card renders on emptiness and never on null. `planned_sessions` is the product''s plan from start_date to session_plan_horizon for this group (planned_sessions_document), raised to the product-local date a `canceling` subscription''s current_period_end falls on — the paid-through instant the page clamps the list at — as plain {session_date, starts_at, ends_at} rows; the cancellations stay their own list, and leave out any on a holiday date. `holiday_breaks` is holiday_breaks_document over the same span: each break of a calendar the product follows, with its name in every locale and the plan rows it withdrew. Self-scoping — the caller must be the participation''s participant (a child, or a parent holding a seat of their own) or a parent linked to them; an unplaced participation has no page and answers P0002; a row that does not exist and a row belonging to another family are refused identically, so it cannot be used as an oracle for enrollment ids. Carries no gedu note of any scope, no roster, no other participant''s marks or creations, no parent email, no material link, no requires_gamer_creations flag and no owed/completeness state.';
+COMMENT ON FUNCTION public.get_my_family_product_feed(p_participation_id uuid) IS 'One round trip for a family club/camp/event page, scoped to ONE participation: the product shell, the group name and its family-facing note, the venue on in-person and hybrid products, the teaching gedus'' first names, the group''s full stored session history with reports and PHOTOS, the named participant''s own attendance marks, and that participant''s own creations. Each session carries updated_by and the last editor''s first name — last editor of the SESSION, not author of the report: an attendance mark or a staff-note edit moves it. The name travels per session because a past session''s editor may no longer teach the group. Each session also carries `images`: {id, width, height} per photo, ordered by (created_at, id), the same shape the gedu and admin documents carry because one shared gallery renders all three, and never the uploader, which is safeguarding audit. That key rides on this strict family document under no versioned twin of its own, on the severity paragraph in docs/plans/CLAUDE.md: transient read-side breakage inside a release window is accepted. `creations` is a TOP-LEVEL array of {title, url} — this participant''s own, in this group, and structurally incapable of holding anybody else''s because it is not a map keyed by participant. It is the one staff-authored family-facing field that carries links, an owner-approved exception to the link-free rule session reports follow, and the render side parses each URL and degrades to the title as plain text when it is not http(s). Empty array when there is nothing, so the card renders on emptiness and never on null. `planned_sessions` is the product''s plan from start_date to session_plan_horizon for this group (planned_sessions_document), raised to the product-local date a `canceling` subscription''s current_period_end falls on — the paid-through instant the page clamps the list at — as plain {session_date, starts_at, ends_at} rows; the cancellations stay their own list, and leave out any on a holiday date. `holiday_breaks` is holiday_breaks_document over the same span: each break of a calendar the product follows, with its name in every locale and the plan rows it withdrew. An ENDED seat keeps its page: its stored sessions stop at those starting before its ended_at — never raised to a subscription''s current_period_end — its cancellations stop at that instant''s product-local date, and its plan at the instant itself — a session later on the day it ended is not listed — cut there rather than raised to a current_period_end. Self-scoping — the caller must be the participation''s participant (a child, or a parent holding a seat of their own) or a parent linked to them; an unplaced participation has no page and answers P0002; a row that does not exist and a row belonging to another family are refused identically, so it cannot be used as an oracle for enrollment ids. Carries no gedu note of any scope, no roster, no other participant''s marks or creations, no parent email, no material link, no requires_gamer_creations flag and no owed/completeness state.';
 
 
 --

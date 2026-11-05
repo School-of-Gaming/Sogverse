@@ -170,6 +170,16 @@ describe("get_admin_dashboard", () => {
   let bothLanguagesGeduId: string | null = null;
   /** Queued, and has accepted only a version that is no longer current. */
   let staleGeduId: string | null = null;
+  /** Certified, with a team profile marked ready and not yet public. */
+  let certifiedWaitingGeduId: string | null = null;
+  /** Uncertified, with a team profile marked ready and not yet public. */
+  let uncertifiedWaitingGeduId: string | null = null;
+  /** Certified, with a team profile that is already public. */
+  let certifiedPublicGeduId: string | null = null;
+  /** Certified, with a team profile saved but not marked ready. */
+  let certifiedNotReadyGeduId: string | null = null;
+  /** An admin whose own team profile is marked ready and not yet public. */
+  let waitingAdminId: string | null = null;
 
   function attention(productId: string) {
     return snapshot.attention_products.find((p) => p.id === productId);
@@ -180,7 +190,11 @@ describe("get_admin_dashboard", () => {
   }
 
   /** Promotes a freshly-created customer profile to a gedu, extension row optional. */
-  async function promoteToGedu(userId: string, withProfileRow: boolean) {
+  async function promoteToGedu(
+    userId: string,
+    withProfileRow: boolean,
+    certified: boolean,
+  ) {
     const promoted = await admin
       .from("profiles")
       .update({ role: "gedu" })
@@ -192,15 +206,12 @@ describe("get_admin_dashboard", () => {
     if (withProfileRow) {
       const seeded = await admin
         .from("gedu_profiles")
-        .insert({ user_id: userId, certified: false });
+        .insert({ user_id: userId, certified });
       expect(seeded.error).toBeNull();
     }
   }
 
-  async function createGedu(
-    label: string,
-    withProfileRow: boolean,
-  ): Promise<string> {
+  async function createUser(label: string): Promise<string> {
     const { data, error } = await admin.auth.admin.createUser({
       email: `admin-dashboard-${label}-${Date.now()}@test.local`,
       password: "testpassword123",
@@ -208,9 +219,35 @@ describe("get_admin_dashboard", () => {
       user_metadata: { first_name: "Dash", last_name: label },
     });
     expect(error).toBeNull();
-    const userId = data.user!.id;
-    await promoteToGedu(userId, withProfileRow);
+    return data.user!.id;
+  }
+
+  async function createGedu(
+    label: string,
+    withProfileRow: boolean,
+    { certified = false }: { certified?: boolean } = {},
+  ): Promise<string> {
+    const userId = await createUser(label);
+    await promoteToGedu(userId, withProfileRow, certified);
     return userId;
+  }
+
+  /**
+   * A team profile in one of its three states. Seeded through the service-role
+   * client: the writers' own rules are team-profiles.test.ts's job, and what is
+   * under test here is which states the dashboard reads as waiting.
+   */
+  async function seedTeamProfile(
+    userId: string,
+    state: "not-ready" | "waiting" | "public",
+  ) {
+    const { error } = await admin.from("team_profiles").insert({
+      user_id: userId,
+      opted_in: state !== "not-ready",
+      approved: state === "public",
+      approval_decided_at: state === "public" ? new Date().toISOString() : null,
+    });
+    expect(error).toBeNull();
   }
 
   beforeAll(async () => {
@@ -470,6 +507,29 @@ describe("get_admin_dashboard", () => {
     otherLanguageGeduId = await createGedu("otherlang", true);
     bothLanguagesGeduId = await createGedu("bothlang", true);
     staleGeduId = await createGedu("stale", true);
+    certifiedWaitingGeduId = await createGedu("certwaiting", true, {
+      certified: true,
+    });
+    uncertifiedWaitingGeduId = await createGedu("uncertwaiting", true);
+    certifiedPublicGeduId = await createGedu("certpublic", true, {
+      certified: true,
+    });
+    certifiedNotReadyGeduId = await createGedu("certnotready", true, {
+      certified: true,
+    });
+    waitingAdminId = await createUser("waitingadmin");
+    const promoted = await admin
+      .from("profiles")
+      .update({ role: "admin" })
+      .eq("id", waitingAdminId);
+    expect(promoted.error).toBeNull();
+    await admin.from("customer_profiles").delete().eq("user_id", waitingAdminId);
+
+    await seedTeamProfile(certifiedWaitingGeduId, "waiting");
+    await seedTeamProfile(uncertifiedWaitingGeduId, "waiting");
+    await seedTeamProfile(certifiedPublicGeduId, "public");
+    await seedTeamProfile(certifiedNotReadyGeduId, "not-ready");
+    await seedTeamProfile(waitingAdminId, "waiting");
 
     // --- contract standing --------------------------------------------------
     //
@@ -568,6 +628,16 @@ describe("get_admin_dashboard", () => {
     if (bothLanguagesGeduId)
       await admin.auth.admin.deleteUser(bothLanguagesGeduId);
     if (staleGeduId) await admin.auth.admin.deleteUser(staleGeduId);
+    // Team profiles cascade with their accounts.
+    for (const id of [
+      certifiedWaitingGeduId,
+      uncertifiedWaitingGeduId,
+      certifiedPublicGeduId,
+      certifiedNotReadyGeduId,
+      waitingAdminId,
+    ]) {
+      if (id) await admin.auth.admin.deleteUser(id);
+    }
     await admin
       .from("gedu_contract_versions")
       .delete()
@@ -582,63 +652,61 @@ describe("get_admin_dashboard", () => {
     expect(error?.code).toBe("42501");
   });
 
-  describe("users", () => {
-    it("carries one tile per role, including roles nobody holds", () => {
-      const roles = snapshot.users.map((u) => u.role).sort();
-      expect(roles).toEqual(["admin", "customer", "gamer", "gedu"]);
-    });
-
-    it("reports a verification stat wherever the role holds real addresses", async () => {
-      // The test is the ADDRESS, not the role. A gamer in sign-in
-      // mode `parent` or `username` carries a synthetic
-      // @gamer.sogverse.internal handle nobody will ever click a link in, so "0
-      // verified" would report a problem that does not exist and NULL says the
-      // stat has no meaning. A gamer in mode `email` holds a real mailbox and
-      // counts exactly like an adult — so whether the gamer tile is NULL is a
-      // question about the data, and is asked of the data rather than assumed.
-      const { count: addressableGamers } = await admin
-        .from("gamer_profiles")
-        .select("user_id", { count: "exact", head: true })
-        .eq("sign_in", "email");
-
-      for (const tile of snapshot.users) {
-        if (tile.role === "gamer" && !addressableGamers) {
-          expect(tile.verified).toBeNull();
-        } else {
-          expect(tile.verified).not.toBeNull();
-        }
-        expect(tile.total).toBeGreaterThan(0);
-      }
-    });
-
-    it("reports certification only for gedus", () => {
-      for (const tile of snapshot.users) {
-        if (tile.role === "gedu") {
-          expect(tile.certified).not.toBeNull();
-        } else {
-          expect(tile.certified).toBeNull();
-        }
-      }
-    });
-
-    it("counts this file's new gedus", () => {
-      const gedus = snapshot.users.find((u) => u.role === "gedu");
-      // Six were created above and none is certified, so the platform holds at
-      // least six — a relative claim, because CI's database also carries
-      // seed.sql and whatever other files have seeded alongside this one.
-      expect(gedus?.total).toBeGreaterThanOrEqual(6);
-    });
+  it("counts no users", async () => {
+    // The contract schema strips unknown keys, so only the raw document can show
+    // a recreated function bringing the per-role counts back.
+    const { data, error } = await adminUser.rpc("get_admin_dashboard");
+    expect(error).toBeNull();
+    expect(data).not.toHaveProperty("users");
   });
 
-  describe("certification queue", () => {
-    it("queues an uncertified gedu, with the facts the wait is worded from", () => {
-      const entry = snapshot.certification_queue.find(
+  describe("Gedu tasks", () => {
+    /** Every entry for one Gedu — a list, so that listing one twice fails. */
+    function entries(geduId: string | null) {
+      return snapshot.gedu_tasks.filter((g) => g.id === geduId);
+    }
+
+    it("lists an uncertified gedu, with the facts the wait is worded from", () => {
+      const entry = snapshot.gedu_tasks.find(
         (g) => g.id === queuedGeduId,
       );
       expect(entry).toBeDefined();
       expect(entry?.first_name).toBe("Dash");
       expect(entry?.last_name).toBe("queued");
       expect(Date.parse(entry!.created_at)).not.toBeNaN();
+      // Uncertified, with no team profile at all: the certification is open and
+      // nothing else is.
+      expect(entry?.certification).not.toBeNull();
+      expect(entry?.team_profile_awaiting_review).toBe(false);
+    });
+
+    it("lists a certified gedu whose team profile is waiting, once, with no certification", () => {
+      const listed = entries(certifiedWaitingGeduId);
+      expect(listed).toHaveLength(1);
+      expect(listed[0].certification).toBeNull();
+      expect(listed[0].team_profile_awaiting_review).toBe(true);
+    });
+
+    it("lists an uncertified gedu whose team profile is waiting once, carrying both", () => {
+      const listed = entries(uncertifiedWaitingGeduId);
+      expect(listed).toHaveLength(1);
+      expect(listed[0].certification).toEqual({
+        contract_accepted_at: null,
+        criminal_record_check_at: null,
+      });
+      expect(listed[0].team_profile_awaiting_review).toBe(true);
+    });
+
+    it("leaves out a certified gedu whose team profile is already public", () => {
+      expect(entries(certifiedPublicGeduId)).toEqual([]);
+    });
+
+    it("leaves out a certified gedu whose team profile is not marked ready", () => {
+      expect(entries(certifiedNotReadyGeduId)).toEqual([]);
+    });
+
+    it("leaves out an admin whose own team profile is waiting", () => {
+      expect(entries(waitingAdminId)).toEqual([]);
     });
 
     it("excludes a gedu whose gedu_profiles row is missing", () => {
@@ -646,20 +714,20 @@ describe("get_admin_dashboard", () => {
       // offers writes to exactly that row. Reading its absence as "uncertified"
       // would put a broken account in front of an admin with nothing to do
       // about it, so the join excludes it instead.
-      const entry = snapshot.certification_queue.find(
+      const entry = snapshot.gedu_tasks.find(
         (g) => g.id === orphanGeduId,
       );
       expect(entry).toBeUndefined();
     });
 
     it("carries the moment a candidate accepted the current contract", () => {
-      const entry = snapshot.certification_queue.find(
+      const entry = snapshot.gedu_tasks.find(
         (g) => g.id === signedGeduId,
       );
       expect(entry).toBeDefined();
       // Parsed rather than string-compared: PostgREST renders a timestamptz with
       // a `+00:00` offset, which is the same instant written differently.
-      expect(Date.parse(entry!.contract_accepted_at!)).toBe(
+      expect(Date.parse(entry!.certification!.contract_accepted_at!)).toBe(
         Date.parse(SIGNED_CURRENT_AT),
       );
     });
@@ -668,11 +736,11 @@ describe("get_admin_dashboard", () => {
       // The two texts are one agreement, so which one this gedu could read is
       // not a fact about their standing. A comparison on whole version strings
       // would report them as unsigned the day the second text was published.
-      const entry = snapshot.certification_queue.find(
+      const entry = snapshot.gedu_tasks.find(
         (g) => g.id === otherLanguageGeduId,
       );
       expect(entry).toBeDefined();
-      expect(Date.parse(entry!.contract_accepted_at!)).toBe(
+      expect(Date.parse(entry!.certification!.contract_accepted_at!)).toBe(
         Date.parse(SIGNED_OTHER_LANGUAGE_AT),
       );
     });
@@ -682,20 +750,20 @@ describe("get_admin_dashboard", () => {
       // answer rather than error on it. The answer is the earlier moment: that
       // is when this person agreed to these terms, and countersigning the other
       // text afterwards does not move it.
-      const entry = snapshot.certification_queue.find(
+      const entry = snapshot.gedu_tasks.find(
         (g) => g.id === bothLanguagesGeduId,
       );
       expect(entry).toBeDefined();
-      expect(Date.parse(entry!.contract_accepted_at!)).toBe(
+      expect(Date.parse(entry!.certification!.contract_accepted_at!)).toBe(
         Date.parse(SIGNED_BOTH_FIRST_AT),
       );
     });
 
     it("says nothing for a candidate who has signed nothing", () => {
-      const entry = snapshot.certification_queue.find(
+      const entry = snapshot.gedu_tasks.find(
         (g) => g.id === queuedGeduId,
       );
-      expect(entry?.contract_accepted_at).toBeNull();
+      expect(entry?.certification?.contract_accepted_at).toBeNull();
     });
 
     it("says nothing for a candidate whose acceptance is of an older version", () => {
@@ -704,11 +772,11 @@ describe("get_admin_dashboard", () => {
       // "has this gedu accepted anything" would show a date here and tell an
       // admin the opposite of the truth. The fixture version is encoded like
       // every other, so what excludes it is its BASE and not its shape.
-      const entry = snapshot.certification_queue.find(
+      const entry = snapshot.gedu_tasks.find(
         (g) => g.id === staleGeduId,
       );
       expect(entry).toBeDefined();
-      expect(entry?.contract_accepted_at).toBeNull();
+      expect(entry?.certification?.contract_accepted_at).toBeNull();
     });
   });
 

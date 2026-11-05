@@ -836,6 +836,11 @@ export const ROUTES = {
      */
     analytics: "/admin/analytics",
     /**
+     * How School of Gaming is doing, by Helsinki month: paying families,
+     * recurring revenue, revenue and families by month, and Gedu capacity.
+     */
+    business: "/admin/business",
+    /**
      * The big picture of Sogverse: the vision board an admin is sent to when
      * they ask what the dream is. Static prose and artwork, English only.
      */

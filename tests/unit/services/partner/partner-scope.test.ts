@@ -65,7 +65,7 @@ describe("readInScopeSeats", () => {
       "programme:products!inner(programme_terms:product_required_consents!inner(document_slug))",
     );
     expect(url.searchParams.get(IN_SCOPE_SEAT_FILTER)).toBe("eq.roblox-programme-terms");
-    expect(url.searchParams.get("status")).toBe("in.(active,waitlisted,completed)");
+    expect(url.searchParams.get("status")).toBe("in.(active,waitlisted)");
   });
 
   it("narrows by participant and by customer, returning a seat matching both once", async () => {
@@ -96,9 +96,9 @@ describe("readInScopeSeats", () => {
 
   it("throws on a seat the scope should never have returned", async () => {
     const fetch = postgrestTables({
-      participations: () => [seat("40000000-0000-4000-8000-000000000001", { status: "reserving" })],
+      participations: () => [seat("40000000-0000-4000-8000-000000000001", { status: "ended" })],
     });
-    await expect(readInScopeSeats(createFetchStubbedClient(fetch))).rejects.toThrow(/reserving/);
+    await expect(readInScopeSeats(createFetchStubbedClient(fetch))).rejects.toThrow(/ended/);
   });
 });
 

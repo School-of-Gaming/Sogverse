@@ -58,12 +58,11 @@ frameworks here, not to parents.
 
 My SOG, enrolment, the schedule, spending controls, the PIN, settings. **Level 1; money and
 account at 0.** Plain, calm and specific: a parent here is doing admin, not reading a story.
-Say what happened, what happens next, and what they can do. Error and empty states say what
-is wrong in the parent's terms and the way out, never the system's internals.
+Say what happened, what happens next, and what they can do.
 
 ## The gamer's side
 
-The gamer's My SOG, the voice room, chat, Yty, Quests. **Level 3, written to the gamer.**
+The gamer's My SOG, the virtual room, chat, Yty, Quests. **Level 3, written to the gamer.**
 Full canon, no glossing, no winking at the fiction from outside it. Direct address ("you",
 "your group", "your Gedu"), present tense, stakes visible. Enthusiasm is earned with
 specifics, not adjectives. Never explain a joke; never say "kids" or "children" to their
@@ -98,9 +97,7 @@ manipulated. "A career, not a course" is the register.
 
 ## Admin
 
-**Level 0.** Describe what the family will experience, never the platform's steps
-(`hard-moments.md`, Admin screens). "Users" is legitimate here: admin copy names a
-population in the database.
+**Level 0.** "Users" is legitimate here: admin copy names a population in the database.
 
 ## Email
 
@@ -152,7 +149,5 @@ never put countdown pressure on children.
   goes.
 - **Dates and times are written in the reader's own conventions** (owner ruling, 13 Oct
   2026): English as UK English ("Monday 3 November", "4pm", "from 4pm to 6pm"), Finnish as
-  Finnish ("ma 3.11.", "klo 16", "klo 16–18"), and Swedish and French as theirs. A date or
-  time the app renders comes from the shared formatters in the viewer's locale and zone,
-  never typed into a string.
+  Finnish ("ma 3.11.", "klo 16", "klo 16–18"), and Swedish and French as theirs.
 - **No LaTeX or doubled dollar signs anywhere**, and currency symbols only for money.

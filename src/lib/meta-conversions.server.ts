@@ -45,8 +45,9 @@ import { clickIdFromCookieHeader, type ClickId } from "@/lib/utm";
  * accepted as such). The id hash is stable for the account, which is what lets
  * Meta recognise the same parent across visits and devices. No phone number,
  * no name, no participation id, and nothing about a child beyond the product
- * named below — not their name, not their age, not their account or its id,
- * not their address. This list is the promise the privacy policy makes; a
+ * named below and, on the child-added event, the fact that one was added — not
+ * their name, not their age, not their account or its id, not their address,
+ * not how many children the family has. This list is the promise the privacy policy makes; a
  * field added here is a policy edit.
  *
  * **What is sent about the enrolment** is `outcome`, one of two fixed words,
@@ -61,6 +62,15 @@ import { clickIdFromCookieHeader, type ClickId } from "@/lib/utm";
  * started from an advertised product's page: then the same product fields,
  * without a price, so Meta learns that an identifiable parent opened an
  * account from that named club, camp or event's page.
+ *
+ * **What is sent about a child added**, under the custom name
+ * `ChildProfileCreated`, is that an identifiable parent added one — every
+ * child added, from wherever — and, like the account creation, nothing more
+ * unless the child was added from an advertised product's sign-up panel: then
+ * that product in the same fields without a price, so Meta learns the parent
+ * added a child while signing up for that named club, camp or event. Nothing
+ * about the child goes with it: not their name, age, account or its id, not
+ * how many there now are.
  *
  * **What is sent about a page view** is nothing but the page; about a product
  * view or a checkout start, the product in the same fields with its price, the
@@ -108,16 +118,20 @@ const REQUEST_TIMEOUT_MS = 10_000;
  * because it would train a campaign on abandoned checkouts, and the browser
  * already reports the checkout start under its own name.
  *
- * `sourcePath` is the public path the conversion happened on, supplied by the
- * caller: a marketing page's own path, so the URL Meta is told is one of the
- * pages the browser pixel is already allowed to report. It is never taken from
- * the request's own URL — that is an API route, and on some of these flows it
+ * `sourcePath` is the path the conversion happened on, supplied by the caller:
+ * a marketing page's own path, so the URL Meta is told is one of the pages the
+ * browser pixel is already allowed to report — or, for a child added from the
+ * family's own dashboard, that dashboard's fixed path, the one private path a
+ * report may name, because it names nobody. It is never taken from the
+ * request's own URL — that is an API route, and on some of these flows it
  * would carry a query string nobody vetted.
  *
  * `product` is built by `metaProductDetails()`, from the same product facts
  * the browser's pushes are built from (`gtmEcommerce()`), so the two sides
  * cannot describe a product differently. On an account creation it is optional: the product page the
- * sign-up started from, when that was an advertised product's page.
+ * sign-up started from, when that was an advertised product's page. On a child
+ * added likewise: the product whose sign-up panel the child was added from,
+ * when that is an advertised product.
  *
  * `eventId` is Meta's `event_id`, the key it deduplicates on: the id the
  * browser pushed its own event for the same moment under, so a container tag
@@ -126,7 +140,7 @@ const REQUEST_TIMEOUT_MS = 10_000;
  */
 export type MetaConversion =
   | {
-      event: "account_created";
+      event: "account_created" | "child_added";
       product?: MetaProductDetails;
       sourcePath: string;
       eventId: string;
@@ -179,6 +193,8 @@ function eventNameFor(conversion: MetaConversion): string {
   switch (conversion.event) {
     case "account_created":
       return META_CONVERSION_EVENTS.accountCreated;
+    case "child_added":
+      return META_CONVERSION_EVENTS.childAdded;
     case "enrolment":
       return META_CONVERSION_EVENTS.enrolment;
     case "page_view":
@@ -199,13 +215,14 @@ function unpriced(product: MetaProductDetails): Record<string, unknown> {
 /**
  * The event's `custom_data`: for an enrolment its outcome and the product it
  * was for; for an account creation the product its sign-up started from, if
- * any, and otherwise none at all.
+ * any, and otherwise none at all; for a child added, likewise, the product
+ * whose sign-up panel it was added from, if any.
  *
- * **Only a seat carries a value.** A waitlisted report and an account creation
- * keep the product's id, name, topic and type but drop `value` and `currency`,
+ * **Only a seat carries a value.** A waitlisted report, an account creation and
+ * a child added keep the product's id, name, topic and type but drop `value` and `currency`,
  * whatever the caller passed: nobody has paid or committed to pay, and a price
- * on either would teach the campaign that a queue place or a new account is
- * revenue. Decided here rather than by each caller, so no route can get it
+ * on any of them would teach the campaign that a queue place, a new account or
+ * a new child is revenue. Decided here rather than by each caller, so no route can get it
  * wrong.
  *
  * A product view and a checkout start name their product with its price, as
@@ -217,6 +234,7 @@ function customDataFor(
 ): Record<string, unknown> | undefined {
   switch (conversion.event) {
     case "account_created":
+    case "child_added":
       return conversion.product && unpriced(conversion.product);
     case "enrolment": {
       const { outcome, product } = conversion;

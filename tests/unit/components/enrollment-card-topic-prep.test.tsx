@@ -105,6 +105,7 @@ function enrollment(
     openHref: INERT_HREF,
     endDate: null,
     timezone: "Europe/Helsinki",
+    seatEndedOn: null,
     waitlistPosition: null,
     seatOfferSentAt: null,
     awaiting: false,

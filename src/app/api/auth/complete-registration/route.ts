@@ -6,6 +6,7 @@ import { SENDER_EMAIL, SENDER_NAME, SUPPORT_EMAIL } from "@/lib/constants/brand"
 import { ROUTES } from "@/lib/constants/routes";
 import { REGISTRATION_CONSENT_DOCUMENTS } from "@/lib/constants/consent-documents";
 import { detectLocaleFromHeader, resolveLocale } from "@/lib/constants/locales";
+import { phoneDigitsForStorage } from "@/lib/constants/phone";
 import { buildWelcomeParentEmail } from "@/lib/email-templates/welcome";
 import { getEmailTranslator } from "@/lib/email-templates/translator";
 import { createEmailVerificationToken } from "@/lib/email-verification";
@@ -64,6 +65,7 @@ export const POST = defineRoute({
     const {
       firstName,
       lastName,
+      phone,
       homeLocationId,
       locale: requestedLocale,
       redirect,
@@ -80,6 +82,15 @@ export const POST = defineRoute({
           code: REGISTRATION_ALREADY_COMPLETE,
         },
         { status: 409 },
+      );
+    }
+
+    // `""` is no number; `null` one the profiles CHECK would refuse.
+    const phoneDigits = phoneDigitsForStorage(phone);
+    if (phoneDigits === null) {
+      return NextResponse.json(
+        { error: "Invalid phone number" },
+        { status: 400 },
       );
     }
 
@@ -115,6 +126,7 @@ export const POST = defineRoute({
       .update({
         first_name: firstName,
         last_name: lastName,
+        ...(phoneDigits ? { phone: phoneDigits } : {}),
         ...(homeLocationId ? { home_location_id: homeLocationId } : {}),
         ...(requestedLocale ? { locale: requestedLocale } : {}),
         ...utmProfileColumns(request),

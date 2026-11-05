@@ -20,14 +20,14 @@ BEGIN
 
   -- The parent is the customer of the seat the participant holds on the
   -- session's product. A mark is only written for a seat held in the group,
-  -- but the seat may have moved or gone since; an active one is preferred,
+  -- but the seat may have moved or ended since; a live one is preferred,
   -- and with none at all there is nobody to tell.
   SELECT part.customer_id
     INTO v_customer_id
     FROM public.participations part
    WHERE part.product_id = v_product_id
      AND part.participant_id = NEW.participant_id
-   ORDER BY (part.status = 'active'::public.participation_status) DESC,
+   ORDER BY public.is_live_seat(part.status) DESC,
             part.signed_up_at DESC, part.id
    LIMIT 1;
 

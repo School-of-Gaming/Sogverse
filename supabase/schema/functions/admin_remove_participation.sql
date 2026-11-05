@@ -20,16 +20,16 @@ BEGIN
       USING ERRCODE = 'no_data_found';
   END IF;
 
-  -- A LIVE subscription, not merely a row — see demote_to_waitlist above for
-  -- the whole reasoning; the two refusals are deliberately one predicate. The
+  -- A LIVE subscription, not merely a row — see demote_to_waitlist for the
+  -- whole reasoning; the two refusals are deliberately one predicate. The
   -- stakes here are the sharper of the two: removal is the ONLY exit a
   -- participation has once its subscription is dead (there is nothing left for
   -- the family to cancel), so counting a `cancelled` row as live left the seat
   -- permanently occupied with no instruction that could ever free it.
   --
-  -- Still refused for anything that can bill: cancelling the participation
-  -- CASCADEs family_subscriptions, and a live subscription would carry on
-  -- charging a family the database no longer knows about.
+  -- Still refused for anything that can bill: ending the seat ends its
+  -- family_subscriptions row too, and a live subscription would carry on
+  -- charging a family whose seat the database says is over.
   SELECT stripe_subscription_id INTO v_live_sub
     FROM public.family_subscriptions
     WHERE participation_id = p_participation_id
@@ -41,7 +41,7 @@ BEGIN
       USING ERRCODE = 'object_not_in_prerequisite_state';
   END IF;
 
-  RETURN public.cancel_participation(p_participation_id, 'admin_cancelled');
+  RETURN public.end_participation(p_participation_id, 'admin_removed');
 END;
 $$;
 
@@ -50,7 +50,7 @@ $$;
 -- Name: FUNCTION admin_remove_participation(p_product_id uuid, p_participation_id uuid); Type: COMMENT; Schema: public; Owner: -
 --
 
-COMMENT ON FUNCTION public.admin_remove_participation(p_product_id uuid, p_participation_id uuid) IS 'Admin-gated un-enrollment. Refuses a participation that is not on the named product, or one with a LIVE Stripe subscription — a family_subscriptions row whose status is anything but ''cancelled'' — which must be cancelled through Stripe first, or the cancel would orphan it; otherwise delegates to cancel_participation. A dunning-dead subscription is stored as ''cancelled'' and does NOT refuse: admin removal is the only exit such a seat has, so counting it would strand the seat forever. Product type is not consulted — a free club has no parent-facing cancel, so this is its only exit.';
+COMMENT ON FUNCTION public.admin_remove_participation(p_product_id uuid, p_participation_id uuid) IS 'Admin-gated un-enrollment. Refuses a participation that is not on the named product, or one with a LIVE Stripe subscription — a family_subscriptions row whose status is anything but ''cancelled'' — which must be cancelled through Stripe first, or ending the seat would leave it billing; otherwise delegates to end_participation with reason admin_removed, which ends a held seat (keeping the row and its group) and deletes a waitlisted row. A dunning-dead subscription is stored as ''cancelled'' and does NOT refuse: admin removal is the only exit such a seat has, so counting it would strand the seat forever. Product type is not consulted — a free club has no parent-facing cancel, so this is its only exit.';
 
 
 --

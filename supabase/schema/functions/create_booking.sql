@@ -88,7 +88,7 @@ BEGIN
     FROM public.participations
     WHERE product_id = p_product_id
       AND participant_id = p_participant_id
-      AND status IN ('active', 'waitlisted', 'completed')
+      AND status IN ('active', 'waitlisted')
     LIMIT 1;
   IF v_existing_id IS NOT NULL THEN
     RAISE EXCEPTION 'gamer % already has a participation on this product (status: %)', p_participant_id, v_existing_status

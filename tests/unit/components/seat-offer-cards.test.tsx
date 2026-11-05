@@ -235,6 +235,7 @@ function waitlistedEnrollment(
     openHref: "#",
     endDate: null,
     timezone: "Europe/Helsinki",
+    seatEndedOn: null,
     waitlistPosition: 3,
     seatOfferSentAt,
     awaiting: false,

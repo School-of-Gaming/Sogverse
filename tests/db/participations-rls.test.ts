@@ -278,7 +278,7 @@ describe("v2 participations / payments / family subscriptions RLS", () => {
     it("customer cannot UPDATE their participation directly", async () => {
       const { error } = await customerClient
         .from("participations")
-        .update({ status: "completed" })
+        .update({ status: "waitlisted" })
         .eq("id", customerParticipationId);
       expect(error).not.toBeNull();
     });

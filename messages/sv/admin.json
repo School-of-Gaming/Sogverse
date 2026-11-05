@@ -1,20 +1,9 @@
 {
   "dashboard": {
     "title": "Instrumentpanel",
-    "description": "Vad som behöver en administratör i dag, vilka som finns på plattformen och vad som pågår.",
+    "description": "Vad som behöver en administratör i dag och vad som pågår.",
     "loadError": "Det gick inte att läsa in instrumentpanelen. Uppdatera sidan och försök igen.",
     "loadErrorWithReason": "Det gick inte att läsa in instrumentpanelen – {reason}. Uppdatera sidan och försök igen.",
-    "users": {
-      "label": "Användare",
-      "roles": {
-        "customer": "Föräldrar",
-        "gamer": "Spelare",
-        "gedu": "Geduer",
-        "admin": "Administratörer"
-      },
-      "verified": "{count} verifierade",
-      "certified": "{count} certifierade"
-    },
     "attention": {
       "title": "Behöver åtgärd",
       "allClearTitle": "Allt är klart",
@@ -32,14 +21,15 @@
         "waitlistOpenSeatsWithOffers": "{waiting} i kö · {open, plural, one {# plats} other {# platser}} lediga · {offers} väntar på svar"
       }
     },
-    "certification": {
-      "title": "Gedu-certifiering",
+    "gedus": {
+      "title": "Gedus",
       "justNow": "{count} certifierade nyss",
-      "empty": "Ingen Gedu väntar på certifiering.",
+      "empty": "Ingen Gedu väntar på dig.",
       "registered": "registrerades {when}",
       "certify": "Certifiera",
       "certifying": "Certifierar…",
-      "failed": "Certifieringen misslyckades – försök igen."
+      "failed": "Certifieringen misslyckades – försök igen.",
+      "profileReady": "Profil redo att granskas"
     },
     "schedule": {
       "title": "Schema",
@@ -906,11 +896,11 @@
     },
     "voiceRoomModes": {
       "label": "Hur ansluter familjerna?",
-      "sogverse": "Sogverse-röstrum",
-      "sogverseDescription": "Ett röstrum skapas automatiskt och öppnas inför varje träff.",
+      "sogverse": "Sogverses virtuella rum",
+      "sogverseDescription": "Ett virtuellt rum skapas automatiskt och öppnas inför varje träff.",
       "external": "Länk till ett möte någon annanstans",
-      "externalDescription": "Familjerna ansluter till ett möte du håller i en annan tjänst. För publiker som är större än ett Sogverse-röstrum rymmer (50 personer).",
-      "none": "Inget röstrum",
+      "externalDescription": "Familjerna ansluter till ett möte du håller i en annan tjänst. För publiker som är större än ett virtuellt rum i Sogverse rymmer (50 personer).",
+      "none": "Inget virtuellt rum",
       "noneDescription": "Familjerna får i stället se de anslutningsinstruktioner du skriver för varje språk."
     },
     "deliveryModes": {
@@ -967,7 +957,7 @@
       "externalVoiceUrlHint": "Offentlig: vem som helst kan läsa länken, även besökare som inte är inloggade.",
       "municipalityHint": "Kommunklubbar är alltid kopplade till en specifik finländsk kommun — den som betalar. Föräldrar från den kommunen ser den när de bläddrar.",
       "siteHint": "Var tillfällena fysiskt äger rum.",
-      "hybridHint": "Gamers kommer till platsen. Gedun, och de gamers som inte kan komma dit, ansluter via Sogverse-röstrummet.",
+      "hybridHint": "Gamers kommer till platsen. Gedun, och de gamers som inte kan komma dit, ansluter via Sogverses virtuella rum.",
       "eventSingleDay": "Evenemang äger rum ett enda datum.",
       "timezoneEntry": "Tiderna för tillfällena nedan anges i den här tidszonen. Föräldrar ser dem omräknade till sin egen tidszon automatiskt.",
       "timezoneChangeMoves": "Tiderna för tillfällena nedan anges i den här tidszonen. Byter du zon flyttas varje kommande tillfälle till samma klockslag i den nya zonen, medan tillfällen som redan har en rapport eller närvaro registrerad behåller de tider de hölls på.",
@@ -1575,8 +1565,7 @@
     "participationStatus": {
       "active": "Aktiv",
       "waitlisted": "På väntelista",
-      "reserving": "Inväntar betalning",
-      "completed": "Avslutad"
+      "ended": "Avslutad"
     },
     "emailVerified": "E-postadress verifierad",
     "emailNotVerified": "E-postadressen är inte verifierad",
@@ -1915,6 +1904,101 @@
         "desktop": "Dator",
         "mobile": "Mobil",
         "tablet": "Surfplatta"
+      }
+    }
+  },
+  "business": {
+    "title": "Verksamhet",
+    "description": "Hur det går för School of Gaming, månad för månad.",
+    "readAt": "Siffror från {time}.",
+    "loadError": "Verksamhetssiffrorna kunde inte läsas. Ladda om sidan och försök igen.",
+    "loadErrorWithReason": "Verksamhetssiffrorna kunde inte läsas: {reason}",
+    "change": "{change} denna månad",
+    "noChange": "Ingen ändring denna månad",
+    "tiles": {
+      "revenueTotal": {
+        "label": "Intäkter förra månaden",
+        "largest": "{share} från {band, select, subscription {prenumerationer} campsAndEvents {läger och evenemang} municipality {kommuner} other {ingen angiven produkt}}",
+        "none": "Inga betalningar registrerade",
+        "change": "{change} mot månaden före",
+        "same": "Samma som månaden före"
+      },
+      "subscriptions": {
+        "label": "Prenumerationer per månad",
+        "live": "{count, plural, one {# aktiv prenumeration} other {# aktiva prenumerationer}}",
+        "outside": "{count, plural, other {# ingår inte, inget pris i euro}}"
+      },
+      "payingFamilies": {
+        "label": "Betalande familjer",
+        "startingLater": "{count, plural, other {+# börjar en klubb senare}}"
+      },
+      "gamers": {
+        "label": "Gamers med plats",
+        "municipality": "{count, plural, one {# i en kommunal klubb} other {# i kommunala klubbar}}"
+      },
+      "firstWeek": {
+        "label": "Aktiva första veckan",
+        "detail": "{engaged} av {total} registreringar",
+        "none": "Inga registreringar att mäta än.",
+        "change": "{change} procentenheter denna månad"
+      }
+    },
+    "engagement": {
+      "heading": "Familjer efter engagemang",
+      "caption": "Alla föräldrakonton.",
+      "chart": "Familjer efter engagemang",
+      "total": "{count, plural, one {familj} other {familjer}}",
+      "slices": {
+        "subscriber": "Prenumererar nu",
+        "paidBefore": "Har betalat tidigare, ingen prenumeration",
+        "municipalityOnly": "Endast kommunala klubbar",
+        "freeOnly": "Endast gratis eller obetalda platser",
+        "waiting": "Väntar på en plats",
+        "neverEnrolled": "Gamer tillagd, aldrig bokat",
+        "noGamer": "Ingen gamer, aldrig bokat"
+      }
+    },
+    "revenue": {
+      "heading": "Intäkter per månad",
+      "caption": "Före återbetalningar.",
+      "chart": "Intäkter per månad",
+      "series": {
+        "subscriptionCents": "Prenumerationer",
+        "campsAndEventsCents": "Läger och evenemang",
+        "municipalityCents": "Kommunfakturor",
+        "unattributedCents": "Ingen produkt angiven"
+      },
+      "noData": "Inga uppgifter",
+      "startsFrom": "Betalningar registreras från {month}.",
+      "none": "Inga betalningar registrerade än.",
+      "nonEur": "{count, plural, one {# betalning} other {# betalningar}} i en annan valuta utelämnade.",
+      "clubsWithoutFee": "{count, plural, one {# klubb utan avgift utelämnad} other {# klubbar utan avgift utelämnade}}"
+    },
+    "families": {
+      "heading": "Betalande familjer per månad",
+      "caption": "Vid varje månads slut.",
+      "chart": "Betalande familjer per månad",
+      "series": {
+        "payingFamilies": "Betalande familjer",
+        "signups": "Nya registreringar",
+        "firstSeats": "Första plats",
+        "stoppedPaying": "Slutade betala"
+      }
+    },
+    "gedus": {
+      "heading": "Gamers per Gedu",
+      "caption": "Per lektion, i snitt.",
+      "chart": "Gamers per Gedu per månad",
+      "series": "Gamers per Gedu",
+      "ranBy": "{sessions, plural, one {# lektion} other {# lektioner}}, {gedus, plural, one {# Gedu} other {# Gedus}}",
+      "noData": "Inga uppgifter",
+      "startsFrom": "Lektionerna har uppgifter från {month}.",
+      "none": "Ingen lektion registrerades under dessa månader.",
+      "certified": {
+        "heading": "Certifierade Gedus",
+        "certified": "Certifierade",
+        "onRunning": "Tilldelade något som pågår",
+        "notOnRunning": "Inte tilldelade något som pågår"
       }
     }
   },

@@ -125,7 +125,7 @@ function world(): World {
       seat(1, G1, P2),
       seat(2, G1, P2),
       seat(3, G2, P2, "waitlisted"),
-      seat(4, P1, P1, "completed"),
+      seat(4, P1, P1, "active"),
       seat(5, G3, P3),
       seat(6, P4, P4),
     ],

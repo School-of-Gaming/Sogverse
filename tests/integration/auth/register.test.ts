@@ -290,8 +290,8 @@ describe("POST /api/auth/register", () => {
     expect(mockCreateUser).not.toHaveBeenCalled();
   });
 
-  it("returns 400 for a first name shorter than the display-name minimum", async () => {
-    const response = await POST(registerRequest({ ...validBody, firstName: "A" }));
+  it("returns 400 for a first name that is only whitespace", async () => {
+    const response = await POST(registerRequest({ ...validBody, firstName: "   " }));
 
     expect(response.status).toBe(400);
     expect(mockCreateUser).not.toHaveBeenCalled();
@@ -539,6 +539,41 @@ describe("POST /api/auth/register", () => {
     expect(mockDeleteUser).not.toHaveBeenCalled();
     expect(mockSendTransactionalEmail).toHaveBeenCalledTimes(1);
     spy.mockRestore();
+  });
+
+  // -- Phone number --
+
+  it("writes the phone onto the new profile as the digits the column stores", async () => {
+    const response = await POST(
+      registerRequest({ ...validBody, phone: "+358401234567" }),
+    );
+
+    expect(response.status).toBe(200);
+    expect(mockProfileUpdate.mock.calls[0][0].row).toMatchObject({
+      phone: "358401234567",
+    });
+  });
+
+  it.each([
+    ["absent", undefined],
+    ["empty", ""],
+  ])("writes no phone when it is %s", async (_label, phone) => {
+    const response = await POST(registerRequest({ ...validBody, phone }));
+
+    expect(response.status).toBe(200);
+    expect(mockProfileUpdate.mock.calls[0][0].row).not.toHaveProperty("phone");
+  });
+
+  // Refused before `createUser`, so a number the profiles CHECK would reject
+  // never leaves an account behind without it.
+  it("returns 400 for a phone the column cannot store, and creates nothing", async () => {
+    const response = await POST(
+      registerRequest({ ...validBody, phone: "+12" }),
+    );
+
+    expect(response.status).toBe(400);
+    expect(mockCreateUser).not.toHaveBeenCalled();
+    expect(mockProfileUpdate).not.toHaveBeenCalled();
   });
 
   // -- UTM attribution --
