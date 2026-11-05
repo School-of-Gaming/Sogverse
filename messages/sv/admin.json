@@ -32,14 +32,15 @@
         "waitlistOpenSeatsWithOffers": "{waiting} i kö · {open, plural, one {# plats} other {# platser}} lediga · {offers} väntar på svar"
       }
     },
-    "certification": {
-      "title": "Gedu-certifiering",
+    "gedus": {
+      "title": "Gedus",
       "justNow": "{count} certifierade nyss",
-      "empty": "Ingen Gedu väntar på certifiering.",
+      "empty": "Ingen Gedu väntar på dig.",
       "registered": "registrerades {when}",
       "certify": "Certifiera",
       "certifying": "Certifierar…",
-      "failed": "Certifieringen misslyckades – försök igen."
+      "failed": "Certifieringen misslyckades – försök igen.",
+      "teamProfileReady": "Teamprofil redo att granskas"
     },
     "schedule": {
       "title": "Schema",

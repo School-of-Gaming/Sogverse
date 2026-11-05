@@ -3,7 +3,7 @@
 import { useTranslations } from "next-intl";
 import { Heading } from "@sog/ui";
 import type { AdminDashboardData } from "./admin-dashboard-data";
-import { GeduCertificationPanel } from "./gedu-certification-panel";
+import { GeduTasksPanel } from "./gedu-tasks-panel";
 import { NeedsAttentionPanel } from "./needs-attention-panel";
 import { ProductTypeKeyRail } from "./product-type-key-rail";
 import { SchedulePanel } from "./schedule-panel";
@@ -102,13 +102,10 @@ export function AdminDashboardPageBody({
           <NeedsAttentionPanel products={data.products} />
 
           {/* Directly under the queue, because the two are read together — what
-              needs doing, then who is standing by — and above the schedule,
-              which is the reference you scroll to rather than the thing you
-              opened the page for. */}
-          <GeduCertificationPanel
-            gedus={data.uncertifiedGedus}
-            onCertifyGedu={onCertifyGedu}
-          />
+              needs doing, then the Gedus waiting on an admin — and above the
+              schedule, which is the reference you scroll to rather than the
+              thing you opened the page for. */}
+          <GeduTasksPanel gedus={data.geduTasks} onCertifyGedu={onCertifyGedu} />
 
           <SchedulePanel
             weeks={data.weeks}

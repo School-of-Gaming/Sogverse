@@ -32,14 +32,15 @@
         "waitlistOpenSeatsWithOffers": "{waiting} jonossa · {open, plural, one {# paikka} other {# paikkaa}} vapaana · {offers} odottaa vastausta"
       }
     },
-    "certification": {
-      "title": "Gedujen hyväksyntä",
+    "gedus": {
+      "title": "Gedut",
       "justNow": "Hyväksytty juuri nyt: {count}",
-      "empty": "Yksikään Gedu ei odota hyväksyntää.",
+      "empty": "Yksikään Gedu ei odota sinua.",
       "registered": "rekisteröitynyt {when}",
       "certify": "Hyväksy",
       "certifying": "Hyväksytään…",
-      "failed": "Hyväksyntä epäonnistui – yritä uudelleen."
+      "failed": "Hyväksyntä epäonnistui – yritä uudelleen.",
+      "teamProfileReady": "Tiimiprofiili valmis tarkistettavaksi"
     },
     "schedule": {
       "title": "Aikataulu",

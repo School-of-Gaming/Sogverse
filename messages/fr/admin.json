@@ -32,14 +32,15 @@
         "waitlistOpenSeatsWithOffers": "{waiting} en liste d’attente · {open, plural, one {# place libre} other {# places libres}} · {offers} en attente de réponse"
       }
     },
-    "certification": {
-      "title": "Certification des Gedus",
+    "gedus": {
+      "title": "Gedus",
       "justNow": "{count} certifiés à l’instant",
-      "empty": "Aucun Gedu n’est en attente de certification.",
+      "empty": "Aucun Gedu ne vous attend.",
       "registered": "inscrit {when}",
       "certify": "Certifier",
       "certifying": "Certification…",
-      "failed": "La certification a échoué – réessayez."
+      "failed": "La certification a échoué – réessayez.",
+      "teamProfileReady": "Profil d’équipe prêt à relire"
     },
     "schedule": {
       "title": "Planning",

@@ -7,8 +7,8 @@ import {
 /**
  * The admin dashboard's data layer: one read, one RPC, one document.
  *
- * The page is four platform-wide aggregates — a users strip, a gedu
- * certification queue, a product attention queue, and a schedule with its
+ * The page is four platform-wide aggregates — a users strip, the Gedu
+ * tasks, a product attention queue, and a schedule with its
  * coming-up feed — and they are only meaningful together: the schedule marks a
  * chip because the attention queue flagged that product. Four separate queries
  * would be four round trips and four cache entries that can disagree about what
