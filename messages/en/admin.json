@@ -32,14 +32,15 @@
         "waitlistOpenSeatsWithOffers": "{waiting} waitlisted · {open, plural, one {# seat} other {# seats}} open · {offers} awaiting an answer"
       }
     },
-    "certification": {
-      "title": "Gedu certification",
+    "gedus": {
+      "title": "Gedus",
       "justNow": "{count} certified just now",
-      "empty": "No Gedus are awaiting certification.",
+      "empty": "No Gedus are waiting on you.",
       "registered": "registered {when}",
       "certify": "Certify",
       "certifying": "Certifying…",
-      "failed": "Could not certify — try again."
+      "failed": "Could not certify — try again.",
+      "profileReady": "Profile ready to review"
     },
     "schedule": {
       "title": "Schedule",

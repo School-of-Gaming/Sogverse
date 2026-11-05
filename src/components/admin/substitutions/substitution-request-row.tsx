@@ -29,7 +29,7 @@ import {
  * box inside a box.
  *
  * **The session comes first and the person second**, which is the reverse of
- * the certification queue on the dashboard. There the row *is* a person and the
+ * the Gedu section on the dashboard. There the row *is* a person and the
  * decision is about them; here the decision is about a session — this Friday's
  * group needs a primary — and who is away is a fact about it. The session's
  * lines and the away line are the ones the substituted-session card opens with
@@ -195,7 +195,7 @@ function SeatSomeoneElseButton({ onPress }: { onPress: () => void }) {
  * inside the request's card, told from its neighbours by a divider rather than
  * by a box of its own.
  *
- * **A name and nothing else.** The row used to carry the certification queue's
+ * **A name and nothing else.** The row used to carry the dashboard Gedu section's
  * two standings — certified, and whether an extract had been recorded — and
  * both are gone: the database refuses an offer from anybody who may not
  * substitute, certification included, so the chip stated something that was

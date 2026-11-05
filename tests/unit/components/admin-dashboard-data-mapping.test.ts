@@ -4,7 +4,7 @@ import { addCalendarDays, addCalendarMonths } from "@/lib/calendar-date";
 import { planSessions } from "../../mocks/planned-sessions";
 import {
   buildAdminDashboardData,
-  buildCertificationQueue,
+  buildGeduTasks,
   productCancellations,
   viewerZoneAbbrev,
 } from "@/components/admin/dashboard/build-admin-dashboard-data";
@@ -134,7 +134,7 @@ function snapshot(
       { role: "gamer", total: 342, verified: null, certified: null },
       { role: "customer", total: 214, verified: 191, certified: null },
     ],
-    certification_queue: [],
+    gedu_tasks: [],
     attention_products: [],
     schedule_products: [],
     ...overrides,
@@ -1129,9 +1129,9 @@ describe("the attention queue", () => {
  * has to age while the page sits open — so it is asked for on its own here,
  * exactly as the shell asks for it.
  */
-describe("the certification queue", () => {
+describe("the Gedu tasks", () => {
   it("names the wait relative to the page's own clock, and only the wait", () => {
-    const queue = buildCertificationQueue(
+    const queue = buildGeduTasks(
       [
         {
           id: "38763617-b031-49af-9fd4-3320e7509019",
@@ -1140,16 +1140,22 @@ describe("the certification queue", () => {
           created_at: "2026-08-15T09:20:00+03:00",
           // One candidate has signed the current contract and one has not, so
           // the fixture pair covers both standings a queue card can show.
-          contract_accepted_at: "2026-08-16T10:00:00+03:00",
-          criminal_record_check_at: null,
+          certification: {
+            contract_accepted_at: "2026-08-16T10:00:00+03:00",
+            criminal_record_check_at: null,
+          },
+          team_profile_awaiting_review: false,
         },
         {
           id: "4889fea4-0602-438f-adfe-2cef72d485ff",
           first_name: "Helmi",
           last_name: "Koskinen",
           created_at: "2026-06-17T09:20:00+03:00",
-          contract_accepted_at: null,
-          criminal_record_check_at: null,
+          certification: {
+            contract_accepted_at: null,
+            criminal_record_check_at: null,
+          },
+          team_profile_awaiting_review: false,
         },
       ],
       "en",
@@ -1177,33 +1183,39 @@ describe("the certification queue", () => {
         first_name: "Venla",
         last_name: "Salminen",
         created_at: "2026-08-15T09:20:00+03:00",
-        contract_accepted_at: "2026-08-16T00:40:00+03:00",
-        criminal_record_check_at: null,
+        certification: {
+          contract_accepted_at: "2026-08-16T00:40:00+03:00",
+          criminal_record_check_at: null,
+        },
+        team_profile_awaiting_review: false,
       },
       {
         id: "4889fea4-0602-438f-adfe-2cef72d485ff",
         first_name: "Helmi",
         last_name: "Koskinen",
         created_at: "2026-06-17T09:20:00+03:00",
-        contract_accepted_at: null,
-        criminal_record_check_at: null,
+        certification: {
+          contract_accepted_at: null,
+          criminal_record_check_at: null,
+        },
+        team_profile_awaiting_review: false,
       },
     ];
 
-    const helsinki = buildCertificationQueue(candidates, "en", NOW, HELSINKI);
-    expect(helsinki[0].contractAcceptedOn).toBe("16 Aug 2026");
+    const helsinki = buildGeduTasks(candidates, "en", NOW, HELSINKI);
+    expect(helsinki[0].certification?.contractAcceptedOn).toBe("16 Aug 2026");
     // Never signed, and "signed a version that has since been superseded", are
     // the same null on the wire and the same silence here: the question is
     // standing under the terms in force today.
-    expect(helsinki[1].contractAcceptedOn).toBeNull();
+    expect(helsinki[1].certification?.contractAcceptedOn).toBeNull();
 
-    const losAngeles = buildCertificationQueue(
+    const losAngeles = buildGeduTasks(
       candidates,
       "en",
       NOW,
       LOS_ANGELES,
     );
-    expect(losAngeles[0].contractAcceptedOn).toBe("15 Aug 2026");
+    expect(losAngeles[0].certification?.contractAcceptedOn).toBe("15 Aug 2026");
   });
 
   it("dates a criminal record check in the viewer's zone, independently of the contract", () => {
@@ -1216,34 +1228,40 @@ describe("the certification queue", () => {
         first_name: "Venla",
         last_name: "Salminen",
         created_at: "2026-08-15T09:20:00+03:00",
-        contract_accepted_at: null,
-        criminal_record_check_at: "2026-08-16T00:40:00+03:00",
+        certification: {
+          contract_accepted_at: null,
+          criminal_record_check_at: "2026-08-16T00:40:00+03:00",
+        },
+        team_profile_awaiting_review: false,
       },
       {
         id: "4889fea4-0602-438f-adfe-2cef72d485ff",
         first_name: "Helmi",
         last_name: "Koskinen",
         created_at: "2026-06-17T09:20:00+03:00",
-        contract_accepted_at: "2026-08-16T00:40:00+03:00",
-        criminal_record_check_at: null,
+        certification: {
+          contract_accepted_at: "2026-08-16T00:40:00+03:00",
+          criminal_record_check_at: null,
+        },
+        team_profile_awaiting_review: false,
       },
     ];
 
-    const helsinki = buildCertificationQueue(candidates, "en", NOW, HELSINKI);
-    expect(helsinki[0].criminalRecordCheckOn).toBe("16 Aug 2026");
-    expect(helsinki[0].contractAcceptedOn).toBeNull();
+    const helsinki = buildGeduTasks(candidates, "en", NOW, HELSINKI);
+    expect(helsinki[0].certification?.criminalRecordCheckOn).toBe("16 Aug 2026");
+    expect(helsinki[0].certification?.contractAcceptedOn).toBeNull();
     // No check recorded, and one recorded as unacceptable, are the same false
     // in the column and so the same null on the wire: both mean the check has
     // not been satisfied, and the queue does not pretend to tell them apart.
-    expect(helsinki[1].criminalRecordCheckOn).toBeNull();
+    expect(helsinki[1].certification?.criminalRecordCheckOn).toBeNull();
 
-    const losAngeles = buildCertificationQueue(
+    const losAngeles = buildGeduTasks(
       candidates,
       "en",
       NOW,
       LOS_ANGELES,
     );
-    expect(losAngeles[0].criminalRecordCheckOn).toBe("15 Aug 2026");
+    expect(losAngeles[0].certification?.criminalRecordCheckOn).toBe("15 Aug 2026");
   });
 });
 
@@ -1252,7 +1270,7 @@ describe("an empty platform", () => {
     const data = build(snapshot());
 
     expect(data.products).toEqual([]);
-    expect(buildCertificationQueue([], "en", NOW, HELSINKI)).toEqual([]);
+    expect(buildGeduTasks([], "en", NOW, HELSINKI)).toEqual([]);
     expect(data.comingUp).toEqual([]);
     expect(data.weeks.length).toBeGreaterThan(0);
     expect(data.weeks.every((entry) => entry.chips.length === 0)).toBe(true);

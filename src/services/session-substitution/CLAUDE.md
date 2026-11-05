@@ -432,7 +432,7 @@ taking the request's id — a database change not yet made.
 it to know whom asking again is pointless. A substituted row carries neither list.
 
 **An offer on it carries the offerer's name and nothing else.** It used to carry the
-certification queue's two standings so the page could draw the same chips, and they are
+dashboard Gedu section's two standings so the page could draw the same chips, and they are
 gone for a reason about the data rather than the design: *an uncertified gedu cannot hold
 an offer.* The may-substitute predicate requires certification and guards every path that
 creates one, approval re-asks it under the request's lock, and the office-arranged write

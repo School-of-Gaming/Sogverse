@@ -32,14 +32,15 @@
         "waitlistOpenSeatsWithOffers": "{waiting} loStaH · {open, plural, one {# quS} other {# quSmey}} poSmoH · {offers} jang loStaH"
       }
     },
-    "certification": {
-      "title": "Gedu patlh",
+    "gedus": {
+      "title": "Gedupu’",
       "justNow": "DaH patlh nobta’: {count}",
-      "empty": "patlh ghaj Hoch Gedupu’.",
+      "empty": "SoH loSbe’ Gedu.",
       "registered": "ghItlhta’ {when}",
       "certify": "patlh yInob",
       "certifying": "patlh noblI’…",
-      "failed": "patlh nobbe’lu’ – yInID."
+      "failed": "patlh nobbe’lu’ – yInID.",
+      "profileReady": "Del’a’ ghuHmoHlu’, yIlegh"
     },
     "schedule": {
       "title": "poH ngoQ",

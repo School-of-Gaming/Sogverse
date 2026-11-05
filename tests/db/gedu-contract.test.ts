@@ -276,7 +276,7 @@ describe("gedu contract acceptance", () => {
 
     it("lets an admin read anyone's", async () => {
       // The admin's own session, not the service role: this is the read behind
-      // the certification queue and it has to work under RLS.
+      // the dashboard's Gedu section and it has to work under RLS.
       const { data, error } = await adminUser
         .from("gedu_contract_acceptances")
         .select("gedu_id, accepted_at")

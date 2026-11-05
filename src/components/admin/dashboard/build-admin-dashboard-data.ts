@@ -9,7 +9,7 @@ import { breakName } from "@/lib/holiday-breaks";
 import { formatDate } from "@/lib/date-format";
 import type {
   AdminDashboardAttentionProduct,
-  AdminDashboardCertificationCandidate,
+  AdminDashboardGeduTask,
   AdminDashboardScheduleProduct,
   AdminDashboardSnapshot,
   AdminDashboardUserStat,
@@ -22,11 +22,12 @@ import type {
   ComingUpDay,
   ComingUpItem,
   DateCancellation,
+  GeduCertification,
+  GeduTask,
   ProductAttention,
   ProductIssue,
   ScheduleChip,
   ScheduleWeek,
-  UncertifiedGedu,
 } from "./admin-dashboard-data";
 import {
   addCalendarDays,
@@ -127,7 +128,7 @@ const ROLE_ORDER: readonly UserRole[] = ["customer", "gamer", "gedu", "admin"];
  */
 export type AdminDashboardDayData = Omit<
   AdminDashboardData,
-  "timeZoneAbbrev" | "uncertifiedGedus"
+  "timeZoneAbbrev" | "geduTasks"
 >;
 
 export function buildAdminDashboardData({
@@ -279,12 +280,12 @@ function toProductAttention(
 }
 
 // ---------------------------------------------------------------------------
-// The certification queue
+// The Gedu tasks
 // ---------------------------------------------------------------------------
 
 /**
- * The queue, aged against a clock — and the **only** part of this module that
- * wants a ticking one.
+ * The Gedu tasks, aged against a clock — and the **only** part of this module
+ * that wants a ticking one.
  *
  * Everything else here is day-granular: which weeks exist, which occurrence
  * lands on which weekday, what is coming up. A wait is not — "3 minutes ago"
@@ -292,43 +293,46 @@ function toProductAttention(
  * separately, and the shell re-runs this cheap map against the live clock while
  * the expensive half is memoised on the calendar day.
  *
- * It also carries each candidate's standing under the contract and under the
- * criminal record check, the two values here that are *dates* rather than gaps
- * and so want the viewer's zone as well as their locale. Both inform the
+ * It also carries an uncertified Gedu's standing under the contract and under
+ * the criminal record check, the two values here that are *dates* rather than
+ * gaps and so want the viewer's zone as well as their locale. Both inform the
  * decision and gate nothing: certification is the platform's only blocking
  * lever, and a candidate missing either is still certifiable — over a
- * confirmation the queue asks for first.
+ * confirmation the row asks for first.
  */
-export function buildCertificationQueue(
-  candidates: readonly AdminDashboardCertificationCandidate[],
+export function buildGeduTasks(
+  tasks: readonly AdminDashboardGeduTask[],
   locale: SupportedLocale,
   now: Date,
   /** The viewer's zone — an acceptance is an instant, so it converts. */
   viewerTimeZone: string,
-): UncertifiedGedu[] {
-  return candidates.map((candidate) =>
-    toUncertifiedGedu(candidate, locale, now, viewerTimeZone),
-  );
+): GeduTask[] {
+  return tasks.map((task) => ({
+    id: task.id,
+    // The last name may be empty on an older account.
+    name: [task.first_name, task.last_name].filter(Boolean).join(" "),
+    registeredAgo: relativeWait(task.created_at, now, locale),
+    certification:
+      task.certification === null
+        ? null
+        : toGeduCertification(task.certification, locale, viewerTimeZone),
+    teamProfileAwaitingReview: task.team_profile_awaiting_review,
+  }));
 }
 
-function toUncertifiedGedu(
-  candidate: AdminDashboardCertificationCandidate,
+function toGeduCertification(
+  certification: NonNullable<AdminDashboardGeduTask["certification"]>,
   locale: SupportedLocale,
-  now: Date,
   viewerTimeZone: string,
-): UncertifiedGedu {
+): GeduCertification {
   return {
-    id: candidate.id,
-    // The last name may be empty on an older account.
-    name: [candidate.first_name, candidate.last_name].filter(Boolean).join(" "),
-    registeredAgo: relativeWait(candidate.created_at, now, locale),
     // The wire's null already means "not standing under the terms in force",
     // whether that is because nothing was ever signed or because what was
     // signed has been superseded. Nothing here re-derives that distinction.
     contractAcceptedOn:
-      candidate.contract_accepted_at === null
+      certification.contract_accepted_at === null
         ? null
-        : formatDate(candidate.contract_accepted_at, locale, {
+        : formatDate(certification.contract_accepted_at, locale, {
             dateStyle: "medium",
             timeZone: viewerTimeZone,
           }),
@@ -337,9 +341,9 @@ function toUncertifiedGedu(
     // ships no flag: the stamp is non-null exactly when the flag is true, so
     // null here already says "no check recorded".
     criminalRecordCheckOn:
-      candidate.criminal_record_check_at === null
+      certification.criminal_record_check_at === null
         ? null
-        : formatDate(candidate.criminal_record_check_at, locale, {
+        : formatDate(certification.criminal_record_check_at, locale, {
             dateStyle: "medium",
             timeZone: viewerTimeZone,
           }),
