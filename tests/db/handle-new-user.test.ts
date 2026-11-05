@@ -149,6 +149,89 @@ describe("handle_new_user() role assignment", () => {
     expect(profile.last_name).toBe("");
   });
 
+  // -- A Google sign-up's name --
+  //
+  // Google sends no first_name or last_name, only one whole name as full_name
+  // (and name). The trigger splits it at the last whitespace, as the
+  // completion page does, and gives the stand-in whole whenever the split
+  // would break a profiles CHECK and with it the sign-in. These users are made
+  // through the Admin API, so their provider is `email`: the name logic reads
+  // only the user metadata, which is what a Google sign-up carries.
+
+  describe("a name from Google", () => {
+    async function namesOf(email: string, user_metadata: Record<string, string>) {
+      const user = await createTestUser({ email, user_metadata });
+      const profile = await getProfile(user.id);
+      return { first_name: profile.first_name, last_name: profile.last_name };
+    }
+
+    it("splits a two-word full name into first and last", async () => {
+      expect(
+        await namesOf("google-two-words@test.local", {
+          full_name: "Ada Lovelace",
+          name: "Ada Lovelace",
+        }),
+      ).toEqual({ first_name: "Ada", last_name: "Lovelace" });
+    });
+
+    it("takes the last word as the last name when there are more", async () => {
+      expect(
+        await namesOf("google-three-words@test.local", {
+          full_name: "Mary Ann  Evans",
+        }),
+      ).toEqual({ first_name: "Mary Ann", last_name: "Evans" });
+    });
+
+    it("takes a single word as the first name alone", async () => {
+      expect(
+        await namesOf("google-one-word@test.local", { full_name: " Cher " }),
+      ).toEqual({ first_name: "Cher", last_name: "" });
+    });
+
+    it("reads name when full_name is absent", async () => {
+      expect(
+        await namesOf("google-name-only@test.local", { name: "Grace Hopper" }),
+      ).toEqual({ first_name: "Grace", last_name: "Hopper" });
+    });
+
+    it("gives the stand-in whole when the first part is one character", async () => {
+      expect(
+        await namesOf("google-short-first@test.local", { full_name: "J Smith" }),
+      ).toEqual({ first_name: "New User", last_name: "" });
+    });
+
+    it("gives the stand-in whole when a part is over 32 characters", async () => {
+      expect(
+        await namesOf("google-long-last@test.local", {
+          full_name: `Ada ${"L".repeat(33)}`,
+        }),
+      ).toEqual({ first_name: "New User", last_name: "" });
+
+      expect(
+        await namesOf("google-long-single@test.local", {
+          full_name: "A".repeat(33),
+        }),
+      ).toEqual({ first_name: "New User", last_name: "" });
+    });
+
+    it("gives the stand-in when the full name is only whitespace", async () => {
+      expect(
+        await namesOf("google-blank@test.local", {
+          full_name: `\t ${String.fromCharCode(0x00a0)}`,
+        }),
+      ).toEqual({ first_name: "New User", last_name: "" });
+    });
+
+    it("lets an explicit first_name win over full_name", async () => {
+      expect(
+        await namesOf("google-explicit-wins@test.local", {
+          first_name: "Typed",
+          full_name: "Ada Lovelace",
+        }),
+      ).toEqual({ first_name: "Typed", last_name: "" });
+    });
+  });
+
   it("creates customer_profiles extension row for every signup", async () => {
     const user = await createTestUser({
       email: "extension@test.local",

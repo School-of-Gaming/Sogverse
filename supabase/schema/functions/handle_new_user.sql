@@ -9,6 +9,8 @@ CREATE FUNCTION public.handle_new_user() RETURNS trigger
 DECLARE
   profile_first_name   TEXT;
   profile_last_name    TEXT;
+  provider_full_name   TEXT;
+  provider_name_parts  TEXT[];
   utm_source_raw       TEXT;
   utm_medium_raw       TEXT;
   utm_campaign_raw     TEXT;
@@ -25,18 +27,47 @@ DECLARE
   intent_id_value      UUID;
   registration_value   TIMESTAMPTZ;
 BEGIN
-  -- Both names trimmed of whitespace of every kind first, because the
+  -- Every name is trimmed of whitespace of every kind first, because the
   -- profiles CHECKs refuse it at either edge. A first name of nothing but
-  -- whitespace is then '' and takes the stand-in like an absent one.
-  profile_first_name := COALESCE(
-    NULLIF(regexp_replace(NEW.raw_user_meta_data->>'first_name', '^[[:space:]\u00A0\u200B\uFEFF]+|[[:space:]\u00A0\u200B\uFEFF]+$', '', 'g'), ''),
-    'New User'
-  );
+  -- whitespace is then '' and counts as absent.
+  profile_first_name := NULLIF(regexp_replace(NEW.raw_user_meta_data->>'first_name', '^[[:space:] ​﻿]+|[[:space:] ​﻿]+$', '', 'g'), '');
 
-  profile_last_name := COALESCE(
-    regexp_replace(NEW.raw_user_meta_data->>'last_name', '^[[:space:]\u00A0\u200B\uFEFF]+|[[:space:]\u00A0\u200B\uFEFF]+$', '', 'g'),
-    ''
-  );
+  IF profile_first_name IS NOT NULL THEN
+    -- The sign-up sent its own name, so the last name is the one it sent too.
+    profile_last_name := COALESCE(
+      regexp_replace(NEW.raw_user_meta_data->>'last_name', '^[[:space:] ​﻿]+|[[:space:] ​﻿]+$', '', 'g'),
+      ''
+    );
+  ELSE
+    -- An identity provider (Google) sends one whole name instead, as
+    -- `full_name` and `name`. It is split the way the completion page splits
+    -- it: at the last whitespace, everything before it the first name and the
+    -- last word the last name. A single word is a first name alone.
+    provider_full_name := COALESCE(
+      NULLIF(regexp_replace(NEW.raw_user_meta_data->>'full_name', '^[[:space:] ​﻿]+|[[:space:] ​﻿]+$', '', 'g'), ''),
+      NULLIF(regexp_replace(NEW.raw_user_meta_data->>'name', '^[[:space:] ​﻿]+|[[:space:] ​﻿]+$', '', 'g'), '')
+    );
+
+    provider_name_parts := regexp_match(provider_full_name, '^(.*)[[:space:] ​﻿](.*)$');
+
+    IF provider_name_parts IS NULL THEN
+      profile_first_name := provider_full_name;
+      profile_last_name  := '';
+    ELSE
+      profile_first_name := regexp_replace(provider_name_parts[1], '^[[:space:] ​﻿]+|[[:space:] ​﻿]+$', '', 'g');
+      profile_last_name  := provider_name_parts[2];
+    END IF;
+
+    -- A provider's name is not ours to shape, and a CHECK refusing it would
+    -- fail the person's sign-in. No name, or one the profiles CHECKs would
+    -- refuse, gives the stand-in whole, never half of each.
+    IF profile_first_name IS NULL
+       OR char_length(profile_first_name) NOT BETWEEN 2 AND 32
+       OR char_length(profile_last_name) > 32 THEN
+      profile_first_name := 'New User';
+      profile_last_name  := '';
+    END IF;
+  END IF;
 
   -- Sanitise here, in the body, rather than letting the CHECKs decide: a
   -- malformed value must cost this family nothing at all, so it degrades to

@@ -1,0 +1,181 @@
+-- A Google sign-up is named from the name Google gives, rather than reading
+-- "New User" until the person finishes the completion form.
+--
+-- Password sign-ups send `first_name` and `last_name`, and those decide the
+-- name exactly as before. Google sends neither; it sends `full_name` (and
+-- `name`). When `first_name` is absent or blank, the trigger splits
+-- `full_name`, or `name` when that is absent or blank, the way the completion
+-- page does: at the last whitespace, the last word being the last name. A split
+-- the profiles CHECKs would refuse names the account "New User" and '', so a
+-- name Google holds can never fail the sign-in.
+--
+-- Nothing else in the function changes. CREATE OR REPLACE keeps its grants.
+
+CREATE OR REPLACE FUNCTION public.handle_new_user() RETURNS trigger
+    LANGUAGE plpgsql SECURITY DEFINER
+    SET search_path TO 'public'
+    AS $_$
+DECLARE
+  profile_first_name   TEXT;
+  profile_last_name    TEXT;
+  provider_full_name   TEXT;
+  provider_name_parts  TEXT[];
+  utm_source_raw       TEXT;
+  utm_medium_raw       TEXT;
+  utm_campaign_raw     TEXT;
+  utm_content_raw      TEXT;
+  utm_term_raw         TEXT;
+  utm_source_value     TEXT;
+  utm_medium_value     TEXT;
+  utm_campaign_value   TEXT;
+  utm_content_value    TEXT;
+  utm_term_value       TEXT;
+  intent_kind_raw      TEXT;
+  intent_id_raw        TEXT;
+  intent_kind_value    TEXT;
+  intent_id_value      UUID;
+  registration_value   TIMESTAMPTZ;
+BEGIN
+  -- Every name is trimmed of whitespace of every kind first, because the
+  -- profiles CHECKs refuse it at either edge. A first name of nothing but
+  -- whitespace is then '' and counts as absent.
+  profile_first_name := NULLIF(regexp_replace(NEW.raw_user_meta_data->>'first_name', '^[[:space:] ​﻿]+|[[:space:] ​﻿]+$', '', 'g'), '');
+
+  IF profile_first_name IS NOT NULL THEN
+    -- The sign-up sent its own name, so the last name is the one it sent too.
+    profile_last_name := COALESCE(
+      regexp_replace(NEW.raw_user_meta_data->>'last_name', '^[[:space:] ​﻿]+|[[:space:] ​﻿]+$', '', 'g'),
+      ''
+    );
+  ELSE
+    -- An identity provider (Google) sends one whole name instead, as
+    -- `full_name` and `name`. It is split the way the completion page splits
+    -- it: at the last whitespace, everything before it the first name and the
+    -- last word the last name. A single word is a first name alone.
+    provider_full_name := COALESCE(
+      NULLIF(regexp_replace(NEW.raw_user_meta_data->>'full_name', '^[[:space:] ​﻿]+|[[:space:] ​﻿]+$', '', 'g'), ''),
+      NULLIF(regexp_replace(NEW.raw_user_meta_data->>'name', '^[[:space:] ​﻿]+|[[:space:] ​﻿]+$', '', 'g'), '')
+    );
+
+    provider_name_parts := regexp_match(provider_full_name, '^(.*)[[:space:] ​﻿](.*)$');
+
+    IF provider_name_parts IS NULL THEN
+      profile_first_name := provider_full_name;
+      profile_last_name  := '';
+    ELSE
+      profile_first_name := regexp_replace(provider_name_parts[1], '^[[:space:] ​﻿]+|[[:space:] ​﻿]+$', '', 'g');
+      profile_last_name  := provider_name_parts[2];
+    END IF;
+
+    -- A provider's name is not ours to shape, and a CHECK refusing it would
+    -- fail the person's sign-in. No name, or one the profiles CHECKs would
+    -- refuse, gives the stand-in whole, never half of each.
+    IF profile_first_name IS NULL
+       OR char_length(profile_first_name) NOT BETWEEN 2 AND 32
+       OR char_length(profile_last_name) > 32 THEN
+      profile_first_name := 'New User';
+      profile_last_name  := '';
+    END IF;
+  END IF;
+
+  -- Sanitise here, in the body, rather than letting the CHECKs decide: a
+  -- malformed value must cost this family nothing at all, so it degrades to
+  -- NULL and the signup succeeds. Trim first, then test the trimmed value —
+  -- and store the trimmed value, so what the CHECK sees is what was tested.
+  -- An absent key arrives NULL, `btrim(NULL)` is NULL, and every comparison
+  -- below is then NULL, so the CASE falls through to ELSE without a special
+  -- case for it.
+  utm_source_raw   := NEW.raw_user_meta_data->>'utm_source';
+  utm_medium_raw   := NEW.raw_user_meta_data->>'utm_medium';
+  utm_campaign_raw := NEW.raw_user_meta_data->>'utm_campaign';
+  utm_content_raw  := NEW.raw_user_meta_data->>'utm_content';
+  utm_term_raw     := NEW.raw_user_meta_data->>'utm_term';
+
+  utm_source_value := CASE
+    WHEN btrim(utm_source_raw) <> ''
+     AND char_length(btrim(utm_source_raw)) <= 200
+     AND utm_source_raw !~ '[[:cntrl:]]'
+     AND left(btrim(utm_source_raw), 1) NOT IN ('=', '+', '-', '@', chr(9), chr(13))
+      THEN btrim(utm_source_raw)
+    ELSE NULL
+  END;
+
+  utm_medium_value := CASE
+    WHEN btrim(utm_medium_raw) <> ''
+     AND char_length(btrim(utm_medium_raw)) <= 200
+     AND utm_medium_raw !~ '[[:cntrl:]]'
+     AND left(btrim(utm_medium_raw), 1) NOT IN ('=', '+', '-', '@', chr(9), chr(13))
+      THEN btrim(utm_medium_raw)
+    ELSE NULL
+  END;
+
+  utm_campaign_value := CASE
+    WHEN btrim(utm_campaign_raw) <> ''
+     AND char_length(btrim(utm_campaign_raw)) <= 200
+     AND utm_campaign_raw !~ '[[:cntrl:]]'
+     AND left(btrim(utm_campaign_raw), 1) NOT IN ('=', '+', '-', '@', chr(9), chr(13))
+      THEN btrim(utm_campaign_raw)
+    ELSE NULL
+  END;
+
+  utm_content_value := CASE
+    WHEN btrim(utm_content_raw) <> ''
+     AND char_length(btrim(utm_content_raw)) <= 200
+     AND utm_content_raw !~ '[[:cntrl:]]'
+     AND left(btrim(utm_content_raw), 1) NOT IN ('=', '+', '-', '@', chr(9), chr(13))
+      THEN btrim(utm_content_raw)
+    ELSE NULL
+  END;
+
+  utm_term_value := CASE
+    WHEN btrim(utm_term_raw) <> ''
+     AND char_length(btrim(utm_term_raw)) <= 200
+     AND utm_term_raw !~ '[[:cntrl:]]'
+     AND left(btrim(utm_term_raw), 1) NOT IN ('=', '+', '-', '@', chr(9), chr(13))
+      THEN btrim(utm_term_raw)
+    ELSE NULL
+  END;
+
+  -- The signup intent, the same way: a kind we do not know, or an id that is
+  -- not a uuid, degrades the pair to NULL rather than failing the signup, and
+  -- the pair is kept whole or not at all. Only the shape is checked here — the
+  -- register route decided the meaning from the row before it sent it.
+  intent_kind_raw := NEW.raw_user_meta_data->>'signup_intent_kind';
+  intent_id_raw   := NEW.raw_user_meta_data->>'signup_intent_id';
+
+  IF intent_kind_raw IN ('product', 'municipality_club', 'landing_page')
+     AND intent_id_raw ~* '^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$' THEN
+    intent_kind_value := intent_kind_raw;
+    intent_id_value   := intent_id_raw::uuid;
+  END IF;
+
+  -- A password account arrives whole: every route that creates one supplies
+  -- the name, the terms acceptance and the consents in the same request, so it
+  -- is registered the moment it exists. Any other provider (Google) arrives
+  -- with none of that, and stays unregistered until a completion route has it.
+  -- The provider is read from app metadata, which only the auth server writes;
+  -- user metadata is the caller's and could claim anything.
+  registration_value := CASE
+    WHEN NEW.raw_app_meta_data->>'provider' = 'email' THEN now()
+    ELSE NULL
+  END;
+
+  INSERT INTO public.profiles (
+    id, email, role, first_name, last_name,
+    utm_source, utm_medium, utm_campaign, utm_content, utm_term,
+    signup_intent_kind, signup_intent_id,
+    registration_completed_at
+  )
+  VALUES (
+    NEW.id, NEW.email, 'customer', profile_first_name, profile_last_name,
+    utm_source_value, utm_medium_value, utm_campaign_value,
+    utm_content_value, utm_term_value,
+    intent_kind_value, intent_id_value,
+    registration_value
+  );
+
+  INSERT INTO public.customer_profiles (user_id) VALUES (NEW.id);
+
+  RETURN NEW;
+END;
+$_$;
