@@ -786,7 +786,6 @@ export type {
   AdminDashboardScheduleProduct,
   AdminDashboardScheduleSlot,
   AdminDashboardSnapshot,
-  AdminDashboardUserStat,
   AdminDashboardWaitlistPressure,
 } from "@/services/admin-dashboard/admin-dashboard.contracts";
 

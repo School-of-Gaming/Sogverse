@@ -652,52 +652,12 @@ describe("get_admin_dashboard", () => {
     expect(error?.code).toBe("42501");
   });
 
-  describe("users", () => {
-    it("carries one tile per role, including roles nobody holds", () => {
-      const roles = snapshot.users.map((u) => u.role).sort();
-      expect(roles).toEqual(["admin", "customer", "gamer", "gedu"]);
-    });
-
-    it("reports a verification stat wherever the role holds real addresses", async () => {
-      // The test is the ADDRESS, not the role. A gamer in sign-in
-      // mode `parent` or `username` carries a synthetic
-      // @gamer.sogverse.internal handle nobody will ever click a link in, so "0
-      // verified" would report a problem that does not exist and NULL says the
-      // stat has no meaning. A gamer in mode `email` holds a real mailbox and
-      // counts exactly like an adult — so whether the gamer tile is NULL is a
-      // question about the data, and is asked of the data rather than assumed.
-      const { count: addressableGamers } = await admin
-        .from("gamer_profiles")
-        .select("user_id", { count: "exact", head: true })
-        .eq("sign_in", "email");
-
-      for (const tile of snapshot.users) {
-        if (tile.role === "gamer" && !addressableGamers) {
-          expect(tile.verified).toBeNull();
-        } else {
-          expect(tile.verified).not.toBeNull();
-        }
-        expect(tile.total).toBeGreaterThan(0);
-      }
-    });
-
-    it("reports certification only for gedus", () => {
-      for (const tile of snapshot.users) {
-        if (tile.role === "gedu") {
-          expect(tile.certified).not.toBeNull();
-        } else {
-          expect(tile.certified).toBeNull();
-        }
-      }
-    });
-
-    it("counts this file's new gedus", () => {
-      const gedus = snapshot.users.find((u) => u.role === "gedu");
-      // Ten were created above, so the platform holds at least ten — a
-      // relative claim, because CI's database also carries
-      // seed.sql and whatever other files have seeded alongside this one.
-      expect(gedus?.total).toBeGreaterThanOrEqual(10);
-    });
+  it("counts no users", async () => {
+    // The contract schema strips unknown keys, so only the raw document can show
+    // a recreated function bringing the per-role counts back.
+    const { data, error } = await adminUser.rpc("get_admin_dashboard");
+    expect(error).toBeNull();
+    expect(data).not.toHaveProperty("users");
   });
 
   describe("Gedu tasks", () => {

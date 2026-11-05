@@ -7,7 +7,6 @@ import { GeduTasksPanel } from "./gedu-tasks-panel";
 import { NeedsAttentionPanel } from "./needs-attention-panel";
 import { ProductTypeKeyRail } from "./product-type-key-rail";
 import { SchedulePanel } from "./schedule-panel";
-import { UsersStrip } from "./users-strip";
 
 /**
  * The admin dashboard's **draft** page body — the redesign of `/admin`, built to
@@ -17,39 +16,24 @@ import { UsersStrip } from "./users-strip";
  * Recent Activity card with nothing in it. The redesign starts from what an
  * admin actually opens this page to find out —
  *
- * 1. **Who is here?** Four numbers, each with the sub-stat its role has.
- * 2. **What needs me?** The ops queue: one card per product that needs
+ * 1. **What needs me?** The ops queue: one card per product that needs
  *    something, and nothing else.
- * 3. **What stands?** Who is not certified yet — kept next to the queue but
+ * 2. **What stands?** Who is not certified yet — kept next to the queue but
  *    deliberately outside it, because a gedu waiting on their own contract or
  *    background check is not work an admin can do today, and counting them as
  *    attention owed is how a count stops being believed.
- * 4. **What is running?** The week as seven rows, and what is lined up after it.
+ * 3. **What is running?** The week as seven rows, and what is lined up after it.
  *
- * **Revenue and growth are deliberately gone.** They were the two tiles that
- * could never be right — money lives in Stripe, which owns the reporting an
- * accountant actually uses, and a growth percentage on a platform this size is
- * noise with a decimal point. A dashboard that shows a number nobody trusts
- * teaches its reader to skim, and everything below the skimmed number pays for
- * it.
+ * **How the business is doing is not this page's question.** Families, revenue
+ * and gedu capacity are read month by month on the business page, which is
+ * read once a month; this page is the queue an admin starts the day in, so the
+ * queue opens it.
  *
- * **The page is four full-width bands, not a column layout.** It was a two-thirds
- * / one-third band over a full-width one, and the narrow column was wrong in both
- * directions at once: four short user stats cannot fill a column whose height is
- * set by however much is wrong with the platform that morning, so it stood mostly
- * empty — and the width it was holding was exactly what the queue needed to stop
- * truncating product names. Users became a slim strip of tiles, the queue took
- * the page, and the queue's cards now tile two and three across.
- *
- * **The strip goes first, and it is not the most urgent thing on the page.** It
- * is a pulse — four numbers that say what the platform *is* before the queue
- * says what is wrong with it — and it earns the top by being small enough to
- * cost the queue almost nothing. One row of tiles is what a reader takes in
- * without stopping, so the queue is still on the fold behind it; a section that
- * pushed the queue below the screen would have to be more urgent than the queue
- * to deserve the position, and this one is not. The schedule stays at the
- * bottom: it is the reference you scroll to, not the thing you open the page
- * for.
+ * **The page is full-width bands, not a column layout.** A narrow column beside
+ * the queue stood mostly empty, and the width it held was exactly what the
+ * queue needed to stop truncating product names, so the queue takes the page
+ * and its cards tile two and three across. The schedule stays at the bottom:
+ * it is the reference you scroll to, not the thing you open the page for.
  *
  * The body is presentational end to end: every count, join and resolution
  * arrives in `data`, and nothing here queries, mutates or reads a clock. The one
@@ -97,8 +81,6 @@ export function AdminDashboardPageBody({
           within. */}
       <div className="xl:grid xl:grid-cols-[minmax(0,1fr)_11rem] xl:items-start xl:gap-6">
         <div className="space-y-6">
-          <UsersStrip stats={data.users} />
-
           <NeedsAttentionPanel products={data.products} />
 
           {/* Directly under the queue, because the two are read together — what

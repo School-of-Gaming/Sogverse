@@ -1,20 +1,9 @@
 {
   "dashboard": {
     "title": "Dashboard",
-    "description": "What needs an admin today, who is on the platform, and what is running.",
+    "description": "What needs an admin today, and what is running.",
     "loadError": "Could not load the dashboard. Refresh to try again.",
     "loadErrorWithReason": "Could not load the dashboard — {reason}. Refresh to try again.",
-    "users": {
-      "label": "Users",
-      "roles": {
-        "customer": "Parents",
-        "gamer": "Gamers",
-        "gedu": "Gedus",
-        "admin": "Admins"
-      },
-      "verified": "{count} verified",
-      "certified": "{count} certified"
-    },
     "attention": {
       "title": "Needs attention",
       "allClearTitle": "All clear",
@@ -1915,6 +1904,101 @@
         "desktop": "Desktop",
         "mobile": "Mobile",
         "tablet": "Tablet"
+      }
+    }
+  },
+  "business": {
+    "title": "Business",
+    "description": "How School of Gaming is doing, month by month.",
+    "readAt": "Figures as of {time}.",
+    "loadError": "The business figures could not be read. Reload the page to try again.",
+    "loadErrorWithReason": "The business figures could not be read: {reason}",
+    "change": "{change} this month",
+    "noChange": "No change this month",
+    "tiles": {
+      "revenueTotal": {
+        "label": "Revenue last month",
+        "largest": "{share} from {band, select, subscription {subscriptions} campsAndEvents {camps and events} municipality {municipalities} other {no named product}}",
+        "none": "No payments recorded",
+        "change": "{change} on the month before",
+        "same": "Same as the month before"
+      },
+      "subscriptions": {
+        "label": "Subscriptions per month",
+        "live": "{count, plural, one {# live subscription} other {# live subscriptions}}",
+        "outside": "{count, plural, other {# not counted: no euro price}}"
+      },
+      "payingFamilies": {
+        "label": "Paying families",
+        "startingLater": "{count, plural, one {+# starts a club later} other {+# start a club later}}"
+      },
+      "gamers": {
+        "label": "Gamers in a seat",
+        "municipality": "{count, plural, one {# in a municipality club} other {# in municipality clubs}}"
+      },
+      "firstWeek": {
+        "label": "Engaged in first week",
+        "detail": "{engaged} of {total} sign-ups",
+        "none": "No sign-ups to measure yet.",
+        "change": "{change} points this month"
+      }
+    },
+    "engagement": {
+      "heading": "Families by engagement",
+      "caption": "Every parent account.",
+      "chart": "Families by engagement",
+      "total": "{count, plural, one {family} other {families}}",
+      "slices": {
+        "subscriber": "Subscribing now",
+        "paidBefore": "Paid before, not subscribing",
+        "municipalityOnly": "Municipality clubs only",
+        "freeOnly": "Free or uncharged seats only",
+        "waiting": "Waiting for a place",
+        "neverEnrolled": "Gamer added, never booked",
+        "noGamer": "No gamer, never booked"
+      }
+    },
+    "revenue": {
+      "heading": "Revenue by month",
+      "caption": "Before refunds.",
+      "chart": "Revenue by month",
+      "series": {
+        "subscriptionCents": "Subscriptions",
+        "campsAndEventsCents": "Camps and events",
+        "municipalityCents": "Municipality invoices",
+        "unattributedCents": "No product named"
+      },
+      "noData": "No data",
+      "startsFrom": "Payments are recorded from {month}.",
+      "none": "No payments recorded yet.",
+      "nonEur": "{count, plural, one {# payment} other {# payments}} in another currency left out.",
+      "clubsWithoutFee": "{count, plural, one {# club without a fee left out} other {# clubs without a fee left out}}"
+    },
+    "families": {
+      "heading": "Paying families by month",
+      "caption": "At each month’s end.",
+      "chart": "Paying families by month",
+      "series": {
+        "payingFamilies": "Paying families",
+        "signups": "New sign-ups",
+        "firstSeats": "First seat taken",
+        "stoppedPaying": "Stopped paying"
+      }
+    },
+    "gedus": {
+      "heading": "Gamers per Gedu",
+      "caption": "Per lesson, on average.",
+      "chart": "Gamers per Gedu by month",
+      "series": "Gamers per Gedu",
+      "ranBy": "{sessions, plural, one {# lesson} other {# lessons}}, {gedus, plural, one {# Gedu} other {# Gedus}}",
+      "noData": "No data",
+      "startsFrom": "Lesson records start in {month}.",
+      "none": "No lesson was recorded in these months.",
+      "certified": {
+        "heading": "Certified Gedus",
+        "certified": "Certified",
+        "onRunning": "Assigned to something running",
+        "notOnRunning": "Not assigned to anything running"
       }
     }
   },

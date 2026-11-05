@@ -1,4 +1,4 @@
-import type { ProductType, UserRole } from "@/types";
+import type { ProductType } from "@/types";
 import type { AppHref } from "@/lib/constants/routes";
 
 /**
@@ -211,23 +211,6 @@ export interface GeduCertification {
 }
 
 /**
- * One role's tile in the users strip.
- *
- * `verified` is `null` rather than `0` for gamers, and the difference is the
- * point: a gamer's email is a synthetic `@gamer.sogverse.internal` address that
- * nobody will ever click a link in, so "0 verified" would report a problem that
- * does not exist. `null` means the stat has no meaning for this role and the
- * tile renders nothing in its place. `certified` is the same shape for the same
- * reason — only gedus can be certified.
- */
-export interface AdminUserRoleStat {
-  role: UserRole;
-  total: number;
-  verified: number | null;
-  certified: number | null;
-}
-
-/**
  * How much of a product's date its groups have cancelled.
  *
  * A cancellation is per group and this page is per product, so a date is one of
@@ -404,7 +387,6 @@ export interface AdminDashboardData {
   products: readonly ProductAttention[];
   /** Gedus with something open for an admin, one entry per Gedu. */
   geduTasks: readonly GeduTask[];
-  users: readonly AdminUserRoleStat[];
   weeks: readonly ScheduleWeek[];
   /** Index into `weeks` of the week containing `now`; the page opens on it. */
   currentWeekIndex: number;

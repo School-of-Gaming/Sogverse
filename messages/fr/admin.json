@@ -1,20 +1,9 @@
 {
   "dashboard": {
     "title": "Tableau de bord",
-    "description": "Ce qui demande l’intervention d’un administrateur aujourd’hui, qui est sur la plateforme et ce qui tourne.",
+    "description": "Ce qui demande l’intervention d’un administrateur aujourd’hui et ce qui tourne.",
     "loadError": "Impossible de charger le tableau de bord. Actualisez la page pour réessayer.",
     "loadErrorWithReason": "Impossible de charger le tableau de bord – {reason}. Actualisez la page pour réessayer.",
-    "users": {
-      "label": "Utilisateurs",
-      "roles": {
-        "customer": "Parents",
-        "gamer": "Gamers",
-        "gedu": "Gedus",
-        "admin": "Administrateurs"
-      },
-      "verified": "{count} vérifiés",
-      "certified": "{count} certifiés"
-    },
     "attention": {
       "title": "À traiter",
       "allClearTitle": "Tout est en ordre",
@@ -1915,6 +1904,101 @@
         "desktop": "Ordinateur",
         "mobile": "Mobile",
         "tablet": "Tablette"
+      }
+    }
+  },
+  "business": {
+    "title": "Activité",
+    "description": "Comment se porte School of Gaming, mois par mois.",
+    "readAt": "Chiffres au {time}.",
+    "loadError": "Impossible de lire les chiffres d’activité. Rechargez la page pour réessayer.",
+    "loadErrorWithReason": "Impossible de lire les chiffres d’activité : {reason}",
+    "change": "{change} ce mois-ci",
+    "noChange": "Aucun changement ce mois-ci",
+    "tiles": {
+      "revenueTotal": {
+        "label": "Revenus du mois dernier",
+        "largest": "{share} {band, select, subscription {des abonnements} campsAndEvents {des camps et événements} municipality {des communes} other {sans produit indiqué}}",
+        "none": "Aucun paiement enregistré",
+        "change": "{change} par rapport au mois précédent",
+        "same": "Comme le mois précédent"
+      },
+      "subscriptions": {
+        "label": "Abonnements par mois",
+        "live": "{count, plural, one {# abonnement actif} other {# abonnements actifs}}",
+        "outside": "{count, plural, one {# non compté, sans prix en euros} other {# non comptés, sans prix en euros}}"
+      },
+      "payingFamilies": {
+        "label": "Familles payantes",
+        "startingLater": "{count, plural, one {+# commence un club plus tard} other {+# commencent un club plus tard}}"
+      },
+      "gamers": {
+        "label": "Gamers ayant une place",
+        "municipality": "{count, plural, one {# dans un club municipal} other {# dans des clubs municipaux}}"
+      },
+      "firstWeek": {
+        "label": "Actifs la première semaine",
+        "detail": "{engaged} sur {total} inscriptions",
+        "none": "Aucune inscription à mesurer pour l’instant.",
+        "change": "{change} points ce mois-ci"
+      }
+    },
+    "engagement": {
+      "heading": "Familles par engagement",
+      "caption": "Tous les comptes parents.",
+      "chart": "Familles par engagement",
+      "total": "{count, plural, one {famille} other {familles}}",
+      "slices": {
+        "subscriber": "Abonnées en ce moment",
+        "paidBefore": "Ont déjà payé, sans abonnement",
+        "municipalityOnly": "Clubs municipaux uniquement",
+        "freeOnly": "Places gratuites ou non facturées uniquement",
+        "waiting": "En attente d’une place",
+        "neverEnrolled": "Gamer ajouté, jamais réservé",
+        "noGamer": "Aucun gamer, jamais réservé"
+      }
+    },
+    "revenue": {
+      "heading": "Revenus par mois",
+      "caption": "Avant remboursements.",
+      "chart": "Revenus par mois",
+      "series": {
+        "subscriptionCents": "Abonnements",
+        "campsAndEventsCents": "Camps et événements",
+        "municipalityCents": "Factures aux communes",
+        "unattributedCents": "Aucun produit indiqué"
+      },
+      "noData": "Aucune donnée",
+      "startsFrom": "Paiements enregistrés depuis {month}.",
+      "none": "Aucun paiement enregistré pour l’instant.",
+      "nonEur": "{count, plural, one {# paiement} other {# paiements}} dans une autre devise non comptés.",
+      "clubsWithoutFee": "{count, plural, one {# club sans tarif non compté} other {# clubs sans tarif non comptés}}"
+    },
+    "families": {
+      "heading": "Familles payantes par mois",
+      "caption": "À la fin de chaque mois.",
+      "chart": "Familles payantes par mois",
+      "series": {
+        "payingFamilies": "Familles payantes",
+        "signups": "Nouvelles inscriptions",
+        "firstSeats": "Première place",
+        "stoppedPaying": "Ont arrêté de payer"
+      }
+    },
+    "gedus": {
+      "heading": "Joueurs par Gedu",
+      "caption": "Par séance, en moyenne.",
+      "chart": "Joueurs par Gedu par mois",
+      "series": "Joueurs par Gedu",
+      "ranBy": "{sessions, plural, one {# séance} other {# séances}}, {gedus, plural, one {# Gedu} other {# Gedus}}",
+      "noData": "Aucune donnée",
+      "startsFrom": "Les séances sont enregistrées depuis {month}.",
+      "none": "Aucune séance n’a été enregistrée sur ces mois.",
+      "certified": {
+        "heading": "Gedus certifiés",
+        "certified": "Certifiés",
+        "onRunning": "Affectés à ce qui est en cours",
+        "notOnRunning": "Sans affectation en cours"
       }
     }
   },

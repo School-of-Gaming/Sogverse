@@ -1162,37 +1162,11 @@ export function buildAdminDashboardFixture(
     // it needs its own empty state, and this is the only scenario that can show
     // one.
     geduTasks: quiet ? [] : geduTasks(locale),
-    users: quiet ? QUIET_USER_STATS : BUSY_USER_STATS,
     weeks,
     currentWeekIndex,
     comingUp: buildComingUp(specs),
   };
 }
-
-/**
- * Plausible platform numbers — one parent to roughly one and a half gamers, most
- * addresses verified, and rather more gedus registered than certified, which is
- * the whole reason the certification section above exists.
- *
- * Both rows agree with the certification list the same scenario builds: `busy`
- * is nineteen gedus with fourteen certified against its five listed, `quiet` is
- * five with all five certified against an empty list. A strip claiming an
- * uncertified gedu the card below it says nothing about is the drift a fixture
- * exists to make impossible.
- */
-const BUSY_USER_STATS: AdminDashboardData["users"] = [
-  { role: "customer", total: 214, verified: 191, certified: null },
-  { role: "gamer", total: 342, verified: null, certified: null },
-  { role: "gedu", total: 19, verified: 17, certified: 14 },
-  { role: "admin", total: 4, verified: 4, certified: null },
-];
-
-const QUIET_USER_STATS: AdminDashboardData["users"] = [
-  { role: "customer", total: 12, verified: 9, certified: null },
-  { role: "gamer", total: 18, verified: null, certified: null },
-  { role: "gedu", total: 5, verified: 5, certified: 5 },
-  { role: "admin", total: 2, verified: 2, certified: null },
-];
 
 function slot(
   weekday: number,

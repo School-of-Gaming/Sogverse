@@ -4,6 +4,7 @@ import { Link } from "@/i18n/navigation";
 import { usePathname } from "@/i18n/navigation";
 import {
   ArrowLeftRight,
+  BriefcaseBusiness,
   ChartLine,
   CodeXml,
   House,
@@ -31,7 +32,7 @@ type SidebarKey =
   | "dashboard" | "users"
   | "developer"
   | "tools" | "products" | "invoicing"
-  | "libraryContent" | "marketing" | "analytics" | "platformVision"
+  | "libraryContent" | "marketing" | "analytics" | "business" | "platformVision"
   | "substitutions" | "feedback";
 
 interface NavItemDef {
@@ -91,6 +92,9 @@ const navItemsByRole: Partial<Record<UserRole, NavItemDef[]>> = {
     // Under marketing because it is mostly read about it: which pages and
     // which campaigns bring visitors in.
     { href: ROUTES.admin.analytics, labelKey: "analytics", icon: <ChartLine className="h-5 w-5" /> },
+    // Beside analytics, the other page that is read rather than worked in:
+    // leadership's monthly read on families, revenue and Gedu capacity.
+    { href: ROUTES.admin.business, labelKey: "business", icon: <BriefcaseBusiness className="h-5 w-5" /> },
     // Last of the content entries and above the tooling: it is read, not
     // worked in, and an admin reaches it from a link far more than by habit.
     { href: ROUTES.admin.platformVision, labelKey: "platformVision", icon: <Sparkles className="h-5 w-5" /> },
