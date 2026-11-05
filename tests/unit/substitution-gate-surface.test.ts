@@ -70,6 +70,10 @@ const ASSIGNMENT_ONLY = new Map<string, string>([
     "services/assignments/assignments.service.ts",
     "Names the table in prose, to say which rows the assignment arm of `get_my_assigned_products` comes from — the substitution arm of that read is carried on the row's own `kind` discriminator, which this file maps — and reads it directly for the admin user page's list of a gedu's standing seats, beside the trainee seats. That read LISTS the groups a gedu is staff on and gates nothing; a sub's one afternoon is not a seat on the group. There is no gate here to widen.",
   ],
+  [
+    "services/admin-business/admin-business.service.ts",
+    "The admin business page's count of certified gedus assigned to a group of a running product: a standing staffing figure, and a sub who covered one afternoon is not staffing a club. It gates nothing. Who ran each past session, substitutes included, comes from the gedu invoicing build, which this file reuses rather than reading the assignments for.",
+  ],
 ]);
 
 /**
