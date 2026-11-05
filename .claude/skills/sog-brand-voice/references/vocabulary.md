@@ -180,25 +180,15 @@ are never swapped.** "In collaboration with" is what Roblox asked for and the on
 their name may appear in; "in partnership with" is Lynx's. Swapping them is a claim about a
 legal relationship neither party agreed to. In every language: en "in collaboration with" /
 "a collaboration between", fr "en collaboration avec" / "une collaboration entre", fi
-"yhteistyössä", sv "i samarbete med". Klingon builds both on one root and is exempt. The rule
-binds internal words too (component names, comments), because there the forbidden word sits
-one copy and paste from a string. Copy about municipalities, schools and other partners says
+"yhteistyössä", sv "i samarbete med". Klingon builds both on one root and is exempt. Copy about municipalities, schools and other partners says
 "partnership" freely. Where a partner's logo may appear is a separate question of approvals,
 in the app's `src/CLAUDE.md`.
 
-**The two lawyer authored Roblox programme documents** (`robloxTerms`, `robloxPrivacy`) carry
-Lynx's lawyer's text word for word, "course", "curriculum" and "facilitator" included,
-because the wording is Lynx's and editing a signed text costs another legal review. Five
-departures are sanctioned and no more: the tags that turn a cross reference into a link to
-our own documents; the emphasis tag where the source bolds body text; the placeholder that
-renders our support address; two sentences corrected to say how Sogverse works (a media
-choice is changed on the child's own page in My SOG); and one sentence added under the
-privacy policy's photography heading, with Lynx's agreement, saying a photograph from a
-lesson may appear in the report every family in the group sees, where the media permission
-was given. Anything further needs the owner. In those two namespaces Finnish and Swedish
-follow the English with the plain category word (ohjaaja, ledare) where the English says
-"facilitator"; French needs no split. `robloxSafeguarding` is ours and uses the house words
-throughout.
+**The two lawyer authored Roblox programme documents** (its terms and its privacy policy)
+carry Lynx's lawyer's text word for word, "course", "curriculum" and "facilitator" included,
+because the wording is Lynx's and editing a signed text costs another legal review. They are
+the one place the banned words stand; never edit them towards this skill. The programme's
+safeguarding policy is ours and uses the house words throughout.
 
 ## Fixed forms that are marks
 
