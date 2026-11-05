@@ -140,8 +140,11 @@ export interface ProductAttention {
   issues: readonly ProductIssue[];
 }
 
-/** A gedu account waiting on an admin's decision. */
-export interface UncertifiedGedu {
+/**
+ * One Gedu with something open for an admin, carrying everything that is open
+ * for them — a Gedu is listed once, never once per task.
+ */
+export interface GeduTask {
   /**
    * The account's real UUID. It has to be real: the identicon beside the name is
    * hashed out of the id's hex bytes, so a readable stand-in renders a
@@ -150,17 +153,32 @@ export interface UncertifiedGedu {
   id: string;
   name: string;
   /**
-   * How long they have been waiting — "12 days ago", already locale-formatted
+   * How long ago they registered — "12 days ago", already locale-formatted
    * by `Intl.RelativeTimeFormat`. The sentence around it ("registered …") is the
    * card's, because that half is translated copy and this half is not.
    */
   registeredAgo: string;
   /**
+   * The certification decision, while it is open: `null` once the Gedu is
+   * certified, which is also what takes the Certify button off their row.
+   */
+  certification: GeduCertification | null;
+  /**
+   * Their team profile is marked ready and not yet public. Making it public
+   * happens on their admin page, where the profile can be read first, so the
+   * row only says so and links there.
+   */
+  teamProfileAwaitingReview: boolean;
+}
+
+/** Where an uncertified Gedu stands on what an admin certifies against. */
+export interface GeduCertification {
+  /**
    * When they accepted the contract version **in force today**, already
    * formatted as a calendar date in the viewer's zone — or `null` when they
    * have not.
    *
-   * `null` deliberately covers two situations the queue does not tell apart:
+   * `null` deliberately covers two situations the section does not tell apart:
    * never signed anything, and signed a version that has since been superseded.
    * The question an admin is deciding against is standing under the terms in
    * force *today*, and both answers to that are "not yet"; the user's own admin
@@ -169,7 +187,7 @@ export interface UncertifiedGedu {
    *
    * Pre-formatted for the same reason `registeredAgo` is: it is an `Intl`
    * product rather than translated copy, and formatting it beside the wait keeps
-   * both derivations at one call site rather than handing the queue a zone it
+   * both derivations at one call site rather than handing the section a zone it
    * would otherwise have no use for.
    */
   contractAcceptedOn: string | null;
@@ -187,7 +205,7 @@ export interface UncertifiedGedu {
    *
    * Pre-formatted for the reason `contractAcceptedOn` is: it is an `Intl`
    * product rather than translated copy, and the two are derived at one call
-   * site so the queue never needs a timezone of its own.
+   * site so the section never needs a timezone of its own.
    */
   criminalRecordCheckOn: string | null;
 }
@@ -367,8 +385,8 @@ export interface AdminDashboardData {
   timeZoneAbbrev: string | null;
   /** Products needing an admin. Empty means nothing is wrong with any of them. */
   products: readonly ProductAttention[];
-  /** Gedu accounts waiting on a certification decision. */
-  uncertifiedGedus: readonly UncertifiedGedu[];
+  /** Gedus with something open for an admin, one entry per Gedu. */
+  geduTasks: readonly GeduTask[];
   weeks: readonly ScheduleWeek[];
   /** Index into `weeks` of the week containing `now`; the page opens on it. */
   currentWeekIndex: number;

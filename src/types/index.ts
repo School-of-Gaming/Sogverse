@@ -781,7 +781,7 @@ export type {
 // the service and the db test both parse through.
 export type {
   AdminDashboardAttentionProduct,
-  AdminDashboardCertificationCandidate,
+  AdminDashboardGeduTask,
   AdminDashboardGroupWithoutGedu,
   AdminDashboardScheduleProduct,
   AdminDashboardScheduleSlot,

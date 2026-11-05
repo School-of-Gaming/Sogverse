@@ -2,21 +2,26 @@
 
 import { useState } from "react";
 import { useTranslations } from "next-intl";
+import { isValidPhoneNumber } from "react-phone-number-input";
 import { Link } from "@/i18n/navigation";
 import { CheckboxRow } from "@/components/ui/checkbox-row";
 import { Field } from "@/components/ui/field";
+import { InternationalPhoneInput } from "@/components/ui/phone-input";
 import { HomeLocationField } from "@/components/locations/home-location-field";
 import type { LocationPick } from "@/components/locations/location-picker-panel";
 import { ROUTES } from "@/lib/constants/routes";
 
 /**
  * The parent account's answers a registration asks for beyond the name and
- * the sign-in: the home location, the terms and the marketing opt-in. Both the
- * password registration and the Google account's finish page ask them, so the
- * state, the refusal before posting and the request fields live here once.
+ * the sign-in: the phone number, the home location, the terms and the
+ * marketing opt-in. Both the password registration and the Google account's
+ * finish page ask them, so the state, the refusal before posting and the
+ * request fields live here once.
  */
 export function useParentAccountFields() {
   const t = useTranslations("auth");
+  // E.164 as the input emits it ("+358…"), or "" for none.
+  const [phone, setPhone] = useState("");
   const [homeLocation, setHomeLocation] = useState<LocationPick | null>(null);
   // The required acknowledgement: agreement to the terms, having been given the
   // Privacy Policy to read. It used to carry a parent-or-guardian declaration
@@ -31,6 +36,8 @@ export function useParentAccountFields() {
   const [marketingConsent, setMarketingConsent] = useState(false);
 
   return {
+    phone,
+    setPhone,
     homeLocation,
     setHomeLocation,
     acceptedTerms,
@@ -49,10 +56,12 @@ export function useParentAccountFields() {
      * exactly as usable as it was.
      */
     validate(): string | null {
+      if (phone && !isValidPhoneNumber(phone)) return t("invalidPhone");
       return acceptedTerms ? null : t("register.termsRequired");
     },
     /** These answers as the registration routes' request body takes them. */
     requestBody: {
+      phone: phone || undefined,
       homeLocationId: homeLocation?.location.id,
       // Always an explicit boolean, never omitted. The schema takes it as
       // optional so an older client that predates the box can still
@@ -78,9 +87,17 @@ export function ParentAccountFields({
   disabled: boolean;
 }) {
   const t = useTranslations("auth");
+  const c = useTranslations("common");
 
   return (
     <>
+      <Field label={c("phoneNumber")} htmlFor="phone" optional>
+        <InternationalPhoneInput
+          id="phone"
+          value={fields.phone || undefined}
+          onChange={(value) => fields.setPhone(value ?? "")}
+        />
+      </Field>
       <Field label={t("register.location")} htmlFor="homeLocation" optional>
         <HomeLocationField
           id="homeLocation"

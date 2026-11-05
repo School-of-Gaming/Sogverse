@@ -22,7 +22,7 @@ import {
 import { AdminDashboardPageBody } from "./admin-dashboard-page-body";
 import {
   buildAdminDashboardData,
-  buildCertificationQueue,
+  buildGeduTasks,
   viewerZoneAbbrev,
 } from "./build-admin-dashboard-data";
 
@@ -154,7 +154,8 @@ export function AdminDashboardPage({
    * - "registered 3 minutes ago" has to become "an hour ago" while the page
    *   sits open. A candidate's contract-acceptance date rides along in that same
    *   map — it is not a ticking fact, but re-deriving it in a second place to
-   *   keep this list pure would buy nothing and cost the queue a second source.
+   *   keep this list pure would buy nothing and cost the section a second
+   *   source.
    * - a zone's abbreviation turns over *inside* a day. Helsinki becomes EEST at
    *   03:00 on the last Sunday in March, and a schedule sampled at midnight
    *   would go on saying EET beside times it had already moved.
@@ -169,17 +170,12 @@ export function AdminDashboardPage({
         locale,
         now,
       ),
-      uncertifiedGedus: buildCertificationQueue(
-        snapshot.certification_queue,
-        locale,
-        now,
-        timeZone,
-      ),
+      geduTasks: buildGeduTasks(snapshot.gedu_tasks, locale, now, timeZone),
     }),
     [
       dayData,
       snapshot.schedule_products,
-      snapshot.certification_queue,
+      snapshot.gedu_tasks,
       locale,
       timeZone,
       now,
@@ -189,13 +185,13 @@ export function AdminDashboardPage({
   /**
    * Certify one gedu, and make every surface that names them agree again.
    *
-   * `mutateAsync` rather than `mutate` because the queue needs to know *when* —
-   * the row leaves the list on the resolution and shows a retry on the
-   * rejection, and a fire-and-forget call could tell it neither. The mutation
-   * already invalidates the whole `gedu-profiles` key on success — the users
-   * list, the picker and the certification card follow from that — so all this
-   * adds is the dashboard's own key, because the certification queue is read
-   * from the dashboard's own document rather than from that list.
+   * `mutateAsync` rather than `mutate` because the Gedu section needs to know
+   * *when* — the Certify leaves the row on the resolution and shows a retry on
+   * the rejection, and a fire-and-forget call could tell it neither. The
+   * mutation already invalidates the whole `gedu-profiles` key on success — the
+   * users list, the picker and the certification card follow from that — so all
+   * this adds is the dashboard's own key, because the Gedu tasks are read from
+   * the dashboard's own document rather than from that list.
    */
   const handleCertifyGedu = useCallback(
     async (geduId: string) => {

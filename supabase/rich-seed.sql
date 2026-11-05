@@ -2685,13 +2685,18 @@ BEGIN
       p_opted_in     => true);
   END LOOP;
 
-  -- The owner's admin makes every profile public but the second admin's,
-  -- which stays waiting, so the user page shows Make public live.
+  -- The owner's admin makes every profile public but three, which stay
+  -- waiting: the second admin's, so the user page shows Make public live, and
+  -- two Gedus', so the dashboard's Gedus card lists a profile to review on an
+  -- uncertified Gedu (the trainee) and on a certified one.
   PERFORM set_config('request.jwt.claims',
     json_build_object('sub', v_admin::text, 'role', 'authenticated')::text, true);
 
   FOR v_id IN SELECT tp.user_id FROM public.team_profiles tp
+                JOIN public.profiles p ON p.id = tp.user_id
                WHERE tp.user_id <> v_admin2
+                 AND p.email NOT IN ('oliver.grant@example.com',
+                                     'ronja.kallio@example.com')
   LOOP
     PERFORM public.set_team_profile_approval(v_id, true);
   END LOOP;

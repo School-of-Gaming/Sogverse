@@ -184,7 +184,7 @@ or withdrawn check does not narrow a gedu's access, hide a surface or fail a
 call anywhere. Certification stays the platform's only blocking lever over an
 educator, for the same reason it is the contract's: independent gates on one
 person are how an account ends up in a state nobody can explain. What the check
-buys is *visibility* — the admin certification queue reports it so the decision
+buys is *visibility* — the admin dashboard's Gedu section reports it so the decision
 is better informed, not pre-empted.
 
 **Rule: `set_gedu_criminal_record_check(gedu_id, passed)` is the only way in.**
@@ -215,7 +215,7 @@ check into a constraint violation.
 **Admin.** The user-detail certification card carries the standing *and* the one
 control that changes it — a checkbox an admin ticks to say they have seen an
 acceptable extract, untickable again with no confirmation, exactly as
-de-certifying asks nothing. The dashboard's certification queue carries a second
+de-certifying asks nothing. The dashboard's Gedu section carries a second
 standing chip per row beside the contract's. Both certify affordances share one
 confirm dialog that names whichever prerequisites are missing, one warning line
 each, so a row missing both is asked once rather than twice. The users list
@@ -251,10 +251,10 @@ the words beside it, and a check/cross variant was only ever restating them.
 `gedu-profiles` root, exactly as `useSetGeduCertified` does — the flag lives on
 that row, so the detail card, the users list and the picker are all reading what
 it just changed — **and the admin dashboard's key alongside it**, because the
-certification queue renders the fact on every row it draws (a standing chip, and
+Gedu section renders the fact on every uncertified row it draws (a standing chip, and
 whether the certify button raises the missing-prerequisite confirmation). It
-moves nobody in or out of that queue, which is a different question from whether
-the queue is now stale. Both mutations' invalidations are **returned** from
+moves nobody in or out of that section, which is a different question from whether
+the section is now stale. Both mutations' invalidations are **returned** from
 `onSuccess`, so `mutateAsync` settles only once the refetch has landed and a
 control cannot re-enable showing the value it just replaced.
 

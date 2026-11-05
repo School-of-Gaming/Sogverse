@@ -384,6 +384,34 @@ describe("POST /api/auth/complete-registration", () => {
     });
   });
 
+  // -- Phone number --
+
+  it("writes the phone as the digits the column stores", async () => {
+    const response = await POST(
+      request({ ...validBody, phone: "+358401234567" }),
+    );
+
+    expect(response.status).toBe(200);
+    expect(profileRow()).toMatchObject({ phone: "358401234567" });
+  });
+
+  it.each([
+    ["absent", undefined],
+    ["empty", ""],
+  ])("writes no phone when it is %s", async (_label, phone) => {
+    const response = await POST(request({ ...validBody, phone }));
+
+    expect(response.status).toBe(200);
+    expect(profileRow()).not.toHaveProperty("phone");
+  });
+
+  it("refuses a phone the column cannot store, writing nothing", async () => {
+    const response = await POST(request({ ...validBody, phone: "+12" }));
+
+    expect(response.status).toBe(400);
+    expect(writes).toEqual([]);
+  });
+
   it("records a marketing refusal when the box was left unticked", async () => {
     await POST(request({ ...validBody, marketingConsent: false }));
 

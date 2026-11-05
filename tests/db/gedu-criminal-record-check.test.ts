@@ -44,7 +44,7 @@ describe("gedu criminal record check", () => {
 
   /** The educator every set/unset assertion below is about. */
   let subjectGeduId: string | null = null;
-  /** Uncertified and checked, so the certification queue has something to say. */
+  /** Uncertified and checked, so the dashboard's Gedu section has something to say. */
   let queuedGeduId: string | null = null;
 
   async function checkRow(userId: string) {
@@ -217,7 +217,7 @@ describe("gedu criminal record check", () => {
      * The invariant the RPC maintains, enforced by a CHECK.
      *
      * Two admin surfaces read different halves of it — the dashboard's
-     * certification queue ships only `criminal_record_check_at` and reads NULL
+     * Gedu section ships only `criminal_record_check_at` and reads NULL
      * as "no check", while the users list reads only
      * `criminal_record_check_passed` — so a disagreeing row would have the two
      * describing one educator differently. Nothing reachable through the app can
@@ -286,7 +286,7 @@ describe("gedu criminal record check", () => {
     });
   });
 
-  describe("the certification queue reports it", () => {
+  describe("the dashboard's Gedu section reports it", () => {
     it("carries the moment for a candidate whose check is recorded, and null for one whose is not", async () => {
       const recorded = await adminUser.rpc("set_gedu_criminal_record_check", {
         p_gedu_id: queuedGeduId!,
@@ -302,22 +302,22 @@ describe("gedu criminal record check", () => {
       expect(error).toBeNull();
       const snapshot = adminDashboardSnapshot.parse(data);
 
-      const checked = snapshot.certification_queue.find(
+      const checked = snapshot.gedu_tasks.find(
         (g) => g.id === queuedGeduId,
       );
       expect(checked).toBeDefined();
       const stamp = await checkRow(queuedGeduId!);
       // Parsed rather than string-compared: PostgREST and jsonb render a
       // timestamptz with different offsets for the same instant.
-      expect(Date.parse(checked!.criminal_record_check_at!)).toBe(
+      expect(Date.parse(checked!.certification!.criminal_record_check_at!)).toBe(
         Date.parse(stamp.criminal_record_check_at!),
       );
 
-      const unchecked = snapshot.certification_queue.find(
+      const unchecked = snapshot.gedu_tasks.find(
         (g) => g.id === subjectGeduId,
       );
       expect(unchecked).toBeDefined();
-      expect(unchecked?.criminal_record_check_at).toBeNull();
+      expect(unchecked?.certification?.criminal_record_check_at).toBeNull();
     });
   });
 });
