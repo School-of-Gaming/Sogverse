@@ -98,26 +98,6 @@ export const createCheckoutBody = z.object({
 });
 
 /**
- * legacy-checkout-session: what a Checkout Session created before bookings
- * carries for the seat beyond who and what: the UTM tag and the School of Gaming
- * mailing answer. Read by the Stripe webhook into `confirm_paid_participation`.
- * Every key is optional and the answer is spelled as a string, because Stripe
- * metadata holds nothing else.
- */
-export const seatAnswersSessionMetadata = z.object({
-  utmSource: z.string().optional(),
-  utmMedium: z.string().optional(),
-  utmCampaign: z.string().optional(),
-  utmContent: z.string().optional(),
-  utmTerm: z.string().optional(),
-  schoolOfGamingMarketingOptIn: z.enum(["true", "false"]).optional(),
-});
-
-export type SeatAnswersSessionMetadata = z.infer<
-  typeof seatAnswersSessionMetadata
->;
-
-/**
  * Request body of POST /api/participations/waitlist.
  *
  * `.uuid()` rather than `.min(1)` because these ids go straight into a `uuid`
@@ -246,25 +226,6 @@ export const confirmBookingRpcResult = z.discriminatedUnion("kind", [
     ...confirmedBookingFacts,
     existing_participation_id: z.string().nullable(),
     existing_status: z.string().nullable(),
-  }),
-]);
-
-/**
- * legacy-checkout-session: `confirm_paid_participation` RPC result, for a
- * Checkout Session created before bookings. `idempotent` has the same polarity as
- * `confirm_booking`'s. Both ids are required: the function raises rather than
- * answer without one.
- */
-export const confirmPaidParticipationRpcResult = z.discriminatedUnion("kind", [
-  z.object({
-    kind: z.literal("confirmed"),
-    participation_id: z.string(),
-    /** False when this call created the row; true when it recognised its own. */
-    idempotent: z.boolean(),
-  }),
-  z.object({
-    kind: z.literal("duplicate_payment"),
-    existing_participation_id: z.string(),
   }),
 ]);
 

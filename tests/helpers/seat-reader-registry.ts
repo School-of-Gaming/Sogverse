@@ -85,7 +85,6 @@ export const DB_SEAT_READERS: Record<string, SeatRead> = {
   "function:admin_enroll_participant": { kind: "writer", why: "inserts an active seat; the occupying-status unique index refuses a second one and lets an ended pair come back" },
   "function:apply_group_changes": { kind: "writer", why: "its move filters to active seats, so one naming an ended seat from a stale panel is skipped" },
   "function:claim_expired_seat_offer_notifications": { kind: "writer", why: "claims waitlisted rows whose offer lapsed" },
-  "function:confirm_paid_participation": { kind: "writer", why: "stamps the seat confirm_booking just answered with" },
   "function:erase_participations": { kind: "writer", why: "the one deletion of seats, for erasure" },
   "function:update_product": { kind: "writer", why: "drops waitlisted rows when the waitlist is turned off" },
 };
@@ -149,7 +148,6 @@ export const TS_SEAT_READERS: Record<string, readonly TsSeatRead[]> = {
     { in: "getParticipationCounts", kind: "live", why: "the picker's lock folds rows through mergeGamerSignupState, which ignores ended" },
     { in: "getConfirmation", kind: "by-id-gated", why: "an ended seat reads as null" },
     { in: "getConfirmationByCheckoutSession", kind: "by-id-gated", why: "the booking's own seat; an ended one reads as seat_gone" },
-    { in: "hasSeatOnProduct", kind: "live", why: "occupying statuses only" },
     { in: "buildMyUpcomingSessionsQuery", kind: "history", why: "the dashboards keep an ended seat as a finished card" },
     { in: "buildMyWaitlistQuery", kind: "live", why: "waitlisted rows only" },
   ],

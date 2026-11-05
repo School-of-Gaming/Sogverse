@@ -3,12 +3,8 @@ import type Stripe from "stripe";
 import { stripe } from "@/lib/stripe/client";
 import { currentPeriodEndOf } from "@/lib/stripe/subscription-period";
 import { createAdminClient } from "@/lib/supabase/admin";
-import {
-  confirmBookingRpcResult,
-  confirmPaidParticipationRpcResult,
-} from "@/services/participations/participations.contracts";
+import { confirmBookingRpcResult } from "@/services/participations/participations.contracts";
 import { sendProductConfirmationEmail } from "@/services/participations/product-confirmation-email.server";
-import { seatAnswerArgsFromSessionMetadata } from "@/services/participations/seat-answers";
 import { isSupportedCurrency } from "@/lib/constants/currency";
 import type { Json, PaymentPurpose } from "@/types";
 
@@ -155,12 +151,11 @@ async function handleCheckoutCompleted(
     session.payment_status === "no_payment_required";
   if (session.payment_status !== "paid" && !isZeroDueSubscription) return;
 
-  // `client_reference_id` is the booking the route wrote before Checkout.
-  // legacy-checkout-session: a Session created before bookings has none, and
-  // identifies itself by its metadata instead. One without that is not ours.
+  // `client_reference_id` is the booking the route wrote before Checkout. A
+  // Session without one is not ours: the account also carries Sessions from
+  // other sources.
   const bookingId = session.client_reference_id;
-  const legacyFacts = bookingId ? null : legacyFactsFromMetadata(session);
-  if (!bookingId && !legacyFacts) return;
+  if (!bookingId) return;
 
   // A finished event never gets here (the route checks it first), so this is a
   // first delivery or the re-run of one that died part-way. Every write below is
@@ -173,9 +168,7 @@ async function handleCheckoutCompleted(
   //                       are the right ones to make.
   //   duplicate_payment — a different payment already put this participant on
   //                       this product. Handled below.
-  const confirmed = legacyFacts
-    ? await confirmLegacySession(admin, session, legacyFacts)
-    : await confirmBooking(admin, bookingId!, session.id);
+  const confirmed = await confirmBooking(admin, bookingId, session.id);
   const { customerId, participantId, productId, purchaseShape, currency } =
     confirmed.facts;
   const isSubscription = purchaseShape.startsWith("subscription_");
@@ -444,7 +437,7 @@ interface ConfirmedFacts {
   currency: string;
 }
 
-/** A confirm's answer, the same from both paths. */
+/** A confirm's answer. */
 type ConfirmOutcome = { facts: ConfirmedFacts } & (
   | { kind: "settled"; participationId: string | null; idempotent: boolean }
   | { kind: "duplicate_payment"; existingParticipationId: string | null }
@@ -487,68 +480,6 @@ async function confirmBooking(
         facts,
         kind: "duplicate_payment",
         existingParticipationId: result.existing_participation_id,
-      };
-}
-
-/**
- * legacy-checkout-session: who and what a Session created before bookings bought,
- * from the metadata the old checkout route wrote. Null on a Session that is not
- * ours: the account also carries Sessions from other sources.
- */
-function legacyFactsFromMetadata(
-  session: Stripe.Checkout.Session,
-): ConfirmedFacts | null {
-  const purchaseShape = session.metadata?.purchaseShape;
-  const customerId = session.metadata?.customerId;
-  const participantId = session.metadata?.participantId;
-  const productId = session.metadata?.productId;
-  // Our integration currency, always EUR. Safe to pair with `amount_total`:
-  // even with Adaptive Pricing on, `session.amount_total`/`currency` report the
-  // EUR settlement amount we receive — the customer's local currency lives in
-  // `session.presentment_details`, which we don't record.
-  const currency = session.metadata?.currency;
-  if (!purchaseShape || !customerId || !participantId || !productId || !currency) {
-    return null;
-  }
-  return { customerId, participantId, productId, purchaseShape, currency };
-}
-
-/**
- * legacy-checkout-session: the confirm for a Session created before bookings. The
- * function writes a booking from these arguments and takes the one confirm path.
- */
-async function confirmLegacySession(
-  admin: Admin,
-  session: Stripe.Checkout.Session,
-  facts: ConfirmedFacts,
-): Promise<ConfirmOutcome> {
-  const { data, error } = await admin.rpc("confirm_paid_participation", {
-    p_product_id: facts.productId,
-    p_participant_id: facts.participantId,
-    p_customer_id: facts.customerId,
-    p_checkout_session_id: session.id,
-    ...seatAnswerArgsFromSessionMetadata(session.metadata),
-  });
-  if (error) {
-    throw new Error(`confirm_paid_participation failed: ${error.message}`);
-  }
-  const parsed = confirmPaidParticipationRpcResult.safeParse(data);
-  if (!parsed.success) {
-    throw new Error(
-      `confirm_paid_participation returned an unexpected shape: ${parsed.error.message}`,
-    );
-  }
-  return parsed.data.kind === "confirmed"
-    ? {
-        facts,
-        kind: "settled",
-        participationId: parsed.data.participation_id,
-        idempotent: parsed.data.idempotent,
-      }
-    : {
-        facts,
-        kind: "duplicate_payment",
-        existingParticipationId: parsed.data.existing_participation_id,
       };
 }
 
