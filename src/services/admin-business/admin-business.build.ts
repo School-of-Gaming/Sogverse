@@ -67,6 +67,8 @@ export type BusinessSeatRow = Pick<
   | "signed_up_at"
   | "ended_at"
 >;
+/** A waitlist place held now: the family waiting, on any product, for any gamer. */
+export type BusinessWaitlistPlaceRow = Pick<Participation, "customer_id">;
 export type BusinessSubscriptionRow = Pick<
   FamilySubscription,
   "customer_id" | "participation_id" | "currency" | "status" | "created_at" | "ended_at"
@@ -119,6 +121,8 @@ export interface BusinessFacts {
   products: readonly BusinessProductRow[];
   /** Every seat held now or once — active and ended, never waitlisted. */
   seats: readonly BusinessSeatRow[];
+  /** Every waitlist place held now; a place is not a seat, and keeps no history. */
+  waitlistPlaces: readonly BusinessWaitlistPlaceRow[];
   subscriptions: readonly BusinessSubscriptionRow[];
   prices: readonly BusinessPriceRow[];
   /** Every payment ever recorded. */
@@ -179,6 +183,7 @@ export type EngagementSlice =
   | "paidBefore"
   | "municipalityOnly"
   | "freeOnly"
+  | "waiting"
   | "neverEnrolled"
   | "noGamer";
 
@@ -188,6 +193,7 @@ export const ENGAGEMENT_SLICES: readonly EngagementSlice[] = [
   "paidBefore",
   "municipalityOnly",
   "freeOnly",
+  "waiting",
   "neverEnrolled",
   "noGamer",
 ];
@@ -508,6 +514,7 @@ function engagementOf(
   );
   const seatsByFamily = groupBy(spans, (span) => span.customerId);
   const withGamer = new Set(facts.gamerLinks.map((link) => link.parent_id));
+  const waiting = new Set(facts.waitlistPlaces.map((place) => place.customer_id));
   const spanBySeat = new Map(spans.map((span) => [span.seatId, span]));
   const paying = payingFamilySet(spans, now);
   // A live subscription whose seat's club has not begun: its span starts later.
@@ -530,9 +537,11 @@ function engagementOf(
       : payers.has(family.id)
         ? "paidBefore"
         : seats.length === 0
-          ? withGamer.has(family.id)
-            ? "neverEnrolled"
-            : "noGamer"
+          ? waiting.has(family.id)
+            ? "waiting"
+            : withGamer.has(family.id)
+              ? "neverEnrolled"
+              : "noGamer"
           : seats.every((seat) => seat.productType === "municipality_club")
             ? "municipalityOnly"
             : "freeOnly";

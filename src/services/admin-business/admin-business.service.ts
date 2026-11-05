@@ -34,7 +34,7 @@ export class AdminBusinessService {
    * Every figure on the page, as of `now` — which the caller fixes once per
    * request so the invoicing builds and this one share a clock.
    *
-   * A perceptibly slow read: every parent, gamer link, seat, subscription and payment,
+   * A perceptibly slow read: every parent, gamer link, seat, waitlist place, subscription and payment,
    * plus twelve months of each invoicing document. A refusal from either
    * invoicing read (a municipality club whose location reaches no
    * municipality) fails the whole read, as it fails that page.
@@ -46,6 +46,7 @@ export class AdminBusinessService {
       gamerLinks,
       products,
       seats,
+      waitlistPlaces,
       subscriptions,
       prices,
       payments,
@@ -58,6 +59,7 @@ export class AdminBusinessService {
       this.readGamerLinks(),
       this.readProducts(),
       this.readSeats(),
+      this.readWaitlistPlaces(),
       this.readSubscriptions(),
       this.readPrices(),
       this.readPayments(),
@@ -71,6 +73,7 @@ export class AdminBusinessService {
       gamerLinks,
       products,
       seats,
+      waitlistPlaces,
       subscriptions,
       prices,
       payments,
@@ -125,6 +128,18 @@ export class AdminBusinessService {
           { count: "exact" },
         )
         .in("status", [...HELD_SEAT_STATUSES, "ended"])
+        .order("id")
+        .range(from, to),
+    );
+  }
+
+  /** Every waitlist place held now: a place that leaves the line is deleted or becomes a seat. */
+  private readWaitlistPlaces() {
+    return walkPages("businessWaitlistPlaces", (from, to) =>
+      this.supabase
+        .from("participations")
+        .select("customer_id", { count: "exact" })
+        .eq("status", "waitlisted")
         .order("id")
         .range(from, to),
     );

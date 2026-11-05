@@ -106,6 +106,7 @@ export const TS_SEAT_READERS: Record<string, readonly TsSeatRead[]> = {
   ],
   "src/services/admin-business/admin-business.service.ts": [
     { in: "readSeats", kind: "history", why: "the business figures are counted over time: each seat is a span from sign-up to its end, so ended seats are what last month's figures, the stops and a past month's gamers per gedu are made of" },
+    { in: "readWaitlistPlaces", kind: "live", why: "waitlisted rows only: the families waiting for a place now" },
     { in: "readSubscriptions", kind: "history", why: "recurring revenue at the end of last month counts subscriptions that have ended since" },
   ],
   "src/app/api/gedu/sessions/email-report/route.ts": [

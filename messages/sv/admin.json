@@ -1952,6 +1952,7 @@
         "paidBefore": "Har betalat tidigare, ingen prenumeration",
         "municipalityOnly": "Endast kommunala klubbar",
         "freeOnly": "Endast gratis eller obetalda platser",
+        "waiting": "Väntar på en plats",
         "neverEnrolled": "Gamer tillagd, aldrig bokat",
         "noGamer": "Ingen gamer, aldrig bokat"
       }

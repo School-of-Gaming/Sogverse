@@ -52,6 +52,7 @@ function facts(overrides: Partial<BusinessFacts> = {}): BusinessFacts {
     gamerLinks: [],
     products: PRODUCTS,
     seats: [],
+    waitlistPlaces: [],
     subscriptions: [],
     prices: [
       { product_id: "club", currency: "eur", price_cents: 4900 },
@@ -154,8 +155,8 @@ describe("families by engagement", () => {
   it("puts every family in the first slice it matches, and the slices sum to the total", () => {
     const overview = buildBusinessOverview(
       facts({
-        families: ["sub", "paid", "muni", "mixed", "never", "waitlistOnly"].map((id) => family(id)),
-        gamerLinks: [{ parent_id: "never" }, { parent_id: "waitlistOnly" }],
+        families: ["sub", "paid", "muni", "mixed", "never", "neverToo"].map((id) => family(id)),
+        gamerLinks: [{ parent_id: "never" }, { parent_id: "neverToo" }],
         seats: [
           seat("s1", "sub", "club", "2026-09-01T10:00:00Z"),
           seat("p1", "paid", "camp", "2026-06-01T10:00:00Z"),
@@ -176,6 +177,7 @@ describe("families by engagement", () => {
       { slice: "paidBefore", families: 1 },
       { slice: "municipalityOnly", families: 1 },
       { slice: "freeOnly", families: 1 },
+      { slice: "waiting", families: 0 },
       { slice: "neverEnrolled", families: 2 },
       { slice: "noGamer", families: 0 },
     ]);
@@ -202,12 +204,55 @@ describe("families by engagement", () => {
       { slice: "paidBefore", families: 0 },
       { slice: "municipalityOnly", families: 0 },
       { slice: "freeOnly", families: 1 },
+      { slice: "waiting", families: 0 },
       { slice: "neverEnrolled", families: 2 },
       { slice: "noGamer", families: 1 },
     ]);
     const sum = overview.engagement.slices.reduce((total, s) => total + s.families, 0);
     expect(sum).toBe(overview.engagement.totalFamilies);
     expect(sum).toBe(5);
+  });
+
+  it("puts a family with no seat but a waitlist place now in its own slice, after every seated one", () => {
+    const overview = buildBusinessOverview(
+      facts({
+        families: ["waits", "waitsNoGamer", "seatedAndWaits", "subAndWaits", "dropped", "promoted"].map((id) =>
+          family(id),
+        ),
+        gamerLinks: ["waits", "seatedAndWaits", "subAndWaits", "dropped", "promoted"].map((id) => ({ parent_id: id })),
+        seats: [
+          seat("w1", "seatedAndWaits", "muni", "2026-09-01T10:00:00Z"),
+          seat("w2", "subAndWaits", "club", "2026-09-01T10:00:00Z"),
+          // Promoted from the line: the place is a seat now, and no longer a place.
+          seat("w3", "promoted", "free", "2026-09-01T10:00:00Z"),
+        ],
+        subscriptions: [sub("subAndWaits", "w2", "2026-09-01T10:00:00Z", "active")],
+        // "dropped" left the line, and a place that leaves it is deleted.
+        waitlistPlaces: [
+          { customer_id: "waits" },
+          { customer_id: "waits" },
+          { customer_id: "waitsNoGamer" },
+          { customer_id: "seatedAndWaits" },
+          { customer_id: "subAndWaits" },
+        ],
+      }),
+      NOW,
+    );
+    expect(overview.engagement.slices).toEqual([
+      { slice: "subscriber", families: 1 },
+      { slice: "paidBefore", families: 0 },
+      { slice: "municipalityOnly", families: 1 },
+      { slice: "freeOnly", families: 1 },
+      { slice: "waiting", families: 2 },
+      { slice: "neverEnrolled", families: 1 },
+      { slice: "noGamer", families: 0 },
+    ]);
+    const sum = overview.engagement.slices.reduce((total, s) => total + s.families, 0);
+    expect(sum).toBe(overview.engagement.totalFamilies);
+    expect(sum).toBe(6);
+    // A waitlist place is not a seat for any other figure.
+    expect(overview.headline.gamersInSeat.now).toBe(3);
+    expect(overview.headline.signupToSeat.now.seated).toBe(0);
   });
 
   it("counts the subscribers whose club has not begun, who are not paying families yet", () => {

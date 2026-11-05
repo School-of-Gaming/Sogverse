@@ -379,6 +379,7 @@ const SLICE_COLOUR: Record<EngagementSlice, { color: ChartColor; swatch: string 
   paidBefore: { color: "var(--color-yty-valor)", swatch: "bg-yty-valor" },
   municipalityOnly: { color: "var(--color-yty-wit)", swatch: "bg-yty-wit" },
   freeOnly: { color: "var(--color-foreground)", swatch: "bg-foreground" },
+  waiting: { color: "var(--color-yty-harmony)", swatch: "bg-yty-harmony" },
   neverEnrolled: { color: "var(--color-muted-foreground)", swatch: "bg-muted-foreground" },
   noGamer: { color: "var(--color-border)", swatch: "bg-border" },
 };

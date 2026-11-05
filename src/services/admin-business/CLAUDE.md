@@ -50,8 +50,9 @@ nothing; what it cannot see is a change that leaves no timestamp (below).
 - **Families by engagement**: every parent account in exactly one slice, the first it
   matches — a live subscription; any payment ever; every seat ever held on a municipality
   club; any other seat (free products, and paid ones nobody was charged for); no seat ever
-  but a gamer linked; no seat ever and no gamer. A gamer link is read as it stands now, and
-  a parent's own seat is a seat. A waitlist place is not a seat.
+  but a waitlist place now; no seat ever but a gamer linked; no seat ever and no gamer. A
+  gamer link and a waitlist place are read as they stand now, and a parent's own seat is a
+  seat. A waitlist place is not a seat.
 - **Revenue by month**: payments by the product they paid for — consumer clubs are
   subscriptions, camps and events their own band, and a payment naming no product
   unattributed. A duplicate charge is left out: it is refunded by hand and bought nothing.

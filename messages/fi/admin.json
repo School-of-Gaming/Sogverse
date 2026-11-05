@@ -1952,6 +1952,7 @@
         "paidBefore": "Maksanut aiemmin, ei tilausta",
         "municipalityOnly": "Vain kuntakerhoja",
         "freeOnly": "Vain maksuttomia tai veloittamattomia paikkoja",
+        "waiting": "Odottaa paikkaa",
         "neverEnrolled": "Gameri lisätty, ei varauksia",
         "noGamer": "Ei gameria, ei varauksia"
       }

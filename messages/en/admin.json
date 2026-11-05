@@ -1952,6 +1952,7 @@
         "paidBefore": "Paid before, not subscribing",
         "municipalityOnly": "Municipality clubs only",
         "freeOnly": "Free or uncharged seats only",
+        "waiting": "Waiting for a place",
         "neverEnrolled": "Gamer added, never booked",
         "noGamer": "No gamer, never booked"
       }

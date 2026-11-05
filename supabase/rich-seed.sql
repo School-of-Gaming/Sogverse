@@ -112,7 +112,7 @@
 -- family feed, the gedu's workspace and both Invoicing pages show the breaks
 -- (section 15).
 --
--- THE BUSINESS HAS A YEAR BEHIND IT. Forty-four more families, signed up over
+-- THE BUSINESS HAS A YEAR BEHIND IT. Forty-six more families, signed up over
 -- the fourteen months before the build, subscribe to clubs, leave them, buy
 -- camps and fill a municipality's school-year club, and every sign-up above
 -- is moved back to when it would have happened, so /admin/business draws
@@ -3230,9 +3230,9 @@ COMMIT;
 --
 -- WHAT IT ADDS:
 --
---   * Forty-four more parent accounts, created over the fourteen months before
+--   * Forty-six more parent accounts, created over the fourteen months before
 --     the build, a few more each month as it goes on. Most enrol; some never
---     do, two only join a waitlist, and nine are the families of a
+--     do, four only join a waitlist, and nine are the families of a
 --     municipality's club and hold nothing else.
 --   * Two consumer clubs running all year, the Minecraft Survival Club and the
 --     Roblox Obby Club, which families subscribe to and leave from across the
@@ -3340,8 +3340,10 @@ INSERT INTO history_family VALUES
   ('jenni.vuorinen@example.com',    'Jenni',    'Vuorinen',   'fi', 40),
   ('lauri.mustonen@example.com',    'Lauri',    'Mustonen',   'fi', 30),
   ('reetta.salo@example.com',       'Reetta',   'Salo',       'fi', 22),
+  ('laura.kangas@example.com',      'Laura',    'Kangas',     'fi', 18),
   ('petteri.oksanen@example.com',   'Petteri',  'Oksanen',    'fi', 15),
   ('maria.lindqvist@example.com',   'Maria',    'Lindqvist',  'sv', 9),
+  ('jussi.ylinen@example.com',      'Jussi',    'Ylinen',     'fi', 6),
   ('eero.hamalainen@example.com',   'Eero',     'Hämäläinen', 'fi', 4),
   ('sanna.koski@example.com',       'Sanna',    'Koski',      'fi', 1);
 
@@ -3389,7 +3391,9 @@ INSERT INTO history_child VALUES
   ('peppi@gamer.example.com',    'jenni.vuorinen@example.com',    'Peppi',    'Vuorinen',   8),
   ('oiva@gamer.example.com',     'lauri.mustonen@example.com',    'Oiva',     'Mustonen',   11),
   ('taimi@gamer.example.com',    'petteri.oksanen@example.com',   'Taimi',    'Oksanen',    9),
-  ('kasper@gamer.example.com',   'eero.hamalainen@example.com',   'Kasper',   'Hämäläinen', 12);
+  ('kasper@gamer.example.com',   'eero.hamalainen@example.com',   'Kasper',   'Hämäläinen', 12),
+  ('wilma@gamer.example.com',    'laura.kangas@example.com',      'Wilma',    'Kangas',     10),
+  ('minja@gamer.example.com',    'jussi.ylinen@example.com',      'Minja',    'Ylinen',     11);
 
 -- Section 8's children appear here too (Milo, Nea, Elias, Venla, Väinö, Eino):
 -- families already on the platform buying the year's camps.
@@ -3802,7 +3806,7 @@ $$;
 
 COMMIT;
 
--- The municipality seats, arranged by an admin as section 8's are; the two
+-- The municipality seats, arranged by an admin as section 8's are; the four
 -- families who only ever joined a waitlist; and the paid seats placed in
 -- their product's one group, as section 8 places its own.
 BEGIN;
@@ -3836,7 +3840,8 @@ BEGIN
   FOR r IN SELECT p.id AS gamer_id, pg.parent_id
              FROM public.profiles p
              JOIN public.parent_gamer pg ON pg.gamer_id = p.id
-            WHERE p.email IN ('lumi@gamer.example.com', 'kasper@gamer.example.com')
+            WHERE p.email IN ('lumi@gamer.example.com', 'kasper@gamer.example.com',
+                              'wilma@gamer.example.com', 'minja@gamer.example.com')
   LOOP
     PERFORM set_config('request.jwt.claims',
       json_build_object('sub', r.parent_id::text, 'role', 'authenticated')::text, true);
