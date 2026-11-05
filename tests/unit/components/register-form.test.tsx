@@ -187,6 +187,36 @@ describe("RegisterForm", () => {
     expect(postedBody()).not.toHaveProperty("homeLocationId");
   });
 
+  // -- The optional phone number --
+
+  it("sends the phone as E.164 when one was typed", async () => {
+    const form = renderForm();
+    form.fill("phone", "+358401234567");
+
+    await form.submit();
+
+    expect(postedBody()).toMatchObject({ phone: "+358401234567" });
+  });
+
+  it("omits the phone when none was typed", async () => {
+    const form = renderForm();
+
+    await form.submit();
+
+    expect(postedBody()).not.toHaveProperty("phone");
+  });
+
+  it("refuses locally, and posts nothing, when the phone is not a valid number", async () => {
+    const form = renderForm();
+    form.fill("phone", "+3584");
+
+    await form.submit();
+
+    expect(mockFetch).not.toHaveBeenCalled();
+    expect(form.container.textContent).toContain("invalidPhone");
+    expect(form.button().disabled).toBe(false);
+  });
+
   // -- The required acknowledgement --
   //
   // One box, two obligations: the registrant says they are the parent or legal

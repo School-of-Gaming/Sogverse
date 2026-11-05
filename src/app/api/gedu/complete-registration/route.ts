@@ -5,6 +5,7 @@ import { sendTransactionalEmail } from "@/lib/brevo";
 import { SENDER_EMAIL, SENDER_NAME, SUPPORT_EMAIL } from "@/lib/constants/brand";
 import { ROUTES } from "@/lib/constants/routes";
 import { detectLocaleFromHeader, resolveLocale } from "@/lib/constants/locales";
+import { phoneDigitsForStorage } from "@/lib/constants/phone";
 import { buildWelcomeGeduEmail } from "@/lib/email-templates/welcome";
 import { getEmailTranslator } from "@/lib/email-templates/translator";
 import { createEmailVerificationToken } from "@/lib/email-verification";
@@ -12,7 +13,6 @@ import { registrationCompletedResponse } from "@/lib/registration-intent-cookie"
 import { getOrigin } from "@/lib/url";
 import { completeGeduRegistrationBody } from "@/services/gedu/gedu-registration.contracts";
 import {
-  geduPhoneDigits,
   promoteToGedu,
   resolveGeduGameHandles,
 } from "@/services/gedu/gedu-registration.server";
@@ -75,7 +75,7 @@ export const POST = defineRoute({
       );
     }
 
-    const phoneDigits = geduPhoneDigits(phone);
+    const phoneDigits = phoneDigitsForStorage(phone);
     if (phoneDigits === null) {
       return NextResponse.json(
         { error: "Invalid phone number" },
