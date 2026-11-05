@@ -8,15 +8,14 @@ import { AddGamerDialog } from "@/components/family/AddGamerDialog";
 import { asObject } from "../../helpers/json";
 
 /**
- * **A child added is a conversion only from a product's sign-up panel.**
+ * **Every child added is a conversion, and every create carries its id.**
  *
  * The dialog is the one place both callers meet: the family's own dashboard
  * opens it bare, and a product's sign-up panel opens it with the product its
- * page is about. Pinned here: that the bare dialog sends the create nothing a
- * report could be built from, and that the panel's sends the product with a
- * fresh id and hands that same id back only once the child exists — so the
- * panel's push and the route's report are one conversion, and a failed create
- * pushes nothing.
+ * page is about. Pinned here: that every create sends a fresh event id, with
+ * the product only when the caller named one, and that the same id is handed
+ * back with the new child only once the child exists — so the panel's push and
+ * the route's report are one conversion, and a failed create pushes nothing.
  */
 
 const messages = {
@@ -27,6 +26,7 @@ const messages = {
 
 const PARENT_ID = "6f1c2a4e-3b5d-4c7e-8f90-1a2b3c4d5e6f";
 const PRODUCT_ID = "7c9e1f42-3a55-4c8e-b1d6-9f0a2e4c7b83";
+const GAMER_ID = "1a8e1e2a-32f6-4c6f-9a6a-9d0f2a1b7c44";
 const UUID =
   /^[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/;
 
@@ -52,11 +52,13 @@ function field(id: string) {
   return input;
 }
 
+type DialogProps = Partial<React.ComponentProps<typeof AddGamerDialog>>;
+
 /** Fill page one, go to page two, and press the create with its default mode. */
-async function addChild(signUp?: React.ComponentProps<typeof AddGamerDialog>["signUp"]) {
+async function addChild(props: DialogProps = {}) {
   render(
     <NextIntlClientProvider locale="en" messages={messages}>
-      <AddGamerDialog open onOpenChange={() => {}} signUp={signUp} />
+      <AddGamerDialog open onOpenChange={() => {}} {...props} />
     </NextIntlClientProvider>,
   );
   fireEvent.change(field("add-gamer-first-name"), { target: { value: "Lily" } });
@@ -78,42 +80,70 @@ async function addChild(signUp?: React.ComponentProps<typeof AddGamerDialog>["si
   });
 }
 
+/** What the last create sent for the route's child-added report. */
+function sentConversion() {
+  return asObject(asObject(mutateAsync.mock.calls.at(-1)?.[0]).conversion);
+}
+
 beforeEach(() => {
   vi.clearAllMocks();
-  mutateAsync.mockResolvedValue({ gamerId: "1a8e1e2a-32f6-4c6f-9a6a-9d0f2a1b7c44" });
+  mutateAsync.mockResolvedValue({ gamerId: GAMER_ID });
 });
 
 describe("the family's own dashboard", () => {
-  it("creates the child with nothing a conversion could be reported from", async () => {
-    await addChild();
+  it("sends a fresh event id and no product", async () => {
+    const onCreated = vi.fn();
+
+    await addChild({ onCreated });
 
     expect(mutateAsync).toHaveBeenCalledTimes(1);
-    const call = asObject(mutateAsync.mock.calls[0][0]);
-    expect(call.parentId).toBe(PARENT_ID);
-    expect(call.signUp).toBeUndefined();
+    expect(asObject(mutateAsync.mock.calls[0][0]).parentId).toBe(PARENT_ID);
+    const conversion = sentConversion();
+    expect(conversion.eventId).toMatch(UUID);
+    expect(conversion.productId).toBeUndefined();
+    expect(onCreated).toHaveBeenCalledWith(GAMER_ID, conversion.eventId);
+  });
+
+  it("mints a new id for every attempt, a retry included", async () => {
+    mutateAsync.mockRejectedValueOnce(new Error("network down"));
+    await addChild();
+    // The failed create leaves the parent on the sign-in page; press it again.
+    await act(async () => {
+      const form = document.querySelector("form");
+      if (!form) throw new Error("no form");
+      fireEvent.submit(form);
+    });
+
+    expect(mutateAsync).toHaveBeenCalledTimes(2);
+    const [first, second] = mutateAsync.mock.calls.map(
+      ([call]) => asObject(asObject(call).conversion).eventId,
+    );
+    expect(first).toMatch(UUID);
+    expect(second).toMatch(UUID);
+    expect(first).not.toBe(second);
   });
 });
 
 describe("a product's sign-up panel", () => {
-  it("sends the product with a fresh id, and hands the same id back once the child exists", async () => {
-    const onChildAdded = vi.fn();
+  it("sends the product with a fresh id, and hands the same id back with the child", async () => {
+    const onCreated = vi.fn();
 
-    await addChild({ productId: PRODUCT_ID, onChildAdded });
+    await addChild({ productId: PRODUCT_ID, onCreated });
 
-    const signUp = asObject(asObject(mutateAsync.mock.calls[0][0]).signUp);
-    expect(signUp.productId).toBe(PRODUCT_ID);
-    expect(signUp.eventId).toMatch(UUID);
-    expect(onChildAdded).toHaveBeenCalledTimes(1);
-    expect(onChildAdded).toHaveBeenCalledWith(signUp.eventId);
+    const conversion = sentConversion();
+    expect(conversion.productId).toBe(PRODUCT_ID);
+    expect(conversion.eventId).toMatch(UUID);
+    expect(onCreated).toHaveBeenCalledTimes(1);
+    expect(onCreated).toHaveBeenCalledWith(GAMER_ID, conversion.eventId);
   });
 
   it("hands nothing back when the child was not created", async () => {
     mutateAsync.mockRejectedValue(new Error("network down"));
-    const onChildAdded = vi.fn();
+    const onCreated = vi.fn();
 
-    await addChild({ productId: PRODUCT_ID, onChildAdded });
+    await addChild({ productId: PRODUCT_ID, onCreated });
 
     expect(mutateAsync).toHaveBeenCalledTimes(1);
-    expect(onChildAdded).not.toHaveBeenCalled();
+    expect(onCreated).not.toHaveBeenCalled();
   });
 });

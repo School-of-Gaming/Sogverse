@@ -498,6 +498,24 @@ describe("reportMetaConversion — the request", () => {
     expect(sentEvent()).not.toHaveProperty("custom_data");
   });
 
+  // A child added from the family's own dashboard names no product, and still
+  // goes out with the parent's hashes on the dashboard's fixed path.
+  it("names nothing on a child added with no product, and still identifies the parent", async () => {
+    await reportMetaConversion(
+      request(),
+      { event: "child_added", product: undefined, sourcePath: "/parent", eventId: EVENT_ID },
+      PARENT,
+    );
+
+    const event = sentEvent();
+    expect(event.event_name).toBe("ChildProfileCreated");
+    expect(event.event_source_url).toBe(`${SITE_ORIGIN}/parent`);
+    expect(event).not.toHaveProperty("custom_data");
+    const userData = asObject(event.user_data);
+    expect(userData.em).toEqual([PARENT_EMAIL_SHA256]);
+    expect(userData.external_id).toEqual([PARENT_ID_SHA256]);
+  });
+
   it("carries the test event code only when one is configured", async () => {
     vi.stubEnv("META_CONVERSIONS_API_TEST_EVENT_CODE", "TEST12345");
 

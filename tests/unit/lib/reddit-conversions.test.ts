@@ -427,6 +427,27 @@ describe("reportRedditConversion — the request", () => {
     expect(user.external_id).toBe(PARENT_ID_SHA256);
   });
 
+  // From the family's own dashboard: no product, the dashboard's fixed path,
+  // and still the parent's hashes.
+  it("reports a child added with no product without any product fields", async () => {
+    await reportRedditConversion(
+      request(),
+      { event: "child_added", sourcePath: "/parent", eventId: EVENT_ID },
+      PARENT,
+    );
+
+    const event = sentEvent();
+    expect(event.type).toEqual({
+      tracking_type: "CUSTOM",
+      custom_event_name: "ChildProfileCreated",
+    });
+    expect(event.event_source_url).toBe(`${SITE_ORIGIN}/parent`);
+    expect(asObject(event.metadata)).toEqual({ conversion_id: EVENT_ID });
+    const user = asObject(event.user);
+    expect(user.email).toBe(PARENT_EMAIL_SHA256);
+    expect(user.external_id).toBe(PARENT_ID_SHA256);
+  });
+
   it("carries the test id only when one is configured", async () => {
     vi.stubEnv("REDDIT_CONVERSIONS_API_TEST_ID", "t2_testing");
 

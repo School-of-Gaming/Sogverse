@@ -87,18 +87,18 @@ const CREDENTIAL_FIELD_ID_PREFIX = "add-gamer";
 interface AddGamerDialogProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
-  onCreated?: (gamerId: string) => void;
   /**
-   * Passed only by a product's sign-up panel, the one place a child added is a
-   * step in the sign-up funnel: the product the page is about, and what to do
-   * once the child exists, handed the id the route's child-added report went
-   * out under so the caller can push its browser twin. Absent — the family's
-   * own dashboard — the create reports nothing.
+   * Handed the new child's id and the id the route's child-added report went
+   * out under, so a caller that can push the browser twin of that report — a
+   * product's sign-up panel — pushes it under the same one.
    */
-  signUp?: {
-    productId: string;
-    onChildAdded: (eventId: string) => void;
-  };
+  onCreated?: (gamerId: string, eventId: string) => void;
+  /**
+   * The product whose sign-up panel the dialog was opened from, passed only by
+   * that panel, so the route's report can name it. The family's own dashboard
+   * passes none, and the child is reported without a product.
+   */
+  productId?: string;
 }
 
 /**
@@ -138,7 +138,7 @@ export function AddGamerDialog({ open, ...props }: AddGamerDialogProps) {
  * We seed the status cache so the view swaps to the form and a reopen stays
  * unlocked rather than re-prompting.
  */
-function AddGamerGate({ onOpenChange, onCreated, signUp }: Omit<AddGamerDialogProps, "open">) {
+function AddGamerGate({ onOpenChange, ...props }: Omit<AddGamerDialogProps, "open">) {
   const queryClient = useQueryClient();
   const { data: status, isError } = usePinStatus();
 
@@ -154,7 +154,7 @@ function AddGamerGate({ onOpenChange, onCreated, signUp }: Omit<AddGamerDialogPr
   }
 
   if (status.unlocked) {
-    return <AddGamerForm onOpenChange={onOpenChange} onCreated={onCreated} signUp={signUp} />;
+    return <AddGamerForm onOpenChange={onOpenChange} {...props} />;
   }
 
   return (
@@ -214,32 +214,30 @@ function GatePlaceholder({ error, onClose }: { error: boolean; onClose: () => vo
 function AddGamerForm({
   onOpenChange,
   onCreated,
-  signUp,
+  productId,
 }: Omit<AddGamerDialogProps, "open">) {
   const { user } = useRequiredAuth();
   const createGamer = useCreateGamer();
 
+  // Every create reports a child added, so every attempt mints its own id:
+  // shared by the route's report and whatever the caller pushes, a failed
+  // attempt reports nothing, and a retry is a new attempt. The caller hears of
+  // the child here rather than through the card, because only here is the id
+  // known.
   const create = async (input: CreateGamerInput) => {
-    if (!signUp) return createGamer.mutateAsync({ parentId: user.id, input });
-    // One id per attempt, shared by the route's report and the caller's push;
-    // a failed attempt reports nothing, and a retry is a new attempt.
     const eventId = crypto.randomUUID();
     const result = await createGamer.mutateAsync({
       parentId: user.id,
       input,
-      signUp: { productId: signUp.productId, eventId },
+      conversion: { productId, eventId },
     });
-    signUp.onChildAdded(eventId);
+    onCreated?.(result.gamerId, eventId);
     return result;
   };
 
   return (
     <Dialog open onOpenChange={onOpenChange}>
-      <AddGamerFormCard
-        onOpenChange={onOpenChange}
-        onCreated={onCreated}
-        onCreate={create}
-      />
+      <AddGamerFormCard onOpenChange={onOpenChange} onCreate={create} />
     </Dialog>
   );
 }

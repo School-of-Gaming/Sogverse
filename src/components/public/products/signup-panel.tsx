@@ -341,19 +341,20 @@ export function SignupPanel({
 
   /**
    * A child was added from this panel: past the account, short of a seat. The
-   * route has already reported it under this id when the product is one we
-   * advertise; the push goes out for every product with `advertised` beside
-   * it, as every other push here does. Unpriced, as the route's report is —
-   * adding a child commits no money — and with nothing about the child.
+   * route has already reported it under this id, naming the product only when
+   * it is one we advertise — so this push names exactly that, and fires on
+   * every child added as `sign_up` fires on every account. Unpriced, as the
+   * route's report is, and with nothing about the child. Pushed before the new
+   * child is selected, while nothing about the panel has moved yet.
    */
-  const onChildAdded = (eventId: string) => {
+  const onGamerCreated = (gamerId: string, eventId: string) => {
     pushGtmEvent({
       event: GTM_EVENTS.childAdded,
       event_id: eventId,
-      ecommerce: ecommerceFor(false),
-      advertised,
+      ecommerce: advertised ? ecommerceFor(false) : null,
       page_path: productPagePath,
     });
+    fields.onSelectParticipant(gamerId);
   };
 
   const handleSubmit = () => {
@@ -600,8 +601,8 @@ export function SignupPanel({
       <AddGamerDialog
         open={addGamerOpen}
         onOpenChange={setAddGamerOpen}
-        onCreated={fields.onSelectParticipant}
-        signUp={{ productId: product.id, onChildAdded }}
+        productId={product.id}
+        onCreated={onGamerCreated}
       />
     </>
   );

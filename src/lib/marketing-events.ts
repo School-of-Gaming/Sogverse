@@ -26,13 +26,12 @@
  *     one — and never as an enrolment, because a name is what Meta optimises
  *     on and an abandoned attempt would train the campaign as hard as a seat.
  *
- *   - `ChildProfileCreated` — a parent added a child from a product's sign-up
- *     panel: past the account, short of a seat. A custom name, because Meta's
- *     taxonomy has no word for it and borrowing one would train a campaign on
- *     the wrong thing — `Lead` is the account, `CompleteRegistration` the seat.
- *     Reported only for an advertised product's page, and never when a child is
- *     added from the family's own dashboard: a child added off the funnel is not
- *     a step in it.
+ *   - `ChildProfileCreated` — a parent added a child: past the account, short
+ *     of a seat. A custom name, because Meta's taxonomy has no word for it and
+ *     borrowing one would train a campaign on the wrong thing — `Lead` is the
+ *     account, `CompleteRegistration` the seat. Reported for every child added,
+ *     as `Lead` is for every account, naming the product only when the child
+ *     was added from an advertised product's sign-up panel.
  *
  *   - `ViewContent` — a product page was looked at.
  *   - `PageView` — a marketing page was reached.

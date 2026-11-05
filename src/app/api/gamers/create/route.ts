@@ -268,40 +268,49 @@ export const POST = defineRoute({
     }
 
     // The child-added conversion, reported to the advertising platforms from
-    // here, the handler that committed it — and only when the child was added
-    // from a product's sign-up panel, which is the one caller that sends a
-    // product id. Added from the family's own dashboard, nothing is reported.
+    // here, the handler that committed it, for every child a parent adds —
+    // modelled on the lead, which reports every new account.
     //
-    // **Decided by the product row, never by the id alone.** The id is
-    // untrusted; the product is read after the response and reported only when
-    // it is one we advertise, so an unknown, unadvertised or unreadable product
-    // reports nothing at all. The source path is that product's public page,
-    // stated rather than taken from this route's own URL.
+    // AFTER the response, so a platform's round trip cannot delay or fail a
+    // child's account that already exists. The reporters decide for themselves
+    // whether to send anything: they refuse without this request's marketing
+    // consent, and the route is customer-only, so a gamer can never reach this.
     //
-    // The report carries the parent and the product, and nothing about the
-    // child: not the name, the birth month, the new account's id or how many
-    // children the family has. The reporters drop the price and refuse to send
-    // without this request's marketing consent; the route is customer-only, so
-    // a gamer can never reach this.
-    if (productId !== undefined) {
-      after(async () => {
-        const product = await advertisedProductFor(productId);
-        if (!product) return;
-        await reportAdConversion(
-          request,
-          {
-            event: "child_added",
-            product,
-            sourcePath: ROUTES.shopProductPath(productId),
-            // The id the panel pushes its own `child_added` under once this
-            // answers, so the two are one conversion to each platform.
-            eventId,
-          },
-          // The signed-in parent's own id and address, never the child's.
-          { id: user.id, email: profile.email },
-        );
-      });
-    }
+    // **The product is optional, and decided by the product row, never by the
+    // id alone.** Only a product's sign-up panel sends one; the id is untrusted,
+    // so the product is read after the response and named only when it is one
+    // we advertise. No id (the family's own dashboard), or an unknown,
+    // unadvertised or unreadable product: the report goes out naming none.
+    //
+    // **The source path is stated, never taken from this route's own URL:** the
+    // product's public page when the panel sent one, which is where the parent
+    // was, and otherwise the parent dashboard's fixed path, which names nobody.
+    //
+    // The report carries the parent and, at most, the product — nothing about
+    // the child: not the name, the birth month, the new account's id or how
+    // many children the family has. The reporters drop the price. The event id
+    // is the one the dialog minted for this attempt; the panel pushes its own
+    // `child_added` under it once this answers, so each platform counts the
+    // two once.
+    after(async () =>
+      reportAdConversion(
+        request,
+        {
+          event: "child_added",
+          product:
+            productId === undefined
+              ? undefined
+              : await advertisedProductFor(productId),
+          sourcePath:
+            productId === undefined
+              ? ROUTES.customer.dashboard
+              : ROUTES.shopProductPath(productId),
+          eventId,
+        },
+        // The signed-in parent's own id and address, never the child's.
+        { id: user.id, email: profile.email },
+      ),
+    );
 
     // The RPC committed, so the gamer exists. Return only its id — the sole
     // thing callers consume (to pre-select the new gamer). The client

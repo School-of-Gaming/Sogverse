@@ -57,7 +57,8 @@ import type { EnrolmentOutcome, GtmEcommerce } from "./marketing-events";
  *   - `child_added` — a parent added a child from a product's sign-up panel.
  *     Custom, as GA4's list has nothing between an account and a purchase;
  *     Meta's and Reddit's `ChildProfileCreated`. A child added from the
- *     family's own dashboard pushes nothing.
+ *     family's own dashboard pushes nothing: the container never loads on a
+ *     private page, so that one is reported by our servers alone.
  *   - `enrolment` — a seat or a queue place was taken. Custom rather than
  *     recommended: GA4's list has no word for registering for a thing, and
  *     `purchase` would be a lie about the free ones.
@@ -177,16 +178,20 @@ export interface GtmSignUpEvent extends GtmEventBase {
 }
 
 /**
- * A parent added a child from a product's sign-up panel. `ecommerce` is that
- * product, unpriced as the server's report of it is — adding a child commits
- * no money. Nothing about the child is in it: not their name, age, id or how
- * many the family now has.
+ * A parent added a child from a product's sign-up panel. `ecommerce` names that
+ * product when it is an advertised one — exactly the product the server's
+ * report names, and unpriced as it is, since adding a child commits no money —
+ * and is `null` otherwise. Nothing about the child is in it: not their name,
+ * age, id or how many the family now has.
  *
- * `advertised` travels with it as it does on every product event: the push
- * goes out for every product, and the server reports only an advertised one.
+ * No `advertised` here, for the reason `sign_up` has none: the server reports
+ * every child added, so the browser twin of it has to fire on every
+ * `child_added`, and the product rule has already decided which product, if
+ * any, it names.
  */
-export interface GtmChildAddedEvent extends GtmEventBase, GtmProductFields {
+export interface GtmChildAddedEvent extends GtmEventBase {
   event: typeof GTM_EVENTS.childAdded;
+  ecommerce: GtmEcommerce | null;
 }
 
 /**

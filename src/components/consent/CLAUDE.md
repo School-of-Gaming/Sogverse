@@ -165,8 +165,9 @@ without a change here** (`src/lib/gtm-events.ts` has the names and why each):
   product has been read; it loads the container itself if the page view has not yet;
 - `add_to_cart` — the click into the sign-up flow from a product's page (below);
 - `sign_up` — a parent account was created;
-- `child_added` — a parent added a child from a product's sign-up panel; adding one from
-  the family's own dashboard pushes nothing;
+- `child_added` — a parent added a child from a product's sign-up panel; one added from
+  the family's own dashboard pushes nothing, since the container never loads there, and
+  is reported by our servers alone;
 - `enrolment` — a seat or a queue place was taken, with `outcome` saying which;
 - `begin_checkout` — the parent was handed to Stripe.
 
@@ -181,8 +182,8 @@ without a change here** (`src/lib/gtm-events.ts` has the names and why each):
   facts as the server reports' fields, plus the same product as `meta`, the object Meta's
   template takes whole (Reddit's reads `ecommerce` itself), and **is pushed for every
   product with `advertised` beside it**. Analytics counts them all; an advertising tag fires only where `advertised`
-  is `true`. A `sign_up` carries no `advertised`: it names a product only when the
-  server's lead would, so its tag fires on every one. A queue place, a lead and a child
+  is `true`. A `sign_up` and a `child_added` carry no `advertised`: each names a product
+  only when the server's report of it would, so its tag fires on every one. A queue place, a lead and a child
   added carry no value, on this side as on the server's.
 - **Every push is preceded by `{ ecommerce: null, meta: null }`.** The container merges
   pushes into one model that keeps what it was last told, so without the reset an event
@@ -213,12 +214,13 @@ it can neither delay nor fail what the family asked for:
 - **an account was created** — a lead (Meta's `Lead`, Reddit's `LEAD`): someone reachable
   who has committed to nothing, naming the product whose page the sign-up started from
   when that was an advertised product's page;
-- **a child was added** — from a product's sign-up panel, on an advertised product's page
-  (Meta's custom `ChildProfileCreated`, and Reddit's custom event of the same name):
-  past the account, short of a seat. The panel sends the product's id with the create,
-  and the route reports only when that product's row is one we advertise; no id (the
-  family's own dashboard), an unknown product or an unadvertised one reports nothing.
-  It names the product, unpriced, and says nothing about the child;
+- **a child was added** — every child a parent adds, from wherever (Meta's custom
+  `ChildProfileCreated`, and Reddit's custom event of the same name): past the account,
+  short of a seat. Like the lead, it names a product only when there is an advertised one
+  to name: a product's sign-up panel sends the product's id with the create, and the
+  report names that product, unpriced, when its row is one we advertise; no id (the
+  family's own dashboard), an unknown product or an unadvertised one sends the report
+  without a product. It says nothing about the child;
 - **an enrolment** — a seat or a place in a queue (Meta's `CompleteRegistration`, Reddit's
   `SIGN_UP`), carrying which of the two it was to Meta. Reddit's event has no field for
   it, so Reddit tells the two apart only by the missing value on a queue place;
@@ -232,7 +234,9 @@ it can neither delay nor fail what the family asked for:
 **Every server report shares its id with the browser's push.** For the lead, the child
 added and the enrolment, the browser mints the id, sends it in the body of the request that commits the
 action, and pushes under it once the route has answered; absent, the server mints its own.
-For the three twins it is required, since a twin with no push to match is nothing. The
+A child added from the family's own dashboard still sends one — the dialog mints it on
+every create — though no push shares it there. For the three twins it is required, since a
+twin with no push to match is nothing. The
 server hands it to Meta as `event_id` and to Reddit as `conversion_id`. It is validated as
 a UUID and used for nothing else: the worst a forged one can do is make a platform discard
 one of that client's own events.
@@ -277,6 +281,14 @@ Anything else — no redirect, another page, an unknown or unadvertised product,
 read — sends the lead without a product, and never touches the registration. The lead's
 `event_source_url` stays the register page, which is where the account was created.
 
+**A child added is reported from the page the dialog was opened on, stated by the caller.**
+From a product's sign-up panel, that product's public page, whether or not the report
+names the product. From the family's own dashboard, the dashboard's fixed path — **the one
+private path a server report may name**: a fixed path with no id in it names nobody,
+where a private page's address in general can name a child, so it is never one derived
+from a request or carrying a record. The browser side keeps the stricter rule: the
+container never loads on a private page, so it never reports one.
+
 Each server report is gated on the **request's own consent cookie**, so a report for
 someone who refused marketing is impossible rather than unlikely. Products we do not
 advertise — a municipality club, or anything invoiced off-platform — are refused **by the
@@ -303,7 +315,8 @@ the other. The address is sent whether or not it has been verified; that is stan
 practice and accepted as such. The id hash is the same on every report for that account, so
 each platform can join one parent's leads, children added and enrolments across visits and
 devices. With the product fields, that tells the platform which product an identifiable
-parent signed up for, opened an account from, or added a child while signing up for. No
+parent signed up for, opened an account from, or was signing up for when they added a
+child. No
 name, and nothing about a child beyond that — the child-added event says only that this
 parent added one, never their name, age, account or its id, how many there are, or
 anything else. The privacy policy's entry for each platform says

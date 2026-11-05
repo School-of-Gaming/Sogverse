@@ -45,9 +45,10 @@ import { clickIdFromCookieHeader } from "@/lib/utm";
  * account or its hashes, even from a signed-in parent.
  *
  * **A child added** goes out as Reddit's custom event `ChildProfileCreated`
- * (`tracking_type` `CUSTOM`), naming the product whose sign-up panel the parent
- * added the child from, without a price, beside the parent's hashes — only for
- * an advertised product's panel, and with nothing about the child.
+ * (`tracking_type` `CUSTOM`) beside the parent's hashes, for every child a
+ * parent adds — naming, without a price, the product whose sign-up panel the
+ * child was added from only when that is an advertised product, otherwise none,
+ * as an account creation does. Nothing about the child goes with it.
  *
  * **Gated on the request's own consent cookie**, decided here from the cookie
  * the browser actually sent, so a report for someone who refused is impossible
@@ -62,22 +63,17 @@ const REQUEST_TIMEOUT_MS = 10_000;
 
 /**
  * What happened, in our own words — the same moments Meta is told about, with
- * the product already described in Reddit's fields. `sourcePath` is the
- * public path the conversion happened on, stated by the caller and never taken
- * from the request's own URL. `eventId` is Reddit's `conversion_id`, its
+ * the product already described in Reddit's fields. `sourcePath` is the path
+ * the conversion happened on, stated by the caller and never taken from the
+ * request's own URL: a public page's, or the parent dashboard's fixed path for
+ * a child added there, as Meta's report says. `eventId` is Reddit's `conversion_id`, its
  * dedup key — the id the browser pushed its own event for the same moment
  * under, untrusted and read by nothing else.
  */
 export type RedditConversion =
   | {
-      event: "account_created";
+      event: "account_created" | "child_added";
       product?: RedditProductDetails;
-      sourcePath: string;
-      eventId: string;
-    }
-  | {
-      event: "child_added";
-      product: RedditProductDetails;
       sourcePath: string;
       eventId: string;
     }
@@ -145,7 +141,8 @@ function hashAccountIdForReddit(id: string): string {
  * queue place, an account creation and a child added name the product but drop the price,
  * whatever the caller passed — the same rule, for the same reason, as Meta's
  * report. An account creation that did not start from a product page names
- * none, and neither does a page view. A product view and a checkout start
+ * none, nor does a child added anywhere but an advertised product's sign-up
+ * panel, nor a page view. A product view and a checkout start
  * carry the price, as the browser's own pushes of them do.
  */
 function productMetadataFor(

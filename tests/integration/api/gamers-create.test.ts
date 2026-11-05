@@ -664,20 +664,44 @@ describe("POST /api/gamers/create — the child-added conversion", () => {
     expect(account).toEqual({ id: "customer-123", email: "parent@example.test" });
   });
 
-  // The family's own dashboard sends no product: a child added off the funnel
-  // is not something we report, so nothing is even looked up.
-  it("reports nothing when no product id is sent", async () => {
-    const response = await POST(createRequest(validBody));
+  // The family's own dashboard sends no product: the child is still reported,
+  // as the parent, on the dashboard's fixed path — no product, and nothing
+  // even looked up.
+  it("reports a child added from the dashboard without a product, on the dashboard's path", async () => {
+    const response = await POST(createRequest({ ...validBody, eventId: EVENT_ID }));
 
     expect(response.status).toBe(200);
-    expect(deferred).toHaveLength(0);
+    expect(deferred).toHaveLength(1);
+    await runDeferred();
+
     expect(mockAdvertisedProductFor).not.toHaveBeenCalled();
-    expect(mockReportAdConversion).not.toHaveBeenCalled();
+    expect(mockReportAdConversion).toHaveBeenCalledTimes(1);
+    const [, conversion, account] = mockReportAdConversion.mock.calls[0];
+    expect(conversion).toEqual({
+      event: "child_added",
+      product: undefined,
+      sourcePath: "/parent",
+      eventId: EVENT_ID,
+    });
+    expect(account).toEqual({ id: "customer-123", email: "parent@example.test" });
+  });
+
+  // An old client sending no id still reports; the fan-out mints one.
+  it("still reports when no event id is sent", async () => {
+    await POST(createRequest(validBody));
+    await runDeferred();
+
+    expect(mockReportAdConversion).toHaveBeenCalledTimes(1);
+    expect(mockReportAdConversion.mock.calls[0][1]).toMatchObject({
+      event: "child_added",
+      eventId: undefined,
+    });
   });
 
   // Decided by the product row: an unadvertised, unknown or unreadable product
-  // all answer undefined, and then nothing is reported at all.
-  it("reports nothing when the product is not one we advertise", async () => {
+  // all answer undefined, and the report goes out naming none — still from the
+  // product's page, where the parent was.
+  it("reports without a product when the product is not one we advertise", async () => {
     mockAdvertisedProductFor.mockResolvedValue(undefined);
 
     const response = await POST(
@@ -687,7 +711,13 @@ describe("POST /api/gamers/create — the child-added conversion", () => {
 
     expect(response.status).toBe(200);
     expect(mockAdvertisedProductFor).toHaveBeenCalledWith(PRODUCT_ID);
-    expect(mockReportAdConversion).not.toHaveBeenCalled();
+    expect(mockReportAdConversion).toHaveBeenCalledTimes(1);
+    expect(mockReportAdConversion.mock.calls[0][1]).toEqual({
+      event: "child_added",
+      product: undefined,
+      sourcePath: `/shop/${PRODUCT_ID}`,
+      eventId: EVENT_ID,
+    });
   });
 
   it("reports nothing when the child was not created", async () => {

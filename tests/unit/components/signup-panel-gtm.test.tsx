@@ -76,7 +76,8 @@ vi.mock("@/providers/auth-provider", () => ({
 const addGamerProps = vi.hoisted(() =>
   vi.fn<
     (props: {
-      signUp?: { productId: string; onChildAdded: (eventId: string) => void };
+      productId?: string;
+      onCreated?: (gamerId: string, eventId: string) => void;
     }) => void
   >(),
 );
@@ -557,41 +558,55 @@ describe("the click into the flow is the checkout start", () => {
 });
 
 describe("a child added from the panel is its own step", () => {
-  /** What the panel handed the dialog for a child added from this page. */
-  function signUpProp() {
+  const GAMER_ID = "1a8e1e2a-32f6-4c6f-9a6a-9d0f2a1b7c44";
+  const EVENT_ID = "3f2b7c1e-9a4d-4e8b-b6c5-0d1e2f3a4b5c";
+
+  /** What the panel handed the dialog. */
+  function dialogProps() {
     const props = addGamerProps.mock.calls.at(-1)?.[0];
-    if (!props?.signUp) throw new Error("the dialog was given no sign-up context");
-    return props.signUp;
+    if (!props) throw new Error("the dialog was never rendered");
+    return props;
+  }
+
+  /** The dialog reporting a child created under the route's event id. */
+  function childCreated() {
+    const { onCreated } = dialogProps();
+    if (!onCreated) throw new Error("the dialog was given no onCreated");
+    act(() => onCreated(GAMER_ID, EVENT_ID));
   }
 
   it("hands the dialog this page's product, so the route can report it", () => {
     render(panel());
 
-    expect(signUpProp().productId).toBe(PRODUCT_ID);
+    expect(dialogProps().productId).toBe(PRODUCT_ID);
   });
 
   it("pushes child_added under the route's id, unpriced and with nothing about the child", () => {
     render(panel());
-    const eventId = "3f2b7c1e-9a4d-4e8b-b6c5-0d1e2f3a4b5c";
 
-    act(() => signUpProp().onChildAdded(eventId));
+    childCreated();
 
     // Adding a child commits no money, so it carries no value, as the route's
-    // report of it carries none.
+    // report of it carries none. No `advertised`: like `sign_up`, it fires on
+    // every one, naming the product the route's report names.
     expect(onlyEvent()).toEqual({
       event: "child_added",
-      event_id: eventId,
+      event_id: EVENT_ID,
       ecommerce: UNPRICED,
-      advertised: true,
       page_path: PRODUCT_PATH,
     });
   });
 
-  it("pushes a municipality club's too, with the flag that says not to bid on it", () => {
+  it("pushes a municipality club's too, naming no product, as the route's report names none", () => {
     render(panel({ product: MUNICIPALITY_PRODUCT }));
 
-    act(() => signUpProp().onChildAdded("3f2b7c1e-9a4d-4e8b-b6c5-0d1e2f3a4b5c"));
+    childCreated();
 
-    expect(onlyEvent()).toMatchObject({ event: "child_added", advertised: false });
+    expect(onlyEvent()).toEqual({
+      event: "child_added",
+      event_id: EVENT_ID,
+      ecommerce: null,
+      page_path: `/shop/${MUNICIPALITY_PRODUCT.id}`,
+    });
   });
 });

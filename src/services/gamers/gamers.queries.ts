@@ -10,7 +10,7 @@ import {
 import { getClient } from "@/lib/supabase/client";
 import {
   GamerService,
-  type ChildAddedSignUp,
+  type ChildAddedConversion,
   type GamerProfileEdit,
   type GamerUpdate,
 } from "./gamers.service";
@@ -94,12 +94,12 @@ export function useCreateGamer() {
     mutationFn: ({
       parentId,
       input,
-      signUp,
+      conversion,
     }: {
       parentId: string;
       input: CreateGamerInput;
-      signUp?: ChildAddedSignUp;
-    }) => service.createGamerAccount(parentId, input, signUp),
+      conversion: ChildAddedConversion;
+    }) => service.createGamerAccount(parentId, input, conversion),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: gamerKeys.myGamers() });
       queryClient.invalidateQueries({ queryKey: familyKeys.list() });
