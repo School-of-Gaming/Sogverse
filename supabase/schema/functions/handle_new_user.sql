@@ -30,31 +30,31 @@ BEGIN
   -- Every name is trimmed of whitespace of every kind first, because the
   -- profiles CHECKs refuse it at either edge. A first name of nothing but
   -- whitespace is then '' and counts as absent.
-  profile_first_name := NULLIF(regexp_replace(NEW.raw_user_meta_data->>'first_name', '^[[:space:] ​﻿]+|[[:space:] ​﻿]+$', '', 'g'), '');
+  profile_first_name := NULLIF(regexp_replace(NEW.raw_user_meta_data->>'first_name', '^[[:space:]\u00A0\u200B\uFEFF]+|[[:space:]\u00A0\u200B\uFEFF]+$', '', 'g'), '');
 
   IF profile_first_name IS NOT NULL THEN
     -- The sign-up sent its own name, so the last name is the one it sent too.
     profile_last_name := COALESCE(
-      regexp_replace(NEW.raw_user_meta_data->>'last_name', '^[[:space:] ​﻿]+|[[:space:] ​﻿]+$', '', 'g'),
+      regexp_replace(NEW.raw_user_meta_data->>'last_name', '^[[:space:]\u00A0\u200B\uFEFF]+|[[:space:]\u00A0\u200B\uFEFF]+$', '', 'g'),
       ''
     );
   ELSE
     -- An identity provider (Google) sends one whole name instead, as
-    -- `full_name` and `name`. It is split the way the completion page splits
-    -- it: at the last whitespace, everything before it the first name and the
-    -- last word the last name. A single word is a first name alone.
+    -- `full_name` and `name`. It is split at the last whitespace, everything
+    -- before it the first name and the last word the last name. A single word
+    -- is a first name alone.
     provider_full_name := COALESCE(
-      NULLIF(regexp_replace(NEW.raw_user_meta_data->>'full_name', '^[[:space:] ​﻿]+|[[:space:] ​﻿]+$', '', 'g'), ''),
-      NULLIF(regexp_replace(NEW.raw_user_meta_data->>'name', '^[[:space:] ​﻿]+|[[:space:] ​﻿]+$', '', 'g'), '')
+      NULLIF(regexp_replace(NEW.raw_user_meta_data->>'full_name', '^[[:space:]\u00A0\u200B\uFEFF]+|[[:space:]\u00A0\u200B\uFEFF]+$', '', 'g'), ''),
+      NULLIF(regexp_replace(NEW.raw_user_meta_data->>'name', '^[[:space:]\u00A0\u200B\uFEFF]+|[[:space:]\u00A0\u200B\uFEFF]+$', '', 'g'), '')
     );
 
-    provider_name_parts := regexp_match(provider_full_name, '^(.*)[[:space:] ​﻿](.*)$');
+    provider_name_parts := regexp_match(provider_full_name, '^(.*)[[:space:]\u00A0\u200B\uFEFF](.*)$');
 
     IF provider_name_parts IS NULL THEN
       profile_first_name := provider_full_name;
       profile_last_name  := '';
     ELSE
-      profile_first_name := regexp_replace(provider_name_parts[1], '^[[:space:] ​﻿]+|[[:space:] ​﻿]+$', '', 'g');
+      profile_first_name := regexp_replace(provider_name_parts[1], '^[[:space:]\u00A0\u200B\uFEFF]+|[[:space:]\u00A0\u200B\uFEFF]+$', '', 'g');
       profile_last_name  := provider_name_parts[2];
     END IF;
 
