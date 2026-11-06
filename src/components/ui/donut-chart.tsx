@@ -55,9 +55,12 @@ export function DonutChart({
   /** Which figure leads a row of the key; the other follows it, quieter. */
   lead: "value" | "share";
 }) {
-  const locale = formattingLocale(useLocale());
-  const count = new Intl.NumberFormat(locale);
-  const percent = new Intl.NumberFormat(locale, { style: "percent", maximumFractionDigits: 0 });
+  const locale = useLocale();
+  const count = new Intl.NumberFormat(formattingLocale(locale));
+  const percent = new Intl.NumberFormat(formattingLocale(locale), {
+    style: "percent",
+    maximumFractionDigits: 0,
+  });
   const describedBy = useId();
 
   const empty = total === null || total.value === 0;
