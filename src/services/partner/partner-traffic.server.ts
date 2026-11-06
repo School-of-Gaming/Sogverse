@@ -2,7 +2,6 @@ import "server-only";
 
 import { unstable_cache } from "next/cache";
 
-import { PartnerQueryError } from "@/lib/api/partner-auth.server";
 import { SUPPORTED_LOCALES } from "@/lib/constants/locales";
 import { ROUTES } from "@/lib/constants/routes";
 import {
@@ -17,6 +16,7 @@ import { PATHNAMES } from "@/i18n/pathnames";
 import type { PartnerTrafficQuery, PartnerTrafficResponse } from "./partner.contracts";
 import { readProgrammeProductIds } from "./partner-scope.server";
 import type { PartnerDb } from "./partner-shared-db.server";
+import { compareText, resolveCountedRange } from "./partner-shared-values";
 
 /**
  * `/traffic` — pageviews of the pages a Lynx campaign lands on, from Vercel Web
@@ -66,71 +66,22 @@ const SHOP_ROUTE = "/shop";
  */
 const PRODUCTION = `environment eq ${odataString("production")}`;
 
-/** The documented default window: the last thirty UTC days, today included. */
-const DEFAULT_RANGE_DAYS = 30;
-
-const DAY_MS = 86_400_000;
-
 // ---------------------------------------------------------------------------
 // Pure pieces
 // ---------------------------------------------------------------------------
 
 /**
- * The range the answer covers: what the caller asked for, else the thirty UTC
- * days ending on `to` — which itself defaults to today, in UTC — clamped to the
- * days a count can exist on.
- *
- * **Clamped, because `range` is the days the counts cover.** The page says the
- * counts reach back to `earliestTrafficDay` and no further, and a day after
- * today has none yet, so a range reaching past either end is answered for the
- * days it shares with them and `range` names exactly those — the truthful
- * answer, and one that bounds the Vercel reads: an unbounded `from` or `to`
- * would otherwise fan out into a read per hundred days across years.
- *
- * Refused as the caller's mistake (→ 400 naming the parameter):
- *
- * - a `from` later than the `to` a default completed — the query schema
- *   refuses a reversed pair it can see, not one a default made, and `/campaigns`
- *   refuses the same case the same way;
- * - a range that shares no day with the counts at all — wholly before the
- *   earliest day, or wholly after today — which has no truthful `range` to
- *   answer with.
+ * The range the answer covers, clamped to the days a count can exist on: back
+ * to `earliestTrafficDay` and no further. Bounding it also bounds the Vercel
+ * reads — an unbounded `from` would otherwise fan out into a read per hundred
+ * days across years.
  */
 export function resolveTrafficRange(
   from: string | undefined,
   to: string | undefined,
   now: Date,
 ): { from: string; to: string } {
-  const today = now.toISOString().slice(0, 10);
-  const end = to ?? today;
-  const start =
-    from ??
-    new Date(Date.parse(`${end}T00:00:00Z`) - (DEFAULT_RANGE_DAYS - 1) * DAY_MS)
-      .toISOString()
-      .slice(0, 10);
-  if (start > end) {
-    throw new PartnerQueryError(
-      `from: must be on or before to, which defaults to today (${end})`,
-    );
-  }
-
-  const earliest = earliestTrafficDay(now);
-  if (end < earliest) {
-    throw new PartnerQueryError(
-      `to: must be on or after ${earliest}, the earliest day traffic is kept for`,
-    );
-  }
-  if (start > today) {
-    throw new PartnerQueryError(
-      from === undefined
-        ? `from: defaults to the 30 days ending on to (${start}), which lies after today (${today})`
-        : `from: must be on or before today (${today})`,
-    );
-  }
-  return {
-    from: start < earliest ? earliest : start,
-    to: end > today ? today : end,
-  };
+  return resolveCountedRange(from, to, now, earliestTrafficDay(now));
 }
 
 /**
@@ -154,10 +105,6 @@ function pathsFilter(paths: readonly string[]): string {
 /** A UTM value as the API reports it: Vercel's empty string for "none" is `null`. */
 function utmValue(value: string | undefined): string | null {
   return value === undefined || value === "" ? null : value;
-}
-
-function compareText(a: string, b: string): number {
-  return a < b ? -1 : a > b ? 1 : 0;
 }
 
 /**

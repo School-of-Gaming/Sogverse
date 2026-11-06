@@ -21,7 +21,8 @@ export function consentAnswerFor(purposes: ConsentPurposes): ConsentAnswer {
  *
  * **Fire and forget.** Nothing waits on it and nothing it does can hold the
  * banner open. `keepalive` lets it outlive a navigation straight after the
- * answer.
+ * answer. `credentials: "omit"` sends it without cookies, a signed-in
+ * visitor's session included.
  */
 export function sendConsentAnswer(
   purposes: ConsentPurposes,
@@ -37,6 +38,7 @@ export function sendConsentAnswer(
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify(body),
       keepalive: true,
+      credentials: "omit",
     }).catch(() => {});
   } catch {
     // A browser that refuses the request outright has lost one count, and the

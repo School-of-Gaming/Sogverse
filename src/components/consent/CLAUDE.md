@@ -338,7 +338,7 @@ when the marketing-page helpers accept it, never the query, and no page otherwis
 route vets it from the body itself and trusts nothing else in it.
 
 **It is the one request a refusal makes, and that is fine (owner's ruling, 2026-11-06).**
-It carries the answer and the path and nothing that identifies anyone, and the table holds
+It carries the answer and the path, no cookies, and nothing that identifies anyone, and the table holds
 no IP, user agent, cookie, session or account, so the tally needs no consent of its own.
 The privacy policy says so in a sentence. A field added to it that could single out a
 visitor ends that ruling.

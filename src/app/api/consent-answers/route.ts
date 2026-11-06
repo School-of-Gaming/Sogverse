@@ -9,7 +9,8 @@ import { createAdminClient } from "@/lib/supabase/admin";
 /**
  * POST /api/consent-answers
  *
- * **The cookie banner's tally.** The banner posts a device's first answer here
+ * **The cookie banner's tally.** The banner posts a device's first answer here,
+ * without cookies,
  * and this counts it: one more for that answer, on today's UTC day, on that
  * page. Nothing else is stored — no IP, no user agent, no cookie, no session,
  * no account — so the count says how many and never who. That is why it needs

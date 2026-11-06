@@ -322,6 +322,7 @@ describe("ConsentBanner", () => {
       expect(tallied()).toEqual([{ answer, pagePath: "/fi/kauppa" }]);
       const [, init] = fetchMock.mock.calls[0];
       expect(init.keepalive).toBe(true);
+      expect(init.credentials).toBe("omit");
     });
 
     it("names a customised first answer by its purposes", () => {
