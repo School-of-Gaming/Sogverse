@@ -604,19 +604,57 @@ describe("reportMetaConversion — the kept click", () => {
     expect(asObject(sentEvent().user_data).fbc).toBe(`fb.1.${LANDED}.${FBCLID}`);
   });
 
-  it("sends the pixel's own _fbc when there is one", async () => {
+  /** The `fbc` sent for a browser carrying this `_fbc`, and this kept click if any. */
+  async function fbcSentFor(fbcCookie: string, keptClick?: string): Promise<unknown> {
     await reportMetaConversion(
       request({
         cookie: cookieHeaderFor(
           GRANTED,
-          `; _fbc=fb.1.123.IwAR${kept(`fbclid=${LANDED}.${FBCLID}`)}`,
+          `; _fbc=${fbcCookie}${keptClick === undefined ? "" : kept(`fbclid=${keptClick}`)}`,
         ),
       }),
-      { event: "account_created", sourcePath: "/register", eventId: EVENT_ID },
+      { event: "page_view", sourcePath: "/", eventId: EVENT_ID },
       PARENT,
     );
+    return asObject(sentEvent().user_data).fbc;
+  }
 
-    expect(asObject(sentEvent().user_data).fbc).toBe("fb.1.123.IwAR");
+  it("sends the pixel's own _fbc when there is no kept click", async () => {
+    expect(await fbcSentFor("fb.1.123.IwAR")).toBe("fb.1.123.IwAR");
+  });
+
+  it("sends the kept click when it is newer than the pixel's _fbc", async () => {
+    expect(await fbcSentFor(`fb.1.${LANDED - 1}.IwAR_old`, `${LANDED}.${FBCLID}`)).toBe(
+      `fb.1.${LANDED}.${FBCLID}`,
+    );
+  });
+
+  it("sends the pixel's _fbc exactly as it stands when it is newer", async () => {
+    expect(await fbcSentFor(`fb.2.${LANDED + 1}.IwAR_new`, `${LANDED}.${FBCLID}`)).toBe(
+      `fb.2.${LANDED + 1}.IwAR_new`,
+    );
+  });
+
+  it("sends the pixel's _fbc when it records the same moment", async () => {
+    expect(await fbcSentFor(`fb.2.${LANDED}.${FBCLID}`, `${LANDED}.${FBCLID}`)).toBe(
+      `fb.2.${LANDED}.${FBCLID}`,
+    );
+  });
+
+  it("sends the pixel's _fbc for the same click whatever the browser's clock says", async () => {
+    expect(await fbcSentFor(`fb.1.${LANDED - 5000}.${FBCLID}`, `${LANDED}.${FBCLID}`)).toBe(
+      `fb.1.${LANDED - 5000}.${FBCLID}`,
+    );
+  });
+
+  it("sends the kept click over an _fbc with no readable creation time", async () => {
+    expect(await fbcSentFor("garbage", `${LANDED}.${FBCLID}`)).toBe(
+      `fb.1.${LANDED}.${FBCLID}`,
+    );
+  });
+
+  it("sends an _fbc with no readable creation time as it is when nothing was kept", async () => {
+    expect(await fbcSentFor("garbage")).toBe("garbage");
   });
 
   it("never sends Reddit's kept click id to Meta", async () => {

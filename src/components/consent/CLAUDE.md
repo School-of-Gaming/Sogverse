@@ -306,9 +306,8 @@ request arrived from, the platform's own browser and click cookies if the browse
 them (Meta's `_fbp` and `_fbc`, Reddit's `_rdt_uuid` and `_rdt_cid` — each platform is sent
 only its own) or, where the click cookie is missing, that platform's click id kept in our
 attribution cookie (Meta's in the `_fbc` format, `fb.1.<landing ms>.<fbclid>`; Reddit's as
-the link carried it) — and, **on the lead, the child added and the enrolment only**, a
-SHA-256 hash of the
-parent's own account email and a SHA-256 hash of the parent's own account id
+the link carried it; where Meta has both, the later click is sent) — and, **on the lead,
+the child added and the enrolment only**, a SHA-256 hash of the parent's own account email and a SHA-256 hash of the parent's own account id
 (`external_id`), both hashed on our server, so neither the address nor the id is ever sent
 or logged, and never a gamer's. **The three page-event twins carry no account, even from a
 signed-in parent**: they tell a platform that a browser reached a page or a product, never
@@ -404,7 +403,11 @@ library turns its platform's click id into its own click cookie only if it loads
 id is still in the address bar, and it loads only once marketing is granted, on a marketing
 page — so a parent who answers the banner a few pages after landing would otherwise convert
 with no click on record. The report sends the vendor's own cookie where there is one and the
-kept id where there is not, and never the other platform's. A click id is never stored on
+kept id where there is not, and never the other platform's. Meta's report, holding both,
+sends whichever records the later click: a visitor landing from a new ad has the new id
+kept before the pixel has rewritten `_fbc`, and the old cookie beside a page address
+carrying the new click reads to Meta as a modified `fbclid`. Reddit's sends its own cookie
+first, unchanged. A click id is never stored on
 an account or a booking and never reaches Klaviyo. Google's `gclid` is not kept, because no
 server report reads it. Keeping the click ids is newer than counsel's ruling on the tag and
 has not had a legal review of its own (`src/lib/utm.ts`).
