@@ -5,6 +5,7 @@ import type { AnalyticsRange } from "@/services/admin-analytics/admin-analytics.
 import {
   readBreakdowns,
   readCampaigns,
+  readConsentAnswers,
   readLandingPages,
   readTopPages,
   readWebAnalyticsOverview,
@@ -14,6 +15,7 @@ import {
   AnalyticsFailure,
   Breakdowns,
   CampaignsTable,
+  ConsentAnswersCard,
   LandingPagesTable,
   ReadAt,
   TopPagesTable,
@@ -23,9 +25,9 @@ import {
  * **The analytics page's sections, each its own read.** Every section awaits
  * only what it shows, inside its own `<Suspense>` on the route, so a section
  * draws as soon as its own read lands and one failing read leaves every other
- * section standing. Each fallback below is shaped like what it stands in for,
- * at its final height: an uncached hour is a round trip to Vercel, so the
- * skeleton is drawn at once.
+ * section standing. Each Vercel fallback below is shaped like what it stands
+ * in for, at its final height: an uncached hour is a round trip to Vercel, so
+ * the skeleton is drawn at once.
  */
 
 type SectionProps = { range: AnalyticsRange; now: Date };
@@ -61,6 +63,25 @@ export async function TrafficSection({ range, now }: SectionProps) {
       }
     />
   );
+}
+
+// ---------------------------------------------------------------------------
+// Cookie answers: our own tally, read live from the database
+// ---------------------------------------------------------------------------
+
+/**
+ * Unlike the Vercel sections, its fallback is the card with its labels and no
+ * figures, not a skeleton: the read is a small grouped query on our own
+ * database, so it lands before a skeleton could mean anything.
+ */
+export function ConsentAnswersFallback() {
+  return <ConsentAnswersCard summary={null} />;
+}
+
+export async function ConsentAnswersSection({ range }: SectionProps) {
+  const result = await readConsentAnswers(range);
+  if (!result.ok) return <ConsentAnswersCard summary={null} failure={result.reason} />;
+  return <ConsentAnswersCard summary={result.data} />;
 }
 
 // ---------------------------------------------------------------------------

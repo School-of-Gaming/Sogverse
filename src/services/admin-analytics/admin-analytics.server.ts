@@ -4,6 +4,7 @@ import { unstable_cache } from "next/cache";
 import { cache } from "react";
 
 import { SUPPORTED_LOCALES, type SupportedLocale } from "@/lib/constants/locales";
+import { consentAnswerTotalsResult } from "@/lib/consent-answers.contracts";
 import { createClient } from "@/lib/supabase/server";
 import type { AppSupabaseClient } from "@/types";
 import {
@@ -20,6 +21,7 @@ import {
   analyticsCacheKey,
   buildBreakdown,
   buildCampaigns,
+  buildConsentAnswers,
   buildDayVisits,
   buildLandingPages,
   buildPathViews,
@@ -30,6 +32,7 @@ import {
   type BreakdownRow,
   type CampaignLabels,
   type CampaignRow,
+  type ConsentAnswerSummary,
   type LandingPageEntry,
   type LandingPageRow,
   type PathViewsRow,
@@ -39,7 +42,8 @@ import {
 } from "./admin-analytics.build";
 
 /**
- * The admin analytics page's reads, all from Vercel Web Analytics.
+ * The admin analytics page's reads: Vercel Web Analytics, and the cookie
+ * banner's own tally from the database.
  *
  * **Every Vercel read is server-only and cached for the hour.** The token reads
  * every page of the project, so it never leaves the server, and each read is
@@ -327,6 +331,41 @@ export async function readLandingPages(
     return { ok: true, data: buildLandingPages(views.data, pages), readAt: views.readAt };
   } catch (error) {
     console.error("admin analytics: the landing page directory read failed", error);
+    return { ok: false, reason: "failed" };
+  }
+}
+
+// ---------------------------------------------------------------------------
+// Cookie answers: our own tally of the banner, read from the database
+// ---------------------------------------------------------------------------
+
+/**
+ * How the cookie banner was answered on the range's UTC days: every answer,
+ * the refusals included, which no Vercel figure can say.
+ *
+ * **Read live, never cached.** It is one grouped read of a table holding a few
+ * rows per day, on the admin's own client (the page's session, or the token an
+ * MCP tool hands in), so there is no rate limit to protect and nothing worth
+ * an hour's lag. `readAt` is the moment of the read.
+ */
+export async function readConsentAnswers(
+  range: { from: string; to: string },
+  client?: AppSupabaseClient,
+): Promise<AnalyticsResult<ConsentAnswerSummary>> {
+  const db = await databaseClient(client);
+  try {
+    const { data, error } = await db.rpc("get_admin_consent_answer_totals", {
+      p_from: range.from,
+      p_to: range.to,
+    });
+    if (error) throw error;
+    return {
+      ok: true,
+      data: buildConsentAnswers(consentAnswerTotalsResult.parse(data)),
+      readAt: new Date().toISOString(),
+    };
+  } catch (error) {
+    console.error("admin analytics: the cookie answers read failed", error);
     return { ok: false, reason: "failed" };
   }
 }

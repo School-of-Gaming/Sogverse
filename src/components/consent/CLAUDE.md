@@ -327,6 +327,33 @@ parent added one, never their name, age, account or its id, how many there are, 
 anything else. The privacy policy's entry for each platform says
 this in plain words; adding a field is a privacy-policy edit.
 
+## The answer tally
+
+**The banner's answers are counted by us, because nothing else can count them.** Vercel's
+analytics runs only for a visitor who allowed it, and a refusal sends nothing anywhere, so
+neither can say how often the banner is accepted. So a device's answer is posted to our own
+`/api/consent-answers`, which counts it: per UTC day, per answer — all, analytics only,
+marketing only, none — per page, a number. The page is the locale-stripped internal path
+when the marketing-page helpers accept it, never the query, and no page otherwise; the
+route vets it from the body itself and trusts nothing else in it.
+
+**It is the one request a refusal makes, and that is fine (owner's ruling, 2026-11-06).**
+It carries the answer and the path, no cookies, and nothing that identifies anyone, and the table holds
+no IP, user agent, cookie, session or account, so the tally needs no consent of its own.
+The privacy policy says so in a sentence. A field added to it that could single out a
+visitor ends that ruling.
+
+**Only a device's first answer counts**: one given while the consent cookie holds no answer
+we can act on, so an answer to an older version of the question counts again. It is judged
+from the cookie at the moment of answering rather than from the document's state, so a tab
+answering after another tab already did sends nothing. Changing an answer through Privacy
+choices sends nothing. The post is fire and forget with `keepalive`, so a navigation straight
+after the answer does not lose it, and it never holds the strip open.
+
+**Forged counts are accepted.** The route is public, has no rate limit and answers `204`
+whatever it is sent; anyone can inflate a count, and the owner ruled that not worth
+defending. There is no count of the banner being shown, only of it being answered.
+
 ## Withdrawal
 
 Granting a purpose needs nothing beyond the state update: the gated components mount, and

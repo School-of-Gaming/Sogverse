@@ -141,7 +141,7 @@
       "heading": "Cookies, analytics and advertising",
       "paragraphs": [
         "A few cookies are simply how the site works: they keep you signed in and remember when you’ve switched between the accounts in your family, remember that you entered your parent PIN, hold your language and timezone, store the cookie choice you make, and remember that you’ve closed the guide we show before a first session. These don’t need your consent — without them there is no site to consent to.",
-        "Everything else waits for you. The first time you visit we ask, and nothing beyond those necessary cookies runs in your browser until you answer. You can change your mind whenever you like from Privacy choices at the bottom of every page: switching something off takes effect straight away, and it doesn’t change anything we already did while it was on.",
+        "Everything else waits for you. The first time you visit we ask, and nothing beyond those necessary cookies runs in your browser until you answer. You can change your mind whenever you like from Privacy choices at the bottom of every page: switching something off takes effect straight away, and it doesn’t change anything we already did while it was on. The first time you answer, we count which answer you gave, by day and by page. The count holds nothing that could tell us who you are, so we keep it whatever your answer.",
         "There are two things to say yes or no to:"
       ],
       "bullets": [

@@ -1,9 +1,9 @@
 # The partner API
 
 `/api/partner/v1/*` is a read-only API published to one outside partner, Lynx Educate,
-for the Roblox Programme. Eight resources answer it: six return records a page at a time
-(products, families, enrolments, sessions, feedback, research rows) and two return
-aggregates (traffic, campaigns). The routes here are thin — gate, parse, read, validate —
+for the Roblox Programme. Nine resources answer it: six return records a page at a time
+(products, families, enrolments, sessions, feedback, research rows) and three return
+aggregates (traffic, campaigns, consent). The routes here are thin — gate, parse, read, validate —
 and the reads live in `src/services/partner/`, over a shared layer of scope, lookups and
 pure derivations that every resource goes through.
 
@@ -170,6 +170,14 @@ full response carrying that row — "Others" under the cap is somebody's real ca
 range is clamped to the days a count can exist on, from the earliest day the page says the
 data reaches back to through today, because `range` is the days the counts cover; a range
 sharing no day with them is refused.
+
+**`/consent` reads our own tally of the cookie banner's first answers, live, and is scoped
+to `/traffic`'s pages.** The tally names every marketing page by its internal path and
+every other page as NULL; the partner sees the Roblox landing page (its three format
+addresses as one), the shop listing and each Programme product's page, and every other row,
+the NULL one included, is dropped before the answer is built. No cache: the read is one
+grouped query of a small table. The range is clamped at today only, since a day before
+counting began truthfully holds no answers.
 
 **Rule: there is no rate limiting (owner decision).** Lynx is trusted to pace its own
 pulls, so no resource answers 429 or sends `Retry-After`, and the page promises neither.

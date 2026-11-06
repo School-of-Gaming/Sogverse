@@ -7,6 +7,8 @@ import {
   BreakdownsSection,
   BreakdownsSkeleton,
   CampaignsSection,
+  ConsentAnswersFallback,
+  ConsentAnswersSection,
   LandingPagesSection,
   TableSkeleton,
   TopPagesSection,
@@ -24,8 +26,9 @@ export async function generateMetadata(): Promise<Metadata> {
 }
 
 /**
- * `/admin/analytics` — the site's traffic, from Vercel Web Analytics, over the
- * UTC days the address names.
+ * `/admin/analytics` — the site's traffic, from Vercel Web Analytics, and how
+ * the cookie banner was answered, from our own tally, over the UTC days the
+ * address names.
  *
  * The proxy already admits only admins here; the role is checked again before
  * anything is read, because the Vercel token behind these figures reads every
@@ -51,9 +54,16 @@ export default async function AdminAnalyticsRoute({
 
   return (
     <AnalyticsShell range={range} earliest={earliest} today={utcToday(now)}>
-      <Suspense key={`traffic-${key}`} fallback={<TrafficSkeleton />}>
-        <TrafficSection {...props} />
-      </Suspense>
+      <div className="grid gap-4 lg:grid-cols-3">
+        <div className="lg:col-span-2">
+          <Suspense key={`traffic-${key}`} fallback={<TrafficSkeleton />}>
+            <TrafficSection {...props} />
+          </Suspense>
+        </div>
+        <Suspense key={`consent-${key}`} fallback={<ConsentAnswersFallback />}>
+          <ConsentAnswersSection {...props} />
+        </Suspense>
+      </div>
 
       <AnalyticsSection heading={t("breakdowns.heading")} caption={t("breakdowns.caption")}>
         <Suspense key={`breakdowns-${key}`} fallback={<BreakdownsSkeleton />}>

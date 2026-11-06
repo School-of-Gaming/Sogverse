@@ -111,6 +111,12 @@ const ROLE_GATED_RPCS: Record<string, RoleGatedRpc> = {
   // argument object and a permitted admin gets the whole document back — the
   // positive half of the matrix is assertable here without a fixture.
   get_admin_dashboard: { permittedRoles: ["admin"] },
+  // The cookie banner's tally over a range of days, for an admin's own session
+  // (the analytics page, the MCP tools); the service-role readers call the
+  // ungranted consent_answer_totals it wraps. All-NULL arguments get past the
+  // guard and select no day, so a permitted admin gets an empty answer and the
+  // positive half is assertable with no fixture.
+  get_admin_consent_answer_totals: { permittedRoles: ["admin"] },
   // One month of municipality invoicing. The guard runs before the
   // month check, which is what makes the all-NULL convention work on both
   // halves: a forbidden role is refused with 42501 and never reaches the

@@ -1,6 +1,6 @@
 import { z } from "zod";
 import { Constants } from "@/types";
-import type { EffectiveProductStatusDB } from "@/types";
+import type { ConsentAnswer, EffectiveProductStatusDB } from "@/types";
 
 /**
  * The wire contracts of the Lynx Educate partner API — one query schema and one
@@ -42,6 +42,19 @@ export const DELIVERY = ["online", "in_person", "hybrid"] as const;
  * this app, not rows of any table.
  */
 const TRAFFIC_PAGE = ["landing", "shop", "product"] as const;
+
+/**
+ * The answers to the cookie banner `/consent` counts, one count each. The
+ * database's own vocabulary, written out so the published keys change only
+ * when somebody decides they should; the `satisfies` makes a rename of the
+ * enum fail to compile here.
+ */
+export const CONSENT_ANSWER = [
+  "all",
+  "analytics_only",
+  "marketing_only",
+  "none",
+] as const satisfies readonly ConsentAnswer[];
 
 /**
  * API-only rule: a campaign is Lynx's when its `utm_campaign` starts with this,
@@ -292,6 +305,13 @@ export const partnerTrafficQuery = withOrderedRange(
     path: ["product_id"],
   },
 );
+
+/**
+ * `/consent` is an aggregate over UTC days like `/traffic`, and takes only the
+ * range: its answer is a handful of entries, so a page or product filter would
+ * save the partner nothing.
+ */
+export const partnerConsentQuery = withOrderedRange(z.object(dateRangeQuery));
 
 // ---------------------------------------------------------------------------
 // Response schemas
@@ -546,6 +566,43 @@ export const partnerTrafficResponse = z.object({
 
 export type PartnerTrafficResponse = z.infer<typeof partnerTrafficResponse>;
 
+/**
+ * The cookie banner's answers on the pages `/traffic` counts: one entry per
+ * page, every answer present. `answered` is the four added together, and an
+ * answer is refused here when it is not.
+ */
+const answerCount = z.number().int().nonnegative();
+
+/** One count per answer, keyed by the answer, and no other key. */
+const consentAnswerCounts = {
+  all: answerCount,
+  analytics_only: answerCount,
+  marketing_only: answerCount,
+  none: answerCount,
+} satisfies Record<(typeof CONSENT_ANSWER)[number], typeof answerCount>;
+
+export const partnerConsentResponse = z.object({
+  range: z.object({ from: isoDate, to: isoDate }),
+  pages: z.array(
+    z
+      .object({
+        page: z.enum(TRAFFIC_PAGE),
+        /** Null for the landing page and the shop. */
+        product_id: uuid.nullable(),
+        answered: z.number().int().nonnegative(),
+        answers: z.object(consentAnswerCounts).strict(),
+      })
+      .refine(
+        (entry) =>
+          CONSENT_ANSWER.reduce((sum, answer) => sum + entry.answers[answer], 0) ===
+          entry.answered,
+        { message: "must be the answers added together", path: ["answered"] },
+      ),
+  ),
+});
+
+export type PartnerConsentResponse = z.infer<typeof partnerConsentResponse>;
+
 /** A count as `/campaigns` shows it: at least the minimum, or withheld as null. */
 const campaignCount = z
   .number()
@@ -615,4 +672,5 @@ export type PartnerSessionsQuery = z.infer<typeof partnerSessionsQuery>;
 export type PartnerFeedbackQuery = z.infer<typeof partnerFeedbackQuery>;
 export type PartnerRobloxResearchQuery = z.infer<typeof partnerRobloxResearchQuery>;
 export type PartnerTrafficQuery = z.infer<typeof partnerTrafficQuery>;
+export type PartnerConsentQuery = z.infer<typeof partnerConsentQuery>;
 export type PartnerCampaignsQuery = z.infer<typeof partnerCampaignsQuery>;

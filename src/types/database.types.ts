@@ -501,6 +501,27 @@ export type Database = {
           },
         ]
       }
+      consent_answer_counts: {
+        Row: {
+          answer: Database["public"]["Enums"]["consent_answer"]
+          count: number
+          day: string
+          page: string | null
+        }
+        Insert: {
+          answer: Database["public"]["Enums"]["consent_answer"]
+          count: number
+          day: string
+          page?: string | null
+        }
+        Update: {
+          answer?: Database["public"]["Enums"]["consent_answer"]
+          count?: number
+          day?: string
+          page?: string | null
+        }
+        Relationships: []
+      }
       consent_document_versions: {
         Row: {
           created_at: string
@@ -4730,9 +4751,24 @@ export type Database = {
         Args: { p_booking_id: string; p_checkout_session_id?: string }
         Returns: Json
       }
+      consent_answer_totals: {
+        Args: { p_from: string; p_to: string }
+        Returns: {
+          answer: Database["public"]["Enums"]["consent_answer"]
+          count: number
+          page: string
+        }[]
+      }
       consume_discord_link_token: { Args: { p_token: string }; Returns: string }
       consume_slack_link_token: { Args: { p_token: string }; Returns: string }
       count_active_seats: { Args: { p_product_id: string }; Returns: number }
+      count_consent_answer: {
+        Args: {
+          p_answer: Database["public"]["Enums"]["consent_answer"]
+          p_page?: string
+        }
+        Returns: undefined
+      }
       create_booking: {
         Args: {
           p_consented_documents?: string[]
@@ -5047,6 +5083,14 @@ export type Database = {
         Returns: boolean
       }
       gedu_trains_group: { Args: { p_group_id: string }; Returns: boolean }
+      get_admin_consent_answer_totals: {
+        Args: { p_from: string; p_to: string }
+        Returns: {
+          answer: Database["public"]["Enums"]["consent_answer"]
+          count: number
+          page: string
+        }[]
+      }
       get_admin_dashboard: { Args: never; Returns: Json }
       get_admin_gedu_invoicing: {
         Args: { p_month_start: string }
@@ -6099,6 +6143,7 @@ export type Database = {
         | "landing_portrait_image"
         | "spotlight_image"
       chat_channel_type: "group_session"
+      consent_answer: "all" | "analytics_only" | "marketing_only" | "none"
       delivery_mode: "online" | "in_person" | "hybrid"
       effective_product_status: "pending" | "running" | "completed"
       gamer_photo_consent_type: "lynx_educate"
@@ -6297,6 +6342,7 @@ export const Constants = {
         "spotlight_image",
       ],
       chat_channel_type: ["group_session"],
+      consent_answer: ["all", "analytics_only", "marketing_only", "none"],
       delivery_mode: ["online", "in_person", "hybrid"],
       effective_product_status: ["pending", "running", "completed"],
       gamer_photo_consent_type: ["lynx_educate"],

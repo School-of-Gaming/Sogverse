@@ -9,7 +9,7 @@ import {
   useState,
   type ReactNode,
 } from "react";
-import { deleteCookie, setCookie } from "@/lib/cookies";
+import { deleteCookie, getCookie, setCookie } from "@/lib/cookies";
 import {
   advertisingCookieNames,
   CONSENT_COOKIE_NAME,
@@ -17,10 +17,12 @@ import {
   clearAdvertisingStorage,
   consentForPurposes,
   isWithdrawal,
+  parseConsentCookie,
   serialiseConsent,
   type ConsentPurposes,
   type ConsentState,
 } from "@/lib/consent";
+import { sendConsentAnswer } from "@/lib/consent-answers";
 import {
   attributionCookieAfterLanding,
   UTM_COOKIE_MAX_AGE_SECONDS,
@@ -116,6 +118,17 @@ export function ConsentProvider({ initial, children }: ConsentProviderProps) {
   const choose = useCallback(
     (purposes: ConsentPurposes) => {
       const next = consentForPurposes(purposes);
+
+      // **Only a device's first answer is counted**: one given while the device
+      // held no answer we can act on — none yet, or one to an older version of
+      // the question, which reads as none. Read off the cookie rather than this
+      // document's state, so an answer another tab stored since this one loaded
+      // is a change, not a second first answer. A change of an existing answer
+      // sends nothing.
+      if (parseConsentCookie(getCookie(CONSENT_COOKIE_NAME)) === null) {
+        sendConsentAnswer(purposes, window.location.pathname);
+      }
+
       setCookie(CONSENT_COOKIE_NAME, serialiseConsent(next), {
         maxAge: CONSENT_MAX_AGE_SECONDS,
       });

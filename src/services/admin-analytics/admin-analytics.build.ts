@@ -2,6 +2,9 @@ import { formatInTimeZone } from "date-fns-tz";
 
 import { PATHNAMES } from "@/i18n/pathnames";
 import { SUPPORTED_LOCALES, type SupportedLocale } from "@/lib/constants/locales";
+import type { ConsentAnswerTotals } from "@/lib/consent-answers.contracts";
+import { Constants } from "@/types/database.types";
+import type { ConsentAnswer } from "@/types";
 import {
   decodeExternalPathname,
   localizeInternalPath,
@@ -513,6 +516,72 @@ export function buildBreakdown(
   return [...rows.values()].sort(
     (a, b) => b.pageviews - a.pageviews || compareText(a.value ?? "", b.value ?? ""),
   );
+}
+
+// ---------------------------------------------------------------------------
+// Cookie answers: our own tally, not Vercel's
+// ---------------------------------------------------------------------------
+
+/** The cookie banner's answers, in the order the database enum lists them. */
+export const CONSENT_ANSWERS = Constants.public.Enums.consent_answer;
+
+export interface ConsentAnswerCount {
+  answer: ConsentAnswer;
+  count: number;
+}
+
+/** A page's answers: the locale-stripped internal path, or null for every page that is not a marketing page. */
+export interface ConsentAnswerPage {
+  page: string | null;
+  answered: number;
+  answers: ConsentAnswerCount[];
+}
+
+export interface ConsentAnswerSummary {
+  /** Every answer counted in the range, whatever it was. */
+  answered: number;
+  /** Each answer's count and its share of `answered`; the share is null when nobody answered. */
+  answers: (ConsentAnswerCount & { share: number | null })[];
+  /** The same answers by the page they were given on, most answered first, the non-marketing pages last. */
+  byPage: ConsentAnswerPage[];
+}
+
+/**
+ * The tally's totals over a range, reduced to what the page and the MCP tools
+ * show. Every answer is listed, at zero when nobody gave it, so the four
+ * always read in the same order and a missing one is never mistaken for a
+ * failed read.
+ */
+export function buildConsentAnswers(rows: ConsentAnswerTotals): ConsentAnswerSummary {
+  const sum = (counts: readonly ConsentAnswerCount[]) =>
+    counts.reduce((total, entry) => total + entry.count, 0);
+  const countsOf = (of: readonly ConsentAnswerTotals[number][]): ConsentAnswerCount[] =>
+    CONSENT_ANSWERS.map((answer) => ({
+      answer,
+      count: sum(of.filter((row) => row.answer === answer)),
+    }));
+
+  const answers = countsOf(rows);
+  const answered = sum(answers);
+  const pages = [...new Set(rows.map((row) => row.page))];
+  const byPage = pages
+    .map((page) => {
+      const counts = countsOf(rows.filter((row) => row.page === page));
+      return { page, answered: sum(counts), answers: counts };
+    })
+    .sort((a, b) => {
+      if ((a.page === null) !== (b.page === null)) return a.page === null ? 1 : -1;
+      return b.answered - a.answered || compareText(a.page ?? "", b.page ?? "");
+    });
+
+  return {
+    answered,
+    answers: answers.map((entry) => ({
+      ...entry,
+      share: answered === 0 ? null : entry.count / answered,
+    })),
+    byPage,
+  };
 }
 
 // ---------------------------------------------------------------------------

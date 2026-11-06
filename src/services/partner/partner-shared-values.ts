@@ -1,3 +1,4 @@
+import { PartnerQueryError } from "@/lib/api/partner-auth.server";
 import { CONSENT_DOCUMENT_BUNDLES } from "@/lib/constants/consent-documents";
 import type { EffectiveProductStatus } from "@/lib/products/effective-status";
 import type { DeliveryMode } from "@/types";
@@ -129,6 +130,74 @@ export function isRobloxUrl(value: string): boolean {
   if (url.protocol !== "https:" && url.protocol !== "http:") return false;
   const host = url.hostname.toLowerCase();
   return host === "roblox.com" || host.endsWith(".roblox.com");
+}
+
+/** Plain code-unit order, the same on every machine: no locale collation. */
+export function compareText(a: string, b: string): number {
+  return a < b ? -1 : a > b ? 1 : 0;
+}
+
+// ---------------------------------------------------------------------------
+// Date ranges
+// ---------------------------------------------------------------------------
+
+/** The documented default window: the last thirty UTC days, today included. */
+const DEFAULT_RANGE_DAYS = 30;
+
+const DAY_MS = 86_400_000;
+
+/** A UTC day, `YYYY-MM-DD`. */
+function utcDay(ms: number): string {
+  return new Date(ms).toISOString().slice(0, 10);
+}
+
+/**
+ * The days a counted resource's answer covers (`/traffic`, `/consent`): what
+ * the caller asked for, else the thirty UTC days ending on `to`, which itself
+ * defaults to today. `range` is the days the counts cover, so a range reaching
+ * past today is answered up to today — a day to come has no count yet — and,
+ * when the resource keeps its counts only back to an `earliest` day, a range
+ * reaching before it is answered from that day. With no `earliest` there is no
+ * lower clamp: a day before counting began holds nothing, which is the
+ * truthful count for it.
+ *
+ * Refused as the caller's mistake (→ 400 naming the parameter):
+ *
+ * - a `from` later than the `to` a default completed — the query schema
+ *   refuses a reversed pair it can see, not one a default made, and
+ *   `/campaigns` refuses the same case the same way;
+ * - a range that shares no day with the counts at all — wholly before
+ *   `earliest`, or wholly after today — which has no truthful `range` to
+ *   answer with.
+ */
+export function resolveCountedRange(
+  from: string | undefined,
+  to: string | undefined,
+  now: Date,
+  earliest?: string,
+): { from: string; to: string } {
+  const today = utcDay(now.getTime());
+  const end = to ?? today;
+  const start = from ?? utcDay(Date.parse(`${end}T00:00:00Z`) - (DEFAULT_RANGE_DAYS - 1) * DAY_MS);
+  if (start > end) {
+    throw new PartnerQueryError(`from: must be on or before to, which defaults to today (${end})`);
+  }
+  if (earliest !== undefined && end < earliest) {
+    throw new PartnerQueryError(
+      `to: must be on or after ${earliest}, the earliest day traffic is kept for`,
+    );
+  }
+  if (start > today) {
+    throw new PartnerQueryError(
+      from === undefined
+        ? `from: defaults to the 30 days ending on to (${start}), which lies after today (${today})`
+        : `from: must be on or before today (${today})`,
+    );
+  }
+  return {
+    from: earliest !== undefined && start < earliest ? earliest : start,
+    to: end > today ? today : end,
+  };
 }
 
 // ---------------------------------------------------------------------------

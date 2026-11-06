@@ -1858,6 +1858,17 @@
         "visitors": "SuchwI'"
       }
     },
+    "consent": {
+      "heading": "cookie jangmey",
+      "caption": "Hoch jangbogh leghwI' toghlu', De' ghom lajbogh neH ghobe'.",
+      "total": "{count, plural, one {jang} other {jangmey}}",
+      "answers": {
+        "all": "Hoch cookie Sop",
+        "analytics_only": "De' ghom neH",
+        "marketing_only": "ja'chuq neH",
+        "none": "cookie Sop Qo'"
+      }
+    },
     "landing": {
       "heading": "Saq nab",
       "caption": "Hoch Saq nab leghlu'pu'bogh. Hoch Hol rap. cookie DIr laj SuchwI' neH.",

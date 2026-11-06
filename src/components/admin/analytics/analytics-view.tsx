@@ -7,7 +7,9 @@ import { Heading } from "@sog/ui";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
+import type { ChartColor } from "@/components/ui/chart";
 import { DatePicker } from "@/components/ui/date-picker";
+import { DonutChart } from "@/components/ui/donut-chart";
 import { Link, useRouter } from "@/i18n/navigation";
 import { LOCALE_CONFIG, formattingLocale, resolveLocale } from "@/lib/constants/locales";
 import { ROUTES } from "@/lib/constants/routes";
@@ -16,13 +18,16 @@ import { SCHEDULE_PART_SEPARATOR } from "@/lib/products/format-product-schedule"
 import { cn } from "@/lib/cn";
 import { formatDate, formatDateOnly } from "@/lib/date-format";
 import { useTimezone } from "@/providers";
+import type { ConsentAnswer } from "@/types";
 import {
   ANALYTICS_PRESETS,
+  CONSENT_ANSWERS,
   type AnalyticsRange,
   type AnalyticsResult,
   type BreakdownRow,
   type CampaignLabelCount,
   type CampaignRow,
+  type ConsentAnswerSummary,
   type LandingPageRow,
   type PathLanguage,
   type RouteRow,
@@ -457,6 +462,68 @@ export function CampaignsTable({ rows }: { rows: CampaignRow[] }) {
         onToggle={() => setExpanded(!expanded)}
         className="px-4 py-2"
       />
+    </Card>
+  );
+}
+
+// ---------------------------------------------------------------------------
+// Cookie answers
+// ---------------------------------------------------------------------------
+
+/**
+ * Each answer's colour, as the ring fills it and as its key's swatch. The three
+ * yeses take three Yty families, and the outright no takes the quiet ink.
+ */
+const ANSWER_COLOUR: Record<ConsentAnswer, { color: ChartColor; swatch: string }> = {
+  all: { color: "var(--color-yty-glow)", swatch: "bg-yty-glow" },
+  analytics_only: { color: "var(--color-yty-valor)", swatch: "bg-yty-valor" },
+  marketing_only: { color: "var(--color-yty-wit)", swatch: "bg-yty-wit" },
+  none: { color: "var(--color-muted-foreground)", swatch: "bg-muted-foreground" },
+};
+
+/**
+ * How the cookie banner was answered: a donut of the answers with their total
+ * in the hole, each answer keyed by its share first and its count after, since
+ * the split is the news. It sits beside the traffic card, carrying its own
+ * heading as that card does. Handed `null` while the read is in flight, it
+ * draws the empty ring and the labels with their figures blank, at its final
+ * height: the read is one small grouped query that lands in a frame or two, so
+ * it gets no skeleton.
+ */
+export function ConsentAnswersCard({
+  summary,
+  failure,
+}: {
+  summary: ConsentAnswerSummary | null;
+  failure?: Extract<AnalyticsResult<unknown>, { ok: false }>["reason"];
+}) {
+  const t = useTranslations("admin.analytics.consent");
+  const slices = CONSENT_ANSWERS.map((answer) => {
+    const entry = summary?.answers.find((row) => row.answer === answer);
+    return {
+      key: answer,
+      label: t(`answers.${answer}`),
+      value: entry?.count ?? null,
+      share: entry?.share ?? null,
+      ...ANSWER_COLOUR[answer],
+    };
+  });
+  return (
+    <Card className="flex flex-col gap-4 p-5">
+      <div className="space-y-1">
+        <Heading level={2} step="card-title">{t("heading")}</Heading>
+        <p className="text-xs text-muted-foreground">{t("caption")}</p>
+      </div>
+      {failure ? (
+        <AnalyticsFailure reason={failure} />
+      ) : (
+        <DonutChart
+          slices={slices}
+          total={summary && { value: summary.answered, label: t("total", { count: summary.answered }) }}
+          chartLabel={t("heading")}
+          lead="share"
+        />
+      )}
     </Card>
   );
 }

@@ -30,6 +30,7 @@ const reads = vi.hoisted(() => ({
   readBreakdowns: vi.fn(),
   readCampaigns: vi.fn(),
   readLandingPages: vi.fn(),
+  readConsentAnswers: vi.fn(),
 }));
 vi.mock("@/services/admin-analytics/admin-analytics.server", async (importOriginal) => ({
   ...(await importOriginal<typeof import("@/services/admin-analytics/admin-analytics.server")>()),
@@ -61,6 +62,42 @@ const OVERVIEW = {
 
 const REFUSED = { ok: false, reason: "refused" };
 
+const CONSENT = {
+  ok: true,
+  readAt: "2026-10-15T09:30:00.000Z",
+  data: {
+    answered: 4,
+    answers: [
+      { answer: "all", count: 3, share: 0.75 },
+      { answer: "analytics_only", count: 0, share: 0 },
+      { answer: "marketing_only", count: 0, share: 0 },
+      { answer: "none", count: 1, share: 0.25 },
+    ],
+    byPage: [
+      {
+        page: "/roblox",
+        answered: 3,
+        answers: [
+          { answer: "all", count: 3 },
+          { answer: "analytics_only", count: 0 },
+          { answer: "marketing_only", count: 0 },
+          { answer: "none", count: 0 },
+        ],
+      },
+      {
+        page: null,
+        answered: 1,
+        answers: [
+          { answer: "all", count: 0 },
+          { answer: "analytics_only", count: 0 },
+          { answer: "marketing_only", count: 0 },
+          { answer: "none", count: 1 },
+        ],
+      },
+    ],
+  },
+};
+
 beforeEach(() => {
   vi.useFakeTimers({ now: NOW, toFake: ["Date"] });
   vi.stubEnv("NEXT_PUBLIC_SUPABASE_URL", SUPABASE_URL);
@@ -79,6 +116,7 @@ beforeEach(() => {
   mockMaybeSingle.mockResolvedValue({ data: { role: "admin" }, error: null });
   for (const read of Object.values(reads)) read.mockReset();
   reads.readWebAnalyticsOverview.mockResolvedValue(OVERVIEW);
+  reads.readConsentAnswers.mockResolvedValue(CONSENT);
 });
 
 afterEach(() => {
@@ -112,6 +150,7 @@ describe("the manual", () => {
       expect(listed.description).toContain("count only visitors who accepted analytics cookies, so real traffic is higher");
       expect(listed.description).toContain("Every day is a UTC day");
       expect(listed.description).toContain("Button clicks are not recorded");
+      expect(listed.description).toContain("not limited to visitors who accepted analytics");
     }
   });
 
@@ -132,10 +171,18 @@ describe("get_analytics_summary", () => {
     const range = { from: "2026-09-16", to: "2026-10-15" };
     expect(reads.readWebAnalyticsOverview).toHaveBeenCalledWith(range, NOW, undefined);
     expect(reads.readPathViews).not.toHaveBeenCalled();
+    // The cookie answers are read on the admin's own token-bound client.
+    expect(reads.readConsentAnswers).toHaveBeenCalledWith(range, expect.objectContaining(bearerClient));
     expect(result.structuredContent).toEqual({
       range: { ...range, days: 30, timeZone: "UTC", adjusted: null },
       filters: { paths: [], campaign: null, source: null, medium: null },
       webAnalytics: { available: true, pageviews: 15, visitors: 6, readAt: READ_AT },
+      cookieAnswers: {
+        available: true,
+        answered: 4,
+        answers: CONSENT.data.answers,
+        readAt: CONSENT.readAt,
+      },
     });
     // Repeated as text for clients that read only that.
     expect(JSON.parse(resultText(result))).toEqual(result.structuredContent);
@@ -215,6 +262,22 @@ describe("get_analytics_summary", () => {
     expect(result.structuredContent).toMatchObject({
       webAnalytics: { available: false, reason: "refused", explanation: expect.stringContaining('"Vercel refused"') },
       days: null,
+    });
+  });
+
+  it("marks the cookie answers unavailable on their own when the database fails", async () => {
+    reads.readConsentAnswers.mockResolvedValue({ ok: false, reason: "failed" });
+
+    const result = await tool("get_analytics_summary");
+
+    expect(result.isError).toBeUndefined();
+    expect(result.structuredContent).toMatchObject({
+      webAnalytics: { available: true },
+      cookieAnswers: {
+        available: false,
+        reason: "failed",
+        explanation: expect.stringContaining("Sogverse's own database did not answer"),
+      },
     });
   });
 
@@ -332,6 +395,30 @@ describe("get_analytics_breakdown", () => {
         languages: [{ language: "en", pageviews: 1 }],
       },
     ]);
+  });
+
+  it("answers the cookie answers by page, on the admin's own client", async () => {
+    const result = await tool("get_analytics_breakdown", { by: "cookie_answers", lastDays: 7 });
+
+    expect(reads.readConsentAnswers).toHaveBeenCalledWith(
+      { from: "2026-10-09", to: "2026-10-15" },
+      expect.objectContaining(bearerClient),
+    );
+    expect(result.structuredContent).toMatchObject({
+      by: "cookie_answers",
+      rows: CONSENT.data.byPage,
+      totalRows: 2,
+      readAt: CONSENT.readAt,
+    });
+  });
+
+  it("names only the database when the cookie answers fail", async () => {
+    reads.readConsentAnswers.mockResolvedValue({ ok: false, reason: "failed" });
+    const result = await tool("get_analytics_breakdown", { by: "cookie_answers" });
+    expect(result.isError).toBe(true);
+    expect(resultText(result)).toBe(
+      "Sogverse's own database did not answer this read. It may pass if asked again in a minute.",
+    );
   });
 
   it("answers one of the one-dimension breakdowns", async () => {

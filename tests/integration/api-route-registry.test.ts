@@ -227,6 +227,7 @@ const TESTS = {
   // suite exists; the shared suite exercises every route either way.
   partnerApi: "tests/integration/api/partner-api.test.ts",
   partnerCampaigns: "tests/integration/api/partner-campaigns.test.ts",
+  partnerConsent: "tests/integration/api/partner-consent.test.ts",
   partnerEnrolments: "tests/integration/api/partner-enrolments.test.ts",
   partnerFamilies: "tests/integration/api/partner-families.test.ts",
   partnerFeedback: "tests/integration/api/partner-feedback.test.ts",
@@ -236,6 +237,7 @@ const TESTS = {
   partnerTraffic: "tests/integration/api/partner-traffic.test.ts",
   oauthConsent: "tests/integration/api/oauth-consent.test.ts",
   pageEvents: "tests/integration/api/page-events.test.ts",
+  consentAnswers: "tests/integration/api/consent-answers.test.ts",
   pin: "tests/integration/auth/pin.test.ts",
   adminPublication: "tests/integration/api/admin-publication.test.ts",
   indexNowKey: "tests/integration/api/indexnow-key.test.ts",
@@ -1438,6 +1440,12 @@ const ROUTE_REGISTRY: Record<string, RouteEntry> = {
     },
   },
 
+  "src/app/api/partner/v1/consent/route.ts": {
+    handlers: {
+      GET: { posture: PARTNER_KEY, body: { kind: "none" }, test: TESTS.partnerConsent },
+    },
+  },
+
   // --- Page events (the browser's moments, reported from the server) --------
 
   "src/app/api/page-events/route.ts": {
@@ -1450,6 +1458,22 @@ const ROUTE_REGISTRY: Record<string, RouteEntry> = {
         },
         body: { kind: "json", schema: "pageEventBody" },
         test: TESTS.pageEvents,
+      },
+    },
+  },
+
+  "src/app/api/consent-answers/route.ts": {
+    adminClient:
+      "count_consent_answer is granted to service_role alone, so this route is the one way a count is written: the anonymous visitor answering the banner has no session to write as, and the table it counts into grants no client role anything",
+    handlers: {
+      POST: {
+        posture: {
+          kind: "public",
+          reason:
+            "the cookie banner's anonymous tally, sent by a visitor who has just answered it — refusals included, before any session or consent exists to gate on. It reads no cookie and no session and stores no identifier: only one of four answers, the UTC day and, when the stated path is a marketing page the shared helpers accept, its internal path; any other path counts under no page. It answers 204 to everything, at once, so it reveals nothing. Anyone can inflate the counts with forged requests, which the owner accepted rather than defend against: the figure is a rate for admins and the partner, not money or access",
+        },
+        body: { kind: "json", schema: "consentAnswerBody" },
+        test: TESTS.consentAnswers,
       },
     },
   },
