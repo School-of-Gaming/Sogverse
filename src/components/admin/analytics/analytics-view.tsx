@@ -484,12 +484,19 @@ const ANSWER_COLOUR: Record<ConsentAnswer, { color: ChartColor; swatch: string }
 /**
  * How the cookie banner was answered: a donut of the answers with their total
  * in the hole, each answer keyed by its share first and its count after, since
- * the split is the news. It takes one column of the three the breakdowns below
- * share. Handed `null` while the read is in flight, it draws the empty ring and
- * the labels with their figures blank, at its final height: the read is one
- * small grouped query that lands in a frame or two, so it gets no skeleton.
+ * the split is the news. It sits beside the traffic card, carrying its own
+ * heading as that card does. Handed `null` while the read is in flight, it
+ * draws the empty ring and the labels with their figures blank, at its final
+ * height: the read is one small grouped query that lands in a frame or two, so
+ * it gets no skeleton.
  */
-export function ConsentAnswersCard({ summary }: { summary: ConsentAnswerSummary | null }) {
+export function ConsentAnswersCard({
+  summary,
+  failure,
+}: {
+  summary: ConsentAnswerSummary | null;
+  failure?: Extract<AnalyticsResult<unknown>, { ok: false }>["reason"];
+}) {
   const t = useTranslations("admin.analytics.consent");
   const slices = CONSENT_ANSWERS.map((answer) => {
     const entry = summary?.answers.find((row) => row.answer === answer);
@@ -502,16 +509,22 @@ export function ConsentAnswersCard({ summary }: { summary: ConsentAnswerSummary 
     };
   });
   return (
-    <div className="grid gap-4 lg:grid-cols-3">
-      <Card className="flex flex-col gap-4 p-5">
+    <Card className="flex flex-col gap-4 p-5">
+      <div className="space-y-1">
+        <Heading level={2} step="card-title">{t("heading")}</Heading>
+        <p className="text-xs text-muted-foreground">{t("caption")}</p>
+      </div>
+      {failure ? (
+        <AnalyticsFailure reason={failure} />
+      ) : (
         <DonutChart
           slices={slices}
           total={summary && { value: summary.answered, label: t("total", { count: summary.answered }) }}
           chartLabel={t("heading")}
           lead="share"
         />
-      </Card>
-    </div>
+      )}
+    </Card>
   );
 }
 

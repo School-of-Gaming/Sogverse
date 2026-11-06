@@ -80,7 +80,7 @@ export function ConsentAnswersFallback() {
 
 export async function ConsentAnswersSection({ range }: SectionProps) {
   const result = await readConsentAnswers(range);
-  if (!result.ok) return <AnalyticsFailure reason={result.reason} />;
+  if (!result.ok) return <ConsentAnswersCard summary={null} failure={result.reason} />;
   return <ConsentAnswersCard summary={result.data} />;
 }
 

@@ -54,15 +54,16 @@ export default async function AdminAnalyticsRoute({
 
   return (
     <AnalyticsShell range={range} earliest={earliest} today={utcToday(now)}>
-      <Suspense key={`traffic-${key}`} fallback={<TrafficSkeleton />}>
-        <TrafficSection {...props} />
-      </Suspense>
-
-      <AnalyticsSection heading={t("consent.heading")} caption={t("consent.caption")}>
+      <div className="grid gap-4 lg:grid-cols-3">
+        <div className="lg:col-span-2">
+          <Suspense key={`traffic-${key}`} fallback={<TrafficSkeleton />}>
+            <TrafficSection {...props} />
+          </Suspense>
+        </div>
         <Suspense key={`consent-${key}`} fallback={<ConsentAnswersFallback />}>
           <ConsentAnswersSection {...props} />
         </Suspense>
-      </AnalyticsSection>
+      </div>
 
       <AnalyticsSection heading={t("breakdowns.heading")} caption={t("breakdowns.caption")}>
         <Suspense key={`breakdowns-${key}`} fallback={<BreakdownsSkeleton />}>
