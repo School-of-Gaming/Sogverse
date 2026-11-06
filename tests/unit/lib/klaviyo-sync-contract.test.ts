@@ -404,13 +404,13 @@ describe("the events", () => {
     },
     {
       ...base,
-      kind: "subscription_cancelled",
-      unique_id: "subscription_cancelled:s1",
+      kind: "cancelled",
+      unique_id: "cancelled:p1",
       properties: {
-        source_id: "s1",
+        source_id: "p1",
         product: CLUB,
-        status: "canceling",
-        current_period_end: "2026-11-02T10:00:00+00:00",
+        ...gamerSeat,
+        reason: "subscription_cancelled",
       },
     },
   ];
@@ -419,10 +419,10 @@ describe("the events", () => {
     expect(EVENT_METRICS).toMatchInlineSnapshot(`
       {
         "account_created": "SV Account Created",
+        "cancelled": "SV Cancelled",
         "enrolled": "SV Enrolled",
         "seat_offered": "SV Seat Offered",
         "session": "SV Session",
-        "subscription_cancelled": "SV Subscription Cancelled",
         "waitlisted": "SV Waitlisted",
       }
     `);
@@ -439,6 +439,17 @@ describe("the events", () => {
     ).toMatchInlineSnapshot(`
       {
         "SV Account Created": {},
+        "SV Cancelled": {
+          "billing_mode": "string",
+          "gamer_birth_year": "number",
+          "gamer_gender": "string",
+          "product_id": "string",
+          "product_name": "string",
+          "product_type": "string",
+          "reason": "string",
+          "seat_holder": "string",
+          "topic": "string",
+        },
         "SV Enrolled": {
           "billing_mode": "string",
           "delivery_mode": "string",
@@ -475,14 +486,6 @@ describe("the events", () => {
           "seat_holder": "string",
           "session_date": "string",
           "session_starts_at": "string",
-          "topic": "string",
-        },
-        "SV Subscription Cancelled": {
-          "ends_at": "string",
-          "product_id": "string",
-          "product_name": "string",
-          "product_type": "string",
-          "status": "string",
           "topic": "string",
         },
         "SV Waitlisted": {

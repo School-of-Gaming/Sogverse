@@ -6112,7 +6112,7 @@ export type Database = {
         | "enrolled"
         | "waitlisted"
         | "seat_offered"
-        | "subscription_cancelled"
+        | "cancelled"
         | "session"
       library_article_category:
         | "online_safety"
@@ -6310,7 +6310,7 @@ export const Constants = {
         "enrolled",
         "waitlisted",
         "seat_offered",
-        "subscription_cancelled",
+        "cancelled",
         "session",
       ],
       library_article_category: [

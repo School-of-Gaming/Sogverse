@@ -199,11 +199,13 @@ export const klaviyoEventRow = z.discriminatedUnion("kind", [
   }),
   z.object({
     ...eventBase,
-    kind: z.literal("subscription_cancelled"),
+    /** A seat ended, on a product of any billing mode. */
+    kind: z.literal("cancelled"),
     properties: z.object({
       ...eventProperties,
-      status: z.enum(["canceling", "cancelled"]),
-      current_period_end: z.string().nullable(),
+      ...seatHolderFacts,
+      /** Why the seat ended. */
+      reason: z.enum(enums.participation_end_reason),
     }),
   }),
 ]);
