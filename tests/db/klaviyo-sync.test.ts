@@ -827,7 +827,7 @@ describe("the Klaviyo sync", () => {
       expect(events.data).toEqual([]);
     });
 
-    it("files a subscription's cancellation once, at the first cancelled state", async () => {
+    it("files nothing for a subscription asked to cancel, and one cancelled event when its seat ends", async () => {
       await clearEvents([TEST_IDS.CUSTOMER]);
       const participationId = await seat(CLUB, "active");
       const { data, error } = await admin
@@ -844,21 +844,90 @@ describe("the Klaviyo sync", () => {
         .single();
       expect(error).toBeNull();
       const subscriptionId = data?.id ?? "";
-      expect(await eventRow("subscription_cancelled", subscriptionId)).toBeNull();
 
+      await clearEvents([TEST_IDS.CUSTOMER]);
       await admin.from("family_subscriptions").update({ status: "canceling" }).eq("id", subscriptionId);
-      const first = await eventRow("subscription_cancelled", subscriptionId);
-      expect(first).toMatchObject({
-        product_id: CLUB,
-        facts: { status: "canceling", current_period_end: null },
-      });
+      const asked = await admin.from("klaviyo_event_outbox").select("id").eq("customer_id", TEST_IDS.CUSTOMER);
+      expect(asked.data).toEqual([]);
 
-      // The end of the same cancellation is not a second one.
-      await admin.from("family_subscriptions").update({ status: "cancelled" }).eq("id", subscriptionId);
-      expect((await eventRow("subscription_cancelled", subscriptionId))?.id).toBe(first?.id);
+      const ended = await admin.rpc("end_participation", {
+        p_participation_id: participationId,
+        p_reason: "subscription_cancelled",
+      });
+      expect(ended.error).toBeNull();
+      const { data: endedSeat } = await admin
+        .from("participations")
+        .select("ended_at")
+        .eq("id", participationId)
+        .single();
+
+      const all = await admin.from("klaviyo_event_outbox").select("*").eq("customer_id", TEST_IDS.CUSTOMER);
+      expect(all.data).toHaveLength(1);
+      const event = all.data?.[0];
+      expect(event).toMatchObject({
+        kind: "cancelled",
+        source_id: participationId,
+        product_id: CLUB,
+        unique_id: `cancelled:${participationId}`,
+      });
+      expect(event?.facts).toEqual({
+        seat_holder: "gamer",
+        gamer_birth_year: SEED.GAMER_BIRTH.birth_year,
+        gamer_gender: "boy",
+        reason: "subscription_cancelled",
+      });
+      expect(new Date(event?.occurred_at ?? "").getTime()).toBe(new Date(endedSeat?.ended_at ?? "").getTime());
+
+      const read = await admin.rpc("get_klaviyo_events", { p_event_ids: [event?.id ?? ""] });
+      expect(read.error).toBeNull();
+      const [row] = (read.data ?? []).map((r) => klaviyoEventRow.parse(r));
+      expect(row).toMatchObject({ kind: "cancelled", properties: { reason: "subscription_cancelled" } });
+      expect(row.properties.product?.billing_mode).toBe("paid");
+
+      // A redelivered end writes nothing, so nothing is filed again.
+      await clearEvents([TEST_IDS.CUSTOMER]);
+      expect((await admin.rpc("end_participation", {
+        p_participation_id: participationId,
+        p_reason: "subscription_cancelled",
+      })).error).toBeNull();
+      expect(await eventRow("cancelled", participationId)).toBeNull();
 
       await admin.from("family_subscriptions").delete().eq("id", subscriptionId);
       await eraseParticipations(admin, (q) => q.eq("id", participationId));
+      await clearEvents([TEST_IDS.CUSTOMER]);
+    });
+
+    it("files a cancelled event for an admin's removal of a parent's own seat on a free product", async () => {
+      await clearEvents([TEST_IDS.CUSTOMER]);
+      const { data, error } = await admin
+        .from("participations")
+        .insert({ product_id: FREE, participant_id: TEST_IDS.CUSTOMER, customer_id: TEST_IDS.CUSTOMER, status: "active" })
+        .select("id")
+        .single();
+      expect(error).toBeNull();
+      const own = data?.id ?? "";
+      const staff = await createAuthenticatedClient(TEST_CREDENTIALS.ADMIN.email, TEST_CREDENTIALS.ADMIN.password);
+      const removed = await staff.rpc("admin_remove_participation", { p_product_id: FREE, p_participation_id: own });
+      expect(removed.error).toBeNull();
+
+      expect(await eventRow("cancelled", own)).toMatchObject({
+        product_id: FREE,
+        facts: { seat_holder: "parent", gamer_birth_year: null, gamer_gender: null, reason: "admin_removed" },
+      });
+
+      await eraseParticipations(admin, (q) => q.eq("id", own));
+      await clearEvents([TEST_IDS.CUSTOMER]);
+    });
+
+    it("files no cancelled event for a waitlisted row leaving the line", async () => {
+      await clearEvents([TEST_IDS.CUSTOMER]);
+      const waiting = await seat(FREE, "waitlisted");
+      expect((await admin.rpc("end_participation", {
+        p_participation_id: waiting,
+        p_reason: "admin_removed",
+      })).error).toBeNull();
+      expect(await eventRow("cancelled", waiting)).toBeNull();
+      await clearEvents([TEST_IDS.CUSTOMER]);
     });
   });
 

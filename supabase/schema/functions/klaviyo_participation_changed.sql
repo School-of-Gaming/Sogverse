@@ -74,6 +74,20 @@ BEGIN
     );
   END IF;
 
+  -- The seat's own end, whatever ended it: end_participation writes the
+  -- status, ended_at and end_reason in one update. The booking's tag and
+  -- answer belong to the moment of booking, so they are not repeated here.
+  IF NEW.status = 'ended'::public.participation_status
+     AND v_old_status IS DISTINCT FROM NEW.status THEN
+    PERFORM public.enqueue_klaviyo_event(
+      'cancelled'::public.klaviyo_event_kind,
+      NEW.id, NEW.customer_id, NEW.product_id,
+      NEW.ended_at,
+      public.klaviyo_seat_holder_facts(NEW.participant_id, NEW.customer_id)
+        || jsonb_build_object('reason', NEW.end_reason)
+    );
+  END IF;
+
   IF NEW.seat_offer_sent_at IS NOT NULL
      AND (TG_OP = 'INSERT' OR OLD.seat_offer_sent_at IS NULL) THEN
     PERFORM public.enqueue_klaviyo_event(
@@ -92,7 +106,7 @@ $$;
 -- Name: FUNCTION klaviyo_participation_changed(); Type: COMMENT; Schema: public; Owner: -
 --
 
-COMMENT ON FUNCTION public.klaviyo_participation_changed() IS 'Trigger on participations, after an insert, a delete, or an update of status, product_id or seat_offer_sent_at that changes it: files the participation''s parent in the Klaviyo profile outbox, and files the events it shows — enrolled when it arrives at active (by insert or from the waitlist) on a product of any billing mode, with klaviyo_seat_holder_facts, the UTM tag of the seat''s booking and — on the insert that books the seat only — its School of Gaming marketing answer (null on a later activation, so a re-activated seat never re-subscribes); waitlisted when it arrives at waitlisted, with the booking''s UTM tag and — on the insert that joins the waitlist only — the same answer (null when a seat is demoted onto it); seat_offered when a seat offer is first stamped on it. A seat with no booking files every answer null. Granted to nobody.';
+COMMENT ON FUNCTION public.klaviyo_participation_changed() IS 'Trigger on participations, after an insert, a delete, or an update of status, product_id or seat_offer_sent_at that changes it: files the participation''s parent in the Klaviyo profile outbox, and files the events it shows — enrolled when it arrives at active (by insert or from the waitlist) on a product of any billing mode, with klaviyo_seat_holder_facts, the UTM tag of the seat''s booking and — on the insert that books the seat only — its School of Gaming marketing answer (null on a later activation, so a re-activated seat never re-subscribes); waitlisted when it arrives at waitlisted, with the booking''s UTM tag and — on the insert that joins the waitlist only — the same answer (null when a seat is demoted onto it); cancelled when it arrives at ended, on a product of any billing mode, with klaviyo_seat_holder_facts and its end_reason as reason, at its ended_at; seat_offered when a seat offer is first stamped on it. A seat with no booking files every booking answer null. Granted to nobody.';
 
 
 --

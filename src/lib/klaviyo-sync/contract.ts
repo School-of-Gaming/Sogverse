@@ -111,7 +111,8 @@ export const EVENT_METRICS = {
   session: "SV Session",
   waitlisted: "SV Waitlisted",
   seat_offered: "SV Seat Offered",
-  subscription_cancelled: "SV Subscription Cancelled",
+  /** One per seat that ends, on a product of any billing mode: the counterpart of `SV Enrolled`. */
+  cancelled: "SV Cancelled",
 } as const satisfies Record<KlaviyoEventRow["kind"], string>;
 
 export const EVENT_PROPERTIES = {
@@ -120,13 +121,13 @@ export const EVENT_PROPERTIES = {
   productName: "product_name",
   productType: "product_type",
   topic: "topic",
-  /** On an enrolment and a session: `paid`, `free` or `external_contract`. */
+  /** On an enrolment, a cancellation and a session: `paid`, `free` or `external_contract`. */
   billingMode: "billing_mode",
-  /** On an enrolment and a session: who holds the seat, `parent` or `gamer`. */
+  /** On an enrolment, a cancellation and a session: who holds the seat, `parent` or `gamer`. */
   seatHolder: "seat_holder",
-  /** On an enrolment and a session: the gamer's birth year; null on a parent's own seat. */
+  /** On an enrolment, a cancellation and a session: the gamer's birth year; null on a parent's own seat. */
   gamerBirthYear: "gamer_birth_year",
-  /** On an enrolment and a session: the gamer's gender; null on a parent's own seat or a gamer with none. */
+  /** On an enrolment, a cancellation and a session: the gamer's gender; null on a parent's own seat or a gamer with none. */
   gamerGender: "gamer_gender",
   /** On an enrolment. */
   deliveryMode: "delivery_mode",
@@ -150,10 +151,8 @@ export const EVENT_PROPERTIES = {
   sessionDate: "session_date",
   /** On a session: its scheduled start, an ISO instant. */
   sessionStartsAt: "session_starts_at",
-  /** On a cancellation: `canceling` (asked for) or `cancelled` (ended). */
-  status: "status",
-  /** On a cancellation: when the paid period ends. */
-  endsAt: "ends_at",
+  /** On a cancellation: why the seat ended, `subscription_cancelled` or `admin_removed`. */
+  reason: "reason",
 } as const;
 
 /** The newsletter form's properties: kept apart from the account's `sog_utm_` ones. */
@@ -353,9 +352,9 @@ function productProperties(
   };
 }
 
-/** What an enrolment and a session say about the seat: its product, its billing mode, and who holds it. */
+/** What an enrolment, a cancellation and a session say about the seat: its product, its billing mode, and who holds it. */
 function seatProperties(
-  properties: Extract<KlaviyoEventRow, { kind: "enrolled" | "session" }>["properties"],
+  properties: Extract<KlaviyoEventRow, { kind: "enrolled" | "cancelled" | "session" }>["properties"],
   locale: SupportedLocale,
 ): KlaviyoProperties {
   return {
@@ -446,13 +445,12 @@ export function klaviyoEventFor(
           [EVENT_PROPERTIES.sessionStartsAt]: row.properties.session_starts_at,
         },
       };
-    case "subscription_cancelled":
+    case "cancelled":
       return {
         ...base,
         properties: {
-          ...productProperties(row.properties.product, locale),
-          [EVENT_PROPERTIES.status]: row.properties.status,
-          [EVENT_PROPERTIES.endsAt]: row.properties.current_period_end,
+          ...seatProperties(row.properties, locale),
+          [EVENT_PROPERTIES.reason]: row.properties.reason,
         },
       };
   }
