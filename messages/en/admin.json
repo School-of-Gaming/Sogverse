@@ -1861,7 +1861,7 @@
     "consent": {
       "heading": "Cookie answers",
       "caption": "Every visitor who answered, not only those who accepted analytics.",
-      "answered": "Answers",
+      "total": "{count, plural, one {answer} other {answers}}",
       "answers": {
         "all": "Accepted all",
         "analytics_only": "Analytics only",

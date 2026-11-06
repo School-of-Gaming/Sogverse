@@ -7,7 +7,9 @@ import { Heading } from "@sog/ui";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
+import type { ChartColor } from "@/components/ui/chart";
 import { DatePicker } from "@/components/ui/date-picker";
+import { DonutChart } from "@/components/ui/donut-chart";
 import { Link, useRouter } from "@/i18n/navigation";
 import { LOCALE_CONFIG, formattingLocale, resolveLocale } from "@/lib/constants/locales";
 import { ROUTES } from "@/lib/constants/routes";
@@ -16,6 +18,7 @@ import { SCHEDULE_PART_SEPARATOR } from "@/lib/products/format-product-schedule"
 import { cn } from "@/lib/cn";
 import { formatDate, formatDateOnly } from "@/lib/date-format";
 import { useTimezone } from "@/providers";
+import type { ConsentAnswer } from "@/types";
 import {
   ANALYTICS_PRESETS,
   CONSENT_ANSWERS,
@@ -468,47 +471,47 @@ export function CampaignsTable({ rows }: { rows: CampaignRow[] }) {
 // ---------------------------------------------------------------------------
 
 /**
- * How the cookie banner was answered: each answer's count and its share, and
- * the answers in all. Handed `null` while the read is in flight, it draws the
- * labels with their figures empty at their final height: the read is one
+ * Each answer's colour, as the ring fills it and as its key's swatch. The three
+ * yeses take three Yty families, and the outright no takes the quiet ink.
+ */
+const ANSWER_COLOUR: Record<ConsentAnswer, { color: ChartColor; swatch: string }> = {
+  all: { color: "var(--color-yty-glow)", swatch: "bg-yty-glow" },
+  analytics_only: { color: "var(--color-yty-valor)", swatch: "bg-yty-valor" },
+  marketing_only: { color: "var(--color-yty-wit)", swatch: "bg-yty-wit" },
+  none: { color: "var(--color-muted-foreground)", swatch: "bg-muted-foreground" },
+};
+
+/**
+ * How the cookie banner was answered: a donut of the answers with their total
+ * in the hole, each answer keyed by its share first and its count after, since
+ * the split is the news. It takes one column of the three the breakdowns below
+ * share. Handed `null` while the read is in flight, it draws the empty ring and
+ * the labels with their figures blank, at its final height: the read is one
  * small grouped query that lands in a frame or two, so it gets no skeleton.
  */
 export function ConsentAnswersCard({ summary }: { summary: ConsentAnswerSummary | null }) {
   const t = useTranslations("admin.analytics.consent");
-  const count = useCount();
-  const locale = useLocale();
-  const share = new Intl.NumberFormat(formattingLocale(locale), {
-    style: "percent",
-    maximumFractionDigits: 0,
+  const slices = CONSENT_ANSWERS.map((answer) => {
+    const entry = summary?.answers.find((row) => row.answer === answer);
+    return {
+      key: answer,
+      label: t(`answers.${answer}`),
+      value: entry?.count ?? null,
+      share: entry?.share ?? null,
+      ...ANSWER_COLOUR[answer],
+    };
   });
-  const figures = [
-    ...CONSENT_ANSWERS.map((answer) => {
-      const entry = summary?.answers.find((row) => row.answer === answer);
-      return {
-        key: answer,
-        label: t(`answers.${answer}`),
-        value: entry ? count(entry.count) : null,
-        share: entry?.share == null ? null : share.format(entry.share),
-      };
-    }),
-    { key: "answered", label: t("answered"), value: summary ? count(summary.answered) : null, share: null },
-  ];
   return (
-    <Card className="p-5">
-      <dl className="grid grid-cols-2 gap-x-8 gap-y-4 sm:grid-cols-3 lg:grid-cols-5">
-        {figures.map((figure) => (
-          <div key={figure.key}>
-            <dt className="text-sm text-muted-foreground">{figure.label}</dt>
-            <dd className="mt-1 flex h-8 items-baseline gap-2 tabular-nums">
-              <span className="text-2xl font-semibold">{figure.value}</span>
-              {figure.share !== null && (
-                <span className="text-xs text-muted-foreground">{figure.share}</span>
-              )}
-            </dd>
-          </div>
-        ))}
-      </dl>
-    </Card>
+    <div className="grid gap-4 lg:grid-cols-3">
+      <Card className="flex flex-col gap-4 p-5">
+        <DonutChart
+          slices={slices}
+          total={summary && { value: summary.answered, label: t("total", { count: summary.answered }) }}
+          chartLabel={t("heading")}
+          lead="share"
+        />
+      </Card>
+    </div>
   );
 }
 

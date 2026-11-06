@@ -1861,7 +1861,7 @@
     "consent": {
       "heading": "Evästevastaukset",
       "caption": "Jokainen vastannut kävijä, ei vain analytiikan hyväksyneet.",
-      "answered": "Vastauksia",
+      "total": "{count, plural, one {vastaus} other {vastausta}}",
       "answers": {
         "all": "Hyväksyi kaikki",
         "analytics_only": "Vain analytiikka",

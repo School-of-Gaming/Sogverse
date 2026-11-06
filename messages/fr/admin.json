@@ -1861,7 +1861,7 @@
     "consent": {
       "heading": "Réponses aux cookies",
       "caption": "Chaque visiteur qui a répondu, pas seulement ceux qui ont accepté les statistiques.",
-      "answered": "Réponses",
+      "total": "{count, plural, one {réponse} other {réponses}}",
       "answers": {
         "all": "Tout accepté",
         "analytics_only": "Statistiques seules",

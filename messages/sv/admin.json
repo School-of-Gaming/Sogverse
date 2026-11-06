@@ -1861,7 +1861,7 @@
     "consent": {
       "heading": "Cookiesvar",
       "caption": "Varje besökare som svarade, inte bara de som godkände analys.",
-      "answered": "Svar",
+      "total": "{count, plural, other {svar}}",
       "answers": {
         "all": "Godkände alla",
         "analytics_only": "Bara analys",

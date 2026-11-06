@@ -7,8 +7,6 @@ import {
   CartesianGrid,
   Line,
   LineChart,
-  Pie,
-  PieChart,
   XAxis,
   YAxis,
   type XAxisTickContentProps,
@@ -16,6 +14,7 @@ import {
 import { useLocale, useTranslations } from "next-intl";
 import { Heading } from "@sog/ui";
 import { Card } from "@/components/ui/card";
+import { DonutChart } from "@/components/ui/donut-chart";
 import {
   ChartContainer,
   ChartLegend,
@@ -72,9 +71,6 @@ const CHART_HEIGHT = "h-64";
 
 /** A monthly chart grows to fill its card when the card beside it is taller. */
 const MONTHLY_CHART_SIZE = "min-h-64 w-full flex-1";
-
-/** The gap between a donut's slices: the card's own ground, so each slice stands apart. */
-const SLICE_EDGE = "var(--color-card)";
 
 /** The one stack the revenue bands share, so each month is one bar. */
 const REVENUE_STACK = "revenue";
@@ -402,56 +398,23 @@ const SLICE_COLOUR: Record<EngagementSlice, { color: ChartColor; swatch: string 
 
 function EngagementCard({ overview }: { overview: BusinessOverview }) {
   const t = useTranslations("admin.business.engagement");
-  const count = useCount();
-  const percent = new Intl.NumberFormat(formattingLocale(useLocale()), {
-    style: "percent",
-    maximumFractionDigits: 0,
-  });
-  const rows = engagementShares(overview.engagement);
-  const config = Object.fromEntries(
-    rows.map(({ slice }) => [slice, { label: t(`slices.${slice}`), color: SLICE_COLOUR[slice].color }]),
-  ) satisfies ChartConfig;
-  const data = rows.map((row) => ({ ...row, fill: `var(--series-${row.slice})` }));
-  const describedBy = useId();
+  const total = overview.engagement.totalFamilies;
+  const slices = engagementShares(overview.engagement).map((row) => ({
+    key: row.slice,
+    label: t(`slices.${row.slice}`),
+    value: row.families,
+    share: row.share,
+    ...SLICE_COLOUR[row.slice],
+  }));
 
   return (
     <BusinessCard heading={t("heading")} caption={t("caption")}>
-      <div className="relative">
-        <ChartContainer config={config} className={`${CHART_HEIGHT} w-full`}>
-          <PieChart aria-label={t("chart")} aria-describedby={describedBy}>
-            <Pie
-              data={data}
-              dataKey="families"
-              nameKey="slice"
-              innerRadius="62%"
-              outerRadius="92%"
-              stroke={SLICE_EDGE}
-              strokeWidth={2}
-              isAnimationActive={false}
-            />
-          </PieChart>
-        </ChartContainer>
-        <div className="pointer-events-none absolute inset-0 flex flex-col items-center justify-center">
-          <span className="text-2xl font-semibold tabular-nums">
-            {count(overview.engagement.totalFamilies)}
-          </span>
-          <span className="text-xs text-muted-foreground">
-            {t("total", { count: overview.engagement.totalFamilies })}
-          </span>
-        </div>
-      </div>
-      <ul id={describedBy} className="divide-y divide-border">
-        {rows.map((row) => (
-          <li key={row.slice} className="flex items-center gap-3 py-1.5 text-sm">
-            <span aria-hidden className={`h-2.5 w-2.5 shrink-0 rounded-full ${SLICE_COLOUR[row.slice].swatch}`} />
-            <span className="min-w-0 flex-1">{t(`slices.${row.slice}`)}</span>
-            <span className="tabular-nums">{count(row.families)}</span>
-            <span className="w-10 text-right text-xs tabular-nums text-muted-foreground">
-              {percent.format(row.share)}
-            </span>
-          </li>
-        ))}
-      </ul>
+      <DonutChart
+        slices={slices}
+        total={{ value: total, label: t("total", { count: total }) }}
+        chartLabel={t("chart")}
+        lead="value"
+      />
     </BusinessCard>
   );
 }

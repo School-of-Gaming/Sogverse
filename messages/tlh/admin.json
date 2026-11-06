@@ -1861,7 +1861,7 @@
     "consent": {
       "heading": "cookie jangmey",
       "caption": "Hoch jangbogh leghwI' toghlu', De' ghom lajbogh neH ghobe'.",
-      "answered": "jangmey",
+      "total": "{count, plural, one {jang} other {jangmey}}",
       "answers": {
         "all": "Hoch cookie Sop",
         "analytics_only": "De' ghom neH",
