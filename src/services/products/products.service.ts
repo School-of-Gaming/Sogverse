@@ -33,6 +33,7 @@ import {
   plannedSessionRows,
   type PlannedSession,
 } from "@/lib/planned-sessions";
+import { dateTimeInstant } from "@/lib/schedule-occurrence";
 import {
   productIdResponse,
   productListFacetsRow,
@@ -72,7 +73,10 @@ import {
 // the shop's sections, a rail that filters the listing, the municipality pages
 // — while a rail of picked products keeps the order it was picked in. A club
 // already running has a past start date and so sorts ahead of those still to
-// start. Products starting on the same day fall back to the newest-created first.
+// start. Products starting on the same day are ordered newest-created first
+// here, and the browse read then re-orders them by when their first session
+// starts (`sortSameDayByFirstSession` below) — the other selects carry no
+// schedule to break the tie with, and need none.
 function buildVisibleProductsQuery<Select extends string>(
   supabase: AppSupabaseClient,
   types: ProductType[],
@@ -173,6 +177,37 @@ function buildVisibleLocationsQuery(
 function dropEndedProducts<Row extends LifecycleInputs>(rows: Row[]): Row[] {
   const now = new Date();
   return rows.filter((row) => effectiveStatus(row, now) !== "completed");
+}
+
+// The browse listing's same-day tie-break: of two products starting on one
+// date, the one whose first session starts earlier comes first. PostgREST
+// cannot order a row by an embedded one-to-many column, so it happens here, on
+// the rows the database already ordered. The first session is the slot on the
+// start date's weekday, placed on that date in the product's own zone and
+// compared as an instant, so two zones on one date order by when each actually
+// begins rather than by their clock faces. A product with no slot that day goes
+// after the ones that have one; the sort is stable, so ties keep the database's
+// newest-created order, and rows on different dates keep the database's order.
+function firstSessionMs(row: ProductBrowseRow): number {
+  // A bare calendar date, so its weekday is read UTC-pinned: 0=Sun..6=Sat,
+  // shifted to the schema's 0=Mon..6=Sun.
+  const weekday = (new Date(`${row.start_date}T00:00:00Z`).getUTCDay() + 6) % 7;
+  const slot = row.schedule_slots.find((s) => s.weekday === weekday);
+  return slot
+    ? dateTimeInstant(row.start_date, slot.start_time, row.timezone).getTime()
+    : Number.MAX_SAFE_INTEGER;
+}
+
+function sortSameDayByFirstSession(rows: ProductBrowseRow[]): ProductBrowseRow[] {
+  return rows
+    .map((row) => ({ row, firstSession: firstSessionMs(row) }))
+    .sort((a, b) => {
+      if (a.row.start_date !== b.row.start_date) {
+        return a.row.start_date < b.row.start_date ? -1 : 1;
+      }
+      return a.firstSession - b.firstSession;
+    })
+    .map(({ row }) => row);
 }
 
 // Joined shape consumed by the parent-facing browse pages
@@ -841,7 +876,7 @@ export class ProductsService {
     const { data, error } = await buildBrowseQuery(this.supabase, types);
 
     if (error) throw error;
-    return dropEndedProducts(data);
+    return sortSameDayByFirstSession(dropEndedProducts(data));
   }
 
   // The same listing, narrowed to each product's location. `/schools` groups
