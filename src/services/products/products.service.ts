@@ -33,6 +33,7 @@ import {
   plannedSessionRows,
   type PlannedSession,
 } from "@/lib/planned-sessions";
+import { weekdayOf } from "@/lib/calendar-date";
 import { dateTimeInstant } from "@/lib/schedule-occurrence";
 import {
   productIdResponse,
@@ -189,9 +190,7 @@ function dropEndedProducts<Row extends LifecycleInputs>(rows: Row[]): Row[] {
 // after the ones that have one; the sort is stable, so ties keep the database's
 // newest-created order, and rows on different dates keep the database's order.
 function firstSessionMs(row: ProductBrowseRow): number {
-  // A bare calendar date, so its weekday is read UTC-pinned: 0=Sun..6=Sat,
-  // shifted to the schema's 0=Mon..6=Sun.
-  const weekday = (new Date(`${row.start_date}T00:00:00Z`).getUTCDay() + 6) % 7;
+  const weekday = weekdayOf(row.start_date);
   const slot = row.schedule_slots.find((s) => s.weekday === weekday);
   return slot
     ? dateTimeInstant(row.start_date, slot.start_time, row.timezone).getTime()
