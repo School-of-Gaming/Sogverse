@@ -66,6 +66,11 @@ import {
 // rule with it, and a visibility rule that exists twice is one that will
 // eventually disagree with itself. The select is a generic literal so each
 // caller's row type is still inferred from its own string.
+//
+// Soonest first: the order is the shop's and every product rail's, so a reader
+// meets the next camp or event before the ones after it. A club already
+// running has a past start date and so sorts ahead of those still to start.
+// Products starting on the same day fall back to the newest-created first.
 function buildVisibleProductsQuery<Select extends string>(
   supabase: AppSupabaseClient,
   types: ProductType[],
@@ -76,6 +81,7 @@ function buildVisibleProductsQuery<Select extends string>(
     .select(select)
     .in("product_type", types)
     .eq("is_visible", true)
+    .order("start_date", { ascending: true })
     .order("created_at", { ascending: false });
 }
 

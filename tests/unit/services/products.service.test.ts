@@ -60,6 +60,8 @@ describe("ProductsService.listVisibleByTypes", () => {
     expect(url.pathname).toBe("/rest/v1/products");
     expect(url.searchParams.get("product_type")).toBe("in.(consumer_club)");
     expect(url.searchParams.get("is_visible")).toBe("eq.true");
+    // Soonest first, newest-created breaking a same-day tie.
+    expect(url.searchParams.get("order")).toBe("start_date.asc,created_at.desc");
 
     expect(result.map((r) => r.id)).toEqual(["future", "open-ended"]);
   });
