@@ -119,6 +119,10 @@ const NOT_AN_EXPANSION = new Map<string, string>([
     "Counts the dates the plan handed it per weekday, to state how many sessions each weekly slot holds. The dates are the plan's; it only asks which weekday each one is.",
   ],
   [
+    "services/products/products.service.ts",
+    "The browse listing's same-day tie-break: the weekday of a product's start date picks the slot whose clock face says when that day's session begins. One known date, no walk; the start date is itself the first session day, so no plan is needed to find it.",
+  ],
+  [
     "components/admin/dashboard/build-admin-dashboard-data.ts",
     "Places each planned session the dashboard document carries in its weekday column of the viewer's calendar. The sessions are the plan's; it only asks which weekday each one falls on for the viewer.",
   ],
