@@ -111,7 +111,7 @@
       "envelopeTitle": "List envelope",
       "items": {
         "formats": "Responses are JSON. Every timestamp is ISO 8601 in UTC; every date is <code>YYYY-MM-DD</code>, a product’s dates being calendar days in the product’s own timezone and a traffic day a calendar day in UTC; every identifier is a UUID that never changes.",
-        "pagination": "Every resource that returns records is paginated by cursor, in ascending order of identifier, so the order is stable while a pull is in progress; a resource whose records have no identifier of their own pages in a stable order of its own. Pass <code>limit</code> (default 100, maximum 500) and the <code>next_cursor</code> from the previous page as <code>cursor</code>; a <code>null</code> <code>next_cursor</code> is the last page. A cursor is opaque, belongs to the filters it was issued with, and does not expire. <code>/traffic</code> returns one aggregate and takes <code>from</code> and <code>to</code> instead; its counts can be up to an hour old. <code>/campaigns</code> returns one aggregate too, and takes <code>from</code> and <code>to</code> as months.",
+        "pagination": "Every resource that returns records is paginated by cursor, in ascending order of identifier, so the order is stable while a pull is in progress; a resource whose records have no identifier of their own pages in a stable order of its own. Pass <code>limit</code> (default 100, maximum 500) and the <code>next_cursor</code> from the previous page as <code>cursor</code>; a <code>null</code> <code>next_cursor</code> is the last page. A cursor is opaque, belongs to the filters it was issued with, and does not expire. <code>/traffic</code> returns one aggregate and takes <code>from</code> and <code>to</code> instead; its counts can be up to an hour old. <code>/campaigns</code> returns one aggregate too, and takes <code>from</code> and <code>to</code> as months. <code>/consent</code> returns one aggregate too, and takes <code>from</code> and <code>to</code> as days, like <code>/traffic</code>; its counts are live.",
         "erasure": "A record that is missing from a full pull is no longer in scope, whether because the family asked for erasure, a seat was cancelled or a product left the Programme, and it leaves Lynx’s store on that same sync in every case. There is no tombstone: a record’s absence is the only signal, so read it only from a pull that reached its last page.",
         "consent": "A consent is reported as it stands at the moment of the request, with when it last changed and no history. A withdrawn marketing consent shows up as <code>granted: false</code> with the email address gone on the next pull; from then on the parent is not mailed, and Lynx may keep the minimal suppression record the Programme’s privacy policy allows so they are not added back.",
         "changePolicy": "Additions to this API, a new field or a new filter, ship without notice; a field removed or renamed, or a value that changes meaning, is a new version under a new path. Build against the fields you use and ignore the rest.",
@@ -276,6 +276,22 @@
           "enrolled": "Those accounts whose family holds a seat on a Programme product, has completed one, or is waiting for one: the third step, and the point where a family enters <code>/families</code>."
         },
         "note": "The campaign on an account is written once, when the account is created, and only where the visitor accepted marketing cookies, so these counts cover the families who did and never the others; it is the same campaign <code>/families</code> reports in <code>parents[].utm</code> once a family enrols. Every count is read live at the moment of the request, so the same range can answer differently on another day: families go on adding children and enrolling, and the current month gains accounts until it ends."
+      },
+      "consent": {
+        "title": "how visitors answer the cookie banner",
+        "intro": "How visitors to the pages a Lynx campaign can land on answered the cookie banner: the Roblox landing page, the shop, and each Programme product’s own page. Every answer is counted, a rejection included, so this is where to read the share of visitors who allow marketing or analytics. A device is counted once, at its first answer, on the page and the UTC day where it answered; an answer changed later is not counted again. Counting began in November 2026, so earlier days have no answers. The counts are live. Aggregate only: an answer is stored as a count, with nothing about who gave it.",
+        "params": {
+          "fromTo": "Only days within this range, inclusive. Omit for the last 30 days. A range reaching past today is answered up to today, as <code>range</code> shows; a range starting after today is refused."
+        },
+        "fields": {
+          "range": "The days the counts cover.",
+          "pages": "One entry per page: the landing page, the shop, and one per Programme product whose page had an answer in the range.",
+          "pagesPage": "Which kind of page, as in <code>/traffic</code>. The shop is shared with everything School of Gaming sells, so its answers are not Programme-only; a product page’s are.",
+          "pagesProductId": "The product whose page it is; <code>null</code> for the landing page and the shop.",
+          "pagesAnswered": "The four answers added together.",
+          "pagesAnswers": "How many devices gave each answer: <code>all</code> accepted analytics and marketing, <code>analytics_only</code> and <code>marketing_only</code> accepted one of the two, and <code>none</code> rejected both. Every answer is present, at zero when nobody gave it."
+        },
+        "note": "Only these three kinds of page are counted: a device that first answers anywhere else is in none of them. The answers decide who the other resources can see. A visitor who answered <code>all</code> or <code>analytics_only</code> can be counted in <code>/traffic</code>, and only one who answered <code>all</code> or <code>marketing_only</code> can bring a campaign into <code>/families</code>."
       }
     },
     "errors": {
@@ -307,7 +323,7 @@
         "childIdentity": "Children’s surnames, birth days and gender, and parents’ phone numbers. The Programme’s privacy policy promises a birth month rather than a birth date, and the rest is not something the dashboards or the Roblox report use.",
         "releases": "Case-study and testimonial releases. The one media permission Sogverse holds already covers public use of a photograph by Lynx Educate, School of Gaming and Roblox; a child’s full name, a case study, a quotation or content linked to the child need a separate written release obtained outside the platform.",
         "deliveryModel": "A delivery model label. Sogverse holds a product’s type and whether it is online, in person or hybrid; a model taxonomy is Lynx’s to lay over those two fields.",
-        "analytics": "Traffic anywhere but the landing page, the shop and the Programme’s product pages, and anything about a single visitor. The analytics behind <code>/traffic</code> are privacy-first by design: a page a family reaches after signing in is theirs, and a visitor is a count, never a record."
+        "analytics": "Traffic and cookie banner answers anywhere but the landing page, the shop and the Programme’s product pages, and anything about a single visitor. The counts behind <code>/traffic</code> and <code>/consent</code> are privacy-first by design: a page a family reaches after signing in is theirs, and a visitor is a count, never a record."
       }
     }
   }

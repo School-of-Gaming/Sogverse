@@ -7,6 +7,7 @@ import {
   analyticsCacheKey,
   buildBreakdown,
   buildCampaigns,
+  buildConsentAnswers,
   buildDayVisits,
   buildLandingPages,
   buildPathViews,
@@ -400,5 +401,49 @@ describe("buildPathViews", () => {
       },
       { given: "/fi/kauppa", pageviews: 8, addresses: [{ path: "/fi/kauppa", language: "fi", pageviews: 8 }] },
     ]);
+  });
+});
+
+describe("buildConsentAnswers", () => {
+  it("lists every answer with its count and share, and splits them by page", () => {
+    const summary = buildConsentAnswers([
+      { page: null, answer: "all", count: 10 },
+      { page: null, answer: "none", count: 5 },
+      { page: "/roblox", answer: "all", count: 3 },
+      { page: "/roblox", answer: "analytics_only", count: 2 },
+      { page: "/shop", answer: "none", count: 5 },
+    ]);
+
+    expect(summary.answered).toBe(25);
+    expect(summary.answers).toEqual([
+      { answer: "all", count: 13, share: 13 / 25 },
+      { answer: "analytics_only", count: 2, share: 2 / 25 },
+      { answer: "marketing_only", count: 0, share: 0 },
+      { answer: "none", count: 10, share: 10 / 25 },
+    ]);
+    // Most answered first, ties by path, the pages that are not marketing pages last.
+    expect(summary.byPage.map((page) => [page.page, page.answered])).toEqual([
+      ["/roblox", 5],
+      ["/shop", 5],
+      [null, 15],
+    ]);
+    expect(summary.byPage[0].answers).toEqual([
+      { answer: "all", count: 3 },
+      { answer: "analytics_only", count: 2 },
+      { answer: "marketing_only", count: 0 },
+      { answer: "none", count: 0 },
+    ]);
+  });
+
+  it("answers no answers as zeros with no share, never a failure", () => {
+    const summary = buildConsentAnswers([]);
+    expect(summary.answered).toBe(0);
+    expect(summary.answers.map((entry) => [entry.answer, entry.count, entry.share])).toEqual([
+      ["all", 0, null],
+      ["analytics_only", 0, null],
+      ["marketing_only", 0, null],
+      ["none", 0, null],
+    ]);
+    expect(summary.byPage).toEqual([]);
   });
 });

@@ -18,11 +18,13 @@ import { formatDate, formatDateOnly } from "@/lib/date-format";
 import { useTimezone } from "@/providers";
 import {
   ANALYTICS_PRESETS,
+  CONSENT_ANSWERS,
   type AnalyticsRange,
   type AnalyticsResult,
   type BreakdownRow,
   type CampaignLabelCount,
   type CampaignRow,
+  type ConsentAnswerSummary,
   type LandingPageRow,
   type PathLanguage,
   type RouteRow,
@@ -457,6 +459,55 @@ export function CampaignsTable({ rows }: { rows: CampaignRow[] }) {
         onToggle={() => setExpanded(!expanded)}
         className="px-4 py-2"
       />
+    </Card>
+  );
+}
+
+// ---------------------------------------------------------------------------
+// Cookie answers
+// ---------------------------------------------------------------------------
+
+/**
+ * How the cookie banner was answered: each answer's count and its share, and
+ * the answers in all. Handed `null` while the read is in flight, it draws the
+ * labels with their figures empty at their final height: the read is one
+ * small grouped query that lands in a frame or two, so it gets no skeleton.
+ */
+export function ConsentAnswersCard({ summary }: { summary: ConsentAnswerSummary | null }) {
+  const t = useTranslations("admin.analytics.consent");
+  const count = useCount();
+  const locale = useLocale();
+  const share = new Intl.NumberFormat(formattingLocale(locale), {
+    style: "percent",
+    maximumFractionDigits: 0,
+  });
+  const figures = [
+    ...CONSENT_ANSWERS.map((answer) => {
+      const entry = summary?.answers.find((row) => row.answer === answer);
+      return {
+        key: answer,
+        label: t(`answers.${answer}`),
+        value: entry ? count(entry.count) : null,
+        share: entry?.share == null ? null : share.format(entry.share),
+      };
+    }),
+    { key: "answered", label: t("answered"), value: summary ? count(summary.answered) : null, share: null },
+  ];
+  return (
+    <Card className="p-5">
+      <dl className="grid grid-cols-2 gap-x-8 gap-y-4 sm:grid-cols-3 lg:grid-cols-5">
+        {figures.map((figure) => (
+          <div key={figure.key}>
+            <dt className="text-sm text-muted-foreground">{figure.label}</dt>
+            <dd className="mt-1 flex h-8 items-baseline gap-2 tabular-nums">
+              <span className="text-2xl font-semibold">{figure.value}</span>
+              {figure.share !== null && (
+                <span className="text-xs text-muted-foreground">{figure.share}</span>
+              )}
+            </dd>
+          </div>
+        ))}
+      </dl>
     </Card>
   );
 }

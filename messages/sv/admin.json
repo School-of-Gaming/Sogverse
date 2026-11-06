@@ -1858,6 +1858,17 @@
         "visitors": "Besökare"
       }
     },
+    "consent": {
+      "heading": "Cookiesvar",
+      "caption": "Varje besökare som svarade, inte bara de som godkände analys.",
+      "answered": "Svar",
+      "answers": {
+        "all": "Godkände alla",
+        "analytics_only": "Bara analys",
+        "marketing_only": "Bara marknadsföring",
+        "none": "Avböjde alla"
+      }
+    },
     "landing": {
       "heading": "Landningssidor",
       "caption": "Sidvisningar för varje landningssida, alla språk av en sida räknade tillsammans. Bara besökare som godkände analys räknas.",

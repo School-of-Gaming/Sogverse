@@ -4,7 +4,7 @@ import { getTranslations } from "next-intl/server";
 import { Badge } from "@/components/ui/badge";
 import { CodeBlock } from "@/components/ui/code-block";
 import { InlineCode as Code, codeTag } from "@/components/ui/inline-code";
-import { PRODUCT_STATUS } from "@/services/partner/partner.contracts";
+import { CONSENT_ANSWER, PRODUCT_STATUS } from "@/services/partner/partner.contracts";
 import { Heading } from "@sog/ui";
 
 export async function generateMetadata(): Promise<Metadata> {
@@ -623,6 +623,35 @@ const TRAFFIC_FIELDS = [
   },
 ] as const;
 
+const CONSENT_PARAMS = [
+  { name: "from, to", type: "date", key: "resources.consent.params.fromTo" },
+] as const;
+
+const CONSENT_FIELDS = [
+  { name: "range", type: "object", key: "resources.consent.fields.range" },
+  { name: "pages", type: "array", key: "resources.consent.fields.pages" },
+  {
+    name: "pages[].page",
+    type: "landing | shop | product",
+    key: "resources.consent.fields.pagesPage",
+  },
+  {
+    name: "pages[].product_id",
+    type: "uuid | null",
+    key: "resources.consent.fields.pagesProductId",
+  },
+  {
+    name: "pages[].answered",
+    type: "integer",
+    key: "resources.consent.fields.pagesAnswered",
+  },
+  {
+    name: `pages[].answers.{${CONSENT_ANSWER.join(", ")}}`,
+    type: "integer",
+    key: "resources.consent.fields.pagesAnswers",
+  },
+] as const;
+
 const CAMPAIGNS_PARAMS = [
   {
     name: "from, to",
@@ -697,6 +726,7 @@ const RESOURCE_PATHS = {
   "roblox-research": "/roblox-research",
   traffic: "/traffic",
   campaigns: "/campaigns",
+  consent: "/consent",
 } as const;
 
 const PRODUCTS_EXAMPLE = `{
@@ -891,6 +921,30 @@ const CAMPAIGNS_EXAMPLE = `{
       "children_added": 11,
       "children_eligible": 6,
       "enrolled": null
+    }
+  ]
+}`;
+
+const CONSENT_EXAMPLE = `{
+  "range": { "from": "2026-11-01", "to": "2026-11-14" },
+  "pages": [
+    {
+      "page": "landing",
+      "product_id": null,
+      "answered": 412,
+      "answers": { "all": 251, "analytics_only": 38, "marketing_only": 9, "none": 114 }
+    },
+    {
+      "page": "shop",
+      "product_id": null,
+      "answered": 57,
+      "answers": { "all": 30, "analytics_only": 6, "marketing_only": 1, "none": 20 }
+    },
+    {
+      "page": "product",
+      "product_id": "5a1f8e1c-1b0e-4a3e-9a9c-2c9a4d8f0b11",
+      "answered": 23,
+      "answers": { "all": 15, "analytics_only": 2, "marketing_only": 0, "none": 6 }
     }
   ]
 }`;
@@ -1141,6 +1195,19 @@ export default function LynxApiDocsPage() {
             params={rows(CAMPAIGNS_PARAMS)}
             fields={rows(CAMPAIGNS_FIELDS)}
             note={rich("resources.campaigns.note")}
+          />
+
+          <Resource
+            id="consent"
+            path={RESOURCE_PATHS.consent}
+            title={t("resources.consent.title")}
+            intro={rich("resources.consent.intro")}
+            labels={labels}
+            exampleTitle={t("common.exampleResponse")}
+            example={CONSENT_EXAMPLE}
+            params={rows(CONSENT_PARAMS)}
+            fields={rows(CONSENT_FIELDS)}
+            note={rich("resources.consent.note")}
           />
 
           {/* Errors */}

@@ -111,7 +111,7 @@
       "envelopeTitle": "Svarskuvert för listor",
       "items": {
         "formats": "Svaren är JSON. Varje tidsstämpel är ISO 8601 i UTC. Varje datum är <code>YYYY-MM-DD</code>, där en produkts datum är kalenderdagar i produktens egen tidszon medan en trafikdag är en kalenderdag i UTC. Varje identifierare är ett UUID som aldrig ändras.",
-        "pagination": "Varje resurs som returnerar poster pagineras med cursor, i stigande ordning efter identifierare, så att ordningen är stabil medan en hämtning pågår; en resurs vars poster saknar egen identifierare pagineras i en egen stabil ordning. Skicka <code>limit</code> (standard 100, högst 500) och föregående sidas <code>next_cursor</code> som <code>cursor</code>; ett <code>next_cursor</code> som är <code>null</code> är sista sidan. En cursor är ogenomskinlig, hör till de filter den utfärdades med, och löper inte ut. <code>/traffic</code> returnerar ett enda aggregat och tar <code>from</code> och <code>to</code> i stället; dess antal kan vara upp till en timme gamla. Även <code>/campaigns</code> returnerar ett enda aggregat, och tar <code>from</code> och <code>to</code> som månader.",
+        "pagination": "Varje resurs som returnerar poster pagineras med cursor, i stigande ordning efter identifierare, så att ordningen är stabil medan en hämtning pågår; en resurs vars poster saknar egen identifierare pagineras i en egen stabil ordning. Skicka <code>limit</code> (standard 100, högst 500) och föregående sidas <code>next_cursor</code> som <code>cursor</code>; ett <code>next_cursor</code> som är <code>null</code> är sista sidan. En cursor är ogenomskinlig, hör till de filter den utfärdades med, och löper inte ut. <code>/traffic</code> returnerar ett enda aggregat och tar <code>from</code> och <code>to</code> i stället; dess antal kan vara upp till en timme gamla. Även <code>/campaigns</code> returnerar ett enda aggregat, och tar <code>from</code> och <code>to</code> som månader. Även <code>/consent</code> returnerar ett enda aggregat, och tar <code>from</code> och <code>to</code> som dagar, som <code>/traffic</code>; dess antal är aktuella i realtid.",
         "erasure": "En post som saknas i en full hämtning omfattas inte längre, vare sig det beror på att familjen begärt radering, att en plats avbokats eller att en produkt lämnat Programmet, och den lämnar Lynx lager vid samma synkronisering i samtliga fall. Det finns ingen raderingsmarkering: att en post saknas är den enda signalen, så läs den bara ur en hämtning som nått sin sista sida.",
         "consent": "Ett samtycke rapporteras som det står i samma stund som förfrågan görs, med uppgift om när det senast ändrades och utan historik. Ett återkallat marknadsföringssamtycke visas som <code>granted: false</code> med e-postadressen borta vid nästa hämtning; därefter får föräldern ingen post, och Lynx får behålla den minimala spärrnotering som Programmets integritetspolicy tillåter, så att föräldern inte läggs tillbaka.",
         "changePolicy": "Tillägg till det här API:et, ett nytt fält eller ett nytt filter, släpps utan förvarning; ett fält som tas bort eller byter namn, eller ett värde som ändrar innebörd, blir en ny version under en ny sökväg. Bygg mot de fält ni använder och strunta i resten.",
@@ -276,6 +276,22 @@
           "enrolled": "De av kontona vars familj har en plats på en produkt i Programmet, har slutfört en sådan eller står i kö till en: det tredje steget, och den punkt där en familj kommer in i <code>/families</code>."
         },
         "note": "Kampanjen på ett konto skrivs en gång, när kontot skapas, och bara där besökaren accepterade marknadsföringscookies, så antalen omfattar de familjerna och aldrig de andra; det är samma kampanj som <code>/families</code> visar i <code>parents[].utm</code> när en familj har anmält sig. Varje antal läses live i samma stund som förfrågan görs, så samma period kan ge ett annat svar en annan dag: familjer fortsätter att lägga till barn och anmäla sig, och innevarande månad får nya konton tills den tar slut."
+      },
+      "consent": {
+        "title": "hur besökare svarar på cookiebannern",
+        "intro": "Hur besökare på de sidor en Lynx-kampanj kan landa på svarade på cookiebannern: Roblox-landningssidan, butiken och den egna sidan för varje produkt i Programmet. Varje svar räknas, även ett nej, så här läser man andelen besökare som tillåter marknadsföring eller analys. En enhet räknas en gång, vid sitt första svar, på den sida och den UTC-dag där den svarade; ett svar som ändras senare räknas inte igen. Räkningen började i november 2026, så tidigare dagar har inga svar. Antalen är aktuella i realtid. Bara aggregat: ett svar sparas som ett antal, utan något om vem som gav det.",
+        "params": {
+          "fromTo": "Bara dagar inom det här intervallet, gränserna inräknade. Utelämna för de senaste 30 dagarna. Ett intervall som sträcker sig förbi i dag besvaras fram till i dag, vilket <code>range</code> visar; ett intervall som börjar efter i dag avvisas."
+        },
+        "fields": {
+          "range": "De dagar antalen täcker.",
+          "pages": "En post per sida: landningssidan, butiken, och en per produkt i Programmet vars sida fick ett svar under intervallet.",
+          "pagesPage": "Vilket slags sida, som i <code>/traffic</code>. Butiken delas med allt School of Gaming säljer, så dess svar gäller inte bara Programmet; en produktsidas gör det.",
+          "pagesProductId": "Produkten vars sida det är; <code>null</code> för landningssidan och butiken.",
+          "pagesAnswered": "De fyra svaren sammanlagda.",
+          "pagesAnswers": "Hur många enheter som gav varje svar: <code>all</code> godkände analys och marknadsföring, <code>analytics_only</code> och <code>marketing_only</code> godkände det ena av de två, och <code>none</code> avböjde båda. Varje svar finns med, med noll när ingen gav det."
+        },
+        "note": "Bara de här tre slagen av sidor räknas: en enhet som svarar första gången någon annanstans finns inte med i någon av dem. Svaren avgör vem de andra resurserna kan se. En besökare som svarade <code>all</code> eller <code>analytics_only</code> kan räknas i <code>/traffic</code>, och bara en som svarade <code>all</code> eller <code>marketing_only</code> kan föra med sig en kampanj till <code>/families</code>."
       }
     },
     "errors": {
@@ -307,7 +323,7 @@
         "childIdentity": "Barnens efternamn, födelsedagar och kön, och föräldrarnas telefonnummer. Programmets integritetspolicy utlovar en födelsemånad snarare än ett födelsedatum, och resten är inget som dashboarderna eller Roblox-rapporten använder.",
         "releases": "Medgivanden för fallstudier och omdömen. Det enda mediatillstånd Sogverse håller täcker redan att Lynx Educate, School of Gaming och Roblox använder ett fotografi offentligt; ett barns fullständiga namn, en fallstudie, ett citat eller innehåll kopplat till barnet kräver ett separat skriftligt medgivande som hämtas in utanför plattformen.",
         "deliveryModel": "En etikett för leveransmodell. Sogverse håller en produkts typ och om den är online, på plats eller hybrid; en modelltaxonomi är Lynx sak att lägga över de två fälten.",
-        "analytics": "Trafik på någon annan sida än landningssidan, butiken och Programmets produktsidor, och allt som rör en enskild besökare. Analysen bakom <code>/traffic</code> är integritetsvänlig från grunden: en sida som en familj når efter inloggning tillhör familjen, och en besökare är ett antal, aldrig en post."
+        "analytics": "Trafik och svar på cookiebannern på någon annan sida än landningssidan, butiken och Programmets produktsidor, och allt som rör en enskild besökare. Antalen bakom <code>/traffic</code> och <code>/consent</code> är integritetsvänliga från grunden: en sida som en familj når efter inloggning tillhör familjen, och en besökare är ett antal, aldrig en post."
       }
     }
   }

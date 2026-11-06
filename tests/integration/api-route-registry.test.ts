@@ -227,6 +227,7 @@ const TESTS = {
   // suite exists; the shared suite exercises every route either way.
   partnerApi: "tests/integration/api/partner-api.test.ts",
   partnerCampaigns: "tests/integration/api/partner-campaigns.test.ts",
+  partnerConsent: "tests/integration/api/partner-consent.test.ts",
   partnerEnrolments: "tests/integration/api/partner-enrolments.test.ts",
   partnerFamilies: "tests/integration/api/partner-families.test.ts",
   partnerFeedback: "tests/integration/api/partner-feedback.test.ts",
@@ -1436,6 +1437,12 @@ const ROUTE_REGISTRY: Record<string, RouteEntry> = {
   "src/app/api/partner/v1/traffic/route.ts": {
     handlers: {
       GET: { posture: PARTNER_KEY, body: { kind: "none" }, test: TESTS.partnerTraffic },
+    },
+  },
+
+  "src/app/api/partner/v1/consent/route.ts": {
+    handlers: {
+      GET: { posture: PARTNER_KEY, body: { kind: "none" }, test: TESTS.partnerConsent },
     },
   },
 

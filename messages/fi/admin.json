@@ -1858,6 +1858,17 @@
         "visitors": "Kävijät"
       }
     },
+    "consent": {
+      "heading": "Evästevastaukset",
+      "caption": "Jokainen vastannut kävijä, ei vain analytiikan hyväksyneet.",
+      "answered": "Vastauksia",
+      "answers": {
+        "all": "Hyväksyi kaikki",
+        "analytics_only": "Vain analytiikka",
+        "marketing_only": "Vain markkinointi",
+        "none": "Hylkäsi kaikki"
+      }
+    },
     "landing": {
       "heading": "Laskeutumissivut",
       "caption": "Kunkin laskeutumissivun katselut, sivun kaikki kielet yhteensä. Mukana vain analytiikan hyväksyneet kävijät.",

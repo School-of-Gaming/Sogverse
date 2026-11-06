@@ -1858,6 +1858,17 @@
         "visitors": "Visitors"
       }
     },
+    "consent": {
+      "heading": "Cookie answers",
+      "caption": "Every visitor who answered, not only those who accepted analytics.",
+      "answered": "Answers",
+      "answers": {
+        "all": "Accepted all",
+        "analytics_only": "Analytics only",
+        "marketing_only": "Marketing only",
+        "none": "Rejected all"
+      }
+    },
     "landing": {
       "heading": "Landing pages",
       "caption": "Pageviews of each landing page, every language of a page counted together. Only visitors who accepted analytics are counted.",
