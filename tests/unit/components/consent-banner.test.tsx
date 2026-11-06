@@ -1,4 +1,4 @@
-import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
+import { afterEach, beforeEach, describe, expect, it, vi, type Mock } from "vitest";
 import { cleanup, fireEvent, render, screen, within } from "@testing-library/react";
 import { NextIntlClientProvider } from "next-intl";
 import enConsent from "@/../messages/en/consent.json";
@@ -6,9 +6,10 @@ import { ConsentBanner, ConsentProvider, useConsent } from "@/components/consent
 import {
   CONSENT_COOKIE_NAME,
   parseConsentCookie,
+  serialiseConsent,
   type ConsentState,
 } from "@/lib/consent";
-import { getCookie } from "@/lib/cookies";
+import { getCookie, setCookie } from "@/lib/cookies";
 import {
   NO_ATTRIBUTION,
   NO_UTM_ATTRIBUTION,
@@ -114,8 +115,13 @@ function clearCookies() {
 }
 
 let reload: ReturnType<typeof vi.fn>;
+let fetchMock: Mock<(input: string, init: RequestInit) => Promise<Response>>;
 
 beforeEach(() => {
+  fetchMock = vi.fn((_input: string, _init: RequestInit) =>
+    Promise.resolve(new Response(null, { status: 204 })),
+  );
+  vi.stubGlobal("fetch", fetchMock);
   clearCookies();
   mockUtm = NO_ATTRIBUTION;
   mockAuth = { user: null, profile: null, isLoading: false };
@@ -127,11 +133,19 @@ beforeEach(() => {
     // jsdom keeps Location's accessors on the prototype, so spreading the real
     // one yields an empty object — the two fields the cookie helpers read are
     // stated outright instead.
-    value: { protocol: "http:", hostname: "localhost", reload },
+    value: {
+      protocol: "http:",
+      hostname: "localhost",
+      pathname: "/fi/kauppa",
+      reload,
+    },
   });
 });
 
-afterEach(cleanup);
+afterEach(() => {
+  cleanup();
+  vi.unstubAllGlobals();
+});
 
 describe("ConsentBanner", () => {
   it("asks when no answer is stored, and stays away once one is", () => {
@@ -281,6 +295,86 @@ describe("ConsentBanner", () => {
 
     expect(storedAnswer()).toMatchObject({ analytics: true, marketing: true });
     expect(reload).not.toHaveBeenCalled();
+  });
+
+  describe("the answer tally", () => {
+    /** The bodies posted to the tally, in order. */
+    function tallied(): unknown[] {
+      return fetchMock.mock.calls
+        .filter(([url]) => url === "/api/consent-answers")
+        .map(([, init]) => JSON.parse(String(init.body)));
+    }
+
+    /** An answer already on the device, as the cookie and the server agree. */
+    function answered(state: ConsentState) {
+      setCookie(CONSENT_COOKIE_NAME, serialiseConsent(state));
+      return state;
+    }
+
+    it.each([
+      [messages.consent.acceptAll, "all"],
+      [messages.consent.rejectAll, "none"],
+    ])("sends a first %s once, with the page's path", (button, answer) => {
+      render(<Harness initial={null} />);
+
+      press(button);
+
+      expect(tallied()).toEqual([{ answer, pagePath: "/fi/kauppa" }]);
+      const [, init] = fetchMock.mock.calls[0];
+      expect(init.keepalive).toBe(true);
+    });
+
+    it("names a customised first answer by its purposes", () => {
+      render(<Harness initial={null} />);
+
+      press(messages.consent.customise);
+      fireEvent.click(purposeCheckbox(PURPOSES.marketing.title));
+      press(messages.consent.saveChoices);
+
+      expect(tallied()).toEqual([
+        { answer: "marketing_only", pagePath: "/fi/kauppa" },
+      ]);
+    });
+
+    it("counts an answer to an older version of the question as a first answer", () => {
+      document.cookie = `${CONSENT_COOKIE_NAME}=${encodeURIComponent(
+        JSON.stringify({ v: 0, at: "2026-01-01T00:00:00.000Z", analytics: true, marketing: true }),
+      )};path=/`;
+      render(<Harness initial={null} />);
+
+      press(messages.consent.rejectAll);
+
+      expect(tallied()).toEqual([{ answer: "none", pagePath: "/fi/kauppa" }]);
+    });
+
+    it("sends nothing when an existing answer is changed", () => {
+      render(<Harness initial={answered({ ...GRANTED_BOTH, marketing: false })} />);
+      fireEvent.click(screen.getByRole("button", { name: "reopen" }));
+
+      press(messages.consent.acceptAll);
+
+      expect(storedAnswer()).toMatchObject({ analytics: true, marketing: true });
+      expect(tallied()).toEqual([]);
+    });
+
+    it("sends nothing when an existing answer is withdrawn", () => {
+      render(<Harness initial={answered(GRANTED_BOTH)} />);
+      fireEvent.click(screen.getByRole("button", { name: "reopen" }));
+
+      press(messages.consent.rejectAll);
+
+      expect(reload).toHaveBeenCalledTimes(1);
+      expect(tallied()).toEqual([]);
+    });
+
+    it("sends nothing when another tab answered after this one loaded", () => {
+      render(<Harness initial={null} />);
+      answered(GRANTED_BOTH);
+
+      press(messages.consent.rejectAll);
+
+      expect(tallied()).toEqual([]);
+    });
   });
 
   describe("the attribution cookie", () => {

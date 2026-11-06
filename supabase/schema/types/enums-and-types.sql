@@ -65,6 +65,25 @@ COMMENT ON TYPE public.chat_channel_type IS 'What a chat channel IS, and therefo
 
 
 --
+-- Name: consent_answer; Type: TYPE; Schema: public; Owner: -
+--
+
+CREATE TYPE public.consent_answer AS ENUM (
+    'all',
+    'analytics_only',
+    'marketing_only',
+    'none'
+);
+
+
+--
+-- Name: TYPE consent_answer; Type: COMMENT; Schema: public; Owner: -
+--
+
+COMMENT ON TYPE public.consent_answer IS 'One answer to the cookie banner, from the two purposes it asks about: all (analytics and marketing), analytics_only, marketing_only, none (both refused).';
+
+
+--
 -- Name: delivery_mode; Type: TYPE; Schema: public; Owner: -
 --
 

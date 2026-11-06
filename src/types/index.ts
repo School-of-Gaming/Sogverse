@@ -163,6 +163,11 @@ export type MarketingConsentEvent =
 export type ProductMarketingConsent =
   Database["public"]["Tables"]["product_marketing_consents"]["Row"];
 
+// consent_answer_counts — the cookie banner's anonymous tally, not an account's
+// consent. The enum alone: the table is the service role's and is read through
+// its two functions.
+export type ConsentAnswer = Database["public"]["Enums"]["consent_answer"];
+
 // gamer_photo_consents / gamer_photo_consent_events /
 // product_gamer_photo_consents — the twin of the three aliases above
 // with the SUBJECT changed from an adult's mailbox to a child's image. A
