@@ -67,10 +67,12 @@ import {
 // eventually disagree with itself. The select is a generic literal so each
 // caller's row type is still inferred from its own string.
 //
-// Soonest first: the order is the shop's and every product rail's, so a reader
-// meets the next camp or event before the ones after it. A club already
-// running has a past start date and so sorts ahead of those still to start.
-// Products starting on the same day fall back to the newest-created first.
+// Soonest first, so a reader meets the next camp or event before the ones after
+// it. Every surface that shows the listing as it comes back keeps this order —
+// the shop's sections, a rail that filters the listing, the municipality pages
+// — while a rail of picked products keeps the order it was picked in. A club
+// already running has a past start date and so sorts ahead of those still to
+// start. Products starting on the same day fall back to the newest-created first.
 function buildVisibleProductsQuery<Select extends string>(
   supabase: AppSupabaseClient,
   types: ProductType[],
