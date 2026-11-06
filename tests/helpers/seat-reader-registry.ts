@@ -75,7 +75,6 @@ export const DB_SEAT_READERS: Record<string, SeatRead> = {
   "function:admin_remove_participation": { kind: "by-id-gated", why: "hands the seat to end_participation, which answers noop on an ended one" },
   "function:demote_to_waitlist": { kind: "by-id-gated", why: "refuses a seat that is not active" },
   "function:get_waitlist_position": { kind: "by-id-gated", why: "answers only for a waitlisted row" },
-  "function:klaviyo_family_subscription_changed": { kind: "by-id-gated", why: "reads the product of the subscription's own seat; status cannot matter" },
   "function:leave_my_waitlist_spot": { kind: "by-id-gated", why: "answers noop unless the row is waitlisted" },
   "function:promote_from_waitlist": { kind: "by-id-gated", why: "answers noop unless the row is waitlisted" },
   "function:respond_seat_offer": { kind: "by-id-gated", why: "refuses unless the row is waitlisted" },

@@ -3,8 +3,8 @@
 Every parent account has a Klaviyo profile that says who they are, their gamers, what
 seats they hold and what they have paid; Klaviyo lists that record what kinds of seat they
 have ever held; and Klaviyo hears of what happens to them — an account opened, a seat
-taken, a session attended or missed, a waitlist joined, a seat offered, a subscription
-cancelled — as events. One way only:
+taken, a session attended or missed, a waitlist joined, a seat offered, a seat ended — as
+events. One way only:
 nothing Klaviyo holds is ever read back except the profile's own Klaviyo id. The newsletter
 form on landing pages writes to the same Klaviyo account (`src/services/landing-pages/`),
 through the same client. Klaviyo is the source of truth for School of Gaming's own mailing
@@ -82,6 +82,12 @@ always deliberate.
   same gate as the account's own tag. A seat with no booking (an admin's, a partner's) files
   it with no tag.
   `SV Waitlisted` carries the waitlist join's tag under the same five names.
+- `SV Cancelled` is `SV Enrolled`'s counterpart: one event per seat that ends, whatever
+  its product's type or billing mode, at the moment it ended. It carries the same seat
+  facts — product, `billing_mode`, who holds it — and `reason`, why it ended
+  (`subscription_cancelled` or `admin_removed`), but not the booking's UTM tag, which
+  belongs to the moment of booking. A subscription set to cancel at the end of its period
+  sends nothing until the seat actually ends.
 - `SV Session` is one event per attendance mark a gedu writes, present or absent. A mark
   changed to the other status is a new event, keyed by session, gamer and status, so a
   mark set back to what it was is the earlier event again and Klaviyo does not count it
