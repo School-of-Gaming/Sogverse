@@ -98,7 +98,7 @@ export function TrafficCard({ state }: { state: TrafficState }) {
   const ready = state.status === "ready" ? state : null;
 
   return (
-    <Card className="space-y-5 p-5">
+    <Card className="h-full space-y-5 p-5">
       <Heading level={2} step="card-title">{t("heading")}</Heading>
 
       {state.status === "failed" ? (

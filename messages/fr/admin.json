@@ -1858,6 +1858,17 @@
         "visitors": "Visiteurs"
       }
     },
+    "consent": {
+      "heading": "Réponses aux cookies",
+      "caption": "Chaque visiteur qui a répondu, pas seulement ceux qui ont accepté les statistiques.",
+      "total": "{count, plural, one {réponse} other {réponses}}",
+      "answers": {
+        "all": "Tout accepté",
+        "analytics_only": "Statistiques seules",
+        "marketing_only": "Marketing seul",
+        "none": "Tout refusé"
+      }
+    },
     "landing": {
       "heading": "Pages d'atterrissage",
       "caption": "Pages vues de chaque page d'atterrissage, toutes les langues d'une page comptées ensemble. Seuls les visiteurs qui ont accepté les statistiques sont comptés.",

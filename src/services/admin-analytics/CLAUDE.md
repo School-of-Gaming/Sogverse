@@ -4,12 +4,20 @@ The `/admin/analytics` page: the site's traffic, for every admin, most of whom h
 Vercel access. The reads are here; the page body is in `src/components/admin/analytics/`.
 
 **Rule: the page shows what Vercel's Web Analytics dashboard shows, read through the
-documented Web Analytics REST endpoint (`src/lib/vercel-analytics.server.ts`), and nothing
-else.** Pageviews and visitors, the timeline, top pages, landing pages, campaigns,
+documented Web Analytics REST endpoint (`src/lib/vercel-analytics.server.ts`), plus the
+cookie answers below.** Pageviews and visitors, the timeline, top pages, landing pages, campaigns,
 referrers, countries and devices. Web Analytics loads only for a visitor who accepted
 analytics, so every figure counts those visitors only, and the page says so beside them.
 Visitors are distinct device ids, so the page calls them approximate, and they never add
 across days or groups.
+
+**The one figure that is not Vercel's is the cookie answers**: our own tally of the banner's
+first answers (`src/components/consent/`), read from the database on the admin's client.
+It counts every visitor who answered, refusals included, so the page labels it as the one
+section not limited to visitors who accepted analytics. It is read live rather than cached
+for the hour: one grouped read of a small table has no rate limit to protect. The page
+shows the range's totals only; the per-page split names pages by internal path (a product
+id, a landing slug), which reads cleanly only to a tool, so it is the MCP breakdown's.
 
 **Every day on the page is a UTC day**, because Vercel buckets at UTC midnight.
 
@@ -21,7 +29,8 @@ its figures were read. A failed read is never cached and never shown as zeros.
 **The MCP analytics tools (`src/lib/mcp/analytics.ts`) read through these same functions**,
 so an AI app's figure is the page's for the same days, from the same hour's cache. The
 landing pages read names each page from the landing page directory in the database, and
-takes an optional client for it: the page leaves it out and reads on its cookie session,
+takes an optional client for it, as the cookie answers read does: the page leaves it out
+and reads on its cookie session,
 and **a tool must hand in the admin's token-bound client**, since a route handler behind
 the MCP gate has no session cookie. The filtered reads (a page's paths, campaign labels)
 exist for the tools and are cached under their own filter.

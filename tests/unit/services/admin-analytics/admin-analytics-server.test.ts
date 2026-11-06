@@ -46,8 +46,10 @@ vi.mock("@/services/landing-pages/landing-pages.service", () => ({
 }));
 
 import { trafficPath } from "@/services/admin-analytics/admin-analytics.build";
+import { createFetchStubbedClient, postgrestJson } from "../../../mocks/postgrest-fetch";
 import {
   readCampaigns,
+  readConsentAnswers,
   readLandingPages,
   readPathViews,
   readTopPages,
@@ -258,6 +260,35 @@ describe("readLandingPages", () => {
         languages: [{ language: "fi", pageviews: 6 }],
       },
     ]);
+  });
+});
+
+describe("readConsentAnswers", () => {
+  it("reads the tally on the client it is handed, live, never through Vercel or the cache", async () => {
+    const database = vi.fn<typeof fetch>(async () =>
+      postgrestJson([
+        { page: null, answer: "none", count: 3 },
+        { page: "/roblox", answer: "all", count: 1 },
+      ]),
+    );
+    const result = await readConsentAnswers(RANGE, createFetchStubbedClient(database));
+
+    expect(result.ok && result.data.answered).toBe(4);
+    const [input, init] = database.mock.calls[0];
+    expect(urlOf(input).pathname).toBe("/rest/v1/rpc/get_admin_consent_answer_totals");
+    expect(JSON.parse(String(init?.body))).toEqual({ p_from: RANGE.from, p_to: RANGE.to });
+    expect(fetchMock).not.toHaveBeenCalled();
+    expect(cache.options).toEqual([]);
+  });
+
+  it("answers a refused read as failed, never as zeros", async () => {
+    const database = vi.fn<typeof fetch>(async () =>
+      postgrestJson({ message: "forbidden", code: "42501", details: null, hint: null }, 403),
+    );
+    expect(await readConsentAnswers(RANGE, createFetchStubbedClient(database))).toEqual({
+      ok: false,
+      reason: "failed",
+    });
   });
 });
 

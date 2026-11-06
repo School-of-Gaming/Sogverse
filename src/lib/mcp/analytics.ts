@@ -25,6 +25,7 @@ import {
 import {
   readBreakdowns,
   readCampaigns,
+  readConsentAnswers,
   readLandingPages,
   readPathViews,
   readTopPages,
@@ -35,12 +36,13 @@ import {
 import type { AppSupabaseClient } from "@/types";
 
 /*
- * The analytics tools: the site's traffic from Vercel Web Analytics, read by
- * an AI app acting as an admin. They run the admin Analytics page's own reads
+ * The analytics tools: the site's traffic from Vercel Web Analytics, and how
+ * the cookie banner was answered from our own tally, read by an AI app acting
+ * as an admin. They run the admin Analytics page's own reads
  * (`src/services/admin-analytics/`), so a figure here is the figure the page
- * shows for the same days, cached under the same key; only the landing page
- * directory read takes the admin's token-bound client in place of the page's
- * session.
+ * shows for the same days, cached under the same key; the landing page
+ * directory read and the cookie answers read take the admin's token-bound
+ * client in place of the page's session.
  *
  * Read-only and general over the site: a page is asked about by its path, so
  * a landing page, a shop page and the home page are asked about alike, and the
@@ -62,6 +64,7 @@ const ANALYTICS_CAVEATS = [
   "Visitors are distinct device ids over the range or group asked for, approximate, and never add up across days or groups.",
   `Every day is a UTC day. Web Analytics reaches back to ${TRAFFIC_DATA_START}, when it was switched on, and is kept for ${TRAFFIC_RETENTION_YEARS} years; a range reaching outside that is narrowed and the answer says so.`,
   "Vercel figures are cached for the hour they were read in; readAt says when.",
+  "Cookie answers are not Vercel's: they are Sogverse's own count of how the cookie banner was answered, read live. They count every device that answered, whatever it chose, so unlike pageviews they are not limited to visitors who accepted analytics; say so when quoting them beside pageviews. A device counts once, at its first answer, on the UTC day and the page it answered on; a later change of mind is not counted. The answers are all (analytics and marketing accepted), analytics_only, marketing_only and none (both rejected).",
   "Button clicks are not recorded anywhere these tools read, so no question about clicks can be answered here.",
 ];
 
@@ -141,16 +144,28 @@ function unavailableWebAnalytics(reason: "unconfigured" | "refused" | "failed"):
   return { available: false, reason, explanation };
 }
 
+const DATABASE_FAILED =
+  "Sogverse's own database did not answer this read. It may pass if asked again in a minute.";
+
+/** The cookie answers read failing: it reads Sogverse's database alone, never Vercel. */
+function unavailableCookieAnswers(): Unavailable {
+  return { available: false, reason: "failed", explanation: DATABASE_FAILED };
+}
+
+/** Where a breakdown's figures come from, which decides what its failure says. */
+type BreakdownSource = "vercel" | "vercel and database" | "database";
+
 /**
  * A breakdown's read failing, as a tool error carrying why. The landing pages
  * table also reads the landing page directory, so its passing failure names
- * both sources.
+ * both sources; the cookie answers table reads the database alone.
  */
 function breakdownFailure(
   reason: "unconfigured" | "refused" | "failed",
-  database: boolean,
+  source: BreakdownSource,
 ): CallToolResult {
-  if (database && reason === "failed") {
+  if (source === "database") return refusal(DATABASE_FAILED);
+  if (source === "vercel and database" && reason === "failed") {
     return refusal(
       "Vercel or Sogverse's own database did not answer this read. It may pass if asked again in a minute.",
     );
@@ -198,7 +213,15 @@ function rangeAnswer(range: { from: string; to: string; adjusted: string | null 
 /** The most paths one summary asks about. */
 const MAX_PATHS = 20;
 
-const BREAKDOWNS = ["pages", "landing_pages", "campaigns", "referrers", "countries", "devices"] as const;
+const BREAKDOWNS = [
+  "pages",
+  "landing_pages",
+  "campaigns",
+  "referrers",
+  "countries",
+  "devices",
+  "cookie_answers",
+] as const;
 
 export function registerAnalyticsTools(server: McpServer): void {
   server.registerTool(
@@ -206,8 +229,8 @@ export function registerAnalyticsTools(server: McpServer): void {
     {
       title: "Analytics summary",
       description: [
-        "The site's traffic over a range of UTC days, as the admin Analytics page counts it: pageviews and visitors from Vercel Web Analytics. Narrow it to some pages (paths) or to campaign labels (campaign, source, medium; they combine with AND, and several paths with OR).",
-        "A read Vercel cannot answer is marked unavailable with the reason and an explanation to relay. A zero is a real zero.",
+        "The site's traffic over a range of UTC days, as the admin Analytics page counts it: pageviews and visitors from Vercel Web Analytics, and cookieAnswers, how the cookie banner was answered: each answer's count and its share of all answers. Narrow the traffic to some pages (paths) or to campaign labels (campaign, source, medium; they combine with AND, and several paths with OR); cookieAnswers is always the whole site, and get_analytics_breakdown by cookie_answers splits it by page.",
+        "A read that cannot be answered is marked unavailable with the reason and an explanation to relay. A zero is a real zero.",
         RANGE_TEXT,
         PATHS_TEXT,
         "With paths the answer also gives each path's pageviews address by address; two paths sharing an address both count it, so those rows can add up to more than the total. includeDays adds one row per UTC day.",
@@ -229,7 +252,7 @@ export function registerAnalyticsTools(server: McpServer): void {
       annotations: READ_ONLY,
     },
     (input, ctx) =>
-      asAnalyticsAdmin(ctx, async () => {
+      asAnalyticsAdmin(ctx, async (client) => {
         const requested = requestedRange(input);
         if (typeof requested === "string") return refusal(requested);
         const now = new Date();
@@ -259,9 +282,10 @@ export function registerAnalyticsTools(server: McpServer): void {
           );
         }
 
-        const [overview, pathViews] = await Promise.all([
+        const [overview, pathViews, consent] = await Promise.all([
           readWebAnalyticsOverview(days, now, byPath || byLabel ? filter : undefined),
           byPath ? readPathViews(days, now, filter) : null,
+          readConsentAnswers(days, client),
         ]);
 
         return answer({
@@ -284,6 +308,14 @@ export function registerAnalyticsTools(server: McpServer): void {
                 readAt: overview.readAt,
               }
             : unavailableWebAnalytics(overview.reason),
+          cookieAnswers: consent.ok
+            ? {
+                available: true,
+                answered: consent.data.answered,
+                answers: consent.data.answers,
+                readAt: consent.readAt,
+              }
+            : unavailableCookieAnswers(),
           ...(pathViews === null
             ? {}
             : {
@@ -303,8 +335,8 @@ export function registerAnalyticsTools(server: McpServer): void {
     {
       title: "Analytics breakdown",
       description: [
-        "One table of the admin Analytics page over a range of UTC days, most first: by pages (one row per page across every language, with its language split), landing_pages (each landing page's views under its id and titles, by every id and slug it has been served at; a path no landing page answers to keeps its own row), campaigns (pageviews per utm_campaign, with the sources and mediums behind each; null is no campaign), referrers (by referring site), countries or devices.",
-        "Every table counts Web Analytics pageviews. A table Vercel cannot read is a tool error saying why.",
+        "One table of the admin Analytics page over a range of UTC days, most first: by pages (one row per page across every language, with its language split), landing_pages (each landing page's views under its id and titles, by every id and slug it has been served at; a path no landing page answers to keeps its own row), campaigns (pageviews per utm_campaign, with the sources and mediums behind each; null is no campaign), referrers (by referring site), countries, devices, or cookie_answers (how the cookie banner was answered, per page: the page's path with no language, the slug or id as served, null for every page that is not a marketing page, with each answer's count and the answers in all).",
+        "Every table but cookie_answers counts Web Analytics pageviews. A table that cannot be read is a tool error saying why.",
         RANGE_TEXT,
         `Pages are named by route (the address with its language left out, the slug untranslated; landing pages are ${LANDING_PAGE_ROUTE}), so a page's row covers every language. Landing pages are listed by the id list_landing_pages and get_landing_page use.`,
         `What every figure means, to relay with it:\n${CAVEATS_TEXT}`,
@@ -332,7 +364,7 @@ export function registerAnalyticsTools(server: McpServer): void {
         const days = { from: range.from, to: range.to };
 
         const read = await readBreakdown(input.by, days, now, client);
-        if (!read.result.ok) return breakdownFailure(read.result.reason, read.database);
+        if (!read.result.ok) return breakdownFailure(read.result.reason, read.source);
         const rows = read.result.data;
         const limit = input.limit ?? 25;
         return answer({
@@ -347,13 +379,13 @@ export function registerAnalyticsTools(server: McpServer): void {
   );
 }
 
-/** One breakdown's rows, as the tool hands them on; `database` when the read touched it. */
+/** One breakdown's rows, as the tool hands them on, and where they were read from. */
 async function readBreakdown(
   by: (typeof BREAKDOWNS)[number],
   range: { from: string; to: string },
   now: Date,
   client: AppSupabaseClient,
-): Promise<{ result: AnalyticsResult<Record<string, unknown>[]>; database: boolean }> {
+): Promise<{ result: AnalyticsResult<Record<string, unknown>[]>; source: BreakdownSource }> {
   const rowsOf = <T, R extends Record<string, unknown>>(
     result: AnalyticsResult<T[]>,
     shape: (row: T) => R,
@@ -361,11 +393,11 @@ async function readBreakdown(
 
   switch (by) {
     case "pages":
-      return { result: rowsOf(await readTopPages(range, now), (row) => ({ ...row })), database: false };
+      return { result: rowsOf(await readTopPages(range, now), (row) => ({ ...row })), source: "vercel" };
     case "campaigns":
       return {
         result: rowsOf(await readCampaigns(range, now), (row) => ({ ...row })),
-        database: false,
+        source: "vercel",
       };
     case "landing_pages":
       return {
@@ -376,7 +408,14 @@ async function readBreakdown(
           pageviews: row.pageviews,
           languages: row.languages,
         })),
-        database: true,
+        source: "vercel and database",
+      };
+    case "cookie_answers":
+      return {
+        result: await readConsentAnswers(range, client).then((result) =>
+          result.ok ? { ...result, data: result.data.byPage.map((row) => ({ ...row })) } : result,
+        ),
+        source: "database",
       };
     case "referrers":
     case "countries":
@@ -386,7 +425,7 @@ async function readBreakdown(
         result: result.ok
           ? { ...result, data: result.data[by].map((row) => ({ ...row })) }
           : result,
-        database: false,
+        source: "vercel",
       };
     }
   }

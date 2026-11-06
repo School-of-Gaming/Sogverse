@@ -8,6 +8,7 @@ import { GET as getFeedback } from "@/app/api/partner/v1/feedback/route";
 import { GET as getRobloxResearch } from "@/app/api/partner/v1/roblox-research/route";
 import { GET as getTraffic } from "@/app/api/partner/v1/traffic/route";
 import { GET as getCampaigns } from "@/app/api/partner/v1/campaigns/route";
+import { GET as getConsent } from "@/app/api/partner/v1/consent/route";
 import * as catchAll from "@/app/api/partner/[...path]/route";
 import {
   CAMPAIGN_MINIMUM_COUNT,
@@ -62,7 +63,7 @@ type Handler = (request: Request) => Response | Promise<Response>;
  * a bad date shape, a date that is not a day and a month that is not a month,
  * so every validator in the contract is executed.
  *
- * This file holds what the eight resources share — the gate, validation, the
+ * This file holds what the nine resources share — the gate, validation, the
  * error envelope and its headers, and the catch-all — as a table, because the
  * partner integrates against "they all behave alike" and a per-resource copy
  * would not say so. What each resource answers lives in its own suite beside
@@ -104,14 +105,15 @@ const ROUTES: readonly {
     badQuery: "?from=2026-13",
     badParam: "from",
   },
+  { path: "consent", handler: getConsent, badQuery: "?to=2026-9-01", badParam: "to" },
 ];
 
-/** The six resources that return records; `/traffic` and `/campaigns` return aggregates. */
-const AGGREGATE_PATHS = ["traffic", "campaigns"];
+/** The six resources that return records; `/traffic`, `/campaigns` and `/consent` return aggregates. */
+const AGGREGATE_PATHS = ["traffic", "campaigns", "consent"];
 const LIST_ROUTES = ROUTES.filter((route) => !AGGREGATE_PATHS.includes(route.path));
 
 /** The resources that take a `from`/`to` window of days; `/campaigns` takes months. */
-const RANGE_PATHS = ["sessions", "feedback", "roblox-research", "traffic"];
+const RANGE_PATHS = ["sessions", "feedback", "roblox-research", "traffic", "consent"];
 const RANGE_ROUTES = ROUTES.filter((route) => RANGE_PATHS.includes(route.path));
 
 const cases = ROUTES.map((route) => [route.path, route] as const);

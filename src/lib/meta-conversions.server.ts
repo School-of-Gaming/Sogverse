@@ -189,6 +189,35 @@ function fbcForClick(click: ClickId): string {
   return `fb.1.${click.landedAt}.${click.id}`;
 }
 
+/**
+ * The `fbc` to send when the browser may carry both Meta's own `_fbc` cookie
+ * and a click our attribution cookie kept: whichever records the later click.
+ * Both naming the same click is the common case, and then the cookie is sent:
+ * its time is the browser's clock and ours the server's, so comparing them
+ * would hand a visitor whose clock runs behind our rebuilt value instead of
+ * the one Meta's browser events carry. Only two different clicks are compared
+ * by time. The cookie's third segment is the time it was created, in
+ * milliseconds, and the `fbclid` after it never contains a dot. On a tie the
+ * cookie wins, and it is always sent exactly as it stands. A cookie whose
+ * creation time cannot be read — it is a third party's, so it can be
+ * malformed — gives way to a kept click, and is sent as it is only when there
+ * is nothing else.
+ */
+function fbcFor(
+  cookie: string | undefined,
+  keptClick: ClickId | null,
+): string | undefined {
+  if (keptClick === null) return cookie;
+  if (cookie === undefined) return fbcForClick(keptClick);
+  const segments = cookie.split(".");
+  if (segments.length === 4 && segments[3] === keptClick.id) return cookie;
+  const createdAt = Number(segments[2]);
+  if (!Number.isFinite(createdAt) || keptClick.landedAt > createdAt) {
+    return fbcForClick(keptClick);
+  }
+  return cookie;
+}
+
 function eventNameFor(conversion: MetaConversion): string {
   switch (conversion.event) {
     case "account_created":
@@ -279,13 +308,18 @@ export async function reportMetaConversion(
     // `_fbc` exists only if the pixel loaded while the `fbclid` was still in
     // the address bar, which a parent who answers the banner a few pages in
     // misses. The `fbclid` our own cookie kept from that landing then stands
-    // in for it; the pixel's own cookie wins where there is one, because it is
-    // the value Meta's browser events already carry.
+    // in for it. Where the browser carries both, the later click is sent. A
+    // visitor with an `_fbc` from an earlier ad who lands from a new one has
+    // the new `fbclid` kept by the time the page is served, but the page view
+    // reported from it can reach us before the pixel rewrites `_fbc` — and
+    // the old cookie, beside a page address carrying the new click, reads to
+    // Meta as a modified `fbclid`. Otherwise the pixel's own cookie wins,
+    // because it is the value Meta's browser events already carry.
     const fbp = cookieValueFromHeader(cookieHeader, "_fbp");
-    const keptClick = clickIdFromCookieHeader(cookieHeader, "meta");
-    const fbc =
-      cookieValueFromHeader(cookieHeader, "_fbc") ??
-      (keptClick === null ? undefined : fbcForClick(keptClick));
+    const fbc = fbcFor(
+      cookieValueFromHeader(cookieHeader, "_fbc"),
+      clickIdFromCookieHeader(cookieHeader, "meta"),
+    );
     // Advanced matching: the hash, never the address, and only when there is
     // an address to hash.
     const email = account.email?.trim();

@@ -111,7 +111,7 @@
       "envelopeTitle": "tetlh nagh beQ",
       "items": {
         "formats": "JSON jangmey. Hoch poH ISO 8601 UTC. Hoch jaj <code>YYYY-MM-DD</code>: De'wI' jajmey — De'wI' poH DaqDaq jajmey; leng jaj — UTC jaj. Hoch pong UUID — reH choHbe'.",
-        "pagination": "De'wI'mey nobbogh Hoch De'meywIj kursor lo', pong mI' tlha' Dat — vaj tlhaptaHvIS ratlh mIw. pong mI' nIteb Hutlhbogh De'wI'mey — mIw ratlh nIteb lo'. <code>limit</code> yInob (100 'oH ghaytan, 500 'oH tIn law') je wa'Hu' nav <code>next_cursor</code> <code>cursor</code> mojmoH; <code>null</code> <code>next_cursor</code> 'oH nav Qav'e'. kursor 'oH So'lu'bogh'e', nobbogh wovmoHwI'meyDaj ghaj, 'ej not Qav. <code>/traffic</code> wa' ghom De' nob neH, 'ej <code>from</code> <code>to</code> je laj; mI'meyDaj wa' rep ngo' law'be'. <code>/campaigns</code> je wa' ghom De' nob, 'ej <code>from</code> <code>to</code> je jarmey rur laj.",
+        "pagination": "De'wI'mey nobbogh Hoch De'meywIj kursor lo', pong mI' tlha' Dat — vaj tlhaptaHvIS ratlh mIw. pong mI' nIteb Hutlhbogh De'wI'mey — mIw ratlh nIteb lo'. <code>limit</code> yInob (100 'oH ghaytan, 500 'oH tIn law') je wa'Hu' nav <code>next_cursor</code> <code>cursor</code> mojmoH; <code>null</code> <code>next_cursor</code> 'oH nav Qav'e'. kursor 'oH So'lu'bogh'e', nobbogh wovmoHwI'meyDaj ghaj, 'ej not Qav. <code>/traffic</code> wa' ghom De' nob neH, 'ej <code>from</code> <code>to</code> je laj; mI'meyDaj wa' rep ngo' law'be'. <code>/campaigns</code> je wa' ghom De' nob, 'ej <code>from</code> <code>to</code> je jarmey rur laj. <code>/consent</code> je wa' ghom De' nob, 'ej <code>from</code> <code>to</code> je jajmey rur laj, <code>/traffic</code> rur; DaH mI'meyDaj laDlu'.",
         "erasure": "Hoch De' tlhapDaq Hutlhbogh De'wI' veH 'elqa'be': qorDu' teqmeH tlhob, qoj Daq lonlu', qoj mIw'a'vo' mej De'wI' — Hoch DochvaD rap. rap boq poHDaq Lynx Daqvo' mej. tombstone tu'be'lu': Hutlhghach neH 'oH QIn'e', vaj nav Qav pawbogh tlhapDaq neH yIlaD.",
         "consent": "tlhob poHDaq chaw' Dotlh 'ang, choHlu'bogh poH Qav tlhej, 'ach qun Hutlh. lujbogh ngeH chaw' <code>granted: false</code> 'ang tlhap vebDaq, 'ej QIn Daq Hutlh; ghIq vav QIn Hevbe', 'ej mIw'a' pegh chut chaw'bogh mach botwI' ghItlh pollaH Lynx — vaj chelqa'be'lu'.",
         "changePolicy": "API'amvaD chelmey — chu' yotlh, chu' wovmoHwI' — 'ang pagh 'ej ngeHlu'. teqlu'bogh qoj pongqa'lu'bogh yotlh, qoj choHbogh qech ghajbogh mI' — chu' He bIngDaq chu' mIw 'oH. Dalo'bogh yotlhmey yIchenmoH, latlh yIbuSHa'.",
@@ -276,6 +276,22 @@
           "enrolled": "mIw'a' De'wI'Daq Daq ghajbogh, rInmoHpu'bogh, qoj Daq loSbogh qorDu' ghajbogh accountmey: wejDIch nuq, 'ej <code>/families</code>Daq 'el qorDu'."
         },
         "note": "account chenmoHlu'DI' wa'logh neH ghItlhlu' mIw, 'ej ngeH chab laj leghwI'DI' neH; vaj qorDu'pu'vetlh neH togh mI'mey — latlh not. <code>/families</code> <code>parents[].utm</code>Daq 'angbogh mIw rap 'oH, muvDI' qorDu'. tlhob poHDaq laDlu' Hoch mI'; vaj latlh jajDaq pIm jang veH rap: puqpu' chel 'ej muv qorDu'pu' — ratlh — 'ej DaH jar rInpa' account chenmoHlu'taH."
+      },
+      "consent": {
+        "title": "chay' leghwI'pu' cookie QIn jang",
+        "intro": "Lynx mIw pawlaHbogh navmey leghwI'pu' cookie QIn jangmeH mIw: Roblox mut nav, malja' nav, je Hoch mIw'a' De'wI' nav nIteb. Hoch jang toghlu', lajQo' je, vaj naDev cookie Sopbogh leghwI'pu' ghom yajlu'. wa'logh De'wI' toghlu', wa'DIch jangDaj, jangbogh navDaq UTC jajDaq je; ghIq choHlu'bogh jang wa'logh toghbe'lu'. 2026 jar wa'maH wa'DIch toghlu' taghlu', vaj jajmey ngo' jang ghajbe'. DaH mI'mey laDlu'. ghomlu'bogh mI'mey neH: mI' neH pollu', jangwI' pong pagh.",
+        "params": {
+          "fromTo": "veHvamDaq jajmey neH, veHmey je. wejmaH jaj Qav DanejDI' yIwoDHa'. DaHjaj juchchugh veH, DaHjaj ghoS jang; <code>range</code> yIlegh. DaHjaj pIq taghchugh veH, lajQo'lu'."
+        },
+        "fields": {
+          "range": "mI'mey So'bogh jajmey.",
+          "pages": "wa' nav wa' De'wI': mut nav, malja' nav, je veHDaq jangbogh mIw'a' De'wI' nav.",
+          "pagesPage": "nav Segh, <code>/traffic</code> rur. Hoch School of Gaming Doch malja' nav ghaj, vaj mIw'a' neH jangmeyDaj ghajbe'; De'wI' nav jangmey ghaj.",
+          "pagesProductId": "De'wI', nav ghajbogh; <code>null</code> mut navvaD malja' navvaD je.",
+          "pagesAnswered": "loS jangmey boq.",
+          "pagesAnswers": "jang wa' wa' nobbogh De'wI'mey mI': <code>all</code> Hoch laj, <code>analytics_only</code> <code>marketing_only</code> je wa' laj, <code>none</code> cha' lajQo'. Hoch jang tu'lu', pagh nobchugh pagh mI' ghaj."
+        },
+        "note": "wej Segh navmey neH toghlu': latlh navDaq wa'DIch jangbogh De'wI' tu'be'lu'. jangmey wuq latlh De'wI'meywIj leghlaHbogh. <code>all</code> pagh <code>analytics_only</code> jangbogh leghwI' <code>/traffic</code>Daq toghlaHlu', 'ej <code>all</code> pagh <code>marketing_only</code> jangbogh leghwI' neH <code>/families</code>Daq mIw qemlaH."
       }
     },
     "errors": {
@@ -307,7 +323,7 @@
         "childIdentity": "puqpu' qorDu' pongmey, bogh jajmey, loD/be' je; vavpu' jatlhmeH mI'mey je. mIw'a' pegh chut bogh jar nob — bogh jaj nobbe'; 'ej latlh lo'be' leghmeH Daqmey Roblox ja'chuq je.",
         "releases": "qun De' je jatlh De' chaw'mey. Sogverse qengbogh wa' nagh beQ chaw' So' vaj: Lynx Educate, School of Gaming, je Roblox nagh beQ lo' Hoch DaqDaq. 'ach puq pong naQ, qun De', mu'tlhegh, qoj puqDaq boqbogh De' — pIm ghItlh chaw' nIS, Daq HurDaq Suqlu'bogh.",
         "deliveryModel": "mIw Segh pong. De'wI' Segh SovtaH Sogverse, 'ej DIvI' Daq qoj nuvDaq qoj hybrid qaS 'e' SovtaH; mIw Seghmey chenmoHmeH Lynx Qu' 'oH — cha' yotlh Dung.",
-        "analytics": "mut nav, malja' nav, je mIw'a' De'wI' navmey Hutlhbogh Hoch nav lengmey, je wa' leghwI' De' Hoch. <code>/traffic</code> bIngDaq De' ghom pegh qaD wa'DIch: 'elpu'DI' qorDu' pawbogh nav ghaHvaD 'oH; 'ej leghwI' 'oH mI''e' — not De'wI'."
+        "analytics": "mut nav, malja' nav, je mIw'a' De'wI' navmey Hutlhbogh Hoch nav lengmey cookie QIn jangmey je, je wa' leghwI' De' Hoch. <code>/traffic</code> <code>/consent</code> je bIngDaq mI'mey pegh qaD wa'DIch: 'elpu'DI' qorDu' pawbogh nav ghaHvaD 'oH; 'ej leghwI' 'oH mI''e', not De'wI'."
       }
     }
   }

@@ -306,9 +306,8 @@ request arrived from, the platform's own browser and click cookies if the browse
 them (Meta's `_fbp` and `_fbc`, Reddit's `_rdt_uuid` and `_rdt_cid` — each platform is sent
 only its own) or, where the click cookie is missing, that platform's click id kept in our
 attribution cookie (Meta's in the `_fbc` format, `fb.1.<landing ms>.<fbclid>`; Reddit's as
-the link carried it) — and, **on the lead, the child added and the enrolment only**, a
-SHA-256 hash of the
-parent's own account email and a SHA-256 hash of the parent's own account id
+the link carried it; where Meta has both, the later click is sent) — and, **on the lead,
+the child added and the enrolment only**, a SHA-256 hash of the parent's own account email and a SHA-256 hash of the parent's own account id
 (`external_id`), both hashed on our server, so neither the address nor the id is ever sent
 or logged, and never a gamer's. **The three page-event twins carry no account, even from a
 signed-in parent**: they tell a platform that a browser reached a page or a product, never
@@ -327,6 +326,33 @@ name, and nothing about a child beyond that — the child-added event says only 
 parent added one, never their name, age, account or its id, how many there are, or
 anything else. The privacy policy's entry for each platform says
 this in plain words; adding a field is a privacy-policy edit.
+
+## The answer tally
+
+**The banner's answers are counted by us, because nothing else can count them.** Vercel's
+analytics runs only for a visitor who allowed it, and a refusal sends nothing anywhere, so
+neither can say how often the banner is accepted. So a device's answer is posted to our own
+`/api/consent-answers`, which counts it: per UTC day, per answer — all, analytics only,
+marketing only, none — per page, a number. The page is the locale-stripped internal path
+when the marketing-page helpers accept it, never the query, and no page otherwise; the
+route vets it from the body itself and trusts nothing else in it.
+
+**It is the one request a refusal makes, and that is fine (owner's ruling, 2026-11-06).**
+It carries the answer and the path, no cookies, and nothing that identifies anyone, and the table holds
+no IP, user agent, cookie, session or account, so the tally needs no consent of its own.
+The privacy policy says so in a sentence. A field added to it that could single out a
+visitor ends that ruling.
+
+**Only a device's first answer counts**: one given while the consent cookie holds no answer
+we can act on, so an answer to an older version of the question counts again. It is judged
+from the cookie at the moment of answering rather than from the document's state, so a tab
+answering after another tab already did sends nothing. Changing an answer through Privacy
+choices sends nothing. The post is fire and forget with `keepalive`, so a navigation straight
+after the answer does not lose it, and it never holds the strip open.
+
+**Forged counts are accepted.** The route is public, has no rate limit and answers `204`
+whatever it is sent; anyone can inflate a count, and the owner ruled that not worth
+defending. There is no count of the banner being shown, only of it being answered.
 
 ## Withdrawal
 
@@ -404,7 +430,11 @@ library turns its platform's click id into its own click cookie only if it loads
 id is still in the address bar, and it loads only once marketing is granted, on a marketing
 page — so a parent who answers the banner a few pages after landing would otherwise convert
 with no click on record. The report sends the vendor's own cookie where there is one and the
-kept id where there is not, and never the other platform's. A click id is never stored on
+kept id where there is not, and never the other platform's. Meta's report, holding both,
+sends whichever records the later click: a visitor landing from a new ad has the new id
+kept before the pixel has rewritten `_fbc`, and the old cookie beside a page address
+carrying the new click reads to Meta as a modified `fbclid`. Reddit's sends its own cookie
+first, unchanged. A click id is never stored on
 an account or a booking and never reaches Klaviyo. Google's `gclid` is not kept, because no
 server report reads it. Keeping the click ids is newer than counsel's ruling on the tag and
 has not had a legal review of its own (`src/lib/utm.ts`).
