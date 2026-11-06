@@ -192,11 +192,16 @@ function fbcForClick(click: ClickId): string {
 /**
  * The `fbc` to send when the browser may carry both Meta's own `_fbc` cookie
  * and a click our attribution cookie kept: whichever records the later click.
- * The cookie's third segment is the time it was created, in milliseconds, and
- * the `fbclid` after it never contains a dot. On a tie the cookie wins, and it
- * is always sent exactly as it stands. A cookie whose creation time cannot be
- * read — it is a third party's, so it can be malformed — gives way to a kept
- * click, and is sent as it is only when there is nothing else.
+ * Both naming the same click is the common case, and then the cookie is sent:
+ * its time is the browser's clock and ours the server's, so comparing them
+ * would hand a visitor whose clock runs behind our rebuilt value instead of
+ * the one Meta's browser events carry. Only two different clicks are compared
+ * by time. The cookie's third segment is the time it was created, in
+ * milliseconds, and the `fbclid` after it never contains a dot. On a tie the
+ * cookie wins, and it is always sent exactly as it stands. A cookie whose
+ * creation time cannot be read — it is a third party's, so it can be
+ * malformed — gives way to a kept click, and is sent as it is only when there
+ * is nothing else.
  */
 function fbcFor(
   cookie: string | undefined,
@@ -204,7 +209,9 @@ function fbcFor(
 ): string | undefined {
   if (keptClick === null) return cookie;
   if (cookie === undefined) return fbcForClick(keptClick);
-  const createdAt = Number(cookie.split(".")[2]);
+  const segments = cookie.split(".");
+  if (segments.length === 4 && segments[3] === keptClick.id) return cookie;
+  const createdAt = Number(segments[2]);
   if (!Number.isFinite(createdAt) || keptClick.landedAt > createdAt) {
     return fbcForClick(keptClick);
   }

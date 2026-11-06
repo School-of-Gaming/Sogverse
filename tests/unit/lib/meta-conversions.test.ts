@@ -641,6 +641,12 @@ describe("reportMetaConversion — the kept click", () => {
     );
   });
 
+  it("sends the pixel's _fbc for the same click whatever the browser's clock says", async () => {
+    expect(await fbcSentFor(`fb.1.${LANDED - 5000}.${FBCLID}`, `${LANDED}.${FBCLID}`)).toBe(
+      `fb.1.${LANDED - 5000}.${FBCLID}`,
+    );
+  });
+
   it("sends the kept click over an _fbc with no readable creation time", async () => {
     expect(await fbcSentFor("garbage", `${LANDED}.${FBCLID}`)).toBe(
       `fb.1.${LANDED}.${FBCLID}`,
