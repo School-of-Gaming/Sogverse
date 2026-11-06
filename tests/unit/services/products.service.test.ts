@@ -24,10 +24,12 @@ describe("ProductsService.listVisibleByTypes", () => {
     end_date: string | null;
     start_date?: string;
     timezone?: string;
+    schedule_slots?: { weekday: number; start_time: string }[];
   }) {
     return {
       start_date: "2026-01-01",
       timezone: "Europe/Helsinki",
+      schedule_slots: [],
       ...overrides,
     };
   }
@@ -60,7 +62,8 @@ describe("ProductsService.listVisibleByTypes", () => {
     expect(url.pathname).toBe("/rest/v1/products");
     expect(url.searchParams.get("product_type")).toBe("in.(consumer_club)");
     expect(url.searchParams.get("is_visible")).toBe("eq.true");
-    // Soonest first, newest-created breaking a same-day tie.
+    // Soonest first, newest-created first within a day — the order the
+    // same-day first-session sort then refines.
     expect(url.searchParams.get("order")).toBe("start_date.asc,created_at.desc");
 
     expect(result.map((r) => r.id)).toEqual(["future", "open-ended"]);
@@ -120,6 +123,82 @@ describe("ProductsService.listVisibleByTypes", () => {
     const result = await service.listVisibleByTypes(["consumer_club"]);
 
     expect(result.map((r) => r.id)).toEqual(["kiritimati-today"]);
+  });
+
+  it("orders same-day products by when their first session starts", async () => {
+    // 2026-07-01 is a Wednesday (weekday 2). The mock answers in the database's
+    // order — start date, then newest-created — and only the same-day run moves.
+    const rows = [
+      row({
+        id: "day-before",
+        start_date: "2026-06-30",
+        end_date: "2026-12-31",
+        schedule_slots: [{ weekday: 1, start_time: "18:00:00" }],
+      }),
+      row({
+        id: "no-slot-newer",
+        start_date: "2026-07-01",
+        end_date: "2026-12-31",
+        schedule_slots: [{ weekday: 0, start_time: "08:00:00" }],
+      }),
+      row({
+        id: "afternoon",
+        start_date: "2026-07-01",
+        end_date: "2026-12-31",
+        schedule_slots: [{ weekday: 2, start_time: "15:00:00" }],
+      }),
+      row({ id: "no-slot-older", start_date: "2026-07-01", end_date: "2026-12-31" }),
+      row({
+        id: "morning",
+        start_date: "2026-07-01",
+        end_date: "2026-12-31",
+        schedule_slots: [{ weekday: 2, start_time: "10:00:00" }],
+      }),
+      row({
+        id: "day-after",
+        start_date: "2026-07-02",
+        end_date: "2026-12-31",
+        schedule_slots: [{ weekday: 3, start_time: "08:00:00" }],
+      }),
+    ];
+    fetchMock.mockResolvedValue(postgrestJson(rows));
+
+    const result = await service.listVisibleByTypes(["event"]);
+
+    expect(result.map((r) => r.id)).toEqual([
+      "day-before",
+      "morning",
+      "afternoon",
+      "no-slot-newer",
+      "no-slot-older",
+      "day-after",
+    ]);
+  });
+
+  it("compares same-day first sessions as instants across time zones", async () => {
+    // 11:00 in London is 10:00Z; 12:00 in Helsinki is 09:00Z. The later clock
+    // face starts first, so Helsinki leads.
+    const rows = [
+      row({
+        id: "london-11",
+        start_date: "2026-07-01",
+        end_date: "2026-12-31",
+        timezone: "Europe/London",
+        schedule_slots: [{ weekday: 2, start_time: "11:00:00" }],
+      }),
+      row({
+        id: "helsinki-12",
+        start_date: "2026-07-01",
+        end_date: "2026-12-31",
+        timezone: "Europe/Helsinki",
+        schedule_slots: [{ weekday: 2, start_time: "12:00:00" }],
+      }),
+    ];
+    fetchMock.mockResolvedValue(postgrestJson(rows));
+
+    const result = await service.listVisibleByTypes(["event"]);
+
+    expect(result.map((r) => r.id)).toEqual(["helsinki-12", "london-11"]);
   });
 
   it("throws when the query errors", async () => {
