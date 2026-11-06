@@ -151,7 +151,7 @@ export const EVENT_PROPERTIES = {
   sessionDate: "session_date",
   /** On a session: its scheduled start, an ISO instant. */
   sessionStartsAt: "session_starts_at",
-  /** On a cancellation: why the seat ended, `subscription_cancelled` or `admin_removed`. */
+  /** On a cancellation: why the seat ended, its `end_reason`. */
   reason: "reason",
 } as const;
 
