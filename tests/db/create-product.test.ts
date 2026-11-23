@@ -29,6 +29,9 @@ import { deleteTestProducts } from "./product-helpers";
  */
 const CONSENT_TERMS = "roblox-programme-terms";
 const CONSENT_PRIVACY = "roblox-privacy-policy";
+// Only booking judges when registration opens, and nothing here books, so it
+// is data: a fixed instant rather than a clock read.
+const REGISTRATION_OPENS_AT = "2020-01-01T00:00:00Z";
 
 /**
  * The Fennoa invoice customer this file points a municipality club at.
@@ -129,7 +132,7 @@ describe("create_product", () => {
       p_spoken_language_code: "en",
       p_delivery_mode: "online",
       p_timezone: "Europe/Helsinki",
-      p_registration_opens_at: new Date(Date.now() - 60_000).toISOString(),
+      p_registration_opens_at: REGISTRATION_OPENS_AT,
       p_start_date: "2099-01-01",
       p_for_gamers: true,
       p_for_parents: false,
@@ -282,7 +285,7 @@ describe("create_product", () => {
       p_spoken_language_code: "en",
       p_delivery_mode: "online",
       p_timezone: "Europe/Helsinki",
-      p_registration_opens_at: new Date(Date.now() - 60_000).toISOString(),
+      p_registration_opens_at: REGISTRATION_OPENS_AT,
       p_start_date: "2099-01-01",
       p_for_gamers: true,
       p_for_parents: false,
@@ -318,7 +321,7 @@ describe("create_product", () => {
       p_spoken_language_code: "en",
       p_delivery_mode: "online",
       p_timezone: "Europe/Helsinki",
-      p_registration_opens_at: new Date(Date.now() - 60_000).toISOString(),
+      p_registration_opens_at: REGISTRATION_OPENS_AT,
       p_start_date: "2099-06-01",
       p_end_date: "2099-06-05",
       p_for_gamers: true,
@@ -351,7 +354,7 @@ describe("create_product", () => {
       p_delivery_mode: "online",
       p_location_id: TEST_IDS.LOCATION_MUNICIPALITY,
       p_timezone: "Europe/Helsinki",
-      p_registration_opens_at: new Date(Date.now() - 60_000).toISOString(),
+      p_registration_opens_at: REGISTRATION_OPENS_AT,
       p_for_gamers: true,
       p_for_parents: false,
       p_min_age: 7,
@@ -407,7 +410,7 @@ describe("create_product", () => {
       p_spoken_language_code: "en",
       p_delivery_mode: "online",
       p_timezone: "Europe/Helsinki",
-      p_registration_opens_at: new Date(Date.now() - 60_000).toISOString(),
+      p_registration_opens_at: REGISTRATION_OPENS_AT,
       p_start_date: "2099-01-01",
       p_for_gamers: true,
       p_for_parents: false,
@@ -438,7 +441,7 @@ describe("create_product", () => {
       p_spoken_language_code: "en",
       p_delivery_mode: "online",
       p_timezone: "Europe/Helsinki",
-      p_registration_opens_at: new Date(Date.now() - 60_000).toISOString(),
+      p_registration_opens_at: REGISTRATION_OPENS_AT,
       p_start_date: "2099-01-01",
       p_for_gamers: true,
       p_for_parents: false,
@@ -482,7 +485,7 @@ describe("create_product", () => {
         p_spoken_language_code: "en",
         p_delivery_mode: "online",
         p_timezone: "Europe/Helsinki",
-        p_registration_opens_at: new Date(Date.now() - 60_000).toISOString(),
+        p_registration_opens_at: REGISTRATION_OPENS_AT,
         p_start_date: "2099-01-01",
         p_for_gamers: true,
         p_for_parents: false,
@@ -667,7 +670,7 @@ describe("create_product", () => {
       p_spoken_language_code: "en",
       p_delivery_mode: "online",
       p_timezone: "Europe/Helsinki",
-      p_registration_opens_at: new Date().toISOString(),
+      p_registration_opens_at: REGISTRATION_OPENS_AT,
       p_start_date: "2099-01-01",
       p_for_gamers: true,
       p_for_parents: false,

@@ -8,6 +8,7 @@ import {
   createBearerTestClient,
   oauthGrantFor,
   revokeOAuthGrant,
+  uniqueSuffix,
   type OAuthGrant,
 } from "./helpers";
 import { TEST_CREDENTIALS, TEST_IDS } from "./constants";
@@ -1215,7 +1216,7 @@ describe("library articles", () => {
 
     it("keeps the save time when the saver's account is deleted", async () => {
       await reseed();
-      const email = `library-saver-${Date.now()}@test.local`;
+      const email = `library-saver-${uniqueSuffix()}@test.local`;
       const created = await admin.auth.admin.createUser({
         email,
         password: "testpassword123",

@@ -1,4 +1,4 @@
-import { describe, it, expect, beforeAll, afterAll } from "vitest";
+import { describe, it, expect, beforeAll, beforeEach, afterAll } from "vitest";
 import type { SupabaseClient } from "@supabase/supabase-js";
 import { z } from "zod";
 import type { Database } from "@/types/database.types";
@@ -11,6 +11,8 @@ import {
   callServiceRoleRpcRaw,
   createAdminTestClient,
   createAnonTestClient,
+  dbInterval,
+  dbNow,
 } from "./helpers";
 import { TEST_IDS } from "./constants";
 import {
@@ -75,9 +77,24 @@ const functionBodies = z.array(
   z.object({ function_name: z.string(), body: z.string() }),
 );
 
-/** A UTC calendar date `offset` days from now, UTC-pinned end to end. */
-function utcDate(offset: number): string {
-  const now = new Date();
+/**
+ * The database's clock, read afresh before the file's setup and before each
+ * test: the calendar dates below count from the database's today, the one its
+ * functions judge against, and stay one day for the whole of a test.
+ */
+let dbClock = await dbNow();
+beforeAll(async () => {
+  dbClock = await dbNow();
+});
+beforeEach(async () => {
+  dbClock = await dbNow();
+});
+
+/**
+ * A UTC calendar date `offset` days from `now` — the database's today unless
+ * told otherwise — UTC-pinned end to end.
+ */
+function utcDate(offset: number, now: Date = dbClock): string {
   return new Date(
     Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), now.getUTCDate() + offset),
   )
@@ -463,16 +480,17 @@ describe("the session plan", () => {
      */
     async function expectHorizon(
       args: { p_group_id?: string; p_at_least?: string },
-      expected: () => string,
+      expected: (now: Date) => string,
       product: string = HORIZON,
     ) {
-      const before = expected();
-      const { data, error } = await admin.rpc("session_plan_horizon", {
-        p_product_id: product,
-        ...args,
-      });
-      expect(error).toBeNull();
-      expect([before, expected()]).toContain(data);
+      // The database's today on either side of the call: the answer is the
+      // one for whichever day it read, should midnight fall between.
+      const { result, notBefore, notAfter } = await dbInterval(
+        async () =>
+          await admin.rpc("session_plan_horizon", { p_product_id: product, ...args }),
+      );
+      expect(result.error).toBeNull();
+      expect([expected(notBefore), expected(notAfter)]).toContain(result.data);
     }
 
     it("is a dated product's end date", async () => {
@@ -485,22 +503,22 @@ describe("the session plan", () => {
 
     it("is the eighth session that has not ended, open-ended", async () => {
       // Yesterday's has ended and today's has not: today plus seven.
-      await expectHorizon({}, () => utcDate(7));
+      await expectHorizon({}, (now) => utcDate(7, now));
     });
 
     it("skips the dates the group cancelled", async () => {
       // Today, +2, +4, +5, +6, +7, +8 and +9: the group cancelled +1 and +3,
       // so its eighth is two days later.
-      await expectHorizon({ p_group_id: GROUP_HORIZON }, () => utcDate(9));
+      await expectHorizon({ p_group_id: GROUP_HORIZON }, (now) => utcDate(9, now));
     });
 
     it("is the last day of the year it searches when fewer than eight fall inside it", async () => {
-      await expectHorizon({}, () => utcDate(366), LATE_START);
+      await expectHorizon({}, (now) => utcDate(366, now), LATE_START);
     });
 
     it("is raised to p_at_least, and never lowered by it", async () => {
-      await expectHorizon({ p_at_least: utcDate(100) }, () => utcDate(100));
-      await expectHorizon({ p_at_least: utcDate(0) }, () => utcDate(7));
+      await expectHorizon({ p_at_least: utcDate(100) }, (now) => utcDate(100, now));
+      await expectHorizon({ p_at_least: utcDate(0) }, (now) => utcDate(7, now));
     });
   });
 
@@ -549,10 +567,10 @@ describe("the session plan", () => {
         })),
       );
 
-      // Taken before the database reads its own clock: the horizon only grows
-      // with time, so a plan read a moment later still holds everything a list
-      // at this instant shows.
-      const now = new Date();
+      // Read off the database's clock before it reads it again for the
+      // horizon: the horizon only grows with time, so a plan read a moment
+      // later still holds everything a list at this instant shows.
+      const now = await dbNow();
       const horizon = await admin.rpc("session_plan_horizon", { p_product_id: LIVE });
       expect(horizon.error).toBeNull();
       const { data, error } = await admin.rpc("planned_session_dates", {

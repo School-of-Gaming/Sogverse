@@ -11,7 +11,7 @@ import {
   gamerGroupCreationsResult,
   groupStaffOverlay,
 } from "@/services/member-flair/member-flair.contracts";
-import { createAdminTestClient, createAuthenticatedClient } from "./helpers";
+import { createAdminTestClient, createAuthenticatedClient, dbNow } from "./helpers";
 import { TEST_CREDENTIALS, TEST_IDS } from "./constants";
 import {
   createScheduleSlot,
@@ -89,9 +89,19 @@ const ALL_PRODUCTS = [PRODUCT_CLUB, PRODUCT_OFF, PRODUCT_OWED];
 const SLOT_START = "23:00";
 const SLOT_MINUTES = 60;
 
-/** `YYYY-MM-DD`, `offset` days from today. The fixture products run in UTC. */
+/**
+ * The database's clock, read when the file loads: the dates below are built
+ * then, and they count from the database's today, the one its functions judge
+ * against.
+ */
+const DB_NOW = await dbNow();
+
+/**
+ * `YYYY-MM-DD`, `offset` days from the database's today. The fixture products
+ * run in UTC.
+ */
 function dayOffset(offset: number): string {
-  const d = new Date();
+  const d = new Date(DB_NOW);
   d.setUTCDate(d.getUTCDate() + offset);
   return d.toISOString().slice(0, 10);
 }
@@ -454,7 +464,7 @@ describe("gamer creations", () => {
         .from("participations")
         .update({
           status: "ended",
-          ended_at: new Date().toISOString(),
+          ended_at: "2020-01-01T00:00:00Z",
           end_reason: "admin_removed",
         })
         .eq("group_id", GROUP_A)

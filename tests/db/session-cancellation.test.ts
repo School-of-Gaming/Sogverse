@@ -15,7 +15,7 @@ import { municipalityInvoicingSnapshot } from "@/services/municipality-invoicing
 import { adminSubstitutionRequests } from "@/services/session-substitution/session-substitution.contracts";
 import { myAssignedProductRows } from "@/services/assignments/assignments.contracts";
 import { adminDashboardSnapshot } from "@/services/admin-dashboard/admin-dashboard.contracts";
-import { createAdminTestClient, createAuthenticatedClient } from "./helpers";
+import { createAdminTestClient, createAuthenticatedClient, dbNow } from "./helpers";
 import { TEST_CREDENTIALS, TEST_IDS } from "./constants";
 import {
   createScheduleSlot,
@@ -65,9 +65,16 @@ const CLUB_MONTH = "2031-02-01";
 /** A Wednesday; the club runs Wednesdays (weekday 2). */
 const CLUB_DATE = "2031-02-12";
 
-/** `YYYY-MM-DD`, `offset` days from today. PRODUCT runs in UTC. */
+/**
+ * The database's clock, read when the file loads: the dates below are built
+ * then, and they count from the database's today, the one its functions judge
+ * against.
+ */
+const DB_NOW = await dbNow();
+
+/** `YYYY-MM-DD`, `offset` days from the database's today. PRODUCT runs in UTC. */
 function dayOffset(offset: number): string {
-  const d = new Date();
+  const d = new Date(DB_NOW);
   d.setUTCDate(d.getUTCDate() + offset);
   return d.toISOString().slice(0, 10);
 }
@@ -907,7 +914,7 @@ describe("session cancellation", () => {
           status: "substituted" as const,
           substitute_id: subId,
           approved_by: TEST_IDS.ADMIN,
-          approved_at: new Date().toISOString(),
+          approved_at: "2020-01-01T00:00:00Z",
         })),
       );
       expect(seeded.error).toBeNull();

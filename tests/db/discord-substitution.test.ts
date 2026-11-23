@@ -13,6 +13,8 @@ import {
   createAdminTestClient,
   createAnonTestClient,
   createAuthenticatedClient,
+  dbNow,
+  uniqueSuffix,
 } from "./helpers";
 import { TEST_IDS } from "./constants";
 import { deleteTestProducts } from "./product-helpers";
@@ -55,9 +57,30 @@ const DISCORD_SHARED = "910000000000000002";
 const DISCORD_ADMIN_ONLY = "910000000000000003";
 const DISCORD_NOBODY = "910000000000000004";
 
-/** A UTC calendar date `offset` days from now; the product's zone is UTC. */
+/**
+ * When a link was made only orders the links on one Discord id, so these are
+ * fixed instants rather than clock reads.
+ */
+const LINKED_EARLIER = "2020-01-01T00:00:00Z";
+const LINKED_AT = "2020-01-01T00:01:00Z";
+const LINKED_LATER = "2020-01-01T00:02:00Z";
+
+/**
+ * The database's clock, read when the file loads and afresh before the setup
+ * and each test: the calendar dates below count from the database's today, the
+ * one the filing and the seat's plan judge against.
+ */
+let dbClock = await dbNow();
+beforeAll(async () => {
+  dbClock = await dbNow();
+});
+beforeEach(async () => {
+  dbClock = await dbNow();
+});
+
+/** A UTC calendar date `offset` days from the database's today; the product's zone is UTC. */
 function utcDate(offset: number): string {
-  const now = new Date();
+  const now = dbClock;
   const day = new Date(
     Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), now.getUTCDate() + offset),
   );
@@ -78,7 +101,7 @@ describe("substitutions from Discord", () => {
     label: string,
     role: "gedu" | "admin",
   ): Promise<{ id: string; email: string }> {
-    const email = `discord-sub-${label}-${Date.now()}@test.local`;
+    const email = `discord-sub-${label}-${uniqueSuffix()}@test.local`;
     const { data, error } = await admin.auth.admin.createUser({
       email,
       password: "testpassword123",
@@ -98,12 +121,12 @@ describe("substitutions from Discord", () => {
     return { id, email };
   }
 
-  async function link(profileId: string, discordUserId: string, linkedAt: Date) {
+  async function link(profileId: string, discordUserId: string, linkedAt: string) {
     const { error } = await admin.from("discord_links").upsert({
       profile_id: profileId,
       discord_user_id: discordUserId,
       discord_username: "disco",
-      linked_at: linkedAt.toISOString(),
+      linked_at: linkedAt,
     });
     expect(error).toBeNull();
   }
@@ -131,7 +154,7 @@ describe("substitutions from Discord", () => {
       delivery_mode: "online",
       location_id: null,
       timezone: "UTC",
-      registration_opens_at: new Date(Date.now() - 60_000).toISOString(),
+      registration_opens_at: "2020-01-01T00:00:00Z",
       is_visible: true,
       created_by: TEST_IDS.ADMIN,
       start_date: utcDate(-30),
@@ -185,7 +208,7 @@ describe("substitutions from Discord", () => {
 
   describe("resolving the Discord user", () => {
     it("answers the linked gedu and their stored locale", async () => {
-      await link(geduId, DISCORD_GEDU, new Date());
+      await link(geduId, DISCORD_GEDU, LINKED_AT);
       const { data, error } = await admin.rpc("get_gedu_for_discord_user", {
         p_discord_user_id: DISCORD_GEDU,
       });
@@ -202,7 +225,7 @@ describe("substitutions from Discord", () => {
     });
 
     it("refuses a Discord user linked only to an account that is not a gedu", async () => {
-      await link(adminId, DISCORD_ADMIN_ONLY, new Date());
+      await link(adminId, DISCORD_ADMIN_ONLY, LINKED_AT);
       const { error } = await admin.rpc("get_gedu_for_discord_user", {
         p_discord_user_id: DISCORD_ADMIN_ONLY,
       });
@@ -210,8 +233,8 @@ describe("substitutions from Discord", () => {
     });
 
     it("answers the gedu account, not a more recently linked admin one", async () => {
-      await link(geduId, DISCORD_SHARED, new Date(Date.now() - 60_000));
-      await link(adminId, DISCORD_SHARED, new Date());
+      await link(geduId, DISCORD_SHARED, LINKED_EARLIER);
+      await link(adminId, DISCORD_SHARED, LINKED_AT);
       const { data, error } = await admin.rpc("get_gedu_for_discord_user", {
         p_discord_user_id: DISCORD_SHARED,
       });
@@ -220,14 +243,14 @@ describe("substitutions from Discord", () => {
     });
 
     it("answers the most recently linked of two gedu accounts", async () => {
-      await link(geduId, DISCORD_SHARED, new Date(Date.now() - 60_000));
-      await link(secondGeduId, DISCORD_SHARED, new Date());
+      await link(geduId, DISCORD_SHARED, LINKED_EARLIER);
+      await link(secondGeduId, DISCORD_SHARED, LINKED_AT);
       const first = await admin.rpc("get_gedu_for_discord_user", {
         p_discord_user_id: DISCORD_SHARED,
       });
       expect(discordLinkedGedu.parse(first.data).profile_id).toBe(secondGeduId);
 
-      await link(geduId, DISCORD_SHARED, new Date(Date.now() + 60_000));
+      await link(geduId, DISCORD_SHARED, LINKED_LATER);
       const second = await admin.rpc("get_gedu_for_discord_user", {
         p_discord_user_id: DISCORD_SHARED,
       });
@@ -237,7 +260,7 @@ describe("substitutions from Discord", () => {
 
   describe("the seat reads", () => {
     it("are the very rows the gedu reads on the web", async () => {
-      await link(geduId, DISCORD_GEDU, new Date());
+      await link(geduId, DISCORD_GEDU, LINKED_AT);
 
       const viaDiscord = await admin.rpc("get_assigned_products_for_discord_user", {
         p_discord_user_id: DISCORD_GEDU,
@@ -263,7 +286,7 @@ describe("substitutions from Discord", () => {
     });
 
     it("hand the bot the seat's plan, flagged where the group cancelled", async () => {
-      await link(geduId, DISCORD_GEDU, new Date());
+      await link(geduId, DISCORD_GEDU, LINKED_AT);
       const { error: cancelError } = await admin.from("session_cancellations").insert([
         { group_id: GROUP, session_date: utcDate(3), cancelled_by: TEST_IDS.ADMIN },
         // The sister group's cancellation is not this seat's.
@@ -304,7 +327,7 @@ describe("substitutions from Discord", () => {
 
   describe("filing", () => {
     it("files for the linked gedu and returns the request document", async () => {
-      await link(geduId, DISCORD_GEDU, new Date());
+      await link(geduId, DISCORD_GEDU, LINKED_AT);
       const sessionDate = utcDate(5);
       const { data, error } = await admin.rpc("request_session_substitution_for_discord_user", {
         p_discord_user_id: DISCORD_GEDU,
@@ -336,7 +359,7 @@ describe("substitutions from Discord", () => {
     });
 
     it("refuses an unlinked Discord user and writes nothing", async () => {
-      await link(adminId, DISCORD_ADMIN_ONLY, new Date());
+      await link(adminId, DISCORD_ADMIN_ONLY, LINKED_AT);
       for (const discordUserId of [DISCORD_NOBODY, DISCORD_ADMIN_ONLY]) {
         const { error } = await admin.rpc("request_session_substitution_for_discord_user", {
           p_discord_user_id: discordUserId,
@@ -354,7 +377,7 @@ describe("substitutions from Discord", () => {
     });
 
     it("surfaces the filing's own refusals with their codes and messages", async () => {
-      await link(geduId, DISCORD_GEDU, new Date());
+      await link(geduId, DISCORD_GEDU, LINKED_AT);
       const file = (args: {
         group?: string;
         date: string;
@@ -397,7 +420,7 @@ describe("substitutions from Discord", () => {
     });
 
     it("answers a web filing and a Discord filing as one: whichever came first, the other is refused", async () => {
-      await link(geduId, DISCORD_GEDU, new Date());
+      await link(geduId, DISCORD_GEDU, LINKED_AT);
       const web = await geduAuth.rpc("request_session_substitution", {
         p_group_id: GROUP,
         p_session_date: utcDate(8),
@@ -439,7 +462,7 @@ describe("substitutions from Discord", () => {
     }
 
     it("names an open and a substituted request, on the web and from Discord alike, and the write refuses each", async () => {
-      await link(geduId, DISCORD_GEDU, new Date());
+      await link(geduId, DISCORD_GEDU, LINKED_AT);
       const open = await fileOnTheWeb(geduAuth, utcDate(5));
       // Substituted by the office: stored directly, because seating a sub is
       // not what is under test — only what the filer reads afterwards.
@@ -454,7 +477,7 @@ describe("substitutions from Discord", () => {
           status: "substituted",
           substitute_id: secondGeduId,
           approved_by: adminId,
-          approved_at: new Date().toISOString(),
+          approved_at: "2020-01-01T00:00:00Z",
         });
       expect(substitutedError).toBeNull();
 
@@ -519,7 +542,7 @@ describe("substitutions from Discord", () => {
     });
 
     it("carries each request's planned window from Discord, cancelled or not, and none past the term", async () => {
-      await link(geduId, DISCORD_GEDU, new Date());
+      await link(geduId, DISCORD_GEDU, LINKED_AT);
       await fileOnTheWeb(geduAuth, utcDate(5));
       await fileOnTheWeb(geduAuth, utcDate(11));
       await admin.from("session_cancellations").insert({
@@ -569,7 +592,7 @@ describe("substitutions from Discord", () => {
     });
 
     it("answers each gedu about their own requests and never a colleague's", async () => {
-      await link(geduId, DISCORD_GEDU, new Date());
+      await link(geduId, DISCORD_GEDU, LINKED_AT);
       // The colleague on the same group asks for a substitute; the gedu does not.
       await fileOnTheWeb(secondGeduAuth, utcDate(13));
 
@@ -582,7 +605,7 @@ describe("substitutions from Discord", () => {
     });
 
     it("refuses an unlinked Discord user from Discord", async () => {
-      await link(adminId, DISCORD_ADMIN_ONLY, new Date());
+      await link(adminId, DISCORD_ADMIN_ONLY, LINKED_AT);
       for (const discordUserId of [DISCORD_NOBODY, DISCORD_ADMIN_ONLY]) {
         const { error } = await admin.rpc("get_live_substitution_requests_for_discord_user", {
           p_discord_user_id: discordUserId,
@@ -640,7 +663,7 @@ describe("substitutions from Discord", () => {
     }
 
     it("the Discord wrappers are closed to signed-in and anonymous callers", async () => {
-      await link(geduId, DISCORD_GEDU, new Date());
+      await link(geduId, DISCORD_GEDU, LINKED_AT);
       for (const [name, args] of discordWrappers) {
         for (const client of [geduAuth, anon]) {
           const { error } = await client.rpc(name, args);

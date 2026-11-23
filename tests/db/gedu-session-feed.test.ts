@@ -17,6 +17,9 @@ import {
   createAdminTestClient,
   createAnonTestClient,
   createAuthenticatedClient,
+  dbNow,
+  dbTime,
+  uniqueSuffix,
 } from "./helpers";
 import { TEST_CREDENTIALS, TEST_IDS } from "./constants";
 import {
@@ -108,9 +111,16 @@ const SLOT_MINUTES = 60;
  */
 const ROBLOX_USER_ID = 987654321;
 
-/** `YYYY-MM-DD`, `offset` days from today. The products all run in UTC. */
+/**
+ * The database's clock, read once when the file loads: the day constants below
+ * are built then, and every date in the file counts from the one today the
+ * database judges sessions against.
+ */
+const DB_CLOCK_AT_LOAD = await dbNow();
+
+/** `YYYY-MM-DD`, `offset` days from the database's today. The products all run in UTC. */
 function dayOffset(offset: number): string {
-  const d = new Date();
+  const d = new Date(DB_CLOCK_AT_LOAD);
   d.setUTCDate(d.getUTCDate() + offset);
   return d.toISOString().slice(0, 10);
 }
@@ -697,8 +707,8 @@ describe("gedu session feed", () => {
       const { error: seedError } = await admin.from("group_sessions").insert({
         group_id: GROUP_MINE,
         session_date: TODAY,
-        starts_at: new Date(Date.now() - 30 * 60_000).toISOString(),
-        ends_at: new Date(Date.now() + 30 * 60_000).toISOString(),
+        starts_at: (await dbTime(-30 * 60_000)).toISOString(),
+        ends_at: (await dbTime(30 * 60_000)).toISOString(),
       });
       expect(seedError).toBeNull();
 
@@ -1909,7 +1919,7 @@ describe("gedu session feed", () => {
       // Unique per run: CI's database carries the seed fixtures AND whatever a
       // previous run left behind, so a fixed address is a collision waiting to
       // happen.
-      const email = `feed-marker-${Date.now()}@test.local`;
+      const email = `feed-marker-${uniqueSuffix()}@test.local`;
       const { data, error } = await admin.auth.admin.createUser({
         email,
         password: "testpassword123",

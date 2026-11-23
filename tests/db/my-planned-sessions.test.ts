@@ -2,7 +2,7 @@ import { describe, it, expect, beforeAll, afterAll, beforeEach } from "vitest";
 import type { SupabaseClient } from "@supabase/supabase-js";
 import type { Database } from "@/types/database.types";
 import { myPlannedSessions } from "@/services/participations/participations.contracts";
-import { createAdminTestClient, createAuthenticatedClient } from "./helpers";
+import { createAdminTestClient, createAuthenticatedClient, dbNow } from "./helpers";
 import { TEST_CREDENTIALS, TEST_IDS } from "./constants";
 import {
   createScheduleSlot,
@@ -42,9 +42,19 @@ const WEEKLY_SEAT = "00000000-0000-0000-0000-000000000875";
 const UNPLACED_SEAT = "00000000-0000-0000-0000-000000000876";
 const ALL_PRODUCTS = [DAILY, WEEKLY];
 
-/** `YYYY-MM-DD`, `offset` days from today. Every product here runs in UTC. */
+/**
+ * The database's clock, read when the file loads: the dates below are built
+ * then, and they count from the database's today, the one its functions judge
+ * against.
+ */
+const DB_NOW = await dbNow();
+
+/**
+ * `YYYY-MM-DD`, `offset` days from the database's today. Every product here
+ * runs in UTC.
+ */
 function dayOffset(offset: number): string {
-  const d = new Date();
+  const d = new Date(DB_NOW);
   d.setUTCDate(d.getUTCDate() + offset);
   return d.toISOString().slice(0, 10);
 }

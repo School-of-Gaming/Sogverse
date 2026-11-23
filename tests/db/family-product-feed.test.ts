@@ -6,6 +6,8 @@ import {
   createAdminTestClient,
   createAnonTestClient,
   createAuthenticatedClient,
+  dbNow,
+  uniqueSuffix,
 } from "./helpers";
 import { TEST_CREDENTIALS, TEST_IDS } from "./constants";
 import {
@@ -54,9 +56,18 @@ const ALL_PRODUCTS = [PRODUCT_MINE, PRODUCT_SITE, PRODUCT_UNPLACED];
 /** A participation id that belongs to nobody. */
 const NO_SUCH_PARTICIPATION = "00000000-0000-0000-0000-0000000006ff";
 
-/** `YYYY-MM-DD`, `offset` days from today. The fixture products run in UTC. */
+/**
+ * The database's clock, read when the file loads: the dates below are built
+ * then, and the feed judges them against the database's today.
+ */
+const DB_NOW = await dbNow();
+
+/**
+ * `YYYY-MM-DD`, `offset` days from the database's today. The fixture products
+ * run in UTC.
+ */
 function dayOffset(offset: number): string {
-  const d = new Date();
+  const d = new Date(DB_NOW);
   d.setUTCDate(d.getUTCDate() + offset);
   return d.toISOString().slice(0, 10);
 }
@@ -436,9 +447,7 @@ describe("family product feed", () => {
         stripe_customer_id: "cus_feed_ended",
         currency: "eur",
         status: "cancelled",
-        current_period_end: new Date(
-          Date.now() + 30 * 24 * 60 * 60 * 1000,
-        ).toISOString(),
+        current_period_end: `${dayOffset(30)}T00:00:00.000Z`,
       });
       expect(sub.error).toBeNull();
       const ended = await admin
@@ -739,7 +748,7 @@ describe("family product feed", () => {
       // Unique per run: CI's database carries the seed fixtures AND whatever a
       // previous run left behind, so a fixed address is a collision waiting to
       // happen.
-      const email = `family-marker-${Date.now()}@test.local`;
+      const email = `family-marker-${uniqueSuffix()}@test.local`;
       const { data, error } = await admin.auth.admin.createUser({
         email,
         password: "testpassword123",

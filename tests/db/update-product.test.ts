@@ -52,6 +52,13 @@ const DECOY_PRODUCT_ID = "00000000-0000-0000-0000-0000000005f8";
 // renamed slug pass on both sides at once.
 const CONSENT_TERMS = "roblox-programme-terms";
 const CONSENT_PRIVACY = "roblox-privacy-policy";
+// Only booking judges when registration opens, and nothing here books, so it
+// is data: a fixed instant rather than a clock read.
+const REGISTRATION_OPENS_AT = "2020-01-01T00:00:00Z";
+// A waitlisted row needs the stamp (chk_participations_waitlisted_has_timestamp),
+// and nothing here orders the queue or asks the database about it, so it is data
+// too.
+const WAITLISTED_AT = "2020-01-01T00:00:00Z";
 /**
  * The Fennoa invoice customer the municipality club is pointed at.
  *
@@ -133,7 +140,7 @@ describe("update_product", () => {
       location_id: TEST_IDS.LOCATION_MUNICIPALITY,
       timezone: "Europe/Helsinki",
       start_date: "2099-01-01",
-      registration_opens_at: new Date(Date.now() - 60_000).toISOString(),
+      registration_opens_at: REGISTRATION_OPENS_AT,
       seat_count: 10,
       waitlist_enabled: false,
       // chk_products_non_consumer_has_end_date: a municipality club needs one,
@@ -169,7 +176,7 @@ describe("update_product", () => {
       p_delivery_mode: "online" as const,
       p_location_id: TEST_IDS.LOCATION_MUNICIPALITY,
       p_timezone: "Europe/Helsinki",
-      p_registration_opens_at: new Date().toISOString(),
+      p_registration_opens_at: REGISTRATION_OPENS_AT,
       p_start_date: "2099-01-01",
       p_end_date: "2099-12-31",
       p_seat_count: 10,
@@ -192,7 +199,7 @@ describe("update_product", () => {
       delivery_mode: "online" as const,
       timezone: "Europe/Helsinki",
       start_date: "2099-01-01",
-      registration_opens_at: new Date(Date.now() - 60_000).toISOString(),
+      registration_opens_at: REGISTRATION_OPENS_AT,
       seat_count: 10,
       waitlist_enabled: true,
       is_visible: false,
@@ -230,7 +237,7 @@ describe("update_product", () => {
       p_spoken_language_code: "en",
       p_delivery_mode: "online" as const,
       p_timezone: "Europe/Helsinki",
-      p_registration_opens_at: new Date().toISOString(),
+      p_registration_opens_at: REGISTRATION_OPENS_AT,
       p_start_date: "2099-01-01",
       p_is_visible: true,
       p_seat_count: 20,
@@ -309,7 +316,7 @@ describe("update_product", () => {
       p_spoken_language_code: "en",
       p_delivery_mode: "online" as const,
       p_timezone: "Europe/Helsinki",
-      p_registration_opens_at: new Date().toISOString(),
+      p_registration_opens_at: REGISTRATION_OPENS_AT,
       p_start_date: "2099-01-01",
     });
     expect(error).not.toBeNull();
@@ -334,7 +341,7 @@ describe("update_product", () => {
       p_spoken_language_code: "en",
       p_delivery_mode: "online" as const,
       p_timezone: "Europe/Helsinki",
-      p_registration_opens_at: new Date().toISOString(),
+      p_registration_opens_at: REGISTRATION_OPENS_AT,
       p_start_date: "2099-01-01",
       p_seat_count: 10,
     });
@@ -362,7 +369,7 @@ describe("update_product", () => {
       p_spoken_language_code: "en",
       p_delivery_mode: "online" as const,
       p_timezone: "Europe/Helsinki",
-      p_registration_opens_at: new Date().toISOString(),
+      p_registration_opens_at: REGISTRATION_OPENS_AT,
       p_start_date: "2099-01-01",
     });
     expect(error?.code).toBe("23514"); // check_violation
@@ -383,7 +390,7 @@ describe("update_product", () => {
       p_spoken_language_code: "en",
       p_delivery_mode: "online" as const,
       p_timezone: "Europe/Helsinki",
-      p_registration_opens_at: new Date().toISOString(),
+      p_registration_opens_at: REGISTRATION_OPENS_AT,
       p_start_date: "2099-01-01",
     });
     // SQLSTATE P0002 — PL/pgSQL's `no_data_found` condition (the function
@@ -422,7 +429,7 @@ describe("update_product", () => {
       p_spoken_language_code: "en",
       p_delivery_mode: "online" as const,
       p_timezone: "Europe/Helsinki",
-      p_registration_opens_at: new Date().toISOString(),
+      p_registration_opens_at: REGISTRATION_OPENS_AT,
       p_start_date: "2099-01-01",
       p_seat_count: 10,
     });
@@ -475,7 +482,7 @@ describe("update_product", () => {
       p_spoken_language_code: "en",
       p_delivery_mode: "online" as const,
       p_timezone: "Europe/Helsinki",
-      p_registration_opens_at: new Date().toISOString(),
+      p_registration_opens_at: REGISTRATION_OPENS_AT,
       p_start_date: "2099-01-01",
       p_seat_count: 10,
       // fee → cents, volunteer → 0. The muni-only column is left unset (the
@@ -605,7 +612,7 @@ describe("update_product", () => {
       p_spoken_language_code: "en",
       p_delivery_mode: "online" as const,
       p_timezone: "Europe/Helsinki",
-      p_registration_opens_at: new Date().toISOString(),
+      p_registration_opens_at: REGISTRATION_OPENS_AT,
       p_start_date: "2099-01-01",
       p_seat_count: 10,
       p_tag: "neuroinclusive",
@@ -646,7 +653,7 @@ describe("update_product", () => {
       p_spoken_language_code: "en",
       p_delivery_mode: "online" as const,
       p_timezone: "Europe/Helsinki",
-      p_registration_opens_at: new Date().toISOString(),
+      p_registration_opens_at: REGISTRATION_OPENS_AT,
       p_start_date: "2099-01-01",
       p_seat_count: 10,
       // p_tag deliberately absent.
@@ -680,7 +687,7 @@ describe("update_product", () => {
       p_spoken_language_code: "en",
       p_delivery_mode: "online" as const,
       p_timezone: "Europe/Helsinki",
-      p_registration_opens_at: new Date().toISOString(),
+      p_registration_opens_at: REGISTRATION_OPENS_AT,
       p_start_date: "2099-01-01",
       p_seat_count: 10,
       p_region_lock_country: "FI",
@@ -723,7 +730,7 @@ describe("update_product", () => {
       p_spoken_language_code: "en",
       p_delivery_mode: "online" as const,
       p_timezone: "Europe/Helsinki",
-      p_registration_opens_at: new Date().toISOString(),
+      p_registration_opens_at: REGISTRATION_OPENS_AT,
       p_start_date: "2099-01-01",
       p_seat_count: 10,
       // p_region_lock_country deliberately absent.
@@ -759,7 +766,7 @@ describe("update_product", () => {
       p_spoken_language_code: "en",
       p_delivery_mode: "online" as const,
       p_timezone: "Europe/Helsinki",
-      p_registration_opens_at: new Date().toISOString(),
+      p_registration_opens_at: REGISTRATION_OPENS_AT,
       p_start_date: "2099-01-01",
       p_seat_count: 10,
       p_region_lock_country: "Finland",
@@ -813,7 +820,7 @@ describe("update_product", () => {
       p_spoken_language_code: "en" as const,
       p_delivery_mode: "online" as const,
       p_timezone: "Europe/Helsinki",
-      p_registration_opens_at: new Date().toISOString(),
+      p_registration_opens_at: REGISTRATION_OPENS_AT,
       p_start_date: "2099-01-01",
       p_seat_count: 10,
     };
@@ -984,7 +991,7 @@ describe("update_product", () => {
         p_spoken_language_code: "en" as const,
         p_delivery_mode: "online" as const,
         p_timezone: "Europe/Helsinki",
-        p_registration_opens_at: new Date().toISOString(),
+        p_registration_opens_at: REGISTRATION_OPENS_AT,
         p_start_date: "2099-01-01",
         p_seat_count: 10,
       };
@@ -1118,7 +1125,7 @@ describe("update_product", () => {
         participant_id: TEST_IDS.GAMER,
         customer_id: TEST_IDS.CUSTOMER,
         status: "waitlisted",
-        waitlisted_at: new Date().toISOString(),
+        waitlisted_at: WAITLISTED_AT,
       });
       expect(error).toBeNull();
     }
@@ -1151,7 +1158,7 @@ describe("update_product", () => {
             customer_id: TEST_IDS.CUSTOMER,
             status: row.status,
             waitlisted_at:
-              row.status === "waitlisted" ? new Date().toISOString() : null,
+              row.status === "waitlisted" ? WAITLISTED_AT : null,
           })),
         )
         .select("id, participant_id");
@@ -1181,7 +1188,7 @@ describe("update_product", () => {
         p_spoken_language_code: "en",
         p_delivery_mode: "online" as const,
         p_timezone: "Europe/Helsinki",
-        p_registration_opens_at: new Date().toISOString(),
+        p_registration_opens_at: REGISTRATION_OPENS_AT,
         p_start_date: "2099-01-01",
         p_seat_count: fields.seatCount,
         p_waitlist_enabled: fields.waitlistEnabled,

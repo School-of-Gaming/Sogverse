@@ -1,7 +1,7 @@
 import { describe, it, expect, beforeAll, afterAll } from "vitest";
 import type { SupabaseClient } from "@supabase/supabase-js";
 import type { Database } from "@/types/database.types";
-import { createAdminTestClient, createAuthenticatedClient } from "./helpers";
+import { createAdminTestClient, createAuthenticatedClient, dbNow, uniqueSuffix } from "./helpers";
 import { TEST_IDS, TEST_CREDENTIALS } from "./constants";
 import { createTestProduct, deleteTestProducts } from "./product-helpers";
 import { addCalendarDays, addCalendarMonths } from "@/lib/calendar-date";
@@ -138,14 +138,23 @@ const ALL_PRODUCTS = [
 ];
 
 /**
- * A bare calendar date `offset` days from today, UTC-pinned end to end: built
- * from `Date.UTC` and read back through `toISOString`, so there is no zoned wall
+ * The database's clock, read once before the setup: the fixtures' dates and the
+ * snapshot's assertions count from the one today the dashboard judged against.
+ */
+let dbClock: Date;
+beforeAll(async () => {
+  dbClock = await dbNow();
+});
+
+/**
+ * A bare calendar date `offset` days from the database's today, UTC-pinned end
+ * to end: built from `Date.UTC` and read back through `toISOString`, so there is no zoned wall
  * clock anywhere in it and the day arithmetic is exact. Every fixture product is
  * created in the `UTC` timezone (the helper's default), which is what makes a
  * UTC date the right one to compare the RPC's own windows against.
  */
 function utcDay(offset: number): string {
-  const now = new Date();
+  const now = dbClock;
   const day = new Date(
     Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), now.getUTCDate() + offset),
   );
@@ -213,7 +222,7 @@ describe("get_admin_dashboard", () => {
 
   async function createUser(label: string): Promise<string> {
     const { data, error } = await admin.auth.admin.createUser({
-      email: `admin-dashboard-${label}-${Date.now()}@test.local`,
+      email: `admin-dashboard-${label}-${uniqueSuffix()}@test.local`,
       password: "testpassword123",
       email_confirm: true,
       user_metadata: { first_name: "Dash", last_name: label, locale: "en" },
@@ -245,7 +254,7 @@ describe("get_admin_dashboard", () => {
       user_id: userId,
       opted_in: state !== "not-ready",
       approved: state === "public",
-      approval_decided_at: state === "public" ? new Date().toISOString() : null,
+      approval_decided_at: state === "public" ? "2020-01-01T00:00:00Z" : null,
     });
     expect(error).toBeNull();
   }
@@ -458,7 +467,7 @@ describe("get_admin_dashboard", () => {
         participant_id: TEST_IDS.GAMER,
         customer_id: TEST_IDS.CUSTOMER,
         status: "waitlisted",
-        waitlisted_at: new Date().toISOString(),
+        waitlisted_at: "2020-01-01T00:00:00Z",
       },
     ]);
     expect(participations.error).toBeNull();

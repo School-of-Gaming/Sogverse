@@ -7,7 +7,13 @@ import { myAssignedProductRows } from "@/services/assignments/assignments.contra
 import { chatChannelRoster } from "@/services/chat/chat.contracts";
 import { productGroupsSnapshot } from "@/services/groups/groups.contracts";
 import { traineeGroupOverlay } from "@/services/member-flair/member-flair.contracts";
-import { createAdminTestClient, createAuthenticatedClient } from "./helpers";
+import {
+  createAdminTestClient,
+  createAuthenticatedClient,
+  dbNow,
+  dbTime,
+  uniqueSuffix,
+} from "./helpers";
 import { SEED, TEST_CREDENTIALS, TEST_IDS } from "./constants";
 import { ageOnDate } from "@/lib/gamer-age-eligibility";
 import type { GamerBirthMonthYear } from "@/lib/gamer-birth";
@@ -57,9 +63,16 @@ const SESSION_STAFF_NOTE = "Trainee-invisible session staff note";
 const SESSION_REPORT = "We built a castle together.";
 const MATERIAL_URL = "https://example.com/trainee-material";
 
-/** `YYYY-MM-DD`, `offset` days from today. The products run in UTC. */
+/**
+ * The database's clock, read once when the file loads: the day constants below
+ * are built then, and every date in the file, the ages included, counts from
+ * the one today the database judges against.
+ */
+const DB_CLOCK_AT_LOAD = await dbNow();
+
+/** `YYYY-MM-DD`, `offset` days from the database's today. The products run in UTC. */
 function dayOffset(offset: number): string {
-  const d = new Date();
+  const d = new Date(DB_CLOCK_AT_LOAD);
   d.setUTCDate(d.getUTCDate() + offset);
   return d.toISOString().slice(0, 10);
 }
@@ -152,7 +165,7 @@ describe("trainee gedus", () => {
 
     // Unique per run, and UNCERTIFIED on purpose: trainee status is
     // independent of certification, so nothing here may depend on it.
-    traineeEmail = `trainee-${Date.now()}@test.local`;
+    traineeEmail = `trainee-${uniqueSuffix()}@test.local`;
     const { data: created, error } = await admin.auth.admin.createUser({
       email: traineeEmail,
       password: "testpassword123",
@@ -250,8 +263,9 @@ describe("trainee gedus", () => {
     });
     expect(placed.error).toBeNull();
 
-    // A chat channel whose window is open now, so every member reads it.
-    const opens = new Date(Date.now() - 10 * 60_000);
+    // A chat channel whose window is open now by the database's clock, so
+    // every member reads it.
+    const opens = await dbTime(-10 * 60_000);
     const channel = await admin
       .from("chat_channels")
       .insert({
@@ -644,7 +658,7 @@ describe("trainee gedus", () => {
     it("puts the trainee on the call chat's roster, tagged for staff and the group's trainees alone", async () => {
       // A second trainee on the same group, so a trainee's view of a fellow
       // trainee is pinned as well as their view of themselves.
-      const secondEmail = `trainee-2-${Date.now()}@test.local`;
+      const secondEmail = `trainee-2-${uniqueSuffix()}@test.local`;
       const { data: created, error: createError } = await admin.auth.admin.createUser({
         email: secondEmail,
         password: "testpassword123",

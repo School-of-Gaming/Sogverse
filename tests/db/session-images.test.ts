@@ -3,7 +3,12 @@ import { z } from "zod";
 import type { SupabaseClient } from "@supabase/supabase-js";
 import type { Database } from "@/types/database.types";
 import { geduGroupFeed } from "@/services/gedu-sessions/gedu-sessions.contracts";
-import { createAdminTestClient, createAuthenticatedClient } from "./helpers";
+import {
+  createAdminTestClient,
+  createAuthenticatedClient,
+  dbNow,
+  uniqueSuffix,
+} from "./helpers";
 import { TEST_CREDENTIALS, TEST_IDS } from "./constants";
 import {
   createScheduleSlot,
@@ -82,9 +87,16 @@ const CAP = 5;
 const SLOT_START = "23:00";
 const SLOT_MINUTES = 60;
 
-/** `YYYY-MM-DD`, `offset` days from today. The products run in UTC. */
+/**
+ * The database's clock, read when the file loads: the dates below are built
+ * then, and they count from the database's today, the one its functions judge
+ * against.
+ */
+const DB_NOW = await dbNow();
+
+/** `YYYY-MM-DD`, `offset` days from the database's today. The products run in UTC. */
 function dayOffset(offset: number): string {
-  const d = new Date();
+  const d = new Date(DB_NOW);
   d.setUTCDate(d.getUTCDate() + offset);
   return d.toISOString().slice(0, 10);
 }
@@ -193,7 +205,7 @@ describe("session photos", () => {
     // The second gedu on the SAME group. Unique per run: CI's database carries
     // the seed fixtures and whatever a previous run left behind, so a fixed
     // address is a collision waiting to happen.
-    const email = `photo-peer-${Date.now()}@test.local`;
+    const email = `photo-peer-${uniqueSuffix()}@test.local`;
     const { data: created, error: createError } =
       await admin.auth.admin.createUser({
         email,

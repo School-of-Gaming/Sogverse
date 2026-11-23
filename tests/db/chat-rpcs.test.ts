@@ -9,7 +9,13 @@ import {
   ensureChatChannelResult,
   type ChatRosterEntry,
 } from "@/services/chat/chat.contracts";
-import { createAdminTestClient, createAuthenticatedClient } from "./helpers";
+import {
+  createAdminTestClient,
+  createAuthenticatedClient,
+  dbInterval,
+  dbNow,
+  dbTime,
+} from "./helpers";
 import { TEST_IDS, TEST_CREDENTIALS } from "./constants";
 import {
   createScheduleSlot,
@@ -182,7 +188,8 @@ describe("chat RPCs", () => {
     await deleteTestProducts(admin, ALL_PRODUCTS);
     // The term started a week ago: a session is only a session inside its
     // product's term, and the helper's default start is tomorrow.
-    const weekAgo = new Date(Date.now() - 7 * 86_400_000).toISOString().slice(0, 10);
+    const dbClock = await dbNow();
+    const weekAgo = new Date(dbClock.getTime() - 7 * 86_400_000).toISOString().slice(0, 10);
     for (const id of ALL_PRODUCTS) {
       await createTestProduct(admin, {
         id,
@@ -193,12 +200,12 @@ describe("chat RPCs", () => {
     }
 
     // A slot whose window is open RIGHT NOW: the session started ten minutes
-    // ago and runs an hour, so `ensure_chat_channel` finds it however long this
+    // ago by the database's clock and runs an hour, so `ensure_chat_channel` finds it however long this
     // file takes. The product's timezone is UTC, so the weekday and wall clock
     // come straight off the UTC fields. If ten minutes ago fell before UTC
     // midnight the slot lands on yesterday's weekday, and the session is
     // yesterday's, still running.
-    const sessionStart = new Date(Date.now() - 10 * 60_000);
+    const sessionStart = new Date(dbClock.getTime() - 10 * 60_000);
     await createScheduleSlot(admin, PRODUCT_LIVE, {
       // schedule_slots.weekday is 0 = Monday; getUTCDay() is 0 = Sunday.
       weekday: (sessionStart.getUTCDay() + 6) % 7,
@@ -264,7 +271,7 @@ describe("chat RPCs", () => {
     // service-role client on purpose: it is the one row on this surface no RPC
     // will produce, because `ensure_chat_channel` only ever mints the window
     // that is open now — and the read bound cannot be proved without one.
-    const expiredOpens = new Date(Date.now() - 30 * 24 * 60 * 60_000);
+    const expiredOpens = await dbTime(-30 * 24 * 60 * 60_000);
     const expired = await admin
       .from("chat_channels")
       .insert({
@@ -311,17 +318,19 @@ describe("chat RPCs", () => {
 
   describe("ensure_chat_channel", () => {
     it("materializes the open window's channel for a member, idempotently", async () => {
-      const again = ensureChatChannelResult.parse(
+      const { result, notBefore, notAfter } = await dbInterval(async () =>
         ok(await gamerAuth.rpc("ensure_chat_channel", { p_group_id: liveGroup })),
       );
+      const again = ensureChatChannelResult.parse(result);
 
       expect(again[0].id).toBe(channelId);
       expect(again[0].group_id).toBe(liveGroup);
       expect(again[0].type).toBe("group_session");
-      // Both instants are server-derived: the window opened before now and
-      // closes after it, which is the whole of what "the room is open" means.
-      expect(Date.parse(again[0].session_opens_at)).toBeLessThan(Date.now());
-      expect(Date.parse(again[0].session_ends_at)).toBeGreaterThan(Date.now());
+      // Both instants are server-derived: the window opened before the
+      // database's now and closes after it, which is the whole of what "the
+      // room is open" means.
+      expect(Date.parse(again[0].session_opens_at)).toBeLessThan(notBefore.getTime());
+      expect(Date.parse(again[0].session_ends_at)).toBeGreaterThan(notAfter.getTime());
     });
 
     it("refuses a stranger", async () => {
@@ -641,7 +650,7 @@ describe("chat RPCs", () => {
       const hide = await admin
         .from("chat_messages")
         .update({
-          hidden_at: new Date().toISOString(),
+          hidden_at: "2020-01-01T00:00:00Z",
           hidden_by: TEST_IDS.GEDU,
         })
         .eq("id", target);

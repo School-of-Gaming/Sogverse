@@ -587,7 +587,7 @@ describe("gamer photo consents", () => {
           .from("participations")
           .update({
             status: "ended",
-            ended_at: new Date().toISOString(),
+            ended_at: "2020-01-01T00:00:00Z",
             end_reason: "admin_removed",
           })
           .eq("group_id", GROUP_TAUGHT)

@@ -9,6 +9,7 @@ import {
   createAdminTestClient,
   createAnonTestClient,
   createAuthenticatedClient,
+  dbNow,
 } from "./helpers";
 import { TEST_CREDENTIALS, TEST_IDS } from "./constants";
 import {
@@ -56,9 +57,16 @@ const ALL_PRODUCTS = [CLUB, CAMP, DAILY];
 
 const NAME_PREFIX = "Holiday-calendars test";
 
-/** `YYYY-MM-DD`, `offset` days from today. DAILY runs in UTC. */
+/**
+ * The database's clock, read when the file loads: the dates below are built
+ * then, and they count from the database's today, the one its functions judge
+ * against.
+ */
+const DB_NOW = await dbNow();
+
+/** `YYYY-MM-DD`, `offset` days from the database's today. DAILY runs in UTC. */
 function dayOffset(offset: number): string {
-  const d = new Date();
+  const d = new Date(DB_NOW);
   d.setUTCDate(d.getUTCDate() + offset);
   return d.toISOString().slice(0, 10);
 }

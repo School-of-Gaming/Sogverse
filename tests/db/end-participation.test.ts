@@ -55,7 +55,7 @@ describe("end_participation", () => {
         customer_id: TEST_IDS.CUSTOMER,
         status,
         group_id: status === "active" ? GROUP : null,
-        waitlisted_at: status === "waitlisted" ? new Date().toISOString() : null,
+        waitlisted_at: status === "waitlisted" ? "2020-01-01T00:00:00Z" : null,
       })
       .select("id")
       .single();

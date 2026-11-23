@@ -100,7 +100,7 @@ describe("gamer dashboard: product join shapes on an ended term", () => {
         participant_id: TEST_IDS.GAMER,
         customer_id: TEST_IDS.CUSTOMER,
         status: "waitlisted",
-        waitlisted_at: new Date().toISOString(),
+        waitlisted_at: "2020-01-01T00:00:00Z",
       },
     ]);
     if (seed.error) throw seed.error;

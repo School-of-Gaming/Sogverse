@@ -339,12 +339,12 @@ describe("get_gedu_assigned_product", () => {
       const fixtures = [
         {
           status: "waitlisted" as const,
-          extras: { waitlisted_at: new Date().toISOString() },
+          extras: { waitlisted_at: "2020-01-01T00:00:00Z" },
         },
         {
           status: "ended" as const,
           extras: {
-            ended_at: new Date().toISOString(),
+            ended_at: "2020-01-01T00:00:00Z",
             end_reason: "admin_removed" as const,
           },
         },

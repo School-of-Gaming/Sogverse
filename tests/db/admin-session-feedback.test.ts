@@ -6,7 +6,11 @@ import {
   adminFeedbackRpcResult,
   type AdminFeedbackRpcResult,
 } from "@/services/session-feedback/admin-feedback.contracts";
-import { createAdminTestClient, createAuthenticatedClient } from "./helpers";
+import {
+  createAdminTestClient,
+  createAuthenticatedClient,
+  uniqueSuffix,
+} from "./helpers";
 import { TEST_IDS, TEST_CREDENTIALS } from "./constants";
 import { deleteTestProducts } from "./product-helpers";
 
@@ -98,7 +102,7 @@ describe("get_admin_session_feedback", () => {
     );
 
     // Unique per run: CI's database keeps whatever a previous run left behind.
-    const stamp = Date.now();
+    const stamp = uniqueSuffix();
     const accounts = [
       { email: `feedback-assistant-${stamp}@test.local`, first: "Aada", last: "Assistant" },
       { email: `feedback-sub-${stamp}@test.local`, first: "Saku", last: "Substitute" },

@@ -12,7 +12,7 @@ import {
   geduAssignedProduct,
   traineeAssignedProduct,
 } from "@/services/assignments/assignments.contracts";
-import { createAdminTestClient, createAuthenticatedClient } from "./helpers";
+import { createAdminTestClient, createAuthenticatedClient, dbNow } from "./helpers";
 import { TEST_CREDENTIALS, TEST_IDS } from "./constants";
 import {
   createScheduleSlot,
@@ -51,12 +51,22 @@ const OPEN_GROUP_2 = "00000000-0000-0000-0000-000000000865";
 const ALL_PRODUCTS = [DATED, OPEN];
 const ALL_GROUPS = [DATED_GROUP, DATED_GROUP_2, OPEN_GROUP, OPEN_GROUP_2];
 
+/**
+ * The database's clock, read when the file loads: the dates below are built
+ * then, and they count from the database's today, the one its functions judge
+ * against.
+ */
+const DB_NOW = await dbNow();
+
 /** The ten days, from today, that OPEN's second group cancelled. */
 const OPEN_GROUP_2_CANCELLED = Array.from({ length: 10 }, (_, offset) => utcDate(offset));
 
-/** A UTC calendar date `offset` days from now; the products all run in UTC. */
+/**
+ * A UTC calendar date `offset` days from the database's today; the products
+ * all run in UTC.
+ */
 function utcDate(offset: number): string {
-  const now = new Date();
+  const now = DB_NOW;
   return new Date(
     Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), now.getUTCDate() + offset),
   )

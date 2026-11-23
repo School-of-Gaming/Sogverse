@@ -14,6 +14,7 @@ import {
   createAdminTestClient,
   createAnonTestClient,
   createAuthenticatedClient,
+  dbNow,
 } from "./helpers";
 import { TEST_CREDENTIALS, TEST_IDS } from "./constants";
 import {
@@ -63,9 +64,16 @@ const ORDINARY = "2030-10-07";
 const HOLIDAY = "2030-10-14";
 const CANCELLED = "2030-10-21";
 
-/** A UTC calendar date `offset` days from now; DAILY runs in UTC. */
+/**
+ * The database's clock, read when the file loads: the dates below are built
+ * then, and they count from the database's today, the one its functions judge
+ * against.
+ */
+const DB_NOW = await dbNow();
+
+/** A UTC calendar date `offset` days from the database's today; DAILY runs in UTC. */
 function utcDate(offset: number): string {
-  const now = new Date();
+  const now = DB_NOW;
   return new Date(
     Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), now.getUTCDate() + offset),
   )
