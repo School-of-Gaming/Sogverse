@@ -12,6 +12,7 @@ import {
   createAnonTestClient,
   createAuthenticatedClient,
   dbNow,
+  utcDayOffset,
 } from "./helpers";
 import { TEST_CREDENTIALS, TEST_IDS } from "./constants";
 import {
@@ -84,7 +85,7 @@ const ALL_PRODUCTS = [PRODUCT, DECOY_PRODUCT];
  *
  * What that slot does **not** give is a session that has not *started*: from
  * 23:00 UTC onwards today's is under way and its register is legitimately open.
- * So the roll-call boundary is asked of TOMORROW, which is ahead of its own
+ * So the roll-call boundary is asked of tomorrow's, which is ahead of its own
  * start whatever the clock says.
  */
 const SLOT_START = "23:00";
@@ -97,15 +98,7 @@ const SLOT_MINUTES = 60;
  */
 const DB_NOW = await dbNow();
 
-/** `YYYY-MM-DD`, `offset` days from the database's today. Both products run in UTC. */
-function dayOffset(offset: number): string {
-  const d = new Date(DB_NOW);
-  d.setUTCDate(d.getUTCDate() + offset);
-  return d.toISOString().slice(0, 10);
-}
-
-const YESTERDAY = dayOffset(-1);
-const TOMORROW = dayOffset(1);
+const YESTERDAY = utcDayOffset(DB_NOW, -1);
 
 describe("admin product sessions", () => {
   let admin: SupabaseClient<Database>;
@@ -149,7 +142,7 @@ describe("admin product sessions", () => {
       await createTestProduct(admin, {
         id,
         seatCount: null,
-        startDate: dayOffset(-30),
+        startDate: utcDayOffset(DB_NOW, -30),
       });
       await admin.from("product_translations").insert({
         product_id: id,
@@ -615,7 +608,7 @@ describe("admin product sessions", () => {
       // at every hour CI could run.
       const { error } = await adminAuth.rpc("record_attendance", {
         p_group_id: GROUP_A,
-        p_session_date: TOMORROW,
+        p_session_date: utcDayOffset(await dbNow(), 1),
         p_participant_id: TEST_IDS.GAMER,
         p_status: "present",
       });
@@ -627,7 +620,7 @@ describe("admin product sessions", () => {
       // however many weekday slots the product runs.
       const { error } = await adminAuth.rpc("set_group_session_notes", {
         p_group_id: GROUP_A,
-        p_session_date: dayOffset(-400),
+        p_session_date: utcDayOffset(DB_NOW, -400),
         p_report: "nope",
         p_gedu_note: "",
       });

@@ -10,6 +10,7 @@ import {
   createAnonTestClient,
   createAuthenticatedClient,
   dbNow,
+  utcDayOffset,
 } from "./helpers";
 import { TEST_CREDENTIALS, TEST_IDS } from "./constants";
 import {
@@ -58,18 +59,13 @@ const ALL_PRODUCTS = [CLUB, CAMP, DAILY];
 const NAME_PREFIX = "Holiday-calendars test";
 
 /**
- * The database's clock, read when the file loads: the dates below are built
- * then, and they count from the database's today, the one its functions judge
- * against.
+ * The database's clock, read before the setup: the dates below count from the
+ * database's today, the one its functions judge against. DAILY runs in UTC.
  */
-const DB_NOW = await dbNow();
-
-/** `YYYY-MM-DD`, `offset` days from the database's today. DAILY runs in UTC. */
-function dayOffset(offset: number): string {
-  const d = new Date(DB_NOW);
-  d.setUTCDate(d.getUTCDate() + offset);
-  return d.toISOString().slice(0, 10);
-}
+let DB_NOW: Date;
+beforeAll(async () => {
+  DB_NOW = await dbNow();
+});
 
 type BreakPayload = {
   id?: string | null;
@@ -190,7 +186,7 @@ describe("holiday calendars", () => {
     await createTestProduct(admin, {
       id: DAILY,
       seatCount: null,
-      startDate: dayOffset(-30),
+      startDate: utcDayOffset(DB_NOW, -30),
     });
     for (let weekday = 0; weekday < 7; weekday++) {
       await createScheduleSlot(admin, DAILY, { weekday, startTime: "23:00" });
@@ -688,7 +684,7 @@ describe("holiday calendars", () => {
 
   describe("a substitution request on a date that becomes a holiday", () => {
     it("leaves the admin queue while the break stands, and returns when it goes", async () => {
-      const date = dayOffset(5);
+      const date = utcDayOffset(DB_NOW, 5);
       const filed = await geduAuth.rpc("request_session_substitution", {
         p_group_id: DAILY_GROUP,
         p_session_date: date,

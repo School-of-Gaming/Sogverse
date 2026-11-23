@@ -12,6 +12,7 @@ import {
   createAdminTestClient,
   createAuthenticatedClient,
   dbNow,
+  utcDayOffset,
 } from "./helpers";
 import { TEST_CREDENTIALS, TEST_IDS } from "./constants";
 import {
@@ -63,17 +64,7 @@ const PRODUCT_AGE_PROBE = "00000000-0000-0000-0000-000000000615";
  */
 const DB_NOW = await dbNow();
 
-/**
- * `YYYY-MM-DD`, `offset` days from the database's today. The fixture products
- * run in UTC, so a UTC-pinned walk is exact here rather than merely convenient.
- */
-function dayOffset(offset: number): string {
-  const d = new Date(DB_NOW);
-  d.setUTCDate(d.getUTCDate() + offset);
-  return d.toISOString().slice(0, 10);
-}
-
-const YESTERDAY = dayOffset(-1);
+const YESTERDAY = utcDayOffset(DB_NOW, -1);
 
 const ALL_PRODUCTS = [
   PRODUCT_GAMERS,
@@ -142,7 +133,7 @@ describe("product audience", () => {
       id: PRODUCT_ROSTER,
       forGamers: true,
       forParents: true,
-      startDate: dayOffset(-30),
+      startDate: utcDayOffset(DB_NOW, -30),
     });
     // A slot on yesterday's weekday, so the group has one finished session an
     // attendance mark can land on. 09:00 UTC has passed on any day already in

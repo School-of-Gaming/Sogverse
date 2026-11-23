@@ -11,7 +11,7 @@ import {
   gamerGroupCreationsResult,
   groupStaffOverlay,
 } from "@/services/member-flair/member-flair.contracts";
-import { createAdminTestClient, createAuthenticatedClient, dbNow } from "./helpers";
+import { createAdminTestClient, createAuthenticatedClient, dbNow, utcDayOffset } from "./helpers";
 import { TEST_CREDENTIALS, TEST_IDS } from "./constants";
 import {
   createScheduleSlot,
@@ -96,18 +96,8 @@ const SLOT_MINUTES = 60;
  */
 const DB_NOW = await dbNow();
 
-/**
- * `YYYY-MM-DD`, `offset` days from the database's today. The fixture products
- * run in UTC.
- */
-function dayOffset(offset: number): string {
-  const d = new Date(DB_NOW);
-  d.setUTCDate(d.getUTCDate() + offset);
-  return d.toISOString().slice(0, 10);
-}
-
-const TODAY = dayOffset(0);
-const YESTERDAY = dayOffset(-1);
+const TODAY = utcDayOffset(DB_NOW, 0);
+const YESTERDAY = utcDayOffset(DB_NOW, -1);
 
 /**
  * The instant the run's final session ended: yesterday's 23:00 UTC slot plus its
@@ -140,7 +130,7 @@ const FINAL_SESSION_ENDS_AT = `${TODAY}T00:00:00.000Z`;
  * does not name `group_id` never fires the stamping trigger, so this write
  * stands.
  */
-const JOINED_AT_BACKDATE = `${dayOffset(-30)}T00:00:00.000Z`;
+const JOINED_AT_BACKDATE = `${utcDayOffset(DB_NOW, -30)}T00:00:00.000Z`;
 
 const ROBLOX_GAME = {
   title: "Skyward Bazaar",
@@ -186,7 +176,7 @@ describe("gamer creations", () => {
       await createTestProduct(admin, {
         id,
         seatCount: null,
-        startDate: dayOffset(-30),
+        startDate: utcDayOffset(DB_NOW, -30),
       });
       await admin.from("product_translations").insert({
         product_id: id,
@@ -202,7 +192,7 @@ describe("gamer creations", () => {
     await createTestProduct(admin, {
       id: PRODUCT_OWED,
       seatCount: null,
-      startDate: dayOffset(-30),
+      startDate: utcDayOffset(DB_NOW, -30),
       endDate: YESTERDAY,
     });
     await admin.from("product_translations").insert({
@@ -890,7 +880,7 @@ describe("gamer creations", () => {
         // Mid-run, and again half an hour into the final session itself: both
         // are "in the group at the time of the last session", which is the
         // owner's principle in the words it was given in.
-        await setJoinedAt(`${dayOffset(-15)}T09:00:00.000Z`);
+        await setJoinedAt(`${utcDayOffset(DB_NOW, -15)}T09:00:00.000Z`);
         expect(await owedCount()).toBe(1);
 
         await setJoinedAt(`${YESTERDAY}T23:30:00.000Z`);

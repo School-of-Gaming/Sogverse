@@ -84,9 +84,13 @@ export function createAdminTestClient(): SupabaseClient<Database> {
 // judges against its own `now()`, or a stamp it wrote, is read from its clock
 // and never from this process's.
 
+/** The client the clock is read through, built on the first read. */
+let clockClient: SupabaseClient<Database> | undefined;
+
 /** The database's clock as of this call, read fresh every time. */
 export async function dbNow(): Promise<Date> {
-  const { data, error } = await createAdminTestClient().rpc("db_clock");
+  clockClient ??= createAdminTestClient();
+  const { data, error } = await clockClient.rpc("db_clock");
   if (error) throw new Error(`Reading the database's clock failed: ${error.message}`);
   return new Date(data);
 }
@@ -118,6 +122,19 @@ export async function dbInterval<T>(
   const result = await act();
   const after = await dbNow();
   return { result, notBefore, notAfter: new Date(after.getTime() + 1) };
+}
+
+/**
+ * `YYYY-MM-DD`, the UTC calendar day `offsetDays` days from `from`'s. Fixture
+ * products run in UTC, so from a `dbNow()` reading this is the product's own
+ * calendar.
+ */
+export function utcDayOffset(from: Date, offsetDays: number): string {
+  return new Date(
+    Date.UTC(from.getUTCFullYear(), from.getUTCMonth(), from.getUTCDate() + offsetDays),
+  )
+    .toISOString()
+    .slice(0, 10);
 }
 
 /** Twelve random hex characters, for emails and names that must not collide. */

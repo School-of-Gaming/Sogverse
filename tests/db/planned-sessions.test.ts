@@ -1,4 +1,4 @@
-import { describe, it, expect, beforeAll, beforeEach, afterAll } from "vitest";
+import { describe, it, expect, beforeAll, afterAll } from "vitest";
 import type { SupabaseClient } from "@supabase/supabase-js";
 import { z } from "zod";
 import type { Database } from "@/types/database.types";
@@ -13,6 +13,7 @@ import {
   createAnonTestClient,
   dbInterval,
   dbNow,
+  utcDayOffset,
 } from "./helpers";
 import { TEST_IDS } from "./constants";
 import {
@@ -78,29 +79,14 @@ const functionBodies = z.array(
 );
 
 /**
- * The database's clock, read afresh before the file's setup and before each
- * test: the calendar dates below count from the database's today, the one its
- * functions judge against, and stay one day for the whole of a test.
+ * The database's clock, read before the file's setup: the calendar dates the
+ * fixtures are built on count from the database's today, the one its functions
+ * judge against.
  */
-let dbClock = await dbNow();
+let DB_NOW: Date;
 beforeAll(async () => {
-  dbClock = await dbNow();
+  DB_NOW = await dbNow();
 });
-beforeEach(async () => {
-  dbClock = await dbNow();
-});
-
-/**
- * A UTC calendar date `offset` days from `now` — the database's today unless
- * told otherwise — UTC-pinned end to end.
- */
-function utcDate(offset: number, now: Date = dbClock): string {
-  return new Date(
-    Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), now.getUTCDate() + offset),
-  )
-    .toISOString()
-    .slice(0, 10);
-}
 
 /** `date` stepped by `days`, UTC-pinned. */
 function addDays(date: string, days: number): string {
@@ -234,7 +220,7 @@ describe("the session plan", () => {
     // after seeding, which puts the eighth on the year's last day).
     await seed(
       LATE_START,
-      { timezone: "UTC", startDate: utcDate(360), endDate: null },
+      { timezone: "UTC", startDate: utcDayOffset(DB_NOW, 360), endDate: null },
       [0, 1, 2, 3, 4, 5, 6].map((weekday) => ({
         weekday,
         startTime: "10:00",
@@ -255,8 +241,8 @@ describe("the session plan", () => {
       // A Tuesday, which the plan does not hold: inert, so in no row.
       { group_id: GROUP_ONE, session_date: "2030-02-12", cancelled_by: TEST_IDS.ADMIN },
       { group_id: GROUP_TWO, session_date: "2030-02-11", cancelled_by: TEST_IDS.ADMIN },
-      { group_id: GROUP_HORIZON, session_date: utcDate(1), cancelled_by: TEST_IDS.ADMIN },
-      { group_id: GROUP_HORIZON, session_date: utcDate(3), cancelled_by: TEST_IDS.ADMIN },
+      { group_id: GROUP_HORIZON, session_date: utcDayOffset(DB_NOW, 1), cancelled_by: TEST_IDS.ADMIN },
+      { group_id: GROUP_HORIZON, session_date: utcDayOffset(DB_NOW, 3), cancelled_by: TEST_IDS.ADMIN },
     ]);
     expect(cancellations.error).toBeNull();
   });
@@ -503,22 +489,24 @@ describe("the session plan", () => {
 
     it("is the eighth session that has not ended, open-ended", async () => {
       // Yesterday's has ended and today's has not: today plus seven.
-      await expectHorizon({}, (now) => utcDate(7, now));
+      await expectHorizon({}, (now) => utcDayOffset(now, 7));
     });
 
     it("skips the dates the group cancelled", async () => {
       // Today, +2, +4, +5, +6, +7, +8 and +9: the group cancelled +1 and +3,
       // so its eighth is two days later.
-      await expectHorizon({ p_group_id: GROUP_HORIZON }, (now) => utcDate(9, now));
+      await expectHorizon({ p_group_id: GROUP_HORIZON }, (now) => utcDayOffset(now, 9));
     });
 
     it("is the last day of the year it searches when fewer than eight fall inside it", async () => {
-      await expectHorizon({}, (now) => utcDate(366, now), LATE_START);
+      await expectHorizon({}, (now) => utcDayOffset(now, 366), LATE_START);
     });
 
     it("is raised to p_at_least, and never lowered by it", async () => {
-      await expectHorizon({ p_at_least: utcDate(100) }, (now) => utcDate(100, now));
-      await expectHorizon({ p_at_least: utcDate(0) }, (now) => utcDate(7, now));
+      const today = await dbNow();
+      const atLeast = utcDayOffset(today, 100);
+      await expectHorizon({ p_at_least: atLeast }, () => atLeast);
+      await expectHorizon({ p_at_least: utcDayOffset(today, 0) }, (now) => utcDayOffset(now, 7));
     });
   });
 
@@ -556,7 +544,7 @@ describe("the session plan", () => {
     it("holds eight sessions that have not closed, after every one that has started, when yesterday's and today's have both ended", async () => {
       // Every day at 00:00 for a minute: a daily club after today's session,
       // so the day before and the day itself both hold finished sessions.
-      const startDate = utcDate(-20);
+      const startDate = utcDayOffset(DB_NOW, -20);
       await seed(
         LIVE,
         { timezone: "UTC", startDate, endDate: null },

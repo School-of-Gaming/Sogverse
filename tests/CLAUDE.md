@@ -201,7 +201,9 @@ database session, so the test's time then measures the machine rather than the c
 
 **A DB test takes any time the database judges, or any stamp it wrote that the test
 checks, from `dbNow()` / `dbTime()` / `dbInterval()`, never from this process's clock**,
-which lint enforces.
+which lint enforces. A boundary case sits one second past the bound, on the side that
+refuses, by the database's clock; a future deadline sits at least a minute out, more
+than any test runs — never a margin for safety.
 
 ## Integration test conventions
 

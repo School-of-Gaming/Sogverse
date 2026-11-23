@@ -1,6 +1,5 @@
 import { describe, it, expect, beforeAll, beforeEach, afterAll } from "vitest";
 import type { SupabaseClient } from "@supabase/supabase-js";
-import { formatInTimeZone } from "date-fns-tz";
 import type { Database } from "@/types/database.types";
 import { consentAnswerTotalsResult } from "@/lib/consent-answers.contracts";
 import {
@@ -8,7 +7,8 @@ import {
   callRpcRaw,
   createAdminTestClient,
   createAuthenticatedClient,
-  dbInterval,
+  dbNow,
+  utcDayOffset,
 } from "./helpers";
 import { TEST_CREDENTIALS } from "./constants";
 
@@ -26,10 +26,6 @@ import { TEST_CREDENTIALS } from "./constants";
 
 /** The canonical forbidden SQLSTATE a missing grant or a guard produces. */
 const FORBIDDEN = "42501";
-
-function utcDay(instant: Date): string {
-  return formatInTimeZone(instant, "UTC", "yyyy-MM-dd");
-}
 
 describe("consent answer tally", () => {
   let admin: SupabaseClient<Database>;
@@ -56,20 +52,23 @@ describe("consent answer tally", () => {
    * calls can straddle UTC midnight, which is two days and so two rows; every
    * claim below holds on the sum and on the day each row carries, whichever
    * happened.
+   *
+   * The days are read straight off the clock on either side, not through
+   * `dbInterval`: its upper bound is a stamp bound a millisecond past the read,
+   * which can fall on the next day when the read does not.
    */
   async function countTwice(
     args: Database["public"]["Functions"]["count_consent_answer"]["Args"],
   ) {
-    const { notBefore, notAfter } = await dbInterval(async () => {
-      for (let i = 0; i < 2; i++) {
-        const { error } = await admin.rpc("count_consent_answer", args);
-        expect(error).toBeNull();
-      }
-    });
-    const before = utcDay(notBefore);
-    const after = utcDay(notAfter);
+    const before = utcDayOffset(await dbNow(), 0);
+    for (let i = 0; i < 2; i++) {
+      const { error } = await admin.rpc("count_consent_answer", args);
+      expect(error).toBeNull();
+    }
+    const after = utcDayOffset(await dbNow(), 0);
     const counted = await rows();
-    expect(counted.length).toBe(before === after ? 1 : 2);
+    expect(counted.length).toBeGreaterThanOrEqual(1);
+    expect(counted.length).toBeLessThanOrEqual(before === after ? 1 : 2);
     for (const row of counted) expect([before, after]).toContain(row.day);
     return counted;
   }

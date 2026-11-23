@@ -1,7 +1,7 @@
 import { describe, it, expect, beforeAll, afterAll } from "vitest";
 import type { SupabaseClient } from "@supabase/supabase-js";
 import type { Database } from "@/types/database.types";
-import { createAdminTestClient, createAuthenticatedClient, dbNow, uniqueSuffix } from "./helpers";
+import { createAdminTestClient, createAuthenticatedClient, dbNow, utcDayOffset, uniqueSuffix } from "./helpers";
 import { TEST_IDS, TEST_CREDENTIALS } from "./constants";
 import { createTestProduct, deleteTestProducts } from "./product-helpers";
 import { addCalendarDays, addCalendarMonths } from "@/lib/calendar-date";
@@ -140,26 +140,12 @@ const ALL_PRODUCTS = [
 /**
  * The database's clock, read once before the setup: the fixtures' dates and the
  * snapshot's assertions count from the one today the dashboard judged against.
+ * Every fixture product runs in UTC, the helper's default.
  */
-let dbClock: Date;
+let DB_NOW: Date;
 beforeAll(async () => {
-  dbClock = await dbNow();
+  DB_NOW = await dbNow();
 });
-
-/**
- * A bare calendar date `offset` days from the database's today, UTC-pinned end
- * to end: built from `Date.UTC` and read back through `toISOString`, so there is no zoned wall
- * clock anywhere in it and the day arithmetic is exact. Every fixture product is
- * created in the `UTC` timezone (the helper's default), which is what makes a
- * UTC date the right one to compare the RPC's own windows against.
- */
-function utcDay(offset: number): string {
-  const now = dbClock;
-  const day = new Date(
-    Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), now.getUTCDate() + offset),
-  );
-  return day.toISOString().slice(0, 10);
-}
 
 describe("get_admin_dashboard", () => {
   let admin: SupabaseClient<Database>;
@@ -296,7 +282,7 @@ describe("get_admin_dashboard", () => {
       productType: "municipality_club",
       billingMode: "external_contract",
       locationId: TEST_IDS.LOCATION_MUNICIPALITY,
-      endDate: utcDay(60),
+      endDate: utcDayOffset(DB_NOW, 60),
       seatCount: null,
       waitlistEnabled: false,
     });
@@ -304,8 +290,8 @@ describe("get_admin_dashboard", () => {
       id: P_CLEAN,
       seatCount: null,
       waitlistEnabled: false,
-      startDate: utcDay(-7),
-      endDate: utcDay(60),
+      startDate: utcDayOffset(DB_NOW, -7),
+      endDate: utcDayOffset(DB_NOW, 60),
     });
     await createTestProduct(admin, {
       id: P_EMPTY_GROUP,
@@ -319,8 +305,8 @@ describe("get_admin_dashboard", () => {
       id: P_ENDED,
       seatCount: null,
       waitlistEnabled: false,
-      startDate: utcDay(-200),
-      endDate: utcDay(-100),
+      startDate: utcDayOffset(DB_NOW, -200),
+      endDate: utcDayOffset(DB_NOW, -100),
     });
     // The invoice-customer pair: two municipality clubs identical in
     // every respect the queue reads except the buyer. One cannot be both, which
@@ -331,7 +317,7 @@ describe("get_admin_dashboard", () => {
         productType: "municipality_club",
         billingMode: "external_contract",
         locationId: TEST_IDS.LOCATION_MUNICIPALITY,
-        endDate: utcDay(60),
+        endDate: utcDayOffset(DB_NOW, 60),
         seatCount: null,
         waitlistEnabled: false,
       });
@@ -342,14 +328,14 @@ describe("get_admin_dashboard", () => {
       id: P_PLANNED,
       seatCount: null,
       waitlistEnabled: false,
-      startDate: utcDay(-40),
-      endDate: utcDay(20),
+      startDate: utcDayOffset(DB_NOW, -40),
+      endDate: utcDayOffset(DB_NOW, 20),
     });
     await createTestProduct(admin, {
       id: P_PLANNED_OPEN,
       seatCount: null,
       waitlistEnabled: false,
-      startDate: utcDay(5),
+      startDate: utcDayOffset(DB_NOW, 5),
     });
 
     // The buyer. Deleted by id AND by number first, because the number is
@@ -502,10 +488,10 @@ describe("get_admin_dashboard", () => {
       .from("session_cancellations")
       .insert([
         // One of the two groups.
-        { group_id: GROUP_PLANNED_B, session_date: utcDay(3), cancelled_by: TEST_IDS.ADMIN },
+        { group_id: GROUP_PLANNED_B, session_date: utcDayOffset(DB_NOW, 3), cancelled_by: TEST_IDS.ADMIN },
         // Both of them.
-        { group_id: GROUP_PLANNED_A, session_date: utcDay(4), cancelled_by: TEST_IDS.ADMIN },
-        { group_id: GROUP_PLANNED_B, session_date: utcDay(4), cancelled_by: TEST_IDS.ADMIN },
+        { group_id: GROUP_PLANNED_A, session_date: utcDayOffset(DB_NOW, 4), cancelled_by: TEST_IDS.ADMIN },
+        { group_id: GROUP_PLANNED_B, session_date: utcDayOffset(DB_NOW, 4), cancelled_by: TEST_IDS.ADMIN },
       ]);
     expect(plannedCancellations.error).toBeNull();
 
@@ -915,8 +901,8 @@ describe("get_admin_dashboard", () => {
       const product = scheduled(P_CLEAN);
       expect(product).toBeDefined();
       expect(product?.timezone).toBe("UTC");
-      expect(product?.start_date).toBe(utcDay(-7));
-      expect(product?.end_date).toBe(utcDay(60));
+      expect(product?.start_date).toBe(utcDayOffset(DB_NOW, -7));
+      expect(product?.end_date).toBe(utcDayOffset(DB_NOW, 60));
       expect(product?.seat_count).toBeNull();
       expect(product?.active_count).toBe(0);
       expect(product?.waitlist_count).toBe(0);
@@ -941,7 +927,7 @@ describe("get_admin_dashboard", () => {
       // ends in twenty, inside the window, so its own end clips it there.
       const dates =
         scheduled(P_PLANNED)?.planned_sessions.map((s) => s.session_date) ?? [];
-      const expected = Array.from({ length: 51 }, (_, i) => utcDay(i - 30));
+      const expected = Array.from({ length: 51 }, (_, i) => utcDayOffset(DB_NOW, i - 30));
       expect(dates).toEqual(expected);
     });
 
@@ -951,21 +937,21 @@ describe("get_admin_dashboard", () => {
       const dates =
         scheduled(P_PLANNED_OPEN)?.planned_sessions.map((s) => s.session_date) ??
         [];
-      expect(dates[0]).toBe(utcDay(5));
+      expect(dates[0]).toBe(utcDayOffset(DB_NOW, 5));
       expect(dates.at(-1)).toBe(
-        addCalendarDays(addCalendarMonths(utcDay(0), 4), -1),
+        addCalendarDays(addCalendarMonths(utcDayOffset(DB_NOW, 0), 4), -1),
       );
     });
 
     it("carries each session's instants in the product's zone", () => {
       const session = scheduled(P_PLANNED)?.planned_sessions.find(
-        (s) => s.session_date === utcDay(0),
+        (s) => s.session_date === utcDayOffset(DB_NOW, 0),
       );
       expect(new Date(session!.starts_at).toISOString()).toBe(
-        `${utcDay(0)}T10:00:00.000Z`,
+        `${utcDayOffset(DB_NOW, 0)}T10:00:00.000Z`,
       );
       expect(new Date(session!.ends_at).toISOString()).toBe(
-        `${utcDay(0)}T11:00:00.000Z`,
+        `${utcDayOffset(DB_NOW, 0)}T11:00:00.000Z`,
       );
     });
 
@@ -975,9 +961,9 @@ describe("get_admin_dashboard", () => {
       const cancelledOn = (date: string) =>
         product?.planned_sessions.find((s) => s.session_date === date)
           ?.cancelled_group_ids;
-      expect(cancelledOn(utcDay(2))).toEqual([]);
-      expect(cancelledOn(utcDay(3))).toEqual([GROUP_PLANNED_B]);
-      expect(cancelledOn(utcDay(4))).toEqual([GROUP_PLANNED_A, GROUP_PLANNED_B]);
+      expect(cancelledOn(utcDayOffset(DB_NOW, 2))).toEqual([]);
+      expect(cancelledOn(utcDayOffset(DB_NOW, 3))).toEqual([GROUP_PLANNED_B]);
+      expect(cancelledOn(utcDayOffset(DB_NOW, 4))).toEqual([GROUP_PLANNED_A, GROUP_PLANNED_B]);
     });
   });
 });

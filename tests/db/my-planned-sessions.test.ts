@@ -2,7 +2,7 @@ import { describe, it, expect, beforeAll, afterAll, beforeEach } from "vitest";
 import type { SupabaseClient } from "@supabase/supabase-js";
 import type { Database } from "@/types/database.types";
 import { myPlannedSessions } from "@/services/participations/participations.contracts";
-import { createAdminTestClient, createAuthenticatedClient, dbNow } from "./helpers";
+import { createAdminTestClient, createAuthenticatedClient, dbNow, utcDayOffset } from "./helpers";
 import { TEST_CREDENTIALS, TEST_IDS } from "./constants";
 import {
   createScheduleSlot,
@@ -49,25 +49,15 @@ const ALL_PRODUCTS = [DAILY, WEEKLY];
  */
 const DB_NOW = await dbNow();
 
-/**
- * `YYYY-MM-DD`, `offset` days from the database's today. Every product here
- * runs in UTC.
- */
-function dayOffset(offset: number): string {
-  const d = new Date(DB_NOW);
-  d.setUTCDate(d.getUTCDate() + offset);
-  return d.toISOString().slice(0, 10);
-}
-
 /** 0 = Monday, matching `schedule_slots.weekday`. */
 function weekdayOf(date: string): number {
   return (new Date(`${date}T12:00:00Z`).getUTCDay() + 6) % 7;
 }
 
-const TODAY = dayOffset(0);
-const TOMORROW = dayOffset(1);
+const TODAY = utcDayOffset(DB_NOW, 0);
+const TOMORROW = utcDayOffset(DB_NOW, 1);
 /** Twelve weeks after tomorrow: the WEEKLY membership's paid-through date. */
-const PAID_THROUGH = dayOffset(85);
+const PAID_THROUGH = utcDayOffset(DB_NOW, 85);
 
 describe("get_my_planned_sessions", () => {
   let admin: SupabaseClient<Database>;
@@ -102,7 +92,7 @@ describe("get_my_planned_sessions", () => {
     await createTestProduct(admin, {
       id: DAILY,
       seatCount: null,
-      startDate: dayOffset(-30),
+      startDate: utcDayOffset(DB_NOW, -30),
     });
     for (let weekday = 0; weekday < 7; weekday++) {
       await createScheduleSlot(admin, DAILY, {
@@ -115,7 +105,7 @@ describe("get_my_planned_sessions", () => {
     await createTestProduct(admin, {
       id: WEEKLY,
       seatCount: null,
-      startDate: dayOffset(-30),
+      startDate: utcDayOffset(DB_NOW, -30),
     });
     await createScheduleSlot(admin, WEEKLY, {
       weekday: weekdayOf(TOMORROW),
@@ -129,7 +119,7 @@ describe("get_my_planned_sessions", () => {
     ]);
     expect(groups.error).toBeNull();
 
-    const twentyDaysAgo = `${dayOffset(-20)}T09:00:00.000Z`;
+    const twentyDaysAgo = `${utcDayOffset(DB_NOW, -20)}T09:00:00.000Z`;
     // Its own insert: a bulk insert sends every row the union of the rows'
     // columns, and a NULL signed_up_at on the others is refused.
     const dailySeat = await admin.from("participations").insert({
@@ -255,7 +245,7 @@ describe("get_my_planned_sessions", () => {
 
     // Placed twenty days ago, so the span opens the day before that rather
     // than the day before today.
-    expect(dates[0]).toBe(dayOffset(-21));
+    expect(dates[0]).toBe(utcDayOffset(DB_NOW, -21));
     expect(dates.at(-1)).toBe(await horizon(DAILY, DAILY_GROUP));
     // Every day in between, once, soonest first: the club runs daily.
     expect(new Set(dates).size).toBe(dates.length);

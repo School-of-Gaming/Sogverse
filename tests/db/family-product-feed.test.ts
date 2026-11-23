@@ -7,6 +7,7 @@ import {
   createAnonTestClient,
   createAuthenticatedClient,
   dbNow,
+  utcDayOffset,
   uniqueSuffix,
 } from "./helpers";
 import { TEST_CREDENTIALS, TEST_IDS } from "./constants";
@@ -62,19 +63,9 @@ const NO_SUCH_PARTICIPATION = "00000000-0000-0000-0000-0000000006ff";
  */
 const DB_NOW = await dbNow();
 
-/**
- * `YYYY-MM-DD`, `offset` days from the database's today. The fixture products
- * run in UTC.
- */
-function dayOffset(offset: number): string {
-  const d = new Date(DB_NOW);
-  d.setUTCDate(d.getUTCDate() + offset);
-  return d.toISOString().slice(0, 10);
-}
-
-const LONG_AGO = dayOffset(-40);
-const YESTERDAY = dayOffset(-1);
-const TWO_DAYS_AGO = dayOffset(-2);
+const LONG_AGO = utcDayOffset(DB_NOW, -40);
+const YESTERDAY = utcDayOffset(DB_NOW, -1);
+const TWO_DAYS_AGO = utcDayOffset(DB_NOW, -2);
 
 const GEDU_NOTE = "PRIVATE-STAFF-NOTE-must-never-reach-a-family";
 const MATERIAL_URL = "https://drive.sog.gg/PRIVATE-lesson-plans";
@@ -126,7 +117,7 @@ describe("family product feed", () => {
       await createTestProduct(admin, {
         id,
         seatCount: null,
-        startDate: dayOffset(-60),
+        startDate: utcDayOffset(DB_NOW, -60),
       });
       await admin.from("product_translations").insert({
         product_id: id,
@@ -447,7 +438,7 @@ describe("family product feed", () => {
         stripe_customer_id: "cus_feed_ended",
         currency: "eur",
         status: "cancelled",
-        current_period_end: `${dayOffset(30)}T00:00:00.000Z`,
+        current_period_end: `${utcDayOffset(DB_NOW, 30)}T00:00:00.000Z`,
       });
       expect(sub.error).toBeNull();
       const ended = await admin

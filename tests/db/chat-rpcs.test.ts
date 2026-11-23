@@ -267,20 +267,19 @@ describe("chat RPCs", () => {
     );
     initialRoster = chatChannelRoster.parse(rawInitialRoster);
 
-    // A channel whose window closed a month ago. Fabricated through the
-    // service-role client on purpose: it is the one row on this surface no RPC
-    // will produce, because `ensure_chat_channel` only ever mints the window
-    // that is open now — and the read bound cannot be proved without one.
-    const expiredOpens = await dbTime(-30 * 24 * 60 * 60_000);
+    // A channel whose family read bound — an hour past its close — lapsed a
+    // second ago. Fabricated through the service-role client on purpose: it is
+    // the one row on this surface no RPC will produce, because
+    // `ensure_chat_channel` only ever mints the window that is open now — and
+    // the read bound cannot be proved without one.
+    const expiredEnds = await dbTime(-(60 * 60_000 + 1_000));
     const expired = await admin
       .from("chat_channels")
       .insert({
         type: "group_session",
         group_id: liveGroup,
-        session_opens_at: expiredOpens.toISOString(),
-        session_ends_at: new Date(
-          expiredOpens.getTime() + 60 * 60_000,
-        ).toISOString(),
+        session_opens_at: new Date(expiredEnds.getTime() - 60 * 60_000).toISOString(),
+        session_ends_at: expiredEnds.toISOString(),
       })
       .select("id")
       .single();
@@ -296,7 +295,7 @@ describe("chat RPCs", () => {
       id: expiredMessageId,
       channel_id: expiredChannelId,
       sender_id: TEST_IDS.GAMER,
-      body: "last month",
+      body: "from the closed session",
     });
     if (oldMessage.error) {
       throw new Error(`seed expired message failed: ${oldMessage.error.message}`);
@@ -670,7 +669,7 @@ describe("chat RPCs", () => {
       const result = await gamerAuth.rpc("send_chat_message", {
         p_id: newMessageId(),
         p_channel_id: channelId,
-        p_body: "quoting last month",
+        p_body: "quoting the closed session",
         p_reply_to_message_id: expiredMessageId,
       });
 

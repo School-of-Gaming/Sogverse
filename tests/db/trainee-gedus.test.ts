@@ -11,6 +11,7 @@ import {
   createAdminTestClient,
   createAuthenticatedClient,
   dbNow,
+  utcDayOffset,
   dbTime,
   uniqueSuffix,
 } from "./helpers";
@@ -64,27 +65,20 @@ const SESSION_REPORT = "We built a castle together.";
 const MATERIAL_URL = "https://example.com/trainee-material";
 
 /**
- * The database's clock, read once when the file loads: the day constants below
- * are built then, and every date in the file, the ages included, counts from
- * the one today the database judges against.
+ * The database's clock, read when the file loads: the dates below are built
+ * then, and they count from the database's today, the one its functions judge
+ * against. The products run in UTC.
  */
-const DB_CLOCK_AT_LOAD = await dbNow();
+const DB_NOW = await dbNow();
 
-/** `YYYY-MM-DD`, `offset` days from the database's today. The products run in UTC. */
-function dayOffset(offset: number): string {
-  const d = new Date(DB_CLOCK_AT_LOAD);
-  d.setUTCDate(d.getUTCDate() + offset);
-  return d.toISOString().slice(0, 10);
-}
-
-const YESTERDAY = dayOffset(-1);
+const YESTERDAY = utcDayOffset(DB_NOW, -1);
 
 /**
- * A birth month's age today in UTC, by the application's own rule — which the
- * RPC has to agree with.
+ * A birth month's age on the database's today in UTC, by the application's own
+ * rule — which the RPC has to agree with.
  */
-function ageInUtc(birth: GamerBirthMonthYear): number {
-  return ageOnDate(birth, dayOffset(0));
+async function ageInUtc(birth: GamerBirthMonthYear): Promise<number> {
+  return ageOnDate(birth, utcDayOffset(await dbNow(), 0));
 }
 
 type Admin = SupabaseClient<Database>;
@@ -182,7 +176,7 @@ describe("trainee gedus", () => {
 
     await deleteTestProducts(admin, ALL_PRODUCTS);
     for (const id of ALL_PRODUCTS) {
-      await createTestProduct(admin, { id, seatCount: null, startDate: dayOffset(-30) });
+      await createTestProduct(admin, { id, seatCount: null, startDate: utcDayOffset(DB_NOW, -30) });
       await admin.from("product_translations").insert({
         product_id: id,
         locale: "en",
@@ -231,7 +225,7 @@ describe("trainee gedus", () => {
     expect(participationId).toBeTruthy();
     await admin
       .from("participations")
-      .update({ group_joined_at: `${dayOffset(-30)}T00:00:00.000Z` })
+      .update({ group_joined_at: `${utcDayOffset(DB_NOW, -30)}T00:00:00.000Z` })
       .in("product_id", ALL_PRODUCTS);
 
     await admin.from("gamer_group_notes").insert({
@@ -407,7 +401,7 @@ describe("trainee gedus", () => {
       expect(roster).toHaveLength(1);
       expect(Object.keys(roster[0]).sort()).toEqual(TRAINEE_ROSTER_KEYS);
       expect(roster[0].participant_id).toBe(TEST_IDS.GAMER);
-      expect(roster[0].age).toBe(ageInUtc({
+      expect(roster[0].age).toBe(await ageInUtc({
         year: SEED.GAMER_BIRTH.birth_year,
         month: SEED.GAMER_BIRTH.birth_month,
       }));
@@ -558,7 +552,7 @@ describe("trainee gedus", () => {
   describe("My SOG", () => {
     it("lists the trainee seat as a third kind, owing nothing", async () => {
       const summaries = await traineeAuth.rpc("get_my_gedu_assignment_summaries", {
-        p_epoch_date: dayOffset(-365),
+        p_epoch_date: utcDayOffset(DB_NOW, -365),
       });
       expect(summaries.error).toBeNull();
       const mine = geduAssignmentSummaries
@@ -576,7 +570,7 @@ describe("trainee gedus", () => {
       // The same group owes the assigned gedu yesterday's mail, so the zero is
       // the trainee arm's and not an empty history.
       const gedu = await geduAuth.rpc("get_my_gedu_assignment_summaries", {
-        p_epoch_date: dayOffset(-365),
+        p_epoch_date: utcDayOffset(DB_NOW, -365),
       });
       const geduRow = geduAssignmentSummaries
         .parse(gedu.data)

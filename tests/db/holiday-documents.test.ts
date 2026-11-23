@@ -15,6 +15,7 @@ import {
   createAnonTestClient,
   createAuthenticatedClient,
   dbNow,
+  utcDayOffset,
 } from "./helpers";
 import { TEST_CREDENTIALS, TEST_IDS } from "./constants";
 import {
@@ -65,21 +66,13 @@ const HOLIDAY = "2030-10-14";
 const CANCELLED = "2030-10-21";
 
 /**
- * The database's clock, read when the file loads: the dates below are built
- * then, and they count from the database's today, the one its functions judge
- * against.
+ * The database's clock, read before the setup: the dates below count from the
+ * database's today, the one its functions judge against. DAILY runs in UTC.
  */
-const DB_NOW = await dbNow();
-
-/** A UTC calendar date `offset` days from the database's today; DAILY runs in UTC. */
-function utcDate(offset: number): string {
-  const now = DB_NOW;
-  return new Date(
-    Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), now.getUTCDate() + offset),
-  )
-    .toISOString()
-    .slice(0, 10);
-}
+let DB_NOW: Date;
+beforeAll(async () => {
+  DB_NOW = await dbNow();
+});
 
 /** CLUB's Monday session on `date`, as a parsed plan row. */
 function clubSession(date: string) {
@@ -168,7 +161,7 @@ describe("the session documents carry the holiday breaks", () => {
       endDate: "2030-12-30",
     });
     await createScheduleSlot(admin, CLUB, { weekday: 0, startTime: "10:00", durationMinutes: 60 });
-    await createTestProduct(admin, { id: DAILY, seatCount: null, startDate: utcDate(-30) });
+    await createTestProduct(admin, { id: DAILY, seatCount: null, startDate: utcDayOffset(DB_NOW, -30) });
     for (let weekday = 0; weekday < 7; weekday++) {
       await createScheduleSlot(admin, DAILY, { weekday, startTime: "10:00", durationMinutes: 60 });
     }
@@ -232,8 +225,8 @@ describe("the session documents carry the holiday breaks", () => {
         { start_date: "2030-10-14", end_date: "2030-10-18", names: AUTUMN_NAMES },
         { start_date: "2030-12-21", end_date: "2031-01-06", names: CHRISTMAS_NAMES },
         {
-          start_date: utcDate(3),
-          end_date: utcDate(5),
+          start_date: utcDayOffset(DB_NOW, 3),
+          end_date: utcDayOffset(DB_NOW, 5),
           names: [{ locale: "en", name: "Long weekend" }],
         },
       ],
@@ -250,7 +243,7 @@ describe("the session documents carry the holiday breaks", () => {
       (stored.data ?? []).find((row) => row.start_date === start)?.id ?? "";
     autumnId = idOn("2030-10-14");
     christmasId = idOn("2030-12-21");
-    nearId = idOn(utcDate(3));
+    nearId = idOn(utcDayOffset(DB_NOW, 3));
 
     for (const product of ALL_PRODUCTS) {
       const { error } = await adminAuth.rpc("set_product_holiday_calendars", {
@@ -370,13 +363,13 @@ describe("the session documents carry the holiday breaks", () => {
       const daily = dashboard.schedule_products.find((p) => p.id === DAILY);
       expect(daily?.holiday_breaks.map((row) => row.id)).toEqual([nearId]);
       expect(daily?.holiday_breaks[0].withdrawnSessions.map((s) => s.date)).toEqual([
-        utcDate(3),
-        utcDate(4),
-        utcDate(5),
+        utcDayOffset(DB_NOW, 3),
+        utcDayOffset(DB_NOW, 4),
+        utcDayOffset(DB_NOW, 5),
       ]);
       const plannedDates = daily?.planned_sessions.map((s) => s.session_date) ?? [];
-      expect(plannedDates).toContain(utcDate(2));
-      expect(plannedDates).not.toContain(utcDate(4));
+      expect(plannedDates).toContain(utcDayOffset(DB_NOW, 2));
+      expect(plannedDates).not.toContain(utcDayOffset(DB_NOW, 4));
     });
   });
 
@@ -395,8 +388,8 @@ describe("the session documents carry the holiday breaks", () => {
           },
           {
             id: nearId,
-            start_date: utcDate(3),
-            end_date: utcDate(5),
+            start_date: utcDayOffset(DB_NOW, 3),
+            end_date: utcDayOffset(DB_NOW, 5),
             names: [{ locale: "en", name: "Long weekend" }],
           },
         ],

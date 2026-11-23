@@ -11,6 +11,7 @@ import {
   createAuthenticatedClient,
   dbInterval,
   dbNow,
+  utcDayOffset,
   dbTime,
   uniqueSuffix,
 } from "./helpers";
@@ -61,15 +62,19 @@ const DISCORD_SHARED = "920000000000000002";
 type Outbox = Database["public"]["Tables"]["substitution_notification_outbox"]["Row"];
 
 /**
- * The database's clock, read afresh before the file's setup and before each
- * test, so the calendar dates below count from the database's today.
+ * The database's clock, read before the file's setup, so the calendar dates
+ * below count from the database's today, in UTC, the product's zone.
+ *
+ * Refreshed before each test, because the close-out and the snapshot judge
+ * today themselves — yesterday's request against today's, the product's today
+ * — and each must count from the day it runs on.
  */
-let dbClock: Date;
+let DB_NOW: Date;
 beforeAll(async () => {
-  dbClock = await dbNow();
+  DB_NOW = await dbNow();
 });
 beforeEach(async () => {
-  dbClock = await dbNow();
+  DB_NOW = await dbNow();
 });
 
 /** When the links below were made: only their order matters. */
@@ -78,15 +83,6 @@ const LINKED_LATER = new Date("2020-01-01T00:01:00Z");
 
 /** A past instant that is only data. */
 const SOME_PAST = "2020-01-01T00:00:00Z";
-
-/** A UTC calendar date `offset` days from the database's today; the product's zone is UTC. */
-function utcDate(offset: number): string {
-  const now = dbClock;
-  const day = new Date(
-    Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), now.getUTCDate() + offset),
-  );
-  return day.toISOString().slice(0, 10);
-}
 
 describe("substitution notifications", () => {
   let admin: SupabaseClient<Database>;
@@ -237,8 +233,8 @@ describe("substitution notifications", () => {
       registration_opens_at: SOME_PAST,
       is_visible: true,
       created_by: TEST_IDS.ADMIN,
-      start_date: utcDate(-30),
-      end_date: utcDate(60),
+      start_date: utcDayOffset(DB_NOW, -30),
+      end_date: utcDayOffset(DB_NOW, 60),
       min_age: 8,
       max_age: 18,
       seat_count: null,
@@ -291,7 +287,7 @@ describe("substitution notifications", () => {
 
   describe("the triggers file the request in the outbox", () => {
     it("on filing, and bump its seq on every later change to the request", async () => {
-      const requestId = await file(ids.requester, utcDate(3));
+      const requestId = await file(ids.requester, utcDayOffset(DB_NOW, 3));
       expect(await outbox(requestId)).toMatchObject({ seq: 1, attempts: 0, leased_until: null });
 
       const { error } = await admin
@@ -303,7 +299,7 @@ describe("substitution notifications", () => {
     });
 
     it("on a gedu's answer being given, changed and removed", async () => {
-      const requestId = await file(ids.requester, utcDate(3));
+      const requestId = await file(ids.requester, utcDayOffset(DB_NOW, 3));
       await clearOutbox([requestId]);
 
       const { error: offerError } = await admin
@@ -328,7 +324,7 @@ describe("substitution notifications", () => {
     });
 
     it("through the web's own write, the offer RPC", async () => {
-      const requestId = await file(ids.requester, utcDate(3));
+      const requestId = await file(ids.requester, utcDayOffset(DB_NOW, 3));
       await clearOutbox([requestId]);
       const { error } = await geduAuth.rpc("offer_session_substitution", {
         p_request_id: requestId,
@@ -338,11 +334,11 @@ describe("substitution notifications", () => {
     });
 
     it("for every non-withdrawn request on a session cancelled or restored, in one write", async () => {
-      const date = utcDate(5);
+      const date = utcDayOffset(DB_NOW, 5);
       const open = await file(ids.requester, date);
       const second = await file(ids.noLanguage, date);
       const withdrawn = await file(ids.unqualified, date, "withdrawn");
-      const elsewhere = await file(ids.requester, utcDate(6));
+      const elsewhere = await file(ids.requester, utcDayOffset(DB_NOW, 6));
       await clearOutbox([open, second, withdrawn, elsewhere]);
 
       // One statement enqueues two requests: the kick runs once for the
@@ -370,7 +366,7 @@ describe("substitution notifications", () => {
     });
 
     it("re-arms a row on enqueue: due now, attempts reset, an infinite stop lifted", async () => {
-      const requestId = await file(ids.requester, utcDate(3));
+      const requestId = await file(ids.requester, utcDayOffset(DB_NOW, 3));
       await admin
         .from("substitution_notification_outbox")
         .update({ attempts: 12, next_attempt_at: "infinity", last_error: "boom" })
@@ -387,7 +383,7 @@ describe("substitution notifications", () => {
     });
 
     it("deleting a request deletes its row with it, and its answers' triggers do not get in the way", async () => {
-      const requestId = await file(ids.requester, utcDate(3));
+      const requestId = await file(ids.requester, utcDayOffset(DB_NOW, 3));
       await admin.from("session_substitution_offers").insert({ request_id: requestId, gedu_id: ids.eligible });
       const { error } = await admin.from("session_substitution_requests").delete().eq("id", requestId);
       expect(error).toBeNull();
@@ -397,7 +393,7 @@ describe("substitution notifications", () => {
 
   describe("the lease", () => {
     it("claims a due row once, counting the attempt, until its lease runs out", async () => {
-      const requestId = await file(ids.requester, utcDate(3));
+      const requestId = await file(ids.requester, utcDayOffset(DB_NOW, 3));
 
       const {
         result: first,
@@ -424,7 +420,7 @@ describe("substitution notifications", () => {
     });
 
     it("leaves a row whose next attempt is still to come", async () => {
-      const requestId = await file(ids.requester, utcDate(3));
+      const requestId = await file(ids.requester, utcDayOffset(DB_NOW, 3));
       await admin
         .from("substitution_notification_outbox")
         .update({ next_attempt_at: (await dbTime(60_000)).toISOString() })
@@ -433,9 +429,9 @@ describe("substitution notifications", () => {
     });
 
     it("narrows to the requests named, and takes no more than the limit", async () => {
-      const a = await file(ids.requester, utcDate(3));
-      const b = await file(ids.requester, utcDate(4));
-      const c = await file(ids.requester, utcDate(5));
+      const a = await file(ids.requester, utcDayOffset(DB_NOW, 3));
+      const b = await file(ids.requester, utcDayOffset(DB_NOW, 4));
+      const c = await file(ids.requester, utcDayOffset(DB_NOW, 5));
 
       expect(await claim(10, [b])).toEqual([{ request_id: b, seq: 1 }]);
 
@@ -447,7 +443,7 @@ describe("substitution notifications", () => {
     });
 
     it("with no names, takes every due row (ours among them)", async () => {
-      const requestId = await file(ids.requester, utcDate(3));
+      const requestId = await file(ids.requester, utcDayOffset(DB_NOW, 3));
       const claimed = await claim(1000, null);
       expect(claimed.map((row) => row.request_id)).toContain(requestId);
       // Hand back whatever else it took, so no row of another suite stays leased.
@@ -461,8 +457,8 @@ describe("substitution notifications", () => {
     });
 
     it("lets two syncs claiming at once share the rows between them, never both taking one", async () => {
-      const a = await file(ids.requester, utcDate(3));
-      const b = await file(ids.requester, utcDate(4));
+      const a = await file(ids.requester, utcDayOffset(DB_NOW, 3));
+      const b = await file(ids.requester, utcDayOffset(DB_NOW, 4));
       const [first, second] = await Promise.all([claim(1, [a, b]), claim(1, [a, b])]);
       const claimed = [...first, ...second].map((row) => row.request_id);
       expect(claimed.sort()).toEqual([a, b].sort());
@@ -471,14 +467,14 @@ describe("substitution notifications", () => {
 
   describe("finishing a sync", () => {
     it("deletes the row when nothing changed while it ran", async () => {
-      const requestId = await file(ids.requester, utcDate(3));
+      const requestId = await file(ids.requester, utcDayOffset(DB_NOW, 3));
       const [job] = await claim(10, [requestId]);
       expect(await finish(requestId, job.seq)).toBe(false);
       expect(await outbox(requestId)).toBeNull();
     });
 
     it("hands the row back, due, and asks for another run when the request changed meanwhile", async () => {
-      const requestId = await file(ids.requester, utcDate(3));
+      const requestId = await file(ids.requester, utcDayOffset(DB_NOW, 3));
       const [job] = await claim(10, [requestId]);
       await admin
         .from("session_substitution_requests")
@@ -491,14 +487,14 @@ describe("substitution notifications", () => {
     });
 
     it("answers false for a request deleted while it ran", async () => {
-      const requestId = await file(ids.requester, utcDate(3));
+      const requestId = await file(ids.requester, utcDayOffset(DB_NOW, 3));
       const [job] = await claim(10, [requestId]);
       await admin.from("session_substitution_requests").delete().eq("id", requestId);
       expect(await finish(requestId, job.seq)).toBe(false);
     });
 
     it("on failure, records the error and backs off 2^attempts minutes", async () => {
-      const requestId = await file(ids.requester, utcDate(3));
+      const requestId = await file(ids.requester, utcDayOffset(DB_NOW, 3));
       const [job] = await claim(10, [requestId]);
       const { result: retry, notBefore, notAfter } = await dbInterval(() =>
         finish(requestId, job.seq, "discord said no"),
@@ -515,7 +511,7 @@ describe("substitution notifications", () => {
     });
 
     it("caps the backoff at an hour", async () => {
-      const requestId = await file(ids.requester, utcDate(3));
+      const requestId = await file(ids.requester, utcDayOffset(DB_NOW, 3));
       await admin.from("substitution_notification_outbox").update({ attempts: 7 }).eq("request_id", requestId);
       const [job] = await claim(10, [requestId]);
       const { notBefore, notAfter } = await dbInterval(() =>
@@ -531,7 +527,7 @@ describe("substitution notifications", () => {
     });
 
     it("stops scheduling after the 12th attempt, and keeps the row", async () => {
-      const requestId = await file(ids.requester, utcDate(3));
+      const requestId = await file(ids.requester, utcDayOffset(DB_NOW, 3));
       await admin.from("substitution_notification_outbox").update({ attempts: 11 }).eq("request_id", requestId);
       const [job] = await claim(10, [requestId]);
       await finish(requestId, job.seq, "gave up");
@@ -561,12 +557,12 @@ describe("substitution notifications", () => {
     }
 
     it("files every request still drawn open whose date has passed, however long ago", async () => {
-      const yesterday = await file(ids.requester, utcDate(-1));
-      const lastWeek = await file(ids.requester, utcDate(-7));
-      const drawnPast = await file(ids.requester, utcDate(-2));
-      const drawnWithdrawn = await file(ids.unqualified, utcDate(-1), "withdrawn");
-      const today = await file(ids.requester, utcDate(0));
-      const unannounced = await file(ids.noLanguage, utcDate(-1));
+      const yesterday = await file(ids.requester, utcDayOffset(DB_NOW, -1));
+      const lastWeek = await file(ids.requester, utcDayOffset(DB_NOW, -7));
+      const drawnPast = await file(ids.requester, utcDayOffset(DB_NOW, -2));
+      const drawnWithdrawn = await file(ids.unqualified, utcDayOffset(DB_NOW, -1), "withdrawn");
+      const today = await file(ids.requester, utcDayOffset(DB_NOW, 0));
+      const unannounced = await file(ids.noLanguage, utcDayOffset(DB_NOW, -1));
       await announce(yesterday, "open");
       await announce(lastWeek, "open");
       await announce(drawnPast, "past");
@@ -583,7 +579,7 @@ describe("substitution notifications", () => {
     });
 
     it("files a passed request once: never while it waits, never after it is drawn past", async () => {
-      const passed = await file(ids.requester, utcDate(-1));
+      const passed = await file(ids.requester, utcDayOffset(DB_NOW, -1));
       await announce(passed, "open");
       await clearOutbox([passed]);
 
@@ -606,7 +602,7 @@ describe("substitution notifications", () => {
     });
 
     it("leaves a failing row's backoff alone", async () => {
-      const parked = await file(ids.requester, utcDate(-1));
+      const parked = await file(ids.requester, utcDayOffset(DB_NOW, -1));
       await announce(parked, "open");
       const { error } = await admin
         .from("substitution_notification_outbox")
@@ -626,7 +622,7 @@ describe("substitution notifications", () => {
 
   describe("the kick when a row is due", () => {
     it("runs for the service role, and queues nothing where Vault is empty", async () => {
-      await file(ids.requester, utcDate(3));
+      await file(ids.requester, utcDayOffset(DB_NOW, 3));
       const { error } = await admin.rpc("kick_substitution_notification_sync_if_due");
       expect(error).toBeNull();
     });
@@ -642,7 +638,7 @@ describe("substitution notifications", () => {
     });
 
     it("describes an open request, its session and every gedu it concerns", async () => {
-      const date = utcDate(3);
+      const date = utcDayOffset(DB_NOW, 3);
       const requestId = await file(ids.requester, date);
       const { error: answerError } = await admin.from("session_substitution_offers").insert([
         { request_id: requestId, gedu_id: ids.eligible, response: "offer" },
@@ -693,7 +689,7 @@ describe("substitution notifications", () => {
       expect(shot.product.delivery_mode).toBe("online");
       expect(shot.required_qualifications).toEqual(["consumer_products"]);
       expect(shot.is_cancelled).toBe(false);
-      expect(shot.product_today).toBe(utcDate(0));
+      expect(shot.product_today).toBe(utcDayOffset(DB_NOW, 0));
       expect(shot.notification).toBeNull();
       expect(shot.dms).toEqual([
         expect.objectContaining({ gedu_id: ids.unqualified, message_id: "2", delivery_error: null }),
@@ -728,7 +724,7 @@ describe("substitution notifications", () => {
     });
 
     it("carries the announcement once there is one", async () => {
-      const requestId = await file(ids.requester, utcDate(3));
+      const requestId = await file(ids.requester, utcDayOffset(DB_NOW, 3));
       await admin.from("substitution_notifications").insert({
         request_id: requestId,
         announced_at: SOME_PAST,
@@ -751,7 +747,7 @@ describe("substitution notifications", () => {
     });
 
     it("names the sub and the approver on a substituted request", async () => {
-      const requestId = await file(ids.requester, utcDate(3));
+      const requestId = await file(ids.requester, utcDayOffset(DB_NOW, 3));
       const { error } = await admin
         .from("session_substitution_requests")
         .update({
@@ -774,7 +770,7 @@ describe("substitution notifications", () => {
       const discordRequester = "920000000000000004";
       await link(ids.requester, discordRequester, LINKED_LATER);
       try {
-        const requestId = await file(ids.requester, utcDate(3));
+        const requestId = await file(ids.requester, utcDayOffset(DB_NOW, 3));
         const shot = await snapshot(requestId);
         expect(shot.request.requester).toMatchObject({ locale: "fi", discord_user_id: discordRequester });
       } finally {
@@ -792,7 +788,7 @@ describe("substitution notifications", () => {
         );
         const { error: seatError } = await adminAuth.rpc("set_session_substitution", {
           p_group_id: GROUP,
-          p_session_date: utcDate(5),
+          p_session_date: utcDayOffset(DB_NOW, 5),
           p_absent_gedu_id: ids.requester,
           p_sub_gedu_id: ids.unqualified,
           p_reason: "sick",
@@ -824,7 +820,7 @@ describe("substitution notifications", () => {
     });
 
     it("says when the session is cancelled, and takes everyone off the eligible list", async () => {
-      const date = utcDate(4);
+      const date = utcDayOffset(DB_NOW, 4);
       const requestId = await file(ids.requester, date);
       await admin.from("session_cancellations").insert({
         group_id: GROUP,

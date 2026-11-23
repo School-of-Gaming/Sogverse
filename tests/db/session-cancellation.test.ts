@@ -15,7 +15,7 @@ import { municipalityInvoicingSnapshot } from "@/services/municipality-invoicing
 import { adminSubstitutionRequests } from "@/services/session-substitution/session-substitution.contracts";
 import { myAssignedProductRows } from "@/services/assignments/assignments.contracts";
 import { adminDashboardSnapshot } from "@/services/admin-dashboard/admin-dashboard.contracts";
-import { createAdminTestClient, createAuthenticatedClient, dbNow } from "./helpers";
+import { createAdminTestClient, createAuthenticatedClient, dbNow, utcDayOffset } from "./helpers";
 import { TEST_CREDENTIALS, TEST_IDS } from "./constants";
 import {
   createScheduleSlot,
@@ -72,23 +72,16 @@ const CLUB_DATE = "2031-02-12";
  */
 const DB_NOW = await dbNow();
 
-/** `YYYY-MM-DD`, `offset` days from the database's today. PRODUCT runs in UTC. */
-function dayOffset(offset: number): string {
-  const d = new Date(DB_NOW);
-  d.setUTCDate(d.getUTCDate() + offset);
-  return d.toISOString().slice(0, 10);
-}
-
 /** 0 = Monday, matching `schedule_slots.weekday`. */
 function weekdayOf(date: string): number {
   return (new Date(`${date}T12:00:00Z`).getUTCDay() + 6) % 7;
 }
 
-const YESTERDAY = dayOffset(-1);
-const TOMORROW = dayOffset(1);
-const IN_TWO_DAYS = dayOffset(2);
-const IN_THREE_DAYS = dayOffset(3);
-const LAST_WEEK = dayOffset(-7);
+const YESTERDAY = utcDayOffset(DB_NOW, -1);
+const TOMORROW = utcDayOffset(DB_NOW, 1);
+const IN_TWO_DAYS = utcDayOffset(DB_NOW, 2);
+const IN_THREE_DAYS = utcDayOffset(DB_NOW, 3);
+const LAST_WEEK = utcDayOffset(DB_NOW, -7);
 
 describe("session cancellation", () => {
   let admin: SupabaseClient<Database>;
@@ -116,7 +109,7 @@ describe("session cancellation", () => {
     await createTestProduct(admin, {
       id: PRODUCT,
       seatCount: null,
-      startDate: dayOffset(-30),
+      startDate: utcDayOffset(DB_NOW, -30),
     });
     for (let weekday = 0; weekday < 7; weekday++) {
       await createScheduleSlot(admin, PRODUCT, {
@@ -165,7 +158,7 @@ describe("session cancellation", () => {
     // that does not name `group_id` leaves the trigger silent.
     const joined = await admin
       .from("participations")
-      .update({ group_joined_at: `${dayOffset(-30)}T00:00:00.000Z` })
+      .update({ group_joined_at: `${utcDayOffset(DB_NOW, -30)}T00:00:00.000Z` })
       .eq("id", PARTICIPATION);
     expect(joined.error).toBeNull();
 
@@ -344,7 +337,7 @@ describe("session cancellation", () => {
 
   it("refuses a date the schedule does not project", async () => {
     // Before the product's start date: no session was ever scheduled there.
-    const { error } = await cancel(dayOffset(-60));
+    const { error } = await cancel(utcDayOffset(DB_NOW, -60));
     expect(error?.code).toBe("23514");
   });
 
@@ -903,7 +896,7 @@ describe("session cancellation", () => {
         .from("gedu_profiles")
         .insert({ user_id: subId, certified: true });
 
-      const SIX_DAYS_AGO = dayOffset(-6);
+      const SIX_DAYS_AGO = utcDayOffset(DB_NOW, -6);
       const seeded = await admin.from("session_substitution_requests").insert(
         [LAST_WEEK, SIX_DAYS_AGO].map((date) => ({
           group_id: GROUP,
