@@ -61,7 +61,11 @@ export async function sendPasswordResetEmail(args: {
 
   // Fetch locale preference and generate the reset link in parallel.
   const [profileResult, linkResult] = await Promise.all([
-    adminClient.from("profiles").select("locale").eq("email", email).single(),
+    adminClient
+      .from("profiles")
+      .select("locale, registration_completed_at")
+      .eq("email", email)
+      .single(),
     // We only consume the single-use token_hash from the result (see the
     // emailed-link construction below) — not the action_link — so no
     // redirectTo is needed.
@@ -75,7 +79,12 @@ export async function sendPasswordResetEmail(args: {
   }
 
   // Resolve locale: profile preference → Accept-Language header → English.
-  const pref = profileResult.data?.locale;
+  // An account still owing its registration (a Google sign-up that never
+  // reached the finish page) holds a placeholder locale, not a choice, so its
+  // stored value is passed over for the browser's language.
+  const profile = profileResult.data;
+  const pref =
+    profile?.registration_completed_at != null ? profile.locale : null;
   const locale = isSupportedLocale(pref)
     ? pref
     : detectLocaleFromHeader(requestHeaders.get("Accept-Language"));

@@ -14,6 +14,8 @@ process.env.NEXT_PUBLIC_SITE_URL = SITE_ORIGIN;
 
 const mockGenerateLink = vi.fn();
 let mockProfileLocale: string | null = null;
+const REGISTERED_AT = "2026-01-01T00:00:00Z";
+let mockRegisteredAt: string | null = REGISTERED_AT;
 
 vi.mock("@/lib/supabase/admin", () => ({
   createAdminClient: vi.fn(() => ({
@@ -26,7 +28,10 @@ vi.mock("@/lib/supabase/admin", () => ({
       select: () => ({
         eq: () => ({
           single: () => Promise.resolve({
-            data: { locale: mockProfileLocale },
+            data: {
+              locale: mockProfileLocale,
+              registration_completed_at: mockRegisteredAt,
+            },
             error: null,
           }),
         }),
@@ -57,6 +62,7 @@ describe("POST /api/auth/forgot-password", () => {
   beforeEach(() => {
     vi.clearAllMocks();
     mockProfileLocale = null;
+    mockRegisteredAt = REGISTERED_AT;
     mockGenerateLink.mockResolvedValue({
       data: { properties: { hashed_token: "hashed-abc-123" } },
       error: null,
@@ -216,6 +222,25 @@ describe("POST /api/auth/forgot-password", () => {
     await POST(createRequest(
       { email: "user@example.com" },
       { "Accept-Language": "en-US,en;q=0.9" },
+    ));
+
+    expect(mockSendTransactionalEmail).toHaveBeenCalledWith(
+      expect.objectContaining({
+        subject: "Nollaa School of Gaming -salasanasi",
+      })
+    );
+  });
+
+  // A Google sign-up holds the placeholder `en` until it finishes registering,
+  // and can ask for a reset before then. The placeholder is not a choice, so
+  // the browser's language decides the mail rather than English.
+  it("passes over the stored locale of an account still owing its registration", async () => {
+    mockProfileLocale = "en";
+    mockRegisteredAt = null;
+
+    await POST(createRequest(
+      { email: "user@example.com" },
+      { "Accept-Language": "fi-FI,fi;q=0.9" },
     ));
 
     expect(mockSendTransactionalEmail).toHaveBeenCalledWith(

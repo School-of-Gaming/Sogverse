@@ -112,15 +112,17 @@ cheapest and lowest-risk item here.
   forever; `status` mirrors **Meta's** delivery vocabulary and grows on their
   schedule. Converting one and not the other is worse than either; if taken, take
   both and accept that a new Meta status is a migration.
-- **`profiles.locale` and `product_translations.locale`** — plain `text` with no
-  CHECK at all, while `SUPPORTED_LOCALES` and `LOCALE_CONFIG` are compile-time and
-  exhaustive, and adding a locale is unavoidably a deploy (a `messages/` file must
-  ship). Two signs the parallel list drifts: `TODO.md` proposes the weaker fix (a
-  CHECK) with a list that is already missing `fr`, and the admin product build
-  silently drops a translation row whose locale is unrecognised. Why only
-  borderline: of ~45 narrowing sites, ~35 narrow `next-intl`'s `useLocale(): string`,
-  which a DB enum cannot fix; only ~8 DB-sourced sites clean up. And `tlh` is the
-  most plausibly *removable* value in the schema.
+- **`profiles.locale` — decided against.** It is `NOT NULL` with a format-only
+  CHECK (`profiles_locale_format`, a code's shape such as `fi` or `pt-br`), and
+  deliberately neither an enum nor a membership CHECK: the supported list stays the
+  app's (`SUPPORTED_LOCALES`), so adding a locale needs no migration.
+- **`product_translations.locale`** — plain `text` with no CHECK at all, while
+  `SUPPORTED_LOCALES` and `LOCALE_CONFIG` are compile-time and exhaustive, and
+  adding a locale is unavoidably a deploy (a `messages/` file must ship). The admin
+  product build silently drops a translation row whose locale is unrecognised. Why
+  only borderline: of ~45 narrowing sites, ~35 narrow `next-intl`'s
+  `useLocale(): string`, which a DB enum cannot fix; only ~8 DB-sourced sites clean
+  up. And `tlh` is the most plausibly *removable* value in the schema.
 
 ## B. Existing DB enums the code still types as `string`
 

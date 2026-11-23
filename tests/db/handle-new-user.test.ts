@@ -930,20 +930,14 @@ describe("handle_new_user() locale", () => {
     expect(data!.locale).toBe("fi");
   });
 
-  it("stores the locale trimmed of space padding", async () => {
-    const { user, error } = await signUp("padded", { locale: " sv " });
-    expect(error).toBeNull();
-
-    const { data } = await admin
-      .from("profiles")
-      .select("locale")
-      .eq("id", user!.id)
-      .single();
-    expect(data!.locale).toBe("sv");
-  });
-
   it("refuses a password account created without a locale", async () => {
     await expectRefused("absent", {});
+  });
+
+  it("refuses a locale padded with spaces rather than trimming it", async () => {
+    // The value is checked exactly as sent: every caller sends an exact code,
+    // so padding is a caller's bug like any other malformed shape.
+    await expectRefused("padded", { locale: " sv " });
   });
 
   it("refuses a password account whose locale is blank", async () => {

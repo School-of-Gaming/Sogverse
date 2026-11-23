@@ -115,7 +115,7 @@ export function LoginForm({
 
       const { data: profile } = await supabase
         .from("profiles")
-        .select("role, locale")
+        .select("role, locale, registration_completed_at")
         .eq("id", data.user.id)
         .single();
 
@@ -131,7 +131,16 @@ export function LoginForm({
       //
       // The cookie is a preference, not a credential, which is what makes a
       // client-side write fine here.
-      if (isSupportedLocale(profile?.locale)) {
+      //
+      // An account still owing its registration (a Google sign-up that set a
+      // password through forgot-password) holds a placeholder locale, not a
+      // choice, so nothing is written: the bare path then follows the
+      // browser's language, and the finish page doesn't take the placeholder
+      // for the reader's pick.
+      if (
+        profile?.registration_completed_at != null &&
+        isSupportedLocale(profile.locale)
+      ) {
         setCookie(LOCALE_COOKIE_NAME, profile.locale);
       }
 

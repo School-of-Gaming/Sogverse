@@ -236,11 +236,13 @@ BEGIN
   -- arrives without a well-formed locale is a caller's bug: the account is
   -- refused, unlike a malformed utm value above, because a guess stored here
   -- would be the language the person is then mailed and shown the site in.
+  -- The value is checked exactly as sent, untrimmed: every caller sends an
+  -- exact code, so padding is as much a caller's bug as any other shape.
   -- An identity provider (Google) carries no locale of ours, so the account
   -- takes 'en' as a placeholder while it is unregistered; the completion
   -- route writes the reader's locale over it.
   IF NEW.raw_app_meta_data->>'provider' = 'email' THEN
-    locale_value := btrim(NEW.raw_user_meta_data->>'locale');
+    locale_value := NEW.raw_user_meta_data->>'locale';
 
     IF locale_value IS NULL OR locale_value !~ '^[a-z]{2,3}(-[a-z]{2})?$' THEN
       RAISE EXCEPTION 'handle_new_user: a password account needs its UI locale, got %; pass locale in user_metadata',
