@@ -431,7 +431,7 @@ function mockAdmin(opts: AdminMockOptions = {}) {
                   id: GAMER_ID,
                   first_name: "Aino",
                   email: null,
-                  locale: null,
+                  locale: "en",
                 },
               ],
               error: null,

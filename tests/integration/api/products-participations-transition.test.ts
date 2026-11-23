@@ -145,7 +145,7 @@ function adminTableStub(table: string) {
             first_name: "Aino",
             last_name: null,
             email: "aino@gamer.sogverse.internal",
-            locale: null,
+            locale: "en",
             gamer_profiles: { sign_in: "parent" },
             ...gamerOverrides,
           },

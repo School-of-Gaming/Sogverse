@@ -18,7 +18,7 @@ export const DISCORD_GEDU_NOT_LINKED_SQLSTATE = "P0031";
 /** `get_gedu_for_discord_user`: which gedu a Discord user id acts as. */
 export const discordLinkedGedu = z.object({
   profile_id: z.string(),
-  /** `profiles.locale` as stored: null when the gedu never chose one. */
-  locale: z.string().nullable(),
+  /** `profiles.locale` as stored. */
+  locale: z.string(),
 });
 export type DiscordLinkedGedu = z.infer<typeof discordLinkedGedu>;

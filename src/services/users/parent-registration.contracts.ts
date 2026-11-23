@@ -88,13 +88,13 @@ export const registerParentBody = z.object({
    */
   homeLocationId: z.string().uuid().optional(),
   /**
-   * Which language to write the welcome mail in. An enum rather than the gedu
-   * schema's plain string because the only thing that ever sends it is our own
-   * picker, which cannot produce a value outside this list — so an unsupported
-   * one is a malformed request rather than a value to fall back from. Absent is
-   * fine: the route then reads the Accept-Language header instead.
+   * The locale the form was read in: the account's stored locale, and the
+   * language of the welcome mail. Required, because the database refuses a
+   * password account created without one. An enum because the only thing that
+   * ever sends it is our own form, which cannot produce a value outside this
+   * list — so an unsupported one is a malformed request.
    */
-  locale: z.enum(SUPPORTED_LOCALES).optional(),
+  locale: z.enum(SUPPORTED_LOCALES),
   /**
    * The `?redirect=` the register page was opened with — the product page a
    * sign-up started from — so the account-creation report can name that

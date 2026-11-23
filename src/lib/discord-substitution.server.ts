@@ -1,10 +1,7 @@
 import "server-only";
 import { joinGeduSeatRows } from "@/components/gedu/gedu-seat-rows";
 import { SESSION_RECORDING_EPOCH } from "@/lib/constants/session-epoch";
-import {
-  isSupportedLocale,
-  type SupportedLocale,
-} from "@/lib/constants/locales";
+import { resolveLocale, type SupportedLocale } from "@/lib/constants/locales";
 import {
   alreadyRequestedSessionKeys,
   buildGeduUpcomingSessions,
@@ -51,12 +48,8 @@ import {
 /** The gedu a Discord user acts as. */
 export interface DiscordGedu {
   profileId: string;
-  /**
-   * The gedu's chosen app locale, or `null` when they never chose one (or the
-   * stored value is not a locale the app offers) — the bot's cue to fall back
-   * to the language Discord reports.
-   */
-  locale: SupportedLocale | null;
+  /** The gedu's app locale, which the bot's copy is written in. */
+  locale: SupportedLocale;
 }
 
 /** Whether an error is the "no gedu account linked to this Discord user" refusal. */
@@ -87,7 +80,7 @@ export async function resolveDiscordGedu(
   const gedu = discordLinkedGedu.parse(data);
   return {
     profileId: gedu.profile_id,
-    locale: isSupportedLocale(gedu.locale) ? gedu.locale : null,
+    locale: resolveLocale(gedu.locale),
   };
 }
 
@@ -106,7 +99,7 @@ export async function resolveDiscordGedu(
  * filing made elsewhere between the list and the press.
  *
  * The locale names the products, so it is the caller's choice: the gedu's own
- * from {@link resolveDiscordGedu}, or Discord's when they have none.
+ * from {@link resolveDiscordGedu}.
  */
 export async function getDiscordGeduUpcomingSessions({
   discordUserId,

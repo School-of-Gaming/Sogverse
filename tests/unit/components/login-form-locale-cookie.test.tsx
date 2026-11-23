@@ -33,7 +33,7 @@ const signInWithPassword = vi.fn<
 const profileRow = {
   data: { role: "customer", locale: "fi" } as {
     role: string;
-    locale: string | null;
+    locale: string;
   } | null,
 };
 
@@ -140,21 +140,9 @@ describe("the locale cookie a password sign-in leaves behind", () => {
     expect(cookieAtNavigation).toContain("locale=fi");
   });
 
-  it("leaves the cookie alone when the profile says auto-detect", async () => {
-    // Null is a real answer, not a missing one: this reader asked to follow
-    // whatever language their browser negotiates, so writing anything here
-    // would freeze a guess into a preference they never made.
-    profileRow.data = { role: "customer", locale: null };
-    document.cookie = "locale=sv;path=/";
-
-    await signIn();
-
-    expect(localeCookie()).toBe("sv");
-  });
-
   it("ignores a stored value we do not ship", async () => {
-    // The column is plain nullable text, so a value can outlive the locale it
-    // named. An unsupported one is not written on: it would put a segment in
+    // The column is text held only to a locale's shape, so a value can
+    // outlive the locale it named. An unsupported one is not written on: it would put a segment in
     // the URL that resolves to no locale at all.
     profileRow.data = { role: "customer", locale: "de" };
 

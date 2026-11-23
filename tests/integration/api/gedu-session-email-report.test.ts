@@ -231,7 +231,7 @@ const PARTICIPATIONS: ParticipationFixture[] = [
       first_name: "Aino",
       email: "aino@gamer.sogverse.internal",
       role: "gamer",
-      locale: null,
+      locale: "en",
       gamer_profiles: { sign_in: "parent" },
     },
   },
@@ -243,7 +243,7 @@ const PARTICIPATIONS: ParticipationFixture[] = [
       first_name: "Väinö",
       email: "vaino@gamer.sogverse.internal",
       role: "gamer",
-      locale: null,
+      locale: "en",
       gamer_profiles: { sign_in: "parent" },
     },
   },
@@ -296,7 +296,7 @@ const PARENT_LINKS: ParentLinkFixture[] = [
     gamer_id: PEOPLE.vaino,
     created_at: "2026-02-05T09:00:00Z",
     // No locale on file, so this mail must come out in the default locale.
-    parent: { first_name: "Liisa", email: "vaino-parent@test.local", locale: null },
+    parent: { first_name: "Liisa", email: "vaino-parent@test.local", locale: "en" },
   },
 ];
 
@@ -1032,7 +1032,7 @@ describe("POST /api/gedu/sessions/email-report", () => {
             first_name: "Orvokki",
             email: "orvokki@gamer.sogverse.internal",
             role: "gamer",
-            locale: null,
+            locale: "en",
             gamer_profiles: { sign_in: "parent" },
           },
         },

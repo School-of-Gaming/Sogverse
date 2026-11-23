@@ -27,7 +27,6 @@ describe("resolveFamilyRecipients", () => {
     const recipients = resolveFamilyRecipients({
       parents: [parent],
       gamer: { ...emailChild, signIn: "parent" },
-      fallbackLocale: "en",
     });
     expect(recipients).toEqual([
       { email: "marja@example.test", kind: "parent", locale: "fi", firstName: "Marja" },
@@ -44,7 +43,6 @@ describe("resolveFamilyRecipients", () => {
         email: "aino@gamer.sogverse.internal",
         signIn: "username",
       },
-      fallbackLocale: "en",
     });
     expect(recipients.map((r) => r.kind)).toEqual(["parent"]);
   });
@@ -58,7 +56,6 @@ describe("resolveFamilyRecipients", () => {
     const recipients = resolveFamilyRecipients({
       parents: [parent],
       gamer: emailChild,
-      fallbackLocale: "en",
     });
     expect(recipients.map((r) => r.kind)).toEqual(["parent", "gamer"]);
   });
@@ -67,7 +64,6 @@ describe("resolveFamilyRecipients", () => {
     const recipients = resolveFamilyRecipients({
       parents: [parent],
       gamer: emailChild,
-      fallbackLocale: "en",
     });
     expect(recipients).toEqual([
       { email: "marja@example.test", kind: "parent", locale: "fi", firstName: "Marja" },
@@ -78,35 +74,32 @@ describe("resolveFamilyRecipients", () => {
   /** We never write to a child alone, whatever they hold. */
   it("writes to nobody when there is no parent, even for a child with their own address", () => {
     expect(
-      resolveFamilyRecipients({ parents: [], gamer: emailChild, fallbackLocale: "en" }),
+      resolveFamilyRecipients({ parents: [], gamer: emailChild }),
     ).toEqual([]);
   });
 
   it("leaves an adult's own seat as it was — one recipient, no child", () => {
     const recipients = resolveFamilyRecipients({
-      parents: [{ email: "sylvie@example.test", firstName: "Sylvie", locale: null }],
+      parents: [{ email: "sylvie@example.test", firstName: "Sylvie", locale: "fr" }],
       gamer: null,
-      fallbackLocale: "fr",
     });
     expect(recipients).toEqual([
       { email: "sylvie@example.test", kind: "parent", locale: "fr", firstName: "Sylvie" },
     ]);
   });
 
-  it("resolves each recipient's locale on their own, with the caller's fallback", () => {
+  it("resolves each recipient's locale on their own", () => {
     const recipients = resolveFamilyRecipients({
-      parents: [{ ...parent, locale: null }],
+      parents: [parent],
       gamer: { ...emailChild, locale: "sv" },
-      fallbackLocale: "fr",
     });
-    expect(recipients.map((r) => r.locale)).toEqual(["fr", "sv"]);
+    expect(recipients.map((r) => r.locale)).toEqual(["fi", "sv"]);
   });
 
   it("never trusts a stored locale it does not ship", () => {
     const recipients = resolveFamilyRecipients({
       parents: [{ ...parent, locale: "xx" }],
       gamer: null,
-      fallbackLocale: "en",
     });
     expect(recipients[0].locale).toBe("en");
   });
@@ -118,7 +111,6 @@ describe("resolveFamilyRecipients", () => {
     const recipients = resolveFamilyRecipients({
       parents: [parent],
       gamer: { ...emailChild, email: "aino@gamer.sogverse.internal" },
-      fallbackLocale: "en",
     });
     expect(recipients.map((r) => r.kind)).toEqual(["parent"]);
   });

@@ -248,7 +248,7 @@ function mockReadsForConfirmationEmail(
                   id: GAMER_ID,
                   first_name: participantFirstName,
                   email: null,
-                  locale: null,
+                  locale: "en",
                   gamer_profiles: { sign_in: "parent" },
                   ...gamer,
                 },

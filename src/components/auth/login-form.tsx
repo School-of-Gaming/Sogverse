@@ -129,10 +129,8 @@ export function LoginForm({
       // awaited before navigating for the same reason: the document is about
       // to unload, and a fire-and-forget write would race it and be lost.
       //
-      // A null `locale` means "auto-detect from the browser", so it is skipped
-      // rather than written — the ladder's header leg is exactly what that
-      // reader asked for. The cookie is a preference, not a credential, which
-      // is what makes a client-side write fine here.
+      // The cookie is a preference, not a credential, which is what makes a
+      // client-side write fine here.
       if (isSupportedLocale(profile?.locale)) {
         setCookie(LOCALE_COOKIE_NAME, profile.locale);
       }

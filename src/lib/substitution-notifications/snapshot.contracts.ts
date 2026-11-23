@@ -35,7 +35,7 @@ export type SnapshotPerson = z.infer<typeof snapshotPerson>;
  * goes to — non-null only when that account ACTS as them, as for every DM.
  */
 const snapshotRequester = snapshotPerson.extend({
-  locale: z.string().nullable(),
+  locale: z.string(),
   discord_user_id: z.string().nullable(),
 });
 
@@ -88,8 +88,8 @@ const snapshotCandidate = z.object({
   gedu_id: z.string(),
   first_name: z.string(),
   last_name: z.string(),
-  /** The gedu's app locale; null when they have never chosen one. */
-  locale: z.string().nullable(),
+  /** The gedu's app locale. */
+  locale: z.string(),
   /** E.164 digits with no plus; null when the gedu has given none. */
   phone: z.string().nullable(),
   /**

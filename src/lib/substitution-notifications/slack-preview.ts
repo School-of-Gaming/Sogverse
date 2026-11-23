@@ -75,7 +75,7 @@ function candidate(
     gedu_id: who.id,
     first_name: who.first_name,
     last_name: who.last_name,
-    locale: null,
+    locale: "fi",
     phone: PHONES[who.id] ?? null,
     discord_user_id: null,
     eligible: true,
@@ -131,7 +131,7 @@ function sampleSnapshot(
     reason: "sick",
     reason_note: "Down with the flu, back next week.",
     created_at: `${sessionDate}T06:00:00.000Z`,
-    requester: { ...person(IDS.requester, "Ville", "Virtanen"), locale: null, discord_user_id: null },
+    requester: { ...person(IDS.requester, "Ville", "Virtanen"), locale: "fi", discord_user_id: null },
   };
   return {
     request:

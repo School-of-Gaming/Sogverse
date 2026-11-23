@@ -70,11 +70,11 @@ async function runDeferred(): Promise<void> {
 
 // --- Helpers ---
 
-/** The parent's own profile, whose last name the new gamer inherits. */
+/** The parent's own profile, whose last name and locale the new gamer inherits. */
 function mockAuthenticated(lastName = "Parentson") {
   mockRequireRole.mockResolvedValue({
     user: { id: "customer-123" },
-    profile: { role: "customer", last_name: lastName },
+    profile: { role: "customer", last_name: lastName, locale: "fi" },
     supabase: {},
   });
 }
@@ -432,6 +432,19 @@ describe("POST /api/gamers/create — the sign-in modes", () => {
       expect.objectContaining({ p_sign_in: "username" }),
     );
     expect(mockSendGamerWelcomeEmail).not.toHaveBeenCalled();
+  });
+
+  // The trigger refuses an account without a locale, so every mode's create
+  // carries the parent's — the one `create_gamer` copies onto the child too.
+  it.each([
+    { signIn: "parent" },
+    { signIn: "username", username: "Aino", password: "a good password" },
+    { signIn: "email", email: "aino@example.com" },
+  ])("creates a `$signIn` account in the parent's locale", async (mode) => {
+    const response = await POST(createRequest({ ...base, ...mode }));
+
+    expect(response.status).toBe(200);
+    expect(mockCreateUser.mock.calls[0][0].user_metadata.locale).toBe("fi");
   });
 
   it("normalises the address before it becomes the account", async () => {

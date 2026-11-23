@@ -290,7 +290,7 @@ export function resolveLocale(
 
 /**
  * The Stripe locale to render Stripe's own chrome in, for a locale value we do
- * not trust yet (a nullable `profiles.locale`, a resolved request locale).
+ * not trust yet (a stored `profiles.locale`, a resolved request locale).
  *
  * Anything we don't recognise — including a locale Stripe has no translation
  * for — becomes `"auto"`, which tells Stripe to read the browser's
