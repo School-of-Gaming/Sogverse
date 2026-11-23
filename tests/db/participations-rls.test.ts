@@ -1,7 +1,11 @@
 import { describe, it, expect, beforeAll, afterAll } from "vitest";
-import { createClient, type SupabaseClient } from "@supabase/supabase-js";
+import type { SupabaseClient } from "@supabase/supabase-js";
 import type { Database } from "@/types/database.types";
-import { createAdminTestClient, createAuthenticatedClient } from "./helpers";
+import {
+  createAdminTestClient,
+  createAnonTestClient,
+  createAuthenticatedClient,
+} from "./helpers";
 import { TEST_IDS, TEST_CREDENTIALS } from "./constants";
 import {
   createTestProduct,
@@ -55,16 +59,6 @@ const ALL_PRODUCTS = [PRODUCT_A, PRODUCT_B];
 const CUSTOMER_STRIPE_ID = "cus_rls_a";
 const CUSTOMER_2_STRIPE_ID = "cus_rls_b";
 
-const supabaseUrl =
-  process.env.NEXT_PUBLIC_SUPABASE_URL ?? "http://127.0.0.1:54321";
-const anonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY ?? "";
-
-function createAnonClient(): SupabaseClient<Database> {
-  return createClient<Database>(supabaseUrl, anonKey, {
-    auth: { autoRefreshToken: false, persistSession: false },
-  });
-}
-
 describe("v2 participations / payments / family subscriptions RLS", () => {
   let admin: SupabaseClient<Database>;
   let customerClient: SupabaseClient<Database>;
@@ -81,7 +75,7 @@ describe("v2 participations / payments / family subscriptions RLS", () => {
 
   beforeAll(async () => {
     admin = createAdminTestClient();
-    anonClient = createAnonClient();
+    anonClient = createAnonTestClient();
     customerClient = await createAuthenticatedClient(
       TEST_CREDENTIALS.CUSTOMER.email,
       TEST_CREDENTIALS.CUSTOMER.password,

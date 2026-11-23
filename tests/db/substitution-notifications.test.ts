@@ -359,7 +359,8 @@ describe("substitution notifications", () => {
         .eq("id", requestId);
       const row = await outbox(requestId);
       expect(row).toMatchObject({ seq: 2, attempts: 0 });
-      expect(new Date(row?.next_attempt_at ?? "").getTime()).toBeLessThanOrEqual(Date.now() + 5_000);
+      // Due by the database's own clock: the claim takes it.
+      expect(await claim(10, [requestId])).toEqual([{ request_id: requestId, seq: 2 }]);
     });
 
     it("deleting a request deletes its row with it, and its answers' triggers do not get in the way", async () => {
@@ -388,7 +389,7 @@ describe("substitution notifications", () => {
       // A sync that died holding the lease: once it lapses, the row is back.
       await admin
         .from("substitution_notification_outbox")
-        .update({ leased_until: new Date(Date.now() - 1_000).toISOString() })
+        .update({ leased_until: new Date(Date.now() - 3_600_000).toISOString() })
         .eq("request_id", requestId);
       expect(await claim(10, [requestId])).toEqual([{ request_id: requestId, seq: 1 }]);
       expect((await outbox(requestId))?.attempts).toBe(2);

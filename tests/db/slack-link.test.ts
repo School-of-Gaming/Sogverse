@@ -24,6 +24,12 @@ const SLACK_A = { id: "USLACKTESTA", username: "office.anna" };
 const SLACK_B = { id: "USLACKTESTB", username: "office.bertil" };
 const SLACK_IDS = [SLACK_A.id, SLACK_B.id];
 
+/**
+ * An expiry long past by any clock. The database judges expiry by its own
+ * `now()`, which need not agree with this process's clock to the second.
+ */
+const anHourAgo = () => new Date(Date.now() - 60 * 60_000);
+
 describe("slack links", () => {
   let admin: SupabaseClient<Database>;
   let adminAuth: SupabaseClient<Database>;
@@ -138,7 +144,7 @@ describe("slack links", () => {
     });
 
     it("refuses an expired token as expired, every time it is tried", async () => {
-      const token = await mint(SLACK_A, new Date(Date.now() - 1000));
+      const token = await mint(SLACK_A, anHourAgo());
       for (let attempt = 0; attempt < 2; attempt++) {
         const { error } = await adminAuth.rpc("consume_slack_link_token", {
           p_token: token,
@@ -180,7 +186,7 @@ describe("slack links", () => {
 
   describe("expired tokens", () => {
     it("are swept when the next token is minted", async () => {
-      await mint(SLACK_A, new Date(Date.now() - 1000));
+      await mint(SLACK_A, anHourAgo());
       await mint(SLACK_B);
       const { data, error } = await admin
         .from("slack_link_tokens")

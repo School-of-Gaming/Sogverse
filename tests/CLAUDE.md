@@ -180,7 +180,10 @@ Shared helpers and constants live in `tests/db/`:
 - `helpers.ts` — `createAdminTestClient()` (service-role, bypasses RLS, for
   setup/teardown and assertions) and `createAuthenticatedClient(email, password)` (signs
   in via Supabase Auth and returns a client that respects RLS; each call is a fresh
-  client with no shared session).
+  client with no shared session). **Every request to the stack goes through these
+  clients or `dbTestFetch` — never a bare `createClient` or `fetch`**: they share one
+  connection pool, which works around an undici bug that otherwise opens a connection
+  per request and exhausts ports when several checkouts test at once.
 - `product-helpers.ts` — product-specific seed/reset helpers: `createTestProduct()`,
   `createScheduleSlot()`, `deleteTestProducts()`, `resetFamilySubs()`.
 - `constants.ts` — `TEST_IDS` (deterministic UUIDs matching `supabase/seed.sql`),
@@ -194,6 +197,10 @@ The deterministic `TEST_IDS` (and the credentials/seed values) must stay in sync
 helper in `tests/helpers/` (four at a time), never a `Promise.all` over the whole list.**
 Each in-flight call opens its own connection on a freshly built stack and queues for a
 database session, so the test's time then measures the machine rather than the cases.
+
+**A time the database judges against its own `now()` sits well clear of the boundary —
+an hour, not a second.** The test builds it from this process's clock and the database
+reads its own, and locally the two run in different kernels that drift seconds apart.
 
 ## Integration test conventions
 

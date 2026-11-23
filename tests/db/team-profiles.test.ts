@@ -14,7 +14,11 @@ import {
   type TeamProfileSaveInput,
 } from "@/services/team-profiles/team-profiles.types";
 import { saveTeamProfileResult } from "@/services/team-profiles/team-profiles.contracts";
-import { createAdminTestClient, createAuthenticatedClient } from "./helpers";
+import {
+  createAdminTestClient,
+  createAuthenticatedClient,
+  dbTestFetch,
+} from "./helpers";
 import { TEST_CREDENTIALS, TEST_IDS } from "./constants";
 
 /**
@@ -521,7 +525,7 @@ describe("team profiles", () => {
             "/storage/v1/",
           )
             ? Promise.reject(new TypeError("fetch failed"))
-            : fetch(input, init),
+            : dbTestFetch(input, init),
       );
 
       await expect(

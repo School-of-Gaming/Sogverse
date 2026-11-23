@@ -247,7 +247,7 @@ describe("bookings", () => {
         .from("bookings")
         .update({
           stripe_checkout_session_id: "cs_booking_closed",
-          checkout_closes_at: new Date(Date.now() - 1_000).toISOString(),
+          checkout_closes_at: new Date(Date.now() - 3_600_000).toISOString(),
         })
         .eq("id", closed);
 

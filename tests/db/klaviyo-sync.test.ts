@@ -978,7 +978,9 @@ describe("the Klaviyo sync", () => {
       await admin.from("profiles").update({ phone: null }).eq("id", TEST_IDS.CUSTOMER_2);
       const rearmed = await profileRow(TEST_IDS.CUSTOMER_2);
       expect(rearmed).toMatchObject({ seq: 2, attempts: 0 });
-      expect(new Date(rearmed?.next_attempt_at ?? "").getTime()).toBeLessThanOrEqual(Date.now() + 5_000);
+      // Due by the database's own clock: the claim takes it.
+      const reclaimed = await admin.rpc("claim_klaviyo_profile_jobs", { p_limit: 10, p_customer_ids: [TEST_IDS.CUSTOMER_2] });
+      expect(reclaimed.data).toEqual([{ customer_id: TEST_IDS.CUSTOMER_2, seq: 2 }]);
       await clearProfiles([TEST_IDS.CUSTOMER_2]);
     });
 

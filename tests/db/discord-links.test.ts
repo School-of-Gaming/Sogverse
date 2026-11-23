@@ -22,6 +22,12 @@ const DISCORD_A = { id: "900000000000000001", username: "creeperhug" };
 const DISCORD_B = { id: "900000000000000002", username: "redstone_nerd" };
 const DISCORD_IDS = [DISCORD_A.id, DISCORD_B.id];
 
+/**
+ * An expiry long past by any clock. The database judges expiry by its own
+ * `now()`, which need not agree with this process's clock to the second.
+ */
+const anHourAgo = () => new Date(Date.now() - 60 * 60_000);
+
 describe("discord links", () => {
   let admin: SupabaseClient<Database>;
   let adminAuth: SupabaseClient<Database>;
@@ -149,7 +155,7 @@ describe("discord links", () => {
     });
 
     it("refuses an expired token as expired, every time it is tried", async () => {
-      const token = await mint(DISCORD_A, new Date(Date.now() - 1000));
+      const token = await mint(DISCORD_A, anHourAgo());
       for (let attempt = 0; attempt < 2; attempt++) {
         const { error } = await geduAuth.rpc("consume_discord_link_token", {
           p_token: token,
@@ -209,7 +215,7 @@ describe("discord links", () => {
 
   describe("expired tokens", () => {
     it("are swept when the next token is minted", async () => {
-      await mint(DISCORD_A, new Date(Date.now() - 1000));
+      await mint(DISCORD_A, anHourAgo());
       await mint(DISCORD_B);
       const { data, error } = await admin
         .from("discord_link_tokens")
