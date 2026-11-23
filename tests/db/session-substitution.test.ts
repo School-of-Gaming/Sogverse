@@ -8,7 +8,7 @@ import {
   substitutionRequestDocument,
   liveSubstitutionRequests,
   openSubstitutionRequests,
-  sessionStaffGedu,
+  sessionStaffPeriod,
 } from "@/services/session-substitution/session-substitution.contracts";
 import { substitutionNotificationSnapshot } from "@/lib/substitution-notifications/snapshot.contracts";
 import { myAssignedProductRows } from "@/services/assignments/assignments.contracts";
@@ -201,7 +201,7 @@ function slotInstants(date: string): { starts_at: string; ends_at: string } {
 // ---------------------------------------------------------------------------
 
 const geduFeedSubstitutionHalves = z.object({
-  gedus: z.array(sessionStaffGedu),
+  gedus: z.array(sessionStaffPeriod),
   substitutions: z.array(substitutionRequestDocument),
 });
 
@@ -811,6 +811,7 @@ describe("session substitutions", () => {
       "function:group_assignments_at": [
         "function:file_session_substitution_request",
         "function:gedu_holds_seat_at_session",
+        "function:get_admin_session_feedback",
         "function:set_session_substitution",
       ],
     };
@@ -2791,7 +2792,13 @@ describe("session substitutions", () => {
 
       const halves = geduFeedSubstitutionHalves.parse(data);
       expect(halves.gedus).toEqual([
-        { id: TEST_IDS.GEDU, first_name: expect.any(String), role: "primary" },
+        {
+          id: TEST_IDS.GEDU,
+          first_name: expect.any(String),
+          role: "primary",
+          started_at: expect.any(String),
+          ended_at: null,
+        },
       ]);
       expect(halves.substitutions.map((substitution) => substitution.id)).toEqual([open]);
       // The requester sees their own offer count and no reason.

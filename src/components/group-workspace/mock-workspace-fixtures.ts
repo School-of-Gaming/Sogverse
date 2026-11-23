@@ -240,9 +240,27 @@ const GROUP_TRAINEES = [{ id: GEDU_IDS.oliver, first_name: "Oliver" }] as const;
  */
 const VIEWER_GEDU_ID = GEDU_IDS.sanna;
 
+/**
+ * Both hold the group for the whole fixture: a period opened long before any
+ * scenario's first session and never ended, so every card is staffed by both.
+ */
+const STANDING_SINCE = new Date("2020-01-01T00:00:00Z");
+
 const ASSIGNED_GROUP_GEDUS: readonly StaffingAssignment[] = [
-  { id: GEDU_IDS.sanna, firstName: "Sanna", role: "primary" },
-  { id: GEDU_IDS.petra, firstName: "Petra", role: "primary" },
+  {
+    id: GEDU_IDS.sanna,
+    firstName: "Sanna",
+    role: "primary",
+    startedAt: STANDING_SINCE,
+    endedAt: null,
+  },
+  {
+    id: GEDU_IDS.petra,
+    firstName: "Petra",
+    role: "primary",
+    startedAt: STANDING_SINCE,
+    endedAt: null,
+  },
 ];
 
 /** A camp's five weekday slots; a club's single weekly one. */
@@ -1660,6 +1678,7 @@ export function buildGroupWorkspaceFixture(
             gedus: ASSIGNED_GROUP_GEDUS,
             requests: substitutions,
             sessionDate: dateOf(entry.startsAt),
+            sessionStartsAt: entry.startsAt,
             viewerId: VIEWER_GEDU_ID,
           }),
         },

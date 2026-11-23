@@ -9,7 +9,7 @@ import {
 } from "@/services/gedu-sessions/gedu-sessions.contracts";
 import {
   substitutionRequestDocument,
-  sessionStaffGedu,
+  sessionStaffPeriod,
 } from "@/services/session-substitution/session-substitution.contracts";
 
 /**
@@ -55,7 +55,8 @@ export const adminSessionGroup = z.object({
   roster: z.array(adminSessionRosterEntry),
   sessions: z.array(geduFeedSession),
   /**
-   * The group's staff with their roles, and every non-withdrawn substitution request
+   * The group's assignment periods, ended ones included, with their roles and
+   * bounds, and every non-withdrawn substitution request
    * on it — the staffing derivation's two inputs, in the gedu feed's shapes
    * verbatim.
    *
@@ -69,7 +70,7 @@ export const adminSessionGroup = z.object({
    * admin-only end to end and the reason is what the staffing editor shows
    * beside a request.
    */
-  gedus: z.array(sessionStaffGedu),
+  gedus: z.array(sessionStaffPeriod),
   substitutions: z.array(substitutionRequestDocument),
   /**
    * The group's cancelled sessions the schedule still projects, newest first,

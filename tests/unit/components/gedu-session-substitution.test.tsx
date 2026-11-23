@@ -69,9 +69,12 @@ const SANNA = "4a84d001-b789-41f5-ace3-cfcffa139869";
 const PETRA = "96e29545-ad63-4948-b783-14e91189ad75";
 const JOONAS = "d2826073-1d3f-4023-b45e-f42fea4332ca";
 
+/** Both have held the group since long before any session here. */
+const STANDING = { startedAt: new Date("2020-01-01T00:00:00Z"), endedAt: null };
+
 const GEDUS: readonly StaffingAssignment[] = [
-  { id: SANNA, firstName: "Sanna", role: "primary" },
-  { id: PETRA, firstName: "Petra", role: "assistant" },
+  { id: SANNA, firstName: "Sanna", role: "primary", ...STANDING },
+  { id: PETRA, firstName: "Petra", role: "assistant", ...STANDING },
 ];
 
 const FOUNDED = new Date("2020-01-01T00:00:00.000Z");
@@ -107,6 +110,7 @@ function futureEntry(
       gedus,
       requests,
       sessionDate: FUTURE_DATE,
+      sessionStartsAt: FUTURE_START,
       viewerId,
     }),
     report: null,
@@ -127,6 +131,7 @@ function pastEntry(requests: readonly SubstitutionRequestInput[], viewerId: stri
       gedus: GEDUS,
       requests,
       sessionDate: PAST_DATE,
+      sessionStartsAt: PAST_START,
       viewerId,
     }),
     report: null,
@@ -537,7 +542,7 @@ describe("the staffing line", () => {
           SANNA,
           [
             ...GEDUS,
-            { id: THIRD, firstName: "Joonas", role: "assistant" },
+            { id: THIRD, firstName: "Joonas", role: "assistant", ...STANDING },
           ],
         ),
       ],

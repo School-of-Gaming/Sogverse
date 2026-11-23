@@ -49,7 +49,9 @@ it on cancel would have thrown away a filing the restore then could not return.
 ## Who is expected is derived, never stored
 
 *A gedu is expected at (group, date) iff they hold no non-withdrawn request for it, and
-they are either assigned to the group or hold a `substituted` request for it.*
+they are either assigned to the group at that session or hold a `substituted` request for
+it.* Assigned at that session means an assignment period containing the session's start
+instant — the stored row's start, else the plan's.
 
 That one sentence is the whole model, and it is written twice — once as a SQL predicate,
 once as the TypeScript derivation helper in `src/lib/` that the staff feeds attach to

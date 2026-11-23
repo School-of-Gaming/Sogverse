@@ -10,7 +10,7 @@ import {
 /**
  * The derivation sentence, case by case: *a gedu is expected at (group, date) iff
  * they hold no non-withdrawn request for it, and they are either assigned to the
- * group or hold a `substituted` request for it.*
+ * group at that session or hold a `substituted` request for it.*
  *
  * These are the same cases the DB suite runs against the SQL predicate —
  * assigned, open request, substituted, the chain, cleared, withdrawn — so a
@@ -23,6 +23,10 @@ import {
  */
 const DATE = "2026-04-13";
 const OTHER_DATE = "2026-04-20";
+/** When the session on {@link DATE} starts — 16:30 in Helsinki. */
+const STARTS_AT = new Date("2026-04-13T13:30:00Z");
+/** Long before any session here: a period that has held the group throughout. */
+const LONG_AGO = new Date("2020-01-01T00:00:00Z");
 
 const GEDU = {
   amina: "9a0c1e4e-2a0e-4b6f-8a3d-3f1b2c7d4e50",
@@ -45,8 +49,15 @@ function person(id: string) {
 function assigned(
   id: string,
   role: GeduAssignmentRole = "primary",
+  period: { startedAt?: Date; endedAt?: Date | null } = {},
 ): StaffingAssignment {
-  return { id, firstName: NAMES[id] ?? "Unknown", role };
+  return {
+    id,
+    firstName: NAMES[id] ?? "Unknown",
+    role,
+    startedAt: period.startedAt ?? LONG_AGO,
+    endedAt: period.endedAt ?? null,
+  };
 }
 
 /** An open request, unless `fields` says otherwise. */
@@ -84,12 +95,14 @@ function derive(args: {
   gedus?: StaffingAssignment[];
   requests?: SubstitutionRequestInput[];
   sessionDate?: string;
+  sessionStartsAt?: Date;
   viewerId?: string | null;
 }) {
   return deriveSessionStaffing({
     gedus: args.gedus ?? [],
     requests: args.requests ?? [],
     sessionDate: args.sessionDate ?? DATE,
+    sessionStartsAt: args.sessionStartsAt ?? STARTS_AT,
     viewerId: args.viewerId,
   });
 }
@@ -121,6 +134,113 @@ describe("deriveSessionStaffing — plain assignment", () => {
 
     expect(expectedIds(staffing)).toEqual([GEDU.amina]);
     expect(staffing.requests).toEqual([]);
+  });
+});
+
+describe("deriveSessionStaffing — assigned at that session", () => {
+  // The session on DATE starts at STARTS_AT; every case moves a period's
+  // bounds around that one instant.
+  const before = (ms: number) => new Date(STARTS_AT.getTime() - ms);
+  const after = (ms: number) => new Date(STARTS_AT.getTime() + ms);
+  const HOUR = 3_600_000;
+
+  it("counts a period that starts at the session's very instant", () => {
+    const staffing = derive({
+      gedus: [assigned(GEDU.amina, "primary", { startedAt: STARTS_AT })],
+    });
+
+    expect(expectedIds(staffing)).toEqual([GEDU.amina]);
+  });
+
+  it("does not count a period that starts a moment after the session", () => {
+    const staffing = derive({
+      gedus: [assigned(GEDU.amina, "primary", { startedAt: after(1) })],
+    });
+
+    expect(staffing.expected).toEqual([]);
+  });
+
+  it("does not count a period that ends at the session's very instant", () => {
+    const staffing = derive({
+      gedus: [assigned(GEDU.amina, "primary", { endedAt: STARTS_AT })],
+    });
+
+    expect(staffing.expected).toEqual([]);
+  });
+
+  it("counts a period that ends a moment after the session starts", () => {
+    const staffing = derive({
+      gedus: [assigned(GEDU.amina, "primary", { endedAt: after(1) })],
+    });
+
+    expect(expectedIds(staffing)).toEqual([GEDU.amina]);
+  });
+
+  it("gives a replacement added mid-day only the later session", () => {
+    // Amina was taken off at noon and Bo put on in her place. The morning
+    // session is Amina's; the evening one is Bo's.
+    const noon = new Date("2026-04-13T09:00:00Z");
+    const gedus = [
+      assigned(GEDU.amina, "primary", { endedAt: noon }),
+      assigned(GEDU.bo, "primary", { startedAt: noon }),
+    ];
+
+    const morning = derive({ gedus, sessionStartsAt: before(5 * HOUR) });
+    const evening = derive({ gedus, sessionStartsAt: STARTS_AT });
+
+    expect(expectedIds(morning)).toEqual([GEDU.amina]);
+    expect(expectedIds(evening)).toEqual([GEDU.bo]);
+  });
+
+  it("staffs each session in the role of the period that contains it", () => {
+    // Amina was an assistant until a role change made her primary.
+    const changed = new Date("2026-04-10T12:00:00Z");
+    const gedus = [
+      assigned(GEDU.amina, "assistant", { endedAt: changed }),
+      assigned(GEDU.amina, "primary", { startedAt: changed }),
+    ];
+
+    const earlier = derive({
+      gedus,
+      sessionDate: "2026-04-06",
+      sessionStartsAt: new Date("2026-04-06T13:30:00Z"),
+    });
+    const later = derive({ gedus });
+
+    expect(earlier.expected).toEqual([
+      { id: GEDU.amina, firstName: "Amina", role: "assistant" },
+    ]);
+    expect(later.expected).toEqual([
+      { id: GEDU.amina, firstName: "Amina", role: "primary" },
+    ]);
+  });
+
+  it("leaves the gap between a removal and a re-add to neither period", () => {
+    const gedus = [
+      assigned(GEDU.amina, "primary", { endedAt: before(24 * HOUR) }),
+      assigned(GEDU.amina, "primary", { startedAt: after(24 * HOUR) }),
+    ];
+
+    expect(derive({ gedus }).expected).toEqual([]);
+    expect(
+      expectedIds(derive({ gedus, sessionStartsAt: before(48 * HOUR) })),
+    ).toEqual([GEDU.amina]);
+    expect(
+      expectedIds(derive({ gedus, sessionStartsAt: after(48 * HOUR) })),
+    ).toEqual([GEDU.amina]);
+  });
+
+  it("lets a sub stand in for a gedu who held the session, after they were removed", () => {
+    // Amina filed for the session, a sub was seated, and Amina has since been
+    // taken off the group: the session is still hers to have been absent from.
+    const staffing = derive({
+      gedus: [assigned(GEDU.amina, "primary", { endedAt: after(HOUR) })],
+      requests: [substituted("r1", GEDU.amina, GEDU.bo)],
+    });
+
+    expect(staffing.expected).toEqual([
+      { id: GEDU.bo, firstName: "Bo", role: "primary" },
+    ]);
   });
 });
 
@@ -375,10 +495,10 @@ describe("deriveSessionStaffing — ordering", () => {
 
     const staffing = derive({
       gedus: [
-        { id: GEDU.dara, firstName: "Dara", role: "assistant" },
-        { id: twinB, firstName: "Cai", role: "primary" },
-        { id: GEDU.amina, firstName: "Amina", role: "assistant" },
-        { id: twinA, firstName: "Cai", role: "primary" },
+        { ...assigned(GEDU.dara, "assistant"), firstName: "Dara" },
+        { ...assigned(twinB), firstName: "Cai" },
+        { ...assigned(GEDU.amina, "assistant"), firstName: "Amina" },
+        { ...assigned(twinA), firstName: "Cai" },
       ],
     });
 

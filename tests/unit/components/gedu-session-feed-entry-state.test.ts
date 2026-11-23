@@ -960,7 +960,15 @@ describe("entryCompleteness — a session the viewer has filed an absence for", 
    */
   function absentViewer(status: "open" | "substituted") {
     return deriveSessionStaffing({
-      gedus: [{ id: VIEWER, firstName: "Sanna", role: "primary" }],
+      gedus: [
+        {
+          id: VIEWER,
+          firstName: "Sanna",
+          role: "primary",
+          startedAt: new Date("2020-01-01T00:00:00Z"),
+          endedAt: null,
+        },
+      ],
       requests: [
         {
           id: "req-1",
@@ -973,6 +981,7 @@ describe("entryCompleteness — a session the viewer has filed an absence for", 
         },
       ],
       sessionDate: "2026-03-16",
+      sessionStartsAt: new Date("2026-03-16T14:30:00Z"),
       viewerId: VIEWER,
     });
   }
@@ -1008,7 +1017,15 @@ describe("entryCompleteness — a session the viewer has filed an absence for", 
     // The admin group page renders the same card and has no request of its own,
     // so the session it still has to chase keeps its warning.
     const staffing = deriveSessionStaffing({
-      gedus: [{ id: VIEWER, firstName: "Sanna", role: "primary" }],
+      gedus: [
+        {
+          id: VIEWER,
+          firstName: "Sanna",
+          role: "primary",
+          startedAt: new Date("2020-01-01T00:00:00Z"),
+          endedAt: null,
+        },
+      ],
       requests: [
         {
           id: "req-1",
@@ -1021,6 +1038,7 @@ describe("entryCompleteness — a session the viewer has filed an absence for", 
         },
       ],
       sessionDate: "2026-03-16",
+      sessionStartsAt: new Date("2026-03-16T14:30:00Z"),
     });
     expect(entryCompleteness(past("p", { staffing }), ROSTER)).toBe(
       "needs_attention",

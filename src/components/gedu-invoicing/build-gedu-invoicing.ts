@@ -1,3 +1,4 @@
+import { fromZonedTime } from "date-fns-tz";
 import { formattingLocale, type SupportedLocale } from "@/lib/constants/locales";
 import { breakContaining, breakName } from "@/lib/holiday-breaks";
 import { resolveRequiredTranslation } from "@/lib/i18n/resolve-translation";
@@ -337,7 +338,7 @@ function buildGedu(gedu: GeduInvoicingGedu, context: BuildContext): GeduInvoice 
 
 /**
  * The gedu's own seats on one group, in the shape the staffing derivation
- * reads: their assignment (if any) as the group's one assignment, their
+ * reads: their assignment (if any) as the group's one assignment period, their
  * substitutions as `substituted` requests naming them, and their own absences
  * as requests they filed.
  *
@@ -355,7 +356,7 @@ export function staffingInputs(
   return {
     gedus: gedu.assignments
       .filter((seat) => seat.group_id === groupId)
-      .map((seat) => ({ ...self, role: seat.role })),
+      .map((seat) => ({ ...self, role: seat.role, ...STANDING_PERIOD })),
     requests: [
       ...gedu.substitutions
         .filter((seat) => seat.group_id === groupId)
@@ -386,6 +387,17 @@ export function staffingInputs(
     ],
   };
 }
+
+/**
+ * The bounds every assignment row of the document is read with: a period open
+ * from the epoch and never ended, so each row staffs every date of the month
+ * exactly as an unbounded assignment did. The document does not carry a
+ * period's bounds, so this is what its rows mean.
+ */
+const STANDING_PERIOD = {
+  startedAt: new Date(0),
+  endedAt: null,
+} as const satisfies Pick<StaffingAssignment, "startedAt" | "endedAt">;
 
 function groupLines(
   gedu: GeduInvoicingGedu,
@@ -426,6 +438,9 @@ function groupLines(
       gedus: inputs.gedus,
       requests: inputs.requests,
       sessionDate: date,
+      // Product-local midnight of the date: every period here is a standing
+      // one, so any instant of the date places it inside.
+      sessionStartsAt: fromZonedTime(`${date}T00:00:00`, product.timezone),
       viewerId: gedu.id,
     });
     const expected =

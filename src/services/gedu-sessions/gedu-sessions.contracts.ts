@@ -11,7 +11,7 @@ import {
 import { gamerCreationList } from "@/services/member-flair/member-flair.contracts";
 import {
   substitutionRequestDocument,
-  sessionStaffGedu,
+  sessionStaffPeriod,
 } from "@/services/session-substitution/session-substitution.contracts";
 
 /**
@@ -347,12 +347,14 @@ export const geduGroupFeed = z.object({
   roster: z.array(geduFeedRosterEntry),
   sessions: z.array(geduFeedSession),
   /**
-   * The group's staff, with the role each holds — the first of the two inputs
-   * the staffing derivation takes. It is on the document rather than derived
-   * from anything else here because nothing else on the workspace knows who
-   * teaches the group: the roster is the children.
+   * Every assignment period the group has had, ended ones included, with its
+   * role and bounds — the first of the two inputs the staffing derivation
+   * takes, which places each session in the period containing its start. It is
+   * on the document rather than derived from anything else here because nothing
+   * else on the workspace knows who teaches the group: the roster is the
+   * children. Not a list of who is on the group now.
    */
-  gedus: z.array(sessionStaffGedu),
+  gedus: z.array(sessionStaffPeriod),
   /**
    * Every **non-withdrawn** substitution request on the group, unbounded and in no
    * particular date order — exactly as this document already returns every
@@ -489,7 +491,7 @@ export const traineeGroupFeed = z.object({
     .nullable(),
   roster: z.array(traineeRosterEntry),
   sessions: z.array(traineeFeedSession),
-  gedus: z.array(sessionStaffGedu),
+  gedus: z.array(sessionStaffPeriod),
   cancellations: z.array(sessionCancellation),
   trainees: z.array(groupTrainee),
   planned_sessions: geduGroupFeed.shape.planned_sessions,

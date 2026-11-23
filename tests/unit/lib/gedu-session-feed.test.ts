@@ -38,6 +38,8 @@ const GEDU_A = {
   id: "aaaa1111-1111-4111-8111-111111111111",
   first_name: "Sanna",
   role: "primary" as const,
+  started_at: "2020-01-01T00:00:00Z",
+  ended_at: null,
 };
 
 /** A second primary, so a case can have somebody left standing. */
@@ -45,6 +47,8 @@ const GEDU_B = {
   id: "bbbb2222-2222-4222-8222-222222222222",
   first_name: "Petra",
   role: "primary" as const,
+  started_at: "2020-01-01T00:00:00Z",
+  ended_at: null,
 };
 
 /** The sub — not on the group at all, seated only by a substituted request. */
@@ -629,6 +633,36 @@ describe("buildGeduSessionFeed — staffing", () => {
     // The neighbouring Monday is untouched by a request filed against another.
     expect(byDate(entries, PAST)?.staffing.expected).toHaveLength(2);
     expect(byDate(entries, PAST)?.staffing.requests).toEqual([]);
+  });
+
+  it("staffs each entry by the period containing its start, the row's snapshot first", () => {
+    // Sanna handed the group to Petra on the afternoon of the past Monday, at
+    // 15:00 Helsinki — before the plan's 16:30 start that day.
+    const handover = "2026-03-16T13:00:00.000Z";
+    const gedus = [
+      { ...GEDU_A, ended_at: handover },
+      { ...GEDU_B, started_at: handover },
+    ];
+    const expectedOn = (entries: SessionFeedEntry[], date: string) =>
+      byDate(entries, date)?.staffing.expected.map((gedu) => gedu.id);
+
+    const planned = build({ gedus });
+    expect(expectedOn(planned, "2026-03-09")).toEqual([GEDU_A.id]);
+    expect(expectedOn(planned, PAST)).toEqual([GEDU_B.id]);
+    expect(expectedOn(planned, FUTURE)).toEqual([GEDU_B.id]);
+
+    // A row recorded at 14:00 Helsinki keeps its own start, so that session
+    // stays Sanna's whatever the plan says now.
+    const recorded = build({
+      gedus,
+      sessions: [
+        row(PAST, {
+          starts_at: "2026-03-16T12:00:00.000Z",
+          ends_at: "2026-03-16T13:30:00.000Z",
+        }),
+      ],
+    });
+    expect(expectedOn(recorded, PAST)).toEqual([GEDU_A.id]);
   });
 
   it("seats an approved sub in the absent gedu's place", () => {

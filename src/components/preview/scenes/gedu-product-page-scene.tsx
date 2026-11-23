@@ -220,6 +220,7 @@ export function GeduProductPageScene({
           gedus: fixture.staffingGedus,
           requests: substitutions,
           sessionDate: productLocalDate(entry.startsAt, fixture.sourceTimeZone),
+          sessionStartsAt: entry.startsAt,
           viewerId: fixture.viewerId,
         }),
       })),

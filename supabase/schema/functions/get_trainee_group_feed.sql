@@ -180,15 +180,24 @@ BEGIN
          AND NOT public.group_session_is_cancelled(s.group_id, s.session_date)
     ) AS session_rows;
 
-  -- The group's assigned gedus, as the gedu document names them.
-  SELECT COALESCE(jsonb_agg(entry ORDER BY entry->>'first_name'), '[]'::jsonb)
+  -- Every assignment period the group has had, ended ones included, as the
+  -- gedu document names them.
+  SELECT COALESCE(
+           jsonb_agg(entry ORDER BY first_name, started_at, period_id),
+           '[]'::jsonb
+         )
     INTO v_gedus
     FROM (
       SELECT jsonb_build_object(
         'id',         pr.id,
         'first_name', pr.first_name,
-        'role',       ga.role
-      ) AS entry
+        'role',       ga.role,
+        'started_at', ga.started_at,
+        'ended_at',   ga.ended_at
+      ) AS entry,
+      pr.first_name,
+      ga.started_at,
+      ga.id AS period_id
         FROM public.gedu_group_assignments ga
         JOIN public.profiles pr ON pr.id = ga.gedu_id
        WHERE ga.group_id = p_group_id
@@ -248,7 +257,7 @@ $$;
 -- Name: FUNCTION get_trainee_group_feed(p_group_id uuid); Type: COMMENT; Schema: public; Owner: -
 --
 
-COMMENT ON FUNCTION public.get_trainee_group_feed(p_group_id uuid) IS 'The trainee''s group workspace: the same document get_gedu_group_feed serves, with everything a trainee may not see ABSENT from the wire rather than blanked, so the same page body renders it. A trainee sees what a gamer on the group sees, plus the material link and the roster. Guard-first on assert_role (an admin or a gedu), then gedu_trains_group as a second 42501; an admin passes outright, to preview the trainee''s view. Carries: the product shell with material_url; the group''s public note (never gedu_note); the site''s name, address and public note (never gedu_note); a roster row per active seat with participant_id, first_name, signed_up_at, group_joined_at, an integer `age` (never the birth year or month), gender, both game identities, `has_note` (whether a staff note exists, never its text or editor) and `creations` always []; no parent_email or participant_email. Every stored session a family is shown — a record kept under a cancellation does not travel — with report, report_emailed_at, updated_by and updated_by_first_name, images, and `attendance` always {}; never gedu_note, created_at, created_by or updated_at. `gedus` as {id, first_name, role}; `substitutions` always []; `cancellations` in session_cancellation_document''s shape with the admin-only detail null, none on a holiday date; `trainees` as {id, first_name}; `planned_sessions`, `holiday_breaks` and `final_session_date` as get_gedu_group_feed carries them. Photo-consent answers are not on it and the trainee cannot read them elsewhere: their read policy asks gedu_teaches_gamer, which has no trainee arm.';
+COMMENT ON FUNCTION public.get_trainee_group_feed(p_group_id uuid) IS 'The trainee''s group workspace: the same document get_gedu_group_feed serves, with everything a trainee may not see ABSENT from the wire rather than blanked, so the same page body renders it. A trainee sees what a gamer on the group sees, plus the material link and the roster. Guard-first on assert_role (an admin or a gedu), then gedu_trains_group as a second 42501; an admin passes outright, to preview the trainee''s view. Carries: the product shell with material_url; the group''s public note (never gedu_note); the site''s name, address and public note (never gedu_note); a roster row per active seat with participant_id, first_name, signed_up_at, group_joined_at, an integer `age` (never the birth year or month), gender, both game identities, `has_note` (whether a staff note exists, never its text or editor) and `creations` always []; no parent_email or participant_email. Every stored session a family is shown — a record kept under a cancellation does not travel — with report, report_emailed_at, updated_by and updated_by_first_name, images, and `attendance` always {}; never gedu_note, created_at, created_by or updated_at. `gedus` as get_gedu_group_feed carries them — every assignment period, ended ones included, as {id, first_name, role, started_at, ended_at}; `substitutions` always []; `cancellations` in session_cancellation_document''s shape with the admin-only detail null, none on a holiday date; `trainees` as {id, first_name}; `planned_sessions`, `holiday_breaks` and `final_session_date` as get_gedu_group_feed carries them. Photo-consent answers are not on it and the trainee cannot read them elsewhere: their read policy asks gedu_teaches_gamer, which has no trainee arm.';
 
 
 --

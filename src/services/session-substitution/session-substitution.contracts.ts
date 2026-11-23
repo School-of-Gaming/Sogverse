@@ -416,8 +416,8 @@ export type SubstitutedAdminSubstitutionRequest = z.infer<
 export const adminSubstitutionRequests = z.array(adminSubstitutionRequest);
 
 /**
- * One gedu on a group, with the role they hold — the staffing derivation's
- * first input, and the shape both staff feeds emit it in.
+ * One gedu on a group now, with the role they hold — the shape every staff read
+ * that lists a group's current gedus emits.
  *
  * First name only, exactly as every other staff list on those surfaces: a
  * workspace names colleagues, it does not carry their records.
@@ -429,6 +429,19 @@ export const sessionStaffGedu = z.object({
 });
 
 export type SessionStaffGedu = z.infer<typeof sessionStaffGedu>;
+
+/**
+ * One assignment period on a group — the staffing derivation's first input,
+ * and the shape the three session documents emit it in: every period the
+ * group has had, ended ones included, so each session is staffed by whoever
+ * held the group at its start. `ended_at` is null while the period is current.
+ */
+export const sessionStaffPeriod = sessionStaffGedu.extend({
+  started_at: z.string(),
+  ended_at: z.string().nullable(),
+});
+
+export type SessionStaffPeriod = z.infer<typeof sessionStaffPeriod>;
 
 /**
  * Response of POST /api/substitution-notifications/observe: how many passed

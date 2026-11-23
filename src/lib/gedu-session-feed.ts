@@ -26,7 +26,7 @@ import type {
 import { WITHHELD } from "@/lib/withheld";
 import type {
   SubstitutionRequestDocument,
-  SessionStaffGedu,
+  SessionStaffPeriod,
 } from "@/services/session-substitution/session-substitution.contracts";
 
 /**
@@ -98,10 +98,12 @@ export interface GeduSessionFeedArgs {
    */
   sessions: readonly (GeduFeedSession | TraineeFeedSession)[];
   /**
-   * The group's staff with their roles, exactly as either staff document emits
-   * them — the first input the per-date staffing derivation takes.
+   * The group's assignment periods, ended ones included, exactly as either
+   * staff document emits them — the first input the per-date staffing
+   * derivation takes, which staffs each entry by the periods containing its
+   * start.
    */
-  gedus: readonly SessionStaffGedu[];
+  gedus: readonly SessionStaffPeriod[];
   /**
    * Every non-withdrawn substitution request on the group, any date, as either staff
    * document emits them. The whole array reaches every entry and the derivation
@@ -181,6 +183,8 @@ export function buildGeduSessionFeed(
     id: gedu.id,
     firstName: gedu.first_name,
     role: gedu.role,
+    startedAt: new Date(gedu.started_at),
+    endedAt: gedu.ended_at === null ? null : new Date(gedu.ended_at),
   }));
   const staffingRequests: SubstitutionRequestInput[] = substitutions.map(toSubstitutionRequestInput);
 
@@ -243,11 +247,13 @@ export function buildGeduSessionFeed(
 
     // The whole array goes in and the derivation picks its own date out — one
     // call per entry, and no second place that decides what "this date's
-    // requests" means.
+    // requests" means. The start it is staffed at is the one the entry renders:
+    // the row's snapshot, else the plan's.
     const staffing = deriveSessionStaffing({
       gedus: staffingGedus,
       requests: staffingRequests,
       sessionDate: date,
+      sessionStartsAt: when.startsAt,
       viewerId,
     });
 

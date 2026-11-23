@@ -263,7 +263,11 @@ describe("buildGeduInvoicing", () => {
       // And the derivation reads it as intended: the sub is expected, in the
       // substitution's role.
       expect(
-        deriveSessionStaffing({ ...inputs, sessionDate: "2026-09-09" }).expected,
+        deriveSessionStaffing({
+          ...inputs,
+          sessionDate: "2026-09-09",
+          sessionStartsAt: new Date("2026-09-09T13:00:00Z"),
+        }).expected,
       ).toEqual([{ id: AINO, firstName: "Aino", role: "assistant" }]);
     });
 

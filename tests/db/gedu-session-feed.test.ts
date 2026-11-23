@@ -985,6 +985,57 @@ describe("gedu session feed", () => {
       expect(session?.report_emailed_at).toBeNull();
     });
 
+    it("hands every assignment period of the group, ended ones included, with its bounds", async () => {
+      // GEDU was an assistant here for half of 1999, before the current
+      // primary period the fixture seeds from 2000. The extra period is
+      // removed again afterwards.
+      await seedAssignment(admin, {
+        groupId: GROUP_MINE,
+        geduId: TEST_IDS.GEDU,
+        productId: PRODUCT_MINE,
+        role: "assistant",
+        startedAt: "1999-01-01T00:00:00Z",
+        endedAt: "1999-06-01T00:00:00Z",
+      });
+      try {
+        const { data, error } = await geduAuth.rpc("get_gedu_group_feed", {
+          p_group_id: GROUP_MINE,
+        });
+        expect(error).toBeNull();
+        const feed = geduGroupFeed.parse(data);
+
+        // Same first name, so the earlier period sorts first.
+        expect(
+          feed.gedus.map((gedu) => ({
+            id: gedu.id,
+            role: gedu.role,
+            started_at: Date.parse(gedu.started_at),
+            ended_at: gedu.ended_at === null ? null : Date.parse(gedu.ended_at),
+          })),
+        ).toEqual([
+          {
+            id: TEST_IDS.GEDU,
+            role: "assistant",
+            started_at: Date.parse("1999-01-01T00:00:00Z"),
+            ended_at: Date.parse("1999-06-01T00:00:00Z"),
+          },
+          {
+            id: TEST_IDS.GEDU,
+            role: "primary",
+            started_at: Date.parse("2000-01-01T00:00:00Z"),
+            ended_at: null,
+          },
+        ]);
+      } finally {
+        await admin
+          .from("gedu_group_assignments")
+          .delete()
+          .eq("group_id", GROUP_MINE)
+          .eq("gedu_id", TEST_IDS.GEDU)
+          .not("ended_at", "is", null);
+      }
+    });
+
     it("hands an admin the identical document the assigned gedu reads", async () => {
       // The admin product page's per-group GROUP DETAILS page renders
       // the gedu workspace's page body unchanged, so the two surfaces stay one

@@ -47,6 +47,9 @@ const PETRA = "96e29545-ad63-4948-b783-14e91189ad75";
 const JOONAS = "d2826073-1d3f-4023-b45e-f42fea4332ca";
 
 const SESSION_DATE = "2026-03-16";
+const SESSION_STARTS_AT = new Date("2026-03-16T14:30:00Z");
+/** Every assignment here has held the group since long before the session. */
+const STANDING = { startedAt: new Date("2020-01-01T00:00:00Z"), endedAt: null };
 
 const NAMES: Record<string, string> = {
   [SANNA]: "Sanna",
@@ -125,15 +128,20 @@ function staffingOf(
   gedus: readonly StaffingAssignment[],
   requests: readonly SubstitutionRequestInput[] = [],
 ) {
-  return deriveSessionStaffing({ gedus, requests, sessionDate: SESSION_DATE });
+  return deriveSessionStaffing({
+    gedus,
+    requests,
+    sessionDate: SESSION_DATE,
+    sessionStartsAt: SESSION_STARTS_AT,
+  });
 }
 
 const ONE_PRIMARY: readonly StaffingAssignment[] = [
-  { id: SANNA, firstName: "Sanna", role: "primary" },
+  { id: SANNA, firstName: "Sanna", role: "primary", ...STANDING },
 ];
 const TWO_SEATS: readonly StaffingAssignment[] = [
-  { id: SANNA, firstName: "Sanna", role: "primary" },
-  { id: PETRA, firstName: "Petra", role: "assistant" },
+  { id: SANNA, firstName: "Sanna", role: "primary", ...STANDING },
+  { id: PETRA, firstName: "Petra", role: "assistant", ...STANDING },
 ];
 
 function renderEditor({
