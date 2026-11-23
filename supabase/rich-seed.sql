@@ -99,6 +99,14 @@
 -- Substitutions page has an offer to approve, and gedu@example.com, who has
 -- not answered, finds it in their pool with Offer and Decline (section 11).
 --
+-- ONE GROUP WAS TAKEN OFF gedu@example.com AT THE BUILD. They taught the
+-- online Roblox Obby Club's Ryhmä A from its start, every Thursday written up
+-- as theirs, until the admin handed the group to lucas.moreau@example.com as
+-- the stack was built. Their latest session on it, within the week before,
+-- was one they were expected at, so their My SOG keeps a "Former group" card
+-- for it beside the groups they still teach and the substitutions they cover,
+-- until that session's substitute window closes fifteen days after it (16.7).
+--
 -- ONE CLUB IS HYBRID. The Minecraft Build Club meets at Sogverse-studio,
 -- Kamppi, with gedu@example.com in its Sogverse voice room rather than in the
 -- room, and parent@example.com's Milo and Otso hold seats on it, so the admin,
@@ -1379,10 +1387,17 @@ $$;
 -- apply_group_changes stamps a new assignment period with the moment it runs, which
 -- leaves every session the seeded product already held unstaffed. Backdate the
 -- periods to their product's start so the past sessions have their educator.
+-- Done as the database owner, because no RPC writes a timestamp it did not take
+-- itself, and with the period trigger off for the one statement, because a
+-- period's start never moves once written: this is the seed saying when it was
+-- written, not a period moving.
+RESET ROLE;
+ALTER TABLE public.gedu_group_assignments DISABLE TRIGGER trg_validate_gedu_assignment_periods;
 UPDATE public.gedu_group_assignments a
    SET started_at = LEAST(a.started_at, p.start_date::timestamp AT TIME ZONE p.timezone)
   FROM public.products p
  WHERE p.id = a.product_id;
+ALTER TABLE public.gedu_group_assignments ENABLE TRIGGER trg_validate_gedu_assignment_periods;
 
 COMMIT;
 
@@ -1690,10 +1705,17 @@ $$;
 -- apply_group_changes stamps a new assignment period with the moment it runs, which
 -- leaves every session the seeded product already held unstaffed. Backdate the
 -- periods to their product's start so the past sessions have their educator.
+-- Done as the database owner, because no RPC writes a timestamp it did not take
+-- itself, and with the period trigger off for the one statement, because a
+-- period's start never moves once written: this is the seed saying when it was
+-- written, not a period moving.
+RESET ROLE;
+ALTER TABLE public.gedu_group_assignments DISABLE TRIGGER trg_validate_gedu_assignment_periods;
 UPDATE public.gedu_group_assignments a
    SET started_at = LEAST(a.started_at, p.start_date::timestamp AT TIME ZONE p.timezone)
   FROM public.products p
  WHERE p.id = a.product_id;
+ALTER TABLE public.gedu_group_assignments ENABLE TRIGGER trg_validate_gedu_assignment_periods;
 
 COMMIT;
 
@@ -3862,10 +3884,11 @@ BEGIN
     p_invoice_customer_id => v_customer
   );
 
-  -- One group each, with the gedu who teaches it.
+  -- One group each, with the gedu who teaches it. The Roblox Obby Club's is
+  -- gedu@example.com until 16.7 hands the group to Lucas.
   FOR r IN SELECT * FROM (VALUES
     ('Minecraft Survival Club',   'Ryhmä A',      v_mikko),
-    ('Roblox Obby Club',          'Ryhmä A',      v_lucas),
+    ('Roblox Obby Club',          'Ryhmä A',      v_gedu),
     ('Holiday Minecraft Camp',    'Camp Group A', v_sofia),
     ('Esports Tournament Day',    'Turnaus',      v_gedu),
     ('Game Design Summer Camp',   'Camp Group A', v_aino),
@@ -3887,10 +3910,17 @@ $$;
 -- apply_group_changes stamps a new assignment period with the moment it runs, which
 -- leaves every session the seeded product already held unstaffed. Backdate the
 -- periods to their product's start so the past sessions have their educator.
+-- Done as the database owner, because no RPC writes a timestamp it did not take
+-- itself, and with the period trigger off for the one statement, because a
+-- period's start never moves once written: this is the seed saying when it was
+-- written, not a period moving.
+RESET ROLE;
+ALTER TABLE public.gedu_group_assignments DISABLE TRIGGER trg_validate_gedu_assignment_periods;
 UPDATE public.gedu_group_assignments a
    SET started_at = LEAST(a.started_at, p.start_date::timestamp AT TIME ZONE p.timezone)
   FROM public.products p
  WHERE p.id = a.product_id;
+ALTER TABLE public.gedu_group_assignments ENABLE TRIGGER trg_validate_gedu_assignment_periods;
 
 COMMIT;
 
@@ -4286,7 +4316,48 @@ $$;
 
 COMMIT;
 
--- 16.7 What the year adds up to, a line per Helsinki month: sign-ups, seats
+-- 16.7 gedu@example.com taken off the Roblox Obby Club. They taught its
+-- Ryhmä A from the start, and 16.6 wrote up its every weekly session as theirs;
+-- now the admin moves them off it and seats Lucas in their place, in one batch
+-- of the groups panel, so their period ends at the instant his begins. It runs
+-- after every backdate above, which would otherwise pull Lucas's new period
+-- back to the product's start.
+--
+-- The club meets on Thursdays, so its latest session to have started lies
+-- within a week before the build, inside the period that ended, and
+-- gedu@example.com filed no absence for it. A seed mails no report, so that
+-- session's substitute window runs fifteen product-local days from it, and
+-- their My SOG keeps a "Former group" card for the club for eight to fifteen
+-- days after the build.
+BEGIN;
+SELECT set_config('request.jwt.claims',
+  json_build_object('sub', (SELECT id::text FROM public.profiles
+                             WHERE email = 'admin@example.com'),
+                    'role', 'authenticated')::text, true);
+SET LOCAL ROLE authenticated;
+
+DO $$
+DECLARE
+  v_product uuid := (SELECT product_id FROM public.product_translations
+                      WHERE locale = 'en' AND name = 'Roblox Obby Club');
+  v_group   uuid := (SELECT id FROM public.product_groups
+                      WHERE product_id = v_product AND name = 'Ryhmä A');
+BEGIN
+  PERFORM public.apply_group_changes(
+    v_product,
+    p_gedu_assignments_removed => jsonb_build_array(jsonb_build_object(
+      'groupId', v_group,
+      'geduId', (SELECT id FROM public.profiles WHERE email = 'gedu@example.com'))),
+    p_gedu_assignments_added => jsonb_build_array(jsonb_build_object(
+      'groupId', v_group,
+      'geduId', (SELECT id FROM public.profiles WHERE email = 'lucas.moreau@example.com'),
+      'role', 'primary')));
+END;
+$$;
+
+COMMIT;
+
+-- 16.8 What the year adds up to, a line per Helsinki month: sign-ups, seats
 -- booked, subscriptions ended, and the EUR charged.
 DO $$
 DECLARE r record;
@@ -4366,6 +4437,21 @@ BEGIN
               AND sr.status = 'substituted'
               AND sr.session_date >= current_date
             ORDER BY sr.session_date
+  LOOP RAISE NOTICE '  % : %', r.k, r.n; END LOOP;
+
+  RAISE NOTICE 'rich-seed: groups gedu@example.com was taken off, still on their My SOG';
+  FOR r IN SELECT t.name || ' ' || g.name AS k,
+                  'card until the window of ' || to_char(max(d.session_date), 'Dy DD Mon')
+                  || ' closes' AS n
+             FROM public.gedu_group_assignments a
+             JOIN public.profiles pr ON pr.id = a.gedu_id
+             JOIN public.product_groups g ON g.id = a.group_id
+             JOIN public.product_translations t
+               ON t.product_id = g.product_id AND t.locale = 'en'
+            CROSS JOIN LATERAL public.gedu_unexpired_ended_assignment_dates(a.gedu_id, a.group_id) d
+            WHERE pr.email = 'gedu@example.com'
+              AND a.ended_at IS NOT NULL
+            GROUP BY t.name, g.name
   LOOP RAISE NOTICE '  % : %', r.k, r.n; END LOOP;
 
   RAISE NOTICE 'rich-seed: requests still open, in gedu@example.com''s pool';
