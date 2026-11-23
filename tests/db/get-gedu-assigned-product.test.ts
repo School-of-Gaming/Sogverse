@@ -14,6 +14,7 @@ import {
   deleteTestProducts,
   eraseParticipations,
 } from "./product-helpers";
+import { seedAssignment } from "./assignment-helpers";
 
 /**
  * Auth + return-shape coverage for `get_gedu_assigned_product`. The RPC is
@@ -116,8 +117,8 @@ describe("get_gedu_assigned_product", () => {
     const created = await adminAuth.rpc("apply_group_changes", {
       p_product_id: PRODUCT_GEDU_ON,
       p_added_groups: [
-        { tempId: "tA", name: "Cohort A", geduIds: [TEST_IDS.GEDU] },
-        { tempId: "tB", name: "Cohort B", geduIds: [] },
+        { tempId: "tA", name: "Cohort A", gedus: [{ geduId: TEST_IDS.GEDU, role: "primary" }] },
+        { tempId: "tB", name: "Cohort B", gedus: [] },
       ],
     });
     const { tempMap } = applyGroupChangesResult.parse(created.data);
@@ -221,6 +222,32 @@ describe("get_gedu_assigned_product", () => {
         p_product_id: PRODUCT_GEDU_OFF,
       });
       expect(error?.code).toBe("42501");
+    });
+
+    it("gedu whose period on the product ended → 42501, with or without the group", async () => {
+      const group = await admin
+        .from("product_groups")
+        .insert({ product_id: PRODUCT_GEDU_OFF, name: "Former cohort" })
+        .select("id")
+        .single();
+      expect(group.error).toBeNull();
+      const formerGroupId = group.data!.id;
+      await seedAssignment(admin, {
+        groupId: formerGroupId,
+        geduId: TEST_IDS.GEDU,
+        productId: PRODUCT_GEDU_OFF,
+        endedAt: "2001-01-01T00:00:00Z",
+      });
+
+      const bare = await geduAuth.rpc("get_gedu_assigned_product", {
+        p_product_id: PRODUCT_GEDU_OFF,
+      });
+      expect(bare.error?.code).toBe("42501");
+      const named = await geduAuth.rpc("get_gedu_assigned_product", {
+        p_product_id: PRODUCT_GEDU_OFF,
+        p_group_id: formerGroupId,
+      });
+      expect(named.error?.code).toBe("42501");
     });
 
     it("gedu calling for a non-existent product → 42501 (no assignment row)", async () => {

@@ -343,8 +343,8 @@ const MODERATOR_ADMISSIONS: readonly Admission[] = [
 /**
  * The gedu arms of the membership gate, in order, or `null` for none.
  *
- * - **Assignment** is on `product_id` (cross-group voice mobility), not
- *   `group_id`.
+ * - **Assignment** is a current period (`ended_at` null), on `product_id`
+ *   (cross-group voice mobility), not `group_id`.
  * - **Substitution** reaches the room on the session being substituted and on
  *   no other session of the group — the one place on this surface where an arm
  *   is DATE-SCOPED. It *adds* to the assignment arm rather than narrowing it: a
@@ -375,6 +375,7 @@ async function admitGedu(
     .select("group_id")
     .eq("gedu_id", userId)
     .eq("product_id", productId)
+    .is("ended_at", null)
     .limit(1)
     .maybeSingle();
   if (assignment) return "assignment";

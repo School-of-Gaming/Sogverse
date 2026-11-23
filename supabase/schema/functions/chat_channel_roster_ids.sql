@@ -17,6 +17,7 @@ CREATE FUNCTION public.chat_channel_roster_ids(p_channel_id uuid) RETURNS SETOF 
     JOIN public.product_groups g ON g.id = c.group_id
     JOIN public.gedu_group_assignments ga ON ga.product_id = g.product_id
    WHERE c.id = p_channel_id
+     AND ga.ended_at IS NULL
   UNION
   -- The channel's own group's trainees, who are in its room.
   SELECT t.gedu_id
@@ -34,7 +35,7 @@ $$;
 -- Name: FUNCTION chat_channel_roster_ids(p_channel_id uuid); Type: COMMENT; Schema: public; Owner: -
 --
 
-COMMENT ON FUNCTION public.chat_channel_roster_ids(p_channel_id uuid) IS 'Internal: the account ids a channel''s roster names — the group''s active seat-holders, the product''s assigned gedus, and everyone who has a message in the channel. The single definition behind both get_chat_channel_roster and the send/edit mention validation, so the picker can never offer a name the send would refuse. Not exposed to `authenticated`: it is called from inside the SECURITY DEFINER chat RPCs. The channel''s own group''s trainees are on it too, being members of its room.';
+COMMENT ON FUNCTION public.chat_channel_roster_ids(p_channel_id uuid) IS 'Internal: the account ids a channel''s roster names — the group''s active seat-holders, the product''s currently assigned gedus (a gedu whose period ended stays only through a message of theirs), and everyone who has a message in the channel. The single definition behind both get_chat_channel_roster and the send/edit mention validation, so the picker can never offer a name the send would refuse. Not exposed to `authenticated`: it is called from inside the SECURITY DEFINER chat RPCs. The channel''s own group''s trainees are on it too, being members of its room.';
 
 
 --

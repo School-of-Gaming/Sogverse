@@ -44,6 +44,8 @@ describe("product_list_facets", () => {
 
   /** A second gedu, so one gedu's reading can be shown to leave the other out. */
   let otherGeduId = "";
+  /** A gedu whose only period on the camp has ended: no seat now. */
+  let endedGeduId = "";
 
   const facets = z.array(productListFacetsRow);
 
@@ -84,18 +86,23 @@ describe("product_list_facets", () => {
     );
 
     // Unique per run: CI's database keeps whatever a previous run left behind.
-    const { data: created, error: userError } = await admin.auth.admin.createUser({
-      email: `facets-gedu-${Date.now()}@test.local`,
-      password: "testpassword123",
-      email_confirm: true,
-      user_metadata: { first_name: "Facet", last_name: "Gedu" },
-    });
-    expect(userError).toBeNull();
-    otherGeduId = created.user?.id ?? "";
-    expect(otherGeduId).toBeTruthy();
-    await admin.from("profiles").update({ role: "gedu" }).eq("id", otherGeduId);
-    await admin.from("customer_profiles").delete().eq("user_id", otherGeduId);
-    await admin.from("gedu_profiles").insert({ user_id: otherGeduId, certified: true });
+    const createGedu = async (label: string) => {
+      const { data: created, error: userError } = await admin.auth.admin.createUser({
+        email: `facets-${label}-${Date.now()}@test.local`,
+        password: "testpassword123",
+        email_confirm: true,
+        user_metadata: { first_name: "Facet", last_name: "Gedu" },
+      });
+      expect(userError).toBeNull();
+      const id = created.user?.id ?? "";
+      expect(id).toBeTruthy();
+      await admin.from("profiles").update({ role: "gedu" }).eq("id", id);
+      await admin.from("customer_profiles").delete().eq("user_id", id);
+      await admin.from("gedu_profiles").insert({ user_id: id, certified: true });
+      return id;
+    };
+    otherGeduId = await createGedu("gedu");
+    endedGeduId = await createGedu("ended");
 
     await admin.from("gedu_group_assignments").delete().in("group_id", GROUPS);
     await admin.from("gedu_group_trainees").delete().in("group_id", GROUPS);
@@ -152,6 +159,7 @@ describe("product_list_facets", () => {
     await seedAssignments(admin, [
       { groupId: GROUP, productId: CAMP, geduId: TEST_IDS.GEDU, role: "primary" },
       { groupId: GROUP, productId: CAMP, geduId: otherGeduId, role: "assistant" },
+      { groupId: GROUP, productId: CAMP, geduId: endedGeduId, endedAt: "2025-06-03T00:00:00Z" },
     ]);
 
     const trainees = await admin.from("gedu_group_trainees").insert([
@@ -167,6 +175,7 @@ describe("product_list_facets", () => {
     await admin.from("product_groups").delete().in("id", GROUPS);
     await deleteTestProducts(admin, [CAMP, MUNI_CLUB]);
     if (otherGeduId) await admin.auth.admin.deleteUser(otherGeduId);
+    if (endedGeduId) await admin.auth.admin.deleteUser(endedGeduId);
   });
 
   it("answers one row per product type, each counting what a direct read counts", async () => {
@@ -193,6 +202,8 @@ describe("product_list_facets", () => {
     expect(camp.gedu_ids).toEqual(
       expect.arrayContaining([TEST_IDS.GEDU, otherGeduId]),
     );
+    // A gedu taken off the camp holds no seat on it now.
+    expect(camp.gedu_ids).not.toContain(endedGeduId);
   });
 
   // The gedu filter matches a trainee seat as well as an assignment, so it

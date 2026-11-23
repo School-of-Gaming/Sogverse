@@ -145,7 +145,8 @@ function buildAdminAssignmentSeatsQuery(
   return supabase
     .from("gedu_group_assignments")
     .select(`role, ${ADMIN_SEAT_EMBEDS}`)
-    .eq("gedu_id", geduId);
+    .eq("gedu_id", geduId)
+    .is("ended_at", null);
 }
 
 function buildAdminTraineeSeatsQuery(
@@ -163,9 +164,9 @@ type AdminTraineeSeatQueryRow = QueryData<
 >[number];
 
 /**
- * One standing seat a gedu holds, for the admin user page's "Assigned
- * products" section: a lead assignment (`primary` / `assistant`) or a trainee
- * seat, on one group of one product. A gedu holds at most one seat per
+ * One standing seat a gedu holds now, for the admin user page's "Assigned
+ * products" section: a current assignment period (`primary` / `assistant`) or
+ * a trainee seat, on one group of one product. An ended period is not a seat. A gedu holds at most one seat per
  * product, of either kind, so a product never appears twice.
  *
  * Substitutions are not seats and are not here: a sub covering one afternoon

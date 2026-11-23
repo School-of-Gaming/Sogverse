@@ -428,6 +428,20 @@ describe("get_admin_dashboard", () => {
     expect(groups.error).toBeNull();
 
     await seedAssignment(admin, { groupId: GROUP_STAFFED, geduId: TEST_IDS.GEDU, productId: P_CLEAN });
+    // The two unstaffed groups each held a gedu once. An ended period staffs
+    // nothing now, so both still read as unstaffed below.
+    await seedAssignment(admin, {
+      groupId: GROUP_NO_GEDU,
+      geduId: TEST_IDS.GEDU,
+      productId: P_VOLUNTEER,
+      endedAt: "2001-01-01T00:00:00Z",
+    });
+    await seedAssignment(admin, {
+      groupId: GROUP_EMPTY,
+      geduId: TEST_IDS.GEDU,
+      productId: P_EMPTY_GROUP,
+      endedAt: "2001-01-01T00:00:00Z",
+    });
 
     // --- participations -----------------------------------------------------
     const participations = await admin.from("participations").insert([
@@ -795,7 +809,7 @@ describe("get_admin_dashboard", () => {
       expect(attention(P_VOLUNTEER)?.missing_gedu_fee).toBe(false);
     });
 
-    it("names a group that has members and no educator", () => {
+    it("names a group that has members and no educator now, its ended period aside", () => {
       const product = attention(P_VOLUNTEER);
       expect(product?.groups_without_gedu).toEqual([
         { id: GROUP_NO_GEDU, name: "Orphaned group" },

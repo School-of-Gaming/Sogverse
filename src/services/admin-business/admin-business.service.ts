@@ -194,12 +194,13 @@ export class AdminBusinessService {
     return { month, totalCents: view.totalCents, clubsWithoutFee: view.clubsWithoutFee };
   }
 
-  /** Every gedu's group assignment now: assignments keep no history. */
+  /** Every gedu's group assignment now: the current periods only. */
   private readAssignments() {
     return walkPages("businessAssignments", (from, to) =>
       this.supabase
         .from("gedu_group_assignments")
         .select("gedu_id, group_id, product_id", { count: "exact" })
+        .is("ended_at", null)
         .order("group_id")
         .order("gedu_id")
         .range(from, to),

@@ -17,8 +17,8 @@ BEGIN
   );
 
   -- Actor AND target: the participant must be actively participating in a group
-  -- the caller is assigned to. A gedu may fix a username for the people they
-  -- teach and for nobody else.
+  -- the caller is currently assigned to. A gedu may fix a username for the people
+  -- they teach and for nobody else.
   --
   -- An admin passes this outright. The admin group details page renders
   -- the gedu workspace's roster body — this editor included — for any group of
@@ -31,6 +31,7 @@ BEGIN
      WHERE part.participant_id = p_participant_id
        AND part.status   = 'active'::public.participation_status
        AND ga.gedu_id    = (SELECT auth.uid())
+       AND ga.ended_at IS NULL
   )
   -- The substitution branch: the participant sits in a group the caller holds a live
   -- substitution on. Group-wide within the window, exactly as the assignment arm is
@@ -90,7 +91,7 @@ $$;
 -- Name: FUNCTION set_group_member_minecraft(p_participant_id uuid, p_minecraft_username text, p_minecraft_uuid text); Type: COMMENT; Schema: public; Owner: -
 --
 
-COMMENT ON FUNCTION public.set_group_member_minecraft(p_participant_id uuid, p_minecraft_username text, p_minecraft_uuid text) IS 'Set a group member''s Minecraft username + resolved UUID, scoped to participants actively enrolled in a group the calling gedu teaches. The Mojang lookup happens in the calling route, so a successful edit lands verified. In practice this is always a child: an adult seat carries no linked game account and the roster row shows that slot empty by design. Open to an ADMIN as well as to the assigned gedu, guard-first on assert_role with the group question as a second 42501 — the same shape the session writers and the group feed take. The admin caller is the product page''s per-group GROUP DETAILS page, which renders the gedu workspace''s roster body unchanged, inline editor included; an admin already holds this exact edit on /admin/users/[id], so admitting them here aligns two surfaces on one action rather than granting a power. An admin passes the group half outright and is exempt from nothing else: the target must be a gamer (23514), and a customer or a gamer is refused on the first statement. The group half also admits a LIVE SUBSTITUTION: the participant sits in a group the caller holds a substitution on, window open and certification intact. A sub running the session is the person with the child in front of them and is exactly who can read a handle off their screen.';
+COMMENT ON FUNCTION public.set_group_member_minecraft(p_participant_id uuid, p_minecraft_username text, p_minecraft_uuid text) IS 'Set a group member''s Minecraft username + resolved UUID, scoped to participants actively enrolled in a group the calling gedu holds a current assignment period on. The Mojang lookup happens in the calling route, so a successful edit lands verified. In practice this is always a child: an adult seat carries no linked game account and the roster row shows that slot empty by design. Open to an ADMIN as well as to the currently assigned gedu, guard-first on assert_role with the group question as a second 42501 — the same shape the session writers and the group feed take. The admin caller is the product page''s per-group GROUP DETAILS page, which renders the gedu workspace''s roster body unchanged, inline editor included; an admin already holds this exact edit on /admin/users/[id], so admitting them here aligns two surfaces on one action rather than granting a power. An admin passes the group half outright and is exempt from nothing else: the target must be a gamer (23514), and a customer or a gamer is refused on the first statement. The group half also admits a LIVE SUBSTITUTION: the participant sits in a group the caller holds a substitution on, window open and certification intact. A sub running the session is the person with the child in front of them and is exactly who can read a handle off their screen.';
 
 
 --

@@ -759,6 +759,13 @@ describe("family product feed", () => {
         .insert({ user_id: markerId, certified: true });
 
       await seedAssignment(admin, { groupId: GROUP_SITE, geduId: markerId, productId: PRODUCT_SITE });
+      // The marker once taught the gamer's remote group too, and was taken off it.
+      await seedAssignment(admin, {
+        groupId: GROUP_MINE,
+        geduId: markerId,
+        productId: PRODUCT_MINE,
+        endedAt: "2001-01-01T00:00:00Z",
+      });
 
       marker = await createAuthenticatedClient(email, "testpassword123");
 
@@ -798,6 +805,15 @@ describe("family product feed", () => {
         .parse(data)
         .sessions.find((s) => s.session_date === date);
     }
+
+    it("leaves a gedu whose period on the group ended out of the gedus header", async () => {
+      const { data, error } = await gamerAuth.rpc("get_my_family_product_feed", {
+        p_participation_id: minePlaced,
+      });
+      expect(error).toBeNull();
+      const feed = familyProductFeed.parse(data);
+      expect(feed.gedus.map((g) => g.id)).toEqual([TEST_IDS.GEDU]);
+    });
 
     it("names the gedu who saved the report", async () => {
       const { error } = await geduAuth.rpc("set_group_session_notes", {

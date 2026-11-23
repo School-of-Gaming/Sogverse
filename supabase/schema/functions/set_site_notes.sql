@@ -15,13 +15,15 @@ BEGIN
     CASE WHEN public.is_admin() THEN 'admin' ELSE 'gedu' END::public.user_role
   );
 
-  -- "You run something at this building" — the site-scoped analogue of the
-  -- assignment check, and the half an admin is exempt from.
+  -- "You run something at this building now" — the site-scoped analogue of the
+  -- assignment check, read from current periods only, and the half an admin is
+  -- exempt from.
   IF NOT public.is_admin() AND NOT EXISTS (
     SELECT 1
       FROM public.gedu_group_assignments ga
       JOIN public.products p ON p.id = ga.product_id
      WHERE ga.gedu_id     = (SELECT auth.uid())
+       AND ga.ended_at IS NULL
        AND p.location_id  = p_location_id
        AND p.delivery_mode <> 'online'
   )
@@ -72,7 +74,7 @@ $$;
 -- Name: FUNCTION set_site_notes(p_location_id uuid, p_public_note text, p_gedu_note text); Type: COMMENT; Schema: public; Owner: -
 --
 
-COMMENT ON FUNCTION public.set_site_notes(p_location_id uuid, p_public_note text, p_gedu_note text) IS 'Write a site''s shared family note and its gedu note. The venue ADDRESS is not a parameter and is never touched — it belongs to the location record and is an admin''s to edit through the location itself. Open to an ADMIN, or to a gedu who teaches on a product held at that site — in person or hybrid, the two delivery modes with a site, a hybrid product''s gedu included although they join it online. Last-write-wins on the notes, across products. A live SUBSTITUTION on any group of such a product passes the site half too. The arm is location-shaped like the assignment one beside it rather than borrowed from a group predicate, because the question this function asks is about a BUILDING. It is the owner''s "a sub sees everything the main gedu sees" applied to the lowest-risk write on the surface, which is one fewer special case than carving it out would be.';
+COMMENT ON FUNCTION public.set_site_notes(p_location_id uuid, p_public_note text, p_gedu_note text) IS 'Write a site''s shared family note and its gedu note. The venue ADDRESS is not a parameter and is never touched — it belongs to the location record and is an admin''s to edit through the location itself. Open to an ADMIN, or to a gedu who currently teaches on a product held at that site (a current assignment period) — in person or hybrid, the two delivery modes with a site, a hybrid product''s gedu included although they join it online. Last-write-wins on the notes, across products. A live SUBSTITUTION on any group of such a product passes the site half too. The arm is location-shaped like the assignment one beside it rather than borrowed from a group predicate, because the question this function asks is about a BUILDING. It is the owner''s "a sub sees everything the main gedu sees" applied to the lowest-risk write on the surface, which is one fewer special case than carving it out would be.';
 
 
 --

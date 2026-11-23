@@ -82,6 +82,11 @@ describe("AssignmentsService.getSeatsForGedu", () => {
     for (const url of urls) {
       expect(url.searchParams.get("gedu_id")).toBe("eq.gedu-1");
     }
+    // Only a current assignment period is a seat; trainee seats have no period.
+    const ended = (path: string) =>
+      urls.find((url) => url.pathname === path)?.searchParams.get("ended_at");
+    expect(ended(ASSIGNMENTS_PATH)).toBe("is.null");
+    expect(ended(TRAINEES_PATH)).toBeNull();
 
     expect(seats.map((seat) => [seat.group.id, seat.role])).toEqual([
       ["group-c", "primary"],

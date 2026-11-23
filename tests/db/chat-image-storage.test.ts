@@ -154,7 +154,7 @@ describe("chat image storage policy", () => {
       {
         p_product_id: PRODUCT_LIVE,
         p_added_groups: [
-          { tempId: "tLive", name: "Live", geduIds: [TEST_IDS.GEDU] },
+          { tempId: "tLive", name: "Live", gedus: [{ geduId: TEST_IDS.GEDU, role: "primary" }] },
         ],
       },
     );

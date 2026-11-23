@@ -787,7 +787,8 @@ describe("trainee gedus", () => {
           admin
             .from("gedu_group_assignments")
             .select("group_id, role")
-            .eq("product_id", PRODUCT_BATCH),
+            .eq("product_id", PRODUCT_BATCH)
+            .is("ended_at", null),
         ]);
         return { trainees: trainees.data, assignments: assignments.data };
       };
@@ -840,6 +841,16 @@ describe("trainee gedus", () => {
         trainees: [{ group_id: GROUP_BATCH }],
         assignments: [],
       });
+      // The removal ended the assignment's period rather than deleting it.
+      const history = await admin
+        .from("gedu_group_assignments")
+        .select("role, ended_at")
+        .eq("product_id", PRODUCT_BATCH)
+        .eq("gedu_id", traineeId);
+      expect(history.error).toBeNull();
+      expect(history.data).toHaveLength(1);
+      expect(history.data?.[0].role).toBe("assistant");
+      expect(history.data?.[0].ended_at).not.toBeNull();
     });
   });
 });

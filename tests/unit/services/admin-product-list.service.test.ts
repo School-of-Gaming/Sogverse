@@ -244,6 +244,9 @@ describe("ProductsService.getAdminListPage", () => {
       expect(url.searchParams.get("gedu_id")).toBe("eq.gedu-1");
       expect(url.searchParams.get("select")).toBe("product_id");
     }
+    // Only a current assignment period is a seat; trainee seats have no period.
+    expect(urlsOf(ASSIGNMENTS_PATH)[0].searchParams.get("ended_at")).toBe("is.null");
+    expect(urlsOf(TRAINEES_PATH)[0].searchParams.get("ended_at")).toBeNull();
   });
 
   it("narrows the list to the products the gedu is assigned to or a trainee on", async () => {

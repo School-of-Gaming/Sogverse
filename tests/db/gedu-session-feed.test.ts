@@ -421,6 +421,32 @@ describe("gedu session feed", () => {
       expect(row?.report_emailed_at).toBeNull();
     });
 
+    it("refuses group notes on a group whose period has ended", async () => {
+      // GEDU taught the other group long ago and was taken off it. The period
+      // is removed again afterwards: the rest of this file reads GROUP_OTHER
+      // as a group GEDU never held.
+      await seedAssignment(admin, {
+        groupId: GROUP_OTHER,
+        geduId: TEST_IDS.GEDU,
+        productId: PRODUCT_OTHER,
+        endedAt: "2001-01-01T00:00:00Z",
+      });
+      try {
+        const { error } = await geduAuth.rpc("set_group_notes", {
+          p_group_id: GROUP_OTHER,
+          p_public_note: "not mine any more",
+          p_gedu_note: "",
+        });
+        expect(error?.code).toBe("42501");
+      } finally {
+        await admin
+          .from("gedu_group_assignments")
+          .delete()
+          .eq("group_id", GROUP_OTHER)
+          .eq("gedu_id", TEST_IDS.GEDU);
+      }
+    });
+
     it("refuses site notes for a building the gedu runs nothing at", async () => {
       // The municipality is a real location the gedu can read; what they do not
       // have is a product running there. That is the only thing standing
