@@ -12,6 +12,7 @@ import {
 } from "@/services/session-substitution/session-substitution.contracts";
 import { substitutionNotificationSnapshot } from "@/lib/substitution-notifications/snapshot.contracts";
 import { myAssignedProductRows } from "@/services/assignments/assignments.contracts";
+import { geduGroupFeed } from "@/services/gedu-sessions/gedu-sessions.contracts";
 import {
   createAdminTestClient,
   createAnonTestClient,
@@ -721,6 +722,9 @@ describe("session substitutions", () => {
       "session_substitution_requests",
       "gedu_substitutes_group",
       "gedu_substitutes_session",
+      // The substitution half of gedu_substitutes_group, named on its own: an
+      // EXISTS over gedu_substitutes_session, so the 48-hour start is in it.
+      "gedu_holds_live_substitution_on_group",
     ];
 
     /**
@@ -822,17 +826,21 @@ describe("session substitutions", () => {
       ],
       // Each carries the substitution half itself: the group-wide predicate
       // ORs the ended arm with a live substitution, the report claim with
-      // gedu_substitutes_session, and the two seat reads draw a substitution
-      // arm beside the ended one.
+      // gedu_substitutes_session, the session-write gate with a live
+      // substitution on the group, the two seat reads draw a substitution arm
+      // beside the ended one, and the workspace feed reads the reader's
+      // substitutions beside their ended dates.
       "function:gedu_holds_unexpired_ended_assignment": [
         "function:claim_group_session_report_email",
         "function:gedu_assignment_summaries",
         "function:gedu_unexpired_ended_assignment_dates",
+        "function:gedu_writes_group_session",
       ],
       "function:gedu_unexpired_ended_assignment_dates": [
         "function:gedu_assigned_products",
         "function:gedu_assignment_summaries",
         "function:gedu_substitutes_group",
+        "function:get_gedu_group_feed",
       ],
     };
 
@@ -889,6 +897,7 @@ describe("session substitutions", () => {
         "function:apply_group_changes",
         "function:gedu_teaches_group",
         "function:gedu_teaches_group_product",
+        "function:gedu_writes_group_session",
         "function:is_voice_group_member",
         "function:is_voice_group_moderator",
         "function:claim_group_session_report_email",
@@ -1675,6 +1684,24 @@ describe("session substitutions", () => {
         p_gedu_note: "",
       });
       expect(error).toBeNull();
+    });
+
+    it("tells the workspace a substitute writes every session and holds only their date", async () => {
+      // The page offers Edit, Send and the room from this answer, so it has to
+      // be the database's: writes group-wide, Send on the substituted date.
+      await seedRequest({ date: utcDate(-3), substituteId: subId });
+
+      const sub = await subAuth.rpc("get_gedu_group_feed", { p_group_id: GROUP_A });
+      expect(sub.error).toBeNull();
+      expect(geduGroupFeed.parse(sub.data).viewer_temporary_seat).toEqual({
+        writes_every_session: true,
+        session_dates: [utcDate(-3)],
+      });
+
+      // The group's own gedu holds it outright.
+      const assigned = await geduAuth.rpc("get_gedu_group_feed", { p_group_id: GROUP_A });
+      expect(assigned.error).toBeNull();
+      expect(geduGroupFeed.parse(assigned.data).viewer_temporary_seat).toBeNull();
     });
   });
 

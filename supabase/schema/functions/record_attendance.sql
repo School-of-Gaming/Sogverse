@@ -16,7 +16,7 @@ BEGIN
     CASE WHEN public.is_admin() THEN 'admin' ELSE 'gedu' END::public.user_role
   );
 
-  IF NOT public.is_admin() AND NOT public.gedu_teaches_group(p_group_id) THEN
+  IF NOT public.is_admin() AND NOT public.gedu_writes_group_session(p_group_id, p_session_date) THEN
     RAISE EXCEPTION 'Forbidden' USING ERRCODE = '42501';
   END IF;
 

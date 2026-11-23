@@ -23,7 +23,7 @@ BEGIN
   -- No row and somebody else's row answer the same way. Deliberate: the caller
   -- has no right to learn which of the two it was.
   IF v_group_id IS NULL
-     OR (NOT public.is_admin() AND NOT public.gedu_teaches_group(v_group_id))
+     OR (NOT public.is_admin() AND NOT public.gedu_writes_group_session(v_group_id, v_session_date))
   THEN
     RAISE EXCEPTION 'Forbidden' USING ERRCODE = '42501';
   END IF;

@@ -443,6 +443,7 @@ function groupFeed(productType: ProductType): GeduGroupFeed {
     planned_sessions: [],
     holiday_breaks: [],
     final_session_date: null,
+    viewer_temporary_seat: null,
   };
 }
 

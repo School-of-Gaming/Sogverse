@@ -7,14 +7,7 @@ CREATE FUNCTION public.gedu_substitutes_group(p_group_id uuid) RETURNS boolean
     SET search_path TO ''
     AS $$
   -- A temporary seat: a live substitution on any date of the group…
-  SELECT EXISTS (
-    SELECT 1
-      FROM public.session_substitution_requests r
-     WHERE r.group_id   = p_group_id
-       AND r.substitute_id = (SELECT auth.uid())
-       AND r.status     = 'substituted'::public.substitution_request_status
-       AND public.gedu_substitutes_session(r.group_id, r.session_date)
-  )
+  SELECT public.gedu_holds_live_substitution_on_group(p_group_id)
   -- …or an ended assignment still in its window.
   OR EXISTS (
     SELECT 1

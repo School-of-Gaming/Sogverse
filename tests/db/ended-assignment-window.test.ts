@@ -2,7 +2,10 @@ import { describe, it, expect, beforeAll, afterAll, beforeEach } from "vitest";
 import type { SupabaseClient } from "@supabase/supabase-js";
 import type { Database } from "@/types/database.types";
 import { myAssignedProductRows } from "@/services/assignments/assignments.contracts";
-import { geduAssignmentSummaries } from "@/services/gedu-sessions/gedu-sessions.contracts";
+import {
+  geduAssignmentSummaries,
+  geduGroupFeed,
+} from "@/services/gedu-sessions/gedu-sessions.contracts";
 import { createAdminTestClient, createAuthenticatedClient } from "./helpers";
 import { TEST_IDS, TEST_CREDENTIALS } from "./constants";
 import { createScheduleSlot, createTestProduct, deleteTestProducts } from "./product-helpers";
@@ -413,6 +416,158 @@ describe("an ended assignment keeps a substitute's window", () => {
       p_session_date: utcDate(-20),
     });
     expect(closed.error?.code).toBe(FORBIDDEN);
+  });
+
+  // -------------------------------------------------------------------------
+  // The session writes, and the workspace document that offers them
+  // -------------------------------------------------------------------------
+
+  /**
+   * A period from -20 to -2 that ended two days ago: its sessions run -20 to
+   * -3. The session three days back is still in its window; the one twenty
+   * days back closed five days ago; the one two days back fell after the
+   * period, so it was never theirs.
+   */
+  function endedAcrossTheRun() {
+    return seedAssignment(admin, {
+      groupId: GROUP,
+      geduId: GEDU,
+      productId: PRODUCT,
+      startedAt: nineAm(-20),
+      endedAt: nineAm(-2),
+    });
+  }
+
+  async function writesNotes(offset: number): Promise<boolean> {
+    const { error } = await geduAuth.rpc("set_group_session_notes", {
+      p_group_id: GROUP,
+      p_session_date: utcDate(offset),
+      p_report: "We finished the castle.",
+      p_gedu_note: "",
+    });
+    if (error === null) return true;
+    expect(error.code).toBe(FORBIDDEN);
+    return false;
+  }
+
+  async function marksAttendance(offset: number): Promise<boolean> {
+    const { error } = await geduAuth.rpc("record_attendance", {
+      p_group_id: GROUP,
+      p_session_date: utcDate(offset),
+      p_participant_id: TEST_IDS.GAMER,
+      p_status: "present",
+    });
+    if (error === null) return true;
+    expect(error.code).toBe(FORBIDDEN);
+    return false;
+  }
+
+  async function addsPhoto(offset: number): Promise<boolean> {
+    const { error } = await geduAuth.rpc("add_group_session_image", {
+      p_group_id: GROUP,
+      p_session_date: utcDate(offset),
+      p_width: 800,
+      p_height: 600,
+      p_max_images: 6,
+    });
+    if (error === null) return true;
+    expect(error.code).toBe(FORBIDDEN);
+    return false;
+  }
+
+  /** A photo on the stored session `offset` days back, inserted as the owner. */
+  async function storedPhoto(offset: number): Promise<string> {
+    await stored(offset);
+    const session = await admin
+      .from("group_sessions")
+      .select("id")
+      .eq("group_id", GROUP)
+      .eq("session_date", utcDate(offset))
+      .single();
+    expect(session.error).toBeNull();
+    if (session.data === null) throw new Error("session not stored");
+    const image = await admin
+      .from("group_session_images")
+      .insert({ session_id: session.data.id, width: 800, height: 600 })
+      .select("id")
+      .single();
+    expect(image.error).toBeNull();
+    if (image.data === null) throw new Error("photo not stored");
+    return image.data.id;
+  }
+
+  it("writes a session still in its window, and no other session of the group", async () => {
+    await endedAcrossTheRun();
+    // The group is theirs — a substitute's seat — so the refusals below are
+    // about the session, not about the workspace.
+    expect(await workspaceOpen()).toBe(true);
+
+    expect(await writesNotes(-3)).toBe(true);
+    expect(await marksAttendance(-3)).toBe(true);
+    expect(await addsPhoto(-3)).toBe(true);
+
+    // Their own session, but its window closed five days ago.
+    expect(await writesNotes(-20)).toBe(false);
+    expect(await marksAttendance(-20)).toBe(false);
+    expect(await addsPhoto(-20)).toBe(false);
+
+    // A session after their period ended: never theirs.
+    expect(await writesNotes(-2)).toBe(false);
+    expect(await marksAttendance(-2)).toBe(false);
+  });
+
+  it("removes a photo only from a session still in its window", async () => {
+    await endedAcrossTheRun();
+    const open = await storedPhoto(-3);
+    const closed = await storedPhoto(-20);
+
+    for (const rpc of ["assert_can_delete_session_image", "delete_group_session_image"] as const) {
+      const refused = await geduAuth.rpc(rpc, { p_image_id: closed });
+      expect(refused.error?.code).toBe(FORBIDDEN);
+    }
+    const kept = await admin.from("group_session_images").select("id").eq("id", closed);
+    expect(kept.data).toHaveLength(1);
+
+    const allowed = await geduAuth.rpc("assert_can_delete_session_image", { p_image_id: open });
+    expect(allowed.error).toBeNull();
+    const removed = await geduAuth.rpc("delete_group_session_image", { p_image_id: open });
+    expect(removed.error).toBeNull();
+  });
+
+  it("still lets a gedu current on the group write any of its sessions", async () => {
+    // A role change two days ago: still on the group, so every session is
+    // theirs, the ones before the change included.
+    await seedAssignments(admin, [
+      { groupId: GROUP, geduId: GEDU, productId: PRODUCT, role: "primary", startedAt: nineAm(-30), endedAt: nineAm(-2) },
+      { groupId: GROUP, geduId: GEDU, productId: PRODUCT, role: "assistant", startedAt: nineAm(-2) },
+    ]);
+    expect(await writesNotes(-20)).toBe(true);
+    expect(await writesNotes(-2)).toBe(true);
+  });
+
+  it("tells the workspace which sessions an ended gedu still holds", async () => {
+    await endedAcrossTheRun();
+    const { data, error } = await geduAuth.rpc("get_gedu_group_feed", { p_group_id: GROUP });
+    expect(error).toBeNull();
+    const seat = geduGroupFeed.parse(data).viewer_temporary_seat;
+    if (seat === null) throw new Error("an ended gedu holds the group temporarily");
+
+    // No substitution: only the windowed dates are theirs to write.
+    expect(seat.writes_every_session).toBe(false);
+    expect(seat.session_dates).toContain(utcDate(-3));
+    expect(seat.session_dates).toContain(utcDate(-10));
+    // The closed window, the session after the period, and anything ahead.
+    expect(seat.session_dates).not.toContain(utcDate(-20));
+    expect(seat.session_dates).not.toContain(utcDate(-16));
+    expect(seat.session_dates).not.toContain(utcDate(-2));
+    // Product-local dates, oldest first, each once.
+    expect([...seat.session_dates].sort()).toEqual(seat.session_dates);
+    expect(new Set(seat.session_dates).size).toBe(seat.session_dates.length);
+
+    // The admin reading the same document holds the group outright.
+    const asAdmin = await adminAuth.rpc("get_gedu_group_feed", { p_group_id: GROUP });
+    expect(asAdmin.error).toBeNull();
+    expect(geduGroupFeed.parse(asAdmin.data).viewer_temporary_seat).toBeNull();
   });
 
   it("keeps the ended gedu out of the voice room and the chat roster", async () => {

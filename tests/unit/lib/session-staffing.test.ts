@@ -5,6 +5,7 @@ import {
   type SubstitutionRequestInput,
   type GeduAssignmentRole,
   type StaffingAssignment,
+  type ViewerTemporarySeat,
 } from "@/lib/session-staffing";
 
 /**
@@ -551,5 +552,39 @@ describe("holdsLiveSubstitutionRequest", () => {
     expect(holdsLiveSubstitutionRequest(requests, DATE, GEDU.cai)).toBe(false);
     expect(holdsLiveSubstitutionRequest(requests, OTHER_DATE, GEDU.amina)).toBe(false);
     expect(holdsLiveSubstitutionRequest(requests, OTHER_DATE, GEDU.cai)).toBe(true);
+  });
+});
+
+describe("deriveSessionStaffing — what the viewer's seat reaches", () => {
+  function reach(viewerSeat: ViewerTemporarySeat | null | undefined) {
+    const staffing = deriveSessionStaffing({
+      gedus: [assigned(GEDU.amina)],
+      requests: [],
+      sessionDate: DATE,
+      sessionStartsAt: STARTS_AT,
+      viewerId: GEDU.bo,
+      viewerSeat,
+    });
+    return { write: staffing.viewerMayWrite, send: staffing.viewerMaySend };
+  }
+
+  it("writes and sends every session where the viewer holds the group outright", () => {
+    expect(reach(null)).toEqual({ write: true, send: true });
+    expect(reach(undefined)).toEqual({ write: true, send: true });
+  });
+
+  it("writes and sends only the seat's own dates on an ended assignment", () => {
+    expect(
+      reach({ writesEverySession: false, sessionDates: new Set([OTHER_DATE]) }),
+    ).toEqual({ write: false, send: false });
+    expect(
+      reach({ writesEverySession: false, sessionDates: new Set([DATE]) }),
+    ).toEqual({ write: true, send: true });
+  });
+
+  it("lets a live substitution write every session, and send only its own date", () => {
+    expect(
+      reach({ writesEverySession: true, sessionDates: new Set([OTHER_DATE]) }),
+    ).toEqual({ write: true, send: false });
   });
 });

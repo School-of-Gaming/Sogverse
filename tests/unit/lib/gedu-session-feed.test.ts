@@ -118,6 +118,7 @@ function feedArgs(
     substitutions: [],
     cancellations: [],
     holidayBreaks: [],
+    viewerSeat: null,
     now,
     epoch: EPOCH,
     ...rest,
@@ -617,6 +618,29 @@ describe("buildGeduSessionFeed — staffing", () => {
     expect(new Set(entries.map((entry) => entry.kind))).toEqual(
       new Set(["future", "past", "no_record"]),
     );
+  });
+
+  it("lets a temporary seat reach only the dates the document names", () => {
+    // A gedu taken off the group, still in the window of the past Monday: that
+    // card is theirs to write and send, and the next one is neither.
+    const entries = build({
+      viewerSeat: { writes_every_session: false, session_dates: [PAST] },
+    });
+    expect(byDate(entries, PAST)?.staffing).toMatchObject({
+      viewerMayWrite: true,
+      viewerMaySend: true,
+    });
+    expect(byDate(entries, FUTURE)?.staffing).toMatchObject({
+      viewerMayWrite: false,
+      viewerMaySend: false,
+    });
+
+    // With none, every card is the reader's.
+    for (const entry of build()) {
+      if (entry.kind === "holiday") continue;
+      expect(entry.staffing.viewerMayWrite).toBe(true);
+      expect(entry.staffing.viewerMaySend).toBe(true);
+    }
   });
 
   it("scopes each entry's staffing to its own date", () => {

@@ -348,6 +348,7 @@ function groupFeed(productType: ProductType): GeduGroupFeed {
     planned_sessions: [],
     holiday_breaks: [],
     final_session_date: null,
+    viewer_temporary_seat: null,
   };
 }
 
@@ -1205,5 +1206,61 @@ describe("gedu product page — the final session's creations block", () => {
 
     // One card, drawing the block in both of its two regions.
     expect(screen.getAllByText("1 of 3 added")).toHaveLength(2);
+  });
+});
+
+describe("gedu product page — the voice room a temporary seat reaches", () => {
+  /** Two Mondays of an online club: one behind NOW, one ahead of it. */
+  const PAST = "2026-03-09";
+  const NEXT = "2026-03-23";
+  const plan = [PAST, NEXT].map((date) => ({
+    date,
+    startsAt: new Date(`${date}T14:30:00.000Z`),
+    endsAt: new Date(`${date}T16:00:00.000Z`),
+    cancelled: false,
+  }));
+
+  function renderOnline(seat: GeduGroupFeed["viewer_temporary_seat"]) {
+    const product = assignedProduct("consumer_club");
+    reads.product = {
+      ...product,
+      product: { ...product.product, delivery_mode: "online" },
+      planned_sessions: plan,
+    };
+    const feed = groupFeed("consumer_club");
+    reads.feed = {
+      ...feed,
+      product: { ...feed.product, delivery_mode: "online" },
+      viewer_temporary_seat: seat,
+    };
+
+    return render(
+      <QueryClientProvider client={new QueryClient()}>
+        <NextIntlClientProvider locale="en" messages={messages}>
+          <TimezoneProvider initialTimezone="Europe/Helsinki">
+            <NowProvider initialNow={NOW}>
+              <GeduProductPage productId={IDS.product} viewerId={IDS.gedu} />
+            </NowProvider>
+          </TimezoneProvider>
+        </NextIntlClientProvider>
+      </QueryClientProvider>,
+    );
+  }
+
+  const roomButton = () => screen.queryByRole("button", { name: /^Opens / });
+
+  it("draws the group's room for a gedu holding the group outright", () => {
+    renderOnline(null);
+    expect(roomButton()).not.toBeNull();
+  });
+
+  it("draws no room for a gedu taken off the group, whose dates are all behind them", () => {
+    renderOnline({ writes_every_session: false, session_dates: [PAST] });
+    expect(roomButton()).toBeNull();
+  });
+
+  it("draws the room for a substitute whose date is still ahead", () => {
+    renderOnline({ writes_every_session: true, session_dates: [NEXT] });
+    expect(roomButton()).not.toBeNull();
   });
 });

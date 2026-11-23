@@ -5044,6 +5044,10 @@ export type Database = {
         Args: { p_gedu_id: string; p_product_id: string }
         Returns: boolean
       }
+      gedu_holds_live_substitution_on_group: {
+        Args: { p_group_id: string }
+        Returns: boolean
+      }
       gedu_holds_seat_at_session: {
         Args: { p_gedu_id: string; p_group_id: string; p_session_date: string }
         Returns: boolean
@@ -5102,6 +5106,10 @@ export type Database = {
         Returns: {
           session_date: string
         }[]
+      }
+      gedu_writes_group_session: {
+        Args: { p_group_id: string; p_session_date: string }
+        Returns: boolean
       }
       get_admin_consent_answer_totals: {
         Args: { p_from: string; p_to: string }

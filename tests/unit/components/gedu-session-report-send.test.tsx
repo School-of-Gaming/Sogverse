@@ -333,6 +333,46 @@ describe("SessionFeed — sending a report to the families", () => {
     ).toBeNull();
   });
 
+  it("offers neither Send nor Edit on a session the viewer's seat does not reach", () => {
+    // A gedu taken off the group, on a session whose window has closed: the
+    // database refuses both the save and the claim.
+    renderFeed({
+      entry: pastEntry({
+        staffing: {
+          ...NO_SESSION_STAFFING,
+          viewerMayWrite: false,
+          viewerMaySend: false,
+        },
+      }),
+    });
+    expect(
+      screen.queryByRole("button", { name: copy.sendReportToParents }),
+    ).toBeNull();
+    expect(screen.queryByRole("button", { name: copy.edit })).toBeNull();
+  });
+
+  it("offers Edit and no Send where a substitute writes but may not send", () => {
+    renderFeed({
+      entry: pastEntry({
+        staffing: { ...NO_SESSION_STAFFING, viewerMaySend: false },
+      }),
+    });
+    expect(
+      screen.queryByRole("button", { name: copy.sendReportToParents }),
+    ).toBeNull();
+    expect(screen.getByRole("button", { name: copy.edit })).toBeDefined();
+  });
+
+  it("still says a report went out where the viewer may not send it", () => {
+    renderFeed({
+      entry: pastEntry({
+        reportEmailedAt: SENT_AT,
+        staffing: { ...NO_SESSION_STAFFING, viewerMaySend: false },
+      }),
+    });
+    expect(sentButton().disabled).toBe(true);
+  });
+
   it("renders the sent state from the stored instant alone", () => {
     // No send happened here: a reload, another tab and another assigned gedu
     // all see this, which is the whole reason the instant is on the row.

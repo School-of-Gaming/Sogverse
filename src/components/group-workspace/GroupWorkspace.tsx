@@ -514,6 +514,21 @@ interface GroupWorkspaceProps {
    * that has name-only rows, the rooms would silently vanish from its rail.
    */
   namedOnlyRoomLock: LockExplanation | null;
+  /**
+   * The session dates whose voice room is the reader's, or `null` for every
+   * room the product's plan opens — an admin, a gedu holding the group
+   * outright, a trainee in their own group's room.
+   *
+   * A reader on a **temporary seat** — a substitute, or a gedu taken off the
+   * group whose window is still open — is admitted to this group's room on
+   * those dates and to no sister group's room at all, so the rail draws this
+   * group's Join only while one of those dates is still ahead, and no Join on a
+   * sister group. The dates are the workspace document's, never derived here.
+   *
+   * Required for the same reason as {@link trainees}: a shell that forgot it
+   * would draw a Join on rooms that refuse the reader.
+   */
+  voiceSessionDates: ReadonlySet<string> | null;
 }
 
 export function GroupWorkspace({
@@ -552,6 +567,7 @@ export function GroupWorkspace({
   groupHeading,
   trainees,
   namedOnlyRoomLock,
+  voiceSessionDates,
 }: GroupWorkspaceProps) {
   const t = useTranslations("gedu.sessionDetails");
   const p = useTranslations("productType");
@@ -644,17 +660,42 @@ export function GroupWorkspace({
       }),
     [data.planned_sessions, openEnded, now, locale, timeZone],
   );
+  // A temporary seat's room is this group's on its own dates alone, so its
+  // countdown is read across those dates of the plan and no others.
   const ownVoiceState = useMemo(
     () =>
       computeVoiceState({
-        plan: markCancelled(data.planned_sessions, cancelledDates),
+        plan: markCancelled(
+          voiceSessionDates === null
+            ? data.planned_sessions
+            : data.planned_sessions.filter((session) =>
+                voiceSessionDates.has(session.date),
+              ),
+          cancelledDates,
+        ),
         openEnded,
         now,
         locale,
         timeZone,
       }),
-    [data.planned_sessions, openEnded, now, locale, timeZone, cancelledDates],
+    [
+      data.planned_sessions,
+      voiceSessionDates,
+      openEnded,
+      now,
+      locale,
+      timeZone,
+      cancelledDates,
+    ],
   );
+  // Whether each Join is the reader's to draw. A product with no voice room
+  // draws none; a temporary seat draws this group's only while one of its
+  // dates is still ahead, and never a sister group's.
+  const drawsOwnJoin =
+    hasVoiceRoom(data.product.delivery_mode) &&
+    (voiceSessionDates === null || ownVoiceState.hasUpcomingSession);
+  const drawsPeerJoins =
+    hasVoiceRoom(data.product.delivery_mode) && voiceSessionDates === null;
 
   /**
    * The member the open dialog is about, found in this group's roster — the
@@ -856,7 +897,7 @@ export function GroupWorkspace({
             <GroupRailCard
               group={assignedGroup}
               heading={groupHeading}
-              deliveryMode={data.product.delivery_mode}
+              drawsJoin={drawsOwnJoin}
               voiceRoom={voiceRoom}
               voiceIsOpen={ownVoiceState.voiceIsOpen}
               opensDate={ownVoiceState.opensDate}
@@ -876,6 +917,7 @@ export function GroupWorkspace({
           <OtherGroupsRailCard
             peerGroups={peerGroups}
             deliveryMode={data.product.delivery_mode}
+            drawsJoins={drawsPeerJoins}
             voiceRoom={voiceRoom}
             voiceIsOpen={voiceState.voiceIsOpen}
             opensDate={voiceState.opensDate}
@@ -1102,6 +1144,7 @@ function ParticipantCount({ count }: { count: number }) {
 function OtherGroupsRailCard({
   peerGroups,
   deliveryMode,
+  drawsJoins,
   voiceRoom,
   voiceIsOpen,
   opensDate,
@@ -1115,8 +1158,10 @@ function OtherGroupsRailCard({
    * on the row to draw, and its Join as the locked control.
    */
   peerGroups: readonly WorkspaceGroupRow[];
-  /** Each row draws its Join where the product has a voice room. */
+  /** A name-only row draws its locked Join where the product has a voice room. */
   deliveryMode: DeliveryMode;
+  /** Whether a full row draws its Join — the product has a room, and it is the reader's. */
+  drawsJoins: boolean;
   voiceRoom: ProductVoiceRoom;
   voiceIsOpen: boolean;
   opensDate: string;
@@ -1183,7 +1228,7 @@ function OtherGroupsRailCard({
                   />
                 )}
               </div>
-              {hasVoiceRoom(deliveryMode) && (
+              {drawsJoins && (
                 <div className="flex justify-center pt-0.5">
                   <JoinVoiceButton
                     voiceRoom={voiceRoom}
@@ -1276,7 +1321,7 @@ function rosterAvatarUrl(
 function GroupRailCard({
   group,
   heading,
-  deliveryMode,
+  drawsJoin,
   voiceRoom,
   voiceIsOpen,
   opensDate,
@@ -1294,8 +1339,8 @@ function GroupRailCard({
   group: WorkspaceGroup;
   /** The card's heading, or `undefined` for the gedu's "My Group". */
   heading?: string;
-  /** The card draws the group's Join where the product has a voice room. */
-  deliveryMode: DeliveryMode;
+  /** Whether the card draws the group's Join — the product has a room, and it is the reader's. */
+  drawsJoin: boolean;
   voiceRoom: ProductVoiceRoom;
   voiceIsOpen: boolean;
   opensDate: string;
@@ -1348,7 +1393,7 @@ function GroupRailCard({
       title={heading ?? t("railGroupHeading")}
       trailing={<ParticipantCount count={group.participant_count} />}
     >
-      {hasVoiceRoom(deliveryMode) && (
+      {drawsJoin && (
         <div className="flex justify-center">
           <JoinVoiceButton
             voiceRoom={voiceRoom}

@@ -147,6 +147,37 @@ export interface SessionStaffing {
    * expected, so the two fields are never both set.
    */
   viewerRequest: SubstitutionRequestState | null;
+  /**
+   * Whether the viewer may write this session up — its register, its report
+   * and note, its photos. `true` wherever the viewer holds the group outright,
+   * and with no viewer at all; on a {@link ViewerTemporarySeat}, every session
+   * where a live substitution writes group-wide, else only the seat's dates.
+   */
+  viewerMayWrite: boolean;
+  /**
+   * Whether the viewer may send this session's report to the families. `true`
+   * wherever the viewer holds the group outright, and with no viewer at all; on
+   * a {@link ViewerTemporarySeat}, only the seat's dates, whatever it writes.
+   */
+  viewerMaySend: boolean;
+}
+
+/**
+ * What a reader holding the group through a **temporary seat** may reach — a
+ * substitute, or a gedu taken off the group whose window is still open — as the
+ * workspace document states it. A reader who holds the group outright has none.
+ *
+ * This is the second question the module answers, and it has a different
+ * source from the first: *who is expected* is derived here from the periods and
+ * the requests, while *what the viewer's seat reaches* is the database's answer,
+ * handed in whole, because the window behind it has exactly one definition and
+ * it is in SQL.
+ */
+export interface ViewerTemporarySeat {
+  /** A live substitution on the group writes every session of it. */
+  writesEverySession: boolean;
+  /** Product-local `YYYY-MM-DD` — the sessions the seat holds. */
+  sessionDates: ReadonlySet<string>;
 }
 
 /**
@@ -164,6 +195,8 @@ export const NO_SESSION_STAFFING: Readonly<SessionStaffing> = Object.freeze({
   viewerIsExpected: false,
   hasViewer: false,
   viewerRequest: null,
+  viewerMayWrite: true,
+  viewerMaySend: true,
 });
 
 export interface SessionStaffingArgs {
@@ -180,6 +213,11 @@ export interface SessionStaffingArgs {
   sessionStartsAt: Date;
   /** The signed-in gedu, where there is one. */
   viewerId?: string | null;
+  /**
+   * The viewer's temporary seat on the group, or `null` (the default) where
+   * they hold it outright or there is no viewer — every session is theirs.
+   */
+  viewerSeat?: ViewerTemporarySeat | null;
 }
 
 /**
@@ -189,8 +227,14 @@ export interface SessionStaffingArgs {
 export function deriveSessionStaffing(
   args: SessionStaffingArgs,
 ): SessionStaffing {
-  const { gedus, requests, sessionDate, sessionStartsAt, viewerId = null } =
-    args;
+  const {
+    gedus,
+    requests,
+    sessionDate,
+    sessionStartsAt,
+    viewerId = null,
+    viewerSeat = null,
+  } = args;
 
   const live = requests.filter(
     (request) =>
@@ -242,6 +286,26 @@ export function deriveSessionStaffing(
       viewerId !== null && expectedList.some((gedu) => gedu.id === viewerId),
     hasViewer: viewerId !== null,
     viewerRequest: states.find((state) => state.isViewers) ?? null,
+    ...viewerSessionReach(viewerSeat, sessionDate),
+  };
+}
+
+/**
+ * What the viewer's seat lets them do on one session: write it up, and send
+ * it. A seat holding the group outright reaches both on every session; a
+ * temporary seat sends only on its own dates, and writes on them too unless a
+ * live substitution writes every session — the same answer
+ * `gedu_writes_group_session` and the report claim give in SQL.
+ */
+function viewerSessionReach(
+  seat: ViewerTemporarySeat | null,
+  sessionDate: string,
+): Pick<SessionStaffing, "viewerMayWrite" | "viewerMaySend"> {
+  if (seat === null) return { viewerMayWrite: true, viewerMaySend: true };
+  const held = seat.sessionDates.has(sessionDate);
+  return {
+    viewerMayWrite: seat.writesEverySession || held,
+    viewerMaySend: held,
   };
 }
 

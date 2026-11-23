@@ -380,7 +380,13 @@ at inside the ended period — not cancelled, not one they filed an absence for 
 stays theirs until that session's window closes, by the same end definition, and the card
 (the substitute's, named as their former group) stands until the latest of those
 closings. The report mail admits them for those dates alone, the voice room and the chat
-roster not at all, and a gedu still current on the group gets nothing extra. The dashboard reads that draw the card ask only
+roster not at all, and a gedu still current on the group gets nothing extra. Where a
+substitute writes every session of the group, they write only those dates too: the run
+is no longer theirs, so the session writes ask a session-scoped gate and the group-level
+ones (notes, roster, game accounts) stay as a substitute's. The workspace document
+states what the reader's temporary seat reaches — whether they write every session, and
+which dates are theirs to send and to join — and the page offers Edit, Send and the room
+from that answer alone. The dashboard reads that draw the card ask only
 whether the substitution has expired, which is why the card outlives the lock rather than
 appearing with it.
 

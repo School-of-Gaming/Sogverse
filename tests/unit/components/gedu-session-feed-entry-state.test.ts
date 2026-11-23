@@ -1112,6 +1112,24 @@ describe("entryCompleteness — a session the viewer was not expected at", () =>
     expect(entryCompleteness(past("p", { staffing }), ROSTER)).toBeNull();
   });
 
+  it("withholds it from a gedu taken off the group once the session's window has closed", () => {
+    // Inside their ended period, so they were expected — but the seat no
+    // longer reaches the date, and the dashboard's ended card drops it too.
+    const staffing = {
+      ...staffingWithViewer({
+        startedAt: "2026-01-01T00:00:00Z",
+        endedAt: "2026-03-20T00:00:00Z",
+      }),
+      viewerMayWrite: false,
+      viewerMaySend: false,
+    };
+    expect(staffing.viewerIsExpected).toBe(true);
+    expect(entryCompleteness(past("p", { staffing }), ROSTER)).toBeNull();
+    expect(
+      entryCompleteness(sentPast("p", { staffing }), ROSTER),
+    ).toBe("complete");
+  });
+
   it("withholds it from a substitute on the group's other dates", () => {
     // A viewer with no period at all: they reach the group through a
     // substitution on some other date, and this session is not theirs.

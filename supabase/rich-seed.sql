@@ -3916,21 +3916,6 @@ BEGIN
 END;
 $$;
 
--- apply_group_changes stamps a new assignment period with the moment it runs, which
--- leaves every session the seeded product already held unstaffed. Backdate the
--- periods to their product's start so the past sessions have their educator.
--- Done as the database owner, because no RPC writes a timestamp it did not take
--- itself, and with the period trigger off for the one statement, because a
--- period's start never moves once written: this is the seed saying when it was
--- written, not a period moving.
-RESET ROLE;
-ALTER TABLE public.gedu_group_assignments DISABLE TRIGGER trg_validate_gedu_assignment_periods;
-UPDATE public.gedu_group_assignments a
-   SET started_at = LEAST(a.started_at, p.start_date::timestamp AT TIME ZONE p.timezone)
-  FROM public.products p
- WHERE p.id = a.product_id;
-ALTER TABLE public.gedu_group_assignments ENABLE TRIGGER trg_validate_gedu_assignment_periods;
-
 COMMIT;
 
 -- 16.4 The bookings, through section 8's checkout path, in the order the
@@ -4262,6 +4247,25 @@ BEGIN
    WHERE p.id = u.id AND p.role IN ('customer', 'gamer');
 END;
 $$;
+COMMIT;
+
+-- apply_group_changes stamped 16.3's assignment periods with the moment it
+-- ran, which leaves every session the seeded products already held unstaffed.
+-- Backdate the periods to their product's start so the past sessions have their
+-- educator — here, after 16.5 has moved the past camps and events back to when
+-- they ran, so their periods reach their sessions too. Done as the database
+-- owner, because no RPC writes a timestamp it did not take itself, and with the
+-- period trigger off for the one statement, because a period's start never
+-- moves once written: this is the seed saying when it was written, not a period
+-- moving.
+BEGIN;
+RESET ROLE;
+ALTER TABLE public.gedu_group_assignments DISABLE TRIGGER trg_validate_gedu_assignment_periods;
+UPDATE public.gedu_group_assignments a
+   SET started_at = LEAST(a.started_at, p.start_date::timestamp AT TIME ZONE p.timezone)
+  FROM public.products p
+ WHERE p.id = a.product_id;
+ALTER TABLE public.gedu_group_assignments ENABLE TRIGGER trg_validate_gedu_assignment_periods;
 COMMIT;
 
 -- 16.6 Every session of the year's products written up by the gedu who

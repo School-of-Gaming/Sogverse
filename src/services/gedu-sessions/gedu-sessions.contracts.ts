@@ -402,9 +402,31 @@ export const geduGroupFeed = z.object({
    * `YYYY-MM-DD`; null on an open-ended product, which has none.
    */
   final_session_date: z.string().nullable(),
+  /**
+   * What the reader's **temporary seat** reaches, or `null` where they hold the
+   * group outright — an admin, or a gedu with a current period on it — and may
+   * write and send every session.
+   *
+   * A substitute and a gedu taken off the group reach this document through
+   * the same temporary arm, and the database answers for both:
+   * `writes_every_session` is whether a live substitution lets them write any
+   * session of the group, and `session_dates` are the product-local dates they
+   * hold it for — the ones they substitute and the ones their ended assignment
+   * still holds. Only those are theirs to send, and only those rooms. The
+   * window behind the dates is the database's; nothing here derives one.
+   */
+  viewer_temporary_seat: z
+    .object({
+      writes_every_session: z.boolean(),
+      session_dates: z.array(z.string()),
+    })
+    .nullable(),
 });
 
 export type GeduGroupFeed = z.infer<typeof geduGroupFeed>;
+export type ViewerTemporarySeatDocument = NonNullable<
+  GeduGroupFeed["viewer_temporary_seat"]
+>;
 export type GeduFeedSession = z.infer<typeof geduFeedSession>;
 export type GeduFeedRosterEntry = z.infer<typeof geduFeedRosterEntry>;
 export type GeduFeedSite = z.infer<typeof geduFeedSite>;

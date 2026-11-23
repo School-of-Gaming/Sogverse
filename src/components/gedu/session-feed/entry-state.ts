@@ -316,7 +316,9 @@ export type SessionCompleteness = "needs_attention" | "complete";
  * to can never be a different date from the one the card is about. A surface
  * with no viewer withholds nothing. The check is not withheld with it: a
  * session somebody else finished is finished, and saying so is more use than
- * silence.
+ * silence. The same holds for a session the viewer may no longer send — a gedu
+ * taken off the group whose window on it has closed — which the SQL drops from
+ * an ended card's count in the same way.
  *
  * **This derivation exists twice — here for the card, and in SQL for the
  * dashboard badge — and now on FOUR conditions.** A change to either half is a
@@ -351,6 +353,11 @@ export function entryCompleteness(
   // A surface with no viewer withholds nothing, which is what keeps the admin
   // group page flagging a session the admin still has to chase.
   if (entry.staffing.hasViewer && !entry.staffing.viewerIsExpected) return null;
+  // Nor is one the viewer can no longer finish: a gedu taken off the group
+  // keeps only the sessions still in their window, and a session they may not
+  // send is out of their reach — the dashboard's ended card drops it the same
+  // way. Read off the staffing, so the date is the card's own.
+  if (!entry.staffing.viewerMaySend) return null;
   return entry.owed && roster.some((gamer) => isExpectedOnEntry(entry, gamer))
     ? "needs_attention"
     : null;

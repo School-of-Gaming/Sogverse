@@ -346,8 +346,13 @@ export function SessionFeedItem({
   // rule — so the card cannot drift from the predicates the tests aim at, and
   // the two editors stay exact complements (exactly one ever opens).
   const live = isLiveEntry(entry, now);
-  const recordable = isEditableEntry(entry, now);
-  const plannable = isPlannableEntry(entry, now);
+  // Whether this session is the viewer's to write at all — false only for a
+  // reader on a temporary seat, on a date the seat does not reach. Neither
+  // editor opens then, and the card carries no Edit: the database would refuse
+  // the save.
+  const writable = entry.staffing.viewerMayWrite;
+  const recordable = writable && isEditableEntry(entry, now);
+  const plannable = writable && isPlannableEntry(entry, now);
   const editorId = useId();
 
   /**
@@ -488,22 +493,24 @@ export function SessionFeedItem({
           <SessionDateLine labels={labels} muted />
           <div className="flex items-center gap-2">
             <span>{t("noRecordLabel")}</span>
-            <Button
-              ref={registerEditButton}
-              type="button"
-              variant="ghost"
-              size="sm"
-              onClick={onToggleEdit}
-              aria-expanded={editing}
-              aria-controls={editorId}
-              // Shorter and quieter than the card's Edit button: this row is a
-              // 2rem line, and a full-size control in it would make the muted
-              // gaps the tallest rows in the feed.
-              className="-my-1 h-6 gap-1 px-2 text-[11px]"
-            >
-              <Pencil className="h-3 w-3" aria-hidden />
-              {t("edit")}
-            </Button>
+            {recordable && (
+              <Button
+                ref={registerEditButton}
+                type="button"
+                variant="ghost"
+                size="sm"
+                onClick={onToggleEdit}
+                aria-expanded={editing}
+                aria-controls={editorId}
+                // Shorter and quieter than the card's Edit button: this row is a
+                // 2rem line, and a full-size control in it would make the muted
+                // gaps the tallest rows in the feed.
+                className="-my-1 h-6 gap-1 px-2 text-[11px]"
+              >
+                <Pencil className="h-3 w-3" aria-hidden />
+                {t("edit")}
+              </Button>
+            )}
           </div>
         </div>
         {/* A pre-epoch gap carries the region like any other row, and on an
@@ -548,7 +555,10 @@ export function SessionFeedItem({
    * is gated on there being a report rather than on the send being available.
    */
   const reportSend =
-    entry.kind === "past" && hasReport(entry.report) ? (
+    entry.kind === "past" &&
+    hasReport(entry.report) &&
+    // A session the viewer may not send keeps the row only to say it went.
+    (entry.staffing.viewerMaySend || sentAtLabel !== null) ? (
       <SessionReportSend
         sentAtLabel={sentAtLabel}
         sending={sending}
