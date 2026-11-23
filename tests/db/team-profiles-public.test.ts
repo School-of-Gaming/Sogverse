@@ -93,7 +93,7 @@ describe("public team profiles", () => {
       email: `public-team-${firstName.toLowerCase()}-${Date.now()}-${minted.length}@test.local`,
       password: PASSWORD,
       email_confirm: true,
-      user_metadata: { first_name: firstName, last_name: lastName },
+      user_metadata: { first_name: firstName, last_name: lastName, locale: "en" },
     });
     expect(error).toBeNull();
     const id = data.user?.id ?? "";

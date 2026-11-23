@@ -262,7 +262,7 @@ describe("session substitutions", () => {
         email: account.email,
         password: "testpassword123",
         email_confirm: true,
-        user_metadata: { first_name: account.first, last_name: account.last },
+        user_metadata: { first_name: account.first, last_name: account.last, locale: "en" },
       });
       expect(error).toBeNull();
       const id = created.user?.id ?? "";
@@ -3229,7 +3229,7 @@ describe("session substitutions", () => {
         email,
         password: "testpassword123",
         email_confirm: true,
-        user_metadata: { first_name: "Slack", last_name: "Admin" },
+        user_metadata: { first_name: "Slack", last_name: "Admin", locale: "en" },
       });
       expect(error).toBeNull();
       slackAdminId = data.user?.id ?? "";

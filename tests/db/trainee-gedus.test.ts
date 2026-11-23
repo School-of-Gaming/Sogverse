@@ -157,7 +157,7 @@ describe("trainee gedus", () => {
       email: traineeEmail,
       password: "testpassword123",
       email_confirm: true,
-      user_metadata: { first_name: "Tiina", last_name: "Trainee" },
+      user_metadata: { first_name: "Tiina", last_name: "Trainee", locale: "en" },
     });
     expect(error).toBeNull();
     traineeId = created.user?.id ?? "";
@@ -649,7 +649,7 @@ describe("trainee gedus", () => {
         email: secondEmail,
         password: "testpassword123",
         email_confirm: true,
-        user_metadata: { first_name: "Aarne", last_name: "Trainee" },
+        user_metadata: { first_name: "Aarne", last_name: "Trainee", locale: "en" },
       });
       expect(createError).toBeNull();
       const secondId = created.user?.id ?? "";

@@ -60,7 +60,7 @@ describe("create_gamer() atomic promotion", () => {
       email,
       password: "testpassword123",
       email_confirm: true,
-      user_metadata: { first_name: "Test", last_name: "User" },
+      user_metadata: { first_name: "Test", last_name: "User", locale: "en" },
     });
     expect(error).toBeNull();
     createdUserIds.push(data.user!.id);

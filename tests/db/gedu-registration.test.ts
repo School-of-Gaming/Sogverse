@@ -63,6 +63,7 @@ describe("gedu registration + certification RPCs", () => {
         email: `gedu-stamp-${Date.now()}-${stampUserIds.length}@test.local`,
         password: "testpassword123",
         email_confirm: true,
+        user_metadata: { locale: "en" },
       });
       expect(error).toBeNull();
       const id = created.user!.id;
@@ -139,7 +140,7 @@ describe("gedu registration + certification RPCs", () => {
           email,
           password: "testpassword123",
           email_confirm: true,
-          user_metadata: { first_name: "Reg", last_name: "Tester" },
+          user_metadata: { first_name: "Reg", last_name: "Tester", locale: "en" },
         });
       expect(createError).toBeNull();
       createdUserId = created.user!.id;
@@ -206,7 +207,7 @@ describe("gedu registration + certification RPCs", () => {
         email,
         password: "testpassword123",
         email_confirm: true,
-        user_metadata: { first_name: "Games", last_name: "Tester" },
+        user_metadata: { first_name: "Games", last_name: "Tester", locale: "en" },
       });
       gameAccountUserId = created.user!.id;
 

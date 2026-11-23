@@ -1914,7 +1914,7 @@ describe("gedu session feed", () => {
         email,
         password: "testpassword123",
         email_confirm: true,
-        user_metadata: { first_name: "Ruut", last_name: "Marker" },
+        user_metadata: { first_name: "Ruut", last_name: "Marker", locale: "en" },
       });
       expect(error).toBeNull();
       markerId = data.user!.id;

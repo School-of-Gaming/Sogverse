@@ -43,7 +43,7 @@ describe("gedu qualifications", () => {
       email,
       password: PASSWORD,
       email_confirm: true,
-      user_metadata: { first_name: "Qualification", last_name: label },
+      user_metadata: { first_name: "Qualification", last_name: label, locale: "en" },
     });
     expect(error).toBeNull();
     const userId = data.user!.id;

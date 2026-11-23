@@ -118,7 +118,7 @@ describe("gamer sign-in mode", () => {
       email: PARENT_EMAIL,
       password: "testpassword123",
       email_confirm: true,
-      user_metadata: { first_name: "Boundary", last_name: "Parentson" },
+      user_metadata: { first_name: "Boundary", last_name: "Parentson", locale: "en" },
     });
     parentId = parent.user!.id;
     await admin.rpc("set_pin_for_user", { p_user_id: parentId, p_pin: "1234" });
@@ -128,7 +128,7 @@ describe("gamer sign-in mode", () => {
     const { data: child } = await admin.auth.admin.createUser({
       email: CHILD_EMAIL,
       email_confirm: true,
-      user_metadata: { first_name: "Boundary", last_name: "Parentson" },
+      user_metadata: { first_name: "Boundary", last_name: "Parentson", locale: "en" },
     });
     childId = child.user!.id;
 

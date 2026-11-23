@@ -168,12 +168,13 @@ $$;
 -- the profile promoted over psql.
 --
 -- The id is the helper's to choose and nobody else's. Callers pass an email.
--- `p_meta` is merged into the signup metadata, which is how a parent's UTM
--- attribution reaches the profile: the trigger reads it from there, exactly as
--- it does for a real registration.
+-- The locale goes into the signup metadata, where the trigger requires one for
+-- a password account, and `p_meta` is merged in after it, which is how a
+-- parent's UTM attribution reaches the profile: the trigger reads both from
+-- there, exactly as it does for a real registration.
 
 CREATE FUNCTION pg_temp.account(
-  p_email text, p_first text, p_last text, p_meta jsonb DEFAULT '{}'
+  p_email text, p_first text, p_last text, p_locale text, p_meta jsonb DEFAULT '{}'
 ) RETURNS uuid LANGUAGE plpgsql AS $$
 DECLARE
   v_id uuid := gen_random_uuid();
@@ -191,7 +192,7 @@ BEGIN
     extensions.crypt('password', extensions.gen_salt('bf')),
     now(), now(),
     '{"provider":"email","providers":["email"]}',
-    jsonb_build_object('first_name', p_first, 'last_name', p_last) || p_meta,
+    jsonb_build_object('first_name', p_first, 'last_name', p_last, 'locale', p_locale) || p_meta,
     '', '', '', '',
     now(), now()
   );
@@ -216,7 +217,7 @@ BEGIN;
 -- admin-gated below runs as it, so the catalogue, the venues, the groups and
 -- the comped seats all read as one person's work.
 DO $$
-DECLARE v_admin uuid := pg_temp.account('admin@example.com', 'Admin', 'Example');
+DECLARE v_admin uuid := pg_temp.account('admin@example.com', 'Admin', 'Example', 'en');
 BEGIN
   UPDATE public.profiles SET role = 'admin', email_verified_at = now()
    WHERE id = v_admin;
@@ -227,7 +228,7 @@ $$;
 -- A second admin, so the admin UI has one admin's profile for another admin
 -- to view and edit.
 DO $$
-DECLARE v_admin2 uuid := pg_temp.account('admin2@example.com', 'Anni', 'Salonen');
+DECLARE v_admin2 uuid := pg_temp.account('admin2@example.com', 'Anni', 'Salonen', 'fi');
 BEGIN
   UPDATE public.profiles SET role = 'admin', email_verified_at = now()
    WHERE id = v_admin2;
@@ -249,10 +250,10 @@ BEGIN
     ('daniel.okafor@example.com', 'Daniel', 'Okafor', 'en', ARRAY['en']::public.spoken_language[])
   ) AS t(email, first_name, last_name, locale, languages)
   LOOP
-    v_id := pg_temp.account(r.email, r.first_name, r.last_name);
+    v_id := pg_temp.account(r.email, r.first_name, r.last_name, r.locale);
     UPDATE public.profiles
        SET role = 'admin', email_verified_at = now(),
-           locale = r.locale, spoken_languages = r.languages
+           spoken_languages = r.languages
      WHERE id = v_id;
     DELETE FROM public.customer_profiles WHERE user_id = v_id;
   END LOOP;
@@ -267,24 +268,24 @@ DO $$
 DECLARE r record;
 BEGIN
   FOR r IN SELECT * FROM (VALUES
-    ('gedu@example.com',           'Gedu',   'Example'),
-    ('aino.virtanen@example.com',  'Aino',   'Virtanen'),
-    ('mikko.lehtinen@example.com', 'Mikko',  'Lehtinen'),
-    ('sofia.nieminen@example.com', 'Sofia',  'Nieminen'),
-    ('lucas.moreau@example.com',   'Lucas',  'Moreau'),
-    ('emma.koskinen@example.com',  'Emma',   'Koskinen'),
-    ('oliver.grant@example.com',   'Oliver', 'Grant'),
-    ('joonas.heinonen@example.com', 'Joonas', 'Heinonen'),
-    ('veera.laaksonen@example.com', 'Veera',  'Laaksonen'),
-    ('tuomas.rautio@example.com',   'Tuomas', 'Rautio'),
-    ('priya.nair@example.com',      'Priya',  'Nair'),
-    ('niklas.holmberg@example.com', 'Niklas', 'Holmberg'),
-    ('lotta.saarinen@example.com',  'Lotta',  'Saarinen'),
-    ('ben.carter@example.com',      'Ben',    'Carter'),
-    ('ronja.kallio@example.com',    'Ronja',  'Kallio')
-  ) AS t(email, first_name, last_name)
+    ('gedu@example.com',           'Gedu',   'Example', 'en'),
+    ('aino.virtanen@example.com',  'Aino',   'Virtanen', 'fi'),
+    ('mikko.lehtinen@example.com', 'Mikko',  'Lehtinen', 'fi'),
+    ('sofia.nieminen@example.com', 'Sofia',  'Nieminen', 'fi'),
+    ('lucas.moreau@example.com',   'Lucas',  'Moreau', 'en'),
+    ('emma.koskinen@example.com',  'Emma',   'Koskinen', 'fi'),
+    ('oliver.grant@example.com',   'Oliver', 'Grant', 'en'),
+    ('joonas.heinonen@example.com', 'Joonas', 'Heinonen', 'fi'),
+    ('veera.laaksonen@example.com', 'Veera',  'Laaksonen', 'fi'),
+    ('tuomas.rautio@example.com',   'Tuomas', 'Rautio', 'fi'),
+    ('priya.nair@example.com',      'Priya',  'Nair', 'en'),
+    ('niklas.holmberg@example.com', 'Niklas', 'Holmberg', 'fi'),
+    ('lotta.saarinen@example.com',  'Lotta',  'Saarinen', 'fi'),
+    ('ben.carter@example.com',      'Ben',    'Carter', 'en'),
+    ('ronja.kallio@example.com',    'Ronja',  'Kallio', 'fi')
+  ) AS t(email, first_name, last_name, locale)
   LOOP
-    PERFORM pg_temp.account(r.email, r.first_name, r.last_name);
+    PERFORM pg_temp.account(r.email, r.first_name, r.last_name, r.locale);
   END LOOP;
 END;
 $$;
@@ -324,13 +325,11 @@ BEGIN
       ('satu.rantanen@example.com',   '{"utm_source":"school-flyer"}'::jsonb)
     ) AS u(email, meta) WHERE u.email = r.email), '{}');
 
-    v_id := pg_temp.account(r.email, r.first_name, r.last_name, v_utm);
+    v_id := pg_temp.account(r.email, r.first_name, r.last_name, r.locale, v_utm);
 
-    -- The fields the registration form collects and no RPC owns. Done here
-    -- rather than later because create_gamer copies the parent's locale onto
-    -- each child, so it has to be right before the children exist.
+    -- The fields the registration form collects and no RPC owns.
     UPDATE public.profiles
-       SET locale = r.locale, spoken_languages = r.languages, phone = r.phone,
+       SET spoken_languages = r.languages, phone = r.phone,
            email_verified_at = now()
      WHERE id = v_id;
   END LOOP;
@@ -345,30 +344,30 @@ DO $$
 DECLARE r record;
 BEGIN
   FOR r IN SELECT * FROM (VALUES
-    ('milo@gamer.example.com',   'Milo',   'Example'),
-    ('nea@gamer.example.com',    'Nea',    'Example'),
-    ('otso@gamer.example.com',   'Otso',   'Example'),
-    ('elias@gamer.example.com',  'Elias',  'Korhonen'),
-    ('venla@gamer.example.com',  'Venla',  'Korhonen'),
-    ('onni@gamer.example.com',   'Onni',   'Mäkinen'),
-    ('aada@gamer.example.com',   'Aada',   'Salminen'),
-    ('vaino@gamer.example.com',  'Väinö',  'Salminen'),
-    ('sanni@gamer.example.com',  'Sanni',  'Salminen'),
-    ('eino@gamer.example.com',   'Eino',   'Heikkinen'),
-    ('iida@gamer.example.com',   'Iida',   'Laine'),
-    ('leevi@gamer.example.com',  'Leevi',  'Laine'),
-    ('oskari@gamer.example.com', 'Oskari', 'Järvinen'),
-    ('lea@gamer.example.com',    'Léa',    'Dubois'),
-    ('hugo@gamer.example.com',   'Hugo',   'Dubois'),
-    ('olivia@gamer.example.com', 'Olivia', 'Whitfield'),
-    ('noah@gamer.example.com',   'Noah',   'Whitfield'),
-    ('pihla@gamer.example.com',  'Pihla',  'Rantanen'),
-    ('aarne@gamer.example.com',  'Aarne',  'Rantanen'),
-    ('rasmus@gamer.example.com', 'Rasmus', 'Hakala'),
-    ('sointu@gamer.example.com', 'Sointu', 'Hakala')
-  ) AS t(email, first_name, last_name)
+    ('milo@gamer.example.com',   'Milo',   'Example', 'en'),
+    ('nea@gamer.example.com',    'Nea',    'Example', 'en'),
+    ('otso@gamer.example.com',   'Otso',   'Example', 'en'),
+    ('elias@gamer.example.com',  'Elias',  'Korhonen', 'fi'),
+    ('venla@gamer.example.com',  'Venla',  'Korhonen', 'fi'),
+    ('onni@gamer.example.com',   'Onni',   'Mäkinen', 'fi'),
+    ('aada@gamer.example.com',   'Aada',   'Salminen', 'fi'),
+    ('vaino@gamer.example.com',  'Väinö',  'Salminen', 'fi'),
+    ('sanni@gamer.example.com',  'Sanni',  'Salminen', 'fi'),
+    ('eino@gamer.example.com',   'Eino',   'Heikkinen', 'fi'),
+    ('iida@gamer.example.com',   'Iida',   'Laine', 'fi'),
+    ('leevi@gamer.example.com',  'Leevi',  'Laine', 'fi'),
+    ('oskari@gamer.example.com', 'Oskari', 'Järvinen', 'fi'),
+    ('lea@gamer.example.com',    'Léa',    'Dubois', 'fr'),
+    ('hugo@gamer.example.com',   'Hugo',   'Dubois', 'fr'),
+    ('olivia@gamer.example.com', 'Olivia', 'Whitfield', 'en'),
+    ('noah@gamer.example.com',   'Noah',   'Whitfield', 'en'),
+    ('pihla@gamer.example.com',  'Pihla',  'Rantanen', 'fi'),
+    ('aarne@gamer.example.com',  'Aarne',  'Rantanen', 'fi'),
+    ('rasmus@gamer.example.com', 'Rasmus', 'Hakala', 'fi'),
+    ('sointu@gamer.example.com', 'Sointu', 'Hakala', 'fi')
+  ) AS t(email, first_name, last_name, locale)
   LOOP
-    PERFORM pg_temp.account(r.email, r.first_name, r.last_name);
+    PERFORM pg_temp.account(r.email, r.first_name, r.last_name, r.locale);
   END LOOP;
 END;
 $$;
@@ -3636,17 +3635,18 @@ DECLARE
 BEGIN
   FOR r IN SELECT * FROM history_family ORDER BY created_days DESC LOOP
     v_n := v_n + 1;
-    v_id := pg_temp.account(r.email, r.first_name, r.last_name);
+    v_id := pg_temp.account(r.email, r.first_name, r.last_name, r.locale);
     UPDATE public.profiles
-       SET locale = r.locale,
-           spoken_languages = CASE r.locale WHEN 'sv' THEN ARRAY['sv','fi']
+       SET spoken_languages = CASE r.locale WHEN 'sv' THEN ARRAY['sv','fi']
                                             ELSE ARRAY['fi'] END::public.spoken_language[],
            phone = '35840200' || lpad(v_n::text, 4, '0'),
            email_verified_at = now()
      WHERE id = v_id;
   END LOOP;
-  FOR r IN SELECT * FROM history_child LOOP
-    PERFORM pg_temp.account(r.email, r.first_name, r.last_name);
+  FOR r IN SELECT c.*, f.locale
+             FROM history_child c
+             JOIN history_family f ON f.email = c.parent_email LOOP
+    PERFORM pg_temp.account(r.email, r.first_name, r.last_name, r.locale);
   END LOOP;
 END;
 $$;

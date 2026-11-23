@@ -216,7 +216,7 @@ describe("gamer photo consents", () => {
       email: "photo-outsider@gamer.sogverse.internal",
       password: "testpassword123",
       email_confirm: true,
-      user_metadata: { first_name: "Outsider", last_name: "Child" },
+      user_metadata: { first_name: "Outsider", last_name: "Child", locale: "en" },
     });
     expect(created.error).toBeNull();
     const userId = created.data.user!.id;

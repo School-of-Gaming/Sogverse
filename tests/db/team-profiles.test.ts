@@ -91,7 +91,7 @@ describe("team profiles", () => {
       email,
       password: PASSWORD,
       email_confirm: true,
-      user_metadata: { first_name: "Minted", last_name: label },
+      user_metadata: { first_name: "Minted", last_name: label, locale: "en" },
     });
     expect(error).toBeNull();
     const id = data.user?.id ?? "";

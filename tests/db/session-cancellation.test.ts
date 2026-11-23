@@ -883,7 +883,7 @@ describe("session cancellation", () => {
         email,
         password: "testpassword123",
         email_confirm: true,
-        user_metadata: { first_name: "Cancel", last_name: "Sub" },
+        user_metadata: { first_name: "Cancel", last_name: "Sub", locale: "en" },
       });
     expect(createError).toBeNull();
     const subId = created.user?.id ?? "";

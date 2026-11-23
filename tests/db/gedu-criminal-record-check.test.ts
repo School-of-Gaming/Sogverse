@@ -64,7 +64,7 @@ describe("gedu criminal record check", () => {
       email: `gedu-crc-${label}-${Date.now()}@test.local`,
       password: "testpassword123",
       email_confirm: true,
-      user_metadata: { first_name: "Crc", last_name: label },
+      user_metadata: { first_name: "Crc", last_name: label, locale: "en" },
     });
     expect(error).toBeNull();
     const userId = data.user!.id;

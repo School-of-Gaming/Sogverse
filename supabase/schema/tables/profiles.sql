@@ -11,7 +11,7 @@ CREATE TABLE public.profiles (
     updated_at timestamp with time zone DEFAULT now() NOT NULL,
     phone text,
     spoken_languages public.spoken_language[] DEFAULT '{}'::public.spoken_language[] NOT NULL,
-    locale text,
+    locale text NOT NULL,
     first_name text NOT NULL,
     last_name text DEFAULT ''::text NOT NULL,
     home_location_id uuid,
@@ -27,6 +27,7 @@ CREATE TABLE public.profiles (
     signup_intent_id uuid,
     CONSTRAINT profiles_first_name_shape CHECK ((((char_length(first_name) >= 1) AND (char_length(first_name) <= 32)) AND (first_name !~ '^[[:space:]\u00A0\u200B\uFEFF]|[[:space:]\u00A0\u200B\uFEFF]$'::text))),
     CONSTRAINT profiles_last_name_shape CHECK (((char_length(last_name) <= 32) AND (last_name !~ '^[[:space:]\u00A0\u200B\uFEFF]|[[:space:]\u00A0\u200B\uFEFF]$'::text))),
+    CONSTRAINT profiles_locale_format CHECK ((locale ~ '^[a-z]{2,3}(-[a-z]{2})?$'::text)),
     CONSTRAINT profiles_phone_e164 CHECK ((phone ~ '^\d{7,15}$'::text)),
     CONSTRAINT profiles_signup_intent_kind_known CHECK (((signup_intent_kind IS NULL) OR (signup_intent_kind = ANY (ARRAY['product'::text, 'municipality_club'::text, 'landing_page'::text])))),
     CONSTRAINT profiles_signup_intent_whole CHECK (((signup_intent_kind IS NULL) = (signup_intent_id IS NULL))),
@@ -56,7 +57,7 @@ COMMENT ON COLUMN public.profiles.spoken_languages IS 'Human languages the user 
 -- Name: COLUMN profiles.locale; Type: COMMENT; Schema: public; Owner: -
 --
 
-COMMENT ON COLUMN public.profiles.locale IS 'BCP-47-style UI locale code (en, fi, sv, ...). Null = auto-detect from cookie/Accept-Language. Distinct from spoken_languages, which is the user''s human-language fluency.';
+COMMENT ON COLUMN public.profiles.locale IS 'The UI locale the account reads the site in (en, fi, sv, ...). Never null. Set when the account is created, by handle_new_user(): a password account''s comes from its user metadata, and the account is refused without a well-formed one; an identity provider''s (Google) is the placeholder ''en'', which the registration-completion routes write over. profiles_locale_format holds it to the code''s shape; which codes are supported is enforced by the app. Distinct from spoken_languages, which is the user''s human-language fluency.';
 
 
 --
@@ -148,6 +149,13 @@ COMMENT ON CONSTRAINT profiles_first_name_shape ON public.profiles IS 'A first n
 --
 
 COMMENT ON CONSTRAINT profiles_last_name_shape ON public.profiles IS 'A last name is at most 32 characters long and neither begins nor ends with whitespace — any character of the [[:space:]] class, or U+00A0, U+200B or U+FEFF. It may be empty: a gamer inherits the parent''s, and older parent accounts predate the requirement the registration forms now make.';
+
+
+--
+-- Name: CONSTRAINT profiles_locale_format ON profiles; Type: COMMENT; Schema: public; Owner: -
+--
+
+COMMENT ON CONSTRAINT profiles_locale_format ON public.profiles IS 'A locale is a language code of two or three lowercase letters, optionally followed by a hyphen and a two-letter lowercase region — the shape every translation table''s locale CHECK holds. Whether the code is one the site is translated into is the app''s to enforce, not this constraint''s.';
 
 
 --

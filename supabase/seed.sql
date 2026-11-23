@@ -28,7 +28,7 @@ INSERT INTO auth.users (
   crypt('testpassword123', gen_salt('bf')),
   NOW(), NOW(),
   '{"provider":"email","providers":["email"]}',
-  jsonb_build_object('first_name', 'Test', 'last_name', 'Admin'),
+  jsonb_build_object('first_name', 'Test', 'last_name', 'Admin', 'locale', 'en'),
   '', '', '', '',
   NOW(), NOW()
 );
@@ -56,7 +56,7 @@ INSERT INTO auth.users (
   crypt('testpassword123', gen_salt('bf')),
   NOW(), NOW(),
   '{"provider":"email","providers":["email"]}',
-  jsonb_build_object('role', 'customer', 'first_name', 'Test', 'last_name', 'Customer'),
+  jsonb_build_object('role', 'customer', 'first_name', 'Test', 'last_name', 'Customer', 'locale', 'en'),
   '', '', '', '',
   NOW(), NOW()
 );
@@ -84,7 +84,7 @@ INSERT INTO auth.users (
   crypt('testpassword123', gen_salt('bf')),
   NOW(), NOW(),
   '{"provider":"email","providers":["email"]}',
-  jsonb_build_object('first_name', 'Test', 'last_name', 'Gedu'),
+  jsonb_build_object('first_name', 'Test', 'last_name', 'Gedu', 'locale', 'en'),
   '', '', '', '',
   NOW(), NOW()
 );
@@ -112,7 +112,7 @@ INSERT INTO auth.users (
   crypt('testpassword123', gen_salt('bf')),
   NOW(), NOW(),
   '{"provider":"email","providers":["email"]}',
-  jsonb_build_object('first_name', 'Test', 'last_name', 'Gamer'),
+  jsonb_build_object('first_name', 'Test', 'last_name', 'Gamer', 'locale', 'en'),
   '', '', '', '',
   NOW(), NOW()
 );
@@ -140,7 +140,7 @@ INSERT INTO auth.users (
   crypt('testpassword123', gen_salt('bf')),
   NOW(), NOW(),
   '{"provider":"email","providers":["email"]}',
-  jsonb_build_object('role', 'customer', 'first_name', 'Test', 'last_name', 'Customer 2'),
+  jsonb_build_object('role', 'customer', 'first_name', 'Test', 'last_name', 'Customer 2', 'locale', 'en'),
   '', '', '', '',
   NOW(), NOW()
 );
@@ -172,7 +172,7 @@ INSERT INTO auth.users (
   crypt('testpassword123', gen_salt('bf')),
   NOW(), NOW(),
   '{"provider":"email","providers":["email"]}',
-  jsonb_build_object('first_name', 'Test', 'last_name', 'Gamer 2'),
+  jsonb_build_object('first_name', 'Test', 'last_name', 'Gamer 2', 'locale', 'en'),
   '', '', '', '',
   NOW(), NOW()
 );
@@ -183,6 +183,52 @@ INSERT INTO auth.identities (
   '00000000-0000-0000-0000-000000000006',
   jsonb_build_object('sub', '00000000-0000-0000-0000-000000000006', 'email', 'testgamer-c1@gamer.sogverse.internal'),
   'email', '00000000-0000-0000-0000-000000000006',
+  NOW(), NOW(), NOW()
+);
+
+-- A parent who signed in with Google and has not finished registering: the one
+-- account here whose provider is not `email`, which the Admin API cannot make
+-- (it creates every user as `email`). It carries what Google sends — a whole
+-- name and no locale — and no password, so nothing signs in as it.
+INSERT INTO auth.users (
+  id, instance_id, aud, role, email,
+  encrypted_password, email_confirmed_at, last_sign_in_at,
+  raw_app_meta_data, raw_user_meta_data,
+  confirmation_token, email_change, email_change_token_new, recovery_token,
+  created_at, updated_at
+) VALUES (
+  '00000000-0000-0000-0000-000000000007',
+  '00000000-0000-0000-0000-000000000000',
+  'authenticated', 'authenticated', 'google-customer@test.local',
+  '',
+  NOW(), NOW(),
+  '{"provider":"google","providers":["google"]}',
+  jsonb_build_object(
+    'iss', 'https://accounts.google.com',
+    'sub', '100000000000000000007',
+    'provider_id', '100000000000000000007',
+    'email', 'google-customer@test.local',
+    'email_verified', true,
+    'full_name', 'Test Google',
+    'name', 'Test Google'
+  ),
+  '', '', '', '',
+  NOW(), NOW()
+);
+INSERT INTO auth.identities (
+  id, user_id, identity_data, provider, provider_id, last_sign_in_at, created_at, updated_at
+) VALUES (
+  '00000000-0000-0000-0000-000000000007',
+  '00000000-0000-0000-0000-000000000007',
+  jsonb_build_object(
+    'iss', 'https://accounts.google.com',
+    'sub', '100000000000000000007',
+    'email', 'google-customer@test.local',
+    'email_verified', true,
+    'full_name', 'Test Google',
+    'name', 'Test Google'
+  ),
+  'google', '100000000000000000007',
   NOW(), NOW(), NOW()
 );
 

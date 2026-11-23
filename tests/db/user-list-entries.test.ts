@@ -245,7 +245,7 @@ describe("user_list_entries", () => {
         email: `user-list-unlinked-${Date.now()}@gamer.sogverse.internal`,
         password: "testpassword123",
         email_confirm: true,
-        user_metadata: { first_name: "Unlinked", last_name: "Gamer" },
+        user_metadata: { first_name: "Unlinked", last_name: "Gamer", locale: "en" },
       });
     expect(createError).toBeNull();
     const gamerId = created.user!.id;

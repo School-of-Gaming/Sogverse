@@ -109,7 +109,7 @@ describe("get_admin_session_feedback", () => {
         email: account.email,
         password: "testpassword123",
         email_confirm: true,
-        user_metadata: { first_name: account.first, last_name: account.last },
+        user_metadata: { first_name: account.first, last_name: account.last, locale: "en" },
       });
       expect(error).toBeNull();
       const id = created.user?.id ?? "";

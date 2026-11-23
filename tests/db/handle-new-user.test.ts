@@ -1,7 +1,12 @@
 import { describe, it, expect, beforeAll, afterEach } from "vitest";
 import type { SupabaseClient } from "@supabase/supabase-js";
 import type { Database } from "@/types/database.types";
-import { createAdminTestClient, createAuthenticatedClient } from "./helpers";
+import {
+  accessTokenFor,
+  createAdminTestClient,
+  createAuthenticatedClient,
+  patchRaw,
+} from "./helpers";
 import { TEST_IDS, TEST_CREDENTIALS } from "./constants";
 
 /**
@@ -36,7 +41,9 @@ describe("handle_new_user() role assignment", () => {
       email: opts.email,
       password: "testpassword123",
       email_confirm: true,
-      user_metadata: opts.user_metadata,
+      // A password account is refused without a locale, and none of these
+      // cases is about it, so every one carries one unless it sends its own.
+      user_metadata: { locale: "en", ...opts.user_metadata },
     });
     expect(error).toBeNull();
     expect(data.user).toBeTruthy();
@@ -760,11 +767,12 @@ describe("the profiles.utm_* columns are write-once", () => {
  * auth provider: a password account is registered the moment it exists, any
  * other provider (Google) starts owing.
  *
- * Only the `email` half is exercised here. Every account this suite can create
- * goes through the Admin API, which stamps `provider: "email"` on the row it
- * inserts and merges any `app_metadata` it was handed only afterwards, in an
- * UPDATE the AFTER INSERT trigger never sees — so there is no way to put a
- * Google-provider row in front of the trigger from here.
+ * Every account this suite can create goes through the Admin API, which stamps
+ * `provider: "email"` on the row it inserts and merges any `app_metadata` it
+ * was handed only afterwards, in an UPDATE the AFTER INSERT trigger never sees
+ * — so there is no way to put a Google-provider row in front of the trigger
+ * from here. The Google half is read off seed.sql's Google parent, which the
+ * seed inserts straight into `auth.users`.
  */
 describe("handle_new_user() registration_completed_at", () => {
   let admin: SupabaseClient<Database>;
@@ -794,7 +802,7 @@ describe("handle_new_user() registration_completed_at", () => {
       email: "registration-password@test.local",
       password: "testpassword123",
       email_confirm: true,
-      user_metadata: { first_name: "Password", last_name: "Parent" },
+      user_metadata: { first_name: "Password", last_name: "Parent", locale: "en" },
     });
     expect(error).toBeNull();
     createdUserIds.push(data.user!.id);
@@ -813,6 +821,17 @@ describe("handle_new_user() registration_completed_at", () => {
     expect(
       new Date(profile!.registration_completed_at!).getTime(),
     ).toBeGreaterThan(before - 60_000);
+  });
+
+  it("leaves an identity provider's account owing its registration", async () => {
+    const { data, error } = await admin
+      .from("profiles")
+      .select("registration_completed_at")
+      .eq("id", TEST_IDS.GOOGLE_CUSTOMER)
+      .single();
+
+    expect(error).toBeNull();
+    expect(data!.registration_completed_at).toBeNull();
   });
 
   it("a parent can read their own value", async () => {
@@ -851,6 +870,166 @@ describe("handle_new_user() registration_completed_at", () => {
 });
 
 /**
+ * `profiles.locale` is never null. The trigger sets it from the auth provider:
+ * a password account's comes from its user metadata and the account is refused
+ * without a well-formed one, so a route or script that forgets it fails at once;
+ * any other provider (Google) takes 'en' until a completion route writes the
+ * reader's locale over it. After that the column's CHECK and NOT NULL hold every
+ * write, the owner's own through the column grant included.
+ */
+describe("handle_new_user() locale", () => {
+  let admin: SupabaseClient<Database>;
+  const createdUserIds: string[] = [];
+
+  beforeAll(() => {
+    admin = createAdminTestClient();
+  });
+
+  afterEach(async () => {
+    for (const userId of createdUserIds.reverse()) {
+      await admin.auth.admin.deleteUser(userId);
+    }
+    createdUserIds.length = 0;
+  });
+
+  async function signUp(label: string, metadata: Record<string, string>) {
+    const email = `locale-${label}-${Date.now()}@test.local`;
+    const { data, error } = await admin.auth.admin.createUser({
+      email,
+      password: "testpassword123",
+      email_confirm: true,
+      user_metadata: { first_name: "Locale", last_name: "Test", ...metadata },
+    });
+    if (data.user) createdUserIds.push(data.user.id);
+    return { email, user: data.user, error };
+  }
+
+  /** A refused signup leaves nothing behind: the trigger's raise rolls back the auth user too. */
+  async function expectRefused(label: string, metadata: Record<string, string>) {
+    const { email, user, error } = await signUp(label, metadata);
+    expect(error).not.toBeNull();
+    expect(user).toBeNull();
+
+    const { data: profiles, error: readError } = await admin
+      .from("profiles")
+      .select("id")
+      .eq("email", email);
+    expect(readError).toBeNull();
+    expect(profiles).toEqual([]);
+  }
+
+  it("stores the locale a password account was created with", async () => {
+    const { user, error } = await signUp("fi", { locale: "fi" });
+    expect(error).toBeNull();
+
+    const { data } = await admin
+      .from("profiles")
+      .select("locale")
+      .eq("id", user!.id)
+      .single();
+    expect(data!.locale).toBe("fi");
+  });
+
+  it("stores the locale trimmed of space padding", async () => {
+    const { user, error } = await signUp("padded", { locale: " sv " });
+    expect(error).toBeNull();
+
+    const { data } = await admin
+      .from("profiles")
+      .select("locale")
+      .eq("id", user!.id)
+      .single();
+    expect(data!.locale).toBe("sv");
+  });
+
+  it("refuses a password account created without a locale", async () => {
+    await expectRefused("absent", {});
+  });
+
+  it("refuses a password account whose locale is blank", async () => {
+    await expectRefused("blank", { locale: "   " });
+  });
+
+  it("refuses a password account whose locale is not a locale code", async () => {
+    // Uppercase, an underscore and a language name: the shapes a caller that
+    // forgot to resolve the locale would most likely send.
+    await expectRefused("upper", { locale: "FI" });
+    await expectRefused("underscore", { locale: "en_GB" });
+    await expectRefused("name", { locale: "english" });
+  });
+
+  it("gives an identity provider's account the placeholder 'en'", async () => {
+    // seed.sql's Google parent, inserted with provider `google` and no locale
+    // in its metadata — the Admin API cannot create one (see the
+    // registration_completed_at block above).
+    const { data, error } = await admin
+      .from("profiles")
+      .select("locale")
+      .eq("id", TEST_IDS.GOOGLE_CUSTOMER)
+      .single();
+
+    expect(error).toBeNull();
+    expect(data!.locale).toBe("en");
+  });
+
+  describe("the column's own guarantees", () => {
+    let customerClient: SupabaseClient<Database>;
+    let customerToken: string;
+
+    beforeAll(async () => {
+      customerClient = await createAuthenticatedClient(
+        TEST_CREDENTIALS.CUSTOMER.email,
+        TEST_CREDENTIALS.CUSTOMER.password,
+      );
+      customerToken = await accessTokenFor(
+        TEST_CREDENTIALS.CUSTOMER.email,
+        TEST_CREDENTIALS.CUSTOMER.password,
+      );
+    });
+
+    async function storedLocale() {
+      const { data, error } = await admin
+        .from("profiles")
+        .select("locale")
+        .eq("id", TEST_IDS.CUSTOMER)
+        .single();
+      expect(error).toBeNull();
+      return data!.locale;
+    }
+
+    it("refuses an owner's write of a malformed locale", async () => {
+      const before = await storedLocale();
+
+      const { error } = await customerClient
+        .from("profiles")
+        .update({ locale: "EN-gb" })
+        .eq("id", TEST_IDS.CUSTOMER);
+
+      // 23514 = check_violation: the grant lets the owner write the column,
+      // and the CHECK is what holds the value to a code's shape.
+      expect(error?.code).toBe("23514");
+      expect(await storedLocale()).toBe(before);
+    });
+
+    it("refuses an owner's write of NULL", async () => {
+      const before = await storedLocale();
+
+      // The generated type no longer admits NULL, so the request is built by
+      // hand: the column grant makes it a path a real caller has.
+      const result = await patchRaw(
+        customerToken,
+        `profiles?id=eq.${TEST_IDS.CUSTOMER}`,
+        { locale: null },
+      );
+
+      // 23502 = not_null_violation.
+      expect(result.code).toBe("23502");
+      expect(await storedLocale()).toBe(before);
+    });
+  });
+});
+
+/**
  * The signup intent: which of our pages the parent set out to reach, as the
  * register route decided it from the row. The trigger checks only the shape —
  * a kind it knows and a uuid — and keeps the pair whole or not at all, so a
@@ -878,7 +1057,7 @@ describe("handle_new_user() signup intent", () => {
       email: `intent-${label}-${Date.now()}@test.local`,
       password: "testpassword123",
       email_confirm: true,
-      user_metadata: { first_name: "Intent", last_name: "Test", ...metadata },
+      user_metadata: { first_name: "Intent", last_name: "Test", locale: "en", ...metadata },
     });
     expect(error).toBeNull();
     createdUserIds.push(data.user!.id);

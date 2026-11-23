@@ -90,7 +90,7 @@ describe("substitution notifications", () => {
       email,
       password: "testpassword123",
       email_confirm: true,
-      user_metadata: { first_name: "Notify", last_name: label },
+      user_metadata: { first_name: "Notify", last_name: label, locale: "en" },
     });
     expect(error).toBeNull();
     const id = data.user?.id ?? "";

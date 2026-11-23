@@ -128,7 +128,7 @@ describe("member flair", () => {
         email: sisterEmail,
         password: "testpassword123",
         email_confirm: true,
-        user_metadata: { first_name: "Sanni", last_name: "Sisterson" },
+        user_metadata: { first_name: "Sanni", last_name: "Sisterson", locale: "en" },
       });
     expect(createError).toBeNull();
     sisterGeduId = created.user!.id;
