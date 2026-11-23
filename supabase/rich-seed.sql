@@ -107,6 +107,14 @@
 -- for it beside the groups they still teach and the substitutions they cover,
 -- until that session's substitute window closes fifteen days after it (16.7).
 --
+-- ONE GEDU CHANGED ROLE AT THE BUILD. gedu@example.com led the Schools Game
+-- Club's Ryhmä 1 from its start; as the stack was built the admin made
+-- mikko.lehtinen@example.com its primary and kept gedu@example.com on as his
+-- assistant. Their primary period ends at the instant the assistant one
+-- begins, so their Invoicing page for the build's month has two lines for the
+-- club: the Tuesdays before the build at the primary fee, the ones after it at
+-- the assistant fee (16.8).
+--
 -- ONE CLUB IS HYBRID. The Minecraft Build Club meets at Sogverse-studio,
 -- Kamppi, with gedu@example.com in its Sogverse voice room rather than in the
 -- room, and parent@example.com's Milo and Otso hold seats on it, so the admin,
@@ -909,7 +917,8 @@ BEGIN
     p_schedule_slots => jsonb_build_array(
       jsonb_build_object('weekday', 1, 'start_time', '14:00', 'duration_minutes', 60)),
     p_prices => jsonb_build_array(jsonb_build_object('currency','eur','price_cents',0)),
-    p_primary_gedu_fee_cents => 6000, p_municipality_fee_cents => 180000,
+    p_primary_gedu_fee_cents => 6000, p_assistant_gedu_fee_cents => 4000,
+    p_municipality_fee_cents => 180000,
     p_invoice_customer_id => (SELECT id FROM public.invoice_customers
                                WHERE fennoa_customer_no = 'F0204')
   );
@@ -4357,7 +4366,46 @@ $$;
 
 COMMIT;
 
--- 16.8 What the year adds up to, a line per Helsinki month: sign-ups, seats
+-- 16.8 gedu@example.com stepping down to assistant on the Schools Game Club.
+-- They have led its Ryhmä 1 since it started; now the admin seats Mikko as the
+-- group's primary and changes gedu@example.com's role to assistant, in one
+-- batch of the groups panel. A role change ends the primary period and starts
+-- the assistant one at the same instant, so the Tuesdays already taught keep
+-- the primary fee and the ones from the build on pay the assistant fee: the
+-- club meets weekly, so the build's month holds sessions on both sides of it.
+-- Like 16.7 it runs after every backdate, which would otherwise pull the new
+-- periods back to the product's start.
+BEGIN;
+SELECT set_config('request.jwt.claims',
+  json_build_object('sub', (SELECT id::text FROM public.profiles
+                             WHERE email = 'admin@example.com'),
+                    'role', 'authenticated')::text, true);
+SET LOCAL ROLE authenticated;
+
+DO $$
+DECLARE
+  v_product uuid := (SELECT product_id FROM public.product_translations
+                      WHERE locale = 'en' AND name = 'Schools Game Club');
+  v_group   uuid := (SELECT id FROM public.product_groups
+                      WHERE product_id = v_product AND name = 'Ryhmä 1');
+BEGIN
+  PERFORM public.apply_group_changes(
+    v_product,
+    p_gedu_assignments_added => jsonb_build_array(
+      jsonb_build_object(
+        'groupId', v_group,
+        'geduId', (SELECT id FROM public.profiles WHERE email = 'mikko.lehtinen@example.com'),
+        'role', 'primary'),
+      jsonb_build_object(
+        'groupId', v_group,
+        'geduId', (SELECT id FROM public.profiles WHERE email = 'gedu@example.com'),
+        'role', 'assistant')));
+END;
+$$;
+
+COMMIT;
+
+-- 16.9 What the year adds up to, a line per Helsinki month: sign-ups, seats
 -- booked, subscriptions ended, and the EUR charged.
 DO $$
 DECLARE r record;
