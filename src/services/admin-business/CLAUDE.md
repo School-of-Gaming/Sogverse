@@ -80,8 +80,8 @@ nothing; what it cannot see is a change that leaves no timestamp (below).
   - *A session held, and who ran it*, are the gedu invoicing page's own build: a session is
     a (group, date) with a paid line, and its gedus are every gedu paid for it. So a session
     counts only once something is recorded for it, never on a cancelled or holiday date, and
-    a session no gedu is paid for (its group has nobody assigned today) is left out rather
-    than counted as gamers with nobody in front of them.
+    a session no gedu is paid for (nobody was assigned to its group when it started) is left
+    out rather than counted as gamers with nobody in front of them.
   - *A gamer seated*: a gamer's seat (never a parent's own) in that group, held at any moment
     of the session's product-local day. A seat is in its group from the moment it joined
     it; a move between groups keeps only the latest, so a gamer who moved counts in their
@@ -100,15 +100,11 @@ nothing; what it cannot see is a change that leaves no timestamp (below).
   yet ended); the page shows the difference too. An uncertified gedu still assigned
   somewhere is in neither figure.
 
-**Who ran a past session is read against today's assignments.** The database records per
-session who was *expected* only through dated substitutions; standing staffing is the group
-assignment, which keeps no history. Per-session authorship (a session's writer, an
-attendance mark's) is stored, but no admin read reaches it, and the writer of a record is
-not necessarily the gedu who ran the session. So a past month counts a substitute on the
-date they covered, and otherwise the gedus assigned to the group today: a gedu taken off a
-group leaves the months they ran it, and one added later appears in months before they
-joined. The page does not say so: it shows rather than explains (`src/CLAUDE.md`), so the
-caveats live here.
+**Who ran a past session is who was expected at it**, as gedu invoicing pays it: a
+substitute on the date they covered, and otherwise the gedus whose assignment period held
+the session's start. Per-session authorship (a session's writer, an attendance mark's) is
+stored, but no admin read reaches it, and the writer of a record is not necessarily the
+gedu who ran the session.
 
 **Revenue is before refunds.** Refunds are credit notes, and credit notes live only in
 Stripe, so nothing here can net them; a refunded payment counts in full.

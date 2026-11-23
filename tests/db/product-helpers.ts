@@ -420,6 +420,11 @@ import { TEST_IDS } from "./constants";
  *                  club, 933 a municipality club on an external contract;
  *                  934 is not a product but 930's group, where attendance is
  *                  marked)
+ *   940-949        gedu-invoicing.test.ts's assignment-period cases (the clubs
+ *                  940, 942, 944, 946 and 948, each with the next id as its
+ *                  one group: a removal through apply_group_changes, a
+ *                  handover after and before a removal-day session, a role
+ *                  change, and a removal and re-add with a gap)
  *
  * One file reserves no PRODUCT id and is listed anyway, so nobody goes looking
  * for its range: **create-product.test.ts**. It is the only file that calls

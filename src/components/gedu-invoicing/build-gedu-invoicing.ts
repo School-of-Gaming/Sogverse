@@ -1,4 +1,3 @@
-import { fromZonedTime } from "date-fns-tz";
 import { formattingLocale, type SupportedLocale } from "@/lib/constants/locales";
 import { breakContaining, breakName } from "@/lib/holiday-breaks";
 import { resolveRequiredTranslation } from "@/lib/i18n/resolve-translation";
@@ -43,8 +42,11 @@ import type {
  * the gedu was expected there.** "Expected" is the substitution derivation
  * (`deriveSessionStaffing`), run here over exactly the seats the document
  * carries: an absent gedu is not paid for the date they gave away, and their sub
- * is — in the role recorded on the substitution. The fee is the product's
- * *current* fee for that role, read with the page.
+ * is — in the role recorded on the substitution. An assignment staffs only the
+ * sessions that start inside its period, at the instant the document gives for
+ * each date: a gedu taken off a group keeps the dates before, a replacement
+ * gets the ones after, and a role change splits the month by role. The fee is
+ * the product's *current* fee for that role, read with the page.
  *
  * **A plan is a claim, not a session** — the municipality rules, per seat.
  * The product's planned dates in the month — the database's plan, already
@@ -338,12 +340,12 @@ function buildGedu(gedu: GeduInvoicingGedu, context: BuildContext): GeduInvoice 
 
 /**
  * The gedu's own seats on one group, in the shape the staffing derivation
- * reads: their assignment (if any) as the group's one assignment period, their
+ * reads: their assignment periods on it, with their bounds, their
  * substitutions as `substituted` requests naming them, and their own absences
  * as requests they filed.
  *
  * Other gedus' seats are not needed — whether *this* gedu is expected turns only
- * on their own assignment and the requests they appear in. The other party on
+ * on their own periods and the requests they appear in. The other party on
  * each request (the absent gedu on a substitution, the sub on an absence) is
  * mapped through as the document names them; the derivation reads the absent
  * gedu only to take them out of the seat, and they are never this gedu.
@@ -356,7 +358,12 @@ export function staffingInputs(
   return {
     gedus: gedu.assignments
       .filter((seat) => seat.group_id === groupId)
-      .map((seat) => ({ ...self, role: seat.role, ...STANDING_PERIOD })),
+      .map((seat) => ({
+        ...self,
+        role: seat.role,
+        startedAt: new Date(seat.started_at),
+        endedAt: seat.ended_at === null ? null : new Date(seat.ended_at),
+      })),
     requests: [
       ...gedu.substitutions
         .filter((seat) => seat.group_id === groupId)
@@ -387,17 +394,6 @@ export function staffingInputs(
     ],
   };
 }
-
-/**
- * The bounds every assignment row of the document is read with: a period open
- * from the epoch and never ended, so each row staffs every date of the month
- * exactly as an unbounded assignment did. The document does not carry a
- * period's bounds, so this is what its rows mean.
- */
-const STANDING_PERIOD = {
-  startedAt: new Date(0),
-  endedAt: null,
-} as const satisfies Pick<StaffingAssignment, "startedAt" | "endedAt">;
 
 function groupLines(
   gedu: GeduInvoicingGedu,
@@ -431,6 +427,9 @@ function groupLines(
   }
   const records = new Set(group.sessions);
   const cancelled = new Set(group.cancelled_sessions);
+  const startsAt = new Map(
+    group.session_starts.map((start) => [start.date, new Date(start.starts_at)]),
+  );
 
   const lines: RoledLine[] = [];
   for (const date of new Set([...claims, ...records])) {
@@ -438,9 +437,14 @@ function groupLines(
       gedus: inputs.gedus,
       requests: inputs.requests,
       sessionDate: date,
-      // Product-local midnight of the date: every period here is a standing
-      // one, so any instant of the date places it inside.
-      sessionStartsAt: fromZonedTime(`${date}T00:00:00`, product.timezone),
+      // The period holding the session's start is the one that staffs it, so
+      // a gedu taken off the group keeps the dates before and a replacement
+      // gets the ones after.
+      sessionStartsAt: required(
+        startsAt.get(date),
+        `start for ${date} on group`,
+        group.id,
+      ),
       viewerId: gedu.id,
     });
     const expected =

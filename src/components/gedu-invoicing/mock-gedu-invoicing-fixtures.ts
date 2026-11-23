@@ -29,6 +29,11 @@ export const GEDU_INVOICING_WORKING_MONTH = "2026-05-01";
 const HELSINKI = "Europe/Helsinki";
 const TERM_START = "2026-01-12";
 const TERM_END = "2026-05-29";
+/** Every gedu's period began with the term and is still current. */
+const SINCE_TERM_START = {
+  started_at: "2026-01-12T00:00:00+02:00",
+  ended_at: null,
+};
 
 /** Real UUIDs, because a gedu's avatar is drawn from their id. */
 const AINO = "e81482ad-e9b5-4c89-9d4c-255be2720d4c";
@@ -125,7 +130,8 @@ const PRODUCTS: GeduInvoicingProduct[] = [
   },
 ];
 
-const GROUPS: GeduInvoicingGroup[] = [
+/** The groups as the fixture writes them; their start instants are derived. */
+const GROUPS: Omit<GeduInvoicingGroup, "session_starts">[] = [
   {
     id: "preview-group-kivikko",
     product_id: "preview-kivikko",
@@ -163,8 +169,12 @@ const GEDUS: GeduInvoicingGedu[] = [
     ...PEOPLE.aino,
     email: "aino.kallio@example.com",
     assignments: [
-      { group_id: "preview-group-kivikko", role: "primary" },
-      { group_id: "preview-group-seikkailijat-1", role: "primary" },
+      { group_id: "preview-group-kivikko", role: "primary", ...SINCE_TERM_START },
+      {
+        group_id: "preview-group-seikkailijat-1",
+        role: "primary",
+        ...SINCE_TERM_START,
+      },
     ],
     substitutions: [],
     absences: [
@@ -182,8 +192,12 @@ const GEDUS: GeduInvoicingGedu[] = [
     ...PEOPLE.mikael,
     email: "mikael.rinne@example.com",
     assignments: [
-      { group_id: "preview-group-mantyranta", role: "primary" },
-      { group_id: "preview-group-seikkailijat-2", role: "assistant" },
+      { group_id: "preview-group-mantyranta", role: "primary", ...SINCE_TERM_START },
+      {
+        group_id: "preview-group-seikkailijat-2",
+        role: "assistant",
+        ...SINCE_TERM_START,
+      },
     ],
     substitutions: [
       {
@@ -199,7 +213,9 @@ const GEDUS: GeduInvoicingGedu[] = [
   {
     ...PEOPLE.sara,
     email: "sara.vuorela@example.com",
-    assignments: [{ group_id: "preview-group-kivikko", role: "assistant" }],
+    assignments: [
+      { group_id: "preview-group-kivikko", role: "assistant", ...SINCE_TERM_START },
+    ],
     substitutions: [],
     // Nobody picked it up.
     absences: [
@@ -237,13 +253,49 @@ export function geduInvoicingMonthFixture(
       ...gedu.absences.map((seat) => seat.group_id),
     ]),
   );
-  const groups = GROUPS.filter((group) => groupIds.has(group.id));
+  const groups = GROUPS.filter((group) => groupIds.has(group.id)).map(
+    withSessionStarts,
+  );
   const productIds = new Set(groups.map((group) => group.product_id));
   return {
     month_start: GEDU_INVOICING_WORKING_MONTH,
     gedus,
     groups,
     products: PRODUCTS.filter((product) => productIds.has(product.id)),
+  };
+}
+
+/**
+ * A group with the start instant of every date the document names on it —
+ * the plan with its holiday-withdrawn dates, the stored and cancelled rows,
+ * and every request — as the database's one start rule gives them. Every
+ * fixture club meets at quarter past two, Helsinki summer time.
+ */
+function withSessionStarts(
+  group: Omit<GeduInvoicingGroup, "session_starts">,
+): GeduInvoicingGroup {
+  const product = PRODUCTS.find((one) => one.id === group.product_id);
+  if (product === undefined) {
+    throw new Error(`fixture group ${group.id} names no product`);
+  }
+  const dates = new Set([
+    ...product.planned_dates,
+    ...product.holiday_breaks.flatMap((row) =>
+      row.withdrawnSessions.map((withdrawn) => withdrawn.date),
+    ),
+    ...group.sessions,
+    ...group.cancelled_sessions,
+    ...GEDUS.flatMap((gedu) =>
+      [...gedu.substitutions, ...gedu.absences]
+        .filter((seat) => seat.group_id === group.id)
+        .map((seat) => seat.session_date),
+    ),
+  ]);
+  return {
+    ...group,
+    session_starts: [...dates]
+      .sort()
+      .map((date) => ({ date, starts_at: `${date}T14:15:00+03:00` })),
   };
 }
 

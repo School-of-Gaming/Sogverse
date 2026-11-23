@@ -12,6 +12,7 @@ import {
 } from "@/components/gedu-invoicing/mock-gedu-invoicing-fixtures";
 import { deriveSessionStaffing } from "@/lib/session-staffing";
 import type {
+  GeduInvoicingAssignment,
   GeduInvoicingGedu,
   GeduInvoicingGroup,
   GeduInvoicingProduct,
@@ -64,6 +65,17 @@ function product(
   };
 }
 
+/** Every club in this file meets at four in the afternoon, Helsinki time. */
+function startsAt(date: string): string {
+  return `${date}T16:00:00+03:00`;
+}
+
+/** Every date of September, so any date a test names has its start. */
+const SEPTEMBER_STARTS = Array.from({ length: 30 }, (_, index) => {
+  const date = `2026-09-${String(index + 1).padStart(2, "0")}`;
+  return { date, starts_at: startsAt(date) };
+});
+
 function group(
   overrides: Partial<GeduInvoicingGroup> & { id: string; product_id: string },
 ): GeduInvoicingGroup {
@@ -71,21 +83,33 @@ function group(
     name: `Group ${overrides.id}`,
     sessions: [],
     cancelled_sessions: [],
+    session_starts: SEPTEMBER_STARTS,
     ...overrides,
   };
 }
 
+/** A period that began long before the month and is still current. */
+const STANDING = { started_at: "2026-01-01T00:00:00Z", ended_at: null };
+
+type AssignmentInput = Omit<GeduInvoicingAssignment, "started_at" | "ended_at"> &
+  Partial<Pick<GeduInvoicingAssignment, "started_at" | "ended_at">>;
+
+/** A gedu row; an assignment named without bounds is a standing one. */
 function gedu(
-  overrides: Partial<GeduInvoicingGedu> & { id: string },
+  overrides: Omit<Partial<GeduInvoicingGedu>, "assignments"> & {
+    id: string;
+    assignments?: AssignmentInput[];
+  },
 ): GeduInvoicingGedu {
+  const { assignments = [], ...rest } = overrides;
   return {
     first_name: overrides.id === BENJAMIN ? "Benjamin" : "Aino",
     last_name: "Tester",
     email: `${overrides.id}@example.com`,
-    assignments: [],
     substitutions: [],
     absences: [],
-    ...overrides,
+    ...rest,
+    assignments: assignments.map((seat) => ({ ...STANDING, ...seat })),
   };
 }
 
@@ -236,6 +260,97 @@ describe("buildGeduInvoicing", () => {
       expect(aino.clubs).toHaveLength(1);
       expect(aino.clubs[0].paidCount).toBe(2);
       expect(aino.clubs[0].totalCents).toBe(12_000);
+    });
+  });
+
+  describe("assignment periods", () => {
+    /** Kinds by date across every club of one gedu, with the role. */
+    function linesOf(view: ReturnType<typeof build>, id: string) {
+      const found = view.gedus.find((one) => one.id === id);
+      return (found?.clubs ?? []).flatMap((club) =>
+        club.lines.map((line) => [line.date, club.role, line.kind]),
+      );
+    }
+
+    it("cuts the month at the instant a gedu was taken off and their replacement added", () => {
+      // Aino is taken off at the moment the 9th starts and Benjamin added in
+      // the same breath: a session starting at a period's end is the next
+      // period's.
+      const handover = startsAt("2026-09-09");
+      const view = build({
+        gedus: [
+          gedu({
+            id: AINO,
+            assignments: [{ group_id: "g1", role: "primary", ended_at: handover }],
+          }),
+          gedu({
+            id: BENJAMIN,
+            assignments: [{ group_id: "g1", role: "primary", started_at: handover }],
+          }),
+        ],
+        groups: [
+          group({ id: "g1", product_id: "p1", sessions: ["2026-09-02", "2026-09-09"] }),
+        ],
+        products: [product({ id: "p1" })],
+      });
+
+      expect(linesOf(view, AINO)).toEqual([["2026-09-02", "primary", "paid"]]);
+      expect(linesOf(view, BENJAMIN)).toEqual([
+        ["2026-09-09", "primary", "paid"],
+        ["2026-09-16", "primary", "upcoming"],
+        ["2026-09-23", "primary", "upcoming"],
+        ["2026-09-30", "primary", "upcoming"],
+      ]);
+    });
+
+    it("pays each session in the role of the period it fell in", () => {
+      const change = "2026-09-05T12:00:00+03:00";
+      const view = build({
+        gedus: [
+          gedu({
+            id: AINO,
+            assignments: [
+              { group_id: "g1", role: "primary", ended_at: change },
+              { group_id: "g1", role: "assistant", started_at: change },
+            ],
+          }),
+        ],
+        groups: [
+          group({ id: "g1", product_id: "p1", sessions: ["2026-09-02", "2026-09-09"] }),
+        ],
+        products: [product({ id: "p1" })],
+      });
+
+      const clubs = geduOf(view, AINO).clubs;
+      expect(clubs.map((club) => [club.role, club.paidCount, club.totalCents])).toEqual([
+        ["primary", 1, 6_000],
+        ["assistant", 1, 4_000],
+      ]);
+    });
+
+    it("pays neither period for the gap between a removal and a re-add", () => {
+      const view = build({
+        gedus: [
+          gedu({
+            id: AINO,
+            assignments: [
+              { group_id: "g1", role: "primary", ended_at: "2026-09-03T00:00:00+03:00" },
+              { group_id: "g1", role: "primary", started_at: "2026-09-10T00:00:00+03:00" },
+            ],
+          }),
+        ],
+        groups: [
+          group({ id: "g1", product_id: "p1", sessions: ["2026-09-02", "2026-09-09"] }),
+        ],
+        products: [product({ id: "p1" })],
+      });
+
+      expect(linesOf(view, AINO).map(([date, , kind]) => [date, kind])).toEqual([
+        ["2026-09-02", "paid"],
+        ["2026-09-16", "upcoming"],
+        ["2026-09-23", "upcoming"],
+        ["2026-09-30", "upcoming"],
+      ]);
     });
   });
 

@@ -13,6 +13,10 @@ import {
   type GeduInvoicingSnapshot,
 } from "@/services/gedu-invoicing/gedu-invoicing.contracts";
 import { seedAssignments } from "./assignment-helpers";
+import {
+  buildGeduInvoicing,
+  type GeduInvoicingView,
+} from "@/components/gedu-invoicing/build-gedu-invoicing";
 
 /**
  * `get_admin_gedu_invoicing` and `get_my_gedu_invoicing`
@@ -35,13 +39,19 @@ import { seedAssignments } from "./assignment-helpers";
  *     absent gedu, the absent gedu's absence names the sub, and an open
  *     absence names nobody
  *   - no substitution reason, category or note ever reaches the document
+ *   - each session is paid to the assignment period holding its start: a
+ *     removal keeps the removed gedu's past lines, a replacement gets only the
+ *     sessions from their start on (on the removal day too), a role change
+ *     splits the month by role, and the gap before a re-add pays nobody —
+ *     read through the builder the pages use
  *
  * **Every assertion is scoped to this file's own fixtures**: the seeded gedu is
  * shared with other files running in parallel, so claims about them are made
  * only through this file's own groups. The month is a fixed historical one, so
  * nothing here moves with the clock.
  *
- * Product UUIDs 820-824 (see the allocation registry in product-helpers.ts).
+ * Product UUIDs 820-824 and 940-949 (see the allocation registry in
+ * product-helpers.ts).
  */
 
 const MONTH_START = "2026-03-01";
@@ -61,6 +71,20 @@ const GROUP_MUNI = "00000000-0000-0000-0000-000000000823";
 /** A club nobody in this file teaches, so it must appear in no document. */
 const UNTAUGHT = "00000000-0000-0000-0000-000000000824";
 const ALL_PRODUCTS = [CONSUMER, MUNI, UNTAUGHT];
+
+/** The assignment-period cases, one club and group each. */
+const REMOVED = "00000000-0000-0000-0000-000000000940";
+const GROUP_REMOVED = "00000000-0000-0000-0000-000000000941";
+const EARLIER = "00000000-0000-0000-0000-000000000942";
+const GROUP_EARLIER = "00000000-0000-0000-0000-000000000943";
+const LATER = "00000000-0000-0000-0000-000000000944";
+const GROUP_LATER = "00000000-0000-0000-0000-000000000945";
+const ROLE = "00000000-0000-0000-0000-000000000946";
+const GROUP_ROLE = "00000000-0000-0000-0000-000000000947";
+const GAP = "00000000-0000-0000-0000-000000000948";
+const GROUP_GAP = "00000000-0000-0000-0000-000000000949";
+const PERIOD_PRODUCTS = [REMOVED, EARLIER, LATER, ROLE, GAP];
+const PERIOD_GROUPS = [GROUP_REMOVED, GROUP_EARLIER, GROUP_LATER, GROUP_ROLE, GROUP_GAP];
 
 const REASON_NOTE = "Gedu invoicing fixture: private reason note";
 
@@ -319,7 +343,7 @@ describe("gedu invoicing", () => {
     // Requests, cancellations, sessions and slots cascade with their group or
     // product; assignments hold RESTRICT onto the account, so they go first.
     await admin.from("gedu_group_assignments").delete().eq("gedu_id", subId);
-    await deleteTestProducts(admin, ALL_PRODUCTS);
+    await deleteTestProducts(admin, [...ALL_PRODUCTS, ...PERIOD_PRODUCTS]);
     await admin.auth.admin.deleteUser(subId);
   });
 
@@ -367,7 +391,14 @@ describe("gedu invoicing", () => {
       const gedu = adminDoc.gedus.find((g) => g.id === TEST_IDS.GEDU);
       expect(
         gedu?.assignments.filter((a) => a.group_id === GROUP_CONSUMER),
-      ).toEqual([{ group_id: GROUP_CONSUMER, role: "primary" }]);
+      ).toEqual([
+        {
+          group_id: GROUP_CONSUMER,
+          role: "primary",
+          started_at: expect.any(String),
+          ended_at: null,
+        },
+      ]);
       // Only the in-month absences: the one filed for April is outside.
       expect(
         gedu?.absences
@@ -391,9 +422,9 @@ describe("gedu invoicing", () => {
       ).toEqual([
         { group_id: GROUP_CONSUMER, session_date: SUBSTITUTED, role: "primary" },
       ]);
-      expect(sub?.assignments).toEqual([
-        { group_id: GROUP_MUNI, role: "assistant" },
-      ]);
+      expect(
+        sub?.assignments.map(({ group_id, role, ended_at }) => ({ group_id, role, ended_at })),
+      ).toEqual([{ group_id: GROUP_MUNI, role: "assistant", ended_at: null }]);
       expect(sub?.absences).toEqual([]);
     });
 
@@ -404,6 +435,23 @@ describe("gedu invoicing", () => {
       // is outside the month.
       expect(group?.sessions).toEqual([RAN, SUBSTITUTED]);
       expect(group?.cancelled_sessions).toEqual([CANCELLED]);
+    });
+
+    it("carries the start instant of every date it names on a group", () => {
+      // The plan's four Wednesdays — the stored rows, the cancellation and the
+      // requests all fall on them — each at the slot's 14:00 UTC.
+      const group = adminDoc.groups.find((g) => g.id === GROUP_CONSUMER);
+      expect(
+        group?.session_starts.map(({ date, starts_at }) => [
+          date,
+          new Date(starts_at).toISOString(),
+        ]),
+      ).toEqual(
+        [RAN, CANCELLED, SUBSTITUTED, "2026-03-25"].map((date) => [
+          date,
+          `${date}T14:00:00.000Z`,
+        ]),
+      );
     });
 
     it("carries each product's fees, type and term", () => {
@@ -572,6 +620,210 @@ describe("gedu invoicing", () => {
       expect(subDoc.groups.map((g) => g.id).sort()).toEqual(
         [GROUP_CONSUMER, GROUP_MUNI].sort(),
       );
+    });
+  });
+
+  describe("assignment periods", () => {
+    // February 2026, whose Wednesdays are the 4th, 11th, 18th and 25th; every
+    // stored session starts at the slot's 14:00 UTC unless a case says
+    // otherwise.
+    const PERIOD_MONTH = "2026-02-01";
+    const FEB = ["2026-02-04", "2026-02-11", "2026-02-18", "2026-02-25"];
+    let periodView: GeduInvoicingView;
+    let periodDoc: GeduInvoicingSnapshot;
+
+    /** The paid lines one gedu has on one group, as [date, role]. */
+    function paid(geduId: string, groupId: string): [string, string][] {
+      const gedu = periodView.gedus.find((g) => g.id === geduId);
+      return (gedu?.clubs ?? []).flatMap((club) =>
+        club.lines
+          .filter((line) => line.groupId === groupId && line.kind === "paid")
+          .map((line): [string, string] => [line.date, club.role]),
+      );
+    }
+
+    async function storeSessions(groupId: string, startsAt: Record<string, string> = {}) {
+      const { error } = await admin.from("group_sessions").insert(
+        FEB.map((date) => {
+          const start = startsAt[date] ?? `${date}T14:00:00Z`;
+          return {
+            group_id: groupId,
+            session_date: date,
+            starts_at: start,
+            ends_at: new Date(new Date(start).getTime() + 60 * 60 * 1000).toISOString(),
+          };
+        }),
+      );
+      expect(error).toBeNull();
+    }
+
+    beforeAll(async () => {
+      await deleteTestProducts(admin, PERIOD_PRODUCTS);
+      const products = await admin.from("products").insert(
+        PERIOD_PRODUCTS.map((id) => ({
+          ...baseProduct(id),
+          primary_gedu_fee_cents: 5000,
+          assistant_gedu_fee_cents: 3000,
+        })),
+      );
+      expect(products.error).toBeNull();
+      const names = await admin.from("product_translations").insert(
+        PERIOD_PRODUCTS.map((id) => ({
+          product_id: id,
+          locale: "en",
+          name: `Gedu invoicing periods ${id.slice(-3)}`,
+          short_description: "Fixture",
+        })),
+      );
+      expect(names.error).toBeNull();
+      const slots = await admin.from("schedule_slots").insert(
+        PERIOD_PRODUCTS.map((id) => ({
+          product_id: id,
+          weekday: 2,
+          start_time: "14:00",
+          duration_minutes: 60,
+        })),
+      );
+      expect(slots.error).toBeNull();
+      const groups = await admin.from("product_groups").insert(
+        PERIOD_PRODUCTS.map((id, index) => ({
+          id: PERIOD_GROUPS[index],
+          product_id: id,
+          name: `Periods group ${index}`,
+        })),
+      );
+      expect(groups.error).toBeNull();
+
+      // Removed through the admin's own batch: the gedu goes and the sub
+      // replaces them, both stamped now — long after February.
+      await seedAssignments(admin, [
+        { groupId: GROUP_REMOVED, productId: REMOVED, geduId: TEST_IDS.GEDU },
+      ]);
+      await storeSessions(GROUP_REMOVED);
+      const removal = await adminUser.rpc("apply_group_changes", {
+        p_product_id: REMOVED,
+        p_gedu_assignments_removed: [{ groupId: GROUP_REMOVED, geduId: TEST_IDS.GEDU }],
+        p_gedu_assignments_added: [
+          { groupId: GROUP_REMOVED, geduId: subId, role: "primary" },
+        ],
+      });
+      expect(removal.error).toBeNull();
+
+      // Handed over at noon on the 18th: that day's session started at 10:00
+      // on one club and starts at 16:00 on the other.
+      const handover = "2026-02-18T12:00:00Z";
+      await seedAssignments(admin, [
+        { groupId: GROUP_EARLIER, productId: EARLIER, geduId: TEST_IDS.GEDU, endedAt: handover },
+        { groupId: GROUP_EARLIER, productId: EARLIER, geduId: subId, startedAt: handover },
+        { groupId: GROUP_LATER, productId: LATER, geduId: TEST_IDS.GEDU, endedAt: handover },
+        { groupId: GROUP_LATER, productId: LATER, geduId: subId, startedAt: handover },
+      ]);
+      await storeSessions(GROUP_EARLIER, { "2026-02-18": "2026-02-18T10:00:00Z" });
+      await storeSessions(GROUP_LATER, { "2026-02-18": "2026-02-18T16:00:00Z" });
+
+      // Primary until the 14th, assistant since.
+      const change = "2026-02-14T00:00:00Z";
+      await seedAssignments(admin, [
+        { groupId: GROUP_ROLE, productId: ROLE, geduId: TEST_IDS.GEDU, role: "primary", endedAt: change },
+        { groupId: GROUP_ROLE, productId: ROLE, geduId: TEST_IDS.GEDU, role: "assistant", startedAt: change },
+      ]);
+      await storeSessions(GROUP_ROLE);
+
+      // Off on the 8th, back on the 20th: the 11th and 18th are in the gap.
+      await seedAssignments(admin, [
+        { groupId: GROUP_GAP, productId: GAP, geduId: TEST_IDS.GEDU, endedAt: "2026-02-08T00:00:00Z" },
+        { groupId: GROUP_GAP, productId: GAP, geduId: TEST_IDS.GEDU, startedAt: "2026-02-20T00:00:00Z" },
+      ]);
+      await storeSessions(GROUP_GAP);
+
+      const read = await adminUser.rpc("get_admin_gedu_invoicing", {
+        p_month_start: PERIOD_MONTH,
+      });
+      expect(read.error).toBeNull();
+      periodDoc = geduInvoicingSnapshot.parse(read.data);
+      periodView = buildGeduInvoicing({ snapshot: periodDoc, locale: "en", now: new Date() });
+    });
+
+    it("keeps a removed gedu's past lines, and gives their replacement none of them", () => {
+      const period = periodDoc.gedus
+        .find((g) => g.id === TEST_IDS.GEDU)
+        ?.assignments.filter((a) => a.group_id === GROUP_REMOVED);
+      expect(period).toHaveLength(1);
+      expect(period?.[0].ended_at).not.toBeNull();
+
+      expect(paid(TEST_IDS.GEDU, GROUP_REMOVED)).toEqual(FEB.map((date) => [date, "primary"]));
+      expect(paid(subId, GROUP_REMOVED)).toEqual([]);
+      // Added long after February, the replacement's period does not reach it.
+      expect(
+        periodDoc.gedus
+          .find((g) => g.id === subId)
+          ?.assignments.some((a) => a.group_id === GROUP_REMOVED),
+      ).toBe(false);
+    });
+
+    it("gives a replacement added mid-month only the sessions from the handover on", () => {
+      expect(paid(TEST_IDS.GEDU, GROUP_LATER)).toEqual([
+        ["2026-02-04", "primary"],
+        ["2026-02-11", "primary"],
+      ]);
+      expect(paid(subId, GROUP_LATER)).toEqual([
+        ["2026-02-18", "primary"],
+        ["2026-02-25", "primary"],
+      ]);
+    });
+
+    it("leaves a session earlier on the removal day with the removed gedu", () => {
+      expect(paid(TEST_IDS.GEDU, GROUP_EARLIER)).toEqual([
+        ["2026-02-04", "primary"],
+        ["2026-02-11", "primary"],
+        ["2026-02-18", "primary"],
+      ]);
+      expect(paid(subId, GROUP_EARLIER)).toEqual([["2026-02-25", "primary"]]);
+    });
+
+    it("splits a month with a role change into one club line per role, each at its fee", () => {
+      expect(paid(TEST_IDS.GEDU, GROUP_ROLE)).toEqual([
+        ["2026-02-04", "primary"],
+        ["2026-02-11", "primary"],
+        ["2026-02-18", "assistant"],
+        ["2026-02-25", "assistant"],
+      ]);
+      const clubs = periodView.gedus
+        .find((g) => g.id === TEST_IDS.GEDU)
+        ?.clubs.filter((club) => club.productId === ROLE)
+        .map((club) => [club.role, club.feeCents, club.paidCount, club.totalCents]);
+      expect(clubs).toEqual([
+        ["primary", 5000, 2, 10_000],
+        ["assistant", 3000, 2, 6_000],
+      ]);
+    });
+
+    it("pays nobody for the gap between a removal and a re-add", () => {
+      expect(paid(TEST_IDS.GEDU, GROUP_GAP)).toEqual([
+        ["2026-02-04", "primary"],
+        ["2026-02-25", "primary"],
+      ]);
+      const gapLines = periodView.gedus.flatMap((gedu) =>
+        gedu.clubs.flatMap((club) =>
+          club.lines.filter((line) => line.groupId === GROUP_GAP).map((line) => line.date),
+        ),
+      );
+      expect(gapLines).not.toContain("2026-02-11");
+      expect(gapLines).not.toContain("2026-02-18");
+    });
+
+    it("carries no period that ended before the month began", async () => {
+      // The handover on the 18th ended the gedu's period on the earlier club;
+      // March sees only the sub's.
+      const { data, error } = await adminUser.rpc("get_admin_gedu_invoicing", {
+        p_month_start: MONTH_START,
+      });
+      expect(error).toBeNull();
+      const march = geduInvoicingSnapshot.parse(data);
+      const holders = march.gedus
+        .filter((g) => g.assignments.some((a) => a.group_id === GROUP_EARLIER))
+        .map((g) => g.id);
+      expect(holders).toEqual([subId]);
     });
   });
 });

@@ -24,16 +24,23 @@ BEGIN
   v_month_end := (p_month_start + INTERVAL '1 month' - INTERVAL '1 day')::date;
 
   WITH
-  -- Standing seats: every group a gedu is assigned to TODAY whose month says
+  -- Standing seats: every assignment period that overlaps the month's
+  -- instants, read in its product's timezone, on a group whose month says
   -- anything — its product's term overlaps the month, or it stored a session
-  -- row inside it (a stored row on an unscheduled date still ran). Assignments
-  -- carry no history, so a past month is read against today's staffing.
+  -- row inside it (a stored row on an unscheduled date still ran). A gedu
+  -- taken off a group keeps the period they held, and one added mid-month
+  -- brings only theirs; which session each period holds is decided by the
+  -- builder at the instant session_starts gives for its date.
   assigned AS (
-    SELECT a.gedu_id, a.group_id, a.role
+    SELECT a.gedu_id, a.group_id, a.role, a.started_at, a.ended_at
       FROM public.gedu_group_assignments a
       JOIN public.product_groups g ON g.id = a.group_id
       JOIN public.products p       ON p.id = g.product_id
      WHERE (p_gedu_id IS NULL OR a.gedu_id = p_gedu_id)
+       AND a.started_at
+             < ((p_month_start + INTERVAL '1 month')::date)::timestamp AT TIME ZONE p.timezone
+       AND (a.ended_at IS NULL
+            OR a.ended_at > p_month_start::timestamp AT TIME ZONE p.timezone)
        AND (
              (p.start_date <= v_month_end
               AND (p.end_date IS NULL OR p.end_date >= p_month_start))
@@ -115,10 +122,12 @@ BEGIN
                         'assignments', COALESCE((
                           SELECT jsonb_agg(
                                    jsonb_build_object(
-                                     'group_id', a.group_id,
-                                     'role',     a.role
+                                     'group_id',   a.group_id,
+                                     'role',       a.role,
+                                     'started_at', a.started_at,
+                                     'ended_at',   a.ended_at
                                    )
-                                   ORDER BY a.group_id
+                                   ORDER BY a.group_id, a.started_at
                                  )
                             FROM assigned a
                            WHERE a.gedu_id = pr.id
@@ -203,6 +212,46 @@ BEGIN
                              AND sc.session_date <= v_month_end
                              AND public.group_session_is_cancelled(sc.group_id, sc.session_date)
                              AND NOT public.group_session_date_is_holiday(sc.group_id, sc.session_date)
+                        ), '[]'::jsonb),
+                        -- The start instant of every date the document can
+                        -- name on the group — the plan with its holiday-
+                        -- withdrawn dates, the stored rows, the
+                        -- cancellations and the live requests — by the one
+                        -- start rule, so the builder places each date in the
+                        -- period holding its start.
+                        'session_starts', COALESCE((
+                          SELECT jsonb_agg(
+                                   jsonb_build_object(
+                                     'date',      d.session_date,
+                                     'starts_at', public.group_session_starts_at(sg.id, d.session_date)
+                                   )
+                                   ORDER BY d.session_date
+                                 )
+                            FROM (
+                                  SELECT psd.session_date
+                                    FROM public.planned_session_dates(
+                                           sg.product_id, p_month_start, v_month_end, true
+                                         ) psd
+                                  UNION
+                                  SELECT gs.session_date
+                                    FROM public.group_sessions gs
+                                   WHERE gs.group_id = sg.id
+                                     AND gs.session_date >= p_month_start
+                                     AND gs.session_date <= v_month_end
+                                  UNION
+                                  SELECT sc.session_date
+                                    FROM public.session_cancellations sc
+                                   WHERE sc.group_id = sg.id
+                                     AND sc.session_date >= p_month_start
+                                     AND sc.session_date <= v_month_end
+                                  UNION
+                                  SELECT r.session_date
+                                    FROM public.session_substitution_requests r
+                                   WHERE r.group_id = sg.id
+                                     AND r.status <> 'withdrawn'::public.substitution_request_status
+                                     AND r.session_date >= p_month_start
+                                     AND r.session_date <= v_month_end
+                                 ) AS d
                         ), '[]'::jsonb)
                       )
                       ORDER BY sg.id
@@ -276,7 +325,7 @@ $$;
 -- Name: FUNCTION gedu_invoicing_document(p_month_start date, p_gedu_id uuid); Type: COMMENT; Schema: public; Owner: -
 --
 
-COMMENT ON FUNCTION public.gedu_invoicing_document(p_month_start date, p_gedu_id uuid) IS 'Internal builder behind gedu invoicing: one calendar month of the raw facts a gedu''s invoice is computed from, for one gedu (p_gedu_id) or for every gedu (NULL — only the admin wrapper passes that). Not granted to `authenticated`: the two guarded wrappers get_admin_gedu_invoicing and get_my_gedu_invoicing are its only client paths. p_month_start must be the first day of a month; anything else raises check_violation. Nothing is written or snapshotted — every figure is recomputed from today''s facts by a pure TypeScript builder, as municipality invoicing is. Per gedu it carries their id, name and email (the email on the gedu''s own entry only — on the gedu''s own read that is the caller''s address, and a counterpart is named but never addressed), and their SEATS: `assignments` (every group they are assigned to whose product''s term overlaps the month or which stored a session row in it, with the assignment role), `substitutions` (every `substituted` request inside the month naming them as the sub, with the role recorded on the request — the absent gedu''s at filing time — and the absent gedu''s id and name) and `absences` (their own non-withdrawn requests inside the month on a group they hold a seat on, with the seated sub''s id and name, or null while the request is open). Those are exactly the facts the substitution derivation needs to decide whether THIS gedu was expected at a (group, date); the builder runs the TypeScript twin of gedu_is_expected_at_session over them rather than this function re-deriving it. WHO covered for whom is named on both sides, so an admin can see why one gedu is not paid for a session another was, and a gedu can see who covered for them: that follows the substitution feature''s disclosure rule (src/services/session-substitution/CLAUDE.md) — the absent gedu is named to admins, to the requester, and to staff on the group, which a seated sub is; only the volunteer pool withholds it, and an unseated volunteer never reaches invoicing. A request''s REASON — its category and note — never appears. STAFFING IS TODAY''S: assignments carry no history (removing one deletes the row, a role change overwrites it), so a past month is computed from current assignments — a known, accepted limitation of v1, not an oversight. Beside the gedus ride every group their seats touch (with its stored group_sessions dates in the month that no cancellation in effect covers — the evidence a session ran — and the month''s cancelled dates in effect, both by group_session_is_cancelled, so a date is never in both, and neither holds a holiday date, which carries its break alone) and every product of those groups (type, timezone, term, both current gedu fees — NULL means not set, never zero — the whole product_translations array, planned_dates — the product''s planned session dates inside the month, as planned_session_dates answers them over the month (so clipped to the term), ascending, which are the dates its seats were due — holiday_breaks (holiday_breaks_document over the month: each break of a calendar the product follows touching it, with its name in every locale and the planned dates it withdrew inside the month), its own location and the nearest ancestor-or-self municipality, null where the chain reaches none). Every array ships as [] rather than null.';
+COMMENT ON FUNCTION public.gedu_invoicing_document(p_month_start date, p_gedu_id uuid) IS 'Internal builder behind gedu invoicing: one calendar month of the raw facts a gedu''s invoice is computed from, for one gedu (p_gedu_id) or for every gedu (NULL — only the admin wrapper passes that). Not granted to `authenticated`: the two guarded wrappers get_admin_gedu_invoicing and get_my_gedu_invoicing are its only client paths. p_month_start must be the first day of a month; anything else raises check_violation. Nothing is written or snapshotted — every figure is recomputed from today''s facts by a pure TypeScript builder, as municipality invoicing is. Per gedu it carries their id, name and email (the email on the gedu''s own entry only — on the gedu''s own read that is the caller''s address, and a counterpart is named but never addressed), and their SEATS: `assignments` (every assignment period of theirs that overlaps the month''s instants in its product''s timezone, on a group whose product''s term overlaps the month or which stored a session row in it, each with its group, role, started_at and ended_at — null while current — so a gedu since taken off a group still carries the period they held, and one whose role changed carries both periods), `substitutions` (every `substituted` request inside the month naming them as the sub, with the role recorded on the request — the absent gedu''s at filing time — and the absent gedu''s id and name) and `absences` (their own non-withdrawn requests inside the month on a group they hold a seat on, with the seated sub''s id and name, or null while the request is open). Those are exactly the facts the substitution derivation needs to decide whether THIS gedu was expected at a (group, date); the builder runs the TypeScript twin of gedu_is_expected_at_session over them rather than this function re-deriving it. WHO covered for whom is named on both sides, so an admin can see why one gedu is not paid for a session another was, and a gedu can see who covered for them: that follows the substitution feature''s disclosure rule (src/services/session-substitution/CLAUDE.md) — the absent gedu is named to admins, to the requester, and to staff on the group, which a seated sub is; only the volunteer pool withholds it, and an unseated volunteer never reaches invoicing. A request''s REASON — its category and note — never appears. STAFFING IS BY PERIOD: a session belongs to the period holding its start instant, so a removed gedu keeps the sessions that started while they held the group, a replacement gets only the ones after, a role change pays each session in the role it was taught in, and the gap between a removal and a re-add pays neither; the builder applies that through the TypeScript twin at the instants `session_starts` carries. Beside the gedus ride every group their seats touch (with its stored group_sessions dates in the month that no cancellation in effect covers — the evidence a session ran — and the month''s cancelled dates in effect, both by group_session_is_cancelled, so a date is never in both, and neither holds a holiday date, which carries its break alone; and `session_starts`, {date, starts_at} for every date the document can name on the group — the plan in the month with its holiday-withdrawn dates, the stored rows, the cancellations and the non-withdrawn requests — each by group_session_starts_at, the one start rule) and every product of those groups (type, timezone, term, both current gedu fees — NULL means not set, never zero — the whole product_translations array, planned_dates — the product''s planned session dates inside the month, as planned_session_dates answers them over the month (so clipped to the term), ascending, which are the dates its seats were due — holiday_breaks (holiday_breaks_document over the month: each break of a calendar the product follows touching it, with its name in every locale and the planned dates it withdrew inside the month), its own location and the nearest ancestor-or-self municipality, null where the chain reaches none). Every array ships as [] rather than null.';
 
 
 --
