@@ -31,24 +31,15 @@ export const groupChangeSet = z.object({
       gedus: z.array(
         z.object({ geduId: z.string(), role: geduAssignmentRole })
       ),
-      /**
-       * The shape this replaced — a bare array of ids, every one a primary.
-       *
-       * It is still **accepted** rather than rejected, and only for the deploy
-       * window: a browser still running the previous bundle posts it, and the
-       * RPC reads it as primaries. Nothing in this app writes it. It is not a
-       * second way to say the same thing — a caller sending both gets both
-       * assignments — so it comes out once no deployed client can be sending it.
-       */
-      geduIds: z.array(z.string()).optional(),
     })
   ),
   renamedGroups: z.array(z.object({ groupId: z.string(), name: z.string() })),
   deletedGroupIds: z.array(z.string()),
   /**
-   * Assignments to create **or re-state**. The RPC upserts on (group, gedu) and
-   * updates the role, so changing somebody's role is one added element rather
-   * than a remove plus an add — which is what lets the panel save a role change
+   * Assignments to create **or re-state**. Re-stating a current assignment in
+   * another role is a role change — the RPC ends that period and starts one in
+   * the new role — so changing somebody's role is one added element rather
+   * than a remove plus an add, which is what lets the panel save a role change
    * the moment it is made, as the one element of an otherwise empty change set.
    * The panel stages nothing: every assignment action is its own save.
    */

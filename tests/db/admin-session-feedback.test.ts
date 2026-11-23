@@ -9,6 +9,7 @@ import {
 import { createAdminTestClient, createAuthenticatedClient } from "./helpers";
 import { TEST_IDS, TEST_CREDENTIALS } from "./constants";
 import { deleteTestProducts } from "./product-helpers";
+import { seedAssignments } from "./assignment-helpers";
 
 /**
  * `get_admin_session_feedback` — the admin feedback page's read: every gamer's
@@ -154,11 +155,10 @@ describe("get_admin_session_feedback", () => {
       .insert({ id: GROUP, product_id: PRODUCT, name: "Tuesday crew" });
     if (group.error) throw new Error(`seed group failed: ${group.error.message}`);
 
-    const staff = await admin.from("gedu_group_assignments").insert([
-      { group_id: GROUP, product_id: PRODUCT, gedu_id: TEST_IDS.GEDU, role: "primary" },
-      { group_id: GROUP, product_id: PRODUCT, gedu_id: assistantId, role: "assistant" },
+    await seedAssignments(admin, [
+      { groupId: GROUP, productId: PRODUCT, geduId: TEST_IDS.GEDU, role: "primary" },
+      { groupId: GROUP, productId: PRODUCT, geduId: assistantId, role: "assistant" },
     ]);
-    if (staff.error) throw new Error(`seed assignments failed: ${staff.error.message}`);
 
     const sub = await admin.from("session_substitution_requests").insert({
       group_id: GROUP,

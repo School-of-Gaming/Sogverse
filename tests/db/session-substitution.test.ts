@@ -19,6 +19,7 @@ import {
 } from "./helpers";
 import { TEST_IDS, TEST_CREDENTIALS } from "./constants";
 import { deleteTestProducts, eraseParticipations } from "./product-helpers";
+import { seedAssignment, seedAssignments } from "./assignment-helpers";
 import { productRequiredQualifications } from "@/lib/products/session-requirements";
 
 /**
@@ -452,14 +453,9 @@ describe("session substitutions", () => {
       { id: GROUP_MUNI, product_id: MUNI_PRODUCT, name: "Municipal Cohort" },
     ]);
 
-    await admin.from("gedu_group_assignments").insert([
-      { group_id: GROUP_A, gedu_id: TEST_IDS.GEDU, product_id: PRODUCT, role: "primary" },
-      {
-        group_id: GROUP_SITE,
-        gedu_id: TEST_IDS.GEDU,
-        product_id: SITE_PRODUCT,
-        role: "primary",
-      },
+    await seedAssignments(admin, [
+      { groupId: GROUP_A, geduId: TEST_IDS.GEDU, productId: PRODUCT },
+      { groupId: GROUP_SITE, geduId: TEST_IDS.GEDU, productId: SITE_PRODUCT },
     ]);
 
     // One active seat on GROUP_A, because the assignment summaries only count a
@@ -538,6 +534,25 @@ describe("session substitutions", () => {
       })),
     );
   });
+
+  /**
+   * Puts the seeded GEDU back on GROUP_A as one current primary period from
+   * long before any date here. A case that ends or splits that period through
+   * the writer leaves history rows behind, which no later case expects.
+   */
+  async function restoreFixtureAssignment() {
+    const { error } = await admin
+      .from("gedu_group_assignments")
+      .delete()
+      .eq("group_id", GROUP_A)
+      .eq("gedu_id", TEST_IDS.GEDU);
+    expect(error).toBeNull();
+    await seedAssignment(admin, {
+      groupId: GROUP_A,
+      geduId: TEST_IDS.GEDU,
+      productId: PRODUCT,
+    });
+  }
 
   /** Writes a request row straight to the table, bypassing every RPC guard. */
   async function seedRequest(input: {
@@ -687,6 +702,8 @@ describe("session substitutions", () => {
         "LISTS a group's gedus for the admin groups panel, which is the PERMANENT assignment editor. Admin-gated, and the list is exactly what that panel edits.",
       "policy:gedu_group_assignments.customers_read_assignments_via_gamers":
         "reads assignment ROWS for a parent whose child is on the product. A read of the rows, not a gate on them.",
+      "function:group_assignments_at":
+        "the containment rule for assignment periods — who held the group at an instant — and not a gate: it answers about the ASSIGNMENT half only, and every gate composing it adds the substitution half beside it.",
     };
 
     /**
@@ -787,6 +804,14 @@ describe("session substitutions", () => {
         "function:chat_body_mentions_are_roster",
         "function:get_chat_channel_roster",
         "function:set_chat_lock",
+      ],
+      // Each carries the substitution half itself: the seat predicate ORs in a
+      // live substitution, and the two writers fall back to the substitution
+      // the gedu holds for the role.
+      "function:group_assignments_at": [
+        "function:file_session_substitution_request",
+        "function:gedu_holds_seat_at_session",
+        "function:set_session_substitution",
       ],
     };
 
@@ -1317,10 +1342,10 @@ describe("session substitutions", () => {
 
       // An ASSIGNED gedu is expected too, and is refused for the same reason
       // rather than for a different one.
-      await admin.from("gedu_group_assignments").insert({
-        group_id: GROUP_A,
-        gedu_id: thirdId,
-        product_id: PRODUCT,
+      await seedAssignment(admin, {
+        groupId: GROUP_A,
+        geduId: thirdId,
+        productId: PRODUCT,
         role: "assistant",
       });
       expect(await maySubstitute(thirdId, date, TEST_IDS.GEDU)).toBe(false);
@@ -1401,10 +1426,10 @@ describe("session substitutions", () => {
       // assignment wins, which is exactly why the substitution card's link carries the
       // group id. The MINTED account holds both roles here rather than the seeded
       // one, so the case depends on no certification this file does not own.
-      await admin.from("gedu_group_assignments").insert({
-        group_id: GROUP_A,
-        gedu_id: subId,
-        product_id: PRODUCT,
+      await seedAssignment(admin, {
+        groupId: GROUP_A,
+        geduId: subId,
+        productId: PRODUCT,
         role: "assistant",
       });
       await seedRequest({
@@ -2517,12 +2542,7 @@ describe("session substitutions", () => {
 
       // Restored for the rest of the file: the seeded assignment is fixture,
       // not state this block owns.
-      await admin.from("gedu_group_assignments").insert({
-        group_id: GROUP_A,
-        gedu_id: TEST_IDS.GEDU,
-        product_id: PRODUCT,
-        role: "primary",
-      });
+      await restoreFixtureAssignment();
     });
 
     it("sets a sub on a PAST session with no request at all", async () => {
@@ -3154,10 +3174,10 @@ describe("session substitutions", () => {
     });
 
     it("the product-groups snapshot carries each pill's role", async () => {
-      await admin.from("gedu_group_assignments").insert({
-        group_id: GROUP_B,
-        gedu_id: subId,
-        product_id: PRODUCT,
+      await seedAssignment(admin, {
+        groupId: GROUP_B,
+        geduId: subId,
+        productId: PRODUCT,
         role: "assistant",
       });
 
@@ -3440,7 +3460,19 @@ describe("session substitutions", () => {
   // -------------------------------------------------------------------------
 
   describe("apply_group_changes and the role column", () => {
-    it("upserts the role, so a role change is ONE add", async () => {
+    /** Every period of one gedu on one group, oldest first. */
+    async function periodsOf(gedu: string, group: string) {
+      const { data, error } = await admin
+        .from("gedu_group_assignments")
+        .select("role, started_at, ended_at")
+        .eq("group_id", group)
+        .eq("gedu_id", gedu)
+        .order("started_at");
+      expect(error).toBeNull();
+      return data ?? [];
+    }
+
+    it("a role change ends the period and starts one in the new role", async () => {
       const { error } = await adminAuth.rpc("apply_group_changes", {
         p_product_id: PRODUCT,
         p_gedu_assignments_added: [
@@ -3449,19 +3481,50 @@ describe("session substitutions", () => {
       });
       expect(error).toBeNull();
 
-      const { data } = await admin
-        .from("gedu_group_assignments")
-        .select("role")
-        .eq("group_id", GROUP_A)
-        .eq("gedu_id", TEST_IDS.GEDU)
-        .single();
-      expect(data?.role).toBe("assistant");
+      const periods = await periodsOf(TEST_IDS.GEDU, GROUP_A);
+      expect(periods.map((period) => period.role)).toEqual(["primary", "assistant"]);
+      expect(Date.parse(periods[0].ended_at ?? "")).toBe(
+        Date.parse(periods[1].started_at),
+      );
+      expect(periods[1].ended_at).toBeNull();
 
-      await admin
-        .from("gedu_group_assignments")
-        .update({ role: "primary" })
-        .eq("group_id", GROUP_A)
-        .eq("gedu_id", TEST_IDS.GEDU);
+      // A past date keeps the role it was taught in, a future one takes the
+      // new role: an admin seating a sub on each snapshots that role.
+      const past = await adminAuth.rpc("set_session_substitution", {
+        p_group_id: GROUP_A,
+        p_session_date: utcDate(-5),
+        p_absent_gedu_id: TEST_IDS.GEDU,
+        p_sub_gedu_id: subId,
+        p_reason: "sick",
+      });
+      expect(past.error).toBeNull();
+      expect(substitutionRequestDocument.parse(past.data).role).toBe("primary");
+
+      const future = await adminAuth.rpc("set_session_substitution", {
+        p_group_id: GROUP_A,
+        p_session_date: utcDate(5),
+        p_absent_gedu_id: TEST_IDS.GEDU,
+        p_sub_gedu_id: subId,
+        p_reason: "sick",
+      });
+      expect(future.error).toBeNull();
+      expect(substitutionRequestDocument.parse(future.data).role).toBe("assistant");
+
+      await restoreFixtureAssignment();
+    });
+
+    it("re-stating the role a gedu already holds changes nothing", async () => {
+      const { error } = await adminAuth.rpc("apply_group_changes", {
+        p_product_id: PRODUCT,
+        p_gedu_assignments_added: [
+          { groupId: GROUP_A, geduId: TEST_IDS.GEDU, role: "primary" },
+        ],
+      });
+      expect(error).toBeNull();
+
+      const periods = await periodsOf(TEST_IDS.GEDU, GROUP_A);
+      expect(periods).toHaveLength(1);
+      expect(periods[0].ended_at).toBeNull();
     });
 
     it("defaults an omitted role to primary", async () => {
@@ -3480,13 +3543,16 @@ describe("session substitutions", () => {
       expect(data?.role).toBe("primary");
     });
 
-    it("withdraws the live requests a REMOVAL orphans", async () => {
-      // Removing a gedu from a group unseats them without touching a substitution row,
-      // which is what made this the one unseating that left live requests
-      // behind: an open request by somebody who is no longer expected, ready for
-      // an admin to answer with a sub for nobody.
+    it("a REMOVAL withdraws the future requests it orphans and keeps the past ones", async () => {
+      // Removing a gedu from a group unseats them from every session starting
+      // after the removal without touching a substitution row, so the requests
+      // they left on those dates would wait for an admin to answer with a sub
+      // for nobody. A session that already started still belongs to the period
+      // that just ended, so its request, and the sub seated on it, stand.
       const open = await seedRequest({ date: utcDate(5) });
       const substituted = await seedRequest({ date: utcDate(6), substituteId: subId });
+      const pastOpen = await seedRequest({ date: utcDate(-5) });
+      const pastSubstituted = await seedRequest({ date: utcDate(-4), substituteId: subId });
 
       const { error } = await adminAuth.rpc("apply_group_changes", {
         p_product_id: PRODUCT,
@@ -3496,9 +3562,9 @@ describe("session substitutions", () => {
       });
       expect(error).toBeNull();
 
-      // Both go, and the substituted one is emptied rather than merely closed: a
-      // withdrawn row carries no sub, so invoicing finds no phantom
-      // substitution for a session nobody was absent from.
+      // Both future ones go, and the substituted one is emptied rather than
+      // merely closed: a withdrawn row carries no sub, so invoicing finds no
+      // phantom substitution for a session nobody was absent from.
       expect((await statusOf(open))?.status).toBe("withdrawn");
       const swept = await statusOf(substituted);
       expect(swept?.status).toBe("withdrawn");
@@ -3506,12 +3572,17 @@ describe("session substitutions", () => {
       expect(swept?.approved_by).toBeNull();
       expect(swept?.approved_at).toBeNull();
 
-      await admin.from("gedu_group_assignments").insert({
-        group_id: GROUP_A,
-        gedu_id: TEST_IDS.GEDU,
-        product_id: PRODUCT,
-        role: "primary",
-      });
+      expect((await statusOf(pastOpen))?.status).toBe("open");
+      const kept = await statusOf(pastSubstituted);
+      expect(kept?.status).toBe("substituted");
+      expect(kept?.substitute_id).toBe(subId);
+
+      // The period ended rather than disappearing.
+      const periods = await periodsOf(TEST_IDS.GEDU, GROUP_A);
+      expect(periods).toHaveLength(1);
+      expect(periods[0].ended_at).not.toBeNull();
+
+      await restoreFixtureAssignment();
     });
 
     it("sweeps by the derivation and not by the name in the removal", async () => {
@@ -3520,9 +3591,9 @@ describe("session substitutions", () => {
       // colleague who is still assigned keeps their absence on the very same
       // date, and another group of the same product is not swept at all.
       const date = utcDate(5);
-      await admin.from("gedu_group_assignments").insert([
-        { group_id: GROUP_A, gedu_id: thirdId, product_id: PRODUCT, role: "assistant" },
-        { group_id: GROUP_B, gedu_id: subId, product_id: PRODUCT, role: "primary" },
+      await seedAssignments(admin, [
+        { groupId: GROUP_A, geduId: thirdId, productId: PRODUCT, role: "assistant" },
+        { groupId: GROUP_B, geduId: subId, productId: PRODUCT },
       ]);
 
       const removed = await seedRequest({ date });
@@ -3545,15 +3616,10 @@ describe("session substitutions", () => {
       expect((await statusOf(colleague))?.status).toBe("open");
       expect((await statusOf(otherGroup))?.status).toBe("open");
 
-      await admin.from("gedu_group_assignments").insert({
-        group_id: GROUP_A,
-        gedu_id: TEST_IDS.GEDU,
-        product_id: PRODUCT,
-        role: "primary",
-      });
+      await restoreFixtureAssignment();
     });
 
-    it("reads an added group's inline gedus with their roles, and the legacy id array", async () => {
+    it("reads an added group's inline gedus with their roles", async () => {
       const { data, error } = await adminAuth.rpc("apply_group_changes", {
         p_product_id: PRODUCT,
         p_added_groups: [
@@ -3562,42 +3628,25 @@ describe("session substitutions", () => {
             name: "Substitution Roles",
             gedus: [{ geduId: subId, role: "assistant" }],
           },
-          { tempId: "tmp-legacy", name: "Substitution Legacy", geduIds: [thirdId] },
         ],
       });
       expect(error).toBeNull();
 
-      const map = z
+      const rolesGroup = z
         .object({ tempMap: z.record(z.string(), z.string()) })
-        .parse(data).tempMap;
-
-      const rolesGroup = map["tmp-roles"];
-      const legacyGroup = map["tmp-legacy"];
+        .parse(data).tempMap["tmp-roles"];
       expect(rolesGroup).toBeTruthy();
-      expect(legacyGroup).toBeTruthy();
 
       const { data: rows } = await admin
         .from("gedu_group_assignments")
-        .select("group_id, gedu_id, role")
-        .in("group_id", [rolesGroup, legacyGroup]);
+        .select("gedu_id, role")
+        .eq("group_id", rolesGroup);
+      expect(rows).toEqual([{ gedu_id: subId, role: "assistant" }]);
 
-      expect(rows?.find((row) => row.group_id === rolesGroup)?.role).toBe(
-        "assistant",
-      );
-      expect(rows?.find((row) => row.group_id === legacyGroup)?.role).toBe(
-        "primary",
-      );
-
-      // Created inside the case, so removed inside it: the groups these rows hang
-      // off are not in ALL_GROUPS and the file's teardown would leave them.
-      await admin
-        .from("gedu_group_assignments")
-        .delete()
-        .in("group_id", [rolesGroup, legacyGroup]);
-      await admin
-        .from("product_groups")
-        .delete()
-        .in("id", [rolesGroup, legacyGroup]);
+      // Created inside the case, so removed inside it: the group these rows
+      // hang off is not in ALL_GROUPS and the file's teardown would leave it.
+      await admin.from("gedu_group_assignments").delete().eq("group_id", rolesGroup);
+      await admin.from("product_groups").delete().eq("id", rolesGroup);
     });
   });
 

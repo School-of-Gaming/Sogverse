@@ -19,6 +19,7 @@ import {
   deleteTestProducts,
   eraseParticipations,
 } from "./product-helpers";
+import { seedAssignments } from "./assignment-helpers";
 
 /**
  * Gamer creations: the write RPC, the four documents that carry the
@@ -225,9 +226,9 @@ describe("gamer creations", () => {
 
     // The gedu teaches one group of PRODUCT_CLUB and the whole of PRODUCT_OWED,
     // and nothing on PRODUCT_OFF.
-    await admin.from("gedu_group_assignments").insert([
-      { group_id: GROUP_A, gedu_id: TEST_IDS.GEDU, product_id: PRODUCT_CLUB },
-      { group_id: GROUP_OWED, gedu_id: TEST_IDS.GEDU, product_id: PRODUCT_OWED },
+    await seedAssignments(admin, [
+      { groupId: GROUP_A, geduId: TEST_IDS.GEDU, productId: PRODUCT_CLUB },
+      { groupId: GROUP_OWED, geduId: TEST_IDS.GEDU, productId: PRODUCT_OWED },
     ]);
 
     await admin.from("participations").insert([

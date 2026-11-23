@@ -25,6 +25,7 @@ import {
   deleteTestProducts,
   eraseParticipations,
 } from "./product-helpers";
+import { seedAssignment, seedAssignments } from "./assignment-helpers";
 
 /**
  * The gedu session feed: the two read RPCs, the four write RPCs, and the
@@ -212,17 +213,9 @@ describe("gedu session feed", () => {
       { id: GROUP_SITE, product_id: PRODUCT_SITE, name: "Cohort On Site" },
     ]);
 
-    await admin.from("gedu_group_assignments").insert([
-      {
-        group_id: GROUP_MINE,
-        gedu_id: TEST_IDS.GEDU,
-        product_id: PRODUCT_MINE,
-      },
-      {
-        group_id: GROUP_SITE,
-        gedu_id: TEST_IDS.GEDU,
-        product_id: PRODUCT_SITE,
-      },
+    await seedAssignments(admin, [
+      { groupId: GROUP_MINE, geduId: TEST_IDS.GEDU, productId: PRODUCT_MINE },
+      { groupId: GROUP_SITE, geduId: TEST_IDS.GEDU, productId: PRODUCT_SITE },
     ]);
 
     // GAMER is on the roster; GAMER_2 is on the OTHER product entirely, so
@@ -1927,11 +1920,7 @@ describe("gedu session feed", () => {
         .from("gedu_profiles")
         .insert({ user_id: markerId, certified: true });
 
-      await admin.from("gedu_group_assignments").insert({
-        group_id: GROUP_MINE,
-        gedu_id: markerId,
-        product_id: PRODUCT_MINE,
-      });
+      await seedAssignment(admin, { groupId: GROUP_MINE, geduId: markerId, productId: PRODUCT_MINE });
 
       marker = await createAuthenticatedClient(email, "testpassword123");
 

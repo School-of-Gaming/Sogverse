@@ -63,7 +63,9 @@ BEGIN
         USING ERRCODE = 'check_violation';
     END IF;
 
-    -- The absent gedu has to actually be expected at the session.
+    -- The absent gedu has to actually be expected at the session — assigned
+    -- to the group at that session, so a past session keeps the gedu who held
+    -- the group then.
     IF NOT public.gedu_is_expected_at_session(
              p_absent_gedu_id, p_group_id, p_session_date
            ) THEN
@@ -72,10 +74,14 @@ BEGIN
         USING ERRCODE = 'check_violation';
     END IF;
 
+    -- The role of the absent gedu's period containing the session, so a past
+    -- session is substituted in the role it was taught in.
     SELECT a.role INTO v_role
-      FROM public.gedu_group_assignments a
-     WHERE a.group_id = p_group_id
-       AND a.gedu_id  = p_absent_gedu_id;
+      FROM public.group_assignments_at(
+             p_group_id,
+             public.group_session_starts_at(p_group_id, p_session_date)
+           ) a
+     WHERE a.gedu_id = p_absent_gedu_id;
 
     IF v_role IS NULL THEN
       SELECT r2.role INTO v_role
@@ -144,7 +150,7 @@ $$;
 -- Name: FUNCTION set_session_substitution(p_group_id uuid, p_session_date date, p_absent_gedu_id uuid, p_sub_gedu_id uuid, p_reason public.substitution_reason, p_reason_note text); Type: COMMENT; Schema: public; Owner: -
 --
 
-COMMENT ON FUNCTION public.set_session_substitution(p_group_id uuid, p_session_date date, p_absent_gedu_id uuid, p_sub_gedu_id uuid, p_reason public.substitution_reason, p_reason_note text) IS 'The office-arranged path: an admin names the absent gedu and the sub outright, with no offer involved. Three shapes in one function. With NO request for that seat it files one on the absent gedu''s behalf, created already `substituted` — the filing needs a reason exactly as the gedu''s own does and is refused without one, and the absent gedu must actually be EXPECTED at the session, with the role taken from their assignment or from the substitution they hold. With an OPEN request it marks that request `substituted`, which is what the admin queue''s approve reads as. With an ALREADY SUBSTITUTED one it RE-POINTS the substitution, so replacing a sub is one action rather than a clear and a set, and the displaced sub''s own absence is then swept by the cascade. An approval or a re-point may omit the reason and keeps the row''s: reason and note are only overwritten when supplied, so an admin replacing a sub does not blank what the gedu wrote. There is deliberately NO today-or-later requirement — this is the retroactive path, and an off-platform substitution that already happened has to be recordable because gedu invoicing reads these rows. The date still passes the ordinary writable-date check. approved_by is the acting admin on every admin path.';
+COMMENT ON FUNCTION public.set_session_substitution(p_group_id uuid, p_session_date date, p_absent_gedu_id uuid, p_sub_gedu_id uuid, p_reason public.substitution_reason, p_reason_note text) IS 'The office-arranged path: an admin names the absent gedu and the sub outright, with no offer involved. Three shapes in one function. With NO request for that seat it files one on the absent gedu''s behalf, created already `substituted` — the filing needs a reason exactly as the gedu''s own does and is refused without one, and the absent gedu must actually be EXPECTED at the session, which means assigned to the group at that session (an assignment period containing its start) or holding a substitution for it; the role is taken from that period or from the substitution they hold, so a past session is substituted in the role it was taught in. With an OPEN request it marks that request `substituted`, which is what the admin queue''s approve reads as. With an ALREADY SUBSTITUTED one it RE-POINTS the substitution, so replacing a sub is one action rather than a clear and a set, and the displaced sub''s own absence is then swept by the cascade. An approval or a re-point may omit the reason and keeps the row''s: reason and note are only overwritten when supplied, so an admin replacing a sub does not blank what the gedu wrote. There is deliberately NO today-or-later requirement — this is the retroactive path, and an off-platform substitution that already happened has to be recordable because gedu invoicing reads these rows. The date still passes the ordinary writable-date check. approved_by is the acting admin on every admin path.';
 
 
 --

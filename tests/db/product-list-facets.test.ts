@@ -10,6 +10,7 @@ import {
 } from "./helpers";
 import { TEST_IDS, TEST_CREDENTIALS } from "./constants";
 import { deleteTestProducts } from "./product-helpers";
+import { seedAssignments } from "./assignment-helpers";
 
 /**
  * `product_list_facets` — the admin product list's per-type counts and filter
@@ -148,11 +149,10 @@ describe("product_list_facets", () => {
     ]);
     if (group.error) throw new Error(`seed group failed: ${group.error.message}`);
 
-    const staff = await admin.from("gedu_group_assignments").insert([
-      { group_id: GROUP, product_id: CAMP, gedu_id: TEST_IDS.GEDU, role: "primary" },
-      { group_id: GROUP, product_id: CAMP, gedu_id: otherGeduId, role: "assistant" },
+    await seedAssignments(admin, [
+      { groupId: GROUP, productId: CAMP, geduId: TEST_IDS.GEDU, role: "primary" },
+      { groupId: GROUP, productId: CAMP, geduId: otherGeduId, role: "assistant" },
     ]);
-    if (staff.error) throw new Error(`seed assignments failed: ${staff.error.message}`);
 
     const trainees = await admin.from("gedu_group_trainees").insert([
       { group_id: TRAINEE_GROUP, product_id: MUNI_CLUB, gedu_id: TEST_IDS.GEDU },

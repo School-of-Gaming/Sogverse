@@ -1076,24 +1076,33 @@ export type Database = {
       gedu_group_assignments: {
         Row: {
           created_at: string
+          ended_at: string | null
           gedu_id: string
           group_id: string
+          id: string
           product_id: string
           role: Database["public"]["Enums"]["gedu_assignment_role"]
+          started_at: string
         }
         Insert: {
           created_at?: string
+          ended_at?: string | null
           gedu_id: string
           group_id: string
+          id?: string
           product_id: string
           role?: Database["public"]["Enums"]["gedu_assignment_role"]
+          started_at: string
         }
         Update: {
           created_at?: string
+          ended_at?: string | null
           gedu_id?: string
           group_id?: string
+          id?: string
           product_id?: string
           role?: Database["public"]["Enums"]["gedu_assignment_role"]
+          started_at?: string
         }
         Relationships: [
           {
@@ -5355,6 +5364,13 @@ export type Database = {
         Args: { p_participation_id: string }
         Returns: number
       }
+      group_assignments_at: {
+        Args: { p_at: string; p_group_id: string }
+        Returns: {
+          gedu_id: string
+          role: Database["public"]["Enums"]["gedu_assignment_role"]
+        }[]
+      }
       group_final_session_date: {
         Args: { p_group_id: string }
         Returns: string
@@ -5369,6 +5385,10 @@ export type Database = {
           session_date: string
           starts_at: string
         }[]
+      }
+      group_session_access_ends_at: {
+        Args: { p_group_id: string; p_session_date: string }
+        Returns: string
       }
       group_session_date_is_holiday: {
         Args: { p_group_id: string; p_session_date: string }
@@ -5385,6 +5405,10 @@ export type Database = {
       group_session_is_cancelled: {
         Args: { p_group_id: string; p_session_date: string }
         Returns: boolean
+      }
+      group_session_starts_at: {
+        Args: { p_group_id: string; p_session_date: string }
+        Returns: string
       }
       group_upcoming_planned_sessions: {
         Args: { p_group_id: string }

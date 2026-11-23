@@ -12,6 +12,7 @@ import {
   geduInvoicingSnapshot,
   type GeduInvoicingSnapshot,
 } from "@/services/gedu-invoicing/gedu-invoicing.contracts";
+import { seedAssignments } from "./assignment-helpers";
 
 /**
  * `get_admin_gedu_invoicing` and `get_my_gedu_invoicing`
@@ -232,21 +233,10 @@ describe("gedu invoicing", () => {
     ]);
     expect(groups.error).toBeNull();
 
-    const assignments = await admin.from("gedu_group_assignments").insert([
-      {
-        group_id: GROUP_CONSUMER,
-        product_id: CONSUMER,
-        gedu_id: TEST_IDS.GEDU,
-        role: "primary",
-      },
-      {
-        group_id: GROUP_MUNI,
-        product_id: MUNI,
-        gedu_id: subId,
-        role: "assistant",
-      },
+    await seedAssignments(admin, [
+      { groupId: GROUP_CONSUMER, productId: CONSUMER, geduId: TEST_IDS.GEDU, role: "primary" },
+      { groupId: GROUP_MUNI, productId: MUNI, geduId: subId, role: "assistant" },
     ]);
-    expect(assignments.error).toBeNull();
 
     // Stored rows: one that ran, one a cancellation covers, the substituted
     // one, and one past the month's end.

@@ -1376,6 +1376,14 @@ BEGIN
 END;
 $$;
 
+-- apply_group_changes stamps a new assignment period with the moment it runs, which
+-- leaves every session the seeded product already held unstaffed. Backdate the
+-- periods to their product's start so the past sessions have their educator.
+UPDATE public.gedu_group_assignments a
+   SET started_at = LEAST(a.started_at, p.start_date::timestamp AT TIME ZONE p.timezone)
+  FROM public.products p
+ WHERE p.id = a.product_id;
+
 COMMIT;
 
 -- =============================================================================
@@ -1678,6 +1686,14 @@ BEGIN
                           'aada@gamer.example.com')));
 END;
 $$;
+
+-- apply_group_changes stamps a new assignment period with the moment it runs, which
+-- leaves every session the seeded product already held unstaffed. Backdate the
+-- periods to their product's start so the past sessions have their educator.
+UPDATE public.gedu_group_assignments a
+   SET started_at = LEAST(a.started_at, p.start_date::timestamp AT TIME ZONE p.timezone)
+  FROM public.products p
+ WHERE p.id = a.product_id;
 
 COMMIT;
 
@@ -3867,6 +3883,14 @@ BEGIN
   END LOOP;
 END;
 $$;
+
+-- apply_group_changes stamps a new assignment period with the moment it runs, which
+-- leaves every session the seeded product already held unstaffed. Backdate the
+-- periods to their product's start so the past sessions have their educator.
+UPDATE public.gedu_group_assignments a
+   SET started_at = LEAST(a.started_at, p.start_date::timestamp AT TIME ZONE p.timezone)
+  FROM public.products p
+ WHERE p.id = a.product_id;
 
 COMMIT;
 

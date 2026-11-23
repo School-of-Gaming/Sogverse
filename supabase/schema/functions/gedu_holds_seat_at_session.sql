@@ -9,13 +9,16 @@ CREATE FUNCTION public.gedu_holds_seat_at_session(p_gedu_id uuid, p_group_id uui
   SELECT p_gedu_id IS NOT NULL
      AND p_group_id IS NOT NULL
      AND p_session_date IS NOT NULL
-     -- "…they are either assigned to the group…"
+     -- "…they are either assigned to the group at that session…" — a period
+     -- holding the session's start instant.
      AND (
            EXISTS (
              SELECT 1
-               FROM public.gedu_group_assignments a
-              WHERE a.group_id = p_group_id
-                AND a.gedu_id  = p_gedu_id
+               FROM public.group_assignments_at(
+                      p_group_id,
+                      public.group_session_starts_at(p_group_id, p_session_date)
+                    ) a
+              WHERE a.gedu_id = p_gedu_id
            )
            -- "…or hold a `substituted` request for it." No window test and no
            -- certification test, for the same reason its parent predicate makes
@@ -38,7 +41,7 @@ $$;
 -- Name: FUNCTION gedu_holds_seat_at_session(p_gedu_id uuid, p_group_id uuid, p_session_date date); Type: COMMENT; Schema: public; Owner: -
 --
 
-COMMENT ON FUNCTION public.gedu_holds_seat_at_session(p_gedu_id uuid, p_group_id uuid, p_session_date date) IS 'Internal predicate: does this gedu still hold a SEAT at (group, date) — assigned to the group, or the substitute_id of a live `substituted` request for it? The second half of the derivation sentence, lifted out because three callers ask it: gedu_is_expected_at_session (which is this AND holding no live request of your own), the orphan sweep (which withdraws every request whose requester no longer passes this), and approve_session_substitution_offer (which refuses to seat a sub for somebody who no longer passes it). Makes NO access-window and NO certification test, exactly as its parent does not: it answers who is DOING THE JOB, a staffing fact, where gedu_substitutes_session answers who may REACH the group. Takes the gedu as an argument rather than reading auth.uid(), because every caller asks it about somebody else. Not granted to `authenticated`.';
+COMMENT ON FUNCTION public.gedu_holds_seat_at_session(p_gedu_id uuid, p_group_id uuid, p_session_date date) IS 'Internal predicate: does this gedu hold a SEAT at (group, date) — assigned to the group at that session, or the substitute_id of a live `substituted` request for it? "Assigned at that session" is an assignment period containing the session''s start instant: group_assignments_at asked at group_session_starts_at. So a gedu taken off a group keeps every session that started before the removal, and one added later gets only the sessions starting at or after their period began. The second half of the derivation sentence, lifted out because three callers ask it: gedu_is_expected_at_session (which is this AND holding no live request of your own), the orphan sweep (which withdraws every request whose requester no longer passes this), and approve_session_substitution_offer (which refuses to seat a sub for somebody who no longer passes it). Makes NO access-window and NO certification test, exactly as its parent does not: it answers who is DOING THE JOB, a staffing fact, where gedu_substitutes_session answers who may REACH the group. Takes the gedu as an argument rather than reading auth.uid(), because every caller asks it about somebody else. Not granted to `authenticated`.';
 
 
 --

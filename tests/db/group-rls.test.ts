@@ -204,6 +204,7 @@ describe("product_groups + gedu_group_assignments RLS", () => {
         group_id: groupX1,
         gedu_id: TEST_IDS.ADMIN,
         product_id: PRODUCT_X,
+        started_at: "2000-01-01T00:00:00Z",
       });
       expect(error).not.toBeNull();
     });

@@ -17,6 +17,7 @@ import {
   deleteTestProducts,
   eraseParticipations,
 } from "./product-helpers";
+import { seedAssignment } from "./assignment-helpers";
 
 /**
  * Trainee seats: a gedu placed on one group to shadow it, who opens the same
@@ -189,11 +190,7 @@ describe("trainee gedus", () => {
       { id: GROUP_SIBLING, product_id: PRODUCT_MAIN, name: "Cohort Sibling" },
       { id: GROUP_BATCH, product_id: PRODUCT_BATCH, name: "Cohort Batch" },
     ]);
-    await admin.from("gedu_group_assignments").insert({
-      group_id: GROUP_MINE,
-      gedu_id: TEST_IDS.GEDU,
-      product_id: PRODUCT_MAIN,
-    });
+    await seedAssignment(admin, { groupId: GROUP_MINE, geduId: TEST_IDS.GEDU, productId: PRODUCT_MAIN });
 
     const { data: seats } = await admin
       .from("participations")
@@ -745,6 +742,7 @@ describe("trainee gedus", () => {
         group_id: GROUP_SIBLING,
         gedu_id: traineeId,
         product_id: PRODUCT_MAIN,
+        started_at: "2000-01-01T00:00:00Z",
       });
       expect(direct.error?.code).toBe("23505");
     });

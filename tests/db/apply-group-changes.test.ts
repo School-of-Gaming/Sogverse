@@ -4,6 +4,7 @@ import type { Database } from "@/types/database.types";
 import { createAdminTestClient, createAuthenticatedClient } from "./helpers";
 import { TEST_IDS, TEST_CREDENTIALS } from "./constants";
 import { createTestProduct, deleteTestProducts, eraseParticipations } from "./product-helpers";
+import { seedAssignment } from "./assignment-helpers";
 import { getStringRecord } from "../helpers/json";
 import { productGroupsSnapshot } from "@/services/groups/groups.contracts";
 import { z } from "zod";
@@ -72,7 +73,7 @@ describe("apply_group_changes", () => {
     it("creates a group and returns the temp id mapping", async () => {
       const { data, error } = await adminAuth.rpc("apply_group_changes", {
         p_product_id: PRODUCT_BASIC,
-        p_added_groups: [{ tempId: "t1", name: "Group A", geduIds: [] }],
+        p_added_groups: [{ tempId: "t1", name: "Group A", gedus: [] }],
       });
 
       expect(error).toBeNull();
@@ -93,23 +94,33 @@ describe("apply_group_changes", () => {
       const { data } = await adminAuth.rpc("apply_group_changes", {
         p_product_id: PRODUCT_BASIC,
         p_added_groups: [
-          { tempId: "t1", name: "Group A", geduIds: [GEDU_A, GEDU_B] },
+          {
+            tempId: "t1",
+            name: "Group A",
+            gedus: [
+              { geduId: GEDU_A, role: "primary" },
+              { geduId: GEDU_B, role: "assistant" },
+            ],
+          },
         ],
       });
       const newId = getStringRecord(data, "tempMap").t1;
 
       const { data: assignments } = await admin
         .from("gedu_group_assignments")
-        .select("gedu_id")
-        .eq("group_id", newId);
-      const ids = (assignments ?? []).map((r) => r.gedu_id).sort();
-      expect(ids).toEqual([GEDU_A, GEDU_B].sort());
+        .select("gedu_id, role, ended_at")
+        .eq("group_id", newId)
+        .order("role");
+      expect(assignments).toEqual([
+        { gedu_id: GEDU_A, role: "primary", ended_at: null },
+        { gedu_id: GEDU_B, role: "assistant", ended_at: null },
+      ]);
     });
 
     it("rejects a blank name", async () => {
       const { error } = await adminAuth.rpc("apply_group_changes", {
         p_product_id: PRODUCT_BASIC,
-        p_added_groups: [{ tempId: "t1", name: "   ", geduIds: [] }],
+        p_added_groups: [{ tempId: "t1", name: "   ", gedus: [] }],
       });
       expect(error).not.toBeNull();
     });
@@ -118,9 +129,9 @@ describe("apply_group_changes", () => {
       const { data } = await adminAuth.rpc("apply_group_changes", {
         p_product_id: PRODUCT_BASIC,
         p_added_groups: [
-          { tempId: "t1", name: "Group A", geduIds: [] },
-          { tempId: "t2", name: "Group B", geduIds: [] },
-          { tempId: "t3", name: "Group C", geduIds: [] },
+          { tempId: "t1", name: "Group A", gedus: [] },
+          { tempId: "t2", name: "Group B", gedus: [] },
+          { tempId: "t3", name: "Group C", gedus: [] },
         ],
       });
       const map = getStringRecord(data, "tempMap");
@@ -149,7 +160,7 @@ describe("apply_group_changes", () => {
     beforeAll(async () => {
       const { data } = await adminAuth.rpc("apply_group_changes", {
         p_product_id: PRODUCT_RENAME,
-        p_added_groups: [{ tempId: "t1", name: "Initial", geduIds: [] }],
+        p_added_groups: [{ tempId: "t1", name: "Initial", gedus: [] }],
       });
       groupId = getStringRecord(data, "tempMap").t1;
     });
@@ -196,7 +207,7 @@ describe("apply_group_changes", () => {
     it("cascades to gedu assignments", async () => {
       const created = await adminAuth.rpc("apply_group_changes", {
         p_product_id: PRODUCT_DELETE,
-        p_added_groups: [{ tempId: "t1", name: "Group A", geduIds: [GEDU_A] }],
+        p_added_groups: [{ tempId: "t1", name: "Group A", gedus: [{ geduId: GEDU_A, role: "primary" }] }],
       });
       const groupId = getStringRecord(created.data, "tempMap").t1;
 
@@ -215,7 +226,7 @@ describe("apply_group_changes", () => {
     it("sends participations back to the unassigned inbox", async () => {
       const created = await adminAuth.rpc("apply_group_changes", {
         p_product_id: PRODUCT_DELETE,
-        p_added_groups: [{ tempId: "t1", name: "Group A", geduIds: [] }],
+        p_added_groups: [{ tempId: "t1", name: "Group A", gedus: [] }],
       });
       const groupId = getStringRecord(created.data, "tempMap").t1;
 
@@ -250,7 +261,7 @@ describe("apply_group_changes", () => {
       // Create a group on PRODUCT_BASIC and try to delete it via PRODUCT_DELETE.
       const created = await adminAuth.rpc("apply_group_changes", {
         p_product_id: PRODUCT_BASIC,
-        p_added_groups: [{ tempId: "t1", name: "G", geduIds: [] }],
+        p_added_groups: [{ tempId: "t1", name: "G", gedus: [] }],
       });
       const otherId = getStringRecord(created.data, "tempMap").t1;
 
@@ -284,12 +295,12 @@ describe("apply_group_changes", () => {
         .eq("product_id", PRODUCT_GEDU_SWAP);
     });
 
-    it("moving a Gedu from group A to group B in one call clears the unique conflict", async () => {
+    it("moving a Gedu from group A to group B ends one period where the next begins", async () => {
       const setup = await adminAuth.rpc("apply_group_changes", {
         p_product_id: PRODUCT_GEDU_SWAP,
         p_added_groups: [
-          { tempId: "tA", name: "Group A", geduIds: [GEDU_A] },
-          { tempId: "tB", name: "Group B", geduIds: [] },
+          { tempId: "tA", name: "Group A", gedus: [{ geduId: GEDU_A, role: "primary" }] },
+          { tempId: "tB", name: "Group B", gedus: [] },
         ],
       });
       const map = getStringRecord(setup.data, "tempMap");
@@ -303,19 +314,28 @@ describe("apply_group_changes", () => {
       });
       expect(error).toBeNull();
 
+      // Two periods: A's ends at the instant B's begins, and stays.
       const { data: rows } = await admin
         .from("gedu_group_assignments")
-        .select("group_id, gedu_id")
-        .eq("product_id", PRODUCT_GEDU_SWAP);
-      expect(rows).toEqual([{ group_id: groupB, gedu_id: GEDU_A }]);
+        .select("group_id, gedu_id, started_at, ended_at")
+        .eq("product_id", PRODUCT_GEDU_SWAP)
+        .order("started_at");
+      expect(rows?.map((row) => [row.group_id, row.gedu_id])).toEqual([
+        [groupA, GEDU_A],
+        [groupB, GEDU_A],
+      ]);
+      const [onA, onB] = rows ?? [];
+      expect(onA.ended_at).not.toBeNull();
+      expect(Date.parse(onA.ended_at ?? "")).toBe(Date.parse(onB.started_at));
+      expect(onB.ended_at).toBeNull();
     });
 
     it("rejects assigning the same Gedu to two groups in one product", async () => {
       const setup = await adminAuth.rpc("apply_group_changes", {
         p_product_id: PRODUCT_GEDU_SWAP,
         p_added_groups: [
-          { tempId: "tA", name: "Group A", geduIds: [GEDU_A] },
-          { tempId: "tB", name: "Group B", geduIds: [] },
+          { tempId: "tA", name: "Group A", gedus: [{ geduId: GEDU_A, role: "primary" }] },
+          { tempId: "tB", name: "Group B", gedus: [] },
         ],
       });
       const groupB = getStringRecord(setup.data, "tempMap").tB;
@@ -324,14 +344,15 @@ describe("apply_group_changes", () => {
         p_product_id: PRODUCT_GEDU_SWAP,
         p_gedu_assignments_added: [{ groupId: groupB, geduId: GEDU_A }],
       });
-      expect(error).not.toBeNull();
+      // The one-live-period-per-product index, not the overlap trigger.
+      expect(error?.code).toBe("23505");
     });
 
     it("can assign Gedus to brand-new groups via temp id resolution", async () => {
       const { data, error } = await adminAuth.rpc("apply_group_changes", {
         p_product_id: PRODUCT_GEDU_SWAP,
         p_added_groups: [
-          { tempId: "tA", name: "Group A", geduIds: [] },
+          { tempId: "tA", name: "Group A", gedus: [] },
         ],
         p_gedu_assignments_added: [{ groupId: "tA", geduId: GEDU_A }],
       });
@@ -359,8 +380,8 @@ describe("apply_group_changes", () => {
       const setup = await adminAuth.rpc("apply_group_changes", {
         p_product_id: PRODUCT_MOVES,
         p_added_groups: [
-          { tempId: "tA", name: "A", geduIds: [] },
-          { tempId: "tB", name: "B", geduIds: [] },
+          { tempId: "tA", name: "A", gedus: [] },
+          { tempId: "tB", name: "B", gedus: [] },
         ],
       });
       const map = getStringRecord(setup.data, "tempMap");
@@ -433,7 +454,7 @@ describe("apply_group_changes", () => {
     it("can move a participation to a brand-new group via temp id resolution", async () => {
       const { data } = await adminAuth.rpc("apply_group_changes", {
         p_product_id: PRODUCT_MOVES,
-        p_added_groups: [{ tempId: "tNew", name: "Brand New", geduIds: [] }],
+        p_added_groups: [{ tempId: "tNew", name: "Brand New", gedus: [] }],
         p_participation_moves: [
           { participationId, toGroupId: "tNew" },
         ],
@@ -456,13 +477,13 @@ describe("apply_group_changes", () => {
         .eq("id", participationId)
         .single();
 
-      // Set up: a duplicate Gedu assignment will trip the (gedu_id, product_id)
-      // unique constraint inside the RPC. We pair it with a participation move
-      // and expect the move to be rolled back too.
-      await admin.from("gedu_group_assignments").insert({
-        group_id: groupA,
-        gedu_id: GEDU_A,
-        product_id: PRODUCT_MOVES,
+      // Set up: a second live Gedu assignment will trip the one-live-period
+      // index inside the RPC. We pair it with a participation move and expect
+      // the move to be rolled back too.
+      await seedAssignment(admin, {
+        groupId: groupA,
+        geduId: GEDU_A,
+        productId: PRODUCT_MOVES,
       });
 
       const { error } = await adminAuth.rpc("apply_group_changes", {
@@ -471,7 +492,7 @@ describe("apply_group_changes", () => {
         p_gedu_assignments_added: [{ groupId: groupB, geduId: GEDU_A }],
         p_participation_moves: [{ participationId, toGroupId: groupA }],
       });
-      expect(error).not.toBeNull();
+      expect(error?.code).toBe("23505");
 
       const { data: after } = await admin
         .from("participations")
@@ -536,7 +557,7 @@ describe("apply_group_changes", () => {
       );
       const { error } = await customerAuth.rpc("apply_group_changes", {
         p_product_id: PRODUCT_VALIDATION,
-        p_added_groups: [{ tempId: "t1", name: "X", geduIds: [] }],
+        p_added_groups: [{ tempId: "t1", name: "X", gedus: [] }],
       });
       expect(error).not.toBeNull();
       expect(error?.code).toBe("42501");
@@ -545,7 +566,7 @@ describe("apply_group_changes", () => {
     it("raises P0002 when the product does not exist", async () => {
       const { error } = await adminAuth.rpc("apply_group_changes", {
         p_product_id: "00000000-0000-0000-0000-0000000007ff",
-        p_added_groups: [{ tempId: "t1", name: "X", geduIds: [] }],
+        p_added_groups: [{ tempId: "t1", name: "X", gedus: [] }],
       });
       expect(error).not.toBeNull();
     });
@@ -557,17 +578,18 @@ describe("apply_group_changes", () => {
         "apply_group_changes",
         {
           p_product_id: PRODUCT_VALIDATION,
-          p_added_groups: [{ tempId: "t1", name: "G", geduIds: [] }],
+          p_added_groups: [{ tempId: "t1", name: "G", gedus: [] }],
         },
       );
       const groupId = getStringRecord(created, "tempMap").t1;
 
-      const { error } = await admin.from("gedu_group_assignments").insert({
-        group_id: groupId,
-        gedu_id: GEDU_A,
-        product_id: PRODUCT_BASIC, // wrong product
-      });
-      expect(error).not.toBeNull();
+      await expect(
+        seedAssignment(admin, {
+          groupId,
+          geduId: GEDU_A,
+          productId: PRODUCT_BASIC, // wrong product
+        }),
+      ).rejects.toThrow();
 
       // Cleanup.
       await admin
@@ -604,7 +626,7 @@ describe("get_product_groups_with_details", () => {
     const setup = await adminAuth.rpc("apply_group_changes", {
       p_product_id: PRODUCT_DETAILS,
       p_added_groups: [
-        { tempId: "tA", name: "Alpha", geduIds: [GEDU_A] },
+        { tempId: "tA", name: "Alpha", gedus: [{ geduId: GEDU_A, role: "primary" }] },
       ],
     });
     const groupA = getStringRecord(setup.data, "tempMap").tA;
@@ -672,7 +694,7 @@ describe("get_product_groups_with_details", () => {
   it("orders participations by updated_at (most recently moved last)", async () => {
     const setup = await adminAuth.rpc("apply_group_changes", {
       p_product_id: PRODUCT_DETAILS,
-      p_added_groups: [{ tempId: "tA", name: "Alpha", geduIds: [] }],
+      p_added_groups: [{ tempId: "tA", name: "Alpha", gedus: [] }],
     });
     const groupA = getStringRecord(setup.data, "tempMap").tA;
 
@@ -734,7 +756,7 @@ describe("get_product_groups_with_details", () => {
     // truth, and is what keeps the three shapes one shape.
     const setup = await adminAuth.rpc("apply_group_changes", {
       p_product_id: PRODUCT_DETAILS,
-      p_added_groups: [{ tempId: "tF", name: "Flair", geduIds: [] }],
+      p_added_groups: [{ tempId: "tF", name: "Flair", gedus: [] }],
     });
     const groupF = getStringRecord(setup.data, "tempMap").tF;
 

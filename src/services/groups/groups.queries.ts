@@ -197,7 +197,8 @@ function withGeduAdded(
     groups: snapshot.groups.map((g) => {
       if (g.id !== groupId) return g;
       // Already on the pill list: this is a ROLE CHANGE, which the RPC applies
-      // as the same add (it upserts on the pair and updates the role). The old
+      // as the same add (it ends the current period and starts one in the new
+      // role). The old
       // no-op would have left the select showing the value the admin just
       // replaced until the settle refetch landed.
       if (g.gedus.some((existing) => existing.id === gedu.id)) {
@@ -358,7 +359,7 @@ interface AddGeduVars {
    * The role to assign in, defaulting to `primary` — what every assignment was
    * before roles existed, and what the add-gedu flow offers first. Passing an
    * existing pill's id with a different role is how a role change is saved: the
-   * RPC upserts on (group, gedu) and updates the role.
+   * RPC ends that assignment period and starts one in the new role.
    */
   role?: GeduAssignmentRole;
 }

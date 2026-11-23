@@ -9,6 +9,7 @@ import {
   adminDashboardSnapshot,
   type AdminDashboardSnapshot,
 } from "@/services/admin-dashboard/admin-dashboard.contracts";
+import { seedAssignment } from "./assignment-helpers";
 
 /**
  * `get_admin_dashboard` (`supabase/schema/functions/`) — the single JSONB
@@ -426,12 +427,7 @@ describe("get_admin_dashboard", () => {
     ]);
     expect(groups.error).toBeNull();
 
-    const assignment = await admin.from("gedu_group_assignments").insert({
-      group_id: GROUP_STAFFED,
-      gedu_id: TEST_IDS.GEDU,
-      product_id: P_CLEAN,
-    });
-    expect(assignment.error).toBeNull();
+    await seedAssignment(admin, { groupId: GROUP_STAFFED, geduId: TEST_IDS.GEDU, productId: P_CLEAN });
 
     // --- participations -----------------------------------------------------
     const participations = await admin.from("participations").insert([

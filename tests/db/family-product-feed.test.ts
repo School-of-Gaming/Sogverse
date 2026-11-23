@@ -14,6 +14,7 @@ import {
   deleteTestProducts,
   eraseParticipations,
 } from "./product-helpers";
+import { seedAssignment, seedAssignments } from "./assignment-helpers";
 
 /**
  * `get_my_family_product_feed` — the one read behind every family club, camp
@@ -162,9 +163,9 @@ describe("family product feed", () => {
       },
     ]);
 
-    await admin.from("gedu_group_assignments").insert([
-      { group_id: GROUP_MINE, gedu_id: TEST_IDS.GEDU, product_id: PRODUCT_MINE },
-      { group_id: GROUP_SITE, gedu_id: TEST_IDS.GEDU, product_id: PRODUCT_SITE },
+    await seedAssignments(admin, [
+      { groupId: GROUP_MINE, geduId: TEST_IDS.GEDU, productId: PRODUCT_MINE },
+      { groupId: GROUP_SITE, geduId: TEST_IDS.GEDU, productId: PRODUCT_SITE },
     ]);
 
     // The site: an admin writes the address, a gedu the two notes. Only the
@@ -757,11 +758,7 @@ describe("family product feed", () => {
         .from("gedu_profiles")
         .insert({ user_id: markerId, certified: true });
 
-      await admin.from("gedu_group_assignments").insert({
-        group_id: GROUP_SITE,
-        gedu_id: markerId,
-        product_id: PRODUCT_SITE,
-      });
+      await seedAssignment(admin, { groupId: GROUP_SITE, geduId: markerId, productId: PRODUCT_SITE });
 
       marker = await createAuthenticatedClient(email, "testpassword123");
 

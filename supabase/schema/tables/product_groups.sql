@@ -85,7 +85,7 @@ CREATE POLICY gamers_read_own_group ON public.product_groups FOR SELECT TO authe
 
 CREATE POLICY gedus_read_assigned_groups ON public.product_groups FOR SELECT TO authenticated USING (((( SELECT public.get_user_role() AS get_user_role) = 'gedu'::public.user_role) AND ((id IN ( SELECT ga.group_id
    FROM public.gedu_group_assignments ga
-  WHERE (ga.gedu_id = ( SELECT auth.uid() AS uid)))) OR ( SELECT public.gedu_substitutes_group(product_groups.id) AS gedu_substitutes_group))));
+  WHERE ((ga.gedu_id = ( SELECT auth.uid() AS uid)) AND (ga.ended_at IS NULL)))) OR ( SELECT public.gedu_substitutes_group(product_groups.id) AS gedu_substitutes_group))));
 
 
 --

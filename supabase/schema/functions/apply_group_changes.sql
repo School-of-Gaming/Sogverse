@@ -7,6 +7,7 @@ CREATE FUNCTION public.apply_group_changes(p_product_id uuid, p_added_groups jso
     SET search_path TO 'public'
     AS $$
 DECLARE
+  v_now             TIMESTAMPTZ;
   v_group           JSONB;
   v_assignment      JSONB;
   v_move            JSONB;
@@ -14,13 +15,16 @@ DECLARE
   v_real_to_id      UUID;
   v_resolved_group  UUID;
   v_gedu_id         UUID;
-  v_gedu_id_text    TEXT;
   v_temp_map        JSONB := '{}'::jsonb;
   v_inline_gedu     JSONB;
+  v_adds            JSONB := '[]'::jsonb;
   v_role            public.gedu_assignment_role;
+  v_current         RECORD;
   v_removed_group   UUID;
   v_removed_gedu    UUID;
-  v_orphan_date     DATE;
+  v_sweep_groups    UUID[] := '{}';
+  v_sweep_dates     DATE[] := '{}';
+  v_sweep           RECORD;
   v_trainee         JSONB;
 BEGIN
   PERFORM public.assert_admin();
@@ -30,39 +34,50 @@ BEGIN
     RAISE EXCEPTION 'Product not found' USING ERRCODE = 'P0002';
   END IF;
 
-  -- Removes first so an admin can move a Gedu from group A to B in one batch.
+  -- The one instant every period this batch ends or starts is stamped with,
+  -- read under the product's lock: two admins' transactions can start in one
+  -- order and take the lock in the other, and now() would stamp them in the
+  -- first. One instant also means a gedu moved between groups leaves one
+  -- period exactly where the next begins.
+  v_now := clock_timestamp();
+
+  -- Removes first, so an admin can move a Gedu from group A to B in one batch:
+  -- the period on A ends before the one on B starts.
   FOR v_assignment IN SELECT * FROM jsonb_array_elements(p_gedu_assignments_removed) LOOP
     v_removed_group := (v_assignment->>'groupId')::UUID;
     v_removed_gedu  := (v_assignment->>'geduId')::UUID;
 
-    DELETE FROM gedu_group_assignments
-     WHERE group_id = v_removed_group
-       AND gedu_id  = v_removed_gedu;
+    UPDATE gedu_group_assignments
+       SET ended_at = v_now
+     WHERE group_id   = v_removed_group
+       AND gedu_id    = v_removed_gedu
+       AND product_id = p_product_id
+       AND ended_at IS NULL;
 
-    -- REMOVING AN ASSIGNMENT IS AN UNSEATING, and every other write that can
-    -- unseat somebody already sweeps the substitution requests it orphans. This one
-    -- is the odd case because it unseats WITHOUT touching a substitution row at all:
-    -- a gedu removed from the group while they have a live request for Tuesday
-    -- leaves that request open, and an admin answering it would seat a sub to
-    -- substitute for nobody — and hand them the group's workspace for the date.
+    -- ENDING AN ASSIGNMENT IS AN UNSEATING for every session starting at or
+    -- after this instant, and every other write that can unseat somebody
+    -- sweeps the substitution requests it orphans. A gedu removed while they
+    -- have a live request for next Tuesday leaves that request open, and an
+    -- admin answering it would seat a sub to substitute for nobody.
     --
-    -- Only the dates the removed gedu has a LIVE REQUEST on are swept, because
-    -- those are the only ones this removal can have orphaned; the sweep itself
-    -- is the same fixpoint every other unseating runs, so a chain that starts
-    -- here unwinds exactly as it does there. A date they merely SUBSTITUTE on is not
-    -- swept and must not be: a substitution is a seat of its own, and it does not
-    -- depend on the assignment this statement just deleted.
-    FOR v_orphan_date IN
-      SELECT DISTINCT r.session_date
-        FROM session_substitution_requests r
-       WHERE r.group_id     = v_removed_group
-         AND r.requested_by = v_removed_gedu
-         AND r.status <> 'withdrawn'::public.substitution_request_status
-    LOOP
-      PERFORM public.cascade_withdraw_orphaned_substitution_requests(
-                v_removed_group, v_orphan_date
-              );
-    END LOOP;
+    -- Only the removed gedu's LIVE REQUESTS on sessions starting at or after
+    -- the removal are collected: a session that started before it still
+    -- belongs to the ended period, so its request, and any substitution on it,
+    -- stands. A date they merely SUBSTITUTE on is not collected: a
+    -- substitution is a seat of its own. The sweeps run at the END of the
+    -- batch, after the adds, so a gedu removed and added again in one batch
+    -- keeps the requests their new period still covers.
+    SELECT v_sweep_groups || array_agg(r.group_id),
+           v_sweep_dates  || array_agg(r.session_date)
+      INTO v_sweep_groups, v_sweep_dates
+      FROM (
+        SELECT DISTINCT r.group_id, r.session_date
+          FROM session_substitution_requests r
+         WHERE r.group_id     = v_removed_group
+           AND r.requested_by = v_removed_gedu
+           AND r.status <> 'withdrawn'::public.substitution_request_status
+           AND public.group_session_starts_at(r.group_id, r.session_date) >= v_now
+      ) r;
   END LOOP;
 
   -- Trainee seats removed, with the assignments and for the same reason: the
@@ -88,6 +103,9 @@ BEGIN
        AND product_id = p_product_id;
   END LOOP;
 
+  -- An added group's educators arrive inline as `gedus: [{ geduId, role }]`.
+  -- They join the batch's adds ahead of the explicit ones, addressed by the
+  -- group's real id, so both go through the one add below.
   FOR v_group IN SELECT * FROM jsonb_array_elements(p_added_groups) LOOP
     INSERT INTO product_groups (product_id, name)
     VALUES (p_product_id, v_group->>'name')
@@ -95,46 +113,28 @@ BEGIN
 
     v_temp_map := v_temp_map || jsonb_build_object(v_group->>'tempId', v_new_id::TEXT);
 
-    -- An added group's educators now arrive as objects carrying a ROLE:
-    -- `gedus: [{ geduId, role }]`. Every assignment has a role as of this
-    -- migration, and the column's DEFAULT is the backfill, so an element that
-    -- omits `role` lands as a primary.
     IF jsonb_typeof(v_group->'gedus') = 'array' THEN
       FOR v_inline_gedu IN SELECT * FROM jsonb_array_elements(v_group->'gedus') LOOP
-        INSERT INTO gedu_group_assignments (group_id, gedu_id, product_id, role)
-        VALUES (
-          v_new_id,
-          (v_inline_gedu->>'geduId')::UUID,
-          p_product_id,
-          COALESCE((v_inline_gedu->>'role')::public.gedu_assignment_role, 'primary')
+        v_adds := v_adds || jsonb_build_array(
+          v_inline_gedu || jsonb_build_object('groupId', v_new_id::TEXT)
         );
-      END LOOP;
-    END IF;
-
-    -- The legacy shape, still read for the deploy window: a bare array of ids,
-    -- every one of them a primary. The old app posts this; the new one posts
-    -- `gedus` above. Both are accepted, and a caller sending both gets both
-    -- (the primary-key conflict on a repeated pair is silenced by the ON
-    -- CONFLICT below, not here, so a duplicate inside ONE batch would still
-    -- raise — which is the caller's bug rather than a state to absorb).
-    IF jsonb_typeof(v_group->'geduIds') = 'array' THEN
-      FOR v_gedu_id_text IN SELECT jsonb_array_elements_text(v_group->'geduIds') LOOP
-        INSERT INTO gedu_group_assignments (group_id, gedu_id, product_id, role)
-        VALUES (v_new_id, v_gedu_id_text::UUID, p_product_id, 'primary')
-        ON CONFLICT (group_id, gedu_id) DO NOTHING;
       END LOOP;
     END IF;
   END LOOP;
 
-  -- Explicit conflict target so the (gedu_id, product_id) UNIQUE violation
-  -- propagates as an error (an admin trying to assign the same Gedu to two
-  -- groups in one product should fail). Only the (group_id, gedu_id)
-  -- primary-key conflict is handled here — and as of this migration it UPDATES
-  -- the role rather than doing nothing, which is what makes a role change ONE
-  -- add rather than a remove plus an add. Re-adding a pair that is already
-  -- there is therefore no longer a no-op: it restates the role, which is
-  -- exactly what the panel's role select posts.
-  FOR v_assignment IN SELECT * FROM jsonb_array_elements(p_gedu_assignments_added) LOOP
+  v_adds := v_adds || p_gedu_assignments_added;
+
+  -- An add { groupId, geduId, role } (an omitted role is a primary):
+  --   - a current period on that group in that role: nothing to do;
+  --   - a current period there in another role: a role change, which ends that
+  --     period and starts one in the new role, so past sessions keep the role
+  --     they were taught in — unless the period began in this very batch, when
+  --     its role is corrected in place, since ending it at the instant it
+  --     began would leave a period of no length;
+  --   - otherwise a new period from this instant. A gedu still current on
+  --     another group of the product meets the one-live-period index, which is
+  --     the error an admin assigning one gedu to two groups has always met.
+  FOR v_assignment IN SELECT * FROM jsonb_array_elements(v_adds) LOOP
     IF v_temp_map ? (v_assignment->>'groupId') THEN
       v_resolved_group := (v_temp_map->>(v_assignment->>'groupId'))::UUID;
     ELSE
@@ -147,10 +147,30 @@ BEGIN
                    'primary'
                  );
 
-    INSERT INTO gedu_group_assignments (group_id, gedu_id, product_id, role)
-    VALUES (v_resolved_group, v_gedu_id, p_product_id, v_role)
-    ON CONFLICT (group_id, gedu_id) DO UPDATE
-      SET role = EXCLUDED.role;
+    SELECT a.id, a.role, a.started_at INTO v_current
+      FROM gedu_group_assignments a
+     WHERE a.group_id = v_resolved_group
+       AND a.gedu_id  = v_gedu_id
+       AND a.ended_at IS NULL
+       FOR UPDATE;
+
+    IF FOUND THEN
+      CONTINUE WHEN v_current.role = v_role;
+
+      IF v_current.started_at = v_now THEN
+        UPDATE gedu_group_assignments
+           SET role = v_role
+         WHERE id = v_current.id;
+        CONTINUE;
+      END IF;
+
+      UPDATE gedu_group_assignments
+         SET ended_at = v_now
+       WHERE id = v_current.id;
+    END IF;
+
+    INSERT INTO gedu_group_assignments (group_id, gedu_id, product_id, role, started_at)
+    VALUES (v_resolved_group, v_gedu_id, p_product_id, v_role, v_now);
   END LOOP;
 
   -- Trainee seats added, after every remove. A group added in this batch is
@@ -187,6 +207,18 @@ BEGIN
        AND status = 'active';
   END LOOP;
 
+  -- The removals' sweeps, against the batch's end state. Each is the same
+  -- fixpoint every other unseating runs, so a chain that starts here unwinds
+  -- exactly as it does there.
+  FOR v_sweep IN
+    SELECT DISTINCT s.group_id, s.session_date
+      FROM unnest(v_sweep_groups, v_sweep_dates) AS s(group_id, session_date)
+  LOOP
+    PERFORM public.cascade_withdraw_orphaned_substitution_requests(
+              v_sweep.group_id, v_sweep.session_date
+            );
+  END LOOP;
+
   RETURN jsonb_build_object('tempMap', v_temp_map);
 END;
 $$;
@@ -196,7 +228,7 @@ $$;
 -- Name: FUNCTION apply_group_changes(p_product_id uuid, p_added_groups jsonb, p_renamed_groups jsonb, p_deleted_group_ids uuid[], p_gedu_assignments_added jsonb, p_gedu_assignments_removed jsonb, p_participation_moves jsonb, p_trainees_added jsonb, p_trainees_removed jsonb); Type: COMMENT; Schema: public; Owner: -
 --
 
-COMMENT ON FUNCTION public.apply_group_changes(p_product_id uuid, p_added_groups jsonb, p_renamed_groups jsonb, p_deleted_group_ids uuid[], p_gedu_assignments_added jsonb, p_gedu_assignments_removed jsonb, p_participation_moves jsonb, p_trainees_added jsonb, p_trainees_removed jsonb) IS 'The admin groups panel''s whole batch, applied in one transaction: remove assignments, delete groups, rename groups, add groups (each with its educators inline), add assignments, and move participations between groups — only active seats move, so a move naming an ended or waitlisted row is skipped silently. Admin-only, guard-first, and it takes the PRODUCT row''s lock first so two admins editing one product''s groups serialize rather than interleave. Removes run BEFORE adds so moving an educator from group A to group B is one batch — the (gedu_id, product_id) UNIQUE would otherwise refuse the add. Newly added groups are addressed by a client-minted `tempId` and the returned `tempMap` hands back the real ids, which is what lets one batch create a group and move members into it. An assignment carries a ROLE: an added assignment element is { groupId, geduId, role } and upserts ON CONFLICT (group_id, gedu_id) DO UPDATE SET role, so a role change is ONE add rather than a remove plus an add — which also means re-adding an existing pair is not a no-op, it restates the role. An added GROUP''s educators arrive as gedus: [{ geduId, role }]; the legacy geduIds array of bare ids is still read for the deploy window and lands every one of them as a primary. An omitted role is a primary, which is also the column''s default. This function is DELIBERATELY ASSIGNMENT-ONLY with respect to session substitutions, and is annotated as such in the completeness check: it is the writer of the permanent relationship, not a gate on it. Removing an assignment also sweeps the substitution requests it orphans: for every date the removed gedu held a live request on, the same fixpoint every other unseating runs. It remains ASSIGNMENT-ONLY as a GATE — it still gates on nothing and still writes no substitution row — but a writer that can unseat somebody has to leave the derivation consistent, or an admin could answer a request filed by a person who is no longer expected at the session. TRAINEE SEATS ride the same batch: p_trainees_removed and p_trainees_added, each element { groupId, geduId } (an added one may name a tempId), removed with the assignments and added after them, so the one-seat-per-product trigger, which refuses a gedu holding both an assignment and a trainee seat on the product, judges the batch''s end state. An added trainee seat has no ON CONFLICT, so placing a gedu already seated on the product is refused.';
+COMMENT ON FUNCTION public.apply_group_changes(p_product_id uuid, p_added_groups jsonb, p_renamed_groups jsonb, p_deleted_group_ids uuid[], p_gedu_assignments_added jsonb, p_gedu_assignments_removed jsonb, p_participation_moves jsonb, p_trainees_added jsonb, p_trainees_removed jsonb) IS 'The admin groups panel''s whole batch, applied in one transaction: end assignments, delete groups, rename groups, add groups (each with its educators inline), add assignments, and move participations between groups — only active seats move, so a move naming an ended or waitlisted row is skipped silently. Admin-only, guard-first, and it takes the PRODUCT row''s lock first so two admins editing one product''s groups serialize rather than interleave; every period the batch ends or starts is stamped with ONE clock_timestamp() read under that lock. An assignment is a PERIOD: a removal { groupId, geduId } ends the current period at that instant (no current period is a silent no-op) and never deletes it; an add { groupId, geduId, role } is a no-op when the gedu is current on that group in that role, a ROLE CHANGE when current there in another role — the period ends and one in the new role starts at the same instant, so past sessions keep the role they were taught in, except that a period begun in this same batch has its role corrected in place rather than leave a period of no length — and otherwise starts a new period at that instant. Re-adding a gedu who was removed is a new row; the gap belongs to neither. Removes run BEFORE adds, so moving an educator from group A to group B is one batch: A''s period ends where B''s begins, and the one-live-period-per-product index would otherwise refuse the add, as it refuses assigning one gedu to two groups of a product. Newly added groups are addressed by a client-minted `tempId` and the returned `tempMap` hands back the real ids, which is what lets one batch create a group and move members into it. An added GROUP''s educators arrive as gedus: [{ geduId, role }] and are added exactly as explicit adds are, ahead of them. An omitted role is a primary, which is also the column''s default. This function is DELIBERATELY ASSIGNMENT-ONLY with respect to session substitutions, and is annotated as such in the completeness check: it is the writer of the permanent relationship, not a gate on it. Ending an assignment also sweeps the substitution requests it orphans: for every date the removed gedu held a live request on whose session starts at or after the removal, the same fixpoint every other unseating runs — a session that started before the removal still belongs to the ended period, so nothing in the past is withdrawn. The sweeps run at the end of the batch, after the adds, so a gedu removed and re-added in one batch keeps the requests their new period covers. It remains ASSIGNMENT-ONLY as a GATE — it still gates on nothing and still writes no substitution row — but a writer that can unseat somebody has to leave the derivation consistent, or an admin could answer a request filed by a person who is no longer expected at the session. TRAINEE SEATS ride the same batch: p_trainees_removed and p_trainees_added, each element { groupId, geduId } (an added one may name a tempId), removed with the assignments and added after them, so the one-seat-per-product trigger, which refuses a gedu holding both a current assignment and a trainee seat on the product, judges the batch''s end state. An added trainee seat has no ON CONFLICT, so placing a gedu already seated on the product is refused.';
 
 
 --

@@ -10,6 +10,7 @@ import { nextKeysetCursor } from "@/lib/supabase/keyset";
 import { createAdminTestClient, createAuthenticatedClient } from "./helpers";
 import { TEST_IDS, TEST_CREDENTIALS } from "./constants";
 import { deleteTestProducts } from "./product-helpers";
+import { seedAssignments } from "./assignment-helpers";
 
 /**
  * The admin product list's page read, `ProductsService.getAdminListPage`, run
@@ -219,11 +220,10 @@ describe("ProductsService.getAdminListPage", () => {
     ]);
     if (groups.error) throw new Error(`seed groups failed: ${groups.error.message}`);
 
-    const staff = await admin.from("gedu_group_assignments").insert([
-      { group_id: GROUP_CLUB, product_id: CLUB_MON_WED, gedu_id: TEST_IDS.GEDU, role: "primary" },
-      { group_id: GROUP_CAMP, product_id: CAMP_AT_SITE, gedu_id: TEST_IDS.GEDU, role: "primary" },
+    await seedAssignments(admin, [
+      { groupId: GROUP_CLUB, productId: CLUB_MON_WED, geduId: TEST_IDS.GEDU, role: "primary" },
+      { groupId: GROUP_CAMP, productId: CAMP_AT_SITE, geduId: TEST_IDS.GEDU, role: "primary" },
     ]);
-    if (staff.error) throw new Error(`seed assignments failed: ${staff.error.message}`);
 
     const trainee = await admin
       .from("gedu_group_trainees")

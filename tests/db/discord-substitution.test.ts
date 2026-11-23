@@ -16,6 +16,7 @@ import {
 } from "./helpers";
 import { TEST_IDS } from "./constants";
 import { deleteTestProducts } from "./product-helpers";
+import { seedAssignments } from "./assignment-helpers";
 
 /**
  * The Discord bot's way into substitutions: a Discord user id resolved to the
@@ -159,11 +160,10 @@ describe("substitutions from Discord", () => {
       { id: GROUP, product_id: PRODUCT, name: "Discord Cohort" },
       { id: OTHER_GROUP, product_id: PRODUCT, name: "Elsewhere Cohort" },
     ]);
-    const { error: assignmentError } = await admin.from("gedu_group_assignments").insert([
-      { group_id: GROUP, gedu_id: geduId, product_id: PRODUCT, role: "primary" },
-      { group_id: GROUP, gedu_id: secondGeduId, product_id: PRODUCT, role: "assistant" },
+    await seedAssignments(admin, [
+      { groupId: GROUP, geduId: geduId, productId: PRODUCT, role: "primary" },
+      { groupId: GROUP, geduId: secondGeduId, productId: PRODUCT, role: "assistant" },
     ]);
-    expect(assignmentError).toBeNull();
   });
 
   beforeEach(async () => {

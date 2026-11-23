@@ -563,6 +563,26 @@ deleted when it leaves the line, and that includes a seat an admin demoted to th
 waitlist: the demote already gave up its placement, and its history goes with it when it
 leaves (owner ruling, 2026-11-05). A payment that named it keeps its product.
 
+## An assignment ends; it is not deleted
+
+**Rule: a gedu's assignment to a group (a `gedu_group_assignments` row) is a period,
+`[started_at, ended_at)`, and taking the gedu off the group ends it — so every read of the
+table says whether it means the gedus on the group now or the gedus at a session.** A read
+that never asks treats a gedu who left as one still teaching, and a read that asks only
+about now hands a past session to whoever holds the group today. Now is `ended_at IS NULL`.
+At a session means the period holding that session's start instant, through
+`group_assignments_at()` asked at `group_session_starts_at()` — the one containment rule
+and the one start rule, never restated inline. Adding a gedu again starts a new row and
+the gap belongs to neither; a role change ends one period and starts the next, so a past
+session keeps the role it was taught in. A period's start never moves and its end is set
+once; one gedu's periods on a product never overlap, and only one of them is current. A
+writer names `started_at` (there is no default), and `apply_group_changes` stamps every
+period of a batch with one `clock_timestamp()`. Each reader — a function, view or policy
+in `schema/`, or a read under `src/` — is classified in
+`tests/helpers/assignment-reader-registry.ts`, and a unit test fails on one that is
+missing and on an entry whose read is gone. A row is deleted only with its group or
+product, or for erasure.
+
 ## `now()` is frozen at transaction start
 
 **Rule: When a timestamp is an ordering/sequence key compared across concurrent

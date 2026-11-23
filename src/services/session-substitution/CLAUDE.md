@@ -62,7 +62,9 @@ substitute for, and answering one would seat a sub for nobody and hand them the 
 workspace for the day. Clearing a substitution, withdrawing a request, re-pointing a sub
 and — less obviously — **removing an assignment through the admin groups panel** all leave
 somebody unseated, and the last of those is the trap, because it unseats without touching
-a substitution row at all. The sweep is a fixpoint, because unseating cascades. Approval
+a substitution row at all. It unseats only from the sessions starting at or after the
+removal: a session that already started belongs to the period that just ended, so its
+request and its sub stand. The sweep is a fixpoint, because unseating cascades. Approval
 re-asks under its lock as a second line of defence, and **refuses** rather than tidying
 up: the refusal aborts the transaction, so a withdraw written beside it would be rolled
 back with everything else.
