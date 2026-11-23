@@ -2,7 +2,7 @@ import { describe, it, expect, beforeAll, beforeEach, afterAll } from "vitest";
 import { createHash, randomBytes } from "node:crypto";
 import type { SupabaseClient } from "@supabase/supabase-js";
 import type { Database } from "@/types/database.types";
-import { createAdminTestClient, createAuthenticatedClient } from "./helpers";
+import { anHourAgo, createAdminTestClient, createAuthenticatedClient } from "./helpers";
 import { TEST_CREDENTIALS, TEST_IDS } from "./constants";
 
 /**
@@ -21,12 +21,6 @@ const EXPIRED = "P0030";
 const DISCORD_A = { id: "900000000000000001", username: "creeperhug" };
 const DISCORD_B = { id: "900000000000000002", username: "redstone_nerd" };
 const DISCORD_IDS = [DISCORD_A.id, DISCORD_B.id];
-
-/**
- * An expiry long past by any clock. The database judges expiry by its own
- * `now()`, which need not agree with this process's clock to the second.
- */
-const anHourAgo = () => new Date(Date.now() - 60 * 60_000);
 
 describe("discord links", () => {
   let admin: SupabaseClient<Database>;

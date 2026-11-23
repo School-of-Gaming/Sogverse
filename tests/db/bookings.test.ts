@@ -4,7 +4,7 @@ import { z } from "zod";
 import type { Database } from "@/types/database.types";
 import { productGroupsSnapshot } from "@/services/groups/groups.contracts";
 import { ParticipationsService } from "@/services/participations/participations.service";
-import { createAdminTestClient, createAuthenticatedClient } from "./helpers";
+import { anHourAgo, createAdminTestClient, createAuthenticatedClient } from "./helpers";
 import { TEST_IDS, TEST_CREDENTIALS } from "./constants";
 import {
   createTestProduct,
@@ -247,7 +247,7 @@ describe("bookings", () => {
         .from("bookings")
         .update({
           stripe_checkout_session_id: "cs_booking_closed",
-          checkout_closes_at: new Date(Date.now() - 3_600_000).toISOString(),
+          checkout_closes_at: anHourAgo().toISOString(),
         })
         .eq("id", closed);
 

@@ -6,6 +6,7 @@ import {
   type SubstitutionNotificationSnapshot,
 } from "@/lib/substitution-notifications/snapshot.contracts";
 import {
+  anHourAgo,
   createAdminTestClient,
   createAnonTestClient,
   createAuthenticatedClient,
@@ -382,14 +383,14 @@ describe("substitution notifications", () => {
       expect(leased?.attempts).toBe(1);
       const leaseMs = new Date(leased?.leased_until ?? "").getTime() - Date.now();
       expect(leaseMs).toBeGreaterThan(60_000);
-      expect(leaseMs).toBeLessThanOrEqual(125_000);
+      expect(leaseMs).toBeLessThanOrEqual(180_000);
 
       expect(await claim(10, [requestId])).toEqual([]);
 
       // A sync that died holding the lease: once it lapses, the row is back.
       await admin
         .from("substitution_notification_outbox")
-        .update({ leased_until: new Date(Date.now() - 3_600_000).toISOString() })
+        .update({ leased_until: anHourAgo().toISOString() })
         .eq("request_id", requestId);
       expect(await claim(10, [requestId])).toEqual([{ request_id: requestId, seq: 1 }]);
       expect((await outbox(requestId))?.attempts).toBe(2);

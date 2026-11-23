@@ -19,9 +19,9 @@ const stackOrigin = new URL(supabaseUrl).origin;
  * so when Kong retires a socket (it closes one after its hundredth request) the
  * old pool's late disconnect closes the new pool for that origin, and the
  * cascade runs on — every later request opens a connection and closes it after
- * one use. Across a full run that left thousands of client ports in TIME_WAIT,
- * enough to exhaust ephemeral ports when several checkouts test at once. A
- * `Pool` for the single origin has no such bookkeeping and reuses its sockets.
+ * one use. Across a full run that left thousands of client ports in TIME_WAIT
+ * and slowed the run. A `Pool` for the single origin has no such bookkeeping
+ * and reuses its sockets.
  *
  * It can go once the undici bundled with Node (`process.versions.undici`)
  * carries the fix, nodejs/undici#5034, which has landed only on undici's v8
@@ -30,7 +30,9 @@ const stackOrigin = new URL(supabaseUrl).origin;
  * The requests themselves stay on the platform's `fetch`, handed this pool as
  * its dispatcher. The `undici` package's own `fetch` cannot carry them: it does
  * not recognise the platform's `FormData`, which storage uploads send, and posts
- * it as the text "[object FormData]".
+ * it as the text "[object FormData]". Because the pool is handed to Node's own
+ * `fetch`, the `undici` package's major must match the major Node bundles
+ * (`process.versions.undici`).
  */
 const stackConnections = new Pool(stackOrigin);
 
@@ -44,19 +46,33 @@ const platformFetch: NodeFetch = globalThis.fetch;
 /**
  * `fetch` for requests to the stack, over the shared pool. Every DB-test
  * client and raw request uses it. A pool sends whatever it is handed to its own
- * host, so a URL on any other origin is refused rather than misdelivered.
+ * host, so a URL on any other origin is refused rather than misdelivered, and a
+ * redirect is an error unless the caller asks for it by `redirect: "manual"`:
+ * following one would send its target to the stack as well.
  */
 export const dbTestFetch: typeof fetch = (input, init) => {
   const url = new URL(input instanceof Request ? input.url : input);
   if (url.origin !== stackOrigin) {
     throw new Error(`dbTestFetch only reaches ${stackOrigin}, not ${url.origin}`);
   }
-  return platformFetch(input, { ...init, dispatcher: stackConnections });
+  return platformFetch(input, {
+    redirect: "error",
+    ...init,
+    dispatcher: stackConnections,
+  });
 };
 
 /** Ends the shared pool; the DB setup calls it once the file's tests are done. */
 export function closeDbTestConnections(): Promise<void> {
   return stackConnections.destroy();
+}
+
+/**
+ * A time long past by any clock. The database judges such times by its own
+ * `now()`, which need not agree with this process's clock to the second.
+ */
+export function anHourAgo(): Date {
+  return new Date(Date.now() - 60 * 60_000);
 }
 
 const clientOptions = {

@@ -32,5 +32,6 @@ beforeAll(async () => {
   }
 });
 
-// Registered before any file's own hooks, so it runs after all of them.
+// Registered before any file's own hooks, so it runs after all of them: the DB
+// config pins `sequence.hooks` to "stack", which runs `afterAll` hooks in reverse.
 afterAll(closeDbTestConnections);
