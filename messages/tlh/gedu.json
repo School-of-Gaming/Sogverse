@@ -3,6 +3,8 @@
     "cardEyebrow": "lIw",
     "cardOpenLabel": "{product} — may’ DalIwbogh",
     "cardLockedLabel": "{product} — may’ DalIwbogh. may’ qaSpa’ loSmaH chorgh rep poSmoH Qu’meH pa’.",
+    "endedCardEyebrow": "ghom ngo'",
+    "endedCardOpenLabel": "{product}: ghom ngo'lIj",
     "accessOpens": "{date} {time}Daq poSmoH Qu’meH pa’",
     "poolHeading": "lIw poQbogh may’mey",
     "poolRequirementsNote": "Hol DajatlhlaHbogh may’mey Dalegh; Daq may’mey, Daqmey DaSo’bogh neH. cha’ DIvI’ <link>DuHmey</link> yIchoH.",

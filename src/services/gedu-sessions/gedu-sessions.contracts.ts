@@ -525,11 +525,12 @@ export type TraineeGroupFeed = z.infer<typeof traineeGroupFeed>;
  * product (no `end_date`) has no final session, so it may be flagged and never
  * owes — documented behaviour, not an error.
  *
- * **A date the caller holds a non-withdrawn substitution request on is not their work
- * and is not counted**, whichever kind of seat the row is: they have said they
- * cannot be there, whoever ends up running it. That holds while the request is
- * still open, once it is substituted, and for the second link of a sub-of-sub
- * chain alike.
+ * **A gedu owes only the sessions they were expected at**, whichever kind of
+ * seat the row is: one inside an assignment period of theirs on the group, or
+ * the one they substitute, and never a date they hold a non-withdrawn
+ * substitution request on — they have said they cannot be there, whoever ends
+ * up running it, while the request is still open, once it is substituted, and
+ * for the second link of a sub-of-sub chain alike.
  *
  * **This derivation exists twice and the two must agree** — here in SQL for the
  * badge, and in TypeScript in the gedu feed's entry-state module for the card.
@@ -555,8 +556,12 @@ export const geduAssignmentSummary = z.object({
    *
    * A `trainee` row is one per trainee seat, and its attention count is always
    * 0: what a session owes is the staff's work.
+   *
+   * An `ended_assignment` row is one per group the gedu was taken off and still
+   * holds while a session of theirs on it is inside its substitute window; it
+   * owes only those still-open sessions.
    */
-  kind: z.enum(["assignment", "substitution", "trainee"]),
+  kind: z.enum(["assignment", "substitution", "trainee", "ended_assignment"]),
   /**
    * The date a `substitution` row is for; null on an `assignment` row.
    *

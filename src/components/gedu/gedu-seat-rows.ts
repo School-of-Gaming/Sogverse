@@ -37,7 +37,7 @@ import type {
  * them the other's badge.
  */
 function seatKey(
-  kind: "assignment" | "substitution" | "trainee",
+  kind: MyAssignedProductSessionRow["kind"],
   groupId: string,
   substitutionDate: string | null,
 ): string {
@@ -132,5 +132,20 @@ export function geduSubstitutionAttention(
         geduSubstitutionKey(s.group_id, s.substitution_date!),
         s.attention_count,
       ]),
+  );
+}
+
+/**
+ * What each ended assignment still owes, keyed by {@link geduAssignmentKey}: a
+ * gedu holds at most one ended-assignment card per group, and its count is the
+ * sessions of theirs on it still inside their window.
+ */
+export function geduEndedAssignmentAttention(
+  summaries: readonly GeduAssignmentSummary[],
+): Record<string, number> {
+  return Object.fromEntries(
+    summaries
+      .filter((s) => s.kind === "ended_assignment")
+      .map((s) => [geduAssignmentKey(s.product_id, s.group_id), s.attention_count]),
   );
 }

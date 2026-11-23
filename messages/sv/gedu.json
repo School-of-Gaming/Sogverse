@@ -3,6 +3,8 @@
     "cardEyebrow": "Vikariat",
     "cardOpenLabel": "{product} – tillfälle du vikarierar på",
     "cardLockedLabel": "{product} – tillfälle du vikarierar på. Gruppens arbetsyta öppnar 48 timmar innan det börjar.",
+    "endedCardEyebrow": "Tidigare grupp",
+    "endedCardOpenLabel": "{product}: din tidigare grupp",
     "accessOpens": "Arbetsytan öppnar {date} kl. {time}",
     "poolHeading": "Tillfällen som behöver en vikarie",
     "poolRequirementsNote": "Du ser tillfällen på ett språk du talar och, för tillfällen på plats, bara i områden du täcker. Håll båda uppdaterade i dina <link>inställningar</link>.",

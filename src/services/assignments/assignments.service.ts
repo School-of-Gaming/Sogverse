@@ -88,9 +88,11 @@ export interface MyAssignedProductSessionRow {
    * a substitution and dated, rather than the recurring assignment card. A consumer
    * that ignored this would render a sub's one substituted afternoon as though they
    * taught the club every week. A `trainee` row is a trainee seat, whose
-   * workspace is the trainee's redacted one.
+   * workspace is the trainee's redacted one. An `ended_assignment` row is a
+   * group the gedu was taken off and still holds, as a sub holds a substituted
+   * one, while a session of theirs on it is inside its window.
    */
-  kind: "assignment" | "substitution" | "trainee";
+  kind: "assignment" | "substitution" | "trainee" | "ended_assignment";
   /**
    * The date a `substitution` row is for, product-local `YYYY-MM-DD`; null on an
    * `assignment` row. It is the other half of a substitution card's identity — one
@@ -113,12 +115,18 @@ export interface MyAssignedProductSessionRow {
    */
   substitutionCancelled: boolean;
   /**
-   * When a `substitution` row's session runs, from the plan — `null` on a date
-   * the plan no longer has (an orphan, a date outside the term, or one on a
-   * holiday break), and on the other kinds.
+   * When the row's dated session runs — the substituted one, or an ended
+   * assignment's last open one — from the plan; `null` on a date the plan no
+   * longer has (an orphan, a date outside the term, or one on a holiday
+   * break), and on the other kinds.
    */
   substitutionStartsAt: Date | null;
   substitutionEndsAt: Date | null;
+  /**
+   * The latest session still open to the gedu on an `ended_assignment` row,
+   * product-local `YYYY-MM-DD`; null on the other kinds.
+   */
+  lastSessionDate: string | null;
   /** Total number of groups in the product (every `product_groups` row). */
   groupCount: number;
   /** Active participations summed across every group in the product. */
@@ -338,6 +346,7 @@ function toMyAssignedProductSessionRow(
       row.substitution_ends_at === null
         ? null
         : new Date(row.substitution_ends_at),
+    lastSessionDate: row.last_session_date,
     groupCount: row.group_count,
     participantCount: row.participant_count,
     slots: row.product.schedule_slots.map((s) => ({

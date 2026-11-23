@@ -136,6 +136,12 @@ export interface SessionStaffing {
    */
   viewerIsExpected: boolean;
   /**
+   * Whether the staffing was derived for a signed-in gedu at all. `false` on the
+   * admin shell and the preview scenes, which is what tells "the viewer is not
+   * expected" apart from "there is no viewer to be expected".
+   */
+  hasViewer: boolean;
+  /**
    * The viewer's own live request for this date, or `null`. Carries the status
    * line and the Withdraw action; a viewer holding one can never also be
    * expected, so the two fields are never both set.
@@ -156,6 +162,7 @@ export const NO_SESSION_STAFFING: Readonly<SessionStaffing> = Object.freeze({
   expected: [],
   requests: [],
   viewerIsExpected: false,
+  hasViewer: false,
   viewerRequest: null,
 });
 
@@ -233,6 +240,7 @@ export function deriveSessionStaffing(
     requests: states,
     viewerIsExpected:
       viewerId !== null && expectedList.some((gedu) => gedu.id === viewerId),
+    hasViewer: viewerId !== null,
     viewerRequest: states.find((state) => state.isViewers) ?? null,
   };
 }

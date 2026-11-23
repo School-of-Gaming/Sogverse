@@ -13,6 +13,7 @@ import { resolveLocale } from "@/lib/constants/locales";
 import {
   geduAssignmentKey,
   rollUpGeduAssignments,
+  rollUpGeduEndedAssignments,
   rollUpGeduSubstitutions,
   type GeduSubstitutionSummary,
 } from "@/lib/gedu-assignment-rollup";
@@ -30,6 +31,7 @@ import {
   type GeduAssignmentSummary,
 } from "@/services/gedu-sessions/gedu-sessions.contracts";
 import {
+  geduEndedAssignmentAttention,
   geduSeatHrefs,
   geduSubstitutionAttention,
   joinGeduSeatRows,
@@ -180,13 +182,23 @@ function buildDashboardCards(args: {
     voiceHrefByAssignment,
   });
 
-  const substitutions = rollUpGeduSubstitutions({
-    rows: seatRows,
-    locale,
-    attentionBySubstitution: geduSubstitutionAttention(summaries),
-    hrefByAssignment,
-    voiceHrefByAssignment,
-  });
+  // An ended assignment draws the substitution's card, after the
+  // substitutions: both are temporary seats, and the ended one is the past.
+  const substitutions = [
+    ...rollUpGeduSubstitutions({
+      rows: seatRows,
+      locale,
+      attentionBySubstitution: geduSubstitutionAttention(summaries),
+      hrefByAssignment,
+      voiceHrefByAssignment,
+    }),
+    ...rollUpGeduEndedAssignments({
+      rows: seatRows,
+      locale,
+      attentionByEndedAssignment: geduEndedAssignmentAttention(summaries),
+      hrefByAssignment,
+    }),
+  ];
 
   const rowsById = new Map(rows.map((row) => [row.product.id, row]));
 

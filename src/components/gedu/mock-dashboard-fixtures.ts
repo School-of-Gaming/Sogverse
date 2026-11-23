@@ -778,6 +778,7 @@ function assignmentRow(opts: {
     substitutionCancelled: false,
     substitutionStartsAt: substitutionWindow?.startsAt ?? null,
     substitutionEndsAt: substitutionWindow?.endsAt ?? null,
+    lastSessionDate: null,
     groupCount: opts.groupCount,
     participantCount: opts.participantCount,
     groupName: opts.groupName,

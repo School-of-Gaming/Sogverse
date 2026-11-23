@@ -205,6 +205,7 @@ function pickerSeats(now: Date): GeduAssignmentRow[] {
     substitutionCancelled: false,
     substitutionStartsAt: null,
     substitutionEndsAt: null,
+    lastSessionDate: null,
     groupCount: 2,
     participantCount: 9,
     groupName: opts.group,

@@ -373,7 +373,14 @@ stay open until 24 hours after the session's report is sent, or 15 product-local
 after the session date if it never is, and only while they are still certified.
 
 Each of those two bounds has **one definition**, in SQL, in the predicate that owns it;
-nothing in this directory restates either. The dashboard reads that draw the card ask only
+nothing in this directory restates either.
+
+**A gedu taken off a group holds it on the same terms.** Per session they were expected
+at inside the ended period — not cancelled, not one they filed an absence for — the group
+stays theirs until that session's window closes, by the same end definition, and the card
+(the substitute's, named as their former group) stands until the latest of those
+closings. The report mail admits them for those dates alone, the voice room and the chat
+roster not at all, and a gedu still current on the group gets nothing extra. The dashboard reads that draw the card ask only
 whether the substitution has expired, which is why the card outlives the lock rather than
 appearing with it.
 

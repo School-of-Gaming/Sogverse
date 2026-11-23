@@ -99,6 +99,9 @@ export function buildGeduUpcomingSessions({
     // cannot ask for a substitute (the card shows that row locked), so the
     // picker over "sessions I could be absent from" does not offer theirs.
     if (row.kind === "trainee") continue;
+    // An ended assignment's sessions all started before it ended, so none is
+    // ahead to be absent from.
+    if (row.kind === "ended_assignment") continue;
     const timezone = row.product.timezone;
     const sessions =
       row.kind === "substitution"

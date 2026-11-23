@@ -5026,6 +5026,7 @@ export type Database = {
           group_count: number
           group_id: string
           kind: string
+          last_session_date: string
           participant_count: number
           product: Json
           substitution_cancelled: boolean
@@ -5049,6 +5050,10 @@ export type Database = {
       }
       gedu_holds_session_qualifications: {
         Args: { p_gedu_id: string; p_group_id: string }
+        Returns: boolean
+      }
+      gedu_holds_unexpired_ended_assignment: {
+        Args: { p_gedu_id: string; p_group_id: string; p_session_date: string }
         Returns: boolean
       }
       gedu_holds_unexpired_substitution: {
@@ -5092,6 +5097,12 @@ export type Database = {
         Returns: boolean
       }
       gedu_trains_group: { Args: { p_group_id: string }; Returns: boolean }
+      gedu_unexpired_ended_assignment_dates: {
+        Args: { p_gedu_id: string; p_group_id: string }
+        Returns: {
+          session_date: string
+        }[]
+      }
       get_admin_consent_answer_totals: {
         Args: { p_from: string; p_to: string }
         Returns: {
@@ -5124,6 +5135,7 @@ export type Database = {
           group_count: number
           group_id: string
           kind: string
+          last_session_date: string
           participant_count: number
           product: Json
           substitution_cancelled: boolean
@@ -5197,6 +5209,7 @@ export type Database = {
           group_count: number
           group_id: string
           kind: string
+          last_session_date: string
           participant_count: number
           product: Json
           substitution_cancelled: boolean

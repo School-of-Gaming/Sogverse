@@ -18,19 +18,23 @@ BEGIN
   );
 
   -- The assignment half is spelled out INLINE here rather than through
-  -- gedu_teaches_group. gedu_teaches_group admits a live substitution on ANY of
+  -- gedu_teaches_group. gedu_teaches_group admits a temporary seat on ANY of
   -- the group's dates; the family report mail is at-most-once and has no
-  -- resend, so a sub must not be able to send the mail for a session they did
-  -- not run. The substitution arm is therefore DATE-SCOPED to the session being
-  -- claimed.
+  -- resend, so a sub, or a gedu taken off the group, must not be able to send
+  -- the mail for a session they did not run. Both temporary arms are therefore
+  -- DATE-SCOPED to the session being claimed.
   IF NOT public.is_admin()
      AND NOT EXISTS (
            SELECT 1
              FROM public.gedu_group_assignments ga
             WHERE ga.group_id = p_group_id
               AND ga.gedu_id  = (SELECT auth.uid())
+              AND ga.ended_at IS NULL
          )
-     AND NOT public.gedu_substitutes_session(p_group_id, p_session_date) THEN
+     AND NOT public.gedu_substitutes_session(p_group_id, p_session_date)
+     AND NOT public.gedu_holds_unexpired_ended_assignment(
+           (SELECT auth.uid()), p_group_id, p_session_date
+         ) THEN
     RAISE EXCEPTION 'Forbidden' USING ERRCODE = '42501';
   END IF;
 
@@ -100,7 +104,7 @@ $$;
 -- Name: FUNCTION claim_group_session_report_email(p_group_id uuid, p_session_date date); Type: COMMENT; Schema: public; Owner: -
 --
 
-COMMENT ON FUNCTION public.claim_group_session_report_email(p_group_id uuid, p_session_date date) IS 'Claim the one send of a session report to the group''s families, and hand back the row it claimed. Open to an ADMIN or to the gedu assigned to the group, exactly as the session-notes writer is. Refuses a CANCELLED session with SQLSTATE P0026 — a record kept under a cancellation may hold a report, but the families were told the session is off — asked under the (group, date) advisory lock cancel_session takes. Then takes the row''s lock and refuses with P0021 when there is no report to send (no row, or a report that is empty after the same whitespace trim the summaries SQL applies) and with P0022 when report_emailed_at is already set — every refusal binds an admin identically; otherwise stamps report_emailed_at = now() and report_emailed_by = auth.uid(). The claim is the FIRST write of the send and is also its authorization: succeeding proves the caller may send for this group, which is what lets the route resolve recipients with the service role afterwards. Releasing a claim is the route''s job and happens only when every single mail failed. The assignment half is spelled out INLINE here instead of calling gedu_teaches_group, and that is a security decision rather than a convenience: gedu_teaches_group admits a live substitution on ANY of the group''s dates, while this mail is at-most-once with no resend, so a sub must not be able to send the families a write-up of a session they did not run. The substitution arm here is therefore DATE-SCOPED to the session being claimed — one of exactly two places on this surface that is, the other being the voice room.';
+COMMENT ON FUNCTION public.claim_group_session_report_email(p_group_id uuid, p_session_date date) IS 'Claim the one send of a session report to the group''s families, and hand back the row it claimed. Open to an ADMIN, to a gedu holding a CURRENT assignment period on the group, to the substitute of that date (gedu_substitutes_session), and to a gedu taken off the group for a date they still hold through their ended assignment (gedu_holds_unexpired_ended_assignment). Refuses a CANCELLED session with SQLSTATE P0026 — a record kept under a cancellation may hold a report, but the families were told the session is off — asked under the (group, date) advisory lock cancel_session takes. Then takes the row''s lock and refuses with P0021 when there is no report to send (no row, or a report that is empty after the same whitespace trim the summaries SQL applies) and with P0022 when report_emailed_at is already set — every refusal binds an admin identically; otherwise stamps report_emailed_at = now() and report_emailed_by = auth.uid(). The claim is the FIRST write of the send and is also its authorization: succeeding proves the caller may send for this group, which is what lets the route resolve recipients with the service role afterwards. Releasing a claim is the route''s job and happens only when every single mail failed. The assignment half is spelled out INLINE here instead of calling gedu_teaches_group, and that is a security decision rather than a convenience: gedu_teaches_group admits a temporary seat on ANY of the group''s dates, while this mail is at-most-once with no resend, so a sub or an ended gedu must not be able to send the families a write-up of a session they did not run. Both temporary arms here are therefore DATE-SCOPED to the session being claimed — one of exactly two places on this surface that is, the other being the voice room.';
 
 
 --

@@ -704,6 +704,10 @@ describe("session substitutions", () => {
         "reads assignment ROWS for a parent whose child is on the product. A read of the rows, not a gate on them.",
       "function:group_assignments_at":
         "the containment rule for assignment periods — who held the group at an instant — and not a gate: it answers about the ASSIGNMENT half only, and every gate composing it adds the substitution half beside it.",
+      "function:gedu_holds_unexpired_ended_assignment":
+        "the ENDED-ASSIGNMENT arm of a temporary seat, for one date — not a gate on its own: every body composing it carries the substitution half beside it.",
+      "function:gedu_unexpired_ended_assignment_dates":
+        "the group-wide form of the ended-assignment arm — not a gate on its own: every body composing it carries the substitution half beside it.",
     };
 
     /**
@@ -807,12 +811,28 @@ describe("session substitutions", () => {
       ],
       // Each carries the substitution half itself: the seat predicate ORs in a
       // live substitution, and the two writers fall back to the substitution
-      // the gedu holds for the role.
+      // the gedu holds for the role. The ended-assignment arm is annotated in
+      // its own right, and its composers are listed below.
       "function:group_assignments_at": [
         "function:file_session_substitution_request",
         "function:gedu_holds_seat_at_session",
+        "function:gedu_holds_unexpired_ended_assignment",
         "function:get_admin_session_feedback",
         "function:set_session_substitution",
+      ],
+      // Each carries the substitution half itself: the group-wide predicate
+      // ORs the ended arm with a live substitution, the report claim with
+      // gedu_substitutes_session, and the two seat reads draw a substitution
+      // arm beside the ended one.
+      "function:gedu_holds_unexpired_ended_assignment": [
+        "function:claim_group_session_report_email",
+        "function:gedu_assignment_summaries",
+        "function:gedu_unexpired_ended_assignment_dates",
+      ],
+      "function:gedu_unexpired_ended_assignment_dates": [
+        "function:gedu_assigned_products",
+        "function:gedu_assignment_summaries",
+        "function:gedu_substitutes_group",
       ],
     };
 

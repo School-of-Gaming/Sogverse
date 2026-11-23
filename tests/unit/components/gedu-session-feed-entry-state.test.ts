@@ -1057,6 +1057,96 @@ describe("entryCompleteness — a session the viewer has filed an absence for", 
   });
 });
 
+describe("entryCompleteness — a session the viewer was not expected at", () => {
+  const VIEWER = "5c2e8f41-9a7d-4b63-8e15-d0b4a7f93c26";
+  const OTHER = "a91f3c07-62d4-4e8b-b5a0-3d7e1c9f2468";
+  const SESSION_DATE = "2026-03-16";
+  const SESSION_START = new Date("2026-03-16T14:30:00Z");
+
+  /** The viewer's one period on the group, and OTHER's, who has always held it. */
+  function staffingWithViewer(
+    period: { startedAt: string; endedAt: string | null } | null,
+    viewerId: string | null = VIEWER,
+  ) {
+    return deriveSessionStaffing({
+      gedus: [
+        {
+          id: OTHER,
+          firstName: "Joonas",
+          role: "primary",
+          startedAt: new Date("2020-01-01T00:00:00Z"),
+          endedAt: null,
+        },
+        ...(period === null
+          ? []
+          : [
+              {
+                id: VIEWER,
+                firstName: "Sanna",
+                role: "assistant" as const,
+                startedAt: new Date(period.startedAt),
+                endedAt: period.endedAt === null ? null : new Date(period.endedAt),
+              },
+            ]),
+      ],
+      requests: [],
+      sessionDate: SESSION_DATE,
+      sessionStartsAt: SESSION_START,
+      viewerId,
+    });
+  }
+
+  it("withholds the warning on a session before the viewer's period began", () => {
+    const staffing = staffingWithViewer({
+      startedAt: "2026-03-20T00:00:00Z",
+      endedAt: null,
+    });
+    expect(entryCompleteness(past("p", { staffing }), ROSTER)).toBeNull();
+  });
+
+  it("withholds the warning on a session after the viewer's period ended", () => {
+    const staffing = staffingWithViewer({
+      startedAt: "2026-01-01T00:00:00Z",
+      endedAt: "2026-03-10T00:00:00Z",
+    });
+    expect(entryCompleteness(past("p", { staffing }), ROSTER)).toBeNull();
+  });
+
+  it("withholds it from a substitute on the group's other dates", () => {
+    // A viewer with no period at all: they reach the group through a
+    // substitution on some other date, and this session is not theirs.
+    expect(
+      entryCompleteness(past("p", { staffing: staffingWithViewer(null) }), ROSTER),
+    ).toBeNull();
+  });
+
+  it("flags a session inside the viewer's own period", () => {
+    const staffing = staffingWithViewer({
+      startedAt: "2026-01-01T00:00:00Z",
+      endedAt: "2026-03-20T00:00:00Z",
+    });
+    expect(entryCompleteness(past("p", { staffing }), ROSTER)).toBe(
+      "needs_attention",
+    );
+  });
+
+  it("withholds nothing on a surface with no viewer", () => {
+    const staffing = staffingWithViewer(null, null);
+    expect(entryCompleteness(past("p", { staffing }), ROSTER)).toBe(
+      "needs_attention",
+    );
+  });
+
+  it("still awards the check on a session that is not the viewer's", () => {
+    expect(
+      entryCompleteness(
+        sentPast("p", { staffing: staffingWithViewer(null) }),
+        ROSTER,
+      ),
+    ).toBe("complete");
+  });
+});
+
 describe("planEditorStateFromEntry / planDraftFromEditorState", () => {
   it("seeds a session with no notes on it with empty fields", () => {
     expect(planEditorStateFromEntry(future("f"))).toEqual({

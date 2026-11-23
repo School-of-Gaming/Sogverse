@@ -3,6 +3,8 @@
     "cardEyebrow": "Tuuraus",
     "cardOpenLabel": "{product} – tuuraamasi kerta",
     "cardLockedLabel": "{product} – tuuraamasi kerta. Ryhmän työtila avautuu 48 tuntia ennen kerran alkua.",
+    "endedCardEyebrow": "Entinen ryhmä",
+    "endedCardOpenLabel": "{product}: entinen ryhmäsi",
     "accessOpens": "Työtila avautuu {date} klo {time}",
     "poolHeading": "Kerrat, jotka tarvitsevat tuuraajan",
     "poolRequirementsNote": "Näet kerrat, joiden kieltä puhut, ja paikan päällä pidettävistä vain ne, jotka ovat kattamillasi alueilla. Pidä molemmat ajan tasalla <link>asetuksissasi</link>.",

@@ -4,6 +4,7 @@ import {
   geduAssignmentKey,
   geduSubstitutionKey,
   rollUpGeduAssignments,
+  rollUpGeduEndedAssignments,
   rollUpGeduSubstitutions,
   type GeduAssignmentRow,
 } from "@/lib/gedu-assignment-rollup";
@@ -85,6 +86,7 @@ function row(over: {
     substitutionCancelled: false,
     substitutionStartsAt: null,
     substitutionEndsAt: null,
+    lastSessionDate: null,
     groupCount: 2,
     participantCount: 14,
     groupName: `${over.name} A`,
@@ -903,5 +905,85 @@ describe("rollUpGeduSubstitutions", () => {
     expect(substitution.hasVoiceRoom).toBe(false);
     expect(substitution.session.siteName).toBe("Sello Library, Espoo");
     expect(substitution.voiceHref).toBe(INERT_HREF);
+  });
+});
+
+describe("rollUpGeduEndedAssignments", () => {
+  /**
+   * A group the gedu was taken off, dated by its latest open session — a Monday
+   * the default slot names, 16:30 Helsinki for 90 minutes.
+   */
+  function endedRow(over: { id: string; name: string; lastSessionDate: string }): GeduAssignmentRow {
+    const base = row({ id: over.id, name: over.name, deliveryMode: "online" });
+    return {
+      ...base,
+      kind: "ended_assignment",
+      upcomingSessions: [],
+      substitutionStartsAt: new Date(`${over.lastSessionDate}T14:30:00.000Z`),
+      substitutionEndsAt: new Date(`${over.lastSessionDate}T16:00:00.000Z`),
+      lastSessionDate: over.lastSessionDate,
+    };
+  }
+
+  const hrefs = (rows: GeduAssignmentRow[]) =>
+    Object.fromEntries(
+      rows.map((r) => [
+        geduAssignmentKey(r.product.id, r.groupId),
+        { pathname: "/gedu/clubs/[id]" as const, params: { id: r.product.id } },
+      ]),
+    );
+
+  it("draws the substitution's card for each ended row, and nothing for the other kinds", () => {
+    const rows = [
+      row({ id: "mine", name: "My Club" }),
+      endedRow({ id: "left", name: "Former Club", lastSessionDate: "2026-02-16" }),
+    ];
+    const [card, ...rest] = rollUpGeduEndedAssignments({
+      rows,
+      locale: "en",
+      attentionByEndedAssignment: { [geduAssignmentKey("left", "left-group")]: 2 },
+      hrefByAssignment: hrefs(rows),
+    });
+    expect(rest).toEqual([]);
+    expect(card.seat).toBe("ended_assignment");
+    expect(card.session.sessionDate).toBe("2026-02-16");
+    expect(card.session.startsAt?.toISOString()).toBe("2026-02-16T14:30:00.000Z");
+    expect(card.attentionCount).toBe(2);
+    expect(card.cancelled).toBe(false);
+    // Its link names the group, as a substitution's does: the gedu holds no
+    // current period on it for the workspace to resolve one from.
+    expect(card.openHref).toEqual({
+      pathname: "/gedu/clubs/[id]",
+      params: { id: "left" },
+      query: { groupId: "left-group" },
+    });
+    // Its session started long before now, so its 48 hours are behind it.
+    expect(card.accessOpensAt.getTime()).toBeLessThan(Date.now());
+  });
+
+  it("offers no Join on a remote product: the voice room is the current gedus'", () => {
+    const rows = [endedRow({ id: "left", name: "Former Club", lastSessionDate: "2026-02-16" })];
+    const [card] = rollUpGeduEndedAssignments({
+      rows,
+      locale: "en",
+      hrefByAssignment: hrefs(rows),
+    });
+    expect(card.hasVoiceRoom).toBe(false);
+    expect(card.voiceHref).toBe(INERT_HREF);
+  });
+
+  it("is left out of the assignment and the substitution roll-ups", () => {
+    const rows = [endedRow({ id: "left", name: "Former Club", lastSessionDate: "2026-02-16" })];
+    expect(
+      rollUpGeduAssignments({
+        rows,
+        now: new Date("2026-02-20T12:00:00Z"),
+        locale: "en",
+        hrefByAssignment: hrefs(rows),
+      }),
+    ).toEqual([]);
+    expect(
+      rollUpGeduSubstitutions({ rows, locale: "en", hrefByAssignment: hrefs(rows) }),
+    ).toEqual([]);
   });
 });
