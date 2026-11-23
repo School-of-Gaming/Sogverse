@@ -2,7 +2,7 @@ import { formatInTimeZone } from "date-fns-tz";
 import { isValidPhoneNumber } from "libphonenumber-js";
 import { getPathname } from "@/i18n/navigation";
 import { SUPPORTED_CURRENCIES } from "@/lib/constants/currency";
-import { DEFAULT_LOCALE, isSupportedLocale, type SupportedLocale } from "@/lib/constants/locales";
+import { resolveLocale, type SupportedLocale } from "@/lib/constants/locales";
 import { isHeldSeatStatus } from "@/lib/constants/participations";
 import { ROUTES } from "@/lib/constants/routes";
 import { resolveTranslation } from "@/lib/i18n/resolve-translation";
@@ -192,7 +192,7 @@ export interface ParentProfile {
   lastName: string;
   /** E.164, or null to clear a number Klaviyo would refuse or the parent removed. */
   phoneNumber: string | null;
-  locale?: string;
+  locale: string;
   country: string | null;
   properties: KlaviyoProperties;
 }
@@ -202,10 +202,9 @@ export function klaviyoEnvironment(): "production" | "staging" {
   return isProductionDeployment() ? "production" : "staging";
 }
 
-/** The locale product names are written in: the parent's, else the default. */
+/** The locale product names are written in: the parent's, narrowed to one the app ships. */
 function nameLocale(snapshot: KlaviyoParentSnapshot): SupportedLocale {
-  const locale = snapshot.profile.locale;
-  return locale !== null && isSupportedLocale(locale) ? locale : DEFAULT_LOCALE;
+  return resolveLocale(snapshot.profile.locale);
 }
 
 function productName(product: KlaviyoProduct, locale: SupportedLocale): string | null {
@@ -276,7 +275,7 @@ export function klaviyoProfileFor(snapshot: KlaviyoParentSnapshot): ParentProfil
     firstName: profile.first_name,
     lastName: profile.last_name,
     phoneNumber: e164(profile.phone),
-    ...(profile.locale === null ? {} : { locale: profile.locale }),
+    locale: profile.locale,
     country,
     properties: {
       [PROFILE_PROPERTIES.environment]: klaviyoEnvironment(),

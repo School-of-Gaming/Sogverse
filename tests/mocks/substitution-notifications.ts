@@ -41,7 +41,7 @@ export function snapshotCandidate(
   return {
     first_name: "Gedu",
     last_name: "Example",
-    locale: null,
+    locale: "en",
     phone: null,
     discord_user_id: null,
     eligible: true,
@@ -110,7 +110,7 @@ export function notificationSnapshot(
     reason: "sick",
     reason_note: null,
     created_at: "2026-10-08T07:00:00.000Z",
-    requester: { ...snapshotPerson(SNAPSHOT_IDS.requester, "Ville"), locale: null, discord_user_id: null },
+    requester: { ...snapshotPerson(SNAPSHOT_IDS.requester, "Ville"), locale: "fi", discord_user_id: null },
     substitute: null,
     approver: null,
     approved_at: null,

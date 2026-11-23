@@ -72,7 +72,7 @@ export const klaviyoParentSnapshot = z.object({
     first_name: z.string(),
     last_name: z.string(),
     phone: z.string().nullable(),
-    locale: z.string().nullable(),
+    locale: z.string(),
     spoken_languages: z.array(z.enum(enums.spoken_language)),
     currency: z.string().nullable(),
     created_at: z.string(),

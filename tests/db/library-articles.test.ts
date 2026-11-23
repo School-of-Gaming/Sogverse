@@ -1220,7 +1220,7 @@ describe("library articles", () => {
         email,
         password: "testpassword123",
         email_confirm: true,
-        user_metadata: { first_name: "Library", last_name: "Saver" },
+        user_metadata: { first_name: "Library", last_name: "Saver", locale: "en" },
       });
       expect(created.error).toBeNull();
       const saverId = created.data.user?.id ?? "";

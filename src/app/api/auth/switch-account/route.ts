@@ -172,7 +172,7 @@ type ServerClient = Awaited<ReturnType<typeof createClient>>;
 // The address is deliberately NOT here: it is asked of GoTrue per switch (see
 // resolveTargetEmail), so carrying the profile copy would only invite a caller
 // to reach for the stale one.
-type TargetProfile = { id: string; role: string | null; locale: string | null };
+type TargetProfile = { id: string; role: string | null; locale: string };
 
 /** A 403 naming which gate was not satisfied. */
 function gateRefusal(code: SwitchAccountErrorCode, message: string): NextResponse {
@@ -365,9 +365,10 @@ async function switchByOtp(args: {
   // bare entry later — a bookmark, an emailed link, a fresh tab — resolves
   // through the cookie → `Accept-Language` → English ladder, and without it a
   // child whose profile says Finnish would be handed their parent's language,
-  // or English, every time. A null `locale` means "auto-detect from the
-  // browser" and is left unwritten. Placed after the marker mint: nothing above
-  // may be delayed by work that is not part of establishing the session.
+  // or English, every time. Every account a switch can enter has finished
+  // registering, so its locale is one it chose. Placed after the marker mint:
+  // nothing above may be delayed by work that is not part of establishing the
+  // session.
   if (isSupportedLocale(target.locale)) {
     cookieStore.set(LOCALE_COOKIE_NAME, target.locale, localeCookieOptions());
   }

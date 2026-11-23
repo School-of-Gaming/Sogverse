@@ -108,7 +108,7 @@ function adminTableStub(table: string) {
             first_name: "Aino",
             last_name: null,
             email: "aino@gamer.sogverse.internal",
-            locale: null,
+            locale: "en",
           },
         ],
         error: null,

@@ -764,7 +764,7 @@ async function rewrittenSubscriptionDescription(
   const name =
     resolveRequiredTranslation(
       facts.targetProduct.product_translations,
-      resolveLocale(customer?.locale ?? null),
+      resolveLocale(customer?.locale),
     ).name;
   const who = participant.first_name;
 

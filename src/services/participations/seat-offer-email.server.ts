@@ -3,11 +3,7 @@ import { sendTransactionalEmail } from "@/lib/brevo";
 import { SENDER_EMAIL, SENDER_NAME, SUPPORT_EMAIL } from "@/lib/constants/brand";
 import { ROUTES } from "@/lib/constants/routes";
 import { SEAT_OFFER_WINDOW_MS } from "@/lib/constants/seat-offer";
-import {
-  DEFAULT_LOCALE,
-  detectLocaleFromHeader,
-  type SupportedLocale,
-} from "@/lib/constants/locales";
+import { DEFAULT_LOCALE, type SupportedLocale } from "@/lib/constants/locales";
 import {
   buildSeatOfferEmail,
   buildSeatOfferGamerEmail,
@@ -64,10 +60,10 @@ interface SeatOfferMailBase {
    */
   client: AppSupabaseClient;
   /**
-   * The request the action arrived on. Read for two things, and passed whole so
-   * neither can be got wrong at a call site: the TRUSTED origin (`getOrigin`,
-   * never the raw Host — these links go in an email and one of them carries a
-   * credential), and `Accept-Language` as the last step of the locale chain.
+   * The request the action arrived on, read for the TRUSTED origin
+   * (`getOrigin`, never the raw Host — these links go in an email and one of
+   * them carries a credential). Passed whole so that cannot be got wrong at a
+   * call site.
    */
   request: Request;
   customerId: string;
@@ -324,10 +320,8 @@ async function sendOffer({
   // every sentence naming them moves into the second person.
   const isSelfSeat = participantId === customerId;
 
-  // Stored preference → what the browser asked for → English, per recipient.
-  // The same chain every other send in the app walks; the resolver applies it
-  // to the parent and to the child separately, because they need not share a
-  // locale.
+  // Each recipient's own stored locale, the parent's and the child's
+  // separately, because they need not share one.
   const recipients = resolveFamilyRecipients({
     parents: [
       { email: customer.email, firstName: customer.first_name, locale: customer.locale },
@@ -340,7 +334,6 @@ async function sendOffer({
           locale: participant.locale,
           signIn: participant.gamer_profiles?.sign_in ?? null,
         },
-    fallbackLocale: detectLocaleFromHeader(request.headers.get("Accept-Language")),
   });
 
   // The TRUSTED origin, never the raw Host header: this link carries a

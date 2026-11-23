@@ -5,10 +5,7 @@ import { ROUTES } from "@/lib/constants/routes";
 import { createPinResetToken } from "@/lib/pin-session";
 import { buildPinResetEmail } from "@/lib/email-templates/pin-reset";
 import { getEmailTranslator } from "@/lib/email-templates/translator";
-import {
-  detectLocaleFromHeader,
-  isSupportedLocale,
-} from "@/lib/constants/locales";
+import { resolveLocale } from "@/lib/constants/locales";
 import { getOrigin } from "@/lib/url";
 
 /**
@@ -49,10 +46,7 @@ export const POST = defineRoute({
     );
     const resetLink = `${origin}${ROUTES.resetPin}?token=${encodeURIComponent(token)}`;
 
-    const pref = profile.locale;
-    const locale = isSupportedLocale(pref)
-      ? pref
-      : detectLocaleFromHeader(request.headers.get("Accept-Language"));
+    const locale = resolveLocale(profile.locale);
     const t = await getEmailTranslator(locale);
 
     await sendTransactionalEmail({

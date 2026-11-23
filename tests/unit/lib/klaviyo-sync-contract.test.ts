@@ -126,7 +126,7 @@ const FULL: KlaviyoParentSnapshot = {
 
 const EMPTY: KlaviyoParentSnapshot = {
   ...FULL,
-  profile: { ...FULL.profile, phone: null, locale: null, home_location: null },
+  profile: { ...FULL.profile, phone: null, home_location: null },
   attribution: {
     utm_source: null,
     utm_medium: null,
@@ -281,7 +281,6 @@ describe("the profile", () => {
     );
     expect(profile.phoneNumber).toBeNull();
     expect(profile.country).toBeNull();
-    expect(profile).not.toHaveProperty("locale");
     expect(profile.properties.sog_paid_until).toBeNull();
     expect(profile.properties.sog_gamer_birth_years).toEqual([]);
     expect(profile.properties.sog_gamer_genders).toEqual([]);

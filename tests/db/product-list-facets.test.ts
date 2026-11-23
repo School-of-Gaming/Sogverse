@@ -87,7 +87,7 @@ describe("product_list_facets", () => {
       email: `facets-gedu-${Date.now()}@test.local`,
       password: "testpassword123",
       email_confirm: true,
-      user_metadata: { first_name: "Facet", last_name: "Gedu" },
+      user_metadata: { first_name: "Facet", last_name: "Gedu", locale: "en" },
     });
     expect(userError).toBeNull();
     otherGeduId = created.user?.id ?? "";

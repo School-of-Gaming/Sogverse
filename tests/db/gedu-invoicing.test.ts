@@ -176,7 +176,7 @@ describe("gedu invoicing", () => {
       email,
       password: "testpassword123",
       email_confirm: true,
-      user_metadata: { first_name: "Sanni", last_name: "Sijainen" },
+      user_metadata: { first_name: "Sanni", last_name: "Sijainen", locale: "en" },
     });
     expect(error).toBeNull();
     subId = created.user?.id ?? "";

@@ -125,6 +125,7 @@ describe("Row Level Security", () => {
         role: "customer",
         first_name: "Injected",
         email: "injected@example.com",
+        locale: "en",
       });
 
       expect(error).not.toBeNull();
@@ -406,7 +407,7 @@ describe("Row Level Security", () => {
           email: "temp-gamer@gamer.sogverse.internal",
           password: "testpassword123",
           email_confirm: true,
-          user_metadata: { first_name: "Temp", last_name: "Gamer" },
+          user_metadata: { first_name: "Temp", last_name: "Gamer", locale: "en" },
         });
 
         // Promote to gamer (same pattern as seed.sql). Keep the synthetic

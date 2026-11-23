@@ -308,7 +308,7 @@ describe("the Klaviyo sync", () => {
         email: `klaviyo-${label}-${Date.now()}@test.local`,
         password: "testpassword123",
         email_confirm: true,
-        user_metadata: { first_name: "Klaviyo", last_name: label },
+        user_metadata: { first_name: "Klaviyo", last_name: label, locale: "en" },
       });
       expect(error).toBeNull();
       return data.user?.id ?? "";
@@ -456,7 +456,7 @@ describe("the Klaviyo sync", () => {
         email: `klaviyo-new-parent-${Date.now()}@test.local`,
         password: "testpassword123",
         email_confirm: true,
-        user_metadata: { first_name: "Klaviyo", last_name: "Parent" },
+        user_metadata: { first_name: "Klaviyo", last_name: "Parent", locale: "en" },
       });
       expect(error).toBeNull();
       const userId = data.user?.id ?? "";

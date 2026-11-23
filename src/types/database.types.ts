@@ -3160,7 +3160,7 @@ export type Database = {
           home_location_id: string | null
           id: string
           last_name: string
-          locale: string | null
+          locale: string
           phone: string | null
           registration_completed_at: string | null
           registration_marketing_consent: boolean | null
@@ -3184,7 +3184,7 @@ export type Database = {
           home_location_id?: string | null
           id: string
           last_name?: string
-          locale?: string | null
+          locale: string
           phone?: string | null
           registration_completed_at?: string | null
           registration_marketing_consent?: boolean | null
@@ -3208,7 +3208,7 @@ export type Database = {
           home_location_id?: string | null
           id?: string
           last_name?: string
-          locale?: string | null
+          locale?: string
           phone?: string | null
           registration_completed_at?: string | null
           registration_marketing_consent?: boolean | null
@@ -5212,7 +5212,7 @@ export type Database = {
           home_location_id: string | null
           id: string
           last_name: string
-          locale: string | null
+          locale: string
           phone: string | null
           registration_completed_at: string | null
           registration_marketing_consent: boolean | null
@@ -5251,7 +5251,7 @@ export type Database = {
           home_location_id: string | null
           id: string
           last_name: string
-          locale: string | null
+          locale: string
           phone: string | null
           registration_completed_at: string | null
           registration_marketing_consent: boolean | null

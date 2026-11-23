@@ -159,10 +159,17 @@ export async function GET(request: Request) {
   // above usually goes to a bare path, which the proxy resolves by the
   // cookie → `Accept-Language` → English ladder — so without this a Finnish
   // reader signing in on a fresh device would land on `/en/parent`. `locale`
-  // rides on the profile read that was already happening; a null value means
-  // "auto-detect from the browser" and is deliberately left unwritten, since
-  // the header leg is what that reader asked for.
-  if (isSupportedLocale(profile.locale)) {
+  // rides on the profile read that was already happening.
+  //
+  // **Only once the account has registered.** An account Google has just
+  // created holds a placeholder locale nobody chose, which the finish page's
+  // answer later writes over; seeding the cookie from it would send a Finnish
+  // browser to the finish page in English. Left unwritten, the bare path
+  // resolves through the browser's own language instead.
+  if (
+    profile.registration_completed_at !== null &&
+    isSupportedLocale(profile.locale)
+  ) {
     response.cookies.set(
       LOCALE_COOKIE_NAME,
       profile.locale,

@@ -42,7 +42,7 @@ const userListProfileColumns = {
   utm_campaign: z.string().nullable(),
   utm_content: z.string().nullable(),
   utm_term: z.string().nullable(),
-  locale: z.string().nullable(),
+  locale: z.string(),
   registration_completed_at: z.string().nullable(),
   registration_marketing_consent: z.boolean().nullable(),
   signup_intent_kind: z.string().nullable(),

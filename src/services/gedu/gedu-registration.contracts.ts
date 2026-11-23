@@ -1,5 +1,6 @@
 import { z } from "zod";
 import { Constants } from "@/types";
+import { SUPPORTED_LOCALES } from "@/lib/constants/locales";
 import { NAME_MIN_LENGTH, NAME_MAX_LENGTH } from "@/lib/constants/account-limits";
 import { trimPersonName } from "@/lib/person-name-trim";
 import { minecraftUsernameValue } from "@/services/minecraft/minecraft.contracts";
@@ -32,7 +33,12 @@ export const registerGeduBody = z.object({
   spokenLanguages: z
     .array(z.enum(Constants.public.Enums.spoken_language))
     .default([]),
-  locale: z.string().optional(),
+  /**
+   * The locale the form was read in: the account's stored locale, and the
+   * language of the welcome mail. Required, for the reason the parent schema
+   * gives.
+   */
+  locale: z.enum(SUPPORTED_LOCALES),
   locationIds: z.array(z.string().uuid()).default([]),
   /**
    * Both game handles are optional, and the two spellings of "no handle" land in

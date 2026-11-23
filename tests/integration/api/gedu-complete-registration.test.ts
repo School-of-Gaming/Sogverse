@@ -140,7 +140,9 @@ function signedInCustomer(profile: Record<string, unknown> = {}) {
       id: USER_ID,
       role: "customer",
       email: EMAIL,
-      locale: null,
+      // The placeholder every account Google creates holds until this route
+      // writes the reader's own over it.
+      locale: "en",
       registration_completed_at: null,
       ...profile,
     },
@@ -240,6 +242,15 @@ describe("POST /api/gedu/complete-registration", () => {
 
   it("refuses a body that fails the contract, writing nothing", async () => {
     const response = await POST(request({ ...validBody, firstName: "   " }));
+
+    expect(response.status).toBe(400);
+    expect(writes).toEqual([]);
+  });
+
+  it("refuses a body without a locale, writing nothing", async () => {
+    // Without one, the account would keep the placeholder nobody chose.
+    const { locale: _omitted, ...noLocale } = validBody;
+    const response = await POST(request(noLocale));
 
     expect(response.status).toBe(400);
     expect(writes).toEqual([]);

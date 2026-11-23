@@ -9,11 +9,7 @@ import {
 } from "@/lib/email-templates/help-request";
 import { getEmailTranslator } from "@/lib/email-templates/translator";
 import { SENDER_EMAIL, SENDER_NAME, SUPPORT_EMAIL } from "@/lib/constants/brand";
-import {
-  detectLocaleFromHeader,
-  formattingLocale,
-  isSupportedLocale,
-} from "@/lib/constants/locales";
+import { formattingLocale, resolveLocale } from "@/lib/constants/locales";
 import { ROLE_LABEL_KEYS } from "@/lib/constants/roles";
 import { gamerHoldsOwnMailbox } from "@/lib/email/family-recipients.server";
 
@@ -42,7 +38,7 @@ export const POST = defineRoute({
   // route used to return the thrown message from its own catch — incidental
   // forwarding, now closed.
 
-  handler: async ({ request, supabase, user, profile, body }) => {
+  handler: async ({ supabase, user, profile, body }) => {
     // Atomic rate-limit check + insert via a self-scoping RPC on the USER-bound
     // client: `submit_my_help_request` writes a row for `auth.uid()` and has no
     // parameter naming a user, so this handler cannot file a request as anyone
@@ -114,11 +110,7 @@ export const POST = defineRoute({
       });
     }
 
-    // Resolve locale: profile preference → Accept-Language → English
-    const pref = profile.locale;
-    const locale = isSupportedLocale(pref)
-      ? pref
-      : detectLocaleFromHeader(request.headers.get("Accept-Language"));
+    const locale = resolveLocale(profile.locale);
 
     const t = await getEmailTranslator(locale);
     const displayName = profile.first_name;

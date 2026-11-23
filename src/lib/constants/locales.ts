@@ -274,23 +274,22 @@ export function isSupportedLocale(value: unknown): value is SupportedLocale {
 }
 
 /**
- * Validate a user-supplied locale value and fall back to a default. Use this
- * when reading `profiles.locale` or a locale from a request body — it narrows
- * `unknown` to `SupportedLocale` in one step without per-call-site casts.
+ * Validate a user-supplied locale value and fall back to `DEFAULT_LOCALE`. Use
+ * this when reading `profiles.locale` or a locale from a request body — it
+ * narrows `unknown` to `SupportedLocale` in one step without per-call-site
+ * casts.
  *
- * For multi-source resolution with Accept-Language fallback, don't use this —
- * inline the chain (see src/app/api/auth/forgot-password/route.ts).
+ * Where a request's `Accept-Language` should be tried before English, don't use
+ * this: narrow with `isSupportedLocale` and fall through to
+ * `detectLocaleFromHeader` at the call site.
  */
-export function resolveLocale(
-  value: unknown,
-  fallback: SupportedLocale = DEFAULT_LOCALE,
-): SupportedLocale {
-  return isSupportedLocale(value) ? value : fallback;
+export function resolveLocale(value: unknown): SupportedLocale {
+  return isSupportedLocale(value) ? value : DEFAULT_LOCALE;
 }
 
 /**
  * The Stripe locale to render Stripe's own chrome in, for a locale value we do
- * not trust yet (a nullable `profiles.locale`, a resolved request locale).
+ * not trust yet (a stored `profiles.locale`, a resolved request locale).
  *
  * Anything we don't recognise — including a locale Stripe has no translation
  * for — becomes `"auto"`, which tells Stripe to read the browser's

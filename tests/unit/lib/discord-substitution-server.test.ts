@@ -139,9 +139,9 @@ describe("resolveDiscordGedu", () => {
     });
   });
 
-  it.each([null, "xx"])("answers no locale for a stored %s", async (locale) => {
-    answer({ get_gedu_for_discord_user: { data: { profile_id: GEDU_ID, locale } } });
-    expect((await resolveDiscordGedu(DISCORD_ID))?.locale).toBeNull();
+  it("answers the default locale for a stored one the app does not ship", async () => {
+    answer({ get_gedu_for_discord_user: { data: { profile_id: GEDU_ID, locale: "xx" } } });
+    expect((await resolveDiscordGedu(DISCORD_ID))?.locale).toBe("en");
   });
 
   it("answers null when no gedu is linked", async () => {

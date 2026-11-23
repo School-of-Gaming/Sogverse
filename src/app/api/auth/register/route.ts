@@ -6,7 +6,6 @@ import { sendTransactionalEmail } from "@/lib/brevo";
 import { SENDER_EMAIL, SENDER_NAME, SUPPORT_EMAIL } from "@/lib/constants/brand";
 import { ROUTES } from "@/lib/constants/routes";
 import { REGISTRATION_CONSENT_DOCUMENTS } from "@/lib/constants/consent-documents";
-import { detectLocaleFromHeader } from "@/lib/constants/locales";
 import { phoneDigitsForStorage } from "@/lib/constants/phone";
 import { buildWelcomeParentEmail } from "@/lib/email-templates/welcome";
 import { getEmailTranslator } from "@/lib/email-templates/translator";
@@ -77,7 +76,7 @@ export const POST = defineRoute({
       lastName,
       phone,
       homeLocationId,
-      locale: requestedLocale,
+      locale,
       redirect,
       eventId,
       marketingConsent,
@@ -125,8 +124,10 @@ export const POST = defineRoute({
 
     // The metadata shape is exactly what the browser `signUp()` sent before, and
     // it has to stay that way: `handle_new_user` reads `first_name`,
-    // `last_name`, the five `utm_*` keys and the two `signup_intent_*` keys out
-    // of it to build the profile row.
+    // `last_name`, `locale`, the five `utm_*` keys and the two
+    // `signup_intent_*` keys out of it to build the profile row. The locale is
+    // the language the parent registered in, and the trigger refuses the
+    // account without one.
     // `display_name` is not read by the trigger — it is the label the Supabase
     // Auth dashboard shows for the user — and `role` is not read either, since
     // the trigger hardcodes `customer`. Both are kept because the dashboard and
@@ -147,6 +148,7 @@ export const POST = defineRoute({
           last_name: lastName,
           display_name: composedDisplayName,
           role: "customer",
+          locale,
           // Each field omitted entirely when absent, so its column simply stays
           // null. The trigger re-sanitises whatever arrives, so a junk value
           // costs this registration nothing.
@@ -215,14 +217,6 @@ export const POST = defineRoute({
     // stranding the parent on the registration form, would both be strictly
     // worse than losing the value.
     //
-    // The locale is persisted, not just used for the mail below: it is the
-    // language the parent registered in, and the profile is the only source a
-    // browserless sender can consult — the Stripe webhook's confirmation mail
-    // resolves profile.locale first and would otherwise fall through
-    // Accept-Language on STRIPE'S request to English. (`register_gedu` already
-    // persists the educator's locale; this is the parent half of the same
-    // decision.)
-    //
     // THE MARKETING ANSWER RIDES ALONG. `registration_marketing_consent` is the
     // write-once record of what the sign-up form was told about School of
     // Gaming's own mailing list; the current answer lives in Klaviyo, which the
@@ -235,12 +229,10 @@ export const POST = defineRoute({
     const profileExtras: {
       phone?: string;
       home_location_id?: string;
-      locale?: string;
       registration_marketing_consent: boolean;
     } = { registration_marketing_consent: marketingConsent ?? false };
     if (phoneDigits) profileExtras.phone = phoneDigits;
     if (homeLocationId) profileExtras.home_location_id = homeLocationId;
-    if (requestedLocale) profileExtras.locale = requestedLocale;
     const { error: extrasError } = await admin
       .from("profiles")
       .update(profileExtras)
@@ -251,13 +243,6 @@ export const POST = defineRoute({
         extrasError,
       );
     }
-
-    // Locale for the mail: what the form was being read in, else what the
-    // browser asked for, else English. The stored preference written above is
-    // the same value, so consulting it would be a read-after-write for nothing.
-    const locale =
-      requestedLocale ??
-      detectLocaleFromHeader(request.headers.get("Accept-Language"));
 
     // The welcome mail. Wrapped because a Brevo failure must not fail the
     // registration: the account is the outcome the parent asked for, it exists,

@@ -216,7 +216,7 @@ describe("get_admin_dashboard", () => {
       email: `admin-dashboard-${label}-${Date.now()}@test.local`,
       password: "testpassword123",
       email_confirm: true,
-      user_metadata: { first_name: "Dash", last_name: label },
+      user_metadata: { first_name: "Dash", last_name: label, locale: "en" },
     });
     expect(error).toBeNull();
     return data.user!.id;

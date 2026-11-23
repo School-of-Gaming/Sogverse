@@ -141,9 +141,8 @@ export function RegisterForm({ redirect: redirectParam }: { redirect: string | n
           password: validatedData.password,
           firstName: validatedData.firstName,
           lastName: validatedData.lastName,
-          // Which language to write the welcome mail in. The profile has no
-          // stored preference yet — it is created by this very request — so the
-          // locale the form is being read in is the best answer anyone has.
+          // The locale the form is being read in: the new account's stored
+          // locale, and the welcome mail's language.
           locale,
           // The product page this visit came from, so the account-creation
           // report can name it. The route re-checks it; nothing navigates on it.

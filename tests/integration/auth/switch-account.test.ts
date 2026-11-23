@@ -134,9 +134,9 @@ type TargetProfile = {
    * `profiles.locale`, which the route reads for one purpose: seeding the
    * `locale` cookie so the switched-in account's own language survives the
    * full-page navigation that follows. Omitted by every test that is not about
-   * that, where it stands for the nullable column's ordinary null.
+   * that, where it stands for English.
    */
-  locale?: string | null;
+  locale?: string;
 } | null;
 
 /**
@@ -161,7 +161,7 @@ function setupAdminFrom(args: {
             ? mockSupabaseSuccess({
                 id: target.id,
                 role: target.role,
-                locale: target.locale ?? null,
+                locale: target.locale ?? "en",
               })
             : mockSupabaseSuccess(null),
         ),
@@ -833,7 +833,7 @@ describe("POST /api/auth/switch-account", () => {
       httpOnly: false,
     };
 
-    async function parentSwitchesToGamer(locale: string | null) {
+    async function parentSwitchesToGamer(locale: string) {
       mockAuthenticated("customer", PARENT_A);
       setupAdminFrom({
         target: {
@@ -857,20 +857,6 @@ describe("POST /api/auth/switch-account", () => {
         "locale",
         "fi",
         LOCALE_COOKIE_OPTIONS,
-      );
-    });
-
-    it("writes nothing when the target says auto-detect", async () => {
-      // Null means "follow the browser". Writing anything here would freeze a
-      // guess into a preference nobody expressed — and, worse, hand the child
-      // whatever the previous account had stored.
-      const response = await parentSwitchesToGamer(null);
-
-      expect(response.status).toBe(200);
-      expect(mockCookieSet).not.toHaveBeenCalledWith(
-        "locale",
-        expect.anything(),
-        expect.anything(),
       );
     });
 
@@ -1006,8 +992,9 @@ describe("POST /api/auth/switch-account", () => {
       // Worse UX, never a weaker gate, and it holds for both cookies: neither
       // can be bound without a session id, so neither is minted. The parent
       // types the PIN again at the unlock screen, and the unmarked session reads
-      // as `own` — the STRONGER of the two switch gates.
-      expect(mockCookieSet).not.toHaveBeenCalled();
+      // as `own` — the STRONGER of the two switch gates. The locale cookie is
+      // the only one written, and it is no gate.
+      expect(mockCookieSet.mock.calls.map(([name]) => name)).toEqual(["locale"]);
       expect(mockCookieDelete).toHaveBeenCalledWith(PIN_COOKIE_NAME);
       expect(mockCookieDelete).toHaveBeenCalledWith(FAMILY_SESSION_COOKIE_NAME);
     });
@@ -1058,9 +1045,10 @@ describe("POST /api/auth/switch-account", () => {
       // (the target's cookies are in the store), so the caller would be handed
       // an error for a session they are now holding. The same landing as a
       // missing session id — unmarked, locked, and therefore on the stronger
-      // gate — is the honest answer.
+      // gate — is the honest answer. Only the locale cookie, which is no gate,
+      // is written.
       expect(response.status).toBe(200);
-      expect(mockCookieSet).not.toHaveBeenCalled();
+      expect(mockCookieSet.mock.calls.map(([name]) => name)).toEqual(["locale"]);
       expect(mockCookieDelete).toHaveBeenCalledWith(FAMILY_SESSION_COOKIE_NAME);
     });
 

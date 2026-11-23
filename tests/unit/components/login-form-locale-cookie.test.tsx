@@ -14,10 +14,10 @@ import { act, fireEvent, render } from "@testing-library/react";
  *
  * Two properties are load-bearing and both are pinned below: the write happens
  * **before** the navigation (the document is about to unload, and a write that
- * loses that race is a preference silently dropped), and a null
- * `profiles.locale` — which means "auto-detect from the browser" — writes
- * nothing, because the ladder's header leg is exactly what that reader asked
- * for.
+ * loses that race is a preference silently dropped), and an account still
+ * owing its registration writes nothing, because its stored locale is the
+ * placeholder a Google sign-up starts on, not a choice, and the ladder's
+ * header leg is the better guess for that reader.
  */
 
 const signInWithPassword = vi.fn<
@@ -30,10 +30,17 @@ const signInWithPassword = vi.fn<
  * `login-form-identifier.test.tsx`: the shared `from()` chain resolves
  * `single()` to undefined, which this form destructures.
  */
+const REGISTERED_AT = "2026-01-01T00:00:00Z";
+
 const profileRow = {
-  data: { role: "customer", locale: "fi" } as {
+  data: {
+    role: "customer",
+    locale: "fi",
+    registration_completed_at: REGISTERED_AT,
+  } as {
     role: string;
-    locale: string | null;
+    locale: string;
+    registration_completed_at: string | null;
   } | null,
 };
 
@@ -124,7 +131,11 @@ beforeEach(() => {
   vi.clearAllMocks();
   document.cookie = "locale=;path=/;max-age=0";
   cookieAtNavigation = undefined;
-  profileRow.data = { role: "customer", locale: "fi" };
+  profileRow.data = {
+    role: "customer",
+    locale: "fi",
+    registration_completed_at: REGISTERED_AT,
+  };
   signInWithPassword.mockResolvedValue({
     data: { user: { id: "3f2b1c90-6a4e-4d21-9f77-0c8b5a1e2d34" } },
     error: null,
@@ -140,23 +151,15 @@ describe("the locale cookie a password sign-in leaves behind", () => {
     expect(cookieAtNavigation).toContain("locale=fi");
   });
 
-  it("leaves the cookie alone when the profile says auto-detect", async () => {
-    // Null is a real answer, not a missing one: this reader asked to follow
-    // whatever language their browser negotiates, so writing anything here
-    // would freeze a guess into a preference they never made.
-    profileRow.data = { role: "customer", locale: null };
-    document.cookie = "locale=sv;path=/";
-
-    await signIn();
-
-    expect(localeCookie()).toBe("sv");
-  });
-
   it("ignores a stored value we do not ship", async () => {
-    // The column is plain nullable text, so a value can outlive the locale it
-    // named. An unsupported one is not written on: it would put a segment in
+    // The column is text held only to a locale's shape, so a value can
+    // outlive the locale it named. An unsupported one is not written on: it would put a segment in
     // the URL that resolves to no locale at all.
-    profileRow.data = { role: "customer", locale: "de" };
+    profileRow.data = {
+      role: "customer",
+      locale: "de",
+      registration_completed_at: REGISTERED_AT,
+    };
 
     await signIn();
 
@@ -170,6 +173,25 @@ describe("the locale cookie a password sign-in leaves behind", () => {
     await signIn();
 
     expect(selectedColumns).toHaveBeenCalledTimes(1);
-    expect(selectedColumns).toHaveBeenCalledWith("role, locale");
+    expect(selectedColumns).toHaveBeenCalledWith(
+      "role, locale, registration_completed_at",
+    );
+  });
+
+  it("writes nothing for an account still owing its registration", async () => {
+    // A Google sign-up starts on the placeholder `en` and can set a password
+    // through forgot-password before it finishes registering. Written on, the
+    // placeholder would send the bare path to English whatever the browser
+    // speaks, and the finish page would read it as the reader's choice.
+    profileRow.data = {
+      role: "customer",
+      locale: "en",
+      registration_completed_at: null,
+    };
+
+    await signIn();
+
+    expect(localeCookie()).toBeUndefined();
+    expect(mockNavigateAfterAuth).toHaveBeenCalledTimes(1);
   });
 });

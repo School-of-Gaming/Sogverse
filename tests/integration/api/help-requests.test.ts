@@ -49,6 +49,7 @@ function mockAuthenticatedAs(role: string, overrides?: Record<string, unknown>) 
       role,
       email: `${role}@test.local`,
       first_name: `Test ${role}`,
+      locale: "en",
       ...overrides,
     },
     supabase: { rpc: mockRpc },
@@ -341,47 +342,14 @@ describe("POST /api/help-requests", () => {
     );
   });
 
-  // -- Accept-Language locale detection --
+  // -- Locale --
 
   // These assert on the subject line rather than the sender name: the sender is
   // one constant in every locale now, so it can no longer witness which
   // translation was chosen, and a test asserting it would pass whatever the
   // locale resolution did.
 
-  it("should use Finnish copy when Accept-Language has fi as best supported match", async () => {
-    mockAuthenticatedAs("customer");
-    setupHappyPath();
-
-    await POST(createRequest(
-      validBody,
-      { "Accept-Language": "de-DE,fi;q=0.9,en;q=0.8" },
-    ));
-
-    expect(mockSendTransactionalEmail).toHaveBeenCalledWith(
-      expect.objectContaining({
-        subject: expect.stringContaining("Avunpyyntö käyttäjältä"),
-      })
-    );
-  });
-
-  it("should use English copy when no Accept-Language language is supported", async () => {
-    mockAuthenticatedAs("customer");
-    setupHappyPath();
-
-    await POST(createRequest(
-      validBody,
-      // None of these is a shipped locale (fr used to sit here, and is one now).
-      { "Accept-Language": "de-DE,pl;q=0.9" },
-    ));
-
-    expect(mockSendTransactionalEmail).toHaveBeenCalledWith(
-      expect.objectContaining({
-        subject: expect.stringContaining("Help request from"),
-      })
-    );
-  });
-
-  it("should prefer stored profile locale over Accept-Language header", async () => {
+  it("writes in the stored profile locale, whatever Accept-Language says", async () => {
     mockAuthenticatedAs("customer", { locale: "fi" });
     setupHappyPath();
 

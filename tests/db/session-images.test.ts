@@ -199,7 +199,7 @@ describe("session photos", () => {
         email,
         password: "testpassword123",
         email_confirm: true,
-        user_metadata: { first_name: "Peer", last_name: "Gedu" },
+        user_metadata: { first_name: "Peer", last_name: "Gedu", locale: "en" },
       });
     expect(createError).toBeNull();
     peerId = created.user!.id;

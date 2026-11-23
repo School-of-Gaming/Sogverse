@@ -54,7 +54,7 @@ The web's "Can't make a session?" picker and reason form, as one ephemeral Compo
 
 **Session times are in the product's zone, not the reader's — a sanctioned exception to the app's viewer-timezone rule (owner ruling, 2026-10-05).** Discord never tells a bot the reader's zone, Sogverse stores none for anyone, and Discord's own `<t:…>` timestamps, which do render in the reader's zone, cannot appear inside a select option and would show no zone name where they can. So the time is the product's own wall clock with its short zone name beside it: the one answer that is right, and visibly so, for every reader.
 
-**The copy** is next-intl's, in the Gedu's own app locale, else the one nearest their Discord client's language, else the default. Lines the web already says are read from the web's own keys; only the bot's own lines live under `discordSub`.
+**The copy** is next-intl's, in the Gedu's own app locale; a caller with no Gedu linked reads the one nearest their Discord client's language, else the default. Lines the web already says are read from the web's own keys; only the bot's own lines live under `discordSub`.
 
 **State lives in `custom_id`s, never in the server:** `sub:l` (show the list, the refusal's way back), `sub:s:<locale>` (the session select; the picked value is `<groupId>:<date>`, and the locale is the copy's, because the modal it opens is answered without a read), `sub:n:<groupId>:<date>` (the modal's submit; the reason and the note arrive as its fields). **A custom_id says what was picked, never who may act**: every step re-resolves the presser from the payload's Discord id, and the database re-derives the Gedu on every read and write.
 

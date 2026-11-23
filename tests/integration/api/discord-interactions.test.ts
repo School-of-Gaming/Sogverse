@@ -571,7 +571,7 @@ describe("POST /api/discord/interactions — /sub", () => {
     mockVerifyKey.mockResolvedValue(true);
     mockFetch.mockResolvedValue(new Response(null, { status: 200 }));
     mockInsert.mockResolvedValue({ error: null });
-    mockResolveDiscordGedu.mockResolvedValue({ profileId: "gedu-profile", locale: null });
+    mockResolveDiscordGedu.mockResolvedValue({ profileId: "gedu-profile", locale: "en" });
     mockGetSessions.mockResolvedValue(SESSIONS);
     mockFileRequest.mockResolvedValue({});
   });

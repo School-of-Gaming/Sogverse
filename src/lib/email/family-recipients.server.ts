@@ -67,7 +67,7 @@ export interface FamilyParentContact {
   email: string;
   firstName: string;
   /** `profiles.locale`, untrusted until resolved. */
-  locale: string | null;
+  locale: string;
 }
 
 /** The child on the seat — the fields that decide whether they get a copy of their own. */
@@ -79,7 +79,7 @@ export interface FamilyGamerContact {
    */
   email: string;
   firstName: string;
-  locale: string | null;
+  locale: string;
   /** `gamer_profiles.sign_in`; null when the row is missing (an adult, or a broken profile). */
   signIn: GamerSignIn | null;
 }
@@ -106,27 +106,22 @@ export function gamerHoldsOwnMailbox(
 /**
  * The recipients of one seat's mail: the parent(s) first, then the child when
  * they hold a mailbox of their own. Empty when there is no parent to write to.
- *
- * `fallbackLocale` is what a recipient with no stored preference is rendered
- * in — the request's `Accept-Language` where a caller has one, the default
- * locale where it does not.
+ * Each recipient is rendered in their own stored locale.
  */
 export function resolveFamilyRecipients({
   parents,
   gamer,
-  fallbackLocale,
 }: {
   parents: readonly FamilyParentContact[];
   /** Null on an adult's own seat: there is no child to copy. */
   gamer: FamilyGamerContact | null;
-  fallbackLocale: SupportedLocale;
 }): FamilyRecipient[] {
   if (parents.length === 0) return [];
 
   const recipients: FamilyRecipient[] = parents.map((parent) => ({
     email: parent.email,
     kind: "parent",
-    locale: resolveLocale(parent.locale, fallbackLocale),
+    locale: resolveLocale(parent.locale),
     firstName: parent.firstName,
   }));
 
@@ -134,7 +129,7 @@ export function resolveFamilyRecipients({
     recipients.push({
       email: gamer.email,
       kind: "gamer",
-      locale: resolveLocale(gamer.locale, fallbackLocale),
+      locale: resolveLocale(gamer.locale),
       firstName: gamer.firstName,
     });
   }

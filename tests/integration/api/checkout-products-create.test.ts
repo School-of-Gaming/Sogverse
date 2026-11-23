@@ -295,7 +295,7 @@ type AdminMockOptions = {
    * the confirmation. Absent by default: a gamer created the ordinary way
    * signs in by switching from the parent and holds no mailbox at all.
    */
-  gamerContact?: { email: string | null; locale: string | null; sign_in: string } | null;
+  gamerContact?: { email: string | null; locale: string; sign_in: string } | null;
 };
 
 function mockAdmin(opts: AdminMockOptions = {}): void {
@@ -362,7 +362,7 @@ function mockAdmin(opts: AdminMockOptions = {}): void {
                   first_name: gamer.first_name ?? GAMER_FIRST_NAME,
                   last_name: "Virtanen",
                   email: gamerContact?.email ?? null,
-                  locale: gamerContact?.locale ?? null,
+                  locale: gamerContact?.locale ?? "en",
                   gamer_profiles: gamerContact
                     ? { sign_in: gamerContact.sign_in }
                     : { sign_in: "parent" },
@@ -413,7 +413,7 @@ function mockForbidden(role: string) {
   );
 }
 
-function mockAuthenticatedCustomer(locale: string | null = null) {
+function mockAuthenticatedCustomer(locale = "en") {
   mockRequireRole.mockResolvedValue({
     user: { id: CUSTOMER_ID },
     profile: { role: "customer", locale, email: CUSTOMER_EMAIL },
@@ -1212,8 +1212,8 @@ describe("POST /api/checkout/products/create", () => {
     // Nor does it enable invoice creation: subscriptions already invoice.
     expect(params.invoice_creation).toBeUndefined();
     expect(params.payment_intent_data).toBeUndefined();
-    // No app locale on the profile → Stripe chrome falls back to 'auto'.
-    expect(params.locale).toBe("auto");
+    // The parent's app locale is the Stripe chrome's.
+    expect(params.locale).toBe("en");
     // Promotion-code entry is enabled on the subscription path too.
     expect(params.allow_promotion_codes).toBe(true);
   });
@@ -2353,7 +2353,7 @@ describe("POST /api/checkout/products/create", () => {
         product: FREE_EVENT,
         gamerContact: {
           email: "aino@gamer.sogverse.internal",
-          locale: null,
+          locale: "en",
           sign_in: "username",
         },
       });

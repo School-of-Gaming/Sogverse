@@ -820,7 +820,7 @@ describe("GroupsPanel — a missing requirement is confirmed, never refused", ()
     role: "gedu",
     phone: null,
     currency: null,
-    locale: null,
+    locale: "en",
     home_location_id: null,
     utm_source: null,
     utm_medium: null,
