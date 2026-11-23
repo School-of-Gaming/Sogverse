@@ -7,17 +7,24 @@
  * gedus taken off a group as well as the ones still on it. This registry is
  * where each read says which of the two it means;
  * `tests/unit/assignment-reader-completeness.test.ts` fails on a read that is
- * missing from it and on an entry whose read is gone.
+ * missing from it, on an entry whose read is gone, and on a read that does not
+ * carry the mark its class requires — in a database reader's definition,
+ * comments stripped, or in the query a TypeScript reader opens.
  *
  * - `current`: the gedus on the group now — only periods whose `ended_at` is
  *   null. An ended period read here keeps a removed gedu's access or shows them
- *   as staff.
+ *   as staff. Mark: `ended_at IS NULL` in the definition; in TypeScript,
+ *   `.is("ended_at", null)` on the query (an embed's own path,
+ *   `.is("<embed>.ended_at", null)`).
  * - `at-session`: the gedus at a session — the period containing the session's
  *   start instant, through `group_assignments_at`, or every period handed out
- *   with its bounds for the reader to apply that rule per session.
+ *   with its bounds for the reader to apply that rule per session. Mark: a call
+ *   to `group_assignments_at`, both `started_at` and `ended_at` read, or a call
+ *   to another at-session function here that places each session in its period.
  * - `writer`: starts, ends or guards periods; what it touches is decided by the
- *   caller or the row it was handed.
- * - `own-history`: a gedu's own rows, every period, ended ones included.
+ *   caller or the row it was handed. No mark: it reads every period by design.
+ * - `own-history`: a gedu's own rows, every period, ended ones included. No
+ *   mark, for the same reason.
  */
 
 export type AssignmentReadKind = "current" | "at-session" | "writer" | "own-history";
