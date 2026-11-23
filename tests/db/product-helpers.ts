@@ -1,6 +1,7 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
 import type { Database } from "@/types/database.types";
 import { TEST_IDS } from "./constants";
+import { dbNow, dbTime } from "./helpers";
 
 /**
  * Helpers for tests/db/*.test.ts. The v2 products system has no seed
@@ -476,20 +477,21 @@ export interface ProductOptions {
 }
 
 /**
- * Tomorrow as a calendar date, read in the product's OWN zone. `start_date` is
- * a calendar date in that zone and `effective_status` compares it against today
- * there, so a date derived in UTC would land on the product's *current* day —
- * and derive `running` rather than the `pending` this default promises — for a
- * fixture in a zone ahead of UTC late in the UTC day.
+ * Tomorrow as a calendar date, read in the product's OWN zone and on the
+ * database's clock. `start_date` is a calendar date in that zone and
+ * `effective_status` compares it against today there, so a date derived in UTC
+ * would land on the product's *current* day — and derive `running` rather than
+ * the `pending` this default promises — for a fixture in a zone ahead of UTC
+ * late in the UTC day.
  */
-function tomorrow(timeZone: string): string {
+async function tomorrow(timeZone: string): Promise<string> {
   // en-CA renders ISO-8601 (YYYY-MM-DD), which is the shape a date column wants.
   return new Intl.DateTimeFormat("en-CA", {
     timeZone,
     year: "numeric",
     month: "2-digit",
     day: "2-digit",
-  }).format(new Date(Date.now() + 86_400_000));
+  }).format((await dbNow()).getTime() + 86_400_000);
 }
 
 /**
@@ -517,11 +519,12 @@ export async function createTestProduct(
     product_type: options.productType ?? "consumer_club",
     billing_mode: options.billingMode ?? "paid",
     seat_count: options.seatCount === undefined ? 1 : options.seatCount,
-    start_date: options.startDate ?? options.endDate ?? tomorrow(timezone),
+    start_date: options.startDate ?? options.endDate ?? (await tomorrow(timezone)),
     end_date: options.endDate ?? null,
     location_id: options.locationId ?? null,
-    registration_opens_at:
-      options.registrationOpensAt ?? new Date(Date.now() - 60_000).toISOString(),
+    // Long open: nothing ties it to the product's dates, and only a time in
+    // the future closes a booking.
+    registration_opens_at: options.registrationOpensAt ?? "2020-01-01T00:00:00Z",
     timezone,
     waitlist_enabled: options.waitlistEnabled ?? true,
     is_visible: options.isVisible ?? true,
@@ -655,7 +658,7 @@ export async function insertPaidBooking(
       purchase_shape: "subscription_monthly",
       currency: "eur",
       stripe_checkout_session_id: booking.checkoutSessionId,
-      checkout_closes_at: new Date(Date.now() + 1_800_000).toISOString(),
+      checkout_closes_at: (await dbTime(1_800_000)).toISOString(),
     })
     .select("id")
     .single();

@@ -1,7 +1,12 @@
 import { describe, it, expect, beforeAll, afterAll } from "vitest";
 import type { SupabaseClient } from "@supabase/supabase-js";
 import type { Database } from "@/types/database.types";
-import { createAdminTestClient, createAuthenticatedClient } from "./helpers";
+import {
+  createAdminTestClient,
+  createAuthenticatedClient,
+  dbInterval,
+  uniqueSuffix,
+} from "./helpers";
 import { TEST_IDS, TEST_CREDENTIALS } from "./constants";
 
 /**
@@ -38,7 +43,7 @@ describe("gedu qualifications", () => {
   let bystanderId: string | null = null;
 
   async function createGedu(label: string): Promise<{ id: string; email: string }> {
-    const email = `gedu-qualification-${label}-${Date.now()}@test.local`;
+    const email = `gedu-qualification-${label}-${uniqueSuffix()}@test.local`;
     const { data, error } = await admin.auth.admin.createUser({
       email,
       password: PASSWORD,
@@ -89,19 +94,26 @@ describe("gedu qualifications", () => {
 
   describe("granting and revoking", () => {
     it("stamps the moment and the admin when an admin grants a qualification", async () => {
-      const before = Date.now();
-      const { error } = await adminUser.rpc("set_gedu_qualification", {
-        p_gedu_id: subjectId!,
-        p_qualification: "neuroinclusive",
-        p_held: true,
-      });
+      const {
+        result: { error },
+        notBefore,
+        notAfter,
+      } = await dbInterval(async () =>
+        adminUser.rpc("set_gedu_qualification", {
+          p_gedu_id: subjectId!,
+          p_qualification: "neuroinclusive",
+          p_held: true,
+        }),
+      );
       expect(error).toBeNull();
 
       const rows = await qualificationRows(subjectId!);
       expect(rows).toHaveLength(1);
       expect(rows[0].qualification).toBe("neuroinclusive");
       expect(rows[0].granted_by).toBe(TEST_IDS.ADMIN);
-      expect(Date.parse(rows[0].granted_at)).toBeGreaterThanOrEqual(before - 60_000);
+      const grantedAt = Date.parse(rows[0].granted_at);
+      expect(grantedAt).toBeGreaterThanOrEqual(notBefore.getTime());
+      expect(grantedAt).toBeLessThanOrEqual(notAfter.getTime());
     });
 
     it("keeps the original stamp when a held qualification is granted again", async () => {

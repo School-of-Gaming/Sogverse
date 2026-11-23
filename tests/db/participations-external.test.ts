@@ -1,7 +1,7 @@
 import { describe, it, expect, beforeAll, afterAll, afterEach } from "vitest";
 import type { SupabaseClient } from "@supabase/supabase-js";
 import type { Database } from "@/types/database.types";
-import { createAdminTestClient } from "./helpers";
+import { createAdminTestClient, dbTime } from "./helpers";
 import { TEST_IDS } from "./constants";
 import { createTestProduct, deleteTestProducts, eraseParticipations } from "./product-helpers";
 import { createBookingRpcResult } from "@/services/participations/participations.contracts";
@@ -63,7 +63,7 @@ describe("create_booking — external_contract (municipality) registration", () 
       .from("products")
       .update({
         seat_count: 10,
-        registration_opens_at: new Date(Date.now() - 60_000).toISOString(),
+        registration_opens_at: (await dbTime(-1_000)).toISOString(),
       })
       .eq("id", PRODUCT_MUNI);
   });
@@ -122,7 +122,7 @@ describe("create_booking — external_contract (municipality) registration", () 
     await admin
       .from("products")
       .update({
-        registration_opens_at: new Date(Date.now() + 60 * 60_000).toISOString(),
+        registration_opens_at: (await dbTime(60_000)).toISOString(),
       })
       .eq("id", PRODUCT_MUNI);
 

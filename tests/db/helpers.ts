@@ -1,4 +1,4 @@
-import { createHash, randomBytes } from "node:crypto";
+import { createHash, randomBytes, randomUUID } from "node:crypto";
 import { createClient, type SupabaseClient } from "@supabase/supabase-js";
 import { Pool, type Dispatcher } from "undici";
 import type { Database } from "@/types/database.types";
@@ -67,14 +67,6 @@ export function closeDbTestConnections(): Promise<void> {
   return stackConnections.destroy();
 }
 
-/**
- * A time long past by any clock. The database judges such times by its own
- * `now()`, which need not agree with this process's clock to the second.
- */
-export function anHourAgo(): Date {
-  return new Date(Date.now() - 60 * 60_000);
-}
-
 const clientOptions = {
   auth: { autoRefreshToken: false, persistSession: false },
   global: { fetch: dbTestFetch },
@@ -85,6 +77,52 @@ const clientOptions = {
  */
 export function createAdminTestClient(): SupabaseClient<Database> {
   return createClient<Database>(supabaseUrl, serviceRoleKey, clientOptions);
+}
+
+// The database's clock. The tests run on the host and the database in a WSL2
+// kernel whose clock drifts seconds from the host's, so a time the database
+// judges against its own `now()`, or a stamp it wrote, is read from its clock
+// and never from this process's.
+
+/** The database's clock as of this call, read fresh every time. */
+export async function dbNow(): Promise<Date> {
+  const { data, error } = await createAdminTestClient().rpc("db_clock");
+  if (error) throw new Error(`Reading the database's clock failed: ${error.message}`);
+  return new Date(data);
+}
+
+/**
+ * The database's clock shifted by `offsetMs`. A past time stays past for the
+ * database; a future one less than a minute ahead would race the test's own
+ * runtime, so it throws.
+ */
+export async function dbTime(offsetMs: number): Promise<Date> {
+  if (offsetMs > 0 && offsetMs < 60_000) {
+    throw new Error(
+      `dbTime(${offsetMs}): a future time under a minute ahead can pass while the test runs`
+    );
+  }
+  return new Date((await dbNow()).getTime() + offsetMs);
+}
+
+/**
+ * Runs `act` between two reads of the database's clock: anything the database
+ * stamped during it lies within [notBefore, notAfter]. `notAfter` carries one
+ * extra millisecond because Postgres stamps in microseconds and a Date floors
+ * them.
+ */
+export async function dbInterval<T>(
+  act: () => Promise<T>
+): Promise<{ result: T; notBefore: Date; notAfter: Date }> {
+  const notBefore = await dbNow();
+  const result = await act();
+  const after = await dbNow();
+  return { result, notBefore, notAfter: new Date(after.getTime() + 1) };
+}
+
+/** Twelve random hex characters, for emails and names that must not collide. */
+export function uniqueSuffix(): string {
+  return randomUUID().replaceAll("-", "").slice(0, 12);
 }
 
 /**

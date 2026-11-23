@@ -4,7 +4,7 @@ import { z } from "zod";
 import type { Database } from "@/types/database.types";
 import { productGroupsSnapshot } from "@/services/groups/groups.contracts";
 import { ParticipationsService } from "@/services/participations/participations.service";
-import { anHourAgo, createAdminTestClient, createAuthenticatedClient } from "./helpers";
+import { createAdminTestClient, createAuthenticatedClient, dbTime } from "./helpers";
 import { TEST_IDS, TEST_CREDENTIALS } from "./constants";
 import {
   createTestProduct,
@@ -238,7 +238,7 @@ describe("bookings", () => {
         .from("bookings")
         .update({
           stripe_checkout_session_id: "cs_booking_open",
-          checkout_closes_at: new Date(Date.now() + 600_000).toISOString(),
+          checkout_closes_at: (await dbTime(60_000)).toISOString(),
         })
         .eq("id", open);
 
@@ -247,7 +247,7 @@ describe("bookings", () => {
         .from("bookings")
         .update({
           stripe_checkout_session_id: "cs_booking_closed",
-          checkout_closes_at: anHourAgo().toISOString(),
+          checkout_closes_at: (await dbTime(-1_000)).toISOString(),
         })
         .eq("id", closed);
 

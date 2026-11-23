@@ -5,6 +5,8 @@ import {
   callServiceRoleRpcRaw,
   createAdminTestClient,
   createAuthenticatedClient,
+  dbNow,
+  dbTime,
 } from "./helpers";
 import { TEST_IDS, TEST_CREDENTIALS } from "./constants";
 import { createTestProduct, deleteTestProducts, eraseParticipations } from "./product-helpers";
@@ -53,21 +55,26 @@ const ALL_PRODUCTS = [
   P_DASHBOARD,
 ];
 
-/** An instant well inside the window, and one well outside it. */
-const LIVE_AT = () => new Date(Date.now() - 60_000);
-const LAPSED_AT = () => new Date(Date.now() - SEAT_OFFER_WINDOW_MS - 60_000);
 /**
- * Five minutes short of the deadline — the window's *far* edge, from inside.
+ * An instant inside the window, and one a second past its end, on the
+ * database's clock, which is the one the window is judged by.
+ */
+const LIVE_AT = () => dbTime(-60_000);
+const LAPSED_AT = () => dbTime(-SEAT_OFFER_WINDOW_MS - 1_000);
+/**
+ * A minute short of the deadline — the window's *far* edge, from inside.
  *
  * `LAPSED_AT` alone only proves the SQL window is no longer than the TypeScript
  * constant. This one proves it is no shorter, and the pair is what actually
  * holds the two literals in lockstep: between them the interval in the three
- * functions is bracketed to `SEAT_OFFER_WINDOW_MS` within five minutes, so a
+ * functions is bracketed to `SEAT_OFFER_WINDOW_MS` within a minute, so a
  * migration that moved `interval '5 days'` to four days or six without moving
  * the constant fails here rather than in somebody's inbox.
  */
-const ALMOST_LAPSED_AT = () =>
-  new Date(Date.now() - SEAT_OFFER_WINDOW_MS + 5 * 60_000);
+const ALMOST_LAPSED_AT = () => dbTime(-SEAT_OFFER_WINDOW_MS + 60_000);
+
+/** A past instant that is only data: no window or ordering reads it. */
+const SOME_PAST = "2020-01-01T00:00:00Z";
 
 describe("seat offers", () => {
   let admin: SupabaseClient<Database>;
@@ -154,7 +161,7 @@ describe("seat offers", () => {
         participant_id: participantId,
         customer_id: TEST_IDS.CUSTOMER,
         status: "waitlisted",
-        waitlisted_at: new Date().toISOString(),
+        waitlisted_at: (await dbNow()).toISOString(),
       })
       .select("id")
       .single();
@@ -337,7 +344,7 @@ describe("seat offers", () => {
    */
   it("re-offers an expired offer with a fresh stamp and clears the old notice", async () => {
     const participation = await queue(P_CLUB);
-    const old = await stamp(participation, LAPSED_AT(), new Date().toISOString());
+    const old = await stamp(participation, await LAPSED_AT(), SOME_PAST);
 
     const res = await admin.rpc("send_seat_offer", {
       p_participation_id: participation,
@@ -358,7 +365,7 @@ describe("seat offers", () => {
 
   it("accepting activates the seat and places it in the single group", async () => {
     const participation = await queue(P_CLUB);
-    const sentAt = await stamp(participation, LIVE_AT());
+    const sentAt = await stamp(participation, await LIVE_AT());
 
     const res = await admin.rpc("respond_seat_offer", {
       p_participation_id: participation,
@@ -396,7 +403,7 @@ describe("seat offers", () => {
       .eq("id", seated);
 
     const participation = await queue(P_CLUB, TEST_IDS.GAMER);
-    const sentAt = await stamp(participation, LIVE_AT());
+    const sentAt = await stamp(participation, await LIVE_AT());
 
     const res = await admin.rpc("respond_seat_offer", {
       p_participation_id: participation,
@@ -416,7 +423,7 @@ describe("seat offers", () => {
    */
   it("still seats the family when the product no longer has exactly one group", async () => {
     const participation = await queue(P_TWO_GROUPS);
-    const sentAt = await stamp(participation, LIVE_AT());
+    const sentAt = await stamp(participation, await LIVE_AT());
 
     const res = await admin.rpc("respond_seat_offer", {
       p_participation_id: participation,
@@ -440,7 +447,7 @@ describe("seat offers", () => {
 
   it("declining deletes the row and hands back what the staff mail names", async () => {
     const participation = await queue(P_CLUB);
-    const sentAt = await stamp(participation, LIVE_AT());
+    const sentAt = await stamp(participation, await LIVE_AT());
 
     const res = await admin.rpc("respond_seat_offer", {
       p_participation_id: participation,
@@ -465,11 +472,11 @@ describe("seat offers", () => {
    */
   it("refuses an answer whose stamp does not match the row", async () => {
     const participation = await queue(P_CLUB);
-    await stamp(participation, LIVE_AT());
+    await stamp(participation, await LIVE_AT());
 
     const res = await admin.rpc("respond_seat_offer", {
       p_participation_id: participation,
-      p_offer_sent_at: new Date(Date.now() - 30_000).toISOString(),
+      p_offer_sent_at: SOME_PAST,
       p_accept: true,
     });
     expect(res.error).toBeNull();
@@ -483,7 +490,7 @@ describe("seat offers", () => {
 
     const res = await admin.rpc("respond_seat_offer", {
       p_participation_id: participation,
-      p_offer_sent_at: new Date().toISOString(),
+      p_offer_sent_at: SOME_PAST,
       p_accept: true,
     });
     expect(res.error).toBeNull();
@@ -511,7 +518,7 @@ describe("seat offers", () => {
    */
   it("refuses an answer with no stamp, both against a live offer and against none", async () => {
     const offered = await queue(P_CLUB, TEST_IDS.GAMER);
-    const sentAt = await stamp(offered, LIVE_AT());
+    const sentAt = await stamp(offered, await LIVE_AT());
     const unoffered = await queue(P_CLUB, TEST_IDS.GAMER_2);
 
     const againstOffer = await callServiceRoleRpcRaw("respond_seat_offer", {
@@ -557,7 +564,7 @@ describe("seat offers", () => {
    */
   it("refuses an ACCEPT after the window has closed, and moves nothing", async () => {
     const participation = await queue(P_CLUB);
-    const sentAt = await stamp(participation, LAPSED_AT());
+    const sentAt = await stamp(participation, await LAPSED_AT());
 
     const res = await admin.rpc("respond_seat_offer", {
       p_participation_id: participation,
@@ -582,7 +589,7 @@ describe("seat offers", () => {
    */
   it("honours a DECLINE after the window has closed, and deletes the row", async () => {
     const participation = await queue(P_CLUB);
-    const sentAt = await stamp(participation, LAPSED_AT());
+    const sentAt = await stamp(participation, await LAPSED_AT());
 
     const res = await admin.rpc("respond_seat_offer", {
       p_participation_id: participation,
@@ -616,9 +623,9 @@ describe("seat offers", () => {
    */
   it("reports whether a decline beat the deadline", async () => {
     const inTime = await queue(P_CLUB, TEST_IDS.GAMER);
-    const inTimeSentAt = await stamp(inTime, LIVE_AT());
+    const inTimeSentAt = await stamp(inTime, await LIVE_AT());
     const late = await queue(P_DASHBOARD, TEST_IDS.GAMER_2);
-    const lateSentAt = await stamp(late, LAPSED_AT());
+    const lateSentAt = await stamp(late, await LAPSED_AT());
 
     const first = await admin.rpc("respond_seat_offer", {
       p_participation_id: inTime,
@@ -659,12 +666,12 @@ describe("seat offers", () => {
    */
   it("reports whether staff had already been told, reading it before the delete", async () => {
     const unswept = await queue(P_CLUB, TEST_IDS.GAMER);
-    const unsweptSentAt = await stamp(unswept, LAPSED_AT());
+    const unsweptSentAt = await stamp(unswept, await LAPSED_AT());
     const swept = await queue(P_DASHBOARD, TEST_IDS.GAMER_2);
     const sweptSentAt = await stamp(
       swept,
-      LAPSED_AT(),
-      new Date().toISOString(),
+      await LAPSED_AT(),
+      SOME_PAST,
     );
 
     const first = await admin.rpc("respond_seat_offer", {
@@ -695,13 +702,13 @@ describe("seat offers", () => {
 
   /**
    * The other side of the same window, and the reason both cases exist. The
-   * refusal above says the offer is dead five days and a minute after it was
-   * sent; this one says it is alive five minutes before that, which is what
+   * refusal above says the offer is dead five days and a second after it was
+   * sent; this one says it is alive a minute short of five days, which is what
    * makes a shortened SQL interval fail rather than pass quietly.
    */
-  it("still honours an answer five minutes before the window closes", async () => {
+  it("still honours an answer a minute before the window closes", async () => {
     const participation = await queue(P_CLUB);
-    const sentAt = await stamp(participation, ALMOST_LAPSED_AT());
+    const sentAt = await stamp(participation, await ALMOST_LAPSED_AT());
 
     const res = await admin.rpc("respond_seat_offer", {
       p_participation_id: participation,
@@ -716,7 +723,7 @@ describe("seat offers", () => {
   it("answers not_found for a participation that does not exist", async () => {
     const res = await admin.rpc("respond_seat_offer", {
       p_participation_id: "ffffffff-ffff-4fff-8fff-ffffffffffff",
-      p_offer_sent_at: new Date().toISOString(),
+      p_offer_sent_at: SOME_PAST,
       p_accept: true,
     });
     expect(res.error).toBeNull();
@@ -731,9 +738,9 @@ describe("seat offers", () => {
 
   it("claims the lapsed, un-notified offers and marks them in the same statement", async () => {
     const lapsed = await queue(P_CLUB, TEST_IDS.GAMER);
-    await stamp(lapsed, LAPSED_AT());
+    await stamp(lapsed, await LAPSED_AT());
     const live = await queue(P_DASHBOARD, TEST_IDS.GAMER_2);
-    await stamp(live, LIVE_AT());
+    await stamp(live, await LIVE_AT());
 
     const first = await admin.rpc("claim_expired_seat_offer_notifications");
     expect(first.error).toBeNull();
@@ -764,9 +771,9 @@ describe("seat offers", () => {
    */
   it("claims across every product when no participation is named", async () => {
     const here = await queue(P_CLUB, TEST_IDS.GAMER);
-    await stamp(here, LAPSED_AT());
+    await stamp(here, await LAPSED_AT());
     const elsewhere = await queue(P_DASHBOARD, TEST_IDS.GAMER);
-    await stamp(elsewhere, LAPSED_AT());
+    await stamp(elsewhere, await LAPSED_AT());
 
     const res = await admin.rpc("claim_expired_seat_offer_notifications");
     expect(res.error).toBeNull();
@@ -787,9 +794,9 @@ describe("seat offers", () => {
    */
   it("claims only the named row, leaving another product's lapsed offer alone", async () => {
     const named = await queue(P_CLUB, TEST_IDS.GAMER);
-    await stamp(named, LAPSED_AT());
+    await stamp(named, await LAPSED_AT());
     const stranger = await queue(P_DASHBOARD, TEST_IDS.GAMER);
-    await stamp(stranger, LAPSED_AT());
+    await stamp(stranger, await LAPSED_AT());
 
     const res = await admin.rpc("claim_expired_seat_offer_notifications", {
       p_participation_id: named,
@@ -827,10 +834,10 @@ describe("seat offers", () => {
     // Explicit positions rather than insertion order: `queue` stamps `now()`
     // for both, and two rows written in the same millisecond would make the
     // starting order the thing under test rather than the assumption.
-    await setQueuePosition(silent, new Date(Date.now() - 7_200_000));
-    await setQueuePosition(behind, new Date(Date.now() - 3_600_000));
+    await setQueuePosition(silent, new Date("2020-01-01T00:00:00Z"));
+    await setQueuePosition(behind, new Date("2020-01-01T01:00:00Z"));
 
-    const sentAt = await stamp(silent, LAPSED_AT());
+    const sentAt = await stamp(silent, await LAPSED_AT());
 
     const silentBefore = (await readRow(silent))!.waitlisted_at!;
     const behindBefore = (await readRow(behind))!.waitlisted_at!;
@@ -870,7 +877,7 @@ describe("seat offers", () => {
    */
   it("claims nothing when the named row has not lapsed", async () => {
     const live = await queue(P_CLUB, TEST_IDS.GAMER);
-    await stamp(live, LIVE_AT());
+    await stamp(live, await LIVE_AT());
 
     const res = await admin.rpc("claim_expired_seat_offer_notifications", {
       p_participation_id: live,
@@ -893,7 +900,7 @@ describe("seat offers", () => {
 
     const res = await admin
       .from("participations")
-      .update({ seat_offer_sent_at: new Date().toISOString() })
+      .update({ seat_offer_sent_at: SOME_PAST })
       .eq("id", participation);
     expect(res.error?.code).toBe("23514");
   });
@@ -902,7 +909,7 @@ describe("seat offers", () => {
     const participation = await queue(P_CLUB);
     const res = await admin
       .from("participations")
-      .update({ seat_offer_expiry_notified_at: new Date().toISOString() })
+      .update({ seat_offer_expiry_notified_at: SOME_PAST })
       .eq("id", participation);
     expect(res.error?.code).toBe("23514");
   });
@@ -914,7 +921,7 @@ describe("seat offers", () => {
    */
   it("promote_from_waitlist clears the offer it is honouring", async () => {
     const participation = await queue(P_CLUB);
-    await stamp(participation, LIVE_AT(), null);
+    await stamp(participation, await LIVE_AT(), null);
 
     const res = await adminUser.rpc("promote_from_waitlist", {
       p_participation_id: participation,
@@ -936,7 +943,7 @@ describe("seat offers", () => {
 
   it("the groups snapshot carries the offer stamps on the waitlist arm", async () => {
     const offered = await queue(P_CLUB, TEST_IDS.GAMER);
-    const sentAt = await stamp(offered, LIVE_AT());
+    const sentAt = await stamp(offered, await LIVE_AT());
     const unoffered = await queue(P_CLUB, TEST_IDS.GAMER_2);
 
     const res = await adminUser.rpc("get_product_groups_with_details", {
@@ -997,7 +1004,7 @@ describe("seat offers", () => {
     });
 
     // One asked: one seat still needs an admin.
-    await stamp(first, LIVE_AT());
+    await stamp(first, await LIVE_AT());
     expect((await waitlistItem())?.waitlist).toMatchObject({
       open_seats: 2,
       live_offer_count: 1,
@@ -1005,11 +1012,11 @@ describe("seat offers", () => {
 
     // Both asked: nothing to do, and the waitlist flag was this product's only
     // issue, so it leaves the list entirely.
-    await stamp(second, LIVE_AT());
+    await stamp(second, await LIVE_AT());
     expect(await waitlistItem()).toBeUndefined();
 
     // The first offer lapses and the job comes back.
-    await stamp(first, LAPSED_AT());
+    await stamp(first, await LAPSED_AT());
     expect((await waitlistItem())?.waitlist).toMatchObject({
       open_seats: 2,
       live_offer_count: 1,

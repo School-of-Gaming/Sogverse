@@ -6,10 +6,13 @@ import {
   type SubstitutionNotificationSnapshot,
 } from "@/lib/substitution-notifications/snapshot.contracts";
 import {
-  anHourAgo,
   createAdminTestClient,
   createAnonTestClient,
   createAuthenticatedClient,
+  dbInterval,
+  dbNow,
+  dbTime,
+  uniqueSuffix,
 } from "./helpers";
 import { TEST_CREDENTIALS, TEST_IDS } from "./constants";
 import { deleteTestProducts } from "./product-helpers";
@@ -57,9 +60,28 @@ const DISCORD_SHARED = "920000000000000002";
 
 type Outbox = Database["public"]["Tables"]["substitution_notification_outbox"]["Row"];
 
-/** A UTC calendar date `offset` days from now; the product's zone is UTC. */
+/**
+ * The database's clock, read afresh before the file's setup and before each
+ * test, so the calendar dates below count from the database's today.
+ */
+let dbClock: Date;
+beforeAll(async () => {
+  dbClock = await dbNow();
+});
+beforeEach(async () => {
+  dbClock = await dbNow();
+});
+
+/** When the links below were made: only their order matters. */
+const LINKED_EARLIER = new Date("2020-01-01T00:00:00Z");
+const LINKED_LATER = new Date("2020-01-01T00:01:00Z");
+
+/** A past instant that is only data. */
+const SOME_PAST = "2020-01-01T00:00:00Z";
+
+/** A UTC calendar date `offset` days from the database's today; the product's zone is UTC. */
 function utcDate(offset: number): string {
-  const now = new Date();
+  const now = dbClock;
   const day = new Date(
     Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), now.getUTCDate() + offset),
   );
@@ -86,7 +108,7 @@ describe("substitution notifications", () => {
     label: string,
     options: { certified: boolean; languages: Array<"en" | "fi">; qualified: boolean },
   ): Promise<string> {
-    const email = `sub-notify-${label}-${Date.now()}@test.local`;
+    const email = `sub-notify-${label}-${uniqueSuffix()}@test.local`;
     const { data, error } = await admin.auth.admin.createUser({
       email,
       password: "testpassword123",
@@ -212,7 +234,7 @@ describe("substitution notifications", () => {
       delivery_mode: "online",
       location_id: null,
       timezone: "UTC",
-      registration_opens_at: new Date(Date.now() - 60_000).toISOString(),
+      registration_opens_at: SOME_PAST,
       is_visible: true,
       created_by: TEST_IDS.ADMIN,
       start_date: utcDate(-30),
@@ -246,9 +268,9 @@ describe("substitution notifications", () => {
     });
     expect(assignmentError).toBeNull();
 
-    await link(ids.eligible, DISCORD_ELIGIBLE, new Date());
-    await link(ids.shadowed, DISCORD_SHARED, new Date(Date.now() - 60_000));
-    await link(ids.acting, DISCORD_SHARED, new Date());
+    await link(ids.eligible, DISCORD_ELIGIBLE, LINKED_LATER);
+    await link(ids.shadowed, DISCORD_SHARED, LINKED_EARLIER);
+    await link(ids.acting, DISCORD_SHARED, LINKED_LATER);
   });
 
   beforeEach(async () => {
@@ -377,20 +399,25 @@ describe("substitution notifications", () => {
     it("claims a due row once, counting the attempt, until its lease runs out", async () => {
       const requestId = await file(ids.requester, utcDate(3));
 
-      const first = await claim(10, [requestId]);
+      const {
+        result: first,
+        notBefore,
+        notAfter,
+      } = await dbInterval(() => claim(10, [requestId]));
       expect(first).toEqual([{ request_id: requestId, seq: 1 }]);
       const leased = await outbox(requestId);
       expect(leased?.attempts).toBe(1);
-      const leaseMs = new Date(leased?.leased_until ?? "").getTime() - Date.now();
-      expect(leaseMs).toBeGreaterThan(60_000);
-      expect(leaseMs).toBeLessThanOrEqual(180_000);
+      // Two minutes from the claim, on the database's clock.
+      const leasedUntil = new Date(leased?.leased_until ?? "").getTime();
+      expect(leasedUntil).toBeGreaterThanOrEqual(notBefore.getTime() + 2 * 60_000);
+      expect(leasedUntil).toBeLessThanOrEqual(notAfter.getTime() + 2 * 60_000);
 
       expect(await claim(10, [requestId])).toEqual([]);
 
       // A sync that died holding the lease: once it lapses, the row is back.
       await admin
         .from("substitution_notification_outbox")
-        .update({ leased_until: anHourAgo().toISOString() })
+        .update({ leased_until: (await dbTime(-1_000)).toISOString() })
         .eq("request_id", requestId);
       expect(await claim(10, [requestId])).toEqual([{ request_id: requestId, seq: 1 }]);
       expect((await outbox(requestId))?.attempts).toBe(2);
@@ -400,7 +427,7 @@ describe("substitution notifications", () => {
       const requestId = await file(ids.requester, utcDate(3));
       await admin
         .from("substitution_notification_outbox")
-        .update({ next_attempt_at: new Date(Date.now() + 60_000).toISOString() })
+        .update({ next_attempt_at: (await dbTime(60_000)).toISOString() })
         .eq("request_id", requestId);
       expect(await claim(10, [requestId])).toEqual([]);
     });
@@ -473,14 +500,17 @@ describe("substitution notifications", () => {
     it("on failure, records the error and backs off 2^attempts minutes", async () => {
       const requestId = await file(ids.requester, utcDate(3));
       const [job] = await claim(10, [requestId]);
-      const before = Date.now();
-      expect(await finish(requestId, job.seq, "discord said no")).toBe(false);
+      const { result: retry, notBefore, notAfter } = await dbInterval(() =>
+        finish(requestId, job.seq, "discord said no"),
+      );
+      expect(retry).toBe(false);
 
       const row = await outbox(requestId);
       expect(row).toMatchObject({ seq: 1, attempts: 1, leased_until: null, last_error: "discord said no" });
-      const delayMs = new Date(row?.next_attempt_at ?? "").getTime() - before;
-      expect(delayMs).toBeGreaterThan(110_000);
-      expect(delayMs).toBeLessThan(130_000);
+      // 2^1 minutes from the finish, on the database's clock.
+      const nextAttempt = new Date(row?.next_attempt_at ?? "").getTime();
+      expect(nextAttempt).toBeGreaterThanOrEqual(notBefore.getTime() + 2 * 60_000);
+      expect(nextAttempt).toBeLessThanOrEqual(notAfter.getTime() + 2 * 60_000);
       expect(await claim(10, [requestId])).toEqual([]);
     });
 
@@ -488,14 +518,16 @@ describe("substitution notifications", () => {
       const requestId = await file(ids.requester, utcDate(3));
       await admin.from("substitution_notification_outbox").update({ attempts: 7 }).eq("request_id", requestId);
       const [job] = await claim(10, [requestId]);
-      const before = Date.now();
-      await finish(requestId, job.seq, "still down");
+      const { notBefore, notAfter } = await dbInterval(() =>
+        finish(requestId, job.seq, "still down"),
+      );
 
       const row = await outbox(requestId);
       expect(row?.attempts).toBe(8);
-      const delayMs = new Date(row?.next_attempt_at ?? "").getTime() - before;
-      expect(delayMs).toBeGreaterThan(59 * 60_000);
-      expect(delayMs).toBeLessThan(61 * 60_000);
+      // An hour from the finish, where 2^8 minutes would be over four.
+      const nextAttempt = new Date(row?.next_attempt_at ?? "").getTime();
+      expect(nextAttempt).toBeGreaterThanOrEqual(notBefore.getTime() + 60 * 60_000);
+      expect(nextAttempt).toBeLessThanOrEqual(notAfter.getTime() + 60 * 60_000);
     });
 
     it("stops scheduling after the 12th attempt, and keeps the row", async () => {
@@ -516,7 +548,7 @@ describe("substitution notifications", () => {
     async function announce(requestId: string, drawnState: DrawnState) {
       const { error } = await admin.from("substitution_notifications").insert({
         request_id: requestId,
-        announced_at: new Date().toISOString(),
+        announced_at: SOME_PAST,
         drawn_state: drawnState,
       });
       expect(error).toBeNull();
@@ -699,7 +731,7 @@ describe("substitution notifications", () => {
       const requestId = await file(ids.requester, utcDate(3));
       await admin.from("substitution_notifications").insert({
         request_id: requestId,
-        announced_at: new Date().toISOString(),
+        announced_at: SOME_PAST,
         slack_channel_id: "C1",
         slack_message_ts: "123.456",
         drawn_state: "open",
@@ -726,7 +758,7 @@ describe("substitution notifications", () => {
           status: "substituted",
           substitute_id: ids.eligible,
           approved_by: TEST_IDS.ADMIN,
-          approved_at: new Date().toISOString(),
+          approved_at: SOME_PAST,
         })
         .eq("id", requestId);
       expect(error).toBeNull();
@@ -740,7 +772,7 @@ describe("substitution notifications", () => {
 
     it("gives the requester the Discord account that acts as them, for their filled DM", async () => {
       const discordRequester = "920000000000000004";
-      await link(ids.requester, discordRequester, new Date());
+      await link(ids.requester, discordRequester, LINKED_LATER);
       try {
         const requestId = await file(ids.requester, utcDate(3));
         const shot = await snapshot(requestId);
@@ -752,7 +784,7 @@ describe("substitution notifications", () => {
 
     it("lists a sub an admin seated, who never answered and was never sent a DM", async () => {
       const discordUnqualified = "920000000000000003";
-      await link(ids.unqualified, discordUnqualified, new Date());
+      await link(ids.unqualified, discordUnqualified, LINKED_LATER);
       try {
         const adminAuth = await createAuthenticatedClient(
           TEST_CREDENTIALS.ADMIN.email,

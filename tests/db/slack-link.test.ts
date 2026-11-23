@@ -2,7 +2,7 @@ import { describe, it, expect, beforeAll, beforeEach, afterAll } from "vitest";
 import { createHash, randomBytes } from "node:crypto";
 import type { SupabaseClient } from "@supabase/supabase-js";
 import type { Database } from "@/types/database.types";
-import { anHourAgo, createAdminTestClient, createAuthenticatedClient } from "./helpers";
+import { createAdminTestClient, createAuthenticatedClient, dbTime } from "./helpers";
 import { TEST_CREDENTIALS, TEST_IDS } from "./constants";
 
 /**
@@ -138,7 +138,7 @@ describe("slack links", () => {
     });
 
     it("refuses an expired token as expired, every time it is tried", async () => {
-      const token = await mint(SLACK_A, anHourAgo());
+      const token = await mint(SLACK_A, await dbTime(-1_000));
       for (let attempt = 0; attempt < 2; attempt++) {
         const { error } = await adminAuth.rpc("consume_slack_link_token", {
           p_token: token,
@@ -180,7 +180,7 @@ describe("slack links", () => {
 
   describe("expired tokens", () => {
     it("are swept when the next token is minted", async () => {
-      await mint(SLACK_A, anHourAgo());
+      await mint(SLACK_A, await dbTime(-1_000));
       await mint(SLACK_B);
       const { data, error } = await admin
         .from("slack_link_tokens")

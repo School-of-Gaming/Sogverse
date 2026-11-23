@@ -16,6 +16,9 @@ import {
   createAdminTestClient,
   createAnonTestClient,
   createAuthenticatedClient,
+  dbNow,
+  dbTime,
+  uniqueSuffix,
 } from "./helpers";
 import { TEST_IDS, TEST_CREDENTIALS } from "./constants";
 import { deleteTestProducts, eraseParticipations } from "./product-helpers";
@@ -122,13 +125,27 @@ const FORBIDDEN = "42501";
 const CHECK_VIOLATION = "23514";
 
 /**
- * A UTC calendar date `offset` days from now, UTC-pinned end to end — built with
- * `Date.UTC` and read back through `toISOString`, never by stepping a zoned Date
- * by 86_400_000. The product's timezone is UTC, so this is the product's own
- * calendar.
+ * The database's clock, read when the file loads (a suite's own constants are
+ * built then), and afresh before the file's setup and before each test: the
+ * calendar dates below count from the database's today, the one its functions
+ * judge against, and stay one day for the whole of a test.
+ */
+let dbClock = await dbNow();
+beforeAll(async () => {
+  dbClock = await dbNow();
+});
+beforeEach(async () => {
+  dbClock = await dbNow();
+});
+
+/**
+ * A UTC calendar date `offset` days from the database's today, UTC-pinned end
+ * to end — built with `Date.UTC` and read back through `toISOString`, never by
+ * stepping a zoned Date by 86_400_000. The product's timezone is UTC, so this
+ * is the product's own calendar.
  */
 function utcDate(offset: number): string {
-  const now = new Date();
+  const now = dbClock;
   const day = new Date(
     Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), now.getUTCDate() + offset),
   );
@@ -154,7 +171,7 @@ function utcDate(offset: number): string {
  * `Etc/GMT` names invert their sign (`Etc/GMT-14` is UTC+14), which is why the
  * two branches read backwards.
  */
-const MIDDAY_OFFSET_HOURS = 12 - new Date().getUTCHours();
+const MIDDAY_OFFSET_HOURS = 12 - (await dbNow()).getUTCHours();
 const MIDDAY_ZONE =
   MIDDAY_OFFSET_HOURS === 0
     ? "UTC"
@@ -167,7 +184,7 @@ const LATE_SLOT = "20:00";
 
 /** A calendar date `offset` days from today **as MIDDAY_ZONE is living it**. */
 function middayDate(offset: number): string {
-  const local = new Date(Date.now() + MIDDAY_OFFSET_HOURS * 3_600_000);
+  const local = new Date(dbClock.getTime() + MIDDAY_OFFSET_HOURS * 3_600_000);
   const day = new Date(
     Date.UTC(
       local.getUTCFullYear(),
@@ -251,7 +268,7 @@ describe("session substitutions", () => {
     // Unique per run: CI's database carries the seed fixtures AND whatever a
     // previous run left behind, so a fixed address is a collision waiting to
     // happen.
-    const stamp = Date.now();
+    const stamp = uniqueSuffix();
     const accounts = [
       { email: `substitution-sub-${stamp}@test.local`, first: "Saku", last: "Substitute" },
       { email: `substitution-third-${stamp}@test.local`, first: "Kolme", last: "Thirdson" },
@@ -312,7 +329,7 @@ describe("session substitutions", () => {
         delivery_mode: "online",
         location_id: null,
         timezone: "UTC",
-        registration_opens_at: new Date(Date.now() - 60_000).toISOString(),
+        registration_opens_at: "2020-01-01T00:00:00Z",
         is_visible: true,
         created_by: TEST_IDS.ADMIN,
         start_date: utcDate(-60),
@@ -332,7 +349,7 @@ describe("session substitutions", () => {
         delivery_mode: "in_person",
         location_id: SITE,
         timezone: "UTC",
-        registration_opens_at: new Date(Date.now() - 60_000).toISOString(),
+        registration_opens_at: "2020-01-01T00:00:00Z",
         is_visible: true,
         created_by: TEST_IDS.ADMIN,
         start_date: utcDate(-60),
@@ -350,7 +367,7 @@ describe("session substitutions", () => {
         delivery_mode: "online",
         location_id: null,
         timezone: "UTC",
-        registration_opens_at: new Date(Date.now() - 60_000).toISOString(),
+        registration_opens_at: "2020-01-01T00:00:00Z",
         is_visible: true,
         created_by: TEST_IDS.ADMIN,
         start_date: utcDate(-60),
@@ -372,7 +389,7 @@ describe("session substitutions", () => {
         delivery_mode: "online" as const,
         location_id: null,
         timezone: MIDDAY_ZONE,
-        registration_opens_at: new Date(Date.now() - 60_000).toISOString(),
+        registration_opens_at: "2020-01-01T00:00:00Z",
         is_visible: true,
         created_by: TEST_IDS.ADMIN,
         start_date: middayDate(-60),
@@ -390,7 +407,7 @@ describe("session substitutions", () => {
         delivery_mode: "online",
         location_id: TEST_IDS.LOCATION_MUNICIPALITY,
         timezone: "UTC",
-        registration_opens_at: new Date(Date.now() - 60_000).toISOString(),
+        registration_opens_at: "2020-01-01T00:00:00Z",
         is_visible: true,
         created_by: TEST_IDS.ADMIN,
         start_date: utcDate(-60),
@@ -561,7 +578,7 @@ describe("session substitutions", () => {
         status: input.status ?? (substituted ? "substituted" : "open"),
         substitute_id: substituted,
         approved_by: substituted ? TEST_IDS.ADMIN : null,
-        approved_at: substituted ? new Date().toISOString() : null,
+        approved_at: substituted ? "2020-01-01T00:00:00Z" : null,
       })
       .select("id")
       .single();
@@ -1067,22 +1084,22 @@ describe("session substitutions", () => {
         session_date: date,
         ...slotInstants(date),
         report: "a report",
-        report_emailed_at: new Date(Date.now() - 60 * 60 * 1000).toISOString(),
+        report_emailed_at: (await dbTime(-(24 * 60 * 60_000 - 60_000))).toISOString(),
       });
 
-      // One hour after the send: the 24 hours have not run out, and the mail
-      // arm — not the 15-day fallback — is what is deciding.
+      // A minute short of 24 hours after the send: the window has not run out,
+      // and the mail arm — not the 15-day fallback — is what is deciding.
       expect(await substitutesGroup(subAuth)).toBe(true);
 
       await admin
         .from("group_sessions")
         .update({
-          report_emailed_at: new Date(Date.now() - 25 * 60 * 60 * 1000).toISOString(),
+          report_emailed_at: (await dbTime(-(24 * 60 * 60_000 + 1_000))).toISOString(),
         })
         .eq("group_id", GROUP_A)
         .eq("session_date", date);
 
-      // Twenty-five hours after the send, and still eleven days inside the
+      // A second past 24 hours after the send, and still eleven days inside the
       // fallback: the mail arm overrides it, which is the whole point of the
       // COALESCE reading the mail stamp first.
       expect(await substitutesGroup(subAuth)).toBe(false);
@@ -1308,7 +1325,7 @@ describe("session substitutions", () => {
           status: "substituted",
           substitute_id: subId,
           approved_by: TEST_IDS.ADMIN,
-          approved_at: new Date().toISOString(),
+          approved_at: "2020-01-01T00:00:00Z",
         })
         .eq("group_id", GROUP_A)
         .eq("session_date", date);
@@ -1823,7 +1840,7 @@ describe("session substitutions", () => {
           status: "substituted",
           substitute_id: subId,
           approved_by: TEST_IDS.ADMIN,
-          approved_at: new Date().toISOString(),
+          approved_at: "2020-01-01T00:00:00Z",
         })
         .eq("id", id);
 
@@ -1954,7 +1971,7 @@ describe("session substitutions", () => {
           status: "substituted",
           substitute_id: subId,
           approved_by: TEST_IDS.ADMIN,
-          approved_at: new Date().toISOString(),
+          approved_at: "2020-01-01T00:00:00Z",
         })
         .eq("id", id);
 
@@ -3224,7 +3241,7 @@ describe("session substitutions", () => {
 
     beforeAll(async () => {
       anon = createAnonTestClient();
-      const email = `substitution-slack-admin-${Date.now()}@test.local`;
+      const email = `substitution-slack-admin-${uniqueSuffix()}@test.local`;
       const { data, error } = await admin.auth.admin.createUser({
         email,
         password: "testpassword123",

@@ -2,7 +2,7 @@ import { describe, it, expect, beforeAll, beforeEach, afterAll } from "vitest";
 import { createHash, randomBytes } from "node:crypto";
 import type { SupabaseClient } from "@supabase/supabase-js";
 import type { Database } from "@/types/database.types";
-import { anHourAgo, createAdminTestClient, createAuthenticatedClient } from "./helpers";
+import { createAdminTestClient, createAuthenticatedClient, dbTime } from "./helpers";
 import { TEST_CREDENTIALS, TEST_IDS } from "./constants";
 
 /**
@@ -149,7 +149,7 @@ describe("discord links", () => {
     });
 
     it("refuses an expired token as expired, every time it is tried", async () => {
-      const token = await mint(DISCORD_A, anHourAgo());
+      const token = await mint(DISCORD_A, await dbTime(-1_000));
       for (let attempt = 0; attempt < 2; attempt++) {
         const { error } = await geduAuth.rpc("consume_discord_link_token", {
           p_token: token,
@@ -209,7 +209,7 @@ describe("discord links", () => {
 
   describe("expired tokens", () => {
     it("are swept when the next token is minted", async () => {
-      await mint(DISCORD_A, anHourAgo());
+      await mint(DISCORD_A, await dbTime(-1_000));
       await mint(DISCORD_B);
       const { data, error } = await admin
         .from("discord_link_tokens")

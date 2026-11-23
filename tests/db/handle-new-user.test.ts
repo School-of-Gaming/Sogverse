@@ -5,7 +5,9 @@ import {
   accessTokenFor,
   createAdminTestClient,
   createAuthenticatedClient,
+  dbInterval,
   patchRaw,
+  uniqueSuffix,
 } from "./helpers";
 import { TEST_IDS, TEST_CREDENTIALS } from "./constants";
 
@@ -797,13 +799,18 @@ describe("handle_new_user() registration_completed_at", () => {
   });
 
   it("registers a password account the moment it is created", async () => {
-    const before = Date.now();
-    const { data, error } = await admin.auth.admin.createUser({
-      email: "registration-password@test.local",
-      password: "testpassword123",
-      email_confirm: true,
-      user_metadata: { first_name: "Password", last_name: "Parent", locale: "en" },
-    });
+    const {
+      result: { data, error },
+      notBefore,
+      notAfter,
+    } = await dbInterval(() =>
+      admin.auth.admin.createUser({
+        email: "registration-password@test.local",
+        password: "testpassword123",
+        email_confirm: true,
+        user_metadata: { first_name: "Password", last_name: "Parent", locale: "en" },
+      }),
+    );
     expect(error).toBeNull();
     createdUserIds.push(data.user!.id);
     expect(data.user!.app_metadata.provider).toBe("email");
@@ -816,11 +823,10 @@ describe("handle_new_user() registration_completed_at", () => {
 
     expect(profileError).toBeNull();
     expect(profile!.registration_completed_at).not.toBeNull();
-    // Stamped at creation. The slack absorbs clock skew between the test
-    // runner and the database.
-    expect(
-      new Date(profile!.registration_completed_at!).getTime(),
-    ).toBeGreaterThan(before - 60_000);
+    // Stamped at creation.
+    const stampedAt = new Date(profile!.registration_completed_at!).getTime();
+    expect(stampedAt).toBeGreaterThanOrEqual(notBefore.getTime());
+    expect(stampedAt).toBeLessThanOrEqual(notAfter.getTime());
   });
 
   it("leaves an identity provider's account owing its registration", async () => {
@@ -856,7 +862,7 @@ describe("handle_new_user() registration_completed_at", () => {
 
     const set = await customerClient
       .from("profiles")
-      .update({ registration_completed_at: new Date().toISOString() })
+      .update({ registration_completed_at: "2020-01-01T00:00:00Z" })
       .eq("id", TEST_IDS.CUSTOMER);
     expect(set.error?.code).toBe("42501");
 
@@ -893,7 +899,7 @@ describe("handle_new_user() locale", () => {
   });
 
   async function signUp(label: string, metadata: Record<string, string>) {
-    const email = `locale-${label}-${Date.now()}@test.local`;
+    const email = `locale-${label}-${uniqueSuffix()}@test.local`;
     const { data, error } = await admin.auth.admin.createUser({
       email,
       password: "testpassword123",
@@ -1048,7 +1054,7 @@ describe("handle_new_user() signup intent", () => {
 
   async function intentOf(label: string, metadata: Record<string, string>) {
     const { data, error } = await admin.auth.admin.createUser({
-      email: `intent-${label}-${Date.now()}@test.local`,
+      email: `intent-${label}-${uniqueSuffix()}@test.local`,
       password: "testpassword123",
       email_confirm: true,
       user_metadata: { first_name: "Intent", last_name: "Test", locale: "en", ...metadata },
