@@ -11,7 +11,14 @@ import {
   gamerGroupCreationsResult,
   groupStaffOverlay,
 } from "@/services/member-flair/member-flair.contracts";
-import { createAdminTestClient, createAuthenticatedClient, dbNow, utcDayOffset } from "./helpers";
+import {
+  createAdminTestClient,
+  createAuthenticatedClient,
+  dbInterval,
+  dbNow,
+  utcDayOffset,
+  utcMidnightsSince,
+} from "./helpers";
 import { TEST_CREDENTIALS, TEST_IDS } from "./constants";
 import {
   createScheduleSlot,
@@ -835,7 +842,13 @@ describe("gamer creations", () => {
         .update({ end_date: null })
         .eq("id", PRODUCT_OWED);
 
-      expect(await owedCount()).toBe(0);
+      // Open-ended, the product runs on past yesterday: today's 23:00 session
+      // ends at midnight, and with nothing recorded it is owed from then on
+      // the three original conditions alone. So a midnight passed since the
+      // file read the clock adds one owed session per midnight, which is not
+      // the creations condition's doing.
+      const { result: owed, notBefore, notAfter } = await dbInterval(owedCount);
+      expect([notBefore, notAfter].map((read) => utcMidnightsSince(TODAY, read))).toContain(owed);
 
       await admin
         .from("products")

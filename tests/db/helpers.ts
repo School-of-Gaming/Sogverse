@@ -137,6 +137,11 @@ export function utcDayOffset(from: Date, offsetDays: number): string {
     .slice(0, 10);
 }
 
+/** The UTC midnights from the start of `day` to `read`: 0 when `read` falls on `day`. */
+export function utcMidnightsSince(day: string, read: Date): number {
+  return (Date.parse(`${utcDayOffset(read, 0)}T00:00:00Z`) - Date.parse(`${day}T00:00:00Z`)) / 86_400_000;
+}
+
 /** Every `YYYY-MM-DD` from `first` to `last`, both included. */
 export function utcDatesThrough(first: string, last: string): string[] {
   const dates: string[] = [];

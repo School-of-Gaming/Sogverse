@@ -17,8 +17,10 @@ import {
   createAdminTestClient,
   createAnonTestClient,
   createAuthenticatedClient,
+  dbInterval,
   dbNow,
   utcDayOffset,
+  utcMidnightsSince,
   dbTime,
   uniqueSuffix,
 } from "./helpers";
@@ -99,7 +101,10 @@ const ALL_PRODUCTS = [PRODUCT_MINE, PRODUCT_OTHER, PRODUCT_SITE];
  * today's session ends at tomorrow's midnight, so it has NOT finished at any
  * hour the suite might run — while yesterday's ended at today's midnight and
  * therefore always has. Without that, "how many past sessions are owed"
- * silently changes answer depending on what time CI started.
+ * silently changes answer depending on what time CI started. The one moment it
+ * does change is a run crossing midnight, which ends today's session: the
+ * owed-count reads accept that answer only when the database's clock says
+ * midnight has passed.
  */
 const SLOT_START = "23:00";
 const SLOT_MINUTES = 60;
@@ -1395,6 +1400,35 @@ describe("gedu session feed", () => {
       }
     }
 
+    /**
+     * Asserts GROUP_MINE's attention count from `epoch` is `expected` as of
+     * `asOf`, the UTC day the test's dates were built on: the file's load-time
+     * today, unless the test read the clock itself.
+     *
+     * Every fixture session ends at midnight UTC, and the one on `asOf` is
+     * unrecorded, so a midnight passing since that read ends one more owed
+     * session. The count is therefore read between two reads of the database's
+     * clock, and each read's day accepts `expected` plus the midnights between
+     * `asOf` and it — on a run that crosses none, `expected` alone.
+     */
+    async function expectOwedFrom(epoch: string, expected: number, asOf = TODAY): Promise<void> {
+      const {
+        result: count,
+        notBefore,
+        notAfter,
+      } = await dbInterval(async () => {
+        const { data, error } = await geduAuth.rpc("get_my_gedu_assignment_summaries", {
+          p_epoch_date: epoch,
+        });
+        expect(error).toBeNull();
+        return geduAssignmentSummaries.parse(data).find((s) => s.group_id === GROUP_MINE)
+          ?.attention_count;
+      });
+      expect(
+        [notBefore, notAfter].map((read) => expected + utcMidnightsSince(asOf, read)),
+      ).toContain(count);
+    }
+
     it("returns one entry per assignment, parsed through the contract schema", async () => {
       const { data, error } = await geduAuth.rpc(
         "get_my_gedu_assignment_summaries",
@@ -1420,15 +1454,9 @@ describe("gedu session feed", () => {
     });
 
     it("counts an unrecorded past session as outstanding work", async () => {
-      const { data } = await geduAuth.rpc("get_my_gedu_assignment_summaries", {
-        p_epoch_date: TWO_DAYS_AGO,
-      });
-      const summaries = geduAssignmentSummaries.parse(data);
-      const mine = summaries.find((s) => s.group_id === GROUP_MINE);
-
       // Two days ago and yesterday have both finished; today's has not, and
       // nothing has been recorded against either of the two that have.
-      expect(mine?.attention_count).toBe(2);
+      await expectOwedFrom(TWO_DAYS_AGO, 2);
     });
 
     /**
@@ -1443,14 +1471,7 @@ describe("gedu session feed", () => {
     it("keeps counting a fully-marked session that has no report", async () => {
       await markWholeRoster([TWO_DAYS_AGO, YESTERDAY]);
 
-      const { data } = await geduAuth.rpc("get_my_gedu_assignment_summaries", {
-        p_epoch_date: TWO_DAYS_AGO,
-      });
-      const summaries = geduAssignmentSummaries.parse(data);
-
-      expect(
-        summaries.find((s) => s.group_id === GROUP_MINE)?.attention_count,
-      ).toBe(2);
+      await expectOwedFrom(TWO_DAYS_AGO, 2);
     });
 
     /**
@@ -1468,14 +1489,7 @@ describe("gedu session feed", () => {
         });
       }
 
-      const { data } = await geduAuth.rpc("get_my_gedu_assignment_summaries", {
-        p_epoch_date: TWO_DAYS_AGO,
-      });
-      const summaries = geduAssignmentSummaries.parse(data);
-
-      expect(
-        summaries.find((s) => s.group_id === GROUP_MINE)?.attention_count,
-      ).toBe(2);
+      await expectOwedFrom(TWO_DAYS_AGO, 2);
     });
 
     /**
@@ -1497,14 +1511,7 @@ describe("gedu session feed", () => {
         });
       }
 
-      const { data } = await geduAuth.rpc("get_my_gedu_assignment_summaries", {
-        p_epoch_date: TWO_DAYS_AGO,
-      });
-      const summaries = geduAssignmentSummaries.parse(data);
-
-      expect(
-        summaries.find((s) => s.group_id === GROUP_MINE)?.attention_count,
-      ).toBe(2);
+      await expectOwedFrom(TWO_DAYS_AGO, 2);
     });
 
     it("stops counting a session once it is marked, reported and emailed", async () => {
@@ -1526,24 +1533,14 @@ describe("gedu session feed", () => {
         p_session_date: TWO_DAYS_AGO,
       });
 
-      async function count(): Promise<number | undefined> {
-        const { data } = await geduAuth.rpc(
-          "get_my_gedu_assignment_summaries",
-          { p_epoch_date: TWO_DAYS_AGO },
-        );
-        return geduAssignmentSummaries
-          .parse(data)
-          .find((s) => s.group_id === GROUP_MINE)?.attention_count;
-      }
-
-      expect(await count()).toBe(1);
+      await expectOwedFrom(TWO_DAYS_AGO, 1);
 
       await geduAuth.rpc("claim_group_session_report_email", {
         p_group_id: GROUP_MINE,
         p_session_date: YESTERDAY,
       });
 
-      expect(await count()).toBe(0);
+      await expectOwedFrom(TWO_DAYS_AGO, 0);
     });
 
     /**
@@ -1571,14 +1568,7 @@ describe("gedu session feed", () => {
         .eq("group_id", GROUP_MINE)
         .eq("session_date", YESTERDAY);
 
-      const { data } = await geduAuth.rpc("get_my_gedu_assignment_summaries", {
-        p_epoch_date: TWO_DAYS_AGO,
-      });
-      const summaries = geduAssignmentSummaries.parse(data);
-
-      expect(
-        summaries.find((s) => s.group_id === GROUP_MINE)?.attention_count,
-      ).toBe(2);
+      await expectOwedFrom(TWO_DAYS_AGO, 2);
     });
 
     /**
@@ -1592,27 +1582,17 @@ describe("gedu session feed", () => {
      * as before, and exactly as the client's own derivation says.
      */
     it("never counts a session that has not finished, however empty", async () => {
-      async function countFrom(epoch: string): Promise<number | undefined> {
-        const { data } = await geduAuth.rpc(
-          "get_my_gedu_assignment_summaries",
-          { p_epoch_date: epoch },
-        );
-        return geduAssignmentSummaries
-          .parse(data)
-          .find((s) => s.group_id === GROUP_MINE)?.attention_count;
-      }
-
       // Floored at today, the only occurrence in range is today's — which
       // started at 23:00 and ends at tomorrow's midnight. It has no register
       // and no report, so under a rule that asked only "is anything missing"
       // it would be outstanding. Nothing is owed until the hour is over.
-      const now = await dbNow();
-      expect(await countFrom(utcDayOffset(now, 0))).toBe(0);
+      const today = utcDayOffset(await dbNow(), 0);
+      await expectOwedFrom(today, 0, today);
 
       // Drop the floor by one day and the same call finds exactly one: the
       // difference between the two answers is the end-instant boundary, and
       // nothing else moved.
-      expect(await countFrom(utcDayOffset(now, -1))).toBe(1);
+      await expectOwedFrom(utcDayOffset(new Date(`${today}T00:00:00Z`), -1), 1, today);
     });
 
     /**
@@ -1631,15 +1611,7 @@ describe("gedu session feed", () => {
         .update({ group_joined_at: `${YESTERDAY}T12:00:00.000Z` })
         .eq("group_id", GROUP_MINE);
       try {
-        const { data } = await geduAuth.rpc(
-          "get_my_gedu_assignment_summaries",
-          { p_epoch_date: TWO_DAYS_AGO },
-        );
-        const summaries = geduAssignmentSummaries.parse(data);
-
-        expect(
-          summaries.find((s) => s.group_id === GROUP_MINE)?.attention_count,
-        ).toBe(1);
+        await expectOwedFrom(TWO_DAYS_AGO, 1);
       } finally {
         await admin
           .from("participations")
@@ -1650,7 +1622,9 @@ describe("gedu session feed", () => {
 
     it("owes nothing for sessions before the epoch, however incomplete", async () => {
       // The epoch gates what is OWED and nothing else — the same two sessions
-      // are still fully recordable, they simply stop being asked for.
+      // are still fully recordable, they simply stop being asked for. A
+      // midnight passing during the run leaves it at nought: the first session
+      // on or after tomorrow ends the midnight after tomorrow's.
       const { data } = await geduAuth.rpc("get_my_gedu_assignment_summaries", {
         p_epoch_date: utcDayOffset(DB_NOW, 1),
       });

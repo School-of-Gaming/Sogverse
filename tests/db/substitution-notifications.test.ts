@@ -570,12 +570,21 @@ describe("substitution notifications", () => {
       await announce(today, "open");
       await clearOutbox([yesterday, lastWeek, drawnPast, drawnWithdrawn, today, unannounced]);
 
-      expect(await closeOut()).toBeGreaterThanOrEqual(2);
+      const { result: filed, notBefore, notAfter } = await dbInterval(closeOut);
+      expect(filed).toBeGreaterThanOrEqual(2);
       expect((await outbox(yesterday))?.seq).toBe(1);
       expect((await outbox(lastWeek))?.seq).toBe(1);
-      for (const requestId of [drawnPast, drawnWithdrawn, today, unannounced]) {
+      for (const requestId of [drawnPast, drawnWithdrawn, unannounced]) {
         expect(await outbox(requestId)).toBeNull();
       }
+      // Today's has not passed. The close-out judges against its own today,
+      // either clock read's day: should midnight have passed since DB_NOW was
+      // read, today's request is yesterday's to it, and filed.
+      expect(
+        [notBefore, notAfter].map((read) =>
+          utcDayOffset(read, 0) === utcDayOffset(DB_NOW, 0) ? null : 1,
+        ),
+      ).toContain((await outbox(today))?.seq ?? null);
     });
 
     it("files a passed request once: never while it waits, never after it is drawn past", async () => {
@@ -662,7 +671,11 @@ describe("substitution notifications", () => {
         .eq("id", ids.eligible);
       expect(phoneError).toBeNull();
 
-      const shot = await snapshot(requestId);
+      const {
+        result: shot,
+        notBefore,
+        notAfter,
+      } = await dbInterval(async () => snapshot(requestId));
       expect(shot.request).toMatchObject({
         id: requestId,
         status: "open",
@@ -689,7 +702,11 @@ describe("substitution notifications", () => {
       expect(shot.product.delivery_mode).toBe("online");
       expect(shot.required_qualifications).toEqual(["consumer_products"]);
       expect(shot.is_cancelled).toBe(false);
-      expect(shot.product_today).toBe(utcDayOffset(DB_NOW, 0));
+      // The day the snapshot was taken on: either clock read's, should
+      // midnight pass during the call.
+      expect([notBefore, notAfter].map((read) => utcDayOffset(read, 0))).toContain(
+        shot.product_today,
+      );
       expect(shot.notification).toBeNull();
       expect(shot.dms).toEqual([
         expect.objectContaining({ gedu_id: ids.unqualified, message_id: "2", delivery_error: null }),

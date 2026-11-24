@@ -10,6 +10,7 @@ import { traineeGroupOverlay } from "@/services/member-flair/member-flair.contra
 import {
   createAdminTestClient,
   createAuthenticatedClient,
+  dbInterval,
   dbNow,
   utcDayOffset,
   dbTime,
@@ -74,11 +75,11 @@ const DB_NOW = await dbNow();
 const YESTERDAY = utcDayOffset(DB_NOW, -1);
 
 /**
- * A birth month's age on the database's today in UTC, by the application's own
- * rule — which the RPC has to agree with.
+ * A birth month's age on `read`'s UTC day, by the application's own rule —
+ * which the RPC has to agree with.
  */
-async function ageInUtc(birth: GamerBirthMonthYear): Promise<number> {
-  return ageOnDate(birth, utcDayOffset(await dbNow(), 0));
+function ageInUtc(birth: GamerBirthMonthYear, read: Date): number {
+  return ageOnDate(birth, utcDayOffset(read, 0));
 }
 
 type Admin = SupabaseClient<Database>;
@@ -383,9 +384,13 @@ describe("trainee gedus", () => {
 
   describe("get_trainee_group_feed", () => {
     it("serves the trainee the redacted document with nothing staff-only on the wire", async () => {
-      const { data, error } = await traineeAuth.rpc("get_trainee_group_feed", {
-        p_group_id: GROUP_MINE,
-      });
+      const {
+        result: { data, error },
+        notBefore,
+        notAfter,
+      } = await dbInterval(async () =>
+        traineeAuth.rpc("get_trainee_group_feed", { p_group_id: GROUP_MINE }),
+      );
       expect(error).toBeNull();
       const wire = JSON.stringify(data);
       const doc = traineeFeed.parse(data);
@@ -401,10 +406,10 @@ describe("trainee gedus", () => {
       expect(roster).toHaveLength(1);
       expect(Object.keys(roster[0]).sort()).toEqual(TRAINEE_ROSTER_KEYS);
       expect(roster[0].participant_id).toBe(TEST_IDS.GAMER);
-      expect(roster[0].age).toBe(await ageInUtc({
-        year: SEED.GAMER_BIRTH.birth_year,
-        month: SEED.GAMER_BIRTH.birth_month,
-      }));
+      // The age on the day the feed was read: either clock read's, should
+      // midnight pass during the call — the age moves at the birth month's first.
+      const birth = { year: SEED.GAMER_BIRTH.birth_year, month: SEED.GAMER_BIRTH.birth_month };
+      expect([notBefore, notAfter].map((read) => ageInUtc(birth, read))).toContain(roster[0].age);
       expect(roster[0].gender).toBe("boy");
       expect(roster[0].has_note).toBe(true);
       expect(roster[0].creations).toEqual([]);
