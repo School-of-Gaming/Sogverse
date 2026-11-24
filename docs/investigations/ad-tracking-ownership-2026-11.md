@@ -2,7 +2,9 @@
 
 **Status: open, nothing decided. Researched 2026-11-24.** Vendor behaviour (Meta, Reddit,
 Google, GTM) and the dashboard figures age fastest. Re-check them before acting. Code
-claims describe `dev` at that date.
+claims describe `dev` at that date. The full reasoning behind this doc, including the
+comparison with standard practice and every race checked, is in
+`ad-tracking-ownership-2026-11-review.md`.
 
 ## The question
 
