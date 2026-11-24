@@ -259,18 +259,13 @@ describe("session cancellation", () => {
    * not; the second answer takes it back off.
    */
   async function owedChange(act: () => Promise<void>): Promise<number[]> {
-    const {
-      result: change,
-      notBefore,
-      notAfter,
-    } = await dbInterval(async () => {
+    const { result: change, reads } = await dbInterval(async () => {
       const before = await attentionCount();
       await act();
       return (await attentionCount()) - before;
     });
-    return utcDayOffset(notBefore, 0) === utcDayOffset(notAfter, 0)
-      ? [change]
-      : [change, change - 1];
+    const [firstDay, lastDay] = reads.map((read) => utcDayOffset(read, 0));
+    return firstDay === lastDay ? [change] : [change, change - 1];
   }
 
   /** The partner API's read: GROUP's cancelled dates in effect. */
@@ -870,8 +865,7 @@ describe("session cancellation", () => {
 
     const {
       result: { data, error },
-      notBefore,
-      notAfter,
+      reads,
     } = await dbInterval(async () => geduAuth.rpc("get_my_assigned_products"));
     expect(error).toBeNull();
     const seat = myAssignedProductRows
@@ -883,7 +877,7 @@ describe("session cancellation", () => {
     // pass, when yesterday's cancellation has aged out of the plan.
     const fromTheDayBefore = (read: Date) =>
       [YESTERDAY, TOMORROW, IN_THREE_DAYS].filter((date) => date >= utcDayOffset(read, -1));
-    expect([notBefore, notAfter].map(fromTheDayBefore)).toContainEqual(
+    expect(reads.map(fromTheDayBefore)).toContainEqual(
       seat?.upcoming_sessions
         .filter((session) => session.cancelled)
         .map((session) => session.date),

@@ -3738,8 +3738,7 @@ describe("session substitutions", () => {
         expect(term.error).toBeNull();
         const {
           result: { data, error },
-          notBefore,
-          notAfter,
+          reads,
         } = await dbInterval(async () => geduAuth.rpc("get_my_assigned_products"));
         expect(error).toBeNull();
         const seat = myAssignedProductRows
@@ -3750,7 +3749,7 @@ describe("session substitutions", () => {
         // to the term's last day, one session each. Midnight can pass during
         // the call, so that today is either clock read's day.
         const opening = plan[0].date;
-        expect([notBefore, notAfter].map((read) => utcDayOffset(read, -1))).toContain(opening);
+        expect(reads.map((read) => utcDayOffset(read, -1))).toContain(opening);
         expect(plan.map((session) => session.date)).toEqual(
           utcDatesThrough(opening, term.data!.end_date!),
         );

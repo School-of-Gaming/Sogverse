@@ -847,8 +847,8 @@ describe("gamer creations", () => {
       // the three original conditions alone. So a midnight passed since the
       // file read the clock adds one owed session per midnight, which is not
       // the creations condition's doing.
-      const { result: owed, notBefore, notAfter } = await dbInterval(owedCount);
-      expect([notBefore, notAfter].map((read) => utcMidnightsSince(TODAY, read))).toContain(owed);
+      const { result: owed, reads } = await dbInterval(owedCount);
+      expect(reads.map((read) => utcMidnightsSince(TODAY, read))).toContain(owed);
 
       await admin
         .from("products")

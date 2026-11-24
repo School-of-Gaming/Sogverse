@@ -386,8 +386,7 @@ describe("trainee gedus", () => {
     it("serves the trainee the redacted document with nothing staff-only on the wire", async () => {
       const {
         result: { data, error },
-        notBefore,
-        notAfter,
+        reads,
       } = await dbInterval(async () =>
         traineeAuth.rpc("get_trainee_group_feed", { p_group_id: GROUP_MINE }),
       );
@@ -409,7 +408,7 @@ describe("trainee gedus", () => {
       // The age on the day the feed was read: either clock read's, should
       // midnight pass during the call — the age moves at the birth month's first.
       const birth = { year: SEED.GAMER_BIRTH.birth_year, month: SEED.GAMER_BIRTH.birth_month };
-      expect([notBefore, notAfter].map((read) => ageInUtc(birth, read))).toContain(roster[0].age);
+      expect(reads.map((read) => ageInUtc(birth, read))).toContain(roster[0].age);
       expect(roster[0].gender).toBe("boy");
       expect(roster[0].has_note).toBe(true);
       expect(roster[0].creations).toEqual([]);

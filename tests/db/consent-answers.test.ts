@@ -7,7 +7,7 @@ import {
   callRpcRaw,
   createAdminTestClient,
   createAuthenticatedClient,
-  dbNow,
+  dbInterval,
   utcDayOffset,
 } from "./helpers";
 import { TEST_CREDENTIALS } from "./constants";
@@ -52,20 +52,17 @@ describe("consent answer tally", () => {
    * calls can straddle UTC midnight, which is two days and so two rows; every
    * claim below holds on the sum and on the day each row carries, whichever
    * happened.
-   *
-   * The days are read straight off the clock on either side, not through
-   * `dbInterval`: its upper bound is a stamp bound a millisecond past the read,
-   * which can fall on the next day when the read does not.
    */
   async function countTwice(
     args: Database["public"]["Functions"]["count_consent_answer"]["Args"],
   ) {
-    const before = utcDayOffset(await dbNow(), 0);
-    for (let i = 0; i < 2; i++) {
-      const { error } = await admin.rpc("count_consent_answer", args);
-      expect(error).toBeNull();
-    }
-    const after = utcDayOffset(await dbNow(), 0);
+    const { reads } = await dbInterval(async () => {
+      for (let i = 0; i < 2; i++) {
+        const { error } = await admin.rpc("count_consent_answer", args);
+        expect(error).toBeNull();
+      }
+    });
+    const [before, after] = reads.map((read) => utcDayOffset(read, 0));
     const counted = await rows();
     expect(counted.length).toBeGreaterThanOrEqual(1);
     expect(counted.length).toBeLessThanOrEqual(before === after ? 1 : 2);

@@ -620,12 +620,11 @@ describe("get_admin_dashboard", () => {
     // the service-role client has no profiles row, so assert_admin refuses it.
     const {
       result: { data, error },
-      notBefore,
-      notAfter,
+      reads,
     } = await dbInterval(async () => adminUser.rpc("get_admin_dashboard"));
     expect(error).toBeNull();
     snapshot = adminDashboardSnapshot.parse(data);
-    snapshotReads = [notBefore, notAfter];
+    snapshotReads = reads;
   });
 
   afterAll(async () => {

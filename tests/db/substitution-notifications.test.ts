@@ -570,7 +570,7 @@ describe("substitution notifications", () => {
       await announce(today, "open");
       await clearOutbox([yesterday, lastWeek, drawnPast, drawnWithdrawn, today, unannounced]);
 
-      const { result: filed, notBefore, notAfter } = await dbInterval(closeOut);
+      const { result: filed, reads } = await dbInterval(closeOut);
       expect(filed).toBeGreaterThanOrEqual(2);
       expect((await outbox(yesterday))?.seq).toBe(1);
       expect((await outbox(lastWeek))?.seq).toBe(1);
@@ -581,9 +581,7 @@ describe("substitution notifications", () => {
       // either clock read's day: should midnight have passed since DB_NOW was
       // read, today's request is yesterday's to it, and filed.
       expect(
-        [notBefore, notAfter].map((read) =>
-          utcDayOffset(read, 0) === utcDayOffset(DB_NOW, 0) ? null : 1,
-        ),
+        reads.map((read) => (utcDayOffset(read, 0) === utcDayOffset(DB_NOW, 0) ? null : 1)),
       ).toContain((await outbox(today))?.seq ?? null);
     });
 
@@ -671,11 +669,7 @@ describe("substitution notifications", () => {
         .eq("id", ids.eligible);
       expect(phoneError).toBeNull();
 
-      const {
-        result: shot,
-        notBefore,
-        notAfter,
-      } = await dbInterval(async () => snapshot(requestId));
+      const { result: shot, reads } = await dbInterval(async () => snapshot(requestId));
       expect(shot.request).toMatchObject({
         id: requestId,
         status: "open",
@@ -704,9 +698,7 @@ describe("substitution notifications", () => {
       expect(shot.is_cancelled).toBe(false);
       // The day the snapshot was taken on: either clock read's, should
       // midnight pass during the call.
-      expect([notBefore, notAfter].map((read) => utcDayOffset(read, 0))).toContain(
-        shot.product_today,
-      );
+      expect(reads.map((read) => utcDayOffset(read, 0))).toContain(shot.product_today);
       expect(shot.notification).toBeNull();
       expect(shot.dms).toEqual([
         expect.objectContaining({ gedu_id: ids.unqualified, message_id: "2", delivery_error: null }),

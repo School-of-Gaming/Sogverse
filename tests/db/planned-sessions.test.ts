@@ -471,12 +471,12 @@ describe("the session plan", () => {
     ) {
       // The database's today on either side of the call: the answer is the
       // one for whichever day it read, should midnight fall between.
-      const { result, notBefore, notAfter } = await dbInterval(
+      const { result, reads } = await dbInterval(
         async () =>
           await admin.rpc("session_plan_horizon", { p_product_id: product, ...args }),
       );
       expect(result.error).toBeNull();
-      expect([expected(notBefore), expected(notAfter)]).toContain(result.data);
+      expect(reads.map(expected)).toContain(result.data);
     }
 
     it("is a dated product's end date", async () => {

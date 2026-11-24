@@ -284,8 +284,7 @@ describe("substitutions from Discord", () => {
 
       const {
         result: { data, error },
-        notBefore,
-        notAfter,
+        reads,
       } = await dbInterval(async () =>
         admin.rpc("get_assigned_products_for_discord_user", { p_discord_user_id: DISCORD_GEDU }),
       );
@@ -296,7 +295,7 @@ describe("substitutions from Discord", () => {
       // last day, set from the load-time read. Midnight can pass during the
       // call, so that today is either clock read's day.
       const opening = plan[0].date;
-      expect([notBefore, notAfter].map((read) => utcDayOffset(read, -1))).toContain(opening);
+      expect(reads.map((read) => utcDayOffset(read, -1))).toContain(opening);
       expect(plan.map((session) => session.date)).toEqual(
         utcDatesThrough(opening, utcDayOffset(DB_NOW, 60)),
       );

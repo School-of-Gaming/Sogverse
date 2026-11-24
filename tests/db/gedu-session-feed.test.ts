@@ -1412,11 +1412,7 @@ describe("gedu session feed", () => {
      * `asOf` and it — on a run that crosses none, `expected` alone.
      */
     async function expectOwedFrom(epoch: string, expected: number, asOf = TODAY): Promise<void> {
-      const {
-        result: count,
-        notBefore,
-        notAfter,
-      } = await dbInterval(async () => {
+      const { result: count, reads } = await dbInterval(async () => {
         const { data, error } = await geduAuth.rpc("get_my_gedu_assignment_summaries", {
           p_epoch_date: epoch,
         });
@@ -1424,9 +1420,7 @@ describe("gedu session feed", () => {
         return geduAssignmentSummaries.parse(data).find((s) => s.group_id === GROUP_MINE)
           ?.attention_count;
       });
-      expect(
-        [notBefore, notAfter].map((read) => expected + utcMidnightsSince(asOf, read)),
-      ).toContain(count);
+      expect(reads.map((read) => expected + utcMidnightsSince(asOf, read))).toContain(count);
     }
 
     it("returns one entry per assignment, parsed through the contract schema", async () => {

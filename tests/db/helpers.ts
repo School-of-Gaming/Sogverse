@@ -110,18 +110,30 @@ export async function dbTime(offsetMs: number): Promise<Date> {
 }
 
 /**
- * Runs `act` between two reads of the database's clock: anything the database
- * stamped during it lies within [notBefore, notAfter]. `notAfter` carries one
- * extra millisecond because Postgres stamps in microseconds and a Date floors
- * them.
+ * Runs `act` between two reads of the database's clock, and answers the two
+ * things a test asks about when it ran:
+ *
+ * - **A stamp** the database wrote during `act` lies within
+ *   [notBefore, notAfter]. `notAfter` carries one extra millisecond because
+ *   Postgres stamps in microseconds and a Date floors them, so it is a bound,
+ *   not a time the clock read.
+ * - **The day** the database judged `act` against is the UTC day of either of
+ *   `reads`, the two raw clock reads — one day unless midnight passed during
+ *   `act`. A day is labelled from `reads`, never from `notAfter`: its extra
+ *   millisecond steps a read at 23:59:59.999 into the next day.
  */
 export async function dbInterval<T>(
   act: () => Promise<T>
-): Promise<{ result: T; notBefore: Date; notAfter: Date }> {
-  const notBefore = await dbNow();
+): Promise<{ result: T; notBefore: Date; notAfter: Date; reads: [Date, Date] }> {
+  const before = await dbNow();
   const result = await act();
   const after = await dbNow();
-  return { result, notBefore, notAfter: new Date(after.getTime() + 1) };
+  return {
+    result,
+    notBefore: before,
+    notAfter: new Date(after.getTime() + 1),
+    reads: [before, after],
+  };
 }
 
 /**
