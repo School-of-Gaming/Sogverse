@@ -137,6 +137,15 @@ export function utcDayOffset(from: Date, offsetDays: number): string {
     .slice(0, 10);
 }
 
+/** Every `YYYY-MM-DD` from `first` to `last`, both included. */
+export function utcDatesThrough(first: string, last: string): string[] {
+  const dates: string[] = [];
+  for (let date = first; date <= last; date = utcDayOffset(new Date(`${date}T00:00:00Z`), 1)) {
+    dates.push(date);
+  }
+  return dates;
+}
+
 /** Twelve random hex characters, for emails and names that must not collide. */
 export function uniqueSuffix(): string {
   return randomUUID().replaceAll("-", "").slice(0, 12);

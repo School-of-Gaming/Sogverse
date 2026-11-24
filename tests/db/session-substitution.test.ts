@@ -18,6 +18,8 @@ import {
   createAuthenticatedClient,
   dbNow,
   utcDayOffset,
+  utcDatesThrough,
+  dbInterval,
   dbTime,
   uniqueSuffix,
 } from "./helpers";
@@ -3732,19 +3734,28 @@ describe("session substitutions", () => {
       ]);
       expect(cancelError).toBeNull();
       try {
-        const { data, error } = await geduAuth.rpc("get_my_assigned_products");
+        const term = await admin.from("products").select("end_date").eq("id", PRODUCT).single();
+        expect(term.error).toBeNull();
+        const {
+          result: { data, error },
+          notBefore,
+          notAfter,
+        } = await dbInterval(async () => geduAuth.rpc("get_my_assigned_products"));
         expect(error).toBeNull();
         const seat = myAssignedProductRows
           .parse(data)
           .find((row) => row.group_id === GROUP_A && row.kind === "assignment");
         const plan = seat?.upcoming_sessions ?? [];
-        // A slot every day: every date from the day before today to the term's
-        // last day, one session each.
+        // A slot every day: every date from the day before the database's today
+        // to the term's last day, one session each. Midnight can pass during
+        // the call, so that today is either clock read's day.
+        const opening = plan[0].date;
+        expect([notBefore, notAfter].map((read) => utcDayOffset(read, -1))).toContain(opening);
         expect(plan.map((session) => session.date)).toEqual(
-          Array.from({ length: 62 }, (_, index) => utcDayOffset(DB_NOW, index - 1)),
+          utcDatesThrough(opening, term.data!.end_date!),
         );
-        expect(plan[0].startsAt.toISOString()).toBe(planned(utcDayOffset(DB_NOW, -1)).starts_at);
-        expect(plan[0].endsAt.toISOString()).toBe(planned(utcDayOffset(DB_NOW, -1)).ends_at);
+        expect(plan[0].startsAt.toISOString()).toBe(planned(opening).starts_at);
+        expect(plan[0].endsAt.toISOString()).toBe(planned(opening).ends_at);
         // The sister group's cancellation is not this group's.
         expect(plan.filter((session) => session.cancelled).map((session) => session.date)).toEqual([
           cancelledHere,

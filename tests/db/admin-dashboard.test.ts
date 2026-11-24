@@ -1,7 +1,15 @@
 import { describe, it, expect, beforeAll, afterAll } from "vitest";
 import type { SupabaseClient } from "@supabase/supabase-js";
 import type { Database } from "@/types/database.types";
-import { createAdminTestClient, createAuthenticatedClient, dbNow, utcDayOffset, uniqueSuffix } from "./helpers";
+import {
+  createAdminTestClient,
+  createAuthenticatedClient,
+  dbInterval,
+  dbNow,
+  utcDatesThrough,
+  utcDayOffset,
+  uniqueSuffix,
+} from "./helpers";
 import { TEST_IDS, TEST_CREDENTIALS } from "./constants";
 import { createTestProduct, deleteTestProducts } from "./product-helpers";
 import { addCalendarDays, addCalendarMonths } from "@/lib/calendar-date";
@@ -138,9 +146,8 @@ const ALL_PRODUCTS = [
 ];
 
 /**
- * The database's clock, read once before the setup: the fixtures' dates and the
- * snapshot's assertions count from the one today the dashboard judged against.
- * Every fixture product runs in UTC, the helper's default.
+ * The database's clock, read once before the setup: the fixtures' dates count
+ * from it. Every fixture product runs in UTC, the helper's default.
  */
 let DB_NOW: Date;
 beforeAll(async () => {
@@ -152,6 +159,12 @@ describe("get_admin_dashboard", () => {
   let adminUser: SupabaseClient<Database>;
   let customer: SupabaseClient<Database>;
   let snapshot: AdminDashboardSnapshot;
+  /**
+   * The database's clock on either side of the snapshot. Its schedule window
+   * counts from the day it judged as today, which is either read's day: one
+   * day unless midnight passed during the call.
+   */
+  let snapshotReads: Date[];
 
   /** The uncertified gedu that must appear in the queue. Has signed nothing. */
   let queuedGeduId: string | null = null;
@@ -605,9 +618,14 @@ describe("get_admin_dashboard", () => {
 
     // One read, after everything is in place. Through the admin's own session:
     // the service-role client has no profiles row, so assert_admin refuses it.
-    const { data, error } = await adminUser.rpc("get_admin_dashboard");
+    const {
+      result: { data, error },
+      notBefore,
+      notAfter,
+    } = await dbInterval(async () => adminUser.rpc("get_admin_dashboard"));
     expect(error).toBeNull();
     snapshot = adminDashboardSnapshot.parse(data);
+    snapshotReads = [notBefore, notAfter];
   });
 
   afterAll(async () => {
@@ -927,8 +945,9 @@ describe("get_admin_dashboard", () => {
       // ends in twenty, inside the window, so its own end clips it there.
       const dates =
         scheduled(P_PLANNED)?.planned_sessions.map((s) => s.session_date) ?? [];
-      const expected = Array.from({ length: 51 }, (_, i) => utcDayOffset(DB_NOW, i - 30));
-      expect(dates).toEqual(expected);
+      expect(
+        snapshotReads.map((read) => utcDatesThrough(utcDayOffset(read, -30), utcDayOffset(DB_NOW, 20))),
+      ).toContainEqual(dates);
     });
 
     it("plans an open-ended term from its first day to the window's far edge", () => {
@@ -938,9 +957,9 @@ describe("get_admin_dashboard", () => {
         scheduled(P_PLANNED_OPEN)?.planned_sessions.map((s) => s.session_date) ??
         [];
       expect(dates[0]).toBe(utcDayOffset(DB_NOW, 5));
-      expect(dates.at(-1)).toBe(
-        addCalendarDays(addCalendarMonths(utcDayOffset(DB_NOW, 0), 4), -1),
-      );
+      expect(
+        snapshotReads.map((read) => addCalendarDays(addCalendarMonths(utcDayOffset(read, 0), 4), -1)),
+      ).toContain(dates.at(-1));
     });
 
     it("carries each session's instants in the product's zone", () => {

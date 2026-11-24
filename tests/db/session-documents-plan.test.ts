@@ -95,13 +95,13 @@ function addDays(date: string, days: number): string {
 
 /**
  * Asserts an open-ended daily plan runs, every day at 23:00 for an hour, from
- * OPEN's start to `horizon` — or to the day before it, the horizon the
- * database computed if the run crossed midnight between the read and this
- * check.
+ * OPEN's start to `horizon` — or to the day after it, should midnight have
+ * passed since the file read the clock: midnight ends the day's session, so
+ * the eighth that has not ended is a day later.
  */
 function expectDailyPlanTo(plan: PlannedSession[], horizon: string) {
   const last = plan.at(-1)?.date ?? "";
-  expect([horizon, addDays(horizon, -1)]).toContain(last);
+  expect([horizon, addDays(horizon, 1)]).toContain(last);
   expect(plan.map((session) => session.date)).toEqual(everyDay(OPEN_START, last));
   for (const session of plan) {
     expect(session.startsAt.toISOString()).toBe(`${session.date}T23:00:00.000Z`);

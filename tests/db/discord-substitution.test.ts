@@ -13,7 +13,9 @@ import {
   createAdminTestClient,
   createAnonTestClient,
   createAuthenticatedClient,
+  dbInterval,
   dbNow,
+  utcDatesThrough,
   utcDayOffset,
   uniqueSuffix,
 } from "./helpers";
@@ -280,18 +282,26 @@ describe("substitutions from Discord", () => {
       ]);
       expect(cancelError).toBeNull();
 
-      const { data, error } = await admin.rpc("get_assigned_products_for_discord_user", {
-        p_discord_user_id: DISCORD_GEDU,
-      });
+      const {
+        result: { data, error },
+        notBefore,
+        notAfter,
+      } = await dbInterval(async () =>
+        admin.rpc("get_assigned_products_for_discord_user", { p_discord_user_id: DISCORD_GEDU }),
+      );
       expect(error).toBeNull();
       const [seat] = myAssignedProductRows.parse(data);
       const plan = seat.upcoming_sessions;
-      // A slot every day: the day before today to the term's last day.
+      // A slot every day: the day before the database's today to the term's
+      // last day, set from the load-time read. Midnight can pass during the
+      // call, so that today is either clock read's day.
+      const opening = plan[0].date;
+      expect([notBefore, notAfter].map((read) => utcDayOffset(read, -1))).toContain(opening);
       expect(plan.map((session) => session.date)).toEqual(
-        Array.from({ length: 62 }, (_, index) => utcDayOffset(DB_NOW, index - 1)),
+        utcDatesThrough(opening, utcDayOffset(DB_NOW, 60)),
       );
-      expect(plan[1].startsAt.toISOString()).toBe(`${utcDayOffset(DB_NOW, 0)}T10:00:00.000Z`);
-      expect(plan[1].endsAt.toISOString()).toBe(`${utcDayOffset(DB_NOW, 0)}T11:00:00.000Z`);
+      expect(plan[1].startsAt.toISOString()).toBe(`${plan[1].date}T10:00:00.000Z`);
+      expect(plan[1].endsAt.toISOString()).toBe(`${plan[1].date}T11:00:00.000Z`);
       expect(plan.filter((session) => session.cancelled).map((session) => session.date)).toEqual([
         utcDayOffset(DB_NOW, 3),
       ]);

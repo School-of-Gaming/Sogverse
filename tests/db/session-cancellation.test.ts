@@ -15,7 +15,13 @@ import { municipalityInvoicingSnapshot } from "@/services/municipality-invoicing
 import { adminSubstitutionRequests } from "@/services/session-substitution/session-substitution.contracts";
 import { myAssignedProductRows } from "@/services/assignments/assignments.contracts";
 import { adminDashboardSnapshot } from "@/services/admin-dashboard/admin-dashboard.contracts";
-import { createAdminTestClient, createAuthenticatedClient, dbNow, utcDayOffset } from "./helpers";
+import {
+  createAdminTestClient,
+  createAuthenticatedClient,
+  dbInterval,
+  dbNow,
+  utcDayOffset,
+} from "./helpers";
 import { TEST_CREDENTIALS, TEST_IDS } from "./constants";
 import {
   createScheduleSlot,
@@ -66,22 +72,29 @@ const CLUB_MONTH = "2031-02-01";
 const CLUB_DATE = "2031-02-12";
 
 /**
- * The database's clock, read when the file loads: the dates below are built
- * then, and they count from the database's today, the one its functions judge
- * against.
+ * The database's clock, read when the file loads for the setup's dates, and
+ * again before each test: the dates below count from the day the test runs on,
+ * the database's today, which its reads judge against.
  */
-const DB_NOW = await dbNow();
+let DB_NOW = await dbNow();
+let YESTERDAY: string;
+let TOMORROW: string;
+let IN_TWO_DAYS: string;
+let IN_THREE_DAYS: string;
+let LAST_WEEK: string;
+beforeEach(async () => {
+  DB_NOW = await dbNow();
+  YESTERDAY = utcDayOffset(DB_NOW, -1);
+  TOMORROW = utcDayOffset(DB_NOW, 1);
+  IN_TWO_DAYS = utcDayOffset(DB_NOW, 2);
+  IN_THREE_DAYS = utcDayOffset(DB_NOW, 3);
+  LAST_WEEK = utcDayOffset(DB_NOW, -7);
+});
 
 /** 0 = Monday, matching `schedule_slots.weekday`. */
 function weekdayOf(date: string): number {
   return (new Date(`${date}T12:00:00Z`).getUTCDay() + 6) % 7;
 }
-
-const YESTERDAY = utcDayOffset(DB_NOW, -1);
-const TOMORROW = utcDayOffset(DB_NOW, 1);
-const IN_TWO_DAYS = utcDayOffset(DB_NOW, 2);
-const IN_THREE_DAYS = utcDayOffset(DB_NOW, 3);
-const LAST_WEEK = utcDayOffset(DB_NOW, -7);
 
 describe("session cancellation", () => {
   let admin: SupabaseClient<Database>;
@@ -239,6 +252,27 @@ describe("session cancellation", () => {
     return row.attention_count;
   }
 
+  /**
+   * How far `act` moves GROUP's owed count: one answer, or two when midnight
+   * passed while it ran. PRODUCT's 23:00 session ends at midnight UTC and is
+   * owed from then, so a midnight between the two counts adds one the act did
+   * not; the second answer takes it back off.
+   */
+  async function owedChange(act: () => Promise<void>): Promise<number[]> {
+    const {
+      result: change,
+      notBefore,
+      notAfter,
+    } = await dbInterval(async () => {
+      const before = await attentionCount();
+      await act();
+      return (await attentionCount()) - before;
+    });
+    return utcDayOffset(notBefore, 0) === utcDayOffset(notAfter, 0)
+      ? [change]
+      : [change, change - 1];
+  }
+
   /** The partner API's read: GROUP's cancelled dates in effect. */
   async function cancellationsInEffect(): Promise<string[]> {
     const { data, error } = await admin.rpc("get_session_cancellations_in_effect", {
@@ -367,11 +401,14 @@ describe("session cancellation", () => {
     const imageId = photo.data;
     if (imageId === null) throw new Error("the photo was not attached");
 
-    // A written-up, unmailed past session is owed until it is mailed.
-    const owedBefore = await attentionCount();
-
-    // The admin's word wins: the cancel lands, and nothing is deleted.
-    expect((await cancel(YESTERDAY, "Venue flooded")).error).toBeNull();
+    // The admin's word wins: the cancel lands, and nothing is deleted. A
+    // written-up, unmailed past session is owed until it is mailed; cancelled,
+    // nothing ran, so nothing is asked for.
+    expect(
+      await owedChange(async () => {
+        expect((await cancel(YESTERDAY, "Venue flooded")).error).toBeNull();
+      }),
+    ).toContain(-1);
     const kept = await admin
       .from("group_sessions")
       .select("report, gedu_note")
@@ -440,15 +477,16 @@ describe("session cancellation", () => {
     expect(staff.sessions.map((s) => s.session_date)).toContain(YESTERDAY);
     expect(staff.cancellations.map((c) => c.session_date)).toEqual([YESTERDAY]);
 
-    // Not owed: nothing ran, so nothing is asked for.
-    expect(await attentionCount()).toBe(owedBefore - 1);
-
-    // Restored, it all comes back as it was, and reopens.
-    const restored = await adminAuth.rpc("restore_session", {
-      p_group_id: GROUP,
-      p_session_date: YESTERDAY,
-    });
-    expect(restored.data).toBe(true);
+    // Restored, it all comes back as it was, owed again, and reopens.
+    expect(
+      await owedChange(async () => {
+        const restored = await adminAuth.rpc("restore_session", {
+          p_group_id: GROUP,
+          p_session_date: YESTERDAY,
+        });
+        expect(restored.data).toBe(true);
+      }),
+    ).toContain(1);
     const back = await familyFeed();
     expect(back.sessions.find((s) => s.session_date === YESTERDAY)).toMatchObject({
       report: "We built a castle.",
@@ -456,7 +494,6 @@ describe("session cancellation", () => {
       images: [expect.objectContaining({ id: imageId })],
     });
     expect(back.cancellations).toEqual([]);
-    expect(await attentionCount()).toBe(owedBefore);
     const removed = await geduAuth.rpc("delete_group_session_image", {
       p_image_id: imageId,
     });
@@ -590,9 +627,11 @@ describe("session cancellation", () => {
   });
 
   it("does not count a cancelled past session as owed", async () => {
-    const before = await attentionCount();
-    expect((await cancel(YESTERDAY)).error).toBeNull();
-    expect(await attentionCount()).toBe(before - 1);
+    expect(
+      await owedChange(async () => {
+        expect((await cancel(YESTERDAY)).error).toBeNull();
+      }),
+    ).toContain(-1);
   });
 
   it("treats a cancellation the schedule no longer projects as inert, and re-applies it when the schedule moves back", async () => {
@@ -749,13 +788,15 @@ describe("session cancellation", () => {
         expect(reworded.error).toBeNull();
 
         // Not owed while cancelled; owed again as history once restored.
-        const owedCancelled = await attentionCount();
-        const restored = await adminAuth.rpc("restore_session", {
-          p_group_id: GROUP,
-          p_session_date: YESTERDAY,
-        });
-        expect(restored.data).toBe(true);
-        expect(await attentionCount()).toBe(owedCancelled + 1);
+        expect(
+          await owedChange(async () => {
+            const restored = await adminAuth.rpc("restore_session", {
+              p_group_id: GROUP,
+              p_session_date: YESTERDAY,
+            });
+            expect(restored.data).toBe(true);
+          }),
+        ).toContain(1);
 
         const back = await familyFeed();
         expect(back.sessions.find((s) => s.session_date === YESTERDAY)).toMatchObject({
@@ -827,18 +868,26 @@ describe("session cancellation", () => {
       expect((await cancel(date, "Holiday")).error).toBeNull();
     }
 
-    const { data, error } = await geduAuth.rpc("get_my_assigned_products");
+    const {
+      result: { data, error },
+      notBefore,
+      notAfter,
+    } = await dbInterval(async () => geduAuth.rpc("get_my_assigned_products"));
     expect(error).toBeNull();
     const seat = myAssignedProductRows
       .parse(data)
       .find((row) => row.group_id === GROUP && row.kind === "assignment");
     // The day before today is kept, for a session still running past local
-    // midnight; anything earlier is no card's business.
-    expect(
+    // midnight; anything earlier is no card's business. That today is the
+    // database's during the call: either clock read's day, should midnight
+    // pass, when yesterday's cancellation has aged out of the plan.
+    const fromTheDayBefore = (read: Date) =>
+      [YESTERDAY, TOMORROW, IN_THREE_DAYS].filter((date) => date >= utcDayOffset(read, -1));
+    expect([notBefore, notAfter].map(fromTheDayBefore)).toContainEqual(
       seat?.upcoming_sessions
         .filter((session) => session.cancelled)
         .map((session) => session.date),
-    ).toEqual([YESTERDAY, TOMORROW, IN_THREE_DAYS]);
+    );
   });
 
   it("drops an inert cancellation from the gedu's seat", async () => {
