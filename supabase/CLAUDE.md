@@ -577,7 +577,9 @@ the gap belongs to neither; a role change ends one period and starts the next, s
 session keeps the role it was taught in. A period's start never moves and its end is set
 once; one gedu's periods on a product never overlap, and only one of them is current. A
 writer names `started_at` (there is no default), and `apply_group_changes` stamps every
-period of a batch with one `clock_timestamp()`. Each reader — a function, view or policy
+period of a batch with one `clock_timestamp()`. A period is never backdated: a gedu added
+after some of a group's sessions ran is neither staffed on nor paid for any of them (owner
+ruling, 2026-11-24) — admins assign before the first session. Each reader — a function, view or policy
 in `schema/`, or a read under `src/` — is classified in
 `tests/helpers/assignment-reader-registry.ts`, and a unit test fails on one that is
 missing and on an entry whose read is gone. A row is deleted only with its group or

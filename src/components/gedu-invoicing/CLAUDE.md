@@ -135,6 +135,11 @@ replacement is paid only from the instant they were added, a role change splits 
 month into one club line per role, and the gap between a removal and a re-add pays
 nobody. Substitutions and absences are dated and keep the role they were filed in.
 
+**A gedu added after a group's sessions have already run is not paid for them** (owner
+ruling, 2026-11-24): their period starts when they are added, and nothing backdates it.
+Admins assign a group's gedus before its first session, so the gap stays accepted rather
+than built for.
+
 ## Shared with municipality invoicing
 
 The two pages are one kind of ledger and are drawn from one set of parts in

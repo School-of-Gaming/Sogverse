@@ -102,7 +102,8 @@ second list to keep current, and the last one was wrong.
   Certification is part of the may-substitute guard every substitution write shares, the pool of open
   requests reads back empty for an uncertified gedu, and the access a live substitution grants to
   that group's workspace is re-checked on every read — so withdrawing certification
-  mid-substitution closes it at once rather than at the window's end. An admin arranging a sub by
+  mid-substitution closes it at once rather than at the window's end. The window a gedu
+  taken off a group keeps is the same kind of temporary seat and closes the same way. An admin arranging a sub by
   hand passes the same guard, so no path seats an uncertified substitute. The contrast with the
   bullet above is the whole rule: assignment has one caller and it is an admin, a substitution is
   offered by any gedu who sees the request.

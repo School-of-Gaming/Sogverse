@@ -29,6 +29,14 @@ CREATE FUNCTION public.gedu_holds_unexpired_ended_assignment(p_gedu_id uuid, p_g
            -- absence for, whoever ran it.
            AND public.gedu_is_expected_at_session(p_gedu_id, p_group_id, p_session_date)
            AND NOT public.group_session_is_cancelled(p_group_id, p_session_date)
+           -- Still certified, as a substitute must be: decertifying ends the
+           -- window mid-way, for both kinds of temporary seat.
+           AND EXISTS (
+             SELECT 1
+               FROM public.gedu_profiles gp
+              WHERE gp.user_id = p_gedu_id
+                AND gp.certified
+           )
            -- The substitute window's END, its one definition.
            AND now() < public.group_session_access_ends_at(p_group_id, p_session_date),
            false
@@ -40,7 +48,7 @@ $$;
 -- Name: FUNCTION gedu_holds_unexpired_ended_assignment(p_gedu_id uuid, p_group_id uuid, p_session_date date); Type: COMMENT; Schema: public; Owner: -
 --
 
-COMMENT ON FUNCTION public.gedu_holds_unexpired_ended_assignment(p_gedu_id uuid, p_group_id uuid, p_session_date date) IS 'Internal predicate, the sibling of gedu_holds_unexpired_substitution: does this gedu still hold this (group, date) through an ENDED assignment? True when they held the group at that session (group_assignments_at asked at group_session_starts_at) and hold no current period on it now, were expected at it (gedu_is_expected_at_session — so not a date they filed an absence for), it is not cancelled, and the substitute window has not closed (now() before group_session_access_ends_at). A gedu still current on the group is answered false: the current period already reaches everything this would. No certification test, unlike a substitution''s: the seat was a standing one. Takes the gedu as an argument because the seat reads ask it about the gedu they were handed. Not granted to `authenticated`.';
+COMMENT ON FUNCTION public.gedu_holds_unexpired_ended_assignment(p_gedu_id uuid, p_group_id uuid, p_session_date date) IS 'Internal predicate, the sibling of gedu_holds_unexpired_substitution: does this gedu still hold this (group, date) through an ENDED assignment? True when they held the group at that session (group_assignments_at asked at group_session_starts_at) and hold no current period on it now, were expected at it (gedu_is_expected_at_session — so not a date they filed an absence for), it is not cancelled, they are still certified, and the substitute window has not closed (now() before group_session_access_ends_at). The certification test is gedu_holds_unexpired_substitution''s: decertifying ends the window at once, for an ended gedu as for a substitute. A gedu still current on the group is answered false: the current period already reaches everything this would. Takes the gedu as an argument because the seat reads ask it about the gedu they were handed. Not granted to `authenticated`.';
 
 
 --

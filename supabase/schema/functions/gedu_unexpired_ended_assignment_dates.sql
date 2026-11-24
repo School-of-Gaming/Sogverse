@@ -47,7 +47,7 @@ $$;
 -- Name: FUNCTION gedu_unexpired_ended_assignment_dates(p_gedu_id uuid, p_group_id uuid); Type: COMMENT; Schema: public; Owner: -
 --
 
-COMMENT ON FUNCTION public.gedu_unexpired_ended_assignment_dates(p_gedu_id uuid, p_group_id uuid) IS 'Internal: the dates of this group on which the gedu still holds it through an ended assignment — gedu_holds_unexpired_ended_assignment asked of every date whose window can still be open: the planned dates from 16 product-local days back to today, and the stored rows over those days or whose report was mailed in the last 24 hours. The group-wide form of that predicate: EXISTS over it is "an ended assignment still in its window", the arm gedu_substitutes_group and the seat reads compose, so the card and the workspace stay open until the LATEST of those windows closes. Empty for a gedu still current on the group. Not granted to `authenticated`.';
+COMMENT ON FUNCTION public.gedu_unexpired_ended_assignment_dates(p_gedu_id uuid, p_group_id uuid) IS 'Internal: the dates of this group on which the gedu still holds it through an ended assignment — gedu_holds_unexpired_ended_assignment asked of every date whose window can still be open: the planned dates from 16 product-local days back to today, and the stored rows over those days or whose report was mailed in the last 24 hours. The group-wide form of that predicate: EXISTS over it is "an ended assignment still in its window", the arm gedu_substitutes_group and the seat reads compose, so the card and the workspace stay open until the LATEST of those windows closes, or until the gedu is decertified. Empty for a gedu still current on the group. Not granted to `authenticated`.';
 
 
 --

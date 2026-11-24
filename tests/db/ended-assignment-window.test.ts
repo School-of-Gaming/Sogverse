@@ -534,6 +534,41 @@ describe("an ended assignment keeps a substitute's window", () => {
     expect(removed.error).toBeNull();
   });
 
+  it("closes the whole window when the gedu is decertified", async () => {
+    await endedAcrossTheRun();
+    await stored(-3);
+    expect(await workspaceOpen()).toBe(true);
+    expect(await cards()).toEqual(["ended_assignment:one"]);
+
+    const decertified = await admin
+      .from("gedu_profiles")
+      .update({ certified: false })
+      .eq("user_id", GEDU);
+    expect(decertified.error).toBeNull();
+    try {
+      expect(await workspaceOpen()).toBe(false);
+      expect(await groupVisible()).toBe(false);
+      expect(await cards()).toEqual([]);
+      expect(await mySummaries()).toEqual([]);
+
+      expect(await writesNotes(-3)).toBe(false);
+      expect(await marksAttendance(-3)).toBe(false);
+      expect(await addsPhoto(-3)).toBe(false);
+
+      const claim = await geduAuth.rpc("claim_group_session_report_email", {
+        p_group_id: GROUP,
+        p_session_date: utcDate(-3),
+      });
+      expect(claim.error?.code).toBe(FORBIDDEN);
+    } finally {
+      const recertified = await admin
+        .from("gedu_profiles")
+        .update({ certified: true })
+        .eq("user_id", GEDU);
+      expect(recertified.error).toBeNull();
+    }
+  });
+
   it("still lets a gedu current on the group write any of its sessions", async () => {
     // A role change two days ago: still on the group, so every session is
     // theirs, the ones before the change included.

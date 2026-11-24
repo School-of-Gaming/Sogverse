@@ -379,7 +379,9 @@ nothing in this directory restates either.
 at inside the ended period — not cancelled, not one they filed an absence for — the group
 stays theirs until that session's window closes, by the same end definition, and the card
 (the substitute's, named as their former group) stands until the latest of those
-closings. The report mail admits them for those dates alone, the voice room and the chat
+closings. Like a substitute's, the window holds only while they are certified:
+decertifying ends it at once, for both kinds of temporary seat (owner ruling,
+2026-11-24). The report mail admits them for those dates alone, the voice room and the chat
 roster not at all, and a gedu still current on the group gets nothing extra. Where a
 substitute writes every session of the group, they write only those dates too: the run
 is no longer theirs, so the session writes ask a session-scoped gate and the group-level
