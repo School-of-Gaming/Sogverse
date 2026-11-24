@@ -146,10 +146,17 @@ Two amplifiers sit on top:
      because that copy carries the id.
 3. **Server twins depend on the container having loaded.** When a blocker stops GTM,
    neither copy is sent. That defeats the main reason the twins exist.
-4. **The query allowlist refuses the whole page on any unknown key.** Google Ads' `gbraid`,
-   `wbraid`, `gad_source` and `gad_campaignid`, plus `utm_id`, `msclkid`, `ttclid` and
-   Klaviyo's `_kx`, are missing. A landing that carries any of them gets no tags and no
-   report for any platform, silently. Whether live ad links carry them hasn't been checked.
+4. **The query allowlist refuses the whole page on any unknown key.** A landing that
+   carries one gets no tags and no report for any platform, silently.
+   - **Likely live candidates:** Meta's `utm_id`, if the ads' URL parameters include a
+     campaign id; Klaviyo's `_kx`, on email links when its onsite identification is on;
+     Instagram's `igsh`/`igshid`, on organically shared links.
+   - **Not live today:** Google Ads' `gbraid`, `wbraid`, `gad_source` and `gad_campaignid`.
+     SOG runs no Google Ads (the owner, 2026-11-24), and nothing in the code tags for it.
+   - **Vercel can't answer it.** Its request records and Web Analytics both drop the query
+     string, apart from the five `utm_*` fields (checked 2026-11-24). The answer needs either
+     logging the names of refused keys, never their values, or the URL settings of the live
+     ads and Klaviyo.
 5. **Page events carry no parent identifier, even for a signed-in, consenting parent.**
    - It protects little: the lead event carries the same `_fbp` with the hashed email, so
      Meta can already join that browser's page views to the parent.
@@ -315,8 +322,7 @@ Reddit's.
 - **Hashes on page events for signed-in, consenting parents**, server side. This raises match
   quality. Clearing Meta's diagnostic as well needs the hashes on the browser pixel.
 - **Widen the query allowlist** with the standard ad and email parameters, and make refusals
-  visible in the health counts. First check real landing URLs, in Vercel's request log, for
-  the keys being refused.
+  visible in the health counts. First find out which keys are actually refused (finding 4).
 - **Cross-tab withdrawal.** Re-read the consent cookie when a tab becomes visible, and reload
   if marketing has been withdrawn.
 - **IPv6.** Meta suggests sending IPv6. The server sends the first forwarded address. Whether
@@ -394,7 +400,7 @@ once that decision is made.
   counts in Events Manager.
 - Whether Meta formally permits creating `_fbp` ourselves, and whether Reddit accepts an
   `_rdt_uuid` we create.
-- Whether live ad links carry query keys the allowlist refuses.
+- Which query keys live ad and email links carry that the allowlist refuses (finding 4).
 - Whether the navigation boundary is clean in this app, or separate root layouts are needed.
 - Whether Vercel passes IPv6 client addresses.
 - The container's actual contents beyond the tags: the enhanced-measurement switch in GA, and
