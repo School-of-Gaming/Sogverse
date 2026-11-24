@@ -92,7 +92,7 @@ describe("product_seat_counts trigger", () => {
       participant_id: TEST_IDS.GAMER,
       customer_id: TEST_IDS.CUSTOMER,
       status: "waitlisted",
-      waitlisted_at: new Date().toISOString(),
+      waitlisted_at: "2020-01-01T00:00:00Z",
     });
 
     expect(await readRollup(admin, PRODUCT_TRIG)).toEqual({
@@ -111,7 +111,7 @@ describe("product_seat_counts trigger", () => {
         participant_id: TEST_IDS.GAMER,
         customer_id: TEST_IDS.CUSTOMER,
         status: "waitlisted",
-        waitlisted_at: new Date().toISOString(),
+        waitlisted_at: "2020-01-01T00:00:00Z",
       })
       .select("id")
       .single();
@@ -148,7 +148,7 @@ describe("product_seat_counts trigger", () => {
       .from("participations")
       .update({
         status: "ended",
-        ended_at: new Date().toISOString(),
+        ended_at: "2020-01-01T00:00:00Z",
         end_reason: "admin_removed",
       })
       .eq("id", inserted!.id);
@@ -202,7 +202,7 @@ describe("product_seat_counts trigger", () => {
       participant_id: TEST_IDS.GAMER_2,
       customer_id: TEST_IDS.CUSTOMER,
       status: "waitlisted",
-      waitlisted_at: new Date().toISOString(),
+      waitlisted_at: "2020-01-01T00:00:00Z",
     });
 
     expect(await readRollup(admin, PRODUCT_TRIG)).toEqual({

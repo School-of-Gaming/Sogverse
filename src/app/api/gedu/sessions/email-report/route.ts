@@ -12,11 +12,7 @@ import { sessionImageUrl } from "@/lib/images/session-image-url";
 import { getEmailTranslator } from "@/lib/email-templates/translator";
 import { SENDER_EMAIL, SENDER_NAME, SUPPORT_EMAIL } from "@/lib/constants/brand";
 import { ROUTES } from "@/lib/constants/routes";
-import {
-  DEFAULT_LOCALE,
-  resolveLocale,
-  type SupportedLocale,
-} from "@/lib/constants/locales";
+import { resolveLocale, type SupportedLocale } from "@/lib/constants/locales";
 import {
   resolveFamilyRecipients,
   type FamilyRecipient,
@@ -460,7 +456,6 @@ export const POST = defineRoute({
                 locale: participant.locale,
                 signIn: participant.gamer_profiles?.sign_in ?? null,
               },
-          fallbackLocale: DEFAULT_LOCALE,
         });
 
         if (recipients.length === 0) {

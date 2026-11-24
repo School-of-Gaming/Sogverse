@@ -3169,7 +3169,7 @@ export type Database = {
           home_location_id: string | null
           id: string
           last_name: string
-          locale: string | null
+          locale: string
           phone: string | null
           registration_completed_at: string | null
           registration_marketing_consent: boolean | null
@@ -3193,7 +3193,7 @@ export type Database = {
           home_location_id?: string | null
           id: string
           last_name?: string
-          locale?: string | null
+          locale: string
           phone?: string | null
           registration_completed_at?: string | null
           registration_marketing_consent?: boolean | null
@@ -3217,7 +3217,7 @@ export type Database = {
           home_location_id?: string | null
           id?: string
           last_name?: string
-          locale?: string | null
+          locale?: string
           phone?: string | null
           registration_completed_at?: string | null
           registration_marketing_consent?: boolean | null
@@ -4892,6 +4892,7 @@ export type Database = {
         Returns: string
       }
       create_testimonial: { Args: { p_versions: Json }; Returns: string }
+      db_clock: { Args: never; Returns: string }
       decline_session_substitution: {
         Args: { p_request_id: string }
         Returns: Json
@@ -5242,7 +5243,7 @@ export type Database = {
           home_location_id: string | null
           id: string
           last_name: string
-          locale: string | null
+          locale: string
           phone: string | null
           registration_completed_at: string | null
           registration_marketing_consent: boolean | null
@@ -5281,7 +5282,7 @@ export type Database = {
           home_location_id: string | null
           id: string
           last_name: string
-          locale: string | null
+          locale: string
           phone: string | null
           registration_completed_at: string | null
           registration_marketing_consent: boolean | null

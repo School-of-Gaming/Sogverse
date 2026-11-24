@@ -7,6 +7,7 @@ import {
   createAdminTestClient,
   createAnonTestClient,
   createAuthenticatedClient,
+  uniqueSuffix,
 } from "./helpers";
 import { TEST_IDS, TEST_CREDENTIALS } from "./constants";
 import { deleteTestProducts } from "./product-helpers";
@@ -88,10 +89,10 @@ describe("product_list_facets", () => {
     // Unique per run: CI's database keeps whatever a previous run left behind.
     const createGedu = async (label: string) => {
       const { data: created, error: userError } = await admin.auth.admin.createUser({
-        email: `facets-${label}-${Date.now()}@test.local`,
+        email: `facets-${label}-${uniqueSuffix()}@test.local`,
         password: "testpassword123",
         email_confirm: true,
-        user_metadata: { first_name: "Facet", last_name: "Gedu" },
+        user_metadata: { first_name: "Facet", last_name: "Gedu", locale: "en" },
       });
       expect(userError).toBeNull();
       const id = created.user?.id ?? "";

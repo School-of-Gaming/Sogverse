@@ -36,6 +36,7 @@ describe("forfeit_password()", () => {
       email,
       password: PASSWORD,
       email_confirm: true,
+      user_metadata: { locale: "en" },
     });
     expect(error).toBeNull();
     if (!data.user) throw new Error(`could not create ${email}`);

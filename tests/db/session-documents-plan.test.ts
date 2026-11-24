@@ -12,7 +12,14 @@ import {
   geduAssignedProduct,
   traineeAssignedProduct,
 } from "@/services/assignments/assignments.contracts";
-import { createAdminTestClient, createAuthenticatedClient } from "./helpers";
+import {
+  createAdminTestClient,
+  createAuthenticatedClient,
+  dbInterval,
+  dbNow,
+  utcDatesThrough,
+  utcDayOffset,
+} from "./helpers";
 import { TEST_CREDENTIALS, TEST_IDS } from "./constants";
 import {
   createScheduleSlot,
@@ -52,33 +59,17 @@ const OPEN_GROUP_2 = "00000000-0000-0000-0000-000000000865";
 const ALL_PRODUCTS = [DATED, OPEN];
 const ALL_GROUPS = [DATED_GROUP, DATED_GROUP_2, OPEN_GROUP, OPEN_GROUP_2];
 
+/**
+ * The database's clock, read when the file loads: the dates below are built
+ * then, and they count from the database's today, the one its functions judge
+ * against.
+ */
+const DB_NOW = await dbNow();
+
 /** The ten days, from today, that OPEN's second group cancelled. */
-const OPEN_GROUP_2_CANCELLED = Array.from({ length: 10 }, (_, offset) => utcDate(offset));
+const OPEN_GROUP_2_CANCELLED = Array.from({ length: 10 }, (_, offset) => utcDayOffset(DB_NOW, offset));
 
-/** A UTC calendar date `offset` days from now; the products all run in UTC. */
-function utcDate(offset: number): string {
-  const now = new Date();
-  return new Date(
-    Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), now.getUTCDate() + offset),
-  )
-    .toISOString()
-    .slice(0, 10);
-}
-
-/** Every calendar date from `from` to `to`, both inclusive, UTC-pinned. */
-function everyDay(from: string, to: string): string[] {
-  const days: string[] = [];
-  for (
-    let day = new Date(`${from}T00:00:00.000Z`);
-    day.toISOString().slice(0, 10) <= to;
-    day.setUTCDate(day.getUTCDate() + 1)
-  ) {
-    days.push(day.toISOString().slice(0, 10));
-  }
-  return days;
-}
-
-const OPEN_START = utcDate(-30);
+const OPEN_START = utcDayOffset(DB_NOW, -30);
 
 /** January 2030's Mondays at 10:00 UTC, for an hour, as the documents carry them. */
 const DATED_PLAN = ["2030-01-07", "2030-01-14", "2030-01-21", "2030-01-28"].map(
@@ -90,28 +81,35 @@ const DATED_PLAN = ["2030-01-07", "2030-01-14", "2030-01-21", "2030-01-28"].map(
   }),
 );
 
-/** `date` stepped by `days`, UTC-pinned. */
-function addDays(date: string, days: number): string {
-  const day = new Date(`${date}T00:00:00.000Z`);
-  day.setUTCDate(day.getUTCDate() + days);
-  return day.toISOString().slice(0, 10);
+/**
+ * Asserts an open-ended daily plan runs, every day at 23:00 for an hour, from
+ * OPEN's start to one of `horizons`.
+ *
+ * A horizon counting from today moves when midnight passes, since midnight
+ * ends the day's session and the eighth that has not ended is then a day
+ * later. Such a plan is read inside `dbInterval` and passed the horizon for
+ * each clock read, one date unless midnight passed during the read. A horizon
+ * that no midnight moves — beyond a run of cancelled days, or a paid-until
+ * date — is passed alone.
+ */
+function expectDailyPlanTo(plan: PlannedSession[], horizons: string[]) {
+  const last = plan.at(-1)?.date ?? "";
+  expect(horizons).toContain(last);
+  expect(plan.map((session) => session.date)).toEqual(utcDatesThrough(OPEN_START, last));
+  for (const session of plan) {
+    const nextDay = utcDayOffset(new Date(`${session.date}T00:00:00.000Z`), 1);
+    expect(session.startsAt.toISOString()).toBe(`${session.date}T23:00:00.000Z`);
+    expect(session.endsAt.toISOString()).toBe(`${nextDay}T00:00:00.000Z`);
+    expect(session.cancelled).toBe(false);
+  }
 }
 
 /**
- * Asserts an open-ended daily plan runs, every day at 23:00 for an hour, from
- * OPEN's start to `horizon` — or to the day before it, the horizon the
- * database computed if the run crossed midnight between the read and this
- * check.
+ * OPEN_GROUP's horizon on each clock read's day: today plus seven, one further
+ * for the day the group cancelled.
  */
-function expectDailyPlanTo(plan: PlannedSession[], horizon: string) {
-  const last = plan.at(-1)?.date ?? "";
-  expect([horizon, addDays(horizon, -1)]).toContain(last);
-  expect(plan.map((session) => session.date)).toEqual(everyDay(OPEN_START, last));
-  for (const session of plan) {
-    expect(session.startsAt.toISOString()).toBe(`${session.date}T23:00:00.000Z`);
-    expect(session.endsAt.toISOString()).toBe(`${addDays(session.date, 1)}T00:00:00.000Z`);
-    expect(session.cancelled).toBe(false);
-  }
+function openGroupHorizons(reads: Date[]): string[] {
+  return reads.map((read) => utcDayOffset(read, 8));
 }
 
 describe("the session documents carry the plan", () => {
@@ -162,7 +160,7 @@ describe("the session documents carry the plan", () => {
 
     const cancellations = await admin.from("session_cancellations").insert([
       { group_id: DATED_GROUP, session_date: "2030-01-28", cancelled_by: TEST_IDS.ADMIN },
-      { group_id: OPEN_GROUP, session_date: utcDate(2), cancelled_by: TEST_IDS.ADMIN },
+      { group_id: OPEN_GROUP, session_date: utcDayOffset(DB_NOW, 2), cancelled_by: TEST_IDS.ADMIN },
       ...OPEN_GROUP_2_CANCELLED.map((session_date) => ({
         group_id: OPEN_GROUP_2,
         session_date,
@@ -192,7 +190,7 @@ describe("the session documents carry the plan", () => {
       stripe_customer_id: "cus_session_documents_plan",
       currency: "eur",
       status: "active",
-      current_period_end: `${utcDate(40)}T12:00:00.000Z`,
+      current_period_end: `${utcDayOffset(DB_NOW, 40)}T12:00:00.000Z`,
     });
     expect(subscription.error).toBeNull();
   });
@@ -243,15 +241,17 @@ describe("the session documents carry the plan", () => {
 
   describe("on an open-ended product", () => {
     it("the gedu group feed plans to its group's horizon and has no final session", async () => {
-      const { data, error } = await adminAuth.rpc("get_gedu_group_feed", {
-        p_group_id: OPEN_GROUP,
-      });
+      const {
+        result: { data, error },
+        reads,
+      } = await dbInterval(async () =>
+        adminAuth.rpc("get_gedu_group_feed", { p_group_id: OPEN_GROUP }),
+      );
       expect(error).toBeNull();
       const feed = geduGroupFeed.parse(data);
-      // Today plus seven, one further for the group's cancelled day after
-      // tomorrow. The cancelled date is still planned.
-      expectDailyPlanTo(feed.planned_sessions, utcDate(8));
-      expect(feed.planned_sessions.map((s) => s.date)).toContain(utcDate(2));
+      // The cancelled day after tomorrow is still planned.
+      expectDailyPlanTo(feed.planned_sessions, openGroupHorizons(reads));
+      expect(feed.planned_sessions.map((s) => s.date)).toContain(utcDayOffset(DB_NOW, 2));
       expect(feed.final_session_date).toBeNull();
     });
 
@@ -262,26 +262,29 @@ describe("the session documents carry the plan", () => {
       expect(error).toBeNull();
       const feed = geduGroupFeed.parse(data);
       // Ten cancelled days, then eight that run: the first of them, ten days
-      // away, is inside, and the plan reaches the eighth.
-      expectDailyPlanTo(feed.planned_sessions, utcDate(17));
-      expect(feed.planned_sessions.map((s) => s.date)).toContain(utcDate(10));
+      // away, is inside, and the plan reaches the eighth. A midnight only eats
+      // into the cancelled days, so the eighth stays where it is.
+      expectDailyPlanTo(feed.planned_sessions, [utcDayOffset(DB_NOW, 17)]);
+      expect(feed.planned_sessions.map((s) => s.date)).toContain(utcDayOffset(DB_NOW, 10));
     });
 
     it("the trainee's feed and door carry the same plan", async () => {
-      const feedRead = await geduAuth.rpc("get_trainee_group_feed", {
-        p_group_id: OPEN_GROUP,
-      });
-      expect(feedRead.error).toBeNull();
-      const feed = traineeGroupFeed.parse(feedRead.data);
-      expectDailyPlanTo(feed.planned_sessions, utcDate(8));
+      const feedRead = await dbInterval(async () =>
+        geduAuth.rpc("get_trainee_group_feed", { p_group_id: OPEN_GROUP }),
+      );
+      expect(feedRead.result.error).toBeNull();
+      const feed = traineeGroupFeed.parse(feedRead.result.data);
+      expectDailyPlanTo(feed.planned_sessions, openGroupHorizons(feedRead.reads));
       expect(feed.final_session_date).toBeNull();
 
-      const doorRead = await geduAuth.rpc("get_trainee_assigned_product", {
-        p_product_id: OPEN,
-      });
-      expect(doorRead.error).toBeNull();
-      const door = traineeAssignedProduct.parse(doorRead.data);
-      expect(door.planned_sessions).toEqual(feed.planned_sessions);
+      // A read of its own, so judged against its own clock reads rather than
+      // compared with the feed's: midnight can fall between the two.
+      const doorRead = await dbInterval(async () =>
+        geduAuth.rpc("get_trainee_assigned_product", { p_product_id: OPEN }),
+      );
+      expect(doorRead.result.error).toBeNull();
+      const door = traineeAssignedProduct.parse(doorRead.result.data);
+      expectDailyPlanTo(door.planned_sessions, openGroupHorizons(doorRead.reads));
       expect(door.final_session_date).toBeNull();
     });
 
@@ -291,19 +294,24 @@ describe("the session documents carry the plan", () => {
       });
       expect(error).toBeNull();
       const document = adminProductSessions.parse(data);
-      // The second group's horizon, past the first group's and the product's.
-      expectDailyPlanTo(document.planned_sessions, utcDate(17));
+      // The second group's horizon, past the first group's and the product's
+      // on either side of a midnight.
+      expectDailyPlanTo(document.planned_sessions, [utcDayOffset(DB_NOW, 17)]);
       expect(document.groups.map((g) => g.final_session_date)).toEqual([null, null]);
     });
   });
 
   describe("the family document", () => {
+    /** The family's plan, with the database's clock read on either side of it. */
     async function familyPlan() {
-      const { data, error } = await customerAuth.rpc("get_my_family_product_feed", {
-        p_participation_id: participationId,
-      });
+      const {
+        result: { data, error },
+        reads,
+      } = await dbInterval(async () =>
+        customerAuth.rpc("get_my_family_product_feed", { p_participation_id: participationId }),
+      );
       expect(error).toBeNull();
-      return familyProductFeed.parse(data).planned_sessions;
+      return { plan: familyProductFeed.parse(data).planned_sessions, reads };
     }
 
     async function setSubscriptionStatus(status: "active" | "canceling") {
@@ -316,14 +324,17 @@ describe("the session documents carry the plan", () => {
 
     it("plans to its own group's horizon, past the date the group cancelled", async () => {
       await setSubscriptionStatus("active");
-      // Today plus seven, one further for the cancelled day after tomorrow.
-      expectDailyPlanTo(await familyPlan(), utcDate(8));
+      const { plan, reads } = await familyPlan();
+      expectDailyPlanTo(plan, openGroupHorizons(reads));
     });
 
     it("plans a cancelled membership through the date it is paid until", async () => {
       await setSubscriptionStatus("canceling");
       try {
-        expectDailyPlanTo(await familyPlan(), utcDate(40));
+        // The paid-until date is past the group's horizon on either side of a
+        // midnight, so it alone is the end.
+        const { plan } = await familyPlan();
+        expectDailyPlanTo(plan, [utcDayOffset(DB_NOW, 40)]);
       } finally {
         await setSubscriptionStatus("active");
       }

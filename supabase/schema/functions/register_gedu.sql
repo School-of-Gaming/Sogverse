@@ -19,13 +19,14 @@ BEGIN
   -- Callers pass '' for absent optional text (the generated RPC arg types are
   -- non-null `string`); NULLIF turns those back into SQL NULL so e.g. an empty
   -- phone stays NULL rather than tripping the profiles.phone format CHECK.
+  -- The locale is not optional, so it is stored as it is.
   -- The names are trimmed of whitespace of every kind, which the profiles
   -- CHECKs refuse at either edge.
   UPDATE public.profiles
   SET role             = 'gedu',
       first_name       = regexp_replace(p_first_name, '^[[:space:]\u00A0\u200B\uFEFF]+|[[:space:]\u00A0\u200B\uFEFF]+$', '', 'g'),
       last_name        = regexp_replace(p_last_name, '^[[:space:]\u00A0\u200B\uFEFF]+|[[:space:]\u00A0\u200B\uFEFF]+$', '', 'g'),
-      locale           = NULLIF(p_locale, ''),
+      locale           = p_locale,
       phone            = NULLIF(p_phone, ''),
       spoken_languages = COALESCE(p_spoken_languages, '{}'),
       -- A password account arrives stamped by handle_new_user; a Google one

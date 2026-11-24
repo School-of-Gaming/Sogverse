@@ -221,12 +221,12 @@ describe("sendGamerWelcomeEmail — what it sends", () => {
     expect(mockBuildGamerWelcomeEmail.mock.calls[0][1]).toBe("sv");
   });
 
-  it("falls back to the request's language when the stored locale is not one we ship", async () => {
+  it("writes in the default locale when the stored one is not one we ship", async () => {
     supabase.state.profile = { ...supabase.state.profile, locale: "xx" };
 
     await sendGamerWelcomeEmail({ request: request("fr"), gamerId: GAMER_ID });
 
-    expect(mockGetEmailTranslator).toHaveBeenCalledWith("fr");
+    expect(mockGetEmailTranslator).toHaveBeenCalledWith("en");
   });
 
   it("builds the verification link on the TRUSTED origin, not the caller's Host", async () => {

@@ -4,7 +4,11 @@ import type { SupabaseClient } from "@supabase/supabase-js";
 import type { Database } from "@/types/database.types";
 import { userListGamer } from "@/services/users/users.contracts";
 import { keysetPage, type KeysetCursor } from "@/lib/supabase/keyset";
-import { createAdminTestClient, createAuthenticatedClient } from "./helpers";
+import {
+  createAdminTestClient,
+  createAuthenticatedClient,
+  uniqueSuffix,
+} from "./helpers";
 import { TEST_IDS, TEST_CREDENTIALS } from "./constants";
 
 /**
@@ -242,10 +246,10 @@ describe("user_list_entries", () => {
   it("lists a gamer with no parent link as a top-level row", async () => {
     const { data: created, error: createError } =
       await admin.auth.admin.createUser({
-        email: `user-list-unlinked-${Date.now()}@gamer.sogverse.internal`,
+        email: `user-list-unlinked-${uniqueSuffix()}@gamer.sogverse.internal`,
         password: "testpassword123",
         email_confirm: true,
-        user_metadata: { first_name: "Unlinked", last_name: "Gamer" },
+        user_metadata: { first_name: "Unlinked", last_name: "Gamer", locale: "en" },
       });
     expect(createError).toBeNull();
     const gamerId = created.user!.id;
@@ -497,7 +501,7 @@ describe("user_list_entries", () => {
     } finally {
       await admin
         .from("gedu_profiles")
-        .update({ certified: true, certified_at: new Date().toISOString() })
+        .update({ certified: true, certified_at: "2020-01-01T00:00:00Z" })
         .eq("user_id", TEST_IDS.GEDU);
     }
   });
@@ -518,7 +522,7 @@ describe("user_list_entries", () => {
       .from("gedu_profiles")
       .update({
         criminal_record_check_passed: true,
-        criminal_record_check_at: new Date().toISOString(),
+        criminal_record_check_at: "2020-01-01T00:00:00Z",
       })
       .eq("user_id", TEST_IDS.GEDU);
 

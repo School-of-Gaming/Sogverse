@@ -3,10 +3,7 @@ import "server-only";
 import { sendTransactionalEmail } from "@/lib/brevo";
 import { SENDER_EMAIL, SENDER_NAME, SUPPORT_EMAIL } from "@/lib/constants/brand";
 import { ROUTES } from "@/lib/constants/routes";
-import {
-  detectLocaleFromHeader,
-  isSupportedLocale,
-} from "@/lib/constants/locales";
+import { resolveLocale } from "@/lib/constants/locales";
 import { createEmailVerificationToken } from "@/lib/email-verification";
 import { buildGamerWelcomeEmail } from "@/lib/email-templates/gamer-welcome";
 import { getEmailTranslator } from "@/lib/email-templates/translator";
@@ -105,12 +102,8 @@ export async function sendGamerWelcomeEmail(args: {
 
   // The CHILD's locale, because the child is the reader. Creation copies the
   // parent's stored locale onto the child, and it is the child's to change
-  // afterwards; the request's own Accept-Language is the fallback for a child
-  // with none stored (a parent who never chose one), which on a create or a
-  // resend is the parent's browser and is the best guess available for a family.
-  const locale = isSupportedLocale(gamer.locale)
-    ? gamer.locale
-    : detectLocaleFromHeader(request.headers.get("Accept-Language"));
+  // afterwards.
+  const locale = resolveLocale(gamer.locale);
   const t = await getEmailTranslator(locale);
 
   await sendTransactionalEmail({

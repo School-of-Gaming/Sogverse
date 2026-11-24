@@ -212,7 +212,7 @@ describe("gamer photo consents", () => {
       email: "photo-outsider@gamer.sogverse.internal",
       password: "testpassword123",
       email_confirm: true,
-      user_metadata: { first_name: "Outsider", last_name: "Child" },
+      user_metadata: { first_name: "Outsider", last_name: "Child", locale: "en" },
     });
     expect(created.error).toBeNull();
     const userId = created.data.user!.id;
@@ -583,7 +583,7 @@ describe("gamer photo consents", () => {
           .from("participations")
           .update({
             status: "ended",
-            ended_at: new Date().toISOString(),
+            ended_at: "2020-01-01T00:00:00Z",
             end_reason: "admin_removed",
           })
           .eq("group_id", GROUP_TAUGHT)

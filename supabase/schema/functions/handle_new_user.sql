@@ -26,6 +26,7 @@ DECLARE
   intent_kind_value    TEXT;
   intent_id_value      UUID;
   registration_value   TIMESTAMPTZ;
+  locale_value         TEXT;
 BEGIN
   -- Every name is trimmed of whitespace of every kind first, because the
   -- profiles CHECKs refuse it at either edge. A first name of nothing but
@@ -153,18 +154,40 @@ BEGIN
     ELSE NULL
   END;
 
+  -- The locale, split on the same test. Every route and script that creates a
+  -- password account knows the language it is creating it in, so one that
+  -- arrives without a well-formed locale is a caller's bug: the account is
+  -- refused, unlike a malformed utm value above, because a guess stored here
+  -- would be the language the person is then mailed and shown the site in.
+  -- The value is checked exactly as sent, untrimmed: every caller sends an
+  -- exact code, so padding is as much a caller's bug as any other shape.
+  -- An identity provider (Google) carries no locale of ours, so the account
+  -- takes 'en' as a placeholder while it is unregistered; the completion
+  -- route writes the reader's locale over it.
+  IF NEW.raw_app_meta_data->>'provider' = 'email' THEN
+    locale_value := NEW.raw_user_meta_data->>'locale';
+
+    IF locale_value IS NULL OR locale_value !~ '^[a-z]{2,3}(-[a-z]{2})?$' THEN
+      RAISE EXCEPTION 'handle_new_user: a password account needs its UI locale, got %; pass locale in user_metadata',
+        COALESCE(quote_literal(NEW.raw_user_meta_data->>'locale'), 'none')
+        USING ERRCODE = '22023';
+    END IF;
+  ELSE
+    locale_value := 'en';
+  END IF;
+
   INSERT INTO public.profiles (
     id, email, role, first_name, last_name,
     utm_source, utm_medium, utm_campaign, utm_content, utm_term,
     signup_intent_kind, signup_intent_id,
-    registration_completed_at
+    registration_completed_at, locale
   )
   VALUES (
     NEW.id, NEW.email, 'customer', profile_first_name, profile_last_name,
     utm_source_value, utm_medium_value, utm_campaign_value,
     utm_content_value, utm_term_value,
     intent_kind_value, intent_id_value,
-    registration_value
+    registration_value, locale_value
   );
 
   INSERT INTO public.customer_profiles (user_id) VALUES (NEW.id);

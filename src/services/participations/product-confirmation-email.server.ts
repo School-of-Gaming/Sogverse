@@ -3,10 +3,7 @@ import { sendTransactionalEmail } from "@/lib/brevo";
 import { SENDER_EMAIL, SENDER_NAME, SUPPORT_EMAIL } from "@/lib/constants/brand";
 import { ROUTES } from "@/lib/constants/routes";
 import type { SupportedCurrency } from "@/lib/constants/currency";
-import {
-  detectLocaleFromHeader,
-  type SupportedLocale,
-} from "@/lib/constants/locales";
+import type { SupportedLocale } from "@/lib/constants/locales";
 import {
   buildProductConfirmationEmail,
   productConfirmationAttachments,
@@ -99,10 +96,10 @@ export type ProductConfirmationSendMode = ProductConfirmationMode | "honoured-of
 export interface ProductConfirmationEmailInput {
   client: AppSupabaseClient;
   /**
-   * The request the signup arrived on. Two things are read from it, and it is
-   * passed whole rather than pre-resolved so neither can be got wrong at a call
-   * site: the TRUSTED origin (`getOrigin`, never the raw Host — the links go in
-   * an email), and `Accept-Language` as the locale fallback. The Stripe webhook
+   * The request the signup arrived on, read for the TRUSTED origin
+   * (`getOrigin`, never the raw Host — the links go in an email). It is passed
+   * whole rather than pre-resolved so that cannot be got wrong at a call
+   * site. The Stripe webhook
    * passes Stripe's own request, which is correct: its Host is either our
    * deployment's or untrusted, and both resolve to the canonical site URL.
    */
@@ -317,9 +314,8 @@ async function send({
   // naming them moves into the second person.
   const isSelfSeat = participantId === customerId;
 
-  // Stored preference → what the browser asked for → English, per recipient —
-  // the same chain every other send in the app walks, applied to the parent and
-  // to the child separately, because they need not share a locale.
+  // Each recipient's own stored locale, the parent's and the child's
+  // separately, because they need not share one.
   const recipients = resolveFamilyRecipients({
     parents: [
       { email: customer.email, firstName: customer.first_name, locale: customer.locale },
@@ -332,7 +328,6 @@ async function send({
           locale: participant.locale,
           signIn: participant.gamer_profiles?.sign_in ?? null,
         },
-    fallbackLocale: detectLocaleFromHeader(request.headers.get("Accept-Language")),
   });
 
   // The TRUSTED origin, never the raw Host header — these links go in an email,

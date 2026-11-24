@@ -177,6 +177,14 @@ describe("POST /api/gedu/register", () => {
     expect(mockCreateUser).not.toHaveBeenCalled();
   });
 
+  it("returns 400 for a body naming no locale, before creating anything", async () => {
+    const { locale: _omitted, ...noLocale } = validBody;
+    const response = await POST(registerRequest(noLocale));
+
+    expect(response.status).toBe(400);
+    expect(mockCreateUser).not.toHaveBeenCalled();
+  });
+
   it("returns 400 for an address in our own synthetic gamer domain", async () => {
     // `@gamer.sogverse.internal` is the namespace a child's username-mode
     // account lives in, and GoTrue's uniqueness on the address is what makes a
@@ -255,6 +263,20 @@ describe("POST /api/gedu/register", () => {
     expect(mockRpc).toHaveBeenCalledWith(
       "register_gedu",
       expect.objectContaining({ p_user_id: NEW_USER_ID, p_first_name: "Aino" }),
+    );
+  });
+
+  it("creates the account with the registration locale in its signup metadata", async () => {
+    // The trigger stores it from there, and refuses the account without one.
+    const response = await POST(registerRequest(validBody));
+
+    expect(response.status).toBe(200);
+    expect(
+      asObject(asObject(mockCreateUser.mock.calls[0][0]).user_metadata).locale,
+    ).toBe("fi");
+    expect(mockRpc).toHaveBeenCalledWith(
+      "register_gedu",
+      expect.objectContaining({ p_locale: "fi" }),
     );
   });
 

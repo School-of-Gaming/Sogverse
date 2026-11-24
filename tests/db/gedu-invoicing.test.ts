@@ -5,6 +5,8 @@ import {
   createAdminTestClient,
   createAnonTestClient,
   createAuthenticatedClient,
+  dbNow,
+  uniqueSuffix,
 } from "./helpers";
 import { TEST_IDS, TEST_CREDENTIALS } from "./constants";
 import { deleteTestProducts } from "./product-helpers";
@@ -196,12 +198,12 @@ describe("gedu invoicing", () => {
     // The sub is minted rather than seeded, and unique per run, so whatever it
     // holds is this file's alone — which is what lets its own read be asserted
     // whole.
-    const email = `gedu-invoicing-sub-${Date.now()}@test.local`;
+    const email = `gedu-invoicing-sub-${uniqueSuffix()}@test.local`;
     const { data: created, error } = await admin.auth.admin.createUser({
       email,
       password: "testpassword123",
       email_confirm: true,
-      user_metadata: { first_name: "Sanni", last_name: "Sijainen" },
+      user_metadata: { first_name: "Sanni", last_name: "Sijainen", locale: "en" },
     });
     expect(error).toBeNull();
     subId = created.user?.id ?? "";
@@ -741,7 +743,7 @@ describe("gedu invoicing", () => {
       });
       expect(read.error).toBeNull();
       periodDoc = geduInvoicingSnapshot.parse(read.data);
-      periodView = buildGeduInvoicing({ snapshot: periodDoc, locale: "en", now: new Date() });
+      periodView = buildGeduInvoicing({ snapshot: periodDoc, locale: "en", now: await dbNow() });
     });
 
     it("keeps a removed gedu's past lines, and gives their replacement none of them", () => {

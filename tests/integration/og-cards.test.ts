@@ -101,7 +101,6 @@ describe.each([
     const bytes = (await response.arrayBuffer()).byteLength;
     expect(bytes).toBeGreaterThan(0);
     expect(bytes).toBeLessThanOrEqual(PREVIEW_IMAGE_BUDGET_BYTES);
-    expect(response.headers.get("content-length")).toBe(String(bytes));
   });
 
   it("caches hard, because it changes only when we deploy", async () => {

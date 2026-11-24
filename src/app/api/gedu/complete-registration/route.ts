@@ -4,7 +4,6 @@ import { createAdminClient } from "@/lib/supabase/admin";
 import { sendTransactionalEmail } from "@/lib/brevo";
 import { SENDER_EMAIL, SENDER_NAME, SUPPORT_EMAIL } from "@/lib/constants/brand";
 import { ROUTES } from "@/lib/constants/routes";
-import { detectLocaleFromHeader, resolveLocale } from "@/lib/constants/locales";
 import { phoneDigitsForStorage } from "@/lib/constants/phone";
 import { buildWelcomeGeduEmail } from "@/lib/email-templates/welcome";
 import { getEmailTranslator } from "@/lib/email-templates/translator";
@@ -56,7 +55,7 @@ export const POST = defineRoute({
       lastName,
       phone,
       spokenLanguages,
-      locale: requestedLocale,
+      locale,
       locationIds,
       minecraftUsername,
       robloxUsername,
@@ -83,7 +82,6 @@ export const POST = defineRoute({
       );
     }
 
-    const locale = resolveLocale(requestedLocale);
     const admin = createAdminClient();
     const userId = user.id;
 
@@ -92,6 +90,8 @@ export const POST = defineRoute({
       robloxUsername,
     });
 
+    // The locale the finish page was read in writes over the placeholder the
+    // account was created with, which nobody chose.
     const { error: rpcError } = await promoteToGedu(admin, {
       userId,
       fields: { firstName, lastName, spokenLanguages, locationIds },
@@ -144,18 +144,11 @@ export const POST = defineRoute({
     }
 
     // The welcome mail, swallowed on failure like every product send.
-    const mailLocale = resolveLocale(
-      requestedLocale,
-      resolveLocale(
-        profile.locale,
-        detectLocaleFromHeader(request.headers.get("Accept-Language")),
-      ),
-    );
     try {
       // The TRUSTED origin, never the raw Host header — the link below carries
       // a signed token.
       const origin = getOrigin(request);
-      const t = await getEmailTranslator(mailLocale);
+      const t = await getEmailTranslator(locale);
       const verificationUrl = emailVerifiedByGoogle
         ? undefined
         : `${origin}${ROUTES.verifyEmail}?token=${encodeURIComponent(
@@ -167,7 +160,7 @@ export const POST = defineRoute({
         fromName: SENDER_NAME,
         toEmail: profile.email,
         subject: t("welcomeGedu.subject"),
-        htmlContent: buildWelcomeGeduEmail(t, mailLocale, {
+        htmlContent: buildWelcomeGeduEmail(t, locale, {
           firstName,
           verificationUrl,
           dashboardUrl: `${origin}${ROUTES.gedu.dashboard}`,

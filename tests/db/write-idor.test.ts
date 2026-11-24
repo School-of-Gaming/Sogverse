@@ -712,7 +712,7 @@ describe("write-path IDOR (§3.4 check 3)", () => {
       group_id: GROUP,
       user_id: TEST_IDS.GAMER,
       placed_by: TEST_IDS.ADMIN,
-      session_opens_at: new Date().toISOString(),
+      session_opens_at: "2020-01-01T00:00:00Z",
     });
 
     await admin

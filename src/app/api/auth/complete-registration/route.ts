@@ -5,7 +5,6 @@ import { sendTransactionalEmail } from "@/lib/brevo";
 import { SENDER_EMAIL, SENDER_NAME, SUPPORT_EMAIL } from "@/lib/constants/brand";
 import { ROUTES } from "@/lib/constants/routes";
 import { REGISTRATION_CONSENT_DOCUMENTS } from "@/lib/constants/consent-documents";
-import { detectLocaleFromHeader, resolveLocale } from "@/lib/constants/locales";
 import { phoneDigitsForStorage } from "@/lib/constants/phone";
 import { buildWelcomeParentEmail } from "@/lib/email-templates/welcome";
 import { getEmailTranslator } from "@/lib/email-templates/translator";
@@ -67,7 +66,7 @@ export const POST = defineRoute({
       lastName,
       phone,
       homeLocationId,
-      locale: requestedLocale,
+      locale,
       redirect,
       eventId,
       marketingConsent,
@@ -120,7 +119,9 @@ export const POST = defineRoute({
     //
     // The marketing answer is the write-once record of what this form was told
     // about School of Gaming's own mailing list — the current answer lives in
-    // Klaviyo — written even when it is a no, an absent field read as one.
+    // Klaviyo — written even when it is a no, an absent field read as one. The
+    // locale the form was read in writes over the placeholder the account was
+    // created with, which nobody chose.
     const { error: profileError } = await admin
       .from("profiles")
       .update({
@@ -128,7 +129,7 @@ export const POST = defineRoute({
         last_name: lastName,
         ...(phoneDigits ? { phone: phoneDigits } : {}),
         ...(homeLocationId ? { home_location_id: homeLocationId } : {}),
-        ...(requestedLocale ? { locale: requestedLocale } : {}),
+        locale,
         ...utmProfileColumns(request),
         ...signUpIntentColumns(signUpIntent),
         registration_marketing_consent: marketingConsent ?? false,
@@ -199,15 +200,6 @@ export const POST = defineRoute({
         { status: 409 },
       );
     }
-
-    // The mail's language: what the form was read in, else the account's
-    // stored preference, else what the browser asked for.
-    const locale =
-      requestedLocale ??
-      resolveLocale(
-        profile.locale,
-        detectLocaleFromHeader(request.headers.get("Accept-Language")),
-      );
 
     // The welcome mail, swallowed on failure like every product send: the
     // registration is the outcome, and it is committed.

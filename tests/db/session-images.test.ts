@@ -3,7 +3,13 @@ import { z } from "zod";
 import type { SupabaseClient } from "@supabase/supabase-js";
 import type { Database } from "@/types/database.types";
 import { geduGroupFeed } from "@/services/gedu-sessions/gedu-sessions.contracts";
-import { createAdminTestClient, createAuthenticatedClient } from "./helpers";
+import {
+  createAdminTestClient,
+  createAuthenticatedClient,
+  dbNow,
+  utcDayOffset,
+  uniqueSuffix,
+} from "./helpers";
 import { TEST_CREDENTIALS, TEST_IDS } from "./constants";
 import {
   createScheduleSlot,
@@ -79,27 +85,24 @@ const NO_SUCH_IMAGE = "00000000-0000-0000-0000-0000000006a9";
 /** The product cap at launch. Passed in by the route from the contracts module. */
 const CAP = 5;
 
-/** As in the gedu feed fixtures: late enough that today's session has not ended. */
+/** Every day of the week, so any date has a session; yesterday's has always ended. */
 const SLOT_START = "23:00";
 const SLOT_MINUTES = 60;
 
-/** `YYYY-MM-DD`, `offset` days from today. The products run in UTC. */
-function dayOffset(offset: number): string {
-  const d = new Date();
-  d.setUTCDate(d.getUTCDate() + offset);
-  return d.toISOString().slice(0, 10);
-}
-
-const YESTERDAY = dayOffset(-1);
-const TWO_DAYS_AGO = dayOffset(-2);
 /**
- * A session still ahead of us, inside the horizon.
- *
- * The fixture products carry no `end_date`, so the writability helper's horizon
- * is today + 90 and a week out is comfortably inside it — while being far enough
- * ahead that no clock skew in CI could make it today's session.
+ * The database's clock, read when the file loads: the dates below are built
+ * then, and they count from the database's today, the one its functions judge
+ * against.
  */
-const NEXT_WEEK = dayOffset(7);
+const DB_NOW = await dbNow();
+
+const YESTERDAY = utcDayOffset(DB_NOW, -1);
+const TWO_DAYS_AGO = utcDayOffset(DB_NOW, -2);
+/**
+ * A session still ahead, inside the horizon: the fixture products carry no
+ * `end_date`, so the writability helper's horizon is today + 90.
+ */
+const NEXT_WEEK = utcDayOffset(DB_NOW, 7);
 
 
 describe("session photos", () => {
@@ -155,7 +158,7 @@ describe("session photos", () => {
       await createTestProduct(admin, {
         id,
         seatCount: null,
-        startDate: dayOffset(-30),
+        startDate: utcDayOffset(DB_NOW, -30),
       });
       await admin.from("product_translations").insert({
         product_id: id,
@@ -190,13 +193,13 @@ describe("session photos", () => {
     // The second gedu on the SAME group. Unique per run: CI's database carries
     // the seed fixtures and whatever a previous run left behind, so a fixed
     // address is a collision waiting to happen.
-    const email = `photo-peer-${Date.now()}@test.local`;
+    const email = `photo-peer-${uniqueSuffix()}@test.local`;
     const { data: created, error: createError } =
       await admin.auth.admin.createUser({
         email,
         password: "testpassword123",
         email_confirm: true,
-        user_metadata: { first_name: "Peer", last_name: "Gedu" },
+        user_metadata: { first_name: "Peer", last_name: "Gedu", locale: "en" },
       });
     expect(createError).toBeNull();
     peerId = created.user!.id;
@@ -322,7 +325,7 @@ describe("session photos", () => {
           group_id: GROUP_OTHER,
           session_date: YESTERDAY,
           starts_at: `${YESTERDAY}T23:00:00Z`,
-          ends_at: `${dayOffset(0)}T00:00:00Z`,
+          ends_at: `${utcDayOffset(DB_NOW, 0)}T00:00:00Z`,
         })
         .select("id")
         .single();
@@ -582,7 +585,7 @@ describe("session photos", () => {
           group_id: GROUP_MINE,
           session_date: YESTERDAY,
           starts_at: `${YESTERDAY}T23:00:00Z`,
-          ends_at: `${dayOffset(0)}T00:00:00Z`,
+          ends_at: `${utcDayOffset(DB_NOW, 0)}T00:00:00Z`,
         })
         .select("id")
         .single();
@@ -689,7 +692,7 @@ describe("session photos", () => {
       // A photo cannot document a session that was never scheduled.
       const { error } = await geduAuth.rpc("add_group_session_image", {
         p_group_id: GROUP_MINE,
-        p_session_date: dayOffset(-400),
+        p_session_date: utcDayOffset(DB_NOW, -400),
         p_width: 1920,
         p_height: 1080,
         p_max_images: CAP,

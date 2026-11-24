@@ -2,7 +2,12 @@ import { describe, it, expect, beforeAll, afterEach, afterAll } from "vitest";
 import type { SupabaseClient } from "@supabase/supabase-js";
 import type { Database } from "@/types/database.types";
 import type { VerificationEmailRequest } from "@/types";
-import { createAdminTestClient, createAuthenticatedClient } from "./helpers";
+import {
+  createAdminTestClient,
+  createAuthenticatedClient,
+  dbInterval,
+  dbTime,
+} from "./helpers";
 import { TEST_CREDENTIALS, TEST_IDS } from "./constants";
 
 /**
@@ -33,6 +38,15 @@ import { TEST_CREDENTIALS, TEST_IDS } from "./constants";
  * The two children are both here because the parent-scoped sibling's key is the
  * SUBJECT, so a row can land on either of them.
  */
+/**
+ * A request a second outside the one-hour window, on the database's clock. The
+ * window's open side is the one that grants a send, so the test sits as close
+ * to it as it can: a row this old must neither count nor survive.
+ */
+async function justExpired(): Promise<string> {
+  return (await dbTime(-(60 * 60_000 + 1_000))).toISOString();
+}
+
 const SCOPED_USERS: string[] = [
   TEST_IDS.CUSTOMER,
   TEST_IDS.CUSTOMER_2,
@@ -112,18 +126,22 @@ describe("request_my_verification_email", () => {
   it("prunes the caller's expired rows on the way past", async () => {
     // These rows are pure bookkeeping — nothing reads them but the function's
     // own count — so one outside the window can never matter again and the RPC
-    // deletes it rather than leaving the table to grow forever.
+    // deletes it rather than leaving the table to grow forever. Six of them, a
+    // whole allowance, so counting them would refuse the call.
+    const expired = await justExpired();
     const { error: seedError } = await admin
       .from("verification_email_requests")
-      .insert({
-        user_id: TEST_IDS.CUSTOMER,
-        created_at: new Date(Date.now() - 2 * 60 * 60 * 1000).toISOString(),
-      });
+      .insert(
+        Array.from({ length: 6 }, () => ({
+          user_id: TEST_IDS.CUSTOMER,
+          created_at: expired,
+        })),
+      );
     expect(seedError).toBeNull();
 
-    // The expired row must not count against the limit either.
-    const { data: accepted } = await customer.rpc(
-      "request_my_verification_email",
+    // The expired rows must not count against the limit either.
+    const { result: accepted, notBefore, notAfter } = await dbInterval(
+      async () => (await customer.rpc("request_my_verification_email")).data,
     );
     expect(accepted).toBe(true);
 
@@ -138,19 +156,17 @@ describe("request_my_verification_email", () => {
 
     expect(rows).toHaveLength(1);
     expect(rows[0].user_id).toBe(TEST_IDS.CUSTOMER);
-    expect(
-      Date.now() - new Date(rows[0].created_at).getTime(),
-      "the surviving row is the fresh one",
-    ).toBeLessThan(60 * 60 * 1000);
+    // The surviving row is the fresh one.
+    const createdAt = new Date(rows[0].created_at).getTime();
+    expect(createdAt).toBeGreaterThanOrEqual(notBefore.getTime());
+    expect(createdAt).toBeLessThanOrEqual(notAfter.getTime());
   });
 
   it("prunes only the caller's own expired rows", async () => {
-    const twoHoursAgo = new Date(
-      Date.now() - 2 * 60 * 60 * 1000,
-    ).toISOString();
+    const expired = await justExpired();
     await admin.from("verification_email_requests").insert([
-      { user_id: TEST_IDS.CUSTOMER, created_at: twoHoursAgo },
-      { user_id: TEST_IDS.CUSTOMER_2, created_at: twoHoursAgo },
+      { user_id: TEST_IDS.CUSTOMER, created_at: expired },
+      { user_id: TEST_IDS.CUSTOMER_2, created_at: expired },
     ]);
 
     await customer.rpc("request_my_verification_email");
@@ -159,7 +175,7 @@ describe("request_my_verification_email", () => {
       .from("verification_email_requests")
       .select("user_id")
       .in("user_id", SCOPED_USERS)
-      .lt("created_at", new Date(Date.now() - 60 * 60 * 1000).toISOString());
+      .lte("created_at", expired);
 
     // The other caller's expired row is still there: the DELETE is keyed to
     // auth.uid() exactly as the INSERT and the count are.
@@ -271,12 +287,10 @@ describe("request_my_verification_email", () => {
     });
 
     it("prunes the subject's expired rows, and only theirs", async () => {
-      const twoHoursAgo = new Date(
-        Date.now() - 2 * 60 * 60 * 1000,
-      ).toISOString();
+      const expired = await justExpired();
       await admin.from("verification_email_requests").insert([
-        { user_id: TEST_IDS.GAMER, created_at: twoHoursAgo },
-        { user_id: TEST_IDS.CUSTOMER_2, created_at: twoHoursAgo },
+        { user_id: TEST_IDS.GAMER, created_at: expired },
+        { user_id: TEST_IDS.CUSTOMER_2, created_at: expired },
       ]);
 
       const { data: accepted } = await customer.rpc(
@@ -290,7 +304,7 @@ describe("request_my_verification_email", () => {
         .from("verification_email_requests")
         .select("user_id")
         .in("user_id", SCOPED_USERS)
-        .lt("created_at", new Date(Date.now() - 60 * 60 * 1000).toISOString());
+        .lte("created_at", expired);
 
       expect(survivors).toEqual([{ user_id: TEST_IDS.CUSTOMER_2 }]);
     });

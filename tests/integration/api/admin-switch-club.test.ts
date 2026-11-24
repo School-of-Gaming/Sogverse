@@ -329,7 +329,7 @@ beforeEach(() => {
     product_groups: { data: { id: TARGET_GROUP_ID }, error: null },
     profiles: {
       data: [
-        { id: GAMER_ID, first_name: "Aino", locale: null },
+        { id: GAMER_ID, first_name: "Aino", locale: "en" },
         { id: CUSTOMER_ID, first_name: "Marja", locale: "fi" },
       ],
       error: null,

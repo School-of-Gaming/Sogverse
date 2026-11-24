@@ -1,7 +1,7 @@
 import { describe, it, expect, beforeAll, afterAll } from "vitest";
 import type { SupabaseClient } from "@supabase/supabase-js";
 import type { Database } from "@/types/database.types";
-import { createAdminTestClient, createAuthenticatedClient } from "./helpers";
+import { createAdminTestClient, createAuthenticatedClient, dbNow } from "./helpers";
 import { TEST_CREDENTIALS, TEST_IDS } from "./constants";
 import {
   createScheduleSlot,
@@ -85,7 +85,7 @@ describe("gamer sign-in mode", () => {
     await createTestProduct(admin, {
       id: PRODUCT,
       seatCount: null,
-      startDate: new Date(Date.now() - 30 * 86_400_000)
+      startDate: new Date((await dbNow()).getTime() - 30 * 86_400_000)
         .toISOString()
         .slice(0, 10),
     });
@@ -115,7 +115,7 @@ describe("gamer sign-in mode", () => {
       email: PARENT_EMAIL,
       password: "testpassword123",
       email_confirm: true,
-      user_metadata: { first_name: "Boundary", last_name: "Parentson" },
+      user_metadata: { first_name: "Boundary", last_name: "Parentson", locale: "en" },
     });
     parentId = parent.user!.id;
     await admin.rpc("set_pin_for_user", { p_user_id: parentId, p_pin: "1234" });
@@ -125,7 +125,7 @@ describe("gamer sign-in mode", () => {
     const { data: child } = await admin.auth.admin.createUser({
       email: CHILD_EMAIL,
       email_confirm: true,
-      user_metadata: { first_name: "Boundary", last_name: "Parentson" },
+      user_metadata: { first_name: "Boundary", last_name: "Parentson", locale: "en" },
     });
     childId = child.user!.id;
 

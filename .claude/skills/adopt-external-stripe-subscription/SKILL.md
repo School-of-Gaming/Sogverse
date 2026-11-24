@@ -55,9 +55,17 @@ API. The Stripe CLI is pinned to an old API version, so `search` calls take
   through the forgot-password link. The signup trigger makes the `customer` profile and
   `customer_profiles` row, and reads `first_name`/`last_name` from `user_metadata`; omit
   them and the profile lands as `New User`. The parent sets their PIN on first sign-in.
+- **`user_metadata.locale` is required on both creates** — a locale the app ships
+  (`src/lib/constants/locales.ts`), e.g. `fi`.
+  The signup trigger refuses an email account without a well-formed one, and GoTrue then
+  answers only "Database error creating new user". The parent's is the language the
+  family reads (the organizer's word, else the club's language); it decides which
+  language every mail to them is written in.
 - **Gamer:** the same create call with a synthetic `g<16hex>@gamer.sogverse.internal`
-  email and **no password** — a switch-only child never types a credential; the parent
-  switches in. Mirror the gamer-create API route rather than a remembered sequence.
+  email, **no password**, and the parent's `locale` in `user_metadata` — a child starts
+  in the parent's language, as the gamer-create route does. A switch-only child never
+  types a credential; the parent switches in. Mirror the gamer-create API route rather
+  than a remembered sequence.
 - **`create_gamer` refuses a parent you just created**: it requires the parent to hold a
   PIN (`P0025`), and it records the parent's guardian declaration for the child, which
   this parent has not made. Don't set a PIN or attest on the parent's behalf. With the

@@ -14,7 +14,12 @@ import {
   type TeamProfileSaveInput,
 } from "@/services/team-profiles/team-profiles.types";
 import { saveTeamProfileResult } from "@/services/team-profiles/team-profiles.contracts";
-import { createAdminTestClient, createAuthenticatedClient } from "./helpers";
+import {
+  createAdminTestClient,
+  createAuthenticatedClient,
+  dbTestFetch,
+  uniqueSuffix,
+} from "./helpers";
 import { TEST_CREDENTIALS, TEST_IDS } from "./constants";
 
 /**
@@ -86,12 +91,12 @@ describe("team profiles", () => {
   let otherAdminId: string;
 
   async function mint(role: "gedu" | "admin", label: string): Promise<string> {
-    const email = `team-profile-${label}-${Date.now()}@test.local`;
+    const email = `team-profile-${label}-${uniqueSuffix()}@test.local`;
     const { data, error } = await admin.auth.admin.createUser({
       email,
       password: PASSWORD,
       email_confirm: true,
-      user_metadata: { first_name: "Minted", last_name: label },
+      user_metadata: { first_name: "Minted", last_name: label, locale: "en" },
     });
     expect(error).toBeNull();
     const id = data.user?.id ?? "";
@@ -157,17 +162,17 @@ describe("team profiles", () => {
    * does — on the service role, in the named person's folder, under a fresh
    * name — and answers the path. The route's own checks (who may edit, the
    * bytes) are its integration test's to hold; a case that needs the route to
-   * refuse sets `photoRouteRefuses`. Every other request goes out as usual.
+   * refuse sets `photoRouteRefuses`. Every other request is one to the stack,
+   * so it goes out over the shared pool.
    */
   let photoRouteRefuses = false;
-  const realFetch = globalThis.fetch;
   async function photoRouteStandIn(
     input: RequestInfo | URL,
     init?: RequestInit,
   ): Promise<Response> {
     const url = input instanceof Request ? input.url : String(input);
     const route = /^\/api\/team\/profiles\/([^/]+)\/photo$/.exec(url);
-    if (route === null) return realFetch(input, init);
+    if (route === null) return dbTestFetch(input, init);
     if (photoRouteRefuses) {
       return Response.json({ error: "Unsupported Media Type" }, { status: 415 });
     }
@@ -521,7 +526,7 @@ describe("team profiles", () => {
             "/storage/v1/",
           )
             ? Promise.reject(new TypeError("fetch failed"))
-            : fetch(input, init),
+            : dbTestFetch(input, init),
       );
 
       await expect(
@@ -1219,7 +1224,7 @@ describe("team profiles", () => {
         .update({
           approved: true,
           approval_decided_by: TEST_IDS.ADMIN,
-          approval_decided_at: new Date().toISOString(),
+          approval_decided_at: "2020-01-01T00:00:00Z",
         })
         .eq("user_id", TEST_IDS.GEDU);
       expect(notReady.error?.code).toBe("23514");
@@ -1234,7 +1239,7 @@ describe("team profiles", () => {
           approved: true,
           opted_in: true,
           approval_decided_by: TEST_IDS.ADMIN,
-          approval_decided_at: new Date().toISOString(),
+          approval_decided_at: "2020-01-01T00:00:00Z",
         })
         .eq("user_id", TEST_IDS.GEDU);
       expect(ready.error).toBeNull();

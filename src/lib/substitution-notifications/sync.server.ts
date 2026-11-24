@@ -1,8 +1,7 @@
 import "server-only";
 import { createHash } from "node:crypto";
 import {
-  DEFAULT_LOCALE,
-  isSupportedLocale,
+  resolveLocale,
   type SupportedLocale,
 } from "@/lib/constants/locales";
 import { ROUTES } from "@/lib/constants/routes";
@@ -235,12 +234,9 @@ class DmSync {
     return this.deferred;
   }
 
-  /** The DM copy in the recipient's app locale, else the default. */
-  private copyFor(recipient: { locale: string | null }): Promise<DiscordSubOfferCopy> {
-    const locale =
-      recipient.locale !== null && isSupportedLocale(recipient.locale)
-        ? recipient.locale
-        : DEFAULT_LOCALE;
+  /** The DM copy in the recipient's app locale. */
+  private copyFor(recipient: { locale: string }): Promise<DiscordSubOfferCopy> {
+    const locale = resolveLocale(recipient.locale);
     // exact-locale: a cache of the DM copy per app locale, keyed by the locale already settled above
     let copy = this.copies.get(locale);
     if (copy === undefined) {

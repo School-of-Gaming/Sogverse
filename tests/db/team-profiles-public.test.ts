@@ -13,6 +13,7 @@ import {
   createAdminTestClient,
   createAnonTestClient,
   createAuthenticatedClient,
+  uniqueSuffix,
 } from "./helpers";
 import { TEST_CREDENTIALS } from "./constants";
 
@@ -90,10 +91,10 @@ describe("public team profiles", () => {
     lastName: string,
   ): Promise<string> {
     const { data, error } = await admin.auth.admin.createUser({
-      email: `public-team-${firstName.toLowerCase()}-${Date.now()}-${minted.length}@test.local`,
+      email: `public-team-${firstName.toLowerCase()}-${uniqueSuffix()}@test.local`,
       password: PASSWORD,
       email_confirm: true,
-      user_metadata: { first_name: firstName, last_name: lastName },
+      user_metadata: { first_name: firstName, last_name: lastName, locale: "en" },
     });
     expect(error).toBeNull();
     const id = data.user?.id ?? "";
@@ -144,7 +145,7 @@ describe("public team profiles", () => {
       photo_path: photoPath,
       opted_in: true,
       approved,
-      approval_decided_at: approved ? new Date().toISOString() : null,
+      approval_decided_at: approved ? "2020-01-01T00:00:00Z" : null,
     });
     expect(error).toBeNull();
     const translations = await admin.from("team_profile_translations").insert([
@@ -318,7 +319,7 @@ describe("public team profiles", () => {
       for (const approved of [false, true]) {
         await admin
           .from("team_profiles")
-          .update({ approved, approval_decided_at: new Date().toISOString() })
+          .update({ approved, approval_decided_at: "2020-01-01T00:00:00Z" })
           .eq("user_id", zed.id);
       }
 

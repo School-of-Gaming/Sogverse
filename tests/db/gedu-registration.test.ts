@@ -1,7 +1,11 @@
 import { describe, it, expect, beforeAll, afterAll } from "vitest";
 import type { SupabaseClient } from "@supabase/supabase-js";
 import type { Database } from "@/types/database.types";
-import { createAdminTestClient, createAuthenticatedClient } from "./helpers";
+import {
+  createAdminTestClient,
+  createAuthenticatedClient,
+  uniqueSuffix,
+} from "./helpers";
 import { TEST_IDS, TEST_CREDENTIALS } from "./constants";
 
 /**
@@ -60,9 +64,10 @@ describe("gedu registration + certification RPCs", () => {
      */
     async function customerWithStamp(stamp: string | null): Promise<string> {
       const { data: created, error } = await admin.auth.admin.createUser({
-        email: `gedu-stamp-${Date.now()}-${stampUserIds.length}@test.local`,
+        email: `gedu-stamp-${uniqueSuffix()}@test.local`,
         password: "testpassword123",
         email_confirm: true,
+        user_metadata: { locale: "en" },
       });
       expect(error).toBeNull();
       const id = created.user!.id;
@@ -133,13 +138,13 @@ describe("gedu registration + certification RPCs", () => {
     });
 
     it("atomically promotes a new customer profile into an uncertified gedu", async () => {
-      const email = `gedu-reg-${Date.now()}@test.local`;
+      const email = `gedu-reg-${uniqueSuffix()}@test.local`;
       const { data: created, error: createError } =
         await admin.auth.admin.createUser({
           email,
           password: "testpassword123",
           email_confirm: true,
-          user_metadata: { first_name: "Reg", last_name: "Tester" },
+          user_metadata: { first_name: "Reg", last_name: "Tester", locale: "en" },
         });
       expect(createError).toBeNull();
       createdUserId = created.user!.id;
@@ -201,12 +206,12 @@ describe("gedu registration + certification RPCs", () => {
       // generated Args types are non-null — and the Roblox account id rides the
       // same convention as text rather than inventing a second one. What this
       // asserts is that the cast on the other side really produces the number.
-      const email = `gedu-games-${Date.now()}@test.local`;
+      const email = `gedu-games-${uniqueSuffix()}@test.local`;
       const { data: created } = await admin.auth.admin.createUser({
         email,
         password: "testpassword123",
         email_confirm: true,
-        user_metadata: { first_name: "Games", last_name: "Tester" },
+        user_metadata: { first_name: "Games", last_name: "Tester", locale: "en" },
       });
       gameAccountUserId = created.user!.id;
 

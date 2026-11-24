@@ -11,7 +11,14 @@ import {
   gamerGroupCreationsResult,
   groupStaffOverlay,
 } from "@/services/member-flair/member-flair.contracts";
-import { createAdminTestClient, createAuthenticatedClient } from "./helpers";
+import {
+  createAdminTestClient,
+  createAuthenticatedClient,
+  dbInterval,
+  dbNow,
+  utcDayOffset,
+  utcMidnightsSince,
+} from "./helpers";
 import { TEST_CREDENTIALS, TEST_IDS } from "./constants";
 import {
   createScheduleSlot,
@@ -90,15 +97,15 @@ const ALL_PRODUCTS = [PRODUCT_CLUB, PRODUCT_OFF, PRODUCT_OWED];
 const SLOT_START = "23:00";
 const SLOT_MINUTES = 60;
 
-/** `YYYY-MM-DD`, `offset` days from today. The fixture products run in UTC. */
-function dayOffset(offset: number): string {
-  const d = new Date();
-  d.setUTCDate(d.getUTCDate() + offset);
-  return d.toISOString().slice(0, 10);
-}
+/**
+ * The database's clock, read when the file loads: the dates below are built
+ * then, and they count from the database's today, the one its functions judge
+ * against.
+ */
+const DB_NOW = await dbNow();
 
-const TODAY = dayOffset(0);
-const YESTERDAY = dayOffset(-1);
+const TODAY = utcDayOffset(DB_NOW, 0);
+const YESTERDAY = utcDayOffset(DB_NOW, -1);
 
 /**
  * The instant the run's final session ended: yesterday's 23:00 UTC slot plus its
@@ -131,7 +138,7 @@ const FINAL_SESSION_ENDS_AT = `${TODAY}T00:00:00.000Z`;
  * does not name `group_id` never fires the stamping trigger, so this write
  * stands.
  */
-const JOINED_AT_BACKDATE = `${dayOffset(-30)}T00:00:00.000Z`;
+const JOINED_AT_BACKDATE = `${utcDayOffset(DB_NOW, -30)}T00:00:00.000Z`;
 
 const ROBLOX_GAME = {
   title: "Skyward Bazaar",
@@ -177,7 +184,7 @@ describe("gamer creations", () => {
       await createTestProduct(admin, {
         id,
         seatCount: null,
-        startDate: dayOffset(-30),
+        startDate: utcDayOffset(DB_NOW, -30),
       });
       await admin.from("product_translations").insert({
         product_id: id,
@@ -193,7 +200,7 @@ describe("gamer creations", () => {
     await createTestProduct(admin, {
       id: PRODUCT_OWED,
       seatCount: null,
-      startDate: dayOffset(-30),
+      startDate: utcDayOffset(DB_NOW, -30),
       endDate: YESTERDAY,
     });
     await admin.from("product_translations").insert({
@@ -455,7 +462,7 @@ describe("gamer creations", () => {
         .from("participations")
         .update({
           status: "ended",
-          ended_at: new Date().toISOString(),
+          ended_at: "2020-01-01T00:00:00Z",
           end_reason: "admin_removed",
         })
         .eq("group_id", GROUP_A)
@@ -836,7 +843,13 @@ describe("gamer creations", () => {
         .update({ end_date: null })
         .eq("id", PRODUCT_OWED);
 
-      expect(await owedCount()).toBe(0);
+      // Open-ended, the product runs on past yesterday: today's 23:00 session
+      // ends at midnight, and with nothing recorded it is owed from then on
+      // the three original conditions alone. So a midnight passed since the
+      // file read the clock adds one owed session per midnight, which is not
+      // the creations condition's doing.
+      const { result: owed, reads } = await dbInterval(owedCount);
+      expect(reads.map((read) => utcMidnightsSince(TODAY, read))).toContain(owed);
 
       await admin
         .from("products")
@@ -881,7 +894,7 @@ describe("gamer creations", () => {
         // Mid-run, and again half an hour into the final session itself: both
         // are "in the group at the time of the last session", which is the
         // owner's principle in the words it was given in.
-        await setJoinedAt(`${dayOffset(-15)}T09:00:00.000Z`);
+        await setJoinedAt(`${utcDayOffset(DB_NOW, -15)}T09:00:00.000Z`);
         expect(await owedCount()).toBe(1);
 
         await setJoinedAt(`${YESTERDAY}T23:30:00.000Z`);

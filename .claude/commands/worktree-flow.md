@@ -415,7 +415,7 @@ belong in one call — and prefer the script wherever one exists.
    that never follows a link, prunes it, checks the main checkout's
    `node_modules` survived, and deletes the branch. Pass `-DeleteRemote`
    whenever the branch was pushed for CI: delete it now rather than leaving it
-   to `cleanup-branches`, because the merge has just proved it safe to delete
+   to `/cleanup`, because the merge has just proved it safe to delete
    and that certainty decays.
 
    It stops rather than proceed when the worktree has uncommitted changes, or

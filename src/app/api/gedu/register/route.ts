@@ -1,7 +1,6 @@
 import { NextResponse } from "next/server";
 import { defineRoute } from "@/lib/api/define-route";
 import { createAdminClient } from "@/lib/supabase/admin";
-import { detectLocaleFromHeader, resolveLocale } from "@/lib/constants/locales";
 import { phoneDigitsForStorage } from "@/lib/constants/phone";
 import { registerGeduBody } from "@/services/gedu/gedu-registration.contracts";
 import {
@@ -44,13 +43,11 @@ export const POST = defineRoute({
       lastName,
       phone,
       spokenLanguages,
-      locale: requestedLocale,
+      locale,
       locationIds,
       minecraftUsername,
       robloxUsername,
     } = body;
-
-    const locale = resolveLocale(requestedLocale);
 
     // The attribution cookie, re-sanitised on the way out of it: the educator
     // never typed the UTM values and cannot see them, so a bad one degrades to
@@ -104,6 +101,9 @@ export const POST = defineRoute({
           first_name: firstName,
           last_name: lastName,
           display_name: composedDisplayName,
+          // The language the educator registered in; the trigger refuses the
+          // account without one.
+          locale,
           // The same five metadata keys the parent path uses, reaching the same
           // trigger, which writes profiles.utm_source / utm_medium /
           // utm_campaign / utm_content / utm_term and re-sanitises on the way
@@ -156,17 +156,6 @@ export const POST = defineRoute({
     // never hears about. The account is the outcome they asked for and it now
     // exists; a Brevo error must not undo it, and a fresh verification link is
     // one button away in settings.
-    //
-    // The locale is the one the form was being read in, else the browser's,
-    // else English — one step longer than the chain the profile's own `locale`
-    // takes above, because a registrant who sent no preference still has a
-    // browser that stated one, and a mail is the one artefact that leaves
-    // before they can pick.
-    const mailLocale =
-      resolveLocale(
-        requestedLocale,
-        detectLocaleFromHeader(request.headers.get("Accept-Language")),
-      );
     try {
       // The TRUSTED origin, never the raw Host header: this mail carries a
       // signed verification token, and a spoofed Host would make it a phishing
@@ -177,14 +166,14 @@ export const POST = defineRoute({
       // verify.
       const storedEmail = authData.user.email ?? email;
       const token = await createEmailVerificationToken(userId, storedEmail);
-      const t = await getEmailTranslator(mailLocale);
+      const t = await getEmailTranslator(locale);
 
       await sendTransactionalEmail({
         fromEmail: SENDER_EMAIL,
         fromName: SENDER_NAME,
         toEmail: storedEmail,
         subject: t("welcomeGedu.subject"),
-        htmlContent: buildWelcomeGeduEmail(t, mailLocale, {
+        htmlContent: buildWelcomeGeduEmail(t, locale, {
           firstName,
           verificationUrl: `${origin}${ROUTES.verifyEmail}?token=${encodeURIComponent(token)}`,
           dashboardUrl: `${origin}${ROUTES.gedu.dashboard}`,

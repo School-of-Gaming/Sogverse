@@ -12,9 +12,11 @@ the `remote-supabase` skill):
 
 1. `POST {SUPABASE_URL}/auth/v1/admin/users` with the service-role key — `email`,
    `email_confirm: true`, and `user_metadata` carrying `first_name` / `last_name` /
-   `display_name`. The signup trigger seeds a `customer` profile plus a
-   `customer_profiles` row.
-2. Over psql: `UPDATE public.profiles SET role='admin', locale=… WHERE id=… AND
+   `display_name` / `locale` (a locale the app ships, `src/lib/constants/locales.ts`,
+   e.g. `fi`: the language the admin reads the app and their mail in). The signup trigger seeds a `customer` profile plus
+   a `customer_profiles` row, and refuses the account without a well-formed `locale` —
+   GoTrue then answers only "Database error creating new user".
+2. Over psql: `UPDATE public.profiles SET role='admin' WHERE id=… AND
    role='customer'` then `DELETE FROM public.customer_profiles WHERE user_id=…`.
    There is **no `admin_profiles` extension table** — an admin is a bare `profiles` row
    with no extension row at all. (Two legacy staging admins still carry a stale

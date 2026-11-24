@@ -13,6 +13,9 @@ export default defineConfig({
     pool: "forks",
     fileParallelism: false,
     testTimeout: 15_000,
+    // The setup's afterAll closes the shared connection pool; "stack" runs it
+    // after every file's own afterAll, which may still be cleaning up.
+    sequence: { hooks: "stack" },
     globals: true,
   },
   resolve: {

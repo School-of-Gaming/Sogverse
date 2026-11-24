@@ -180,7 +180,11 @@ Shared helpers and constants live in `tests/db/`:
 - `helpers.ts` — `createAdminTestClient()` (service-role, bypasses RLS, for
   setup/teardown and assertions) and `createAuthenticatedClient(email, password)` (signs
   in via Supabase Auth and returns a client that respects RLS; each call is a fresh
-  client with no shared session).
+  client with no shared session). **Every request to the stack goes through these
+  clients or `dbTestFetch` — never a bare `createClient` or `fetch`, which lint
+  enforces**: they share one connection pool, which works around an undici bug that
+  otherwise opens a fresh connection per request, leaving thousands of ports in
+  TIME_WAIT over a run and slowing it.
 - `product-helpers.ts` — product-specific seed/reset helpers: `createTestProduct()`,
   `createScheduleSlot()`, `deleteTestProducts()`, `resetFamilySubs()`.
 - `constants.ts` — `TEST_IDS` (deterministic UUIDs matching `supabase/seed.sql`),
@@ -194,6 +198,12 @@ The deterministic `TEST_IDS` (and the credentials/seed values) must stay in sync
 helper in `tests/helpers/` (four at a time), never a `Promise.all` over the whole list.**
 Each in-flight call opens its own connection on a freshly built stack and queues for a
 database session, so the test's time then measures the machine rather than the cases.
+
+**A DB test takes any time the database judges, or any stamp it wrote that the test
+checks, from `dbNow()` / `dbTime()` / `dbInterval()`, never from this process's clock**,
+which lint enforces. A boundary case sits one second past the bound, on the side that
+refuses, by the database's clock; a future deadline sits at least a minute out, more
+than any test runs — never a margin for safety.
 
 ## Integration test conventions
 

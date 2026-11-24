@@ -13,6 +13,11 @@ import {
   createAdminTestClient,
   createAnonTestClient,
   createAuthenticatedClient,
+  dbInterval,
+  dbNow,
+  utcDatesThrough,
+  utcDayOffset,
+  uniqueSuffix,
 } from "./helpers";
 import { TEST_IDS } from "./constants";
 import { deleteTestProducts } from "./product-helpers";
@@ -56,14 +61,20 @@ const DISCORD_SHARED = "910000000000000002";
 const DISCORD_ADMIN_ONLY = "910000000000000003";
 const DISCORD_NOBODY = "910000000000000004";
 
-/** A UTC calendar date `offset` days from now; the product's zone is UTC. */
-function utcDate(offset: number): string {
-  const now = new Date();
-  const day = new Date(
-    Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), now.getUTCDate() + offset),
-  );
-  return day.toISOString().slice(0, 10);
-}
+/**
+ * When a link was made only orders the links on one Discord id, so these are
+ * fixed instants rather than clock reads.
+ */
+const LINKED_EARLIER = "2020-01-01T00:00:00Z";
+const LINKED_AT = "2020-01-01T00:01:00Z";
+const LINKED_LATER = "2020-01-01T00:02:00Z";
+
+/**
+ * The database's clock, read when the file loads (the call table below builds
+ * its dates then): the calendar dates count from the database's today, the one
+ * the filing and the seat's plan judge against. The product runs in UTC.
+ */
+const DB_NOW = await dbNow();
 
 describe("substitutions from Discord", () => {
   let admin: SupabaseClient<Database>;
@@ -79,12 +90,12 @@ describe("substitutions from Discord", () => {
     label: string,
     role: "gedu" | "admin",
   ): Promise<{ id: string; email: string }> {
-    const email = `discord-sub-${label}-${Date.now()}@test.local`;
+    const email = `discord-sub-${label}-${uniqueSuffix()}@test.local`;
     const { data, error } = await admin.auth.admin.createUser({
       email,
       password: "testpassword123",
       email_confirm: true,
-      user_metadata: { first_name: "Disco", last_name: label },
+      user_metadata: { first_name: "Disco", last_name: label, locale: "en" },
     });
     expect(error).toBeNull();
     const id = data.user?.id ?? "";
@@ -99,12 +110,12 @@ describe("substitutions from Discord", () => {
     return { id, email };
   }
 
-  async function link(profileId: string, discordUserId: string, linkedAt: Date) {
+  async function link(profileId: string, discordUserId: string, linkedAt: string) {
     const { error } = await admin.from("discord_links").upsert({
       profile_id: profileId,
       discord_user_id: discordUserId,
       discord_username: "disco",
-      linked_at: linkedAt.toISOString(),
+      linked_at: linkedAt,
     });
     expect(error).toBeNull();
   }
@@ -132,11 +143,11 @@ describe("substitutions from Discord", () => {
       delivery_mode: "online",
       location_id: null,
       timezone: "UTC",
-      registration_opens_at: new Date(Date.now() - 60_000).toISOString(),
+      registration_opens_at: "2020-01-01T00:00:00Z",
       is_visible: true,
       created_by: TEST_IDS.ADMIN,
-      start_date: utcDate(-30),
-      end_date: utcDate(60),
+      start_date: utcDayOffset(DB_NOW, -30),
+      end_date: utcDayOffset(DB_NOW, 60),
       min_age: 8,
       max_age: 18,
       seat_count: null,
@@ -185,7 +196,7 @@ describe("substitutions from Discord", () => {
 
   describe("resolving the Discord user", () => {
     it("answers the linked gedu and their stored locale", async () => {
-      await link(geduId, DISCORD_GEDU, new Date());
+      await link(geduId, DISCORD_GEDU, LINKED_AT);
       const { data, error } = await admin.rpc("get_gedu_for_discord_user", {
         p_discord_user_id: DISCORD_GEDU,
       });
@@ -202,7 +213,7 @@ describe("substitutions from Discord", () => {
     });
 
     it("refuses a Discord user linked only to an account that is not a gedu", async () => {
-      await link(adminId, DISCORD_ADMIN_ONLY, new Date());
+      await link(adminId, DISCORD_ADMIN_ONLY, LINKED_AT);
       const { error } = await admin.rpc("get_gedu_for_discord_user", {
         p_discord_user_id: DISCORD_ADMIN_ONLY,
       });
@@ -210,8 +221,8 @@ describe("substitutions from Discord", () => {
     });
 
     it("answers the gedu account, not a more recently linked admin one", async () => {
-      await link(geduId, DISCORD_SHARED, new Date(Date.now() - 60_000));
-      await link(adminId, DISCORD_SHARED, new Date());
+      await link(geduId, DISCORD_SHARED, LINKED_EARLIER);
+      await link(adminId, DISCORD_SHARED, LINKED_AT);
       const { data, error } = await admin.rpc("get_gedu_for_discord_user", {
         p_discord_user_id: DISCORD_SHARED,
       });
@@ -220,14 +231,14 @@ describe("substitutions from Discord", () => {
     });
 
     it("answers the most recently linked of two gedu accounts", async () => {
-      await link(geduId, DISCORD_SHARED, new Date(Date.now() - 60_000));
-      await link(secondGeduId, DISCORD_SHARED, new Date());
+      await link(geduId, DISCORD_SHARED, LINKED_EARLIER);
+      await link(secondGeduId, DISCORD_SHARED, LINKED_AT);
       const first = await admin.rpc("get_gedu_for_discord_user", {
         p_discord_user_id: DISCORD_SHARED,
       });
       expect(discordLinkedGedu.parse(first.data).profile_id).toBe(secondGeduId);
 
-      await link(geduId, DISCORD_SHARED, new Date(Date.now() + 60_000));
+      await link(geduId, DISCORD_SHARED, LINKED_LATER);
       const second = await admin.rpc("get_gedu_for_discord_user", {
         p_discord_user_id: DISCORD_SHARED,
       });
@@ -237,7 +248,7 @@ describe("substitutions from Discord", () => {
 
   describe("the seat reads", () => {
     it("are the very rows the gedu reads on the web", async () => {
-      await link(geduId, DISCORD_GEDU, new Date());
+      await link(geduId, DISCORD_GEDU, LINKED_AT);
 
       const viaDiscord = await admin.rpc("get_assigned_products_for_discord_user", {
         p_discord_user_id: DISCORD_GEDU,
@@ -263,28 +274,35 @@ describe("substitutions from Discord", () => {
     });
 
     it("hand the bot the seat's plan, flagged where the group cancelled", async () => {
-      await link(geduId, DISCORD_GEDU, new Date());
+      await link(geduId, DISCORD_GEDU, LINKED_AT);
       const { error: cancelError } = await admin.from("session_cancellations").insert([
-        { group_id: GROUP, session_date: utcDate(3), cancelled_by: TEST_IDS.ADMIN },
+        { group_id: GROUP, session_date: utcDayOffset(DB_NOW, 3), cancelled_by: TEST_IDS.ADMIN },
         // The sister group's cancellation is not this seat's.
-        { group_id: OTHER_GROUP, session_date: utcDate(4), cancelled_by: TEST_IDS.ADMIN },
+        { group_id: OTHER_GROUP, session_date: utcDayOffset(DB_NOW, 4), cancelled_by: TEST_IDS.ADMIN },
       ]);
       expect(cancelError).toBeNull();
 
-      const { data, error } = await admin.rpc("get_assigned_products_for_discord_user", {
-        p_discord_user_id: DISCORD_GEDU,
-      });
+      const {
+        result: { data, error },
+        reads,
+      } = await dbInterval(async () =>
+        admin.rpc("get_assigned_products_for_discord_user", { p_discord_user_id: DISCORD_GEDU }),
+      );
       expect(error).toBeNull();
       const [seat] = myAssignedProductRows.parse(data);
       const plan = seat.upcoming_sessions;
-      // A slot every day: the day before today to the term's last day.
+      // A slot every day: the day before the database's today to the term's
+      // last day, set from the load-time read. Midnight can pass during the
+      // call, so that today is either clock read's day.
+      const opening = plan[0].date;
+      expect(reads.map((read) => utcDayOffset(read, -1))).toContain(opening);
       expect(plan.map((session) => session.date)).toEqual(
-        Array.from({ length: 62 }, (_, index) => utcDate(index - 1)),
+        utcDatesThrough(opening, utcDayOffset(DB_NOW, 60)),
       );
-      expect(plan[1].startsAt.toISOString()).toBe(`${utcDate(0)}T10:00:00.000Z`);
-      expect(plan[1].endsAt.toISOString()).toBe(`${utcDate(0)}T11:00:00.000Z`);
+      expect(plan[1].startsAt.toISOString()).toBe(`${plan[1].date}T10:00:00.000Z`);
+      expect(plan[1].endsAt.toISOString()).toBe(`${plan[1].date}T11:00:00.000Z`);
       expect(plan.filter((session) => session.cancelled).map((session) => session.date)).toEqual([
-        utcDate(3),
+        utcDayOffset(DB_NOW, 3),
       ]);
       expect(seat.substitution_starts_at).toBeNull();
       expect(seat.substitution_ends_at).toBeNull();
@@ -304,8 +322,8 @@ describe("substitutions from Discord", () => {
 
   describe("filing", () => {
     it("files for the linked gedu and returns the request document", async () => {
-      await link(geduId, DISCORD_GEDU, new Date());
-      const sessionDate = utcDate(5);
+      await link(geduId, DISCORD_GEDU, LINKED_AT);
+      const sessionDate = utcDayOffset(DB_NOW, 5);
       const { data, error } = await admin.rpc("request_session_substitution_for_discord_user", {
         p_discord_user_id: DISCORD_GEDU,
         p_group_id: GROUP,
@@ -336,12 +354,12 @@ describe("substitutions from Discord", () => {
     });
 
     it("refuses an unlinked Discord user and writes nothing", async () => {
-      await link(adminId, DISCORD_ADMIN_ONLY, new Date());
+      await link(adminId, DISCORD_ADMIN_ONLY, LINKED_AT);
       for (const discordUserId of [DISCORD_NOBODY, DISCORD_ADMIN_ONLY]) {
         const { error } = await admin.rpc("request_session_substitution_for_discord_user", {
           p_discord_user_id: discordUserId,
           p_group_id: GROUP,
-          p_session_date: utcDate(5),
+          p_session_date: utcDayOffset(DB_NOW, 5),
           p_reason: "sick",
         });
         expect(error?.code).toBe(NOT_LINKED);
@@ -354,7 +372,7 @@ describe("substitutions from Discord", () => {
     });
 
     it("surfaces the filing's own refusals with their codes and messages", async () => {
-      await link(geduId, DISCORD_GEDU, new Date());
+      await link(geduId, DISCORD_GEDU, LINKED_AT);
       const file = (args: {
         group?: string;
         date: string;
@@ -367,47 +385,47 @@ describe("substitutions from Discord", () => {
           ...(args.reason ? { p_reason: args.reason } : {}),
         });
 
-      const notTaught = await file({ group: OTHER_GROUP, date: utcDate(5), reason: "sick" });
+      const notTaught = await file({ group: OTHER_GROUP, date: utcDayOffset(DB_NOW, 5), reason: "sick" });
       expect(notTaught.error?.code).toBe(FORBIDDEN);
 
-      const noReason = await file({ date: utcDate(5) });
+      const noReason = await file({ date: utcDayOffset(DB_NOW, 5) });
       expect(noReason.error?.code).toBe(CHECK_VIOLATION);
       expect(noReason.error?.message).toContain("needs a reason category");
 
-      const past = await file({ date: utcDate(-5), reason: "sick" });
+      const past = await file({ date: utcDayOffset(DB_NOW, -5), reason: "sick" });
       expect(past.error?.code).toBe(CHECK_VIOLATION);
       expect(past.error?.message).toContain("past session");
 
-      const outsideTerm = await file({ date: utcDate(90), reason: "sick" });
+      const outsideTerm = await file({ date: utcDayOffset(DB_NOW, 90), reason: "sick" });
       expect(outsideTerm.error?.code).toBe(CHECK_VIOLATION);
       expect(outsideTerm.error?.message).toContain("No scheduled session on");
 
       await admin.from("session_cancellations").insert({
         group_id: GROUP,
-        session_date: utcDate(6),
+        session_date: utcDayOffset(DB_NOW, 6),
         cancelled_by: TEST_IDS.ADMIN,
       });
-      const cancelled = await file({ date: utcDate(6), reason: "sick" });
+      const cancelled = await file({ date: utcDayOffset(DB_NOW, 6), reason: "sick" });
       expect(cancelled.error?.code).toBe(CANCELLED);
 
-      const first = await file({ date: utcDate(7), reason: "sick" });
+      const first = await file({ date: utcDayOffset(DB_NOW, 7), reason: "sick" });
       expect(first.error).toBeNull();
-      const again = await file({ date: utcDate(7), reason: "sick" });
+      const again = await file({ date: utcDayOffset(DB_NOW, 7), reason: "sick" });
       expect(again.error?.code).toBe(FORBIDDEN);
     });
 
     it("answers a web filing and a Discord filing as one: whichever came first, the other is refused", async () => {
-      await link(geduId, DISCORD_GEDU, new Date());
+      await link(geduId, DISCORD_GEDU, LINKED_AT);
       const web = await geduAuth.rpc("request_session_substitution", {
         p_group_id: GROUP,
-        p_session_date: utcDate(8),
+        p_session_date: utcDayOffset(DB_NOW, 8),
         p_reason: "sick",
       });
       expect(web.error).toBeNull();
       const discord = await admin.rpc("request_session_substitution_for_discord_user", {
         p_discord_user_id: DISCORD_GEDU,
         p_group_id: GROUP,
-        p_session_date: utcDate(8),
+        p_session_date: utcDayOffset(DB_NOW, 8),
         p_reason: "sick",
       });
       expect(discord.error?.code).toBe(FORBIDDEN);
@@ -439,28 +457,28 @@ describe("substitutions from Discord", () => {
     }
 
     it("names an open and a substituted request, on the web and from Discord alike, and the write refuses each", async () => {
-      await link(geduId, DISCORD_GEDU, new Date());
-      const open = await fileOnTheWeb(geduAuth, utcDate(5));
+      await link(geduId, DISCORD_GEDU, LINKED_AT);
+      const open = await fileOnTheWeb(geduAuth, utcDayOffset(DB_NOW, 5));
       // Substituted by the office: stored directly, because seating a sub is
       // not what is under test — only what the filer reads afterwards.
       const { error: substitutedError } = await admin
         .from("session_substitution_requests")
         .insert({
           group_id: GROUP,
-          session_date: utcDate(7),
+          session_date: utcDayOffset(DB_NOW, 7),
           requested_by: geduId,
           role: "primary",
           reason: "other",
           status: "substituted",
           substitute_id: secondGeduId,
           approved_by: adminId,
-          approved_at: new Date().toISOString(),
+          approved_at: "2020-01-01T00:00:00Z",
         });
       expect(substitutedError).toBeNull();
 
       const web = await liveOnTheWeb(geduAuth);
       const requests = liveSubstitutionRequests.parse(web);
-      expect(keysOf(web)).toEqual([`${GROUP}:${utcDate(5)}`, `${GROUP}:${utcDate(7)}`]);
+      expect(keysOf(web)).toEqual([`${GROUP}:${utcDayOffset(DB_NOW, 5)}`, `${GROUP}:${utcDayOffset(DB_NOW, 7)}`]);
       expect(requests.map((request) => request.status)).toEqual(["open", "substituted"]);
       // The requester's own reading: their name, never the reason.
       expect(requests[0]).toMatchObject({
@@ -478,7 +496,7 @@ describe("substitutions from Discord", () => {
       expect(liveSubstitutionRequests.parse(viaDiscord.data)).toEqual(requests);
 
       // And the list cannot disagree with the write: each is refused again.
-      for (const sessionDate of [utcDate(5), utcDate(7)]) {
+      for (const sessionDate of [utcDayOffset(DB_NOW, 5), utcDayOffset(DB_NOW, 7)]) {
         const again = await geduAuth.rpc("request_session_substitution", {
           p_group_id: GROUP,
           p_session_date: sessionDate,
@@ -489,7 +507,7 @@ describe("substitutions from Discord", () => {
     });
 
     it("leaves out a withdrawn request, which the gedu may ask about again", async () => {
-      const filed = await fileOnTheWeb(geduAuth, utcDate(9));
+      const filed = await fileOnTheWeb(geduAuth, utcDayOffset(DB_NOW, 9));
       const { error: withdrawError } = await geduAuth.rpc(
         "withdraw_session_substitution_request",
         { p_request_id: filed.id },
@@ -497,41 +515,41 @@ describe("substitutions from Discord", () => {
       expect(withdrawError).toBeNull();
 
       expect(keysOf(await liveOnTheWeb(geduAuth))).toEqual([]);
-      await fileOnTheWeb(geduAuth, utcDate(9));
-      expect(keysOf(await liveOnTheWeb(geduAuth))).toEqual([`${GROUP}:${utcDate(9)}`]);
+      await fileOnTheWeb(geduAuth, utcDayOffset(DB_NOW, 9));
+      expect(keysOf(await liveOnTheWeb(geduAuth))).toEqual([`${GROUP}:${utcDayOffset(DB_NOW, 9)}`]);
     });
 
     it("keeps a request on a cancelled session, where the write still refuses a second filing", async () => {
-      await fileOnTheWeb(geduAuth, utcDate(11));
+      await fileOnTheWeb(geduAuth, utcDayOffset(DB_NOW, 11));
       await admin.from("session_cancellations").insert({
         group_id: GROUP,
-        session_date: utcDate(11),
+        session_date: utcDayOffset(DB_NOW, 11),
         cancelled_by: TEST_IDS.ADMIN,
       });
 
-      expect(keysOf(await liveOnTheWeb(geduAuth))).toEqual([`${GROUP}:${utcDate(11)}`]);
+      expect(keysOf(await liveOnTheWeb(geduAuth))).toEqual([`${GROUP}:${utcDayOffset(DB_NOW, 11)}`]);
       const again = await geduAuth.rpc("request_session_substitution", {
         p_group_id: GROUP,
-        p_session_date: utcDate(11),
+        p_session_date: utcDayOffset(DB_NOW, 11),
         p_reason: "sick",
       });
       expect(again.error?.code).toBe(FORBIDDEN);
     });
 
     it("carries each request's planned window from Discord, cancelled or not, and none past the term", async () => {
-      await link(geduId, DISCORD_GEDU, new Date());
-      await fileOnTheWeb(geduAuth, utcDate(5));
-      await fileOnTheWeb(geduAuth, utcDate(11));
+      await link(geduId, DISCORD_GEDU, LINKED_AT);
+      await fileOnTheWeb(geduAuth, utcDayOffset(DB_NOW, 5));
+      await fileOnTheWeb(geduAuth, utcDayOffset(DB_NOW, 11));
       await admin.from("session_cancellations").insert({
         group_id: GROUP,
-        session_date: utcDate(11),
+        session_date: utcDayOffset(DB_NOW, 11),
         cancelled_by: TEST_IDS.ADMIN,
       });
       // Past the term's end: stored directly, since the write refuses a date
       // the plan does not name.
       const { error: pastTermError } = await admin.from("session_substitution_requests").insert({
         group_id: GROUP,
-        session_date: utcDate(61),
+        session_date: utcDayOffset(DB_NOW, 61),
         requested_by: geduId,
         role: "primary",
         reason: "other",
@@ -549,17 +567,17 @@ describe("substitutions from Discord", () => {
         request.session_cancelled,
       ]);
       expect(windows).toEqual([
-        [utcDate(5), `${utcDate(5)}T10:00:00.000Z`, `${utcDate(5)}T11:00:00.000Z`, false],
+        [utcDayOffset(DB_NOW, 5), `${utcDayOffset(DB_NOW, 5)}T10:00:00.000Z`, `${utcDayOffset(DB_NOW, 5)}T11:00:00.000Z`, false],
         // A cancelled session keeps its window: the plan still has it.
-        [utcDate(11), `${utcDate(11)}T10:00:00.000Z`, `${utcDate(11)}T11:00:00.000Z`, true],
-        [utcDate(61), null, null, false],
+        [utcDayOffset(DB_NOW, 11), `${utcDayOffset(DB_NOW, 11)}T10:00:00.000Z`, `${utcDayOffset(DB_NOW, 11)}T11:00:00.000Z`, true],
+        [utcDayOffset(DB_NOW, 61), null, null, false],
       ]);
     });
 
     it("leaves out a request dated before today in the product's zone", async () => {
       const { error } = await admin.from("session_substitution_requests").insert({
         group_id: GROUP,
-        session_date: utcDate(-3),
+        session_date: utcDayOffset(DB_NOW, -3),
         requested_by: geduId,
         role: "primary",
         reason: "sick",
@@ -569,20 +587,20 @@ describe("substitutions from Discord", () => {
     });
 
     it("answers each gedu about their own requests and never a colleague's", async () => {
-      await link(geduId, DISCORD_GEDU, new Date());
+      await link(geduId, DISCORD_GEDU, LINKED_AT);
       // The colleague on the same group asks for a substitute; the gedu does not.
-      await fileOnTheWeb(secondGeduAuth, utcDate(13));
+      await fileOnTheWeb(secondGeduAuth, utcDayOffset(DB_NOW, 13));
 
       expect(keysOf(await liveOnTheWeb(geduAuth))).toEqual([]);
       const viaDiscord = await admin.rpc("get_live_substitution_requests_for_discord_user", {
         p_discord_user_id: DISCORD_GEDU,
       });
       expect(keysOf(viaDiscord.data)).toEqual([]);
-      expect(keysOf(await liveOnTheWeb(secondGeduAuth))).toEqual([`${GROUP}:${utcDate(13)}`]);
+      expect(keysOf(await liveOnTheWeb(secondGeduAuth))).toEqual([`${GROUP}:${utcDayOffset(DB_NOW, 13)}`]);
     });
 
     it("refuses an unlinked Discord user from Discord", async () => {
-      await link(adminId, DISCORD_ADMIN_ONLY, new Date());
+      await link(adminId, DISCORD_ADMIN_ONLY, LINKED_AT);
       for (const discordUserId of [DISCORD_NOBODY, DISCORD_ADMIN_ONLY]) {
         const { error } = await admin.rpc("get_live_substitution_requests_for_discord_user", {
           p_discord_user_id: discordUserId,
@@ -603,7 +621,7 @@ describe("substitutions from Discord", () => {
         {
           p_discord_user_id: DISCORD_GEDU,
           p_group_id: GROUP,
-          p_session_date: utcDate(5),
+          p_session_date: utcDayOffset(DB_NOW, 5),
           p_reason: "sick",
         },
       ],
@@ -622,7 +640,7 @@ describe("substitutions from Discord", () => {
         {
           p_gedu_id: TEST_IDS.GEDU,
           p_group_id: GROUP,
-          p_session_date: utcDate(5),
+          p_session_date: utcDayOffset(DB_NOW, 5),
           p_reason: "sick",
           p_reason_note: "",
         },
@@ -640,7 +658,7 @@ describe("substitutions from Discord", () => {
     }
 
     it("the Discord wrappers are closed to signed-in and anonymous callers", async () => {
-      await link(geduId, DISCORD_GEDU, new Date());
+      await link(geduId, DISCORD_GEDU, LINKED_AT);
       for (const [name, args] of discordWrappers) {
         for (const client of [geduAuth, anon]) {
           const { error } = await client.rpc(name, args);

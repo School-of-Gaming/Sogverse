@@ -5,7 +5,7 @@ import {
   gamerGroupNoteResult,
   groupStaffOverlay,
 } from "@/services/member-flair/member-flair.contracts";
-import { createAdminTestClient, createAuthenticatedClient } from "./helpers";
+import { createAdminTestClient, createAuthenticatedClient, uniqueSuffix } from "./helpers";
 import { TEST_IDS, TEST_CREDENTIALS } from "./constants";
 import { createTestProduct, deleteTestProducts, eraseParticipations } from "./product-helpers";
 import { seedAssignments } from "./assignment-helpers";
@@ -123,13 +123,13 @@ describe("member flair", () => {
     // Unique per run: CI's database carries the seed fixtures AND whatever a
     // previous run left behind, so a fixed address is a collision waiting to
     // happen.
-    const sisterEmail = `flair-sister-gedu-${Date.now()}@test.local`;
+    const sisterEmail = `flair-sister-gedu-${uniqueSuffix()}@test.local`;
     const { data: created, error: createError } =
       await admin.auth.admin.createUser({
         email: sisterEmail,
         password: "testpassword123",
         email_confirm: true,
-        user_metadata: { first_name: "Sanni", last_name: "Sisterson" },
+        user_metadata: { first_name: "Sanni", last_name: "Sisterson", locale: "en" },
       });
     expect(createError).toBeNull();
     sisterGeduId = created.user!.id;
@@ -370,7 +370,7 @@ describe("member flair", () => {
         .from("participations")
         .update({
           status: "ended",
-          ended_at: new Date().toISOString(),
+          ended_at: "2020-01-01T00:00:00Z",
           end_reason: "admin_removed",
         })
         .eq("id", row.id);
@@ -472,7 +472,7 @@ describe("member flair", () => {
         .from("participations")
         .update({
           status: "ended",
-          ended_at: new Date().toISOString(),
+          ended_at: "2020-01-01T00:00:00Z",
           end_reason: "admin_removed",
         })
         .eq("product_id", PRODUCT_FLAIR)
@@ -692,7 +692,7 @@ describe("member flair", () => {
         .from("participations")
         .update({
           status: "ended",
-          ended_at: new Date().toISOString(),
+          ended_at: "2020-01-01T00:00:00Z",
           end_reason: "admin_removed",
         })
         .eq("product_id", PRODUCT_FLAIR)

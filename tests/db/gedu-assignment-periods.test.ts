@@ -3,7 +3,12 @@ import type { SupabaseClient } from "@supabase/supabase-js";
 import { z } from "zod";
 import type { Database } from "@/types/database.types";
 import { substitutionRequestDocument } from "@/services/session-substitution/session-substitution.contracts";
-import { createAdminTestClient, createAuthenticatedClient } from "./helpers";
+import {
+  createAdminTestClient,
+  createAuthenticatedClient,
+  dbNow,
+  utcDayOffset,
+} from "./helpers";
 import { TEST_IDS, TEST_CREDENTIALS } from "./constants";
 import { createScheduleSlot, createTestProduct, deleteTestProducts } from "./product-helpers";
 import { seedAssignment } from "./assignment-helpers";
@@ -31,15 +36,18 @@ const OTHER = TEST_IDS.ADMIN;
 
 const FORBIDDEN = "42501";
 
-/** A UTC calendar date `offset` days from today, UTC-pinned end to end. */
-function utcDate(offset: number): string {
-  const now = new Date();
-  return new Date(
-    Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), now.getUTCDate() + offset),
-  )
-    .toISOString()
-    .slice(0, 10);
-}
+/**
+ * The database's clock, read before the setup and again before each test: the
+ * dates below count from the day the test runs on, the database's today, which
+ * a seat and a filing are judged against.
+ */
+let DB_NOW: Date;
+beforeAll(async () => {
+  DB_NOW = await dbNow();
+});
+beforeEach(async () => {
+  DB_NOW = await dbNow();
+});
 
 /** The planned start of a date: the slot's 10:00 UTC. */
 function plannedStart(date: string): string {
@@ -76,8 +84,8 @@ describe("gedu assignment periods", () => {
       id: PRODUCT,
       billingMode: "free",
       seatCount: null,
-      startDate: utcDate(-60),
-      endDate: utcDate(60),
+      startDate: utcDayOffset(DB_NOW, -60),
+      endDate: utcDayOffset(DB_NOW, 60),
     });
     for (const weekday of [0, 1, 2, 3, 4, 5, 6]) {
       await createScheduleSlot(admin, PRODUCT, { weekday, startTime: "10:00" });
@@ -167,7 +175,7 @@ describe("gedu assignment periods", () => {
         status: substitute ? "substituted" : "open",
         substitute_id: substitute,
         approved_by: substitute ? TEST_IDS.ADMIN : null,
-        approved_at: substitute ? new Date().toISOString() : null,
+        approved_at: substitute ? "2020-01-01T00:00:00Z" : null,
       })
       .select("id")
       .single();
@@ -326,8 +334,8 @@ describe("gedu assignment periods", () => {
       const periods = await periodsOf(GEDU);
       expect(periods).toHaveLength(1);
       expect(periods[0].ended_at).not.toBeNull();
-      expect(await seated(GEDU, GROUP_1, utcDate(-5))).toBe(true);
-      expect(await seated(GEDU, GROUP_1, utcDate(5))).toBe(false);
+      expect(await seated(GEDU, GROUP_1, utcDayOffset(DB_NOW, -5))).toBe(true);
+      expect(await seated(GEDU, GROUP_1, utcDayOffset(DB_NOW, 5))).toBe(false);
     });
 
     it("adding a removed gedu again starts a new row, and the gap is nobody's", async () => {
@@ -356,14 +364,14 @@ describe("gedu assignment periods", () => {
       expect(periods.map((period) => period.role)).toEqual(["primary", "assistant"]);
       expect(Date.parse(periods[0].ended_at ?? "")).toBe(Date.parse(periods[1].started_at));
 
-      expect((await rolesAt(GROUP_1, utcDate(-5)))[GEDU]).toBe("primary");
-      expect((await rolesAt(GROUP_1, utcDate(5)))[GEDU]).toBe("assistant");
+      expect((await rolesAt(GROUP_1, utcDayOffset(DB_NOW, -5)))[GEDU]).toBe("primary");
+      expect((await rolesAt(GROUP_1, utcDayOffset(DB_NOW, 5)))[GEDU]).toBe("assistant");
 
       // A request filed for a future session snapshots the role of the period
       // holding it.
       const { data, error } = await geduAuth.rpc("request_session_substitution", {
         p_group_id: GROUP_1,
-        p_session_date: utcDate(5),
+        p_session_date: utcDayOffset(DB_NOW, 5),
         p_reason: "other",
       });
       expect(error).toBeNull();
@@ -382,15 +390,15 @@ describe("gedu assignment periods", () => {
       expect([onOne.group_id, onTwo.group_id]).toEqual([GROUP_1, GROUP_2]);
       expect(Date.parse(onOne.ended_at ?? "")).toBe(Date.parse(onTwo.started_at));
 
-      expect(await seated(GEDU, GROUP_1, utcDate(-5))).toBe(true);
-      expect(await seated(GEDU, GROUP_1, utcDate(5))).toBe(false);
-      expect(await seated(GEDU, GROUP_2, utcDate(-5))).toBe(false);
-      expect(await seated(GEDU, GROUP_2, utcDate(5))).toBe(true);
+      expect(await seated(GEDU, GROUP_1, utcDayOffset(DB_NOW, -5))).toBe(true);
+      expect(await seated(GEDU, GROUP_1, utcDayOffset(DB_NOW, 5))).toBe(false);
+      expect(await seated(GEDU, GROUP_2, utcDayOffset(DB_NOW, -5))).toBe(false);
+      expect(await seated(GEDU, GROUP_2, utcDayOffset(DB_NOW, 5))).toBe(true);
     });
 
     it("a removal and re-add in one batch leaves the future requests alive", async () => {
       await seedAssignment(admin, { groupId: GROUP_1, geduId: GEDU, productId: PRODUCT });
-      const future = await seedRequest({ date: utcDate(5) });
+      const future = await seedRequest({ date: utcDayOffset(DB_NOW, 5) });
 
       await apply({
         p_gedu_assignments_removed: [{ groupId: GROUP_1, geduId: GEDU }],
@@ -422,8 +430,8 @@ describe("gedu assignment periods", () => {
 
     it("the sweep withdraws a future request and keeps a past one with its substitute", async () => {
       await seedAssignment(admin, { groupId: GROUP_1, geduId: GEDU, productId: PRODUCT });
-      const future = await seedRequest({ date: utcDate(5) });
-      const past = await seedRequest({ date: utcDate(-5), substituteId: OTHER });
+      const future = await seedRequest({ date: utcDayOffset(DB_NOW, 5) });
+      const past = await seedRequest({ date: utcDayOffset(DB_NOW, -5), substituteId: OTHER });
 
       await apply({ p_gedu_assignments_removed: [{ groupId: GROUP_1, geduId: GEDU }] });
 
@@ -438,7 +446,7 @@ describe("gedu assignment periods", () => {
 
   describe("a session belongs to the period holding its start", () => {
     it("at a planned start, the replacement added then takes the session", async () => {
-      const date = utcDate(-10);
+      const date = utcDayOffset(DB_NOW, -10);
       const handover = plannedStart(date);
       await seedAssignment(admin, {
         groupId: GROUP_1,
@@ -455,12 +463,12 @@ describe("gedu assignment periods", () => {
 
       expect(await seated(GEDU, GROUP_1, date)).toBe(false);
       expect(await seated(OTHER, GROUP_1, date)).toBe(true);
-      expect(await seated(GEDU, GROUP_1, utcDate(-11))).toBe(true);
-      expect(await seated(OTHER, GROUP_1, utcDate(-11))).toBe(false);
+      expect(await seated(GEDU, GROUP_1, utcDayOffset(DB_NOW, -11))).toBe(true);
+      expect(await seated(OTHER, GROUP_1, utcDayOffset(DB_NOW, -11))).toBe(false);
     });
 
     it("a gedu removed just after a planned start keeps that session", async () => {
-      const date = utcDate(-10);
+      const date = utcDayOffset(DB_NOW, -10);
       const handover = "T10:00:00.001Z";
       await seedAssignment(admin, {
         groupId: GROUP_1,
@@ -477,13 +485,13 @@ describe("gedu assignment periods", () => {
 
       expect(await seated(GEDU, GROUP_1, date)).toBe(true);
       expect(await seated(OTHER, GROUP_1, date)).toBe(false);
-      expect(await seated(OTHER, GROUP_1, utcDate(-9))).toBe(true);
+      expect(await seated(OTHER, GROUP_1, utcDayOffset(DB_NOW, -9))).toBe(true);
     });
 
     it("a stored session is judged at its stored start, not the plan's", async () => {
       // Stored at 15:30 while the plan says 10:00, and the handover falls
       // between the two: by the plan the session would be the leaver's.
-      const date = utcDate(-12);
+      const date = utcDayOffset(DB_NOW, -12);
       const stored = await admin.from("group_sessions").insert({
         group_id: GROUP_1,
         session_date: date,
@@ -528,19 +536,19 @@ describe("gedu assignment periods", () => {
         groupId: GROUP_1,
         geduId: GEDU,
         productId: PRODUCT,
-        endedAt: `${utcDate(7)}T00:00:00.000Z`,
+        endedAt: `${utcDayOffset(DB_NOW, 7)}T00:00:00.000Z`,
       });
 
       const inside = await geduAuth.rpc("request_session_substitution", {
         p_group_id: GROUP_1,
-        p_session_date: utcDate(5),
+        p_session_date: utcDayOffset(DB_NOW, 5),
         p_reason: "sick",
       });
       expect(inside.error).toBeNull();
 
       const after = await geduAuth.rpc("request_session_substitution", {
         p_group_id: GROUP_1,
-        p_session_date: utcDate(8),
+        p_session_date: utcDayOffset(DB_NOW, 8),
         p_reason: "sick",
       });
       expect(after.error?.code).toBe(FORBIDDEN);

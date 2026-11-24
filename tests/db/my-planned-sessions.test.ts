@@ -2,7 +2,7 @@ import { describe, it, expect, beforeAll, afterAll, beforeEach } from "vitest";
 import type { SupabaseClient } from "@supabase/supabase-js";
 import type { Database } from "@/types/database.types";
 import { myPlannedSessions } from "@/services/participations/participations.contracts";
-import { createAdminTestClient, createAuthenticatedClient } from "./helpers";
+import { createAdminTestClient, createAuthenticatedClient, dbNow, utcDayOffset } from "./helpers";
 import { TEST_CREDENTIALS, TEST_IDS } from "./constants";
 import {
   createScheduleSlot,
@@ -42,22 +42,23 @@ const WEEKLY_SEAT = "00000000-0000-0000-0000-000000000875";
 const UNPLACED_SEAT = "00000000-0000-0000-0000-000000000876";
 const ALL_PRODUCTS = [DAILY, WEEKLY];
 
-/** `YYYY-MM-DD`, `offset` days from today. Every product here runs in UTC. */
-function dayOffset(offset: number): string {
-  const d = new Date();
-  d.setUTCDate(d.getUTCDate() + offset);
-  return d.toISOString().slice(0, 10);
-}
+/**
+ * The database's clock, read when the file loads: the dates below are built
+ * then, and they count from the database's today, the one its functions judge
+ * against. A run crossing midnight leaves them right: TOMORROW names WEEKLY's
+ * first session after its placement, which the span reaches from either day.
+ */
+const DB_NOW = await dbNow();
 
 /** 0 = Monday, matching `schedule_slots.weekday`. */
 function weekdayOf(date: string): number {
   return (new Date(`${date}T12:00:00Z`).getUTCDay() + 6) % 7;
 }
 
-const TODAY = dayOffset(0);
-const TOMORROW = dayOffset(1);
+const TODAY = utcDayOffset(DB_NOW, 0);
+const TOMORROW = utcDayOffset(DB_NOW, 1);
 /** Twelve weeks after tomorrow: the WEEKLY membership's paid-through date. */
-const PAID_THROUGH = dayOffset(85);
+const PAID_THROUGH = utcDayOffset(DB_NOW, 85);
 
 describe("get_my_planned_sessions", () => {
   let admin: SupabaseClient<Database>;
@@ -92,7 +93,7 @@ describe("get_my_planned_sessions", () => {
     await createTestProduct(admin, {
       id: DAILY,
       seatCount: null,
-      startDate: dayOffset(-30),
+      startDate: utcDayOffset(DB_NOW, -30),
     });
     for (let weekday = 0; weekday < 7; weekday++) {
       await createScheduleSlot(admin, DAILY, {
@@ -105,7 +106,7 @@ describe("get_my_planned_sessions", () => {
     await createTestProduct(admin, {
       id: WEEKLY,
       seatCount: null,
-      startDate: dayOffset(-30),
+      startDate: utcDayOffset(DB_NOW, -30),
     });
     await createScheduleSlot(admin, WEEKLY, {
       weekday: weekdayOf(TOMORROW),
@@ -119,7 +120,7 @@ describe("get_my_planned_sessions", () => {
     ]);
     expect(groups.error).toBeNull();
 
-    const twentyDaysAgo = `${dayOffset(-20)}T09:00:00.000Z`;
+    const twentyDaysAgo = `${utcDayOffset(DB_NOW, -20)}T09:00:00.000Z`;
     // Its own insert: a bulk insert sends every row the union of the rows'
     // columns, and a NULL signed_up_at on the others is refused.
     const dailySeat = await admin.from("participations").insert({
@@ -225,9 +226,25 @@ describe("get_my_planned_sessions", () => {
     return data;
   }
 
+  /**
+   * DAILY_SEAT's plan, beside DAILY's group horizon read on either side of it.
+   * The horizon is the eighth session that has not ended, and DAILY's 23:00
+   * session ends at midnight UTC, so a midnight passing during the read moves
+   * it a day on: the plan ends at one of the two.
+   */
+  async function dailyPlanWithin(client: SupabaseClient<Database>) {
+    const opening = await horizon(DAILY, DAILY_GROUP);
+    const plan = await planFor(client, DAILY_SEAT);
+    const closing = await horizon(DAILY, DAILY_GROUP);
+    return { plan, horizons: [opening, closing] };
+  }
+
   it("answers the seat's child and paying parent alike, and another family not at all", async () => {
-    const asGamer = await planFor(gamerAuth, DAILY_SEAT);
-    const asParent = await planFor(customerAuth, DAILY_SEAT);
+    // WEEKLY_SEAT's span runs from the day before its placement to its
+    // paid-through date, neither of which moves with the clock, so two reads
+    // agree whenever they run.
+    const asGamer = await planFor(gamerAuth, WEEKLY_SEAT);
+    const asParent = await planFor(customerAuth, WEEKLY_SEAT);
     expect(asGamer.length).toBeGreaterThan(0);
     expect(asParent).toEqual(asGamer);
 
@@ -240,13 +257,13 @@ describe("get_my_planned_sessions", () => {
   });
 
   it("spans from the day before the seat became theirs to the group's horizon", async () => {
-    const plan = await planFor(customerAuth, DAILY_SEAT);
+    const { plan, horizons } = await dailyPlanWithin(customerAuth);
     const dates = plan.map((session) => session.date);
 
     // Placed twenty days ago, so the span opens the day before that rather
     // than the day before today.
-    expect(dates[0]).toBe(dayOffset(-21));
-    expect(dates.at(-1)).toBe(await horizon(DAILY, DAILY_GROUP));
+    expect(dates[0]).toBe(utcDayOffset(DB_NOW, -21));
+    expect(horizons).toContain(dates.at(-1));
     // Every day in between, once, soonest first: the club runs daily.
     expect(new Set(dates).size).toBe(dates.length);
     expect([...dates].sort()).toEqual(dates);
@@ -261,15 +278,14 @@ describe("get_my_planned_sessions", () => {
     });
     expect(cancelled.error).toBeNull();
 
-    const plan = await planFor(gamerAuth, DAILY_SEAT);
+    const { plan, horizons: after } = await dailyPlanWithin(gamerAuth);
     expect(
       plan.filter((session) => session.cancelled).map((s) => s.date),
     ).toEqual([TOMORROW]);
     // The horizon skips the group's cancelled session, so the span reaches one
     // day further and the card still has eight sessions that run.
-    const after = await horizon(DAILY, DAILY_GROUP);
-    expect(after).not.toBe(before);
-    expect(plan.at(-1)?.date).toBe(after);
+    expect(after).not.toContain(before);
+    expect(after).toContain(plan.at(-1)?.date);
   });
 
   it("never flags an unplaced seat, whatever another group cancelled", async () => {

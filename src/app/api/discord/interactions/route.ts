@@ -9,8 +9,8 @@ import {
 } from "discord-interactions";
 import {
   DEFAULT_LOCALE,
-  isSupportedLocale,
   matchLocaleFromHeader,
+  resolveLocale,
   type SupportedLocale,
 } from "@/lib/constants/locales";
 import { DISCORD_API_BASE, discordBotHeaders } from "@/lib/discord-api.server";
@@ -460,9 +460,9 @@ function modalField(components: unknown, customId: string): object | null {
  * Run one `/sub` step for the caller and PATCH its message in.
  *
  * Every step starts the same way: who is this, in which language, and what can
- * they file for. The copy is the gedu's own locale where they chose one, else
- * their Discord client's. A failure anywhere sends a short generic line in that
- * language, never the cause.
+ * they file for. The copy is the gedu's own locale; until the caller is known
+ * to be a gedu, their Discord client's. A failure anywhere sends a short
+ * generic line in that language, never the cause.
  */
 async function sendSubStep(
   interactionToken: string,
@@ -480,7 +480,7 @@ async function sendSubStep(
       await sendSubNotLinked(interactionToken, caller, fallback, requestHeaders, step);
       return;
     }
-    const locale = gedu.locale ?? discordLanguage;
+    const locale = gedu.locale;
     // exact-locale: picks which message catalogue to load, not a written version
     const copy = locale === discordLanguage ? fallback : await loadDiscordSubCopy(locale);
     fallback = copy;
@@ -642,11 +642,7 @@ async function sendSubReqAnswer(
     if (read === null) return;
     const { snapshot, candidate } = read;
     const locale =
-      candidate === null
-        ? discordLanguage
-        : candidate.locale !== null && isSupportedLocale(candidate.locale)
-          ? candidate.locale
-          : DEFAULT_LOCALE;
+      candidate === null ? discordLanguage : resolveLocale(candidate.locale);
     const copy = await loadDiscordSubOfferCopy(locale);
     await patchDiscordMessage(
       interactionToken,

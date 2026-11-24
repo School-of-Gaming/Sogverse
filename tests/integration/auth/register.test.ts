@@ -466,12 +466,12 @@ describe("POST /api/auth/register", () => {
     expect(deferred).toHaveLength(0);
   });
 
-  // The trigger reads first_name/last_name (and the five utm_* keys) straight
-  // out of this bag, so the shape is a contract with the database, not a
-  // detail. The two inert keys are kept because the Supabase Auth dashboard
-  // shows display_name and because a reader of the metadata should see what
-  // they saw before this moved off the browser.
-  it("sends the same signup metadata the browser used to send", async () => {
+  // The trigger reads first_name/last_name/locale (and the five utm_* keys)
+  // straight out of this bag, so the shape is a contract with the database,
+  // not a detail. The two inert keys are kept because the Supabase Auth
+  // dashboard shows display_name and because a reader of the metadata should
+  // see what they saw before this moved off the browser.
+  it("sends the signup metadata the profile trigger reads", async () => {
     await POST(registerRequest(validBody));
 
     expect(signupMetadata()).toEqual({
@@ -479,6 +479,7 @@ describe("POST /api/auth/register", () => {
       last_name: "Virtanen",
       display_name: "Marja Virtanen",
       role: "customer",
+      locale: "en",
     });
   });
 
@@ -513,7 +514,6 @@ describe("POST /api/auth/register", () => {
     expect(mockProfileUpdate).toHaveBeenCalledWith({
       row: {
         home_location_id: LOCATION_ID,
-        locale: "en",
         registration_marketing_consent: false,
       },
       column: "id",
@@ -751,7 +751,7 @@ describe("POST /api/auth/register", () => {
     expect(response.status).toBe(200);
     expect(mockProfileUpdate).toHaveBeenCalledTimes(1);
     expect(mockProfileUpdate.mock.calls[0][0]).toEqual({
-      row: { locale: "en", registration_marketing_consent: true },
+      row: { registration_marketing_consent: true },
       column: "id",
       value: NEW_USER_ID,
     });
@@ -994,23 +994,19 @@ describe("POST /api/auth/register", () => {
     expect(htmlContent).toContain(`${SITE_ORIGIN}/settings`);
   });
 
-  // The persisted locale is what a browserless sender consults later: without
-  // it, the Stripe webhook's confirmation mail for this parent falls through
-  // Accept-Language on Stripe's own request and lands on English.
-  it("persists the registration locale onto the profile", async () => {
+  // The trigger stores the locale from the signup metadata, and refuses the
+  // account without one — so it travels with the create, never as a second
+  // write after it.
+  it("creates the account with the registration locale in its signup metadata", async () => {
     const response = await POST(registerRequest({ ...validBody, locale: "fi" }));
 
     expect(response.status).toBe(200);
-    expect(mockProfileUpdate).toHaveBeenCalledWith({
-      row: { locale: "fi", registration_marketing_consent: false },
-      column: "id",
-      value: NEW_USER_ID,
-    });
+    expect(signupMetadata().locale).toBe("fi");
+    expect(mockProfileUpdate.mock.calls[0][0].row).not.toHaveProperty("locale");
   });
 
-  it("writes only the marketing answer when neither locale nor location was sent", async () => {
-    const { locale: _omitted, ...noLocale } = validBody;
-    const response = await POST(registerRequest(noLocale));
+  it("writes only the marketing answer when no location was sent", async () => {
+    const response = await POST(registerRequest(validBody));
 
     expect(response.status).toBe(200);
     expect(mockProfileUpdate).toHaveBeenCalledWith({
@@ -1029,21 +1025,12 @@ describe("POST /api/auth/register", () => {
     expect(subject).not.toBe("Welcome to School of Gaming");
   });
 
-  it("falls back to Accept-Language when the body names no locale", async () => {
+  it("returns 400 for a body naming no locale, before an account exists", async () => {
     const { locale: _omitted, ...noLocale } = validBody;
-    const request = new Request("http://localhost:3000/api/auth/register", {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        "Accept-Language": "fi-FI,fi;q=0.9",
-      },
-      body: JSON.stringify(noLocale),
-    });
+    const response = await POST(registerRequest(noLocale));
 
-    await POST(request);
-
-    const { subject } = mockSendTransactionalEmail.mock.calls[0][0];
-    expect(subject).not.toBe("Welcome to School of Gaming");
+    expect(response.status).toBe(400);
+    expect(mockCreateUser).not.toHaveBeenCalled();
   });
 
   // Regression guard: the emailed link carries a signed token, so an origin

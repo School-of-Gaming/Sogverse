@@ -6,10 +6,7 @@ import { ROUTES } from "@/lib/constants/routes";
 import { createEmailVerificationToken } from "@/lib/email-verification";
 import { buildVerifyEmailEmail } from "@/lib/email-templates/verify-email";
 import { getEmailTranslator } from "@/lib/email-templates/translator";
-import {
-  detectLocaleFromHeader,
-  isSupportedLocale,
-} from "@/lib/constants/locales";
+import { resolveLocale } from "@/lib/constants/locales";
 import { getOrigin } from "@/lib/url";
 import { hasRealEmail } from "@/lib/gamer-sign-in";
 
@@ -108,10 +105,7 @@ export const POST = defineRoute({
     const token = await createEmailVerificationToken(profile.id, profile.email);
     const verificationUrl = `${origin}${ROUTES.verifyEmail}?token=${encodeURIComponent(token)}`;
 
-    const pref = profile.locale;
-    const locale = isSupportedLocale(pref)
-      ? pref
-      : detectLocaleFromHeader(request.headers.get("Accept-Language"));
+    const locale = resolveLocale(profile.locale);
     const t = await getEmailTranslator(locale);
 
     await sendTransactionalEmail({

@@ -155,6 +155,10 @@ export const POST = defineRoute({
           first_name: firstName,
           last_name: inheritedLastName,
           display_name: composedDisplayName,
+          // The parent's locale, which the child starts in and may change
+          // later. The trigger refuses an account without one; `create_gamer`
+          // copies the same value from the parent's row.
+          locale: profile.locale,
         },
       });
 

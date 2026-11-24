@@ -3,7 +3,7 @@ import type { PostgrestError, SupabaseClient } from "@supabase/supabase-js";
 import type { Database } from "@/types/database.types";
 import { VOICE_CONFIG } from "@/lib/constants/voice";
 import { ensureChatChannelResult } from "@/services/chat/chat.contracts";
-import { createAdminTestClient, createAuthenticatedClient } from "./helpers";
+import { createAdminTestClient, createAuthenticatedClient, dbNow } from "./helpers";
 import { TEST_CREDENTIALS, TEST_IDS } from "./constants";
 import {
   createScheduleSlot,
@@ -188,10 +188,12 @@ describe("group_open_session_windows", () => {
       [{ weekday: 6, startTime: "03:30", durationMinutes: 60 }],
     );
 
-    // A session that started twenty minutes ago and runs an hour, so its
-    // window is open however long this file takes. The term started a week ago.
-    const started = new Date(Date.now() - 20 * 60_000);
-    const weekAgo = new Date(Date.now() - 7 * 86_400_000).toISOString().slice(0, 10);
+    // A session that started twenty minutes ago by the database's clock, the
+    // one that judges the window, and runs an hour, so its window is open
+    // however long this file takes. The term started a week ago.
+    const now = await dbNow();
+    const started = new Date(now.getTime() - 20 * 60_000);
+    const weekAgo = new Date(now.getTime() - 7 * 86_400_000).toISOString().slice(0, 10);
     await seed(
       PRODUCT_LIVE,
       { timezone: "UTC", startDate: weekAgo, endDate: null },

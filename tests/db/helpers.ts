@@ -1,5 +1,6 @@
-import { createHash, randomBytes } from "node:crypto";
+import { createHash, randomBytes, randomUUID } from "node:crypto";
 import { createClient, type SupabaseClient } from "@supabase/supabase-js";
+import { Pool, type Dispatcher } from "undici";
 import type { Database } from "@/types/database.types";
 
 const supabaseUrl =
@@ -7,13 +8,164 @@ const supabaseUrl =
 const serviceRoleKey = process.env.SUPABASE_SERVICE_ROLE_KEY ?? "";
 const anonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY ?? "";
 
+const stackOrigin = new URL(supabaseUrl).origin;
+
+/**
+ * The one connection pool every request this test process makes to the stack
+ * travels through, so sockets are reused rather than opened per request.
+ *
+ * It works around an undici bug, nodejs/undici#5022: the `Agent` behind Node's
+ * global `fetch` keys its per-origin bookkeeping by origin rather than by pool,
+ * so when Kong retires a socket (it closes one after its hundredth request) the
+ * old pool's late disconnect closes the new pool for that origin, and the
+ * cascade runs on — every later request opens a connection and closes it after
+ * one use. Across a full run that left thousands of client ports in TIME_WAIT
+ * and slowed the run. A `Pool` for the single origin has no such bookkeeping
+ * and reuses its sockets.
+ *
+ * It can go once the undici bundled with Node (`process.versions.undici`)
+ * carries the fix, nodejs/undici#5034, which has landed only on undici's v8
+ * line: the DB tests then use the platform's `fetch` as it comes.
+ *
+ * The requests themselves stay on the platform's `fetch`, handed this pool as
+ * its dispatcher. The `undici` package's own `fetch` cannot carry them: it does
+ * not recognise the platform's `FormData`, which storage uploads send, and posts
+ * it as the text "[object FormData]". Because the pool is handed to Node's own
+ * `fetch`, the `undici` package's major must match the major Node bundles
+ * (`process.versions.undici`).
+ */
+const stackConnections = new Pool(stackOrigin);
+
+/** Node's `fetch` takes a `dispatcher`, which the DOM's `RequestInit` does not name. */
+type NodeFetch = (
+  input: RequestInfo | URL,
+  init: RequestInit & { dispatcher: Dispatcher }
+) => Promise<Response>;
+const platformFetch: NodeFetch = globalThis.fetch;
+
+/**
+ * `fetch` for requests to the stack, over the shared pool. Every DB-test
+ * client and raw request uses it. A pool sends whatever it is handed to its own
+ * host, so a URL on any other origin is refused rather than misdelivered, and a
+ * redirect is an error unless the caller asks for it by `redirect: "manual"`:
+ * following one would send its target to the stack as well.
+ */
+export const dbTestFetch: typeof fetch = (input, init) => {
+  const url = new URL(input instanceof Request ? input.url : input);
+  if (url.origin !== stackOrigin) {
+    throw new Error(`dbTestFetch only reaches ${stackOrigin}, not ${url.origin}`);
+  }
+  return platformFetch(input, {
+    redirect: "error",
+    ...init,
+    dispatcher: stackConnections,
+  });
+};
+
+/** Ends the shared pool; the DB setup calls it once the file's tests are done. */
+export function closeDbTestConnections(): Promise<void> {
+  return stackConnections.destroy();
+}
+
+const clientOptions = {
+  auth: { autoRefreshToken: false, persistSession: false },
+  global: { fetch: dbTestFetch },
+};
+
 /**
  * Service-role client — bypasses RLS. Use for setup/teardown and assertions.
  */
 export function createAdminTestClient(): SupabaseClient<Database> {
-  return createClient<Database>(supabaseUrl, serviceRoleKey, {
-    auth: { autoRefreshToken: false, persistSession: false },
-  });
+  return createClient<Database>(supabaseUrl, serviceRoleKey, clientOptions);
+}
+
+// The database's clock. The tests run on the host and the database in a WSL2
+// kernel whose clock drifts seconds from the host's, so a time the database
+// judges against its own `now()`, or a stamp it wrote, is read from its clock
+// and never from this process's.
+
+/** The client the clock is read through, built on the first read. */
+let clockClient: SupabaseClient<Database> | undefined;
+
+/** The database's clock as of this call, read fresh every time. */
+export async function dbNow(): Promise<Date> {
+  clockClient ??= createAdminTestClient();
+  const { data, error } = await clockClient.rpc("db_clock");
+  if (error) throw new Error(`Reading the database's clock failed: ${error.message}`);
+  return new Date(data);
+}
+
+/**
+ * The database's clock shifted by `offsetMs`. A past time stays past for the
+ * database; a future one less than a minute ahead would race the test's own
+ * runtime, so it throws.
+ */
+export async function dbTime(offsetMs: number): Promise<Date> {
+  if (offsetMs > 0 && offsetMs < 60_000) {
+    throw new Error(
+      `dbTime(${offsetMs}): a future time under a minute ahead can pass while the test runs`
+    );
+  }
+  return new Date((await dbNow()).getTime() + offsetMs);
+}
+
+/**
+ * Runs `act` between two reads of the database's clock, and answers the two
+ * things a test asks about when it ran:
+ *
+ * - **A stamp** the database wrote during `act` lies within
+ *   [notBefore, notAfter]. `notAfter` carries one extra millisecond because
+ *   Postgres stamps in microseconds and a Date floors them, so it is a bound,
+ *   not a time the clock read.
+ * - **The day** the database judged `act` against is the UTC day of either of
+ *   `reads`, the two raw clock reads — one day unless midnight passed during
+ *   `act`. A day is labelled from `reads`, never from `notAfter`: its extra
+ *   millisecond steps a read at 23:59:59.999 into the next day.
+ */
+export async function dbInterval<T>(
+  act: () => Promise<T>
+): Promise<{ result: T; notBefore: Date; notAfter: Date; reads: [Date, Date] }> {
+  const before = await dbNow();
+  const result = await act();
+  const after = await dbNow();
+  return {
+    result,
+    notBefore: before,
+    notAfter: new Date(after.getTime() + 1),
+    reads: [before, after],
+  };
+}
+
+/**
+ * `YYYY-MM-DD`, the UTC calendar day `offsetDays` days from `from`'s. Fixture
+ * products run in UTC, so from a `dbNow()` reading this is the product's own
+ * calendar.
+ */
+export function utcDayOffset(from: Date, offsetDays: number): string {
+  return new Date(
+    Date.UTC(from.getUTCFullYear(), from.getUTCMonth(), from.getUTCDate() + offsetDays),
+  )
+    .toISOString()
+    .slice(0, 10);
+}
+
+/** The UTC midnights from the start of `day` to `read`: 0 when `read` falls on `day`. */
+export function utcMidnightsSince(day: string, read: Date): number {
+  return (Date.parse(`${utcDayOffset(read, 0)}T00:00:00Z`) - Date.parse(`${day}T00:00:00Z`)) / 86_400_000;
+}
+
+/** Every `YYYY-MM-DD` from `first` to `last`, both included. */
+export function utcDatesThrough(first: string, last: string): string[] {
+  const dates: string[] = [];
+  for (let date = first; date <= last; date = utcDayOffset(new Date(`${date}T00:00:00Z`), 1)) {
+    dates.push(date);
+  }
+  return dates;
+}
+
+/** Twelve random hex characters, for emails and names that must not collide. */
+export function uniqueSuffix(): string {
+  return randomUUID().replaceAll("-", "").slice(0, 12);
 }
 
 /**
@@ -22,9 +174,7 @@ export function createAdminTestClient(): SupabaseClient<Database> {
  * reachable (or not) without a session.
  */
 export function createAnonTestClient(): SupabaseClient<Database> {
-  return createClient<Database>(supabaseUrl, anonKey, {
-    auth: { autoRefreshToken: false, persistSession: false },
-  });
+  return createClient<Database>(supabaseUrl, anonKey, clientOptions);
 }
 
 /**
@@ -34,12 +184,15 @@ export function createAnonTestClient(): SupabaseClient<Database> {
 export async function createAuthenticatedClient(
   email: string,
   password: string,
-  /** Stands in for the network, to fail chosen requests. */
+  /**
+   * Stands in for the network, to fail chosen requests. What it lets through
+   * goes on to `dbTestFetch`.
+   */
   customFetch?: typeof fetch
 ): Promise<SupabaseClient<Database>> {
   const client = createClient<Database>(supabaseUrl, anonKey, {
-    auth: { autoRefreshToken: false, persistSession: false },
-    ...(customFetch ? { global: { fetch: customFetch } } : {}),
+    ...clientOptions,
+    global: { fetch: customFetch ?? dbTestFetch },
   });
 
   const { error } = await client.auth.signInWithPassword({ email, password });
@@ -58,9 +211,7 @@ export async function accessTokenFor(
   email: string,
   password: string
 ): Promise<string> {
-  const client = createClient(supabaseUrl, anonKey, {
-    auth: { autoRefreshToken: false, persistSession: false },
-  });
+  const client = createClient(supabaseUrl, anonKey, clientOptions);
 
   const { data, error } = await client.auth.signInWithPassword({
     email,
@@ -96,7 +247,7 @@ export async function callRpcRaw(
   functionName: string,
   args: Record<string, unknown>
 ): Promise<RawRestResult> {
-  const response = await fetch(`${supabaseUrl}/rest/v1/rpc/${functionName}`, {
+  const response = await dbTestFetch(`${supabaseUrl}/rest/v1/rpc/${functionName}`, {
     method: "POST",
     headers: {
       apikey: anonKey,
@@ -124,7 +275,7 @@ export async function callServiceRoleRpcRaw(
   functionName: string,
   args: Record<string, unknown>
 ): Promise<unknown> {
-  const response = await fetch(`${supabaseUrl}/rest/v1/rpc/${functionName}`, {
+  const response = await dbTestFetch(`${supabaseUrl}/rest/v1/rpc/${functionName}`, {
     method: "POST",
     headers: {
       apikey: serviceRoleKey,
@@ -160,7 +311,7 @@ export async function callServiceRoleRpcResult(
   functionName: string,
   args: Record<string, unknown>
 ): Promise<RawRestResult> {
-  const response = await fetch(`${supabaseUrl}/rest/v1/rpc/${functionName}`, {
+  const response = await dbTestFetch(`${supabaseUrl}/rest/v1/rpc/${functionName}`, {
     method: "POST",
     headers: {
       apikey: serviceRoleKey,
@@ -194,7 +345,7 @@ export async function patchRaw(
   path: string,
   body: Record<string, unknown>
 ): Promise<RawRestResult> {
-  const response = await fetch(`${supabaseUrl}/rest/v1/${path}`, {
+  const response = await dbTestFetch(`${supabaseUrl}/rest/v1/${path}`, {
     method: "PATCH",
     headers: {
       apikey: anonKey,
@@ -268,7 +419,7 @@ export async function oauthGrantFor(
 
   // The authorize step answers with a redirect to the consent page, naming the
   // pending authorization.
-  const authorize = await fetch(
+  const authorize = await dbTestFetch(
     `${supabaseUrl}/auth/v1/oauth/authorize?${new URLSearchParams({
       response_type: "code",
       client_id: clientId,
@@ -304,7 +455,7 @@ export async function oauthGrantFor(
   const code = new URL(approved.data.redirect_url).searchParams.get("code");
   if (code === null) throw new Error("The approval carried no code");
 
-  const exchanged = await fetch(`${supabaseUrl}/auth/v1/oauth/token`, {
+  const exchanged = await dbTestFetch(`${supabaseUrl}/auth/v1/oauth/token`, {
     method: "POST",
     headers: {
       apikey: anonKey,
@@ -356,7 +507,10 @@ export function createBearerTestClient(
   accessToken: string
 ): SupabaseClient<Database> {
   return createClient<Database>(supabaseUrl, anonKey, {
-    auth: { autoRefreshToken: false, persistSession: false },
-    global: { headers: { Authorization: `Bearer ${accessToken}` } },
+    ...clientOptions,
+    global: {
+      fetch: dbTestFetch,
+      headers: { Authorization: `Bearer ${accessToken}` },
+    },
   });
 }

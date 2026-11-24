@@ -11,6 +11,9 @@ import {
   createAdminTestClient,
   createAnonTestClient,
   createAuthenticatedClient,
+  dbInterval,
+  dbNow,
+  uniqueSuffix,
 } from "./helpers";
 import { SEED, TEST_CREDENTIALS, TEST_IDS } from "./constants";
 import { createTestProduct, deleteTestProducts, eraseParticipations } from "./product-helpers";
@@ -42,6 +45,9 @@ const PRODUCTS = [CLUB, ENDED, FREE, MUNI];
 
 const FORBIDDEN = "42501";
 const CHECK_VIOLATION = "23514";
+
+/** A past instant that is only data: nothing judges it against the clock. */
+const SOME_PAST = "2020-01-01T00:00:00Z";
 
 /** What every enrolled event of the seeded gamer's seat says about who holds it, with no booking tag. */
 const GAMER_SEAT_UNTAGGED = {
@@ -124,7 +130,7 @@ describe("the Klaviyo sync", () => {
         participant_id: TEST_IDS.GAMER,
         customer_id: TEST_IDS.CUSTOMER,
         status,
-        ...(status === "waitlisted" ? { waitlisted_at: new Date().toISOString() } : {}),
+        ...(status === "waitlisted" ? { waitlisted_at: (await dbNow()).toISOString() } : {}),
       })
       .select("id")
       .single();
@@ -305,10 +311,10 @@ describe("the Klaviyo sync", () => {
     /** A fresh password account: a customer row, registered at creation. */
     async function newCustomer(label: string): Promise<string> {
       const { data, error } = await admin.auth.admin.createUser({
-        email: `klaviyo-${label}-${Date.now()}@test.local`,
+        email: `klaviyo-${label}-${uniqueSuffix()}@test.local`,
         password: "testpassword123",
         email_confirm: true,
-        user_metadata: { first_name: "Klaviyo", last_name: label },
+        user_metadata: { first_name: "Klaviyo", last_name: label, locale: "en" },
       });
       expect(error).toBeNull();
       return data.user?.id ?? "";
@@ -337,7 +343,7 @@ describe("the Klaviyo sync", () => {
       const userId = await newUnregisteredCustomer("unregistered");
       // The OAuth callback's verified-address stamp files them, and the
       // snapshot's silence is what keeps them out.
-      await admin.from("profiles").update({ email_verified_at: new Date().toISOString() }).eq("id", userId);
+      await admin.from("profiles").update({ email_verified_at: SOME_PAST }).eq("id", userId);
       expect((await profileRow(userId))?.seq).toBeGreaterThanOrEqual(1);
       expect(await snapshotIds([userId])).toEqual([]);
       await remove(userId);
@@ -349,7 +355,7 @@ describe("the Klaviyo sync", () => {
 
       const stamped = await admin
         .from("profiles")
-        .update({ registration_completed_at: new Date().toISOString() })
+        .update({ registration_completed_at: SOME_PAST })
         .eq("id", userId);
       expect(stamped.error).toBeNull();
       expect((await profileRow(userId))?.seq).toBe(1);
@@ -371,7 +377,7 @@ describe("the Klaviyo sync", () => {
       expect(early.error).toBeNull();
       expect(early.data).toEqual([]);
 
-      await admin.from("profiles").update({ registration_completed_at: new Date().toISOString() }).eq("id", userId);
+      await admin.from("profiles").update({ registration_completed_at: SOME_PAST }).eq("id", userId);
       const claimed = await admin.rpc("claim_klaviyo_event_jobs", { p_limit: 10, p_customer_ids: [userId] });
       expect(claimed.data).toEqual([expect.objectContaining({ kind: "account_created", customer_id: userId })]);
       await remove(userId);
@@ -453,10 +459,10 @@ describe("the Klaviyo sync", () => {
   describe("the event outbox", () => {
     it("files the account opening on a parent's first terms acceptance, and never on the bare insert", async () => {
       const { data, error } = await admin.auth.admin.createUser({
-        email: `klaviyo-new-parent-${Date.now()}@test.local`,
+        email: `klaviyo-new-parent-${uniqueSuffix()}@test.local`,
         password: "testpassword123",
         email_confirm: true,
-        user_metadata: { first_name: "Klaviyo", last_name: "Parent" },
+        user_metadata: { first_name: "Klaviyo", last_name: "Parent", locale: "en" },
       });
       expect(error).toBeNull();
       const userId = data.user?.id ?? "";
@@ -502,7 +508,7 @@ describe("the Klaviyo sync", () => {
       expect(waitlisted?.facts).toEqual(WAITLISTED_UNTAGGED);
       expect(await eventRow("enrolled", waiting)).toBeNull();
 
-      const offeredAt = new Date().toISOString();
+      const offeredAt = SOME_PAST;
       await admin.from("participations").update({ seat_offer_sent_at: offeredAt }).eq("id", waiting);
       const offered = await eventRow("seat_offered", waiting);
       expect(new Date(offered?.occurred_at ?? "").getTime()).toBe(new Date(offeredAt).getTime());
@@ -814,7 +820,7 @@ describe("the Klaviyo sync", () => {
           amount_cents: 4900,
           currency: "eur",
           purpose: "single_payment",
-          stripe_event_id: `evt_klaviyo_${Date.now()}_a`,
+          stripe_event_id: `evt_klaviyo_${uniqueSuffix()}_a`,
           metadata: { productId: CLUB },
         })
         .select("id")
@@ -835,7 +841,7 @@ describe("the Klaviyo sync", () => {
         .insert({
           customer_id: TEST_IDS.CUSTOMER,
           participation_id: participationId,
-          stripe_subscription_id: `sub_klaviyo_${Date.now()}`,
+          stripe_subscription_id: `sub_klaviyo_${uniqueSuffix()}`,
           stripe_customer_id: "cus_klaviyo",
           currency: "eur",
           status: "active",
@@ -965,11 +971,15 @@ describe("the Klaviyo sync", () => {
       await admin.from("profiles").update({ phone: "358401234568" }).eq("id", TEST_IDS.CUSTOMER_2);
       await admin.rpc("claim_klaviyo_profile_jobs", { p_limit: 10, p_customer_ids: [TEST_IDS.CUSTOMER_2] });
 
-      await admin.rpc("finish_klaviyo_profile_job", { p_customer_id: TEST_IDS.CUSTOMER_2, p_seq: 1, p_error: "Klaviyo said 503" });
+      const { notBefore, notAfter } = await dbInterval(async () =>
+        admin.rpc("finish_klaviyo_profile_job", { p_customer_id: TEST_IDS.CUSTOMER_2, p_seq: 1, p_error: "Klaviyo said 503" }),
+      );
       const backedOff = await profileRow(TEST_IDS.CUSTOMER_2);
       expect(backedOff).toMatchObject({ attempts: 1, last_error: "Klaviyo said 503", leased_until: null });
-      // 2^1 minutes.
-      expect(new Date(backedOff?.next_attempt_at ?? "").getTime()).toBeGreaterThan(Date.now() + 60_000);
+      // 2^1 minutes from the finish, on the database's clock.
+      const nextAttempt = new Date(backedOff?.next_attempt_at ?? "").getTime();
+      expect(nextAttempt).toBeGreaterThanOrEqual(notBefore.getTime() + 2 * 60_000);
+      expect(nextAttempt).toBeLessThanOrEqual(notAfter.getTime() + 2 * 60_000);
 
       await admin.from("klaviyo_profile_outbox").update({ attempts: 12 }).eq("customer_id", TEST_IDS.CUSTOMER_2);
       await admin.rpc("finish_klaviyo_profile_job", { p_customer_id: TEST_IDS.CUSTOMER_2, p_seq: 1, p_error: "again" });
@@ -978,7 +988,9 @@ describe("the Klaviyo sync", () => {
       await admin.from("profiles").update({ phone: null }).eq("id", TEST_IDS.CUSTOMER_2);
       const rearmed = await profileRow(TEST_IDS.CUSTOMER_2);
       expect(rearmed).toMatchObject({ seq: 2, attempts: 0 });
-      expect(new Date(rearmed?.next_attempt_at ?? "").getTime()).toBeLessThanOrEqual(Date.now() + 5_000);
+      // Due by the database's own clock: the claim takes it.
+      const reclaimed = await admin.rpc("claim_klaviyo_profile_jobs", { p_limit: 10, p_customer_ids: [TEST_IDS.CUSTOMER_2] });
+      expect(reclaimed.data).toEqual([{ customer_id: TEST_IDS.CUSTOMER_2, seq: 2 }]);
       await clearProfiles([TEST_IDS.CUSTOMER_2]);
     });
 
@@ -1068,7 +1080,7 @@ describe("the Klaviyo sync", () => {
         stripe_customer_id: "cus_klaviyo_ended",
         currency: "eur",
         status: "active",
-        current_period_end: new Date().toISOString(),
+        current_period_end: SOME_PAST,
       });
       expect(sub.error).toBeNull();
       const ended = await admin.rpc("end_participation", {

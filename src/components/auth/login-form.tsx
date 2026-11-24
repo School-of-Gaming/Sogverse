@@ -115,7 +115,7 @@ export function LoginForm({
 
       const { data: profile } = await supabase
         .from("profiles")
-        .select("role, locale")
+        .select("role, locale, registration_completed_at")
         .eq("id", data.user.id)
         .single();
 
@@ -129,11 +129,18 @@ export function LoginForm({
       // awaited before navigating for the same reason: the document is about
       // to unload, and a fire-and-forget write would race it and be lost.
       //
-      // A null `locale` means "auto-detect from the browser", so it is skipped
-      // rather than written — the ladder's header leg is exactly what that
-      // reader asked for. The cookie is a preference, not a credential, which
-      // is what makes a client-side write fine here.
-      if (isSupportedLocale(profile?.locale)) {
+      // The cookie is a preference, not a credential, which is what makes a
+      // client-side write fine here.
+      //
+      // An account still owing its registration (a Google sign-up that set a
+      // password through forgot-password) holds a placeholder locale, not a
+      // choice, so nothing is written: the bare path then follows the
+      // browser's language, and the finish page doesn't take the placeholder
+      // for the reader's pick.
+      if (
+        profile?.registration_completed_at != null &&
+        isSupportedLocale(profile.locale)
+      ) {
         setCookie(LOCALE_COOKIE_NAME, profile.locale);
       }
 

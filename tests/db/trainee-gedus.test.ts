@@ -7,7 +7,15 @@ import { myAssignedProductRows } from "@/services/assignments/assignments.contra
 import { chatChannelRoster } from "@/services/chat/chat.contracts";
 import { productGroupsSnapshot } from "@/services/groups/groups.contracts";
 import { traineeGroupOverlay } from "@/services/member-flair/member-flair.contracts";
-import { createAdminTestClient, createAuthenticatedClient } from "./helpers";
+import {
+  createAdminTestClient,
+  createAuthenticatedClient,
+  dbInterval,
+  dbNow,
+  utcDayOffset,
+  dbTime,
+  uniqueSuffix,
+} from "./helpers";
 import { SEED, TEST_CREDENTIALS, TEST_IDS } from "./constants";
 import { ageOnDate } from "@/lib/gamer-age-eligibility";
 import type { GamerBirthMonthYear } from "@/lib/gamer-birth";
@@ -58,21 +66,21 @@ const SESSION_STAFF_NOTE = "Trainee-invisible session staff note";
 const SESSION_REPORT = "We built a castle together.";
 const MATERIAL_URL = "https://example.com/trainee-material";
 
-/** `YYYY-MM-DD`, `offset` days from today. The products run in UTC. */
-function dayOffset(offset: number): string {
-  const d = new Date();
-  d.setUTCDate(d.getUTCDate() + offset);
-  return d.toISOString().slice(0, 10);
-}
+/**
+ * The database's clock, read when the file loads: the dates below are built
+ * then, and they count from the database's today, the one its functions judge
+ * against. The products run in UTC.
+ */
+const DB_NOW = await dbNow();
 
-const YESTERDAY = dayOffset(-1);
+const YESTERDAY = utcDayOffset(DB_NOW, -1);
 
 /**
- * A birth month's age today in UTC, by the application's own rule — which the
- * RPC has to agree with.
+ * A birth month's age on `read`'s UTC day, by the application's own rule —
+ * which the RPC has to agree with.
  */
-function ageInUtc(birth: GamerBirthMonthYear): number {
-  return ageOnDate(birth, dayOffset(0));
+function ageInUtc(birth: GamerBirthMonthYear, read: Date): number {
+  return ageOnDate(birth, utcDayOffset(read, 0));
 }
 
 type Admin = SupabaseClient<Database>;
@@ -153,12 +161,12 @@ describe("trainee gedus", () => {
 
     // Unique per run, and UNCERTIFIED on purpose: trainee status is
     // independent of certification, so nothing here may depend on it.
-    traineeEmail = `trainee-${Date.now()}@test.local`;
+    traineeEmail = `trainee-${uniqueSuffix()}@test.local`;
     const { data: created, error } = await admin.auth.admin.createUser({
       email: traineeEmail,
       password: "testpassword123",
       email_confirm: true,
-      user_metadata: { first_name: "Tiina", last_name: "Trainee" },
+      user_metadata: { first_name: "Tiina", last_name: "Trainee", locale: "en" },
     });
     expect(error).toBeNull();
     traineeId = created.user?.id ?? "";
@@ -170,7 +178,7 @@ describe("trainee gedus", () => {
 
     await deleteTestProducts(admin, ALL_PRODUCTS);
     for (const id of ALL_PRODUCTS) {
-      await createTestProduct(admin, { id, seatCount: null, startDate: dayOffset(-30) });
+      await createTestProduct(admin, { id, seatCount: null, startDate: utcDayOffset(DB_NOW, -30) });
       await admin.from("product_translations").insert({
         product_id: id,
         locale: "en",
@@ -215,7 +223,7 @@ describe("trainee gedus", () => {
     expect(participationId).toBeTruthy();
     await admin
       .from("participations")
-      .update({ group_joined_at: `${dayOffset(-30)}T00:00:00.000Z` })
+      .update({ group_joined_at: `${utcDayOffset(DB_NOW, -30)}T00:00:00.000Z` })
       .in("product_id", ALL_PRODUCTS);
 
     await admin.from("gamer_group_notes").insert({
@@ -247,8 +255,9 @@ describe("trainee gedus", () => {
     });
     expect(placed.error).toBeNull();
 
-    // A chat channel whose window is open now, so every member reads it.
-    const opens = new Date(Date.now() - 10 * 60_000);
+    // A chat channel whose window is open now by the database's clock, so
+    // every member reads it.
+    const opens = await dbTime(-10 * 60_000);
     const channel = await admin
       .from("chat_channels")
       .insert({
@@ -372,9 +381,12 @@ describe("trainee gedus", () => {
 
   describe("get_trainee_group_feed", () => {
     it("serves the trainee the redacted document with nothing staff-only on the wire", async () => {
-      const { data, error } = await traineeAuth.rpc("get_trainee_group_feed", {
-        p_group_id: GROUP_MINE,
-      });
+      const {
+        result: { data, error },
+        reads,
+      } = await dbInterval(async () =>
+        traineeAuth.rpc("get_trainee_group_feed", { p_group_id: GROUP_MINE }),
+      );
       expect(error).toBeNull();
       const wire = JSON.stringify(data);
       const doc = traineeFeed.parse(data);
@@ -390,10 +402,10 @@ describe("trainee gedus", () => {
       expect(roster).toHaveLength(1);
       expect(Object.keys(roster[0]).sort()).toEqual(TRAINEE_ROSTER_KEYS);
       expect(roster[0].participant_id).toBe(TEST_IDS.GAMER);
-      expect(roster[0].age).toBe(ageInUtc({
-        year: SEED.GAMER_BIRTH.birth_year,
-        month: SEED.GAMER_BIRTH.birth_month,
-      }));
+      // The age on the day the feed was read: either clock read's, should
+      // midnight pass during the call — the age moves at the birth month's first.
+      const birth = { year: SEED.GAMER_BIRTH.birth_year, month: SEED.GAMER_BIRTH.birth_month };
+      expect(reads.map((read) => ageInUtc(birth, read))).toContain(roster[0].age);
       expect(roster[0].gender).toBe("boy");
       expect(roster[0].has_note).toBe(true);
       expect(roster[0].creations).toEqual([]);
@@ -541,7 +553,7 @@ describe("trainee gedus", () => {
   describe("My SOG", () => {
     it("lists the trainee seat as a third kind, owing nothing", async () => {
       const summaries = await traineeAuth.rpc("get_my_gedu_assignment_summaries", {
-        p_epoch_date: dayOffset(-365),
+        p_epoch_date: utcDayOffset(DB_NOW, -365),
       });
       expect(summaries.error).toBeNull();
       const mine = geduAssignmentSummaries
@@ -559,7 +571,7 @@ describe("trainee gedus", () => {
       // The same group owes the assigned gedu yesterday's mail, so the zero is
       // the trainee arm's and not an empty history.
       const gedu = await geduAuth.rpc("get_my_gedu_assignment_summaries", {
-        p_epoch_date: dayOffset(-365),
+        p_epoch_date: utcDayOffset(DB_NOW, -365),
       });
       const geduRow = geduAssignmentSummaries
         .parse(gedu.data)
@@ -641,12 +653,12 @@ describe("trainee gedus", () => {
     it("puts the trainee on the call chat's roster, tagged for staff and the group's trainees alone", async () => {
       // A second trainee on the same group, so a trainee's view of a fellow
       // trainee is pinned as well as their view of themselves.
-      const secondEmail = `trainee-2-${Date.now()}@test.local`;
+      const secondEmail = `trainee-2-${uniqueSuffix()}@test.local`;
       const { data: created, error: createError } = await admin.auth.admin.createUser({
         email: secondEmail,
         password: "testpassword123",
         email_confirm: true,
-        user_metadata: { first_name: "Aarne", last_name: "Trainee" },
+        user_metadata: { first_name: "Aarne", last_name: "Trainee", locale: "en" },
       });
       expect(createError).toBeNull();
       const secondId = created.user?.id ?? "";

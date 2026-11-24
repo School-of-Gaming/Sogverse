@@ -6,7 +6,13 @@ import {
   geduAssignmentSummaries,
   geduGroupFeed,
 } from "@/services/gedu-sessions/gedu-sessions.contracts";
-import { createAdminTestClient, createAuthenticatedClient } from "./helpers";
+import {
+  createAdminTestClient,
+  createAuthenticatedClient,
+  dbNow,
+  dbTime,
+  utcDayOffset,
+} from "./helpers";
 import { TEST_IDS, TEST_CREDENTIALS } from "./constants";
 import { createScheduleSlot, createTestProduct, deleteTestProducts } from "./product-helpers";
 import { seedAssignment, seedAssignments } from "./assignment-helpers";
@@ -35,24 +41,29 @@ const GROUPS = [GROUP, GROUP_2];
 const GEDU = TEST_IDS.GEDU;
 const FORBIDDEN = "42501";
 
-/** A UTC calendar date `offset` days from today, UTC-pinned end to end. */
-function utcDate(offset: number): string {
-  const now = new Date();
-  return new Date(
-    Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), now.getUTCDate() + offset),
-  )
-    .toISOString()
-    .slice(0, 10);
-}
+const HOUR = 3_600_000;
+
+/**
+ * The database's clock, read before the setup and again before each test: the
+ * dates below count from the day the test runs on, the database's today, which
+ * the window is judged against.
+ */
+let DB_NOW: Date;
+beforeAll(async () => {
+  DB_NOW = await dbNow();
+});
+beforeEach(async () => {
+  DB_NOW = await dbNow();
+});
 
 /** 09:00 UTC on the day `offset` days from today: an hour before that day's session. */
 function nineAm(offset: number): string {
-  return `${utcDate(offset)}T09:00:00.000Z`;
+  return `${utcDayOffset(DB_NOW, offset)}T09:00:00.000Z`;
 }
 
-/** An instant `hours` from now. */
-function hoursFromNow(hours: number): string {
-  return new Date(Date.now() + hours * 3_600_000).toISOString();
+/** The database's clock `ms` ago, for a report's mailing stamp. */
+async function mailedAgo(ms: number): Promise<string> {
+  return (await dbTime(-ms)).toISOString();
 }
 
 describe("an ended assignment keeps a substitute's window", () => {
@@ -76,8 +87,8 @@ describe("an ended assignment keeps a substitute's window", () => {
       id: PRODUCT,
       billingMode: "free",
       seatCount: null,
-      startDate: utcDate(-30),
-      endDate: utcDate(-1),
+      startDate: utcDayOffset(DB_NOW, -30),
+      endDate: utcDayOffset(DB_NOW, -1),
     });
     for (const weekday of [0, 1, 2, 3, 4, 5, 6]) {
       await createScheduleSlot(admin, PRODUCT, { weekday, startTime: "10:00" });
@@ -101,7 +112,7 @@ describe("an ended assignment keeps a substitute's window", () => {
     // does not name group_id leaves the join-stamping trigger silent.
     const joined = await admin
       .from("participations")
-      .update({ group_joined_at: `${utcDate(-30)}T00:00:00.000Z` })
+      .update({ group_joined_at: `${utcDayOffset(DB_NOW, -30)}T00:00:00.000Z` })
       .eq("id", PARTICIPATION);
     expect(joined.error).toBeNull();
   });
@@ -138,7 +149,7 @@ describe("an ended assignment keeps a substitute's window", () => {
 
   /** A stored session `offset` days from today, with a report, mailed or not. */
   async function stored(offset: number, reportEmailedAt: string | null = null) {
-    const date = utcDate(offset);
+    const date = utcDayOffset(DB_NOW, offset);
     const { error } = await admin.from("group_sessions").insert({
       group_id: GROUP,
       session_date: date,
@@ -216,13 +227,13 @@ describe("an ended assignment keeps a substitute's window", () => {
 
   it("closes 24 hours after the report is mailed", async () => {
     await endedOn(-3);
-    await stored(-3, hoursFromNow(-1));
+    await stored(-3, await mailedAgo(24 * HOUR - 60_000));
     expect(await workspaceOpen()).toBe(true);
     expect(await groupVisible()).toBe(true);
 
     const { error } = await admin
       .from("group_sessions")
-      .update({ report_emailed_at: hoursFromNow(-25) })
+      .update({ report_emailed_at: await mailedAgo(24 * HOUR + 1_000) })
       .eq("group_id", GROUP);
     expect(error).toBeNull();
     expect(await workspaceOpen()).toBe(false);
@@ -238,15 +249,15 @@ describe("an ended assignment keeps a substitute's window", () => {
       { groupId: GROUP, geduId: GEDU, productId: PRODUCT, startedAt: nineAm(-12), endedAt: nineAm(-11) },
       { groupId: GROUP, geduId: GEDU, productId: PRODUCT, startedAt: nineAm(-5), endedAt: nineAm(-4) },
     ]);
-    await stored(-5, hoursFromNow(-48));
+    await stored(-5, await mailedAgo(48 * HOUR));
 
     expect(await workspaceOpen()).toBe(true);
     const [row] = await myRows();
     expect(row.kind).toBe("ended_assignment");
-    expect(row.last_session_date).toBe(utcDate(-12));
+    expect(row.last_session_date).toBe(utcDayOffset(DB_NOW, -12));
     expect(row.upcoming_sessions).toEqual([]);
     expect(new Date(row.substitution_starts_at ?? 0).toISOString()).toBe(
-      `${utcDate(-12)}T10:00:00.000Z`,
+      `${utcDayOffset(DB_NOW, -12)}T10:00:00.000Z`,
     );
 
     // With the later one still unsent too, the card is dated by it.
@@ -255,22 +266,22 @@ describe("an ended assignment keeps a substitute's window", () => {
       .update({ report_emailed_at: null })
       .eq("group_id", GROUP);
     expect(unsent.error).toBeNull();
-    expect((await myRows())[0].last_session_date).toBe(utcDate(-5));
+    expect((await myRows())[0].last_session_date).toBe(utcDayOffset(DB_NOW, -5));
 
     // Once the earlier report is mailed a day ago as well, nothing is open.
     const mailedLater = await admin
       .from("group_sessions")
-      .update({ report_emailed_at: hoursFromNow(-48) })
+      .update({ report_emailed_at: await mailedAgo(48 * HOUR) })
       .eq("group_id", GROUP);
     expect(mailedLater.error).toBeNull();
-    const date = utcDate(-12);
+    const date = utcDayOffset(DB_NOW, -12);
     const mailedEarlier = await admin.from("group_sessions").insert({
       group_id: GROUP,
       session_date: date,
       starts_at: `${date}T10:00:00.000Z`,
       ends_at: `${date}T11:00:00.000Z`,
       report: "We built a moat.",
-      report_emailed_at: hoursFromNow(-25),
+      report_emailed_at: await mailedAgo(25 * HOUR),
     });
     expect(mailedEarlier.error).toBeNull();
     expect(await workspaceOpen()).toBe(false);
@@ -281,7 +292,7 @@ describe("an ended assignment keeps a substitute's window", () => {
     await endedOn(-3);
     const { error } = await admin.from("session_substitution_requests").insert({
       group_id: GROUP,
-      session_date: utcDate(-3),
+      session_date: utcDayOffset(DB_NOW, -3),
       requested_by: GEDU,
       role: "primary",
       reason: "other",
@@ -298,7 +309,7 @@ describe("an ended assignment keeps a substitute's window", () => {
     await endedOn(-3);
     const { error } = await adminAuth.rpc("cancel_session", {
       p_group_id: GROUP,
-      p_session_date: utcDate(-3),
+      p_session_date: utcDayOffset(DB_NOW, -3),
     });
     expect(error).toBeNull();
 
@@ -328,18 +339,18 @@ describe("an ended assignment keeps a substitute's window", () => {
     expect(summary.attention_count).toBe(2);
 
     // One of them mailed a day ago: it is out of reach, so out of the count.
-    await stored(-3, hoursFromNow(-25));
+    await stored(-3, await mailedAgo(25 * HOUR));
     expect((await mySummaries())[0].attention_count).toBe(1);
 
     // Both: the card leaves My SOG.
-    const date = utcDate(-4);
+    const date = utcDayOffset(DB_NOW, -4);
     const { error } = await admin.from("group_sessions").insert({
       group_id: GROUP,
       session_date: date,
       starts_at: `${date}T10:00:00.000Z`,
       ends_at: `${date}T11:00:00.000Z`,
       report: "We built a bridge.",
-      report_emailed_at: hoursFromNow(-25),
+      report_emailed_at: await mailedAgo(25 * HOUR),
     });
     expect(error).toBeNull();
     expect(await cards()).toEqual([]);
@@ -407,13 +418,13 @@ describe("an ended assignment keeps a substitute's window", () => {
 
     const open = await geduAuth.rpc("claim_group_session_report_email", {
       p_group_id: GROUP,
-      p_session_date: utcDate(-3),
+      p_session_date: utcDayOffset(DB_NOW, -3),
     });
     expect(open.error).toBeNull();
 
     const closed = await geduAuth.rpc("claim_group_session_report_email", {
       p_group_id: GROUP,
-      p_session_date: utcDate(-20),
+      p_session_date: utcDayOffset(DB_NOW, -20),
     });
     expect(closed.error?.code).toBe(FORBIDDEN);
   });
@@ -441,7 +452,7 @@ describe("an ended assignment keeps a substitute's window", () => {
   async function writesNotes(offset: number): Promise<boolean> {
     const { error } = await geduAuth.rpc("set_group_session_notes", {
       p_group_id: GROUP,
-      p_session_date: utcDate(offset),
+      p_session_date: utcDayOffset(DB_NOW, offset),
       p_report: "We finished the castle.",
       p_gedu_note: "",
     });
@@ -453,7 +464,7 @@ describe("an ended assignment keeps a substitute's window", () => {
   async function marksAttendance(offset: number): Promise<boolean> {
     const { error } = await geduAuth.rpc("record_attendance", {
       p_group_id: GROUP,
-      p_session_date: utcDate(offset),
+      p_session_date: utcDayOffset(DB_NOW, offset),
       p_participant_id: TEST_IDS.GAMER,
       p_status: "present",
     });
@@ -465,7 +476,7 @@ describe("an ended assignment keeps a substitute's window", () => {
   async function addsPhoto(offset: number): Promise<boolean> {
     const { error } = await geduAuth.rpc("add_group_session_image", {
       p_group_id: GROUP,
-      p_session_date: utcDate(offset),
+      p_session_date: utcDayOffset(DB_NOW, offset),
       p_width: 800,
       p_height: 600,
       p_max_images: 6,
@@ -482,7 +493,7 @@ describe("an ended assignment keeps a substitute's window", () => {
       .from("group_sessions")
       .select("id")
       .eq("group_id", GROUP)
-      .eq("session_date", utcDate(offset))
+      .eq("session_date", utcDayOffset(DB_NOW, offset))
       .single();
     expect(session.error).toBeNull();
     if (session.data === null) throw new Error("session not stored");
@@ -557,7 +568,7 @@ describe("an ended assignment keeps a substitute's window", () => {
 
       const claim = await geduAuth.rpc("claim_group_session_report_email", {
         p_group_id: GROUP,
-        p_session_date: utcDate(-3),
+        p_session_date: utcDayOffset(DB_NOW, -3),
       });
       expect(claim.error?.code).toBe(FORBIDDEN);
     } finally {
@@ -589,12 +600,12 @@ describe("an ended assignment keeps a substitute's window", () => {
 
     // No substitution: only the windowed dates are theirs to write.
     expect(seat.writes_every_session).toBe(false);
-    expect(seat.session_dates).toContain(utcDate(-3));
-    expect(seat.session_dates).toContain(utcDate(-10));
+    expect(seat.session_dates).toContain(utcDayOffset(DB_NOW, -3));
+    expect(seat.session_dates).toContain(utcDayOffset(DB_NOW, -10));
     // The closed window, the session after the period, and anything ahead.
-    expect(seat.session_dates).not.toContain(utcDate(-20));
-    expect(seat.session_dates).not.toContain(utcDate(-16));
-    expect(seat.session_dates).not.toContain(utcDate(-2));
+    expect(seat.session_dates).not.toContain(utcDayOffset(DB_NOW, -20));
+    expect(seat.session_dates).not.toContain(utcDayOffset(DB_NOW, -16));
+    expect(seat.session_dates).not.toContain(utcDayOffset(DB_NOW, -2));
     // Product-local dates, oldest first, each once.
     expect([...seat.session_dates].sort()).toEqual(seat.session_dates);
     expect(new Set(seat.session_dates).size).toBe(seat.session_dates.length);
@@ -623,7 +634,7 @@ describe("an ended assignment keeps a substitute's window", () => {
     // GROUP's windowed dates are still theirs to send, still no room of their
     // own — but the current period on GROUP_2 is what voice admits them by, to
     // every room of the product, GROUP's included.
-    expect(seat.session_dates).toContain(utcDate(-3));
+    expect(seat.session_dates).toContain(utcDayOffset(DB_NOW, -3));
     expect(seat.voice_dates).toEqual([]);
     expect(seat.teaches_product).toBe(true);
 
@@ -642,7 +653,7 @@ describe("an ended assignment keeps a substitute's window", () => {
     expect(voice.error).toBeNull();
     expect(voice.data).toBe(false);
 
-    const date = utcDate(-2);
+    const date = utcDayOffset(DB_NOW, -2);
     const channel = await admin
       .from("chat_channels")
       .insert({

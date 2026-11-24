@@ -489,7 +489,7 @@ describe("GET /api/auth/callback", () => {
    * carried their stored language with it.
    */
   describe("the locale cookie", () => {
-    function signedInWithLocale(locale: string | null) {
+    function signedInWithLocale(locale: string) {
       signedInAs({
         role: "customer",
         locale,
@@ -504,18 +504,23 @@ describe("GET /api/auth/callback", () => {
       expect(response.headers.get("set-cookie")).toContain("locale=fi");
     });
 
-    it("writes nothing when the profile says auto-detect", async () => {
-      // Null means "follow the browser", and the ladder's header leg is
-      // exactly that. Writing a guess here would freeze it into a preference
-      // the reader never expressed.
-      const response = await signedInWithLocale(null);
+    it("writes nothing for an account still owing its registration", async () => {
+      // Google created the account a moment ago with a placeholder locale
+      // nobody chose. Written as the cookie, it would send a Finnish browser to
+      // the finish page in English; left alone, the bare path follows the
+      // browser.
+      signedInAs({ role: "customer", locale: "en", registration_completed_at: null });
 
-      expect(response.headers.get("set-cookie")).toBeNull();
+      const response = await GET(createCallbackRequest({ code: "valid-code" }));
+
+      expect(
+        response.headers.getSetCookie().filter((cookie) => cookie.startsWith("locale=")),
+      ).toEqual([]);
     });
 
     it("ignores a stored value we do not ship", async () => {
-      // The column is plain nullable text, so a value can outlive the locale
-      // it named; writing it would put a segment in the URL that resolves to
+      // The column is held only to a locale's shape, so a value can outlive
+      // the locale it named; writing it would put a segment in the URL that resolves to
       // no locale at all.
       const response = await signedInWithLocale("de");
 

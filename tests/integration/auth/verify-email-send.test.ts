@@ -55,7 +55,7 @@ function authAs(
   overrides: {
     role?: "customer" | "gamer" | "gedu" | "admin";
     email?: string | null;
-    locale?: string | null;
+    locale?: string;
     emailVerifiedAt?: string | null;
   } = {},
 ) {
@@ -66,7 +66,7 @@ function authAs(
       role: overrides.role ?? "customer",
       email: overrides.email === undefined ? "parent@example.com" : overrides.email,
       first_name: "Marja",
-      locale: overrides.locale === undefined ? "en" : overrides.locale,
+      locale: overrides.locale ?? "en",
       email_verified_at: overrides.emailVerifiedAt ?? null,
     },
     supabase: {

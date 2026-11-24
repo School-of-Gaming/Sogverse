@@ -500,7 +500,7 @@ describe("drainSubstitutionNotifications", () => {
   });
 
   describe("the requester's DM", () => {
-    const requester = (discordUserId: string | null, locale: string | null = "fi") => ({
+    const requester = (discordUserId: string | null, locale = "fi") => ({
       id: SNAPSHOT_IDS.requester,
       first_name: "Ville",
       last_name: "Virtanen",
