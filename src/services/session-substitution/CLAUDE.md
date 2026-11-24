@@ -49,7 +49,9 @@ it on cancel would have thrown away a filing the restore then could not return.
 ## Who is expected is derived, never stored
 
 *A gedu is expected at (group, date) iff they hold no non-withdrawn request for it, and
-they are either assigned to the group or hold a `substituted` request for it.*
+they are either assigned to the group at that session or hold a `substituted` request for
+it.* Assigned at that session means an assignment period containing the session's start
+instant — the stored row's start, else the plan's.
 
 That one sentence is the whole model, and it is written twice — once as a SQL predicate,
 once as the TypeScript derivation helper in `src/lib/` that the staff feeds attach to
@@ -62,7 +64,9 @@ substitute for, and answering one would seat a sub for nobody and hand them the 
 workspace for the day. Clearing a substitution, withdrawing a request, re-pointing a sub
 and — less obviously — **removing an assignment through the admin groups panel** all leave
 somebody unseated, and the last of those is the trap, because it unseats without touching
-a substitution row at all. The sweep is a fixpoint, because unseating cascades. Approval
+a substitution row at all. It unseats only from the sessions starting at or after the
+removal: a session that already started belongs to the period that just ended, so its
+request and its sub stand. The sweep is a fixpoint, because unseating cascades. Approval
 re-asks under its lock as a second line of defence, and **refuses** rather than tidying
 up: the refusal aborts the transaction, so a withdraw written beside it would be rolled
 back with everything else.
@@ -369,7 +373,23 @@ stay open until 24 hours after the session's report is sent, or 15 product-local
 after the session date if it never is, and only while they are still certified.
 
 Each of those two bounds has **one definition**, in SQL, in the predicate that owns it;
-nothing in this directory restates either. The dashboard reads that draw the card ask only
+nothing in this directory restates either.
+
+**A gedu taken off a group holds it on the same terms.** Per session they were expected
+at inside the ended period — not cancelled, not one they filed an absence for — the group
+stays theirs until that session's window closes, by the same end definition, and the card
+(the substitute's, named as their former group) stands until the latest of those
+closings. Like a substitute's, the window holds only while they are certified:
+decertifying ends it at once, for both kinds of temporary seat (owner ruling,
+2026-11-24). The report mail admits them for those dates alone, the voice room and the chat
+roster not at all, and a gedu still current on the group gets nothing extra. Where a
+substitute writes every session of the group, they write only those dates too: the run
+is no longer theirs, so the session writes ask a session-scoped gate and the group-level
+ones (notes, roster, game accounts) stay as a substitute's. The workspace document
+states what the reader's temporary seat reaches — whether they write every session, which
+dates are theirs to send, which dates' rooms admit them (their substitution dates only,
+never an ended assignment's), and whether a current period elsewhere on the product opens
+every room of it — and the page offers Edit, Send and Join from that answer alone. The dashboard reads that draw the card ask only
 whether the substitution has expired, which is why the card outlives the lock rather than
 appearing with it.
 

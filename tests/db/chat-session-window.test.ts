@@ -89,7 +89,7 @@ describe("group_open_session_windows", () => {
     const created = ok(
       await adminAuth.rpc("apply_group_changes", {
         p_product_id: productId,
-        p_added_groups: [{ tempId: "g", name: "Group", geduIds: [] }],
+        p_added_groups: [{ tempId: "g", name: "Group", gedus: [] }],
       }),
     );
     groups[productId] = getStringRecord(created, "tempMap").g;

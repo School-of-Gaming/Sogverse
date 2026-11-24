@@ -31,6 +31,7 @@ import {
   deleteTestProducts,
   eraseParticipations,
 } from "./product-helpers";
+import { seedAssignment, seedAssignments } from "./assignment-helpers";
 
 /**
  * The gedu session feed: the two read RPCs, the four write RPCs, and the
@@ -220,17 +221,9 @@ describe("gedu session feed", () => {
       { id: GROUP_SITE, product_id: PRODUCT_SITE, name: "Cohort On Site" },
     ]);
 
-    await admin.from("gedu_group_assignments").insert([
-      {
-        group_id: GROUP_MINE,
-        gedu_id: TEST_IDS.GEDU,
-        product_id: PRODUCT_MINE,
-      },
-      {
-        group_id: GROUP_SITE,
-        gedu_id: TEST_IDS.GEDU,
-        product_id: PRODUCT_SITE,
-      },
+    await seedAssignments(admin, [
+      { groupId: GROUP_MINE, geduId: TEST_IDS.GEDU, productId: PRODUCT_MINE },
+      { groupId: GROUP_SITE, geduId: TEST_IDS.GEDU, productId: PRODUCT_SITE },
     ]);
 
     // GAMER is on the roster; GAMER_2 is on the OTHER product entirely, so
@@ -434,6 +427,32 @@ describe("gedu session feed", () => {
         .eq("session_date", YESTERDAY)
         .single();
       expect(row?.report_emailed_at).toBeNull();
+    });
+
+    it("refuses group notes on a group whose period has ended", async () => {
+      // GEDU taught the other group long ago and was taken off it. The period
+      // is removed again afterwards: the rest of this file reads GROUP_OTHER
+      // as a group GEDU never held.
+      await seedAssignment(admin, {
+        groupId: GROUP_OTHER,
+        geduId: TEST_IDS.GEDU,
+        productId: PRODUCT_OTHER,
+        endedAt: "2001-01-01T00:00:00Z",
+      });
+      try {
+        const { error } = await geduAuth.rpc("set_group_notes", {
+          p_group_id: GROUP_OTHER,
+          p_public_note: "not mine any more",
+          p_gedu_note: "",
+        });
+        expect(error?.code).toBe("42501");
+      } finally {
+        await admin
+          .from("gedu_group_assignments")
+          .delete()
+          .eq("group_id", GROUP_OTHER)
+          .eq("gedu_id", TEST_IDS.GEDU);
+      }
     });
 
     it("refuses site notes for a building the gedu runs nothing at", async () => {
@@ -973,6 +992,57 @@ describe("gedu session feed", () => {
       // Written but not yet sent, which is the state the card offers the
       // button in.
       expect(session?.report_emailed_at).toBeNull();
+    });
+
+    it("hands every assignment period of the group, ended ones included, with its bounds", async () => {
+      // GEDU was an assistant here for half of 1999, before the current
+      // primary period the fixture seeds from 2000. The extra period is
+      // removed again afterwards.
+      await seedAssignment(admin, {
+        groupId: GROUP_MINE,
+        geduId: TEST_IDS.GEDU,
+        productId: PRODUCT_MINE,
+        role: "assistant",
+        startedAt: "1999-01-01T00:00:00Z",
+        endedAt: "1999-06-01T00:00:00Z",
+      });
+      try {
+        const { data, error } = await geduAuth.rpc("get_gedu_group_feed", {
+          p_group_id: GROUP_MINE,
+        });
+        expect(error).toBeNull();
+        const feed = geduGroupFeed.parse(data);
+
+        // Same first name, so the earlier period sorts first.
+        expect(
+          feed.gedus.map((gedu) => ({
+            id: gedu.id,
+            role: gedu.role,
+            started_at: Date.parse(gedu.started_at),
+            ended_at: gedu.ended_at === null ? null : Date.parse(gedu.ended_at),
+          })),
+        ).toEqual([
+          {
+            id: TEST_IDS.GEDU,
+            role: "assistant",
+            started_at: Date.parse("1999-01-01T00:00:00Z"),
+            ended_at: Date.parse("1999-06-01T00:00:00Z"),
+          },
+          {
+            id: TEST_IDS.GEDU,
+            role: "primary",
+            started_at: Date.parse("2000-01-01T00:00:00Z"),
+            ended_at: null,
+          },
+        ]);
+      } finally {
+        await admin
+          .from("gedu_group_assignments")
+          .delete()
+          .eq("group_id", GROUP_MINE)
+          .eq("gedu_id", TEST_IDS.GEDU)
+          .not("ended_at", "is", null);
+      }
     });
 
     it("hands an admin the identical document the assigned gedu reads", async () => {
@@ -1900,11 +1970,7 @@ describe("gedu session feed", () => {
         .from("gedu_profiles")
         .insert({ user_id: markerId, certified: true });
 
-      await admin.from("gedu_group_assignments").insert({
-        group_id: GROUP_MINE,
-        gedu_id: markerId,
-        product_id: PRODUCT_MINE,
-      });
+      await seedAssignment(admin, { groupId: GROUP_MINE, geduId: markerId, productId: PRODUCT_MINE });
 
       marker = await createAuthenticatedClient(email, "testpassword123");
 

@@ -13,6 +13,7 @@ import {
   type SubstitutionRequestInput,
   type SessionStaffing,
   type StaffingAssignment,
+  type ViewerTemporarySeat,
 } from "@/lib/session-staffing";
 import type {
   SessionEditor,
@@ -22,11 +23,12 @@ import type {
   GeduFeedSession,
   SessionCancellation,
   TraineeFeedSession,
+  ViewerTemporarySeatDocument,
 } from "@/services/gedu-sessions/gedu-sessions.contracts";
 import { WITHHELD } from "@/lib/withheld";
 import type {
   SubstitutionRequestDocument,
-  SessionStaffGedu,
+  SessionStaffPeriod,
 } from "@/services/session-substitution/session-substitution.contracts";
 
 /**
@@ -98,10 +100,12 @@ export interface GeduSessionFeedArgs {
    */
   sessions: readonly (GeduFeedSession | TraineeFeedSession)[];
   /**
-   * The group's staff with their roles, exactly as either staff document emits
-   * them — the first input the per-date staffing derivation takes.
+   * The group's assignment periods, ended ones included, exactly as either
+   * staff document emits them — the first input the per-date staffing
+   * derivation takes, which staffs each entry by the periods containing its
+   * start.
    */
-  gedus: readonly SessionStaffGedu[];
+  gedus: readonly SessionStaffPeriod[];
   /**
    * Every non-withdrawn substitution request on the group, any date, as either staff
    * document emits them. The whole array reaches every entry and the derivation
@@ -128,6 +132,16 @@ export interface GeduSessionFeedArgs {
    * would offer one person's absence under another's name.
    */
   viewerId?: string | null;
+  /**
+   * The reader's temporary seat as the workspace document states it, or
+   * `null` where they hold the group outright — an admin, a gedu with a current
+   * period on it, or a trainee, whose writes are locked by their own shell.
+   *
+   * **Required, because its omission would unlock writes**: a substitute or a
+   * gedu taken off the group would be offered Edit and Send on sessions the
+   * database refuses them. Every entry's staffing carries what it decides.
+   */
+  viewerSeat: ViewerTemporarySeatDocument | null;
   now: Date;
   /**
    * The product-local date from which write-ups are owed. Defaults to the
@@ -168,10 +182,19 @@ export function buildGeduSessionFeed(
     cancellations,
     holidayBreaks,
     viewerId = null,
+    viewerSeat,
     now,
     epoch = SESSION_RECORDING_EPOCH,
     reach = "staff",
   } = args;
+
+  const staffingSeat: ViewerTemporarySeat | null =
+    viewerSeat === null
+      ? null
+      : {
+          writesEverySession: viewerSeat.writes_every_session,
+          sessionDates: new Set(viewerSeat.session_dates),
+        };
 
   // Mapped once for the whole feed rather than per entry: the derivation's
   // inputs are structural on purpose — it depends on no generated type — and
@@ -181,6 +204,8 @@ export function buildGeduSessionFeed(
     id: gedu.id,
     firstName: gedu.first_name,
     role: gedu.role,
+    startedAt: new Date(gedu.started_at),
+    endedAt: gedu.ended_at === null ? null : new Date(gedu.ended_at),
   }));
   const staffingRequests: SubstitutionRequestInput[] = substitutions.map(toSubstitutionRequestInput);
 
@@ -243,12 +268,15 @@ export function buildGeduSessionFeed(
 
     // The whole array goes in and the derivation picks its own date out — one
     // call per entry, and no second place that decides what "this date's
-    // requests" means.
+    // requests" means. The start it is staffed at is the one the entry renders:
+    // the row's snapshot, else the plan's.
     const staffing = deriveSessionStaffing({
       gedus: staffingGedus,
       requests: staffingRequests,
       sessionDate: date,
+      sessionStartsAt: when.startsAt,
       viewerId,
+      viewerSeat: staffingSeat,
     });
 
     // A cancellation wins over a stored row on the same date. The record is

@@ -14,6 +14,7 @@ CREATE FUNCTION public.is_voice_group_moderator(p_group_id uuid) RETURNS boolean
       join public.gedu_group_assignments a on a.product_id = g.product_id
       where g.id = p_group_id
         and a.gedu_id = (select auth.uid())
+        and a.ended_at is null
     )
     -- Date-scoped, exactly as the membership predicate beside it is and for the
     -- same reason: a sub moderates the room on the dates they are substituting, not
@@ -43,7 +44,7 @@ $$;
 -- Name: FUNCTION is_voice_group_moderator(p_group_id uuid); Type: COMMENT; Schema: public; Owner: -
 --
 
-COMMENT ON FUNCTION public.is_voice_group_moderator(p_group_id uuid) IS 'Who MODERATES this group''s voice room and its chat: an admin, a gedu assigned to any group of the group''s product, or a live substitution dated today or yesterday in the product''s timezone. A POSITIVE allow-list, never an exclusion — the room learned that the expensive way, a "not a gamer" test having been one parent-seat release away from handing moderation to parents. Date-scoped on its substitution arm exactly as is_voice_group_member is, and for the same reason: the two move together, because the chat channel is gated by the pair and a substitute must be in the channel on their own date only. Its substitution arm spans the same two local dates as is_voice_group_member''s, and always must: the chat channel is gated by the pair, so a cross-midnight session where one of them dropped the substitute would keep them in the room with no moderation, or in the chat with none.';
+COMMENT ON FUNCTION public.is_voice_group_moderator(p_group_id uuid) IS 'Who MODERATES this group''s voice room and its chat: an admin, a gedu currently assigned to any group of the group''s product (a current period), or a live substitution dated today or yesterday in the product''s timezone. A POSITIVE allow-list, never an exclusion — the room learned that the expensive way, a "not a gamer" test having been one parent-seat release away from handing moderation to parents. Date-scoped on its substitution arm exactly as is_voice_group_member is, and for the same reason: the two move together, because the chat channel is gated by the pair and a substitute must be in the channel on their own date only. Its substitution arm spans the same two local dates as is_voice_group_member''s, and always must: the chat channel is gated by the pair, so a cross-midnight session where one of them dropped the substitute would keep them in the room with no moderation, or in the chat with none.';
 
 
 --

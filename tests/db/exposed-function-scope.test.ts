@@ -8,6 +8,7 @@ import {
 } from "./helpers";
 import { TEST_CREDENTIALS, TEST_IDS } from "./constants";
 import { createTestProduct, deleteTestProducts } from "./product-helpers";
+import { seedAssignment } from "./assignment-helpers";
 
 /**
  * Scope tests for the self-scoping functions exposed to `authenticated` that had
@@ -139,11 +140,7 @@ describe("self-scoping exposed functions", () => {
     await admin
       .from("product_groups")
       .insert({ id: GROUP_ID, product_id: ENROLLED_PRODUCT, name: "Scope" });
-    await admin.from("gedu_group_assignments").insert({
-      group_id: GROUP_ID,
-      gedu_id: TEST_IDS.GEDU,
-      product_id: ENROLLED_PRODUCT,
-    });
+    await seedAssignment(admin, { groupId: GROUP_ID, geduId: TEST_IDS.GEDU, productId: ENROLLED_PRODUCT });
     await admin.from("participations").insert({
       product_id: ENROLLED_PRODUCT,
       group_id: GROUP_ID,

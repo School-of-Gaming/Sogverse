@@ -20,6 +20,7 @@ import {
   createTestProduct,
   deleteTestProducts,
 } from "./product-helpers";
+import { seedAssignments } from "./assignment-helpers";
 
 /**
  * The admin session surface: one product-keyed read of its own, and the
@@ -247,6 +248,57 @@ describe("admin product sessions", () => {
       expect(
         document.groups.some((group) => group.id === DECOY_GROUP),
       ).toBe(false);
+    });
+
+    it("hands every assignment period of a group, ended ones included, with its bounds", async () => {
+      // GEDU was an assistant on Cohort B for half of 1999, and has been its
+      // primary since 2000. The periods are removed again afterwards: every
+      // other case in this file is a pass by role with nobody assigned.
+      await seedAssignments(admin, [
+        {
+          groupId: GROUP_B,
+          geduId: TEST_IDS.GEDU,
+          productId: PRODUCT,
+          role: "assistant",
+          startedAt: "1999-01-01T00:00:00Z",
+          endedAt: "1999-06-01T00:00:00Z",
+        },
+        { groupId: GROUP_B, geduId: TEST_IDS.GEDU, productId: PRODUCT },
+      ]);
+      try {
+        const document = await readDocument();
+        const gedus = document.groups.find((group) => group.id === GROUP_B)?.gedus;
+
+        expect(
+          gedus?.map((gedu) => ({
+            id: gedu.id,
+            role: gedu.role,
+            started_at: Date.parse(gedu.started_at),
+            ended_at: gedu.ended_at === null ? null : Date.parse(gedu.ended_at),
+          })),
+        ).toEqual([
+          {
+            id: TEST_IDS.GEDU,
+            role: "assistant",
+            started_at: Date.parse("1999-01-01T00:00:00Z"),
+            ended_at: Date.parse("1999-06-01T00:00:00Z"),
+          },
+          {
+            id: TEST_IDS.GEDU,
+            role: "primary",
+            started_at: Date.parse("2000-01-01T00:00:00Z"),
+            ended_at: null,
+          },
+        ]);
+        expect(
+          document.groups.find((group) => group.id === GROUP_A)?.gedus,
+        ).toEqual([]);
+      } finally {
+        await admin
+          .from("gedu_group_assignments")
+          .delete()
+          .eq("group_id", GROUP_B);
+      }
     });
 
     it("carries the site and its two notes on an in-person product", async () => {

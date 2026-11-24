@@ -348,6 +348,7 @@ function groupFeed(productType: ProductType): GeduGroupFeed {
     planned_sessions: [],
     holiday_breaks: [],
     final_session_date: null,
+    viewer_temporary_seat: null,
   };
 }
 
@@ -1205,5 +1206,108 @@ describe("gedu product page — the final session's creations block", () => {
 
     // One card, drawing the block in both of its two regions.
     expect(screen.getAllByText("1 of 3 added")).toHaveLength(2);
+  });
+});
+
+describe("gedu product page — the voice room a temporary seat reaches", () => {
+  /** Two Mondays of an online club: one behind NOW, one ahead of it. */
+  const PAST = "2026-03-09";
+  const NEXT = "2026-03-23";
+  const plan = [PAST, NEXT].map((date) => ({
+    date,
+    startsAt: new Date(`${date}T14:30:00.000Z`),
+    endsAt: new Date(`${date}T16:00:00.000Z`),
+    cancelled: false,
+  }));
+  /** A sister group of the product — the reader's own, in the last case. */
+  const SISTER = {
+    id: "06b7ea5f-5e51-474d-86c0-0854605f71cc",
+    name: "Monday B",
+    created_at: "2025-09-01T00:00:00.000Z",
+    is_my_group: false as const,
+    participant_count: 0,
+    gedus: [],
+    roster: [],
+  };
+
+  function renderOnline(seat: GeduGroupFeed["viewer_temporary_seat"]) {
+    const product = assignedProduct("consumer_club");
+    reads.product = {
+      ...product,
+      product: { ...product.product, delivery_mode: "online" },
+      groups: [...product.groups, SISTER],
+      planned_sessions: plan,
+    };
+    const feed = groupFeed("consumer_club");
+    reads.feed = {
+      ...feed,
+      product: { ...feed.product, delivery_mode: "online" },
+      viewer_temporary_seat: seat,
+    };
+
+    return render(
+      <QueryClientProvider client={new QueryClient()}>
+        <NextIntlClientProvider locale="en" messages={messages}>
+          <TimezoneProvider initialTimezone="Europe/Helsinki">
+            <NowProvider initialNow={NOW}>
+              <GeduProductPage productId={IDS.product} viewerId={IDS.gedu} />
+            </NowProvider>
+          </TimezoneProvider>
+        </NextIntlClientProvider>
+      </QueryClientProvider>,
+    );
+  }
+
+  /** Every room the rail draws a Join for, this group's and the sister's. */
+  const roomButtons = () => screen.queryAllByRole("button", { name: /^Opens / });
+
+  it("draws every room for a gedu holding the group outright", () => {
+    renderOnline(null);
+    expect(roomButtons()).toHaveLength(2);
+  });
+
+  it("draws no room for a gedu taken off the group, whose dates are all behind them", () => {
+    renderOnline({
+      writes_every_session: false,
+      session_dates: [PAST],
+      voice_dates: [],
+      teaches_product: false,
+    });
+    expect(roomButtons()).toHaveLength(0);
+  });
+
+  it("draws no room for a gedu taken off the group whose window holds a date ahead", () => {
+    // Theirs to write and send, but the room admits an ended assignment to
+    // nothing: a Join here is one the room would refuse.
+    renderOnline({
+      writes_every_session: false,
+      session_dates: [NEXT],
+      voice_dates: [],
+      teaches_product: false,
+    });
+    expect(roomButtons()).toHaveLength(0);
+  });
+
+  it("draws this group's room alone for a substitute whose date is still ahead", () => {
+    renderOnline({
+      writes_every_session: true,
+      session_dates: [NEXT],
+      voice_dates: [NEXT],
+      teaches_product: false,
+    });
+    expect(roomButtons()).toHaveLength(1);
+  });
+
+  it("draws every room for a substitute who teaches a sister group", () => {
+    // The current period on the sister group admits them to every room of
+    // the product: that group's Join stays, and this group's room opens on
+    // every date, not only the substituted one, which is behind them.
+    renderOnline({
+      writes_every_session: true,
+      session_dates: [PAST],
+      voice_dates: [PAST],
+      teaches_product: true,
+    });
+    expect(roomButtons()).toHaveLength(2);
   });
 });

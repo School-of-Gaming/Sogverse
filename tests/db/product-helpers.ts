@@ -421,6 +421,16 @@ import { dbNow, dbTime } from "./helpers";
  *                  club, 933 a municipality club on an external contract;
  *                  934 is not a product but 930's group, where attendance is
  *                  marked)
+ *   940-949        gedu-invoicing.test.ts's assignment-period cases (the clubs
+ *                  940, 942, 944, 946 and 948, each with the next id as its
+ *                  one group: a removal through apply_group_changes, a
+ *                  handover after and before a removal-day session, a role
+ *                  change, and a removal and re-add with a gap)
+ *   ae0-ae2        gedu-assignment-periods.test.ts (the every-day club ae0 with
+ *                  its two groups ae1 and ae2)
+ *   af0-af3        ended-assignment-window.test.ts (the every-day club af0 with
+ *                  its two groups af1 and af2; af3 is not a product but the
+ *                  seeded gamer's seat in af1)
  *
  * One file reserves no PRODUCT id and is listed anyway, so nobody goes looking
  * for its range: **create-product.test.ts**. It is the only file that calls

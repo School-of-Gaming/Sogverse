@@ -50,12 +50,14 @@ const myAssignedProductRow = z.object({
   group_count: z.number(),
   participant_count: z.number(),
   /**
-   * Which kind of seat the row is: a standing `assignment`, a live
-   * `substitution` on one date, or a `trainee` seat. Arms of one RPC because
-   * they share every product fact and the dashboard card differs in its chrome
-   * rather than in the facts it needs.
+   * Which kind of seat the row is: a current `assignment`, a live
+   * `substitution` on one date, a `trainee` seat, or an `ended_assignment` — a
+   * group the gedu was taken off and still holds while a session of theirs on
+   * it is inside its substitute window. Arms of one RPC because they share
+   * every product fact and the dashboard card differs in its chrome rather
+   * than in the facts it needs.
    */
-  kind: z.enum(["assignment", "substitution", "trainee"]),
+  kind: z.enum(["assignment", "substitution", "trainee", "ended_assignment"]),
   /** The substitution date on a `substitution` row; null on an `assignment` row. */
   substitution_date: z.string().nullable(),
   /**
@@ -71,11 +73,18 @@ const myAssignedProductRow = z.object({
    */
   upcoming_sessions: plannedSessionRows,
   /**
-   * The substituted session's instants on a `substitution` row, from the plan;
-   * null on a date the plan no longer has, and on the other kinds.
+   * The instants of the session the row is dated by — the substituted session
+   * on a `substitution` row, `last_session_date`'s on an `ended_assignment`
+   * row — from the plan; null on a date the plan no longer has, and on the
+   * other kinds.
    */
   substitution_starts_at: z.string().nullable(),
   substitution_ends_at: z.string().nullable(),
+  /**
+   * The latest session still open to the gedu on an `ended_assignment` row;
+   * null on the other kinds.
+   */
+  last_session_date: z.string().nullable(),
 });
 
 export type MyAssignedProductRow = z.infer<typeof myAssignedProductRow>;

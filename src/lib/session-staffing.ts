@@ -4,10 +4,19 @@
  *
  * **The rule is one sentence, and it is the whole module:** *a gedu is expected
  * at (group, date) iff they hold no non-withdrawn request for it, and they are
- * either assigned to the group or hold a `substituted` request for it.* The SQL says
- * the same thing in a predicate; this is its TypeScript twin, and the two are
- * meant to be read against each other — a behaviour the DB suite tests and this
- * module does not is a divergence, not a simplification.
+ * either assigned to the group at that session or hold a `substituted` request
+ * for it.* The SQL says the same thing in a predicate; this is its TypeScript
+ * twin, and the two are meant to be read against each other — a behaviour the
+ * DB suite tests and this module does not is a divergence, not a
+ * simplification. Do not write a third.
+ *
+ * **"Assigned at that session"** is an assignment period containing the
+ * session's start instant: `startedAt <= start < endedAt`, an open end for a
+ * period still current. A gedu taken off a group keeps the sessions that
+ * started while they held it, and a replacement gets only the ones after; a
+ * role change ends one period and starts another, so each session is staffed
+ * in the role of the period it fell in; and the gap between a removal and a
+ * later re-add belongs to neither period.
  *
  * That one sentence already answers the awkward cases, which is why nothing here
  * special-cases them:
@@ -29,20 +38,28 @@
  * staffing.
  *
  * Pure and clock-free: `unfilled` (an open request whose date has passed) is a
- * question about now, so it belongs to the caller that already holds a clock, and
- * every date comparison here is an equality between product-local `YYYY-MM-DD`
- * strings. The inputs are structural on purpose — the service maps its zod output
+ * question about now, so it belongs to the caller that already holds a clock.
+ * Requests are matched by equality between product-local `YYYY-MM-DD` strings,
+ * and assignment periods by the session's start instant, which the caller
+ * hands in. The inputs are structural on purpose — the service maps its zod output
  * onto them — so nothing here depends on the generated database types.
  */
 
 /** The pay class an assignment or a substitution carries. */
 export type GeduAssignmentRole = "primary" | "assistant";
 
-/** A gedu assigned to the group, as the feeds list them. */
+/**
+ * One assignment period on the group, as the feeds list them — ended ones
+ * included, because a past session belongs to whoever held the group then.
+ */
 export interface StaffingAssignment {
   id: string;
   firstName: string;
   role: GeduAssignmentRole;
+  /** When the period began; a session starting at this instant is inside it. */
+  startedAt: Date;
+  /** When it ended, or `null` while it is current; this instant is outside it. */
+  endedAt: Date | null;
 }
 
 /** Whoever a request names: the absent gedu, or their sub. */
@@ -119,11 +136,48 @@ export interface SessionStaffing {
    */
   viewerIsExpected: boolean;
   /**
+   * Whether the staffing was derived for a signed-in gedu at all. `false` on the
+   * admin shell and the preview scenes, which is what tells "the viewer is not
+   * expected" apart from "there is no viewer to be expected".
+   */
+  hasViewer: boolean;
+  /**
    * The viewer's own live request for this date, or `null`. Carries the status
    * line and the Withdraw action; a viewer holding one can never also be
    * expected, so the two fields are never both set.
    */
   viewerRequest: SubstitutionRequestState | null;
+  /**
+   * Whether the viewer may write this session up — its register, its report
+   * and note, its photos. `true` wherever the viewer holds the group outright,
+   * and with no viewer at all; on a {@link ViewerTemporarySeat}, every session
+   * where a live substitution writes group-wide, else only the seat's dates.
+   */
+  viewerMayWrite: boolean;
+  /**
+   * Whether the viewer may send this session's report to the families. `true`
+   * wherever the viewer holds the group outright, and with no viewer at all; on
+   * a {@link ViewerTemporarySeat}, only the seat's dates, whatever it writes.
+   */
+  viewerMaySend: boolean;
+}
+
+/**
+ * What a reader holding the group through a **temporary seat** may reach — a
+ * substitute, or a gedu taken off the group whose window is still open — as the
+ * workspace document states it. A reader who holds the group outright has none.
+ *
+ * This is the second question the module answers, and it has a different
+ * source from the first: *who is expected* is derived here from the periods and
+ * the requests, while *what the viewer's seat reaches* is the database's answer,
+ * handed in whole, because the window behind it has exactly one definition and
+ * it is in SQL.
+ */
+export interface ViewerTemporarySeat {
+  /** A live substitution on the group writes every session of it. */
+  writesEverySession: boolean;
+  /** Product-local `YYYY-MM-DD` — the sessions the seat holds. */
+  sessionDates: ReadonlySet<string>;
 }
 
 /**
@@ -139,18 +193,31 @@ export const NO_SESSION_STAFFING: Readonly<SessionStaffing> = Object.freeze({
   expected: [],
   requests: [],
   viewerIsExpected: false,
+  hasViewer: false,
   viewerRequest: null,
+  viewerMayWrite: true,
+  viewerMaySend: true,
 });
 
 export interface SessionStaffingArgs {
-  /** The group's assignments, with roles, in any order. */
+  /** The group's assignment periods, ended ones included, in any order. */
   gedus: readonly StaffingAssignment[];
   /** The group's substitution requests, any date, any status, in any order. */
   requests: readonly SubstitutionRequestInput[];
   /** Product-local `YYYY-MM-DD` — the session being staffed. */
   sessionDate: string;
+  /**
+   * The session's start instant — the stored row's snapshot where there is one,
+   * else the plan's — which picks the assignment periods that staff it.
+   */
+  sessionStartsAt: Date;
   /** The signed-in gedu, where there is one. */
   viewerId?: string | null;
+  /**
+   * The viewer's temporary seat on the group, or `null` (the default) where
+   * they hold it outright or there is no viewer — every session is theirs.
+   */
+  viewerSeat?: ViewerTemporarySeat | null;
 }
 
 /**
@@ -160,7 +227,14 @@ export interface SessionStaffingArgs {
 export function deriveSessionStaffing(
   args: SessionStaffingArgs,
 ): SessionStaffing {
-  const { gedus, requests, sessionDate, viewerId = null } = args;
+  const {
+    gedus,
+    requests,
+    sessionDate,
+    sessionStartsAt,
+    viewerId = null,
+    viewerSeat = null,
+  } = args;
 
   const live = requests.filter(
     (request) =>
@@ -174,6 +248,7 @@ export function deriveSessionStaffing(
 
   const expected = new Map<string, ExpectedGedu>();
   for (const gedu of gedus) {
+    if (!heldAt(gedu, sessionStartsAt)) continue;
     if (absent.has(gedu.id)) continue;
     expected.set(gedu.id, {
       id: gedu.id,
@@ -209,8 +284,42 @@ export function deriveSessionStaffing(
     requests: states,
     viewerIsExpected:
       viewerId !== null && expectedList.some((gedu) => gedu.id === viewerId),
+    hasViewer: viewerId !== null,
     viewerRequest: states.find((state) => state.isViewers) ?? null,
+    ...viewerSessionReach(viewerSeat, sessionDate),
   };
+}
+
+/**
+ * What the viewer's seat lets them do on one session: write it up, and send
+ * it. A seat holding the group outright reaches both on every session; a
+ * temporary seat sends only on its own dates, and writes on them too unless a
+ * live substitution writes every session — the same answer
+ * `gedu_writes_group_session` and the report claim give in SQL.
+ */
+function viewerSessionReach(
+  seat: ViewerTemporarySeat | null,
+  sessionDate: string,
+): Pick<SessionStaffing, "viewerMayWrite" | "viewerMaySend"> {
+  if (seat === null) return { viewerMayWrite: true, viewerMaySend: true };
+  const held = seat.sessionDates.has(sessionDate);
+  return {
+    viewerMayWrite: seat.writesEverySession || held,
+    viewerMaySend: held,
+  };
+}
+
+/**
+ * Whether an assignment period contains the instant: `startedAt <= at <
+ * endedAt`, an open end for a current period. The SQL twin is
+ * `group_assignments_at`.
+ */
+function heldAt(period: StaffingAssignment, at: Date): boolean {
+  const instant = at.getTime();
+  return (
+    period.startedAt.getTime() <= instant &&
+    (period.endedAt === null || instant < period.endedAt.getTime())
+  );
 }
 
 /**

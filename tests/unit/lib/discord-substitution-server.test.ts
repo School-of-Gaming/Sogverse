@@ -72,6 +72,7 @@ const ASSIGNMENT_ROW = {
   ),
   substitution_starts_at: null,
   substitution_ends_at: null,
+  last_session_date: null,
 };
 
 const SUMMARY = {

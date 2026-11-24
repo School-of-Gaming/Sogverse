@@ -152,7 +152,14 @@ export function buildTraineeWorkspaceFixture(now: Date): {
           },
     roster,
     sessions,
-    gedus,
+    // The group's assignment periods, as the club fixture's staffing reads them.
+    gedus: club.staffingGedus.map((period) => ({
+      id: period.id,
+      first_name: period.firstName,
+      role: period.role,
+      started_at: period.startedAt.toISOString(),
+      ended_at: period.endedAt === null ? null : period.endedAt.toISOString(),
+    })),
     cancellations,
     trainees: [{ id: TRAINEE_ID, first_name: "Veera" }],
     // The workspace fixture's plan, which is its feed's own sessions — so

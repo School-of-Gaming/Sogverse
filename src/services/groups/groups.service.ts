@@ -158,8 +158,9 @@ export class GroupsService {
 
   /**
    * Assigns a Gedu to a group in a role — or re-states the role of one already
-   * there, which is the same call: the RPC upserts on (group, gedu), so a role
-   * change is one add rather than a remove followed by an add.
+   * there, which is the same call: the RPC ends the current period and starts
+   * one in the new role, so a role change is one add rather than a remove
+   * followed by an add.
    *
    * `primary` is the default because it is what every assignment was before
    * roles existed and what the add-gedu flow offers first; an `assistant` on a

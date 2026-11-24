@@ -19,7 +19,7 @@ BEGIN
 
   -- The assignment half of the gate, which is what an admin is exempt from.
   -- Everything below it applies to both callers identically.
-  IF NOT public.is_admin() AND NOT public.gedu_teaches_group(p_group_id) THEN
+  IF NOT public.is_admin() AND NOT public.gedu_writes_group_session(p_group_id, p_session_date) THEN
     RAISE EXCEPTION 'Forbidden' USING ERRCODE = '42501';
   END IF;
 

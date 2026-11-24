@@ -5,6 +5,7 @@ import { createAdminTestClient, createAuthenticatedClient } from "./helpers";
 import { TEST_IDS, TEST_CREDENTIALS } from "./constants";
 import { createTestProduct, deleteTestProducts, eraseParticipations } from "./product-helpers";
 import { getStringRecord } from "../helpers/json";
+import { seedAssignment } from "./assignment-helpers";
 
 /**
  * RLS coverage for voice_zones and voice_private_zone_occupants.
@@ -62,7 +63,7 @@ describe("voice_zones + voice_private_zone_occupants RLS", () => {
 
     const x = await adminAuth.rpc("apply_group_changes", {
       p_product_id: PRODUCT_X,
-      p_added_groups: [{ tempId: "tX1", name: "X1", geduIds: [TEST_IDS.GEDU] }],
+      p_added_groups: [{ tempId: "tX1", name: "X1", gedus: [{ geduId: TEST_IDS.GEDU, role: "primary" }] }],
     });
     groupX1 = getStringRecord(x.data, "tempMap").tX1;
 
@@ -76,9 +77,17 @@ describe("voice_zones + voice_private_zone_occupants RLS", () => {
 
     const y = await adminAuth.rpc("apply_group_changes", {
       p_product_id: PRODUCT_Y,
-      p_added_groups: [{ tempId: "tY1", name: "Y1", geduIds: [] }],
+      p_added_groups: [{ tempId: "tY1", name: "Y1", gedus: [] }],
     });
     groupY1 = getStringRecord(y.data, "tempMap").tY1;
+    // GEDU once taught Y1 and was taken off it. An ended period is no
+    // membership, so every "outsider" assertion about Y below holds with it.
+    await seedAssignment(admin, {
+      groupId: groupY1,
+      geduId: TEST_IDS.GEDU,
+      productId: PRODUCT_Y,
+      endedAt: "2001-01-01T00:00:00Z",
+    });
 
     // Seed one locked zone in X1 via the service-role client (bypasses RLS).
     // Surface the error: a swallowed insert failure here would skip the whole
@@ -166,6 +175,13 @@ describe("voice_zones + voice_private_zone_occupants RLS", () => {
         .select("group_id")
         .in("group_id", [groupX1, groupY1]);
       expect((data ?? []).map((r) => r.group_id)).toEqual([groupX1]);
+    });
+
+    it("a gedu whose period on the group ended is neither member nor moderator", async () => {
+      const member = await geduAuth.rpc("is_voice_group_member", { p_group_id: groupY1 });
+      const moderator = await geduAuth.rpc("is_voice_group_moderator", { p_group_id: groupY1 });
+      expect(member).toMatchObject({ data: false, error: null });
+      expect(moderator).toMatchObject({ data: false, error: null });
     });
 
     it("admin sees the seeded zone", async () => {

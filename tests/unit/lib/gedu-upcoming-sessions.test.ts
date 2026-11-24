@@ -104,6 +104,7 @@ function row(overrides: {
       substitutionDate !== null && cancelled.has(substitutionDate),
     substitutionStartsAt: substituted?.startsAt ?? null,
     substitutionEndsAt: substituted?.endsAt ?? null,
+    lastSessionDate: null,
     slots: overrides.slots,
     groupCount: 1,
     participantCount: 8,

@@ -8,6 +8,7 @@ import {
 import { createAdminTestClient, createAuthenticatedClient, uniqueSuffix } from "./helpers";
 import { TEST_IDS, TEST_CREDENTIALS } from "./constants";
 import { createTestProduct, deleteTestProducts, eraseParticipations } from "./product-helpers";
+import { seedAssignments } from "./assignment-helpers";
 
 /**
  * The two staff-only marks a gedu meets before a session starts: the
@@ -178,9 +179,9 @@ describe("member flair", () => {
     ]);
 
     // One gedu per group of the SAME product, and neither on PRODUCT_OFF.
-    await admin.from("gedu_group_assignments").insert([
-      { group_id: GROUP_A, gedu_id: TEST_IDS.GEDU, product_id: PRODUCT_FLAIR },
-      { group_id: GROUP_B, gedu_id: sisterGeduId, product_id: PRODUCT_FLAIR },
+    await seedAssignments(admin, [
+      { groupId: GROUP_A, geduId: TEST_IDS.GEDU, productId: PRODUCT_FLAIR },
+      { groupId: GROUP_B, geduId: sisterGeduId, productId: PRODUCT_FLAIR },
     ]);
 
     await admin.from("participations").insert([

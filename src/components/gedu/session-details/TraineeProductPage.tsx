@@ -179,6 +179,9 @@ export function TraineeWorkspace({
         // Nobody: a trainee holds no staff seat, so no card may offer them an
         // absence of their own — the locked row below stands in its place.
         viewerId: null,
+        // No temporary seat: a trainee's writes are locked by this shell, and
+        // the lock explains itself where the control is.
+        viewerSeat: null,
         now,
         reach: "redacted",
       }),
@@ -261,6 +264,9 @@ export function TraineeWorkspace({
       }}
       trainees={feed.trainees}
       namedOnlyRoomLock={locks.room}
+      // Their own group's room on every date it opens; sister groups arrive by
+      // name only, with the lock above.
+      voiceSessionDates={null}
     />
   );
 }

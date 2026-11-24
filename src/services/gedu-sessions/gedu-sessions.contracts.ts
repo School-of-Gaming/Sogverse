@@ -11,7 +11,7 @@ import {
 import { gamerCreationList } from "@/services/member-flair/member-flair.contracts";
 import {
   substitutionRequestDocument,
-  sessionStaffGedu,
+  sessionStaffPeriod,
 } from "@/services/session-substitution/session-substitution.contracts";
 
 /**
@@ -347,12 +347,14 @@ export const geduGroupFeed = z.object({
   roster: z.array(geduFeedRosterEntry),
   sessions: z.array(geduFeedSession),
   /**
-   * The group's staff, with the role each holds — the first of the two inputs
-   * the staffing derivation takes. It is on the document rather than derived
-   * from anything else here because nothing else on the workspace knows who
-   * teaches the group: the roster is the children.
+   * Every assignment period the group has had, ended ones included, with its
+   * role and bounds — the first of the two inputs the staffing derivation
+   * takes, which places each session in the period containing its start. It is
+   * on the document rather than derived from anything else here because nothing
+   * else on the workspace knows who teaches the group: the roster is the
+   * children. Not a list of who is on the group now.
    */
-  gedus: z.array(sessionStaffGedu),
+  gedus: z.array(sessionStaffPeriod),
   /**
    * Every **non-withdrawn** substitution request on the group, unbounded and in no
    * particular date order — exactly as this document already returns every
@@ -400,9 +402,38 @@ export const geduGroupFeed = z.object({
    * `YYYY-MM-DD`; null on an open-ended product, which has none.
    */
   final_session_date: z.string().nullable(),
+  /**
+   * What the reader's **temporary seat** reaches, or `null` where they hold the
+   * group outright — an admin, or a gedu with a current period on it — and may
+   * write and send every session.
+   *
+   * A substitute and a gedu taken off the group reach this document through
+   * the same temporary arm, and the database answers for both:
+   * `writes_every_session` is whether a live substitution lets them write any
+   * session of the group, and `session_dates` are the product-local dates they
+   * hold it for — the ones they substitute and the ones their ended assignment
+   * still holds. Only those are theirs to send.
+   *
+   * The voice room admits less: `voice_dates` are the substitution dates alone,
+   * because an ended assignment is in no room, and `teaches_product` is whether
+   * the reader holds a current period on any group of the product, which
+   * admits them to every room of it — this group's on every date included. The
+   * window behind the dates is the database's; nothing here derives one.
+   */
+  viewer_temporary_seat: z
+    .object({
+      writes_every_session: z.boolean(),
+      session_dates: z.array(z.string()),
+      voice_dates: z.array(z.string()),
+      teaches_product: z.boolean(),
+    })
+    .nullable(),
 });
 
 export type GeduGroupFeed = z.infer<typeof geduGroupFeed>;
+export type ViewerTemporarySeatDocument = NonNullable<
+  GeduGroupFeed["viewer_temporary_seat"]
+>;
 export type GeduFeedSession = z.infer<typeof geduFeedSession>;
 export type GeduFeedRosterEntry = z.infer<typeof geduFeedRosterEntry>;
 export type GeduFeedSite = z.infer<typeof geduFeedSite>;
@@ -489,7 +520,7 @@ export const traineeGroupFeed = z.object({
     .nullable(),
   roster: z.array(traineeRosterEntry),
   sessions: z.array(traineeFeedSession),
-  gedus: z.array(sessionStaffGedu),
+  gedus: z.array(sessionStaffPeriod),
   cancellations: z.array(sessionCancellation),
   trainees: z.array(groupTrainee),
   planned_sessions: geduGroupFeed.shape.planned_sessions,
@@ -523,11 +554,12 @@ export type TraineeGroupFeed = z.infer<typeof traineeGroupFeed>;
  * product (no `end_date`) has no final session, so it may be flagged and never
  * owes — documented behaviour, not an error.
  *
- * **A date the caller holds a non-withdrawn substitution request on is not their work
- * and is not counted**, whichever kind of seat the row is: they have said they
- * cannot be there, whoever ends up running it. That holds while the request is
- * still open, once it is substituted, and for the second link of a sub-of-sub
- * chain alike.
+ * **A gedu owes only the sessions they were expected at**, whichever kind of
+ * seat the row is: one inside an assignment period of theirs on the group, or
+ * the one they substitute, and never a date they hold a non-withdrawn
+ * substitution request on — they have said they cannot be there, whoever ends
+ * up running it, while the request is still open, once it is substituted, and
+ * for the second link of a sub-of-sub chain alike.
  *
  * **This derivation exists twice and the two must agree** — here in SQL for the
  * badge, and in TypeScript in the gedu feed's entry-state module for the card.
@@ -553,8 +585,12 @@ export const geduAssignmentSummary = z.object({
    *
    * A `trainee` row is one per trainee seat, and its attention count is always
    * 0: what a session owes is the staff's work.
+   *
+   * An `ended_assignment` row is one per group the gedu was taken off and still
+   * holds while a session of theirs on it is inside its substitute window; it
+   * owes only those still-open sessions.
    */
-  kind: z.enum(["assignment", "substitution", "trainee"]),
+  kind: z.enum(["assignment", "substitution", "trainee", "ended_assignment"]),
   /**
    * The date a `substitution` row is for; null on an `assignment` row.
    *

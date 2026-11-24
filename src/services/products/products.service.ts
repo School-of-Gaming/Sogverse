@@ -815,8 +815,8 @@ export class ProductsService {
   }
 
   /**
-   * The products a gedu holds a standing seat on: an assignment (primary or
-   * assistant) or a trainee seat, the two tables a seat can live in. The gedu
+   * The products a gedu holds a standing seat on now: a current assignment
+   * period (primary or assistant) or a trainee seat, the two tables a seat can live in. The gedu
    * filter asks who is on a product, and a trainee is on it as much as a lead
    * is — the difference is pay and permissions, not presence. A substitution is
    * not a seat: a sub covering one afternoon is not one of a club's educators.
@@ -832,7 +832,8 @@ export class ProductsService {
       this.supabase
         .from("gedu_group_assignments")
         .select("product_id")
-        .eq("gedu_id", geduId),
+        .eq("gedu_id", geduId)
+        .is("ended_at", null),
       this.supabase
         .from("gedu_group_trainees")
         .select("product_id")

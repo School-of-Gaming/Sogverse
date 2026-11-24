@@ -81,7 +81,7 @@ describe("gamer dashboard: product join shapes on an ended term", () => {
     // requires group_id NOT NULL) exercise the same query the dashboard runs.
     const created = await adminAuth.rpc("apply_group_changes", {
       p_product_id: CLOSED_ACTIVE_PRODUCT,
-      p_added_groups: [{ tempId: "tA", name: "Cohort A", geduIds: [] }],
+      p_added_groups: [{ tempId: "tA", name: "Cohort A", gedus: [] }],
     });
     activeGroupId = applyGroupChangesResult.parse(created.data).tempMap.tA;
 

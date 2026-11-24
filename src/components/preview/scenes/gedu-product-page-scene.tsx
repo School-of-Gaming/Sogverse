@@ -220,6 +220,7 @@ export function GeduProductPageScene({
           gedus: fixture.staffingGedus,
           requests: substitutions,
           sessionDate: productLocalDate(entry.startsAt, fixture.sourceTimeZone),
+          sessionStartsAt: entry.startsAt,
           viewerId: fixture.viewerId,
         }),
       })),
@@ -687,6 +688,8 @@ export function GeduProductPageScene({
       // A staff document carries every sister group in full, so no row is
       // ever drawn by name alone.
       namedOnlyRoomLock={null}
+      // The scene's gedu holds the group outright.
+      voiceSessionDates={null}
       // Deliberately not passed. A Roblox render can only be resolved by
       // account id through our own route, and a scene must not reach a
       // third-party host on load — so every figure here is the drawn stand-in,

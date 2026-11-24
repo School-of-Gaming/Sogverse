@@ -72,9 +72,18 @@ BEGIN
     UNION
     SELECT group_id, session_date FROM sessions_in_range
   ),
-  -- The candidates who can be expected at (group, day): the group's assigned
-  -- gedus, and the substitutes seated on that day who are not also assigned.
-  -- The predicate decides which of them are expected.
+  -- Each (group, day)'s session start instant, computed once per key: the
+  -- instant a session is placed in an assignment period by.
+  key_instants AS MATERIALIZED (
+    SELECT k.group_id,
+           k.session_date,
+           public.group_session_starts_at(k.group_id, k.session_date) AS starts_at
+      FROM session_keys k
+  ),
+  -- The candidates who can be expected at (group, day): the gedus assigned to
+  -- the group at that session, each with that period's role, and the
+  -- substitutes seated on that day who are not also assigned at it. The
+  -- predicate decides which of them are expected.
   key_gedus AS (
     SELECT k.group_id,
            k.session_date,
@@ -87,11 +96,10 @@ BEGIN
              ORDER BY CASE c.role WHEN 'primary' THEN 0 WHEN 'assistant' THEN 1 ELSE 2 END,
                       gp.first_name, gp.last_name, gp.id
            ) AS gedus
-      FROM session_keys k
+      FROM key_instants k
       CROSS JOIN LATERAL (
-        SELECT ga.gedu_id, ga.role::text AS role
-          FROM public.gedu_group_assignments ga
-         WHERE ga.group_id = k.group_id
+        SELECT held.gedu_id, held.role::text AS role
+          FROM public.group_assignments_at(k.group_id, k.starts_at) held
         UNION
         SELECT r.substitute_id, 'substitute'
           FROM public.session_substitution_requests r
@@ -100,9 +108,8 @@ BEGIN
            AND r.status       = 'substituted'::public.substitution_request_status
            AND NOT EXISTS (
                  SELECT 1
-                   FROM public.gedu_group_assignments ga
-                  WHERE ga.group_id = k.group_id
-                    AND ga.gedu_id  = r.substitute_id
+                   FROM public.group_assignments_at(k.group_id, k.starts_at) held
+                  WHERE held.gedu_id = r.substitute_id
                )
       ) c
       JOIN public.profiles gp ON gp.id = c.gedu_id
@@ -200,7 +207,7 @@ $_$;
 -- Name: FUNCTION get_admin_session_feedback(p_from date, p_to date, p_window_before_minutes integer); Type: COMMENT; Schema: public; Owner: -
 --
 
-COMMENT ON FUNCTION public.get_admin_session_feedback(p_from date, p_to date, p_window_before_minutes integer) IS 'The admin feedback page''s whole read: every gamer''s feedback answer whose session day falls in [p_from, p_to], and every recorded session of an online or hybrid product in that range as the response rate''s denominator. Admin-only, guard-first on assert_admin; it crosses the boundary that session_feedback''s policies draw around each child''s own row. A row''s session day is its opening instant shifted forward by p_window_before_minutes, read in its product''s timezone — the caller passes the voice window constant so the number has one home. RESPONSES are gamers'' rows only, never an empty one (no answer and a blank note), and never filtered by whether the gamer still holds a seat: history is the point. Each carries its group and product, the respondent''s id and full name, every gedu expected at that (group, day) as decided by gedu_is_expected_at_session over the assigned gedus and the day''s seated substitutes (an assigned gedu keeps the assignment''s role; a substitute is ''substitute''), the stored answers verbatim with retired keys included, the note, the last save as submittedAt, and countsTowardRate: true exactly when a non-cancelled group_sessions row exists for that (group, day) and its session_attendance marks the respondent present, so the response rate reads "of the gamers marked present, how many answered" and can never pass 100%. SESSIONS are group_sessions rows on online and hybrid products, the ones with a voice room, in the range, cancelled ones left out, each with the count of gamers marked present and the same expected gedus; a session nobody was marked present at still travels. A response whose session has no recorded row travels without a partner in sessions. Every entry carries all of its product''s name translations, and the reader picks one by locale. Keys are camelCase in the shape the page''s contract parses.';
+COMMENT ON FUNCTION public.get_admin_session_feedback(p_from date, p_to date, p_window_before_minutes integer) IS 'The admin feedback page''s whole read: every gamer''s feedback answer whose session day falls in [p_from, p_to], and every recorded session of an online or hybrid product in that range as the response rate''s denominator. Admin-only, guard-first on assert_admin; it crosses the boundary that session_feedback''s policies draw around each child''s own row. A row''s session day is its opening instant shifted forward by p_window_before_minutes, read in its product''s timezone — the caller passes the voice window constant so the number has one home. RESPONSES are gamers'' rows only, never an empty one (no answer and a blank note), and never filtered by whether the gamer still holds a seat: history is the point. Each carries its group and product, the respondent''s id and full name, every gedu expected at that (group, day) as decided by gedu_is_expected_at_session over the gedus assigned to the group at that session — group_assignments_at at group_session_starts_at, the instant computed once per (group, day) — and the day''s seated substitutes (an assigned gedu keeps the role of the period containing the session, so a past session stays attributed to whoever held the group then and never to a later replacement; a substitute is ''substitute''), the stored answers verbatim with retired keys included, the note, the last save as submittedAt, and countsTowardRate: true exactly when a non-cancelled group_sessions row exists for that (group, day) and its session_attendance marks the respondent present, so the response rate reads "of the gamers marked present, how many answered" and can never pass 100%. SESSIONS are group_sessions rows on online and hybrid products, the ones with a voice room, in the range, cancelled ones left out, each with the count of gamers marked present and the same expected gedus; a session nobody was marked present at still travels. A response whose session has no recorded row travels without a partner in sessions. Every entry carries all of its product''s name translations, and the reader picks one by locale. Keys are camelCase in the shape the page''s contract parses.';
 
 
 --

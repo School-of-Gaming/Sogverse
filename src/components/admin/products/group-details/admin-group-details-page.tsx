@@ -481,6 +481,9 @@ function Workspace({
         // supplies the staffing editor in that slot instead, as it already does
         // for the site panel.
         viewerId: null,
+        // An admin holds every group outright: every session is theirs to
+        // write and send.
+        viewerSeat: null,
         now,
       }),
     [
@@ -898,6 +901,8 @@ function Workspace({
       // A staff document carries every sister group in full, so no row is
       // ever drawn by name alone.
       namedOnlyRoomLock={null}
+      // An admin may enter every room of the product.
+      voiceSessionDates={null}
     />
   );
 }

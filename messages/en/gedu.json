@@ -3,6 +3,8 @@
     "cardEyebrow": "Substitution",
     "cardOpenLabel": "{product} — session you’re substituting for",
     "cardLockedLabel": "{product} — session you’re substituting for. The group’s workspace opens 48 hours before it starts.",
+    "endedCardEyebrow": "Former group",
+    "endedCardOpenLabel": "{product}: your former group",
     "accessOpens": "Workspace opens {date} at {time}",
     "poolHeading": "Sessions needing a substitute",
     "poolRequirementsNote": "You see sessions in a language you speak and, for on-site ones, in your coverage areas. Keep both up to date in your <link>settings</link>.",

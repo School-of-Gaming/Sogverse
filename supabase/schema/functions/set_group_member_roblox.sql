@@ -17,8 +17,8 @@ BEGIN
   );
 
   -- Actor AND target: the participant must be actively participating in a group
-  -- the caller is assigned to. A gedu may fix a username for the people they
-  -- teach and for nobody else. An admin passes it outright — see the
+  -- the caller is currently assigned to. A gedu may fix a username for the people
+  -- they teach and for nobody else. An admin passes it outright — see the
   -- Minecraft twin above for why.
   IF NOT public.is_admin() AND NOT EXISTS (
     SELECT 1
@@ -27,6 +27,7 @@ BEGIN
      WHERE part.participant_id = p_participant_id
        AND part.status   = 'active'::public.participation_status
        AND ga.gedu_id    = (SELECT auth.uid())
+       AND ga.ended_at IS NULL
   )
   -- The substitution branch, byte for byte the Minecraft twin's — one roster editor
   -- serves both platforms, so widening one alone would ship a control that
@@ -86,7 +87,7 @@ $$;
 -- Name: FUNCTION set_group_member_roblox(p_participant_id uuid, p_roblox_username text, p_roblox_user_id bigint); Type: COMMENT; Schema: public; Owner: -
 --
 
-COMMENT ON FUNCTION public.set_group_member_roblox(p_participant_id uuid, p_roblox_username text, p_roblox_user_id bigint) IS 'Set a group member''s Roblox username + resolved account id, scoped to participants actively enrolled in a group the calling gedu teaches. The Roblox twin of set_group_member_minecraft, and identical to it in every respect but the key''s type: Roblox''s id is an int64, so the account-id parameter is a DEFAULTed bigint rather than a text column carrying an '''' sentinel, and omitting it is how an unverified save is expressed. The Roblox lookup happens in the calling route (neither Roblox API is reachable from a browser), so an id arriving here was resolved server-side and its presence is the whole of "verified". Clearing the username clears the id with it. In practice the target is always a child: an adult seat carries no linked game account and the roster row shows that slot empty by design. Open to an ADMIN as well as to the assigned gedu, in the same shape as its Minecraft twin — the admin group details page renders one roster editor serving both platforms, so admitting one alone would ship a control that works on a Minecraft group and refuses on a Roblox one. An admin passes the group half outright and is exempt from nothing else. The group half also admits a LIVE SUBSTITUTION, in the same shape as its Minecraft twin, and for the same reason: one roster editor serves both platforms.';
+COMMENT ON FUNCTION public.set_group_member_roblox(p_participant_id uuid, p_roblox_username text, p_roblox_user_id bigint) IS 'Set a group member''s Roblox username + resolved account id, scoped to participants actively enrolled in a group the calling gedu holds a current assignment period on. The Roblox twin of set_group_member_minecraft, and identical to it in every respect but the key''s type: Roblox''s id is an int64, so the account-id parameter is a DEFAULTed bigint rather than a text column carrying an '''' sentinel, and omitting it is how an unverified save is expressed. The Roblox lookup happens in the calling route (neither Roblox API is reachable from a browser), so an id arriving here was resolved server-side and its presence is the whole of "verified". Clearing the username clears the id with it. In practice the target is always a child: an adult seat carries no linked game account and the roster row shows that slot empty by design. Open to an ADMIN as well as to the currently assigned gedu, in the same shape as its Minecraft twin — the admin group details page renders one roster editor serving both platforms, so admitting one alone would ship a control that works on a Minecraft group and refuses on a Roblox one. An admin passes the group half outright and is exempt from nothing else. The group half also admits a LIVE SUBSTITUTION, in the same shape as its Minecraft twin, and for the same reason: one roster editor serves both platforms.';
 
 
 --

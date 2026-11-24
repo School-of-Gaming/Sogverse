@@ -13,6 +13,7 @@ import {
 } from "./helpers";
 import { TEST_IDS, TEST_CREDENTIALS } from "./constants";
 import { deleteTestProducts } from "./product-helpers";
+import { seedAssignments } from "./assignment-helpers";
 
 /**
  * `get_admin_session_feedback` — the admin feedback page's read: every gamer's
@@ -158,11 +159,10 @@ describe("get_admin_session_feedback", () => {
       .insert({ id: GROUP, product_id: PRODUCT, name: "Tuesday crew" });
     if (group.error) throw new Error(`seed group failed: ${group.error.message}`);
 
-    const staff = await admin.from("gedu_group_assignments").insert([
-      { group_id: GROUP, product_id: PRODUCT, gedu_id: TEST_IDS.GEDU, role: "primary" },
-      { group_id: GROUP, product_id: PRODUCT, gedu_id: assistantId, role: "assistant" },
+    await seedAssignments(admin, [
+      { groupId: GROUP, productId: PRODUCT, geduId: TEST_IDS.GEDU, role: "primary" },
+      { groupId: GROUP, productId: PRODUCT, geduId: assistantId, role: "assistant" },
     ]);
-    if (staff.error) throw new Error(`seed assignments failed: ${staff.error.message}`);
 
     const sub = await admin.from("session_substitution_requests").insert({
       group_id: GROUP,
@@ -326,6 +326,64 @@ describe("get_admin_session_feedback", () => {
 
     // The denominator carries the same staffing.
     expect(sessions.find((s) => s.sessionDate === DAY_2)?.gedus).toEqual(day2?.gedus);
+  });
+
+  it("attributes a past session to the gedu who held the group then, not to a later replacement", async () => {
+    // The assistant is taken off between DAY_2 and DAY_3 and Saku — who
+    // substituted once on DAY_2 — takes the assistant's place from that
+    // instant. The fixture's own periods are put back afterwards.
+    const handover = "2025-03-13T00:00:00Z";
+    const ended = await admin
+      .from("gedu_group_assignments")
+      .update({ ended_at: handover })
+      .eq("group_id", GROUP)
+      .eq("gedu_id", assistantId)
+      .is("ended_at", null);
+    expect(ended.error).toBeNull();
+    await seedAssignments(admin, [
+      {
+        groupId: GROUP,
+        productId: PRODUCT,
+        geduId: subId,
+        role: "assistant",
+        startedAt: handover,
+      },
+    ]);
+    try {
+      const { responses, sessions } = await read(DAY_1, DAY_3);
+      const staffOn = (day: string) =>
+        responses
+          .find((r) => r.sessionDate === day)
+          ?.gedus.map((g) => [g.id, g.role]);
+
+      // Before the handover: the assistant, as before.
+      expect(staffOn(DAY_1)).toEqual([
+        [TEST_IDS.GEDU, "primary"],
+        [assistantId, "assistant"],
+      ]);
+      // Saku's DAY_2 seat is still the substitution, not the later period.
+      expect(staffOn(DAY_2)).toEqual([
+        [assistantId, "assistant"],
+        [subId, "substitute"],
+      ]);
+      // After it: the replacement, in the role of the period holding them.
+      expect(staffOn(DAY_3)).toEqual([
+        [TEST_IDS.GEDU, "primary"],
+        [subId, "assistant"],
+      ]);
+      expect(
+        sessions.find((s) => s.sessionDate === DAY_3)?.gedus.map((g) => g.id),
+      ).toEqual([TEST_IDS.GEDU, subId]);
+    } finally {
+      await admin
+        .from("gedu_group_assignments")
+        .delete()
+        .eq("group_id", GROUP)
+        .in("gedu_id", [assistantId, subId]);
+      await seedAssignments(admin, [
+        { groupId: GROUP, productId: PRODUCT, geduId: assistantId, role: "assistant" },
+      ]);
+    }
   });
 
   it("counts every recorded online session in the range, with its gamers marked present", async () => {

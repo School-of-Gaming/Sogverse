@@ -11,6 +11,7 @@ CREATE VIEW public.product_list_facets WITH (security_invoker='true') AS
            FROM (( SELECT a.gedu_id,
                     a.product_id
                    FROM public.gedu_group_assignments a
+                  WHERE (a.ended_at IS NULL)
                 UNION ALL
                  SELECT tr.gedu_id,
                     tr.product_id
@@ -58,7 +59,7 @@ COMMENT ON COLUMN public.product_list_facets.product_count IS 'Every product of 
 -- Name: COLUMN product_list_facets.gedu_ids; Type: COMMENT; Schema: public; Owner: -
 --
 
-COMMENT ON COLUMN public.product_list_facets.gedu_ids IS 'The distinct gedus holding a standing seat — an assignment or a trainee seat — on any group of any product of this type, ascending. Empty, never NULL.';
+COMMENT ON COLUMN public.product_list_facets.gedu_ids IS 'The distinct gedus holding a standing seat now — a current assignment period or a trainee seat — on any group of any product of this type, ascending. Empty, never NULL.';
 
 
 --

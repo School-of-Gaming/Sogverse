@@ -22,8 +22,8 @@ BEGIN
     -- An explicit group: the substitution card's link carries one, so a gedu substituting
     -- a SIBLING group of a product they already teach lands in the right
     -- workspace instead of their own group's. It must belong to this product
-    -- and be one the caller is assigned to or substitutes on — gedu_teaches_group is
-    -- exactly that pair of questions since this migration.
+    -- and be one the caller is currently assigned to or substitutes on —
+    -- gedu_teaches_group is exactly that pair of questions.
     SELECT g.id
       INTO v_my_group_id
       FROM product_groups g
@@ -31,14 +31,16 @@ BEGIN
        AND g.product_id = p_product_id
        AND public.gedu_teaches_group(g.id);
   ELSE
+    -- The caller's current period on this product; there is at most one.
     SELECT group_id
       INTO v_my_group_id
       FROM gedu_group_assignments
      WHERE product_id = p_product_id
        AND gedu_id    = v_caller_id
+       AND ended_at IS NULL
      LIMIT 1;
 
-    -- No assignment on this product: a pure substitution. Resolve the substituted group,
+    -- No current assignment on this product: a pure substitution. Resolve the substituted group,
     -- deterministically ordered so two live substitutions on one product answer the
     -- same way every call. (The card always sends p_group_id, so this arm is
     -- the fallback for a bare link rather than the normal path.)
@@ -129,10 +131,11 @@ BEGIN
            WHERE part.group_id = pg.id
              AND part.status   = 'active'
         ),
-        -- Each educator now carries their assignment ROLE — primary or
-        -- assistant. Every read that LISTS a group's staff carries it, because
-        -- "who is on this group" and "in what capacity" are one answer, and the
-        -- role is a pay CLASS rather than a figure.
+        -- The group's staff now — current periods only — each with their
+        -- assignment ROLE, primary or assistant. Every read that LISTS a
+        -- group's staff carries it, because "who is on this group" and "in what
+        -- capacity" are one answer, and the role is a pay CLASS rather than a
+        -- figure.
         'gedus', COALESCE((
           SELECT jsonb_agg(
                    jsonb_build_object(
@@ -145,6 +148,7 @@ BEGIN
             FROM gedu_group_assignments ga
             JOIN profiles gp ON gp.id = ga.gedu_id
            WHERE ga.group_id = pg.id
+             AND ga.ended_at IS NULL
         ), '[]'::jsonb),
         'roster',
           CASE WHEN pg.id = v_my_group_id THEN
@@ -240,7 +244,7 @@ $$;
 -- Name: FUNCTION get_gedu_assigned_product(p_product_id uuid, p_group_id uuid); Type: COMMENT; Schema: public; Owner: -
 --
 
-COMMENT ON FUNCTION public.get_gedu_assigned_product(p_product_id uuid, p_group_id uuid) IS 'One round trip for a gedu opening a product they have a seat on: the product shell, which group is theirs, and every group on the product with its participant_count and gedus. The roster rides only on the caller''s own group and is keyed by participant_id — the same shape get_gedu_group_feed serves, kept in parity on purpose even though the rendered roster always comes from the feed''s fresher copy. The shell carries the product''s topic (which decides whether a game identity is shown at all, and which one) and each roster entry carries roblox_username/roblox_user_id beside the Minecraft pair. Each roster entry also carries the staff-only flair — group_joined_at, note and note_updated_by_first_name — emitted unconditionally, because the join stamp is a fact and the clubs-only newcomer rule is applied by the client. Each roster entry carries `creations` too (always an array, [] when there is no row) and the shell carries requires_gamer_creations, both in parity with get_gedu_group_feed for the same reason every other field is: the page composes both documents. THIS IS THE DOOR A SUBSTITUTION COMES THROUGH, and both halves of it are widened rather than only the gate: p_group_id is optional and, when given, must name a group of this product that the caller is assigned to or substitutes on — which is what lets a gedu substituting a SIBLING group of a product they already teach land in the right workspace instead of their own group''s. Without it the assignment group is resolved, and a caller with no assignment on the product falls back to their substituted group, deterministically ordered. A caller with neither is refused with 42501. Each entry of `gedus` additionally carries the assignment `role`. The document also carries `planned_sessions`, read to the resolved group''s session_plan_horizon, and that group''s `final_session_date`, in parity with get_gedu_group_feed.';
+COMMENT ON FUNCTION public.get_gedu_assigned_product(p_product_id uuid, p_group_id uuid) IS 'One round trip for a gedu opening a product they have a seat on: the product shell, which group is theirs, and every group on the product with its participant_count and gedus. The roster rides only on the caller''s own group and is keyed by participant_id — the same shape get_gedu_group_feed serves, kept in parity on purpose even though the rendered roster always comes from the feed''s fresher copy. The shell carries the product''s topic (which decides whether a game identity is shown at all, and which one) and each roster entry carries roblox_username/roblox_user_id beside the Minecraft pair. Each roster entry also carries the staff-only flair — group_joined_at, note and note_updated_by_first_name — emitted unconditionally, because the join stamp is a fact and the clubs-only newcomer rule is applied by the client. Each roster entry carries `creations` too (always an array, [] when there is no row) and the shell carries requires_gamer_creations, both in parity with get_gedu_group_feed for the same reason every other field is: the page composes both documents. THIS IS THE DOOR A SUBSTITUTION COMES THROUGH, and both halves of it are widened rather than only the gate: p_group_id is optional and, when given, must name a group of this product that the caller is currently assigned to or substitutes on — which is what lets a gedu substituting a SIBLING group of a product they already teach land in the right workspace instead of their own group''s. Without it the group of the caller''s current assignment period is resolved, and a caller with no current period on the product falls back to their substituted group, deterministically ordered. A caller with neither is refused with 42501. `gedus` lists each group''s staff now, current periods only, and each entry additionally carries the assignment `role`. The document also carries `planned_sessions`, read to the resolved group''s session_plan_horizon, and that group''s `final_session_date`, in parity with get_gedu_group_feed.';
 
 
 --

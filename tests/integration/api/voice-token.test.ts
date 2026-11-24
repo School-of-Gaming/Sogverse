@@ -195,6 +195,20 @@ function mockTables(opts: {
     windowCalls.push(args);
     return Promise.resolve(mockSupabaseSuccess(openWindows));
   });
+  // The assignment row stands for a current period, so the mock answers it
+  // only when the route asked for one: a read that forgot `ended_at is null`
+  // finds nothing and the assignment cases fail.
+  const isCurrentAssignment = vi.fn((column: string, value: unknown) => ({
+    limit: vi.fn().mockReturnValue({
+      maybeSingle: vi
+        .fn()
+        .mockResolvedValue(
+          mockSupabaseSuccess(
+            column === "ended_at" && value === null ? (opts.geduAssignment ?? null) : null,
+          ),
+        ),
+    }),
+  }));
   mockAdminFrom.mockImplementation((table: string) => {
     if (table === "product_groups") {
       const row = opts.group
@@ -236,15 +250,13 @@ function mockTables(opts: {
       };
     }
     if (table === "gedu_group_assignments") {
+      // .select().eq(gedu_id).eq(product_id).is(ended_at, null).limit()
+      // .maybeSingle() — only a current period admits.
       return {
         select: vi.fn().mockReturnValue({
           eq: vi.fn().mockReturnValue({
             eq: vi.fn().mockReturnValue({
-              limit: vi.fn().mockReturnValue({
-                maybeSingle: vi
-                  .fn()
-                  .mockResolvedValue(mockSupabaseSuccess(opts.geduAssignment ?? null)),
-              }),
+              is: isCurrentAssignment,
             }),
           }),
         }),

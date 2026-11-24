@@ -18,6 +18,7 @@ import {
   createTestProduct,
   deleteTestProducts,
 } from "./product-helpers";
+import { seedAssignment } from "./assignment-helpers";
 
 /**
  * Holiday calendars: the four tables, their three writers, and what a holiday
@@ -197,13 +198,7 @@ describe("holiday calendars", () => {
       { id: DAILY_GROUP, product_id: DAILY, name: "Holiday daily cohort" },
     ]);
     expect(groups.error).toBeNull();
-    const assignment = await admin.from("gedu_group_assignments").insert({
-      product_id: DAILY,
-      group_id: DAILY_GROUP,
-      gedu_id: TEST_IDS.GEDU,
-      role: "primary",
-    });
-    expect(assignment.error).toBeNull();
+    await seedAssignment(admin, { productId: DAILY, groupId: DAILY_GROUP, geduId: TEST_IDS.GEDU, role: "primary" });
 
     calendarA = await createCalendar("A", [
       {

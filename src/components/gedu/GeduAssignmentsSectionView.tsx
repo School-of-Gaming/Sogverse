@@ -76,8 +76,9 @@ export function GeduAssignmentsSectionView({
         card.kind === "substitution" ? (
           // A substitution's identity is (group, substitution date) — a sub may hold two
           // Mondays of one group, and nothing else tells those two cards apart.
+          // An ended assignment's card shares the shape, so its seat leads the key.
           <GeduSubstitutionCard
-            key={`substitution-${card.item.groupId}-${card.item.session.sessionDate}`}
+            key={`${card.item.seat}-${card.item.groupId}-${card.item.session.sessionDate}`}
             substitution={card.item}
           />
         ) : (

@@ -28,6 +28,7 @@ import {
   createTestProduct,
   deleteTestProducts,
 } from "./product-helpers";
+import { seedAssignment } from "./assignment-helpers";
 
 /**
  * Admin session cancellation: `cancel_session` / `restore_session`, and every
@@ -175,13 +176,7 @@ describe("session cancellation", () => {
       .eq("id", PARTICIPATION);
     expect(joined.error).toBeNull();
 
-    const assignment = await admin.from("gedu_group_assignments").insert({
-      product_id: PRODUCT,
-      group_id: GROUP,
-      gedu_id: TEST_IDS.GEDU,
-      role: "primary",
-    });
-    expect(assignment.error).toBeNull();
+    await seedAssignment(admin, { productId: PRODUCT, groupId: GROUP, geduId: TEST_IDS.GEDU, role: "primary" });
   });
 
   afterAll(async () => {

@@ -17,6 +17,7 @@ import {
 } from "./helpers";
 import { TEST_CREDENTIALS, TEST_IDS } from "./constants";
 import { deleteTestProducts } from "./product-helpers";
+import { seedAssignment } from "./assignment-helpers";
 
 /**
  * Substitution requests announce their changes: the triggers that file a request
@@ -256,13 +257,7 @@ describe("substitution notifications", () => {
       })),
     );
     await admin.from("product_groups").insert({ id: GROUP, product_id: PRODUCT, name: "Notify Cohort" });
-    const { error: assignmentError } = await admin.from("gedu_group_assignments").insert({
-      group_id: GROUP,
-      gedu_id: ids.requester,
-      product_id: PRODUCT,
-      role: "primary",
-    });
-    expect(assignmentError).toBeNull();
+    await seedAssignment(admin, { groupId: GROUP, geduId: ids.requester, productId: PRODUCT, role: "primary" });
 
     await link(ids.eligible, DISCORD_ELIGIBLE, LINKED_LATER);
     await link(ids.shadowed, DISCORD_SHARED, LINKED_EARLIER);

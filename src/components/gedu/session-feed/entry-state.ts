@@ -305,15 +305,20 @@ export type SessionCompleteness = "needs_attention" | "complete";
  * final session ignores it here exactly as the badge ignores it there, and
  * history keeps its check.
  *
- * **A session the viewer has filed an absence for is nobody's warning to them.**
- * A gedu who said they cannot make a date is not the person who owes its
- * write-up, whether the session is still waiting for a substitution, already substituted,
- * or the second link of a sub-of-sub chain — so the warning is withheld from
- * *that* viewer while the request stands, and returns if they withdraw it. It
- * is read off the entry's own staffing rather than re-derived, so the date the
- * rule is applied to can never be a different date from the one the card is
- * about. The check is not withheld with it: a session somebody else finished is
- * finished, and saying so is more use than silence.
+ * **A session the viewer was not expected at is nobody's warning to them.** A
+ * gedu owes only the sessions they were expected at: inside an assignment
+ * period of theirs, or the one they substitute — never one before they joined
+ * the group or after they left it, and never a date they said they cannot
+ * make, whether it is still waiting for a substitution, already substituted, or
+ * the second link of a sub-of-sub chain. So the warning is withheld from *that*
+ * viewer, and returns if they withdraw their request. It is read off the
+ * entry's own staffing rather than re-derived, so the date the rule is applied
+ * to can never be a different date from the one the card is about. A surface
+ * with no viewer withholds nothing. The check is not withheld with it: a
+ * session somebody else finished is finished, and saying so is more use than
+ * silence. The same holds for a session the viewer may no longer send — a gedu
+ * taken off the group whose window on it has closed — which the SQL drops from
+ * an ended card's count in the same way.
  *
  * **This derivation exists twice — here for the card, and in SQL for the
  * dashboard badge — and now on FOUR conditions.** A change to either half is a
@@ -337,15 +342,22 @@ export function entryCompleteness(
       (entry.reportEmailedAt !== null &&
         !entryOwesCreations(entry, roster, creations)));
   if (finished) return "complete";
-  // The viewer said they cannot be there, so this session is not their work
-  // outstanding — whoever ends up running it, and whether the request is still
-  // open, already substituted, or the second link of a sub-of-sub chain. The green
-  // check is deliberately NOT withheld the same way: a session somebody else
-  // finished is finished, and the absent gedu seeing so is the truth.
+  // A session the viewer was not expected at is not their work outstanding:
+  // one before their period began or after it ended, another gedu's date a
+  // substitute is not covering, or a date they said they cannot make — whoever
+  // ends up running it, and whether the request is still open, already
+  // substituted, or the second link of a sub-of-sub chain. The green check is
+  // deliberately NOT withheld the same way: a session somebody else finished
+  // is finished, and the viewer seeing so is the truth.
   //
-  // `viewerRequest` is null for a surface with no viewer, which is what keeps
-  // the admin group page flagging a session the admin still has to chase.
-  if (entry.staffing.viewerRequest !== null) return null;
+  // A surface with no viewer withholds nothing, which is what keeps the admin
+  // group page flagging a session the admin still has to chase.
+  if (entry.staffing.hasViewer && !entry.staffing.viewerIsExpected) return null;
+  // Nor is one the viewer can no longer finish: a gedu taken off the group
+  // keeps only the sessions still in their window, and a session they may not
+  // send is out of their reach — the dashboard's ended card drops it the same
+  // way. Read off the staffing, so the date is the card's own.
+  if (!entry.staffing.viewerMaySend) return null;
   return entry.owed && roster.some((gamer) => isExpectedOnEntry(entry, gamer))
     ? "needs_attention"
     : null;

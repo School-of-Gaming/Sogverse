@@ -16,7 +16,8 @@ BEGIN
   -- session you are expected at. That admits an assigned gedu and an approved
   -- sub alike — which is the whole of "a sub can ask for a sub" — and refuses
   -- somebody who already has a live request, so filing twice is impossible
-  -- before the unique index has to say so.
+  -- before the unique index has to say so. It also refuses a session that
+  -- starts after the filer's assignment period ended.
   IF NOT public.gedu_is_expected_at_session(p_gedu_id, p_group_id, p_session_date) THEN
     RAISE EXCEPTION 'Forbidden' USING ERRCODE = '42501';
   END IF;
@@ -52,12 +53,15 @@ BEGIN
       USING ERRCODE = 'check_violation';
   END IF;
 
-  -- The role being substituted: the filer's assignment role, or — when the filer is
-  -- themselves a sub — the role stored on the substitution they hold.
+  -- The role being substituted: the role of the filer's assignment period
+  -- containing the session, or — when the filer is themselves a sub — the role
+  -- stored on the substitution they hold.
   SELECT a.role INTO v_role
-    FROM public.gedu_group_assignments a
-   WHERE a.group_id = p_group_id
-     AND a.gedu_id  = p_gedu_id;
+    FROM public.group_assignments_at(
+           p_group_id,
+           public.group_session_starts_at(p_group_id, p_session_date)
+         ) a
+   WHERE a.gedu_id = p_gedu_id;
 
   IF v_role IS NULL THEN
     SELECT r.role INTO v_role
@@ -93,7 +97,7 @@ $$;
 -- Name: FUNCTION file_session_substitution_request(p_gedu_id uuid, p_group_id uuid, p_session_date date, p_reason public.substitution_reason, p_reason_note text); Type: COMMENT; Schema: public; Owner: -
 --
 
-COMMENT ON FUNCTION public.file_session_substitution_request(p_gedu_id uuid, p_group_id uuid, p_session_date date, p_reason public.substitution_reason, p_reason_note text) IS '"I cannot make this session", filed for the given gedu: the one body of that write, behind request_session_substitution (the web, for auth.uid()) and request_session_substitution_for_discord_user (the Discord bot, for the linked gedu). Makes no role test of its own: each caller has already established that the gedu is a gedu. The AUTHORIZATION IS THE DERIVATION: the gedu must be EXPECTED at that session, which admits an assigned gedu and an approved sub alike (that is the whole of "a sub can ask for a sub") and refuses anyone who already holds a live request, with 42501. The reason category is required here and only here — an admin recording an off-platform substitution may not know it. The date must pass the ordinary writable-date check, must not be a cancelled session (P0026), AND must be today or later in the PRODUCT''s timezone; date granularity is deliberate, the handbook''s own norm being same-day filing, and it is deliberately looser than the card, which hides the action once the session''s end has passed. The role substituted is snapshotted from the gedu''s assignment role, or from the role on the substitution they hold when the gedu is themselves a sub. reason_note is trimmed, nulled when empty, and capped at 500 characters by the table''s own CHECK. Returns the request document as the filer reads it, without reason or reason_note: the filer''s own words come back from the form, and every other gedu-facing document keeps them off the wire. Granted to nobody: reachable only through its two wrappers.';
+COMMENT ON FUNCTION public.file_session_substitution_request(p_gedu_id uuid, p_group_id uuid, p_session_date date, p_reason public.substitution_reason, p_reason_note text) IS '"I cannot make this session", filed for the given gedu: the one body of that write, behind request_session_substitution (the web, for auth.uid()) and request_session_substitution_for_discord_user (the Discord bot, for the linked gedu). Makes no role test of its own: each caller has already established that the gedu is a gedu. The AUTHORIZATION IS THE DERIVATION: the gedu must be EXPECTED at that session, which admits an assigned gedu and an approved sub alike (that is the whole of "a sub can ask for a sub") and refuses anyone who already holds a live request, and anyone whose assignment period does not contain the session''s start — a session after their removal — with 42501. The reason category is required here and only here — an admin recording an off-platform substitution may not know it. The date must pass the ordinary writable-date check, must not be a cancelled session (P0026), AND must be today or later in the PRODUCT''s timezone; date granularity is deliberate, the handbook''s own norm being same-day filing, and it is deliberately looser than the card, which hides the action once the session''s end has passed. The role substituted is snapshotted from the gedu''s assignment period containing the session, or from the role on the substitution they hold when the gedu is themselves a sub; a request keeps that role if the gedu''s role changes before the date. reason_note is trimmed, nulled when empty, and capped at 500 characters by the table''s own CHECK. Returns the request document as the filer reads it, without reason or reason_note: the filer''s own words come back from the form, and every other gedu-facing document keeps them off the wire. Granted to nobody: reachable only through its two wrappers.';
 
 
 --

@@ -9,13 +9,12 @@ CREATE FUNCTION public.gedu_assignment_summaries(p_gedu_id uuid, p_epoch_date da
 BEGIN
 
   RETURN COALESCE((
-    -- The gedu's SEATS on groups, of which there are now two kinds. The union
-    -- is the whole of the change to this function: everything below it is
-    -- written against a (product, group) pair and a possible substitution DATE, and
+    -- The gedu's SEATS on groups. Everything below the union is written
+    -- against a (product, group) pair and a possible substitution DATE, and
     -- does not care which arm produced them.
     --
-    --   * `assignment` — one row per gedu_group_assignments row, exactly as
-    --     before, with `substitution_date` null.
+    --   * `assignment` — one row per CURRENT gedu_group_assignments period,
+    --     with `substitution_date` null.
     --   * `substitution`      — one row per UNEXPIRED substitution date.
     --     gedu_holds_unexpired_substitution carries the whole of that: keyed to
     --     the gedu asked about, the holder still certified, and the window's END not yet
@@ -23,6 +22,10 @@ BEGIN
     --     require the session to be within 48 hours — this arm feeds the substitution
     --     card a sub reads on My SOG, which exists from approval, where the
     --     workspace it links to opens at T-48h.
+    --   * `ended_assignment` — one row per group the gedu was taken off and
+    --     still holds through an ended assignment in its window
+    --     (gedu_unexpired_ended_assignment_dates is empty for a gedu current
+    --     on the group, so a role change or a re-add draws no second card).
     --
     -- `gedu_id` is carried through rather than dropped so the closing
     -- `WHERE a.gedu_id = p_gedu_id` still reads as the statement it always was.
@@ -34,6 +37,7 @@ BEGIN
              NULL::date         AS substitution_date
         FROM public.gedu_group_assignments a0
        WHERE a0.gedu_id = p_gedu_id
+         AND a0.ended_at IS NULL
       UNION ALL
       SELECT g0.product_id,
              r0.group_id,
@@ -55,6 +59,22 @@ BEGIN
              NULL::date      AS substitution_date
         FROM public.gedu_group_trainees t0
        WHERE t0.gedu_id = p_gedu_id
+      UNION ALL
+      SELECT e0.product_id,
+             e0.group_id,
+             p_gedu_id AS gedu_id,
+             'ended_assignment'::text AS kind,
+             NULL::date               AS substitution_date
+        FROM (
+          SELECT DISTINCT ea.product_id, ea.group_id
+            FROM public.gedu_group_assignments ea
+           WHERE ea.gedu_id = p_gedu_id
+             AND ea.ended_at IS NOT NULL
+        ) e0
+       WHERE EXISTS (
+               SELECT 1
+                 FROM public.gedu_unexpired_ended_assignment_dates(p_gedu_id, e0.group_id)
+             )
     )
     SELECT jsonb_agg(
              jsonb_build_object(
@@ -206,20 +226,22 @@ BEGIN
            -- final occurrence. An ASSIGNMENT row sees every occurrence, as
            -- before.
            AND (a.substitution_date IS NULL OR occurrence.session_date = a.substitution_date)
-           -- A date the gedu holds a NON-WITHDRAWN request on is not their
-           -- work, whichever kind of seat this row is: they have said they
-           -- cannot be there. The badge must not count it, whether the request
-           -- is still open, already substituted, or a sub-of-sub chain's second
-           -- link. This has a TWIN IN TYPESCRIPT (see the comment below on the
-           -- four conditions) and the twin learns the same rule.
-           AND NOT EXISTS (
-             SELECT 1
-               FROM public.session_substitution_requests rq
-              WHERE rq.group_id     = g.id
-                AND rq.session_date = occurrence.session_date
-                AND rq.requested_by = p_gedu_id
-                AND rq.status <> 'withdrawn'::public.substitution_request_status
-           )
+           -- A gedu owes only the sessions they were EXPECTED at
+           -- (gedu_is_expected_at_session), whichever kind of seat this row
+           -- is: one inside a period of theirs on the group, or the one they
+           -- substitute — and never a date they filed a non-withdrawn request
+           -- on, whether it is still open, already substituted, or a sub-of-sub
+           -- chain's second link: they have said they cannot be there. So a
+           -- gedu added mid-run owes nothing from before they were, and one
+           -- taken off owes nothing from after. This has a TWIN IN TYPESCRIPT
+           -- (see the comment below on the four conditions) and the twin
+           -- learns the same rule.
+           AND public.gedu_is_expected_at_session(p_gedu_id, g.id, occurrence.session_date)
+           -- An ENDED row owes only the sessions still open to the gedu: one
+           -- whose window has closed is out of their reach, and a count they
+           -- cannot clear is no use to them.
+           AND (a.kind <> 'ended_assignment'
+                OR public.gedu_holds_unexpired_ended_assignment(p_gedu_id, g.id, occurrence.session_date))
            -- Cancellation: a cancelled session owes nothing — nothing ran, so
            -- there is no register, report or mail to ask for, and a record
            -- kept under the cancellation is frozen rather than owed — and
@@ -365,7 +387,7 @@ $$;
 -- Name: FUNCTION gedu_assignment_summaries(p_gedu_id uuid, p_epoch_date date); Type: COMMENT; Schema: public; Owner: -
 --
 
-COMMENT ON FUNCTION public.gedu_assignment_summaries(p_gedu_id uuid, p_epoch_date date) IS 'One row per gedu assignment for the dashboard cards: group name, that group''s participant count (an active seat may be held by an adult as well as by a child), the venue name on in-person and hybrid products, and how many past sessions still need attention. A finished session on or after the epoch counts until ALL of: the register is in, a family-facing report is written, the mail telling the families it is there has been sent, and — on the run''s FINAL session of a product with requires_gamer_creations set — every current roster member has at least one creation. The register condition is scoped to the members who had JOINED the group before that occurrence ended: both the marks counted and the size they are compared against, off participations.group_joined_at against an end instant resolved once per occurrence (the stored row''s ends_at, else the planned end from derive_group_session_window, which is the same instant the "has it finished" test already used). group_participant_count deliberately keeps measuring the WHOLE current roster — a card''s headcount is not a per-occurrence question. The empty-group exemption is: an occurrence on which no member was expected owes nothing at all, so a group whose first members joined after its first sessions had run owes no register, report or mail for those sessions. The report and mail conditions are unscoped because a session owes those whoever was in the room. The creations condition carries the SAME join-date scoping as the register condition, on the owner''s principle that a gedu owes a creation for every gamer who was in the group at the time of the last session — so a seat placed into the group after the final session ended owes nothing, and one occurrence cannot answer "who was this for" two different ways. Only the JOIN half of that principle is expressible: a member who has since LEFT owes nothing, because the roster is active seats and a departure leaves no trace. The final session is group_final_session_date: the last planned date on or before end_date that the group has not cancelled, derived rather than stored — so a cancelled last session hands the creations condition to the one before it; an open-ended product (end_date NULL) has none and therefore never owes creations, which is documented behaviour rather than an error. A CANCELLED occurrence is never owed, by group_session_is_cancelled — including a cancelled record the schedule no longer projects, which the stored-row arm would otherwise reach: nothing ran, and a record kept under a cancellation is frozen. The badge''s unit is the SESSION: it counts sessions needing attention, and the final one simply has one more way to need it. The enforcement epoch travels in as an argument because it is a code constant, not a column. This count has a twin in TypeScript — the gedu feed''s entry-state derivation, which answers the same question for one card — and the two must be changed together, on all four conditions and on who a session is for, which scopes two of them. A SECOND KIND OF SEAT feeds the same machinery: a `substitution` row per substitution date, carrying `kind` and `substitution_date`, whose owed count is the same four conditions applied to a set of one occurrence — so it is 0 or 1 and never a term''s worth. That arm asks gedu_holds_unexpired_substitution rather than gedu_substitutes_session: the card stands from approval, where the workspace behind it opens 48 hours before the substituted session, and a card that waited for the workspace would hide from a sub the afternoon they had agreed to take. A substitution still locked owes nothing by construction, because every occurrence this count ranges over has already ended. A THIRD KIND, `trainee`: a row per gedu_group_trainees seat with substitution_date null, the group name, participant count and venue name like an assignment row, and an attention_count that is always 0 — what a session owes is the staff''s work, so no staff-only aggregate is computed for a trainee seat.';
+COMMENT ON FUNCTION public.gedu_assignment_summaries(p_gedu_id uuid, p_epoch_date date) IS 'One row per gedu seat for the dashboard cards — a CURRENT assignment period, a substitution date, a trainee seat, or a group the gedu was taken off and still holds through an ended assignment in its window — group name, that group''s participant count (an active seat may be held by an adult as well as by a child), the venue name on in-person and hybrid products, and how many past sessions still need attention. A finished session on or after the epoch counts until ALL of: the register is in, a family-facing report is written, the mail telling the families it is there has been sent, and — on the run''s FINAL session of a product with requires_gamer_creations set — every current roster member has at least one creation. The register condition is scoped to the members who had JOINED the group before that occurrence ended: both the marks counted and the size they are compared against, off participations.group_joined_at against an end instant resolved once per occurrence (the stored row''s ends_at, else the planned end from derive_group_session_window, which is the same instant the "has it finished" test already used). group_participant_count deliberately keeps measuring the WHOLE current roster — a card''s headcount is not a per-occurrence question. The empty-group exemption is: an occurrence on which no member was expected owes nothing at all, so a group whose first members joined after its first sessions had run owes no register, report or mail for those sessions. The report and mail conditions are unscoped because a session owes those whoever was in the room. The creations condition carries the SAME join-date scoping as the register condition, on the owner''s principle that a gedu owes a creation for every gamer who was in the group at the time of the last session — so a seat placed into the group after the final session ended owes nothing, and one occurrence cannot answer "who was this for" two different ways. Only the JOIN half of that principle is expressible: a member who has since LEFT owes nothing, because the roster is active seats and a departure leaves no trace. The final session is group_final_session_date: the last planned date on or before end_date that the group has not cancelled, derived rather than stored — so a cancelled last session hands the creations condition to the one before it; an open-ended product (end_date NULL) has none and therefore never owes creations, which is documented behaviour rather than an error. A gedu owes only the occurrences they were EXPECTED at (gedu_is_expected_at_session): inside an assignment period of theirs on the group or the date they substitute, and never a date they filed a non-withdrawn request on — so a gedu added mid-run owes nothing from before their period began and one taken off nothing from after it ended. A CANCELLED occurrence is never owed, by group_session_is_cancelled — including a cancelled record the schedule no longer projects, which the stored-row arm would otherwise reach: nothing ran, and a record kept under a cancellation is frozen. The badge''s unit is the SESSION: it counts sessions needing attention, and the final one simply has one more way to need it. The enforcement epoch travels in as an argument because it is a code constant, not a column. This count has a twin in TypeScript — the gedu feed''s entry-state derivation, which answers the same question for one card — and the two must be changed together, on all four conditions, on who a session is for, which scopes two of them, and on whether the viewer was expected at it. A SECOND KIND OF SEAT feeds the same machinery: a `substitution` row per substitution date, carrying `kind` and `substitution_date`, whose owed count is the same four conditions applied to a set of one occurrence — so it is 0 or 1 and never a term''s worth. That arm asks gedu_holds_unexpired_substitution rather than gedu_substitutes_session: the card stands from approval, where the workspace behind it opens 48 hours before the substituted session, and a card that waited for the workspace would hide from a sub the afternoon they had agreed to take. A substitution still locked owes nothing by construction, because every occurrence this count ranges over has already ended. A FOURTH KIND, `ended_assignment`: a row per group on which gedu_unexpired_ended_assignment_dates is non-empty — the gedu held it in an ended period, holds no current one, is still certified, and some session they were expected at there still has its substitute window open — with substitution_date null, whose owed count is the same four conditions over just those still-open sessions. A THIRD KIND, `trainee`: a row per gedu_group_trainees seat with substitution_date null, the group name, participant count and venue name like an assignment row, and an attention_count that is always 0 — what a session owes is the staff''s work, so no staff-only aggregate is computed for a trainee seat.';
 
 
 --

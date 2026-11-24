@@ -8,10 +8,11 @@ import {
   substitutionRequestDocument,
   liveSubstitutionRequests,
   openSubstitutionRequests,
-  sessionStaffGedu,
+  sessionStaffPeriod,
 } from "@/services/session-substitution/session-substitution.contracts";
 import { substitutionNotificationSnapshot } from "@/lib/substitution-notifications/snapshot.contracts";
 import { myAssignedProductRows } from "@/services/assignments/assignments.contracts";
+import { geduGroupFeed } from "@/services/gedu-sessions/gedu-sessions.contracts";
 import {
   createAdminTestClient,
   createAnonTestClient,
@@ -25,6 +26,7 @@ import {
 } from "./helpers";
 import { TEST_IDS, TEST_CREDENTIALS } from "./constants";
 import { deleteTestProducts, eraseParticipations } from "./product-helpers";
+import { seedAssignment, seedAssignments } from "./assignment-helpers";
 import { productRequiredQualifications } from "@/lib/products/session-requirements";
 
 /**
@@ -198,7 +200,7 @@ function slotInstants(date: string): { starts_at: string; ends_at: string } {
 // ---------------------------------------------------------------------------
 
 const geduFeedSubstitutionHalves = z.object({
-  gedus: z.array(sessionStaffGedu),
+  gedus: z.array(sessionStaffPeriod),
   substitutions: z.array(substitutionRequestDocument),
 });
 
@@ -450,14 +452,9 @@ describe("session substitutions", () => {
       { id: GROUP_MUNI, product_id: MUNI_PRODUCT, name: "Municipal Cohort" },
     ]);
 
-    await admin.from("gedu_group_assignments").insert([
-      { group_id: GROUP_A, gedu_id: TEST_IDS.GEDU, product_id: PRODUCT, role: "primary" },
-      {
-        group_id: GROUP_SITE,
-        gedu_id: TEST_IDS.GEDU,
-        product_id: SITE_PRODUCT,
-        role: "primary",
-      },
+    await seedAssignments(admin, [
+      { groupId: GROUP_A, geduId: TEST_IDS.GEDU, productId: PRODUCT },
+      { groupId: GROUP_SITE, geduId: TEST_IDS.GEDU, productId: SITE_PRODUCT },
     ]);
 
     // One active seat on GROUP_A, because the assignment summaries only count a
@@ -536,6 +533,25 @@ describe("session substitutions", () => {
       })),
     );
   });
+
+  /**
+   * Puts the seeded GEDU back on GROUP_A as one current primary period from
+   * long before any date here. A case that ends or splits that period through
+   * the writer leaves history rows behind, which no later case expects.
+   */
+  async function restoreFixtureAssignment() {
+    const { error } = await admin
+      .from("gedu_group_assignments")
+      .delete()
+      .eq("group_id", GROUP_A)
+      .eq("gedu_id", TEST_IDS.GEDU);
+    expect(error).toBeNull();
+    await seedAssignment(admin, {
+      groupId: GROUP_A,
+      geduId: TEST_IDS.GEDU,
+      productId: PRODUCT,
+    });
+  }
 
   /** Writes a request row straight to the table, bypassing every RPC guard. */
   async function seedRequest(input: {
@@ -685,6 +701,12 @@ describe("session substitutions", () => {
         "LISTS a group's gedus for the admin groups panel, which is the PERMANENT assignment editor. Admin-gated, and the list is exactly what that panel edits.",
       "policy:gedu_group_assignments.customers_read_assignments_via_gamers":
         "reads assignment ROWS for a parent whose child is on the product. A read of the rows, not a gate on them.",
+      "function:group_assignments_at":
+        "the containment rule for assignment periods — who held the group at an instant — and not a gate: it answers about the ASSIGNMENT half only, and every gate composing it adds the substitution half beside it.",
+      "function:gedu_holds_unexpired_ended_assignment":
+        "the ENDED-ASSIGNMENT arm of a temporary seat, for one date — not a gate on its own: every body composing it carries the substitution half beside it.",
+      "function:gedu_unexpired_ended_assignment_dates":
+        "the group-wide form of the ended-assignment arm — not a gate on its own: every body composing it carries the substitution half beside it.",
     };
 
     /**
@@ -698,6 +720,9 @@ describe("session substitutions", () => {
       "session_substitution_requests",
       "gedu_substitutes_group",
       "gedu_substitutes_session",
+      // The substitution half of gedu_substitutes_group, named on its own: an
+      // EXISTS over gedu_substitutes_session, so the 48-hour start is in it.
+      "gedu_holds_live_substitution_on_group",
     ];
 
     /**
@@ -786,6 +811,35 @@ describe("session substitutions", () => {
         "function:get_chat_channel_roster",
         "function:set_chat_lock",
       ],
+      // Each carries the substitution half itself: the seat predicate ORs in a
+      // live substitution, and the two writers fall back to the substitution
+      // the gedu holds for the role. The ended-assignment arm is annotated in
+      // its own right, and its composers are listed below.
+      "function:group_assignments_at": [
+        "function:file_session_substitution_request",
+        "function:gedu_holds_seat_at_session",
+        "function:gedu_holds_unexpired_ended_assignment",
+        "function:get_admin_session_feedback",
+        "function:set_session_substitution",
+      ],
+      // Each carries the substitution half itself: the group-wide predicate
+      // ORs the ended arm with a live substitution, the report claim with
+      // gedu_substitutes_session, the session-write gate with a live
+      // substitution on the group, the two seat reads draw a substitution arm
+      // beside the ended one, and the workspace feed reads the reader's
+      // substitutions beside their ended dates.
+      "function:gedu_holds_unexpired_ended_assignment": [
+        "function:claim_group_session_report_email",
+        "function:gedu_assignment_summaries",
+        "function:gedu_unexpired_ended_assignment_dates",
+        "function:gedu_writes_group_session",
+      ],
+      "function:gedu_unexpired_ended_assignment_dates": [
+        "function:gedu_assigned_products",
+        "function:gedu_assignment_summaries",
+        "function:gedu_substitutes_group",
+        "function:get_gedu_group_feed",
+      ],
     };
 
     it("no annotated member is composed by a body this check never sees", async () => {
@@ -841,6 +895,7 @@ describe("session substitutions", () => {
         "function:apply_group_changes",
         "function:gedu_teaches_group",
         "function:gedu_teaches_group_product",
+        "function:gedu_writes_group_session",
         "function:is_voice_group_member",
         "function:is_voice_group_moderator",
         "function:claim_group_session_report_email",
@@ -1315,10 +1370,10 @@ describe("session substitutions", () => {
 
       // An ASSIGNED gedu is expected too, and is refused for the same reason
       // rather than for a different one.
-      await admin.from("gedu_group_assignments").insert({
-        group_id: GROUP_A,
-        gedu_id: thirdId,
-        product_id: PRODUCT,
+      await seedAssignment(admin, {
+        groupId: GROUP_A,
+        geduId: thirdId,
+        productId: PRODUCT,
         role: "assistant",
       });
       expect(await maySubstitute(thirdId, date, TEST_IDS.GEDU)).toBe(false);
@@ -1399,10 +1454,10 @@ describe("session substitutions", () => {
       // assignment wins, which is exactly why the substitution card's link carries the
       // group id. The MINTED account holds both roles here rather than the seeded
       // one, so the case depends on no certification this file does not own.
-      await admin.from("gedu_group_assignments").insert({
-        group_id: GROUP_A,
-        gedu_id: subId,
-        product_id: PRODUCT,
+      await seedAssignment(admin, {
+        groupId: GROUP_A,
+        geduId: subId,
+        productId: PRODUCT,
         role: "assistant",
       });
       await seedRequest({
@@ -1627,6 +1682,28 @@ describe("session substitutions", () => {
         p_gedu_note: "",
       });
       expect(error).toBeNull();
+    });
+
+    it("tells the workspace a substitute writes every session and holds only their date", async () => {
+      // The page offers Edit, Send and the room from this answer, so it has to
+      // be the database's: writes group-wide, Send on the substituted date.
+      await seedRequest({ date: utcDayOffset(DB_NOW, -3), substituteId: subId });
+
+      const sub = await subAuth.rpc("get_gedu_group_feed", { p_group_id: GROUP_A });
+      expect(sub.error).toBeNull();
+      // Their date is also their room, and only theirs: they teach nowhere on
+      // the product.
+      expect(geduGroupFeed.parse(sub.data).viewer_temporary_seat).toEqual({
+        writes_every_session: true,
+        session_dates: [utcDayOffset(DB_NOW, -3)],
+        voice_dates: [utcDayOffset(DB_NOW, -3)],
+        teaches_product: false,
+      });
+
+      // The group's own gedu holds it outright.
+      const assigned = await geduAuth.rpc("get_gedu_group_feed", { p_group_id: GROUP_A });
+      expect(assigned.error).toBeNull();
+      expect(geduGroupFeed.parse(assigned.data).viewer_temporary_seat).toBeNull();
     });
   });
 
@@ -2515,12 +2592,7 @@ describe("session substitutions", () => {
 
       // Restored for the rest of the file: the seeded assignment is fixture,
       // not state this block owns.
-      await admin.from("gedu_group_assignments").insert({
-        group_id: GROUP_A,
-        gedu_id: TEST_IDS.GEDU,
-        product_id: PRODUCT,
-        role: "primary",
-      });
+      await restoreFixtureAssignment();
     });
 
     it("sets a sub on a PAST session with no request at all", async () => {
@@ -2769,7 +2841,13 @@ describe("session substitutions", () => {
 
       const halves = geduFeedSubstitutionHalves.parse(data);
       expect(halves.gedus).toEqual([
-        { id: TEST_IDS.GEDU, first_name: expect.any(String), role: "primary" },
+        {
+          id: TEST_IDS.GEDU,
+          first_name: expect.any(String),
+          role: "primary",
+          started_at: expect.any(String),
+          ended_at: null,
+        },
       ]);
       expect(halves.substitutions.map((substitution) => substitution.id)).toEqual([open]);
       // The requester sees their own offer count and no reason.
@@ -3152,10 +3230,10 @@ describe("session substitutions", () => {
     });
 
     it("the product-groups snapshot carries each pill's role", async () => {
-      await admin.from("gedu_group_assignments").insert({
-        group_id: GROUP_B,
-        gedu_id: subId,
-        product_id: PRODUCT,
+      await seedAssignment(admin, {
+        groupId: GROUP_B,
+        geduId: subId,
+        productId: PRODUCT,
         role: "assistant",
       });
 
@@ -3438,7 +3516,19 @@ describe("session substitutions", () => {
   // -------------------------------------------------------------------------
 
   describe("apply_group_changes and the role column", () => {
-    it("upserts the role, so a role change is ONE add", async () => {
+    /** Every period of one gedu on one group, oldest first. */
+    async function periodsOf(gedu: string, group: string) {
+      const { data, error } = await admin
+        .from("gedu_group_assignments")
+        .select("role, started_at, ended_at")
+        .eq("group_id", group)
+        .eq("gedu_id", gedu)
+        .order("started_at");
+      expect(error).toBeNull();
+      return data ?? [];
+    }
+
+    it("a role change ends the period and starts one in the new role", async () => {
       const { error } = await adminAuth.rpc("apply_group_changes", {
         p_product_id: PRODUCT,
         p_gedu_assignments_added: [
@@ -3447,19 +3537,50 @@ describe("session substitutions", () => {
       });
       expect(error).toBeNull();
 
-      const { data } = await admin
-        .from("gedu_group_assignments")
-        .select("role")
-        .eq("group_id", GROUP_A)
-        .eq("gedu_id", TEST_IDS.GEDU)
-        .single();
-      expect(data?.role).toBe("assistant");
+      const periods = await periodsOf(TEST_IDS.GEDU, GROUP_A);
+      expect(periods.map((period) => period.role)).toEqual(["primary", "assistant"]);
+      expect(Date.parse(periods[0].ended_at ?? "")).toBe(
+        Date.parse(periods[1].started_at),
+      );
+      expect(periods[1].ended_at).toBeNull();
 
-      await admin
-        .from("gedu_group_assignments")
-        .update({ role: "primary" })
-        .eq("group_id", GROUP_A)
-        .eq("gedu_id", TEST_IDS.GEDU);
+      // A past date keeps the role it was taught in, a future one takes the
+      // new role: an admin seating a sub on each snapshots that role.
+      const past = await adminAuth.rpc("set_session_substitution", {
+        p_group_id: GROUP_A,
+        p_session_date: utcDayOffset(DB_NOW, -5),
+        p_absent_gedu_id: TEST_IDS.GEDU,
+        p_sub_gedu_id: subId,
+        p_reason: "sick",
+      });
+      expect(past.error).toBeNull();
+      expect(substitutionRequestDocument.parse(past.data).role).toBe("primary");
+
+      const future = await adminAuth.rpc("set_session_substitution", {
+        p_group_id: GROUP_A,
+        p_session_date: utcDayOffset(DB_NOW, 5),
+        p_absent_gedu_id: TEST_IDS.GEDU,
+        p_sub_gedu_id: subId,
+        p_reason: "sick",
+      });
+      expect(future.error).toBeNull();
+      expect(substitutionRequestDocument.parse(future.data).role).toBe("assistant");
+
+      await restoreFixtureAssignment();
+    });
+
+    it("re-stating the role a gedu already holds changes nothing", async () => {
+      const { error } = await adminAuth.rpc("apply_group_changes", {
+        p_product_id: PRODUCT,
+        p_gedu_assignments_added: [
+          { groupId: GROUP_A, geduId: TEST_IDS.GEDU, role: "primary" },
+        ],
+      });
+      expect(error).toBeNull();
+
+      const periods = await periodsOf(TEST_IDS.GEDU, GROUP_A);
+      expect(periods).toHaveLength(1);
+      expect(periods[0].ended_at).toBeNull();
     });
 
     it("defaults an omitted role to primary", async () => {
@@ -3478,13 +3599,16 @@ describe("session substitutions", () => {
       expect(data?.role).toBe("primary");
     });
 
-    it("withdraws the live requests a REMOVAL orphans", async () => {
-      // Removing a gedu from a group unseats them without touching a substitution row,
-      // which is what made this the one unseating that left live requests
-      // behind: an open request by somebody who is no longer expected, ready for
-      // an admin to answer with a sub for nobody.
+    it("a REMOVAL withdraws the future requests it orphans and keeps the past ones", async () => {
+      // Removing a gedu from a group unseats them from every session starting
+      // after the removal without touching a substitution row, so the requests
+      // they left on those dates would wait for an admin to answer with a sub
+      // for nobody. A session that already started still belongs to the period
+      // that just ended, so its request, and the sub seated on it, stand.
       const open = await seedRequest({ date: utcDayOffset(DB_NOW, 5) });
       const substituted = await seedRequest({ date: utcDayOffset(DB_NOW, 6), substituteId: subId });
+      const pastOpen = await seedRequest({ date: utcDayOffset(DB_NOW, -5) });
+      const pastSubstituted = await seedRequest({ date: utcDayOffset(DB_NOW, -4), substituteId: subId });
 
       const { error } = await adminAuth.rpc("apply_group_changes", {
         p_product_id: PRODUCT,
@@ -3494,9 +3618,9 @@ describe("session substitutions", () => {
       });
       expect(error).toBeNull();
 
-      // Both go, and the substituted one is emptied rather than merely closed: a
-      // withdrawn row carries no sub, so invoicing finds no phantom
-      // substitution for a session nobody was absent from.
+      // Both future ones go, and the substituted one is emptied rather than
+      // merely closed: a withdrawn row carries no sub, so invoicing finds no
+      // phantom substitution for a session nobody was absent from.
       expect((await statusOf(open))?.status).toBe("withdrawn");
       const swept = await statusOf(substituted);
       expect(swept?.status).toBe("withdrawn");
@@ -3504,12 +3628,17 @@ describe("session substitutions", () => {
       expect(swept?.approved_by).toBeNull();
       expect(swept?.approved_at).toBeNull();
 
-      await admin.from("gedu_group_assignments").insert({
-        group_id: GROUP_A,
-        gedu_id: TEST_IDS.GEDU,
-        product_id: PRODUCT,
-        role: "primary",
-      });
+      expect((await statusOf(pastOpen))?.status).toBe("open");
+      const kept = await statusOf(pastSubstituted);
+      expect(kept?.status).toBe("substituted");
+      expect(kept?.substitute_id).toBe(subId);
+
+      // The period ended rather than disappearing.
+      const periods = await periodsOf(TEST_IDS.GEDU, GROUP_A);
+      expect(periods).toHaveLength(1);
+      expect(periods[0].ended_at).not.toBeNull();
+
+      await restoreFixtureAssignment();
     });
 
     it("sweeps by the derivation and not by the name in the removal", async () => {
@@ -3518,9 +3647,9 @@ describe("session substitutions", () => {
       // colleague who is still assigned keeps their absence on the very same
       // date, and another group of the same product is not swept at all.
       const date = utcDayOffset(DB_NOW, 5);
-      await admin.from("gedu_group_assignments").insert([
-        { group_id: GROUP_A, gedu_id: thirdId, product_id: PRODUCT, role: "assistant" },
-        { group_id: GROUP_B, gedu_id: subId, product_id: PRODUCT, role: "primary" },
+      await seedAssignments(admin, [
+        { groupId: GROUP_A, geduId: thirdId, productId: PRODUCT, role: "assistant" },
+        { groupId: GROUP_B, geduId: subId, productId: PRODUCT },
       ]);
 
       const removed = await seedRequest({ date });
@@ -3543,15 +3672,10 @@ describe("session substitutions", () => {
       expect((await statusOf(colleague))?.status).toBe("open");
       expect((await statusOf(otherGroup))?.status).toBe("open");
 
-      await admin.from("gedu_group_assignments").insert({
-        group_id: GROUP_A,
-        gedu_id: TEST_IDS.GEDU,
-        product_id: PRODUCT,
-        role: "primary",
-      });
+      await restoreFixtureAssignment();
     });
 
-    it("reads an added group's inline gedus with their roles, and the legacy id array", async () => {
+    it("reads an added group's inline gedus with their roles", async () => {
       const { data, error } = await adminAuth.rpc("apply_group_changes", {
         p_product_id: PRODUCT,
         p_added_groups: [
@@ -3560,42 +3684,25 @@ describe("session substitutions", () => {
             name: "Substitution Roles",
             gedus: [{ geduId: subId, role: "assistant" }],
           },
-          { tempId: "tmp-legacy", name: "Substitution Legacy", geduIds: [thirdId] },
         ],
       });
       expect(error).toBeNull();
 
-      const map = z
+      const rolesGroup = z
         .object({ tempMap: z.record(z.string(), z.string()) })
-        .parse(data).tempMap;
-
-      const rolesGroup = map["tmp-roles"];
-      const legacyGroup = map["tmp-legacy"];
+        .parse(data).tempMap["tmp-roles"];
       expect(rolesGroup).toBeTruthy();
-      expect(legacyGroup).toBeTruthy();
 
       const { data: rows } = await admin
         .from("gedu_group_assignments")
-        .select("group_id, gedu_id, role")
-        .in("group_id", [rolesGroup, legacyGroup]);
+        .select("gedu_id, role")
+        .eq("group_id", rolesGroup);
+      expect(rows).toEqual([{ gedu_id: subId, role: "assistant" }]);
 
-      expect(rows?.find((row) => row.group_id === rolesGroup)?.role).toBe(
-        "assistant",
-      );
-      expect(rows?.find((row) => row.group_id === legacyGroup)?.role).toBe(
-        "primary",
-      );
-
-      // Created inside the case, so removed inside it: the groups these rows hang
-      // off are not in ALL_GROUPS and the file's teardown would leave them.
-      await admin
-        .from("gedu_group_assignments")
-        .delete()
-        .in("group_id", [rolesGroup, legacyGroup]);
-      await admin
-        .from("product_groups")
-        .delete()
-        .in("id", [rolesGroup, legacyGroup]);
+      // Created inside the case, so removed inside it: the group these rows
+      // hang off is not in ALL_GROUPS and the file's teardown would leave it.
+      await admin.from("gedu_group_assignments").delete().eq("group_id", rolesGroup);
+      await admin.from("product_groups").delete().eq("id", rolesGroup);
     });
   });
 

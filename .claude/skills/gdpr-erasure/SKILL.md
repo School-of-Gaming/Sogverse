@@ -27,11 +27,17 @@ auto-mode classifier blocks it. Counts and ids are enough to plan the delete.
 the list; count the account's rows in each. Most are `ON DELETE CASCADE`. The ones that
 change the plan:
 
-- **`payments` and `family_subscriptions` are `RESTRICT`**, and so is
-  `gedu_group_assignments` for a gedu. A row there blocks the delete outright, and it is
-  money or staffing history, so it is a decision rather than an obstacle. Accounting
-  records carry a statutory retention obligation, so raise it with finance before
-  touching them. Do not delete these rows to clear the way.
+- **`payments` and `family_subscriptions` are `RESTRICT`**. A row there blocks the
+  delete outright, and it is money, so it is a decision rather than an obstacle.
+  Accounting records carry a statutory retention obligation, so raise it with finance
+  before touching them. Do not delete these rows to clear the way.
+- **`gedu_group_assignments` is `RESTRICT` for a gedu too, and holds periods.** Count
+  current ones (`ended_at IS NULL`) and ended ones apart. A current period means the gedu
+  still teaches a group: that is the owner's call, and they are taken off it through the
+  admin groups panel before anything runs, never by a delete. Ended periods are the gedu's
+  teaching history, kept when they leave a group; the erasure deletes them with the
+  account (step 3), since nothing else removes them and the FK refuses the delete while
+  they remain.
 - **A payment survives its seat.** When a gamer is erased while the parent who paid
   stays, the cascade takes the gamer's seats and each payment's `participation_id`
   goes NULL by itself (`ON DELETE SET NULL`): the money stays recorded against the
@@ -168,6 +174,13 @@ COMMIT;
   object in it through the Storage API before the delete. This procedure is written for
   families; erasing staff also touches employment records, which is the owner's call
   before anything here runs.
+- **A Gedu's ended assignment periods go in the same transaction, before their
+  `auth.users` delete:**
+  `DELETE FROM public.gedu_group_assignments WHERE gedu_id = '<gedu-uuid>' AND ended_at IS NOT NULL;`
+  The FK onto `profiles` is `RESTRICT`, so without it the account's delete is refused.
+  Only ended rows are named: a current period left by mistake still blocks the delete and
+  rolls the transaction back, which is the guard that the gedu was taken off their groups
+  first (step 2).
 
 - **Deleting the parent enqueues them for the Klaviyo sync**, which deletes their Klaviyo
   profile on its next run, looked up by external ID = the Sogverse profile id. Nothing is

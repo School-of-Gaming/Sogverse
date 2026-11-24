@@ -42,6 +42,11 @@ import { formatDate } from "@/lib/date-format";
  * wrong roster. The query param is built in the roll-up, so this card simply
  * renders whichever href it was handed.
  *
+ * **A group the gedu was taken off draws this card too**, while a session of
+ * theirs on it is still inside its window: they are treated like a substitute,
+ * so the card is the substitute's, named as their former group in the eyebrow,
+ * dated by the latest session still open to them, and with no Join.
+ *
  * **The badge is the badge**. What a substitution owes is the same four things every
  * session owes, counted over a set of one — so the corner mark is the one every
  * other card wears, and a sub who has not sent their report finds it in the
@@ -76,6 +81,7 @@ export function GeduSubstitutionCard({ substitution }: { substitution: GeduSubst
   const now = useNow();
 
   const {
+    seat,
     session,
     groupName,
     accessOpensAt,
@@ -141,7 +147,11 @@ export function GeduSubstitutionCard({ substitution }: { substitution: GeduSubst
                 <span className="text-xs font-medium uppercase tracking-wider text-muted-foreground">
                   {p(productType)}
                 </span>
-                <SeatKindBadge>{t("cardEyebrow")}</SeatKindBadge>
+                <SeatKindBadge>
+                  {seat === "ended_assignment"
+                    ? t("endedCardEyebrow")
+                    : t("cardEyebrow")}
+                </SeatKindBadge>
               </div>
               <ChevronRight
                 aria-hidden
@@ -234,7 +244,9 @@ export function GeduSubstitutionCard({ substitution }: { substitution: GeduSubst
           aria-label={
             locked
               ? t("cardLockedLabel", { product: productName })
-              : t("cardOpenLabel", { product: productName })
+              : seat === "ended_assignment"
+                ? t("endedCardOpenLabel", { product: productName })
+                : t("cardOpenLabel", { product: productName })
           }
           className="absolute inset-0 rounded-lg focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-act"
         />

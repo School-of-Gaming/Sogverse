@@ -23,10 +23,13 @@ BEGIN
         USING ERRCODE = 'check_violation';
     END IF;
 
+    -- Only a CURRENT period: a gedu who once taught the product and was taken
+    -- off it may shadow a group of it.
     IF EXISTS (
       SELECT 1 FROM public.gedu_group_assignments a
        WHERE a.gedu_id = NEW.gedu_id
          AND a.product_id = NEW.product_id
+         AND a.ended_at IS NULL
     ) THEN
       RAISE EXCEPTION 'gedu % is assigned on product % and cannot also be a trainee there',
         NEW.gedu_id, NEW.product_id
@@ -53,7 +56,7 @@ $$;
 -- Name: FUNCTION validate_one_gedu_seat_per_product(); Type: COMMENT; Schema: public; Owner: -
 --
 
-COMMENT ON FUNCTION public.validate_one_gedu_seat_per_product() IS 'Trigger on gedu_group_assignments and gedu_group_trainees: a gedu holds an assignment or a trainee seat on a product, never both, refused from whichever side is written second with unique_violation — the SQLSTATE each table''s own (gedu_id, product_id) UNIQUE raises for the same kind of clash. On the trainee table it also refuses a seat-holder who is not a gedu. Takes a transaction-scoped advisory lock on the (gedu, product) pair, so two writes racing into the two tables queue rather than each finding the other empty. apply_group_changes removes before it adds, so one batch may end a gedu''s seat of one kind and add one of the other on the same product.';
+COMMENT ON FUNCTION public.validate_one_gedu_seat_per_product() IS 'Trigger on gedu_group_assignments and gedu_group_trainees: a gedu holds a current assignment or a trainee seat on a product, never both, refused from whichever side is written second with unique_violation — the SQLSTATE each table''s own one-per-(gedu, product) index raises for the same kind of clash. An ENDED assignment period does not count: a gedu taken off a product may train on it. On the trainee table it also refuses a seat-holder who is not a gedu. Takes a transaction-scoped advisory lock on the (gedu, product) pair, so two writes racing into the two tables queue rather than each finding the other empty. apply_group_changes removes before it adds, so one batch may end a gedu''s seat of one kind and add one of the other on the same product.';
 
 
 --

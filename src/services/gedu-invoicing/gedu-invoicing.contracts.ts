@@ -26,8 +26,9 @@ import {
  * (`src/lib/session-staffing.ts`). The document carries exactly the seats that
  * derivation reads — the gedu's assignments, the substitutions they ran and
  * their own absences — and the builder runs it; nothing here pre-judges which
- * dates pay. Staffing is today's: assignments carry no history, so a past month
- * is read against current assignments.
+ * dates pay. Staffing is by period: each assignment carries its bounds and each
+ * group the start instant of its dates, and a date belongs to the period
+ * holding its start.
  */
 
 const productName = z.object({
@@ -37,10 +38,22 @@ const productName = z.object({
 
 const geduRole = z.enum(Constants.public.Enums.gedu_assignment_role);
 
-/** A standing seat: a group the gedu is assigned to today, and in which role. */
+/**
+ * A standing seat: one assignment period overlapping the month, in its role.
+ * A session belongs to it iff the session starts in `[started_at, ended_at)`;
+ * `ended_at` is null while the period is current.
+ */
 export const geduInvoicingAssignment = z.object({
   group_id: z.string(),
   role: geduRole,
+  started_at: z.string(),
+  ended_at: z.string().nullable(),
+});
+
+/** When the session a group names on a date starts — or would have. */
+export const geduInvoicingSessionStart = z.object({
+  date: z.string(),
+  starts_at: z.string(),
 });
 
 /**
@@ -106,7 +119,9 @@ export const geduInvoicingGedu = z.object({
  * `sessions` are the stored `group_sessions` dates inside the month that no
  * cancellation in effect covers — the proof a session ran. `cancelled_sessions`
  * are the month's cancelled dates in effect, by the same predicate, so a date
- * is never in both and a cancelled date is never paid.
+ * is never in both and a cancelled date is never paid. `session_starts` gives
+ * the start instant of every date the document names on the group, which is
+ * what places each date in an assignment period.
  */
 export const geduInvoicingGroup = z.object({
   id: z.string(),
@@ -114,6 +129,7 @@ export const geduInvoicingGroup = z.object({
   name: z.string(),
   sessions: z.array(z.string()),
   cancelled_sessions: z.array(z.string()),
+  session_starts: z.array(geduInvoicingSessionStart),
 });
 
 /**
@@ -161,6 +177,9 @@ export type GeduInvoicingCounterpart = z.infer<
   typeof geduInvoicingCounterpart
 >;
 export type GeduInvoicingAssignment = z.infer<typeof geduInvoicingAssignment>;
+export type GeduInvoicingSessionStart = z.infer<
+  typeof geduInvoicingSessionStart
+>;
 export type GeduInvoicingSubstitution = z.infer<
   typeof geduInvoicingSubstitution
 >;

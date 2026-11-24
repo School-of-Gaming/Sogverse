@@ -94,6 +94,22 @@ describe("GeduSubstitutionCard", () => {
     expect(html).toContain(substitution.groupName ?? "");
   });
 
+  it("names itself the gedu's former group when it stands for an ended assignment", () => {
+    const ended: GeduSubstitutionSummary = {
+      ...fixtureCover(),
+      seat: "ended_assignment",
+      openHref: WORKSPACE,
+      accessOpensAt: new Date(NOW.getTime() - 60_000),
+    };
+    const html = cardHtml(ended);
+    expect(html).toContain(copy.endedCardEyebrow);
+    expect(html).not.toContain(`>${copy.cardEyebrow}<`);
+    expect(html).toContain(
+      copy.endedCardOpenLabel.replace("{product}", ended.session.productName),
+    );
+    expect(html).toContain("groupId=sibling-group");
+  });
+
   // A badge is a div, and a browser closes a paragraph at the first div inside
   // it — so the server's markup and the client's tree part ways and the whole
   // dashboard fails hydration. Rendering to a string never parses, so nothing

@@ -113,10 +113,17 @@ describe("location_lineage", () => {
     });
 
     afterAll(async () => {
-      // Children before parents: the parent foreign key restricts deletes.
-      for (const id of [...created].reverse()) {
-        await service.from("locations").delete().eq("id", id);
-      }
+      // The cases move places around, so creation order no longer says who is
+      // whose parent, and the parent foreign key restricts deletes. Detach
+      // them all first; a place left behind would be a parentless site at the
+      // top of the tree for every file that runs after this one.
+      const detached = await service
+        .from("locations")
+        .update({ parent_id: null })
+        .in("id", created);
+      expect(detached.error).toBeNull();
+      const deleted = await service.from("locations").delete().in("id", created);
+      expect(deleted.error).toBeNull();
     });
 
     it("refuses a place moved under its own grandchild", async () => {

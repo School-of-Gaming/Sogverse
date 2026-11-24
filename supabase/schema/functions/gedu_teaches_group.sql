@@ -11,9 +11,10 @@ CREATE FUNCTION public.gedu_teaches_group(p_group_id uuid) RETURNS boolean
       FROM public.gedu_group_assignments ga
      WHERE ga.group_id = p_group_id
        AND ga.gedu_id  = (SELECT auth.uid())
+       AND ga.ended_at IS NULL
   )
   -- The substitution branch: a live, certified substitution on this group reaches everything
-  -- the group's assigned gedus reach, for as long as their access window is
+  -- the group's current gedus reach, for as long as their access window is
   -- open. Group-wide rather than per-date on purpose — the workspace, the
   -- roster, the notes and the report are all one surface, and a sub who may
   -- write the report has to be able to open the page it is written on. The two
@@ -27,7 +28,7 @@ $$;
 -- Name: FUNCTION gedu_teaches_group(p_group_id uuid); Type: COMMENT; Schema: public; Owner: -
 --
 
-COMMENT ON FUNCTION public.gedu_teaches_group(p_group_id uuid) IS 'Internal predicate: may the caller act as staff on this group — assigned to it, OR holding a live substitution on it (gedu_substitutes_group, which carries the certification test and the access window). The single gate behind the group workspace, the session notes and report, the register, the session photos and their delete check, and the group notes; gedu_teaches_gamer composes it too, which is why that predicate needed no edit of its own. NOT the gate behind the voice room or the family report mail — both of those are DATE-scoped and call gedu_substitutes_session directly, because a sub has no business in the group''s other sessions and the report mail is at-most-once with no resend. Not exposed to authenticated: it is called from inside the SECURITY DEFINER gedu RPCs.';
+COMMENT ON FUNCTION public.gedu_teaches_group(p_group_id uuid) IS 'Internal predicate: may the caller act as staff on this group — holding a current assignment period on it (an ended one reaches nothing here), OR holding a live substitution on it (gedu_substitutes_group, which carries the certification test and the access window). The single gate behind the group workspace, the session notes and report, the register, the session photos and their delete check, and the group notes; gedu_teaches_gamer composes it too, which is why that predicate needed no edit of its own. NOT the gate behind the voice room or the family report mail — both of those are DATE-scoped and call gedu_substitutes_session directly, because a sub has no business in the group''s other sessions and the report mail is at-most-once with no resend. Not exposed to authenticated: it is called from inside the SECURITY DEFINER gedu RPCs.';
 
 
 --

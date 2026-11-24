@@ -25,6 +25,7 @@ import {
   deleteTestProducts,
   eraseParticipations,
 } from "./product-helpers";
+import { seedAssignment } from "./assignment-helpers";
 
 /**
  * Trainee seats: a gedu placed on one group to shadow it, who opens the same
@@ -197,11 +198,7 @@ describe("trainee gedus", () => {
       { id: GROUP_SIBLING, product_id: PRODUCT_MAIN, name: "Cohort Sibling" },
       { id: GROUP_BATCH, product_id: PRODUCT_BATCH, name: "Cohort Batch" },
     ]);
-    await admin.from("gedu_group_assignments").insert({
-      group_id: GROUP_MINE,
-      gedu_id: TEST_IDS.GEDU,
-      product_id: PRODUCT_MAIN,
-    });
+    await seedAssignment(admin, { groupId: GROUP_MINE, geduId: TEST_IDS.GEDU, productId: PRODUCT_MAIN });
 
     const { data: seats } = await admin
       .from("participations")
@@ -757,6 +754,7 @@ describe("trainee gedus", () => {
         group_id: GROUP_SIBLING,
         gedu_id: traineeId,
         product_id: PRODUCT_MAIN,
+        started_at: "2000-01-01T00:00:00Z",
       });
       expect(direct.error?.code).toBe("23505");
     });
@@ -801,7 +799,8 @@ describe("trainee gedus", () => {
           admin
             .from("gedu_group_assignments")
             .select("group_id, role")
-            .eq("product_id", PRODUCT_BATCH),
+            .eq("product_id", PRODUCT_BATCH)
+            .is("ended_at", null),
         ]);
         return { trainees: trainees.data, assignments: assignments.data };
       };
@@ -854,6 +853,16 @@ describe("trainee gedus", () => {
         trainees: [{ group_id: GROUP_BATCH }],
         assignments: [],
       });
+      // The removal ended the assignment's period rather than deleting it.
+      const history = await admin
+        .from("gedu_group_assignments")
+        .select("role, ended_at")
+        .eq("product_id", PRODUCT_BATCH)
+        .eq("gedu_id", traineeId);
+      expect(history.error).toBeNull();
+      expect(history.data).toHaveLength(1);
+      expect(history.data?.[0].role).toBe("assistant");
+      expect(history.data?.[0].ended_at).not.toBeNull();
     });
   });
 });

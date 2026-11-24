@@ -23,6 +23,7 @@ import {
   createTestProduct,
   deleteTestProducts,
 } from "./product-helpers";
+import { seedAssignment } from "./assignment-helpers";
 
 /**
  * The holiday breaks on the session documents: every document a session list
@@ -172,13 +173,7 @@ describe("the session documents carry the holiday breaks", () => {
     ]);
     expect(groups.error).toBeNull();
 
-    const assignment = await admin.from("gedu_group_assignments").insert({
-      product_id: CLUB,
-      group_id: CLUB_GROUP,
-      gedu_id: TEST_IDS.GEDU,
-      role: "primary",
-    });
-    expect(assignment.error).toBeNull();
+    await seedAssignment(admin, { productId: CLUB, groupId: CLUB_GROUP, geduId: TEST_IDS.GEDU, role: "primary" });
 
     const seat = await admin
       .from("participations")

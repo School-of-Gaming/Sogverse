@@ -17,6 +17,7 @@ import {
   deleteTestProducts,
   eraseParticipations,
 } from "./product-helpers";
+import { seedAssignment } from "./assignment-helpers";
 
 /**
  * Session-report photos: the two write RPCs, the removal check in front of
@@ -179,11 +180,7 @@ describe("session photos", () => {
       { id: GROUP_OTHER, product_id: PRODUCT_OTHER, name: "Cohort Elsewhere" },
     ]);
 
-    await admin.from("gedu_group_assignments").insert({
-      group_id: GROUP_MINE,
-      gedu_id: TEST_IDS.GEDU,
-      product_id: PRODUCT_MINE,
-    });
+    await seedAssignment(admin, { groupId: GROUP_MINE, geduId: TEST_IDS.GEDU, productId: PRODUCT_MINE });
 
     await admin.from("participations").insert({
       product_id: PRODUCT_MINE,
@@ -214,11 +211,7 @@ describe("session photos", () => {
     await admin
       .from("gedu_profiles")
       .insert({ user_id: peerId, certified: true });
-    await admin.from("gedu_group_assignments").insert({
-      group_id: GROUP_MINE,
-      gedu_id: peerId,
-      product_id: PRODUCT_MINE,
-    });
+    await seedAssignment(admin, { groupId: GROUP_MINE, geduId: peerId, productId: PRODUCT_MINE });
 
     peerAuth = await createAuthenticatedClient(email, "testpassword123");
   });

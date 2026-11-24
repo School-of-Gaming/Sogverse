@@ -22,6 +22,7 @@ import {
   payForBooking,
   eraseParticipations,
 } from "./product-helpers";
+import { seedAssignment } from "./assignment-helpers";
 
 /**
  * A product's AUDIENCE, and the seat a parent may take on their own account.
@@ -157,11 +158,7 @@ describe("product audience", () => {
     await admin
       .from("product_groups")
       .insert({ id: GROUP_ROSTER, product_id: PRODUCT_ROSTER, name: "Mixed" });
-    await admin.from("gedu_group_assignments").insert({
-      group_id: GROUP_ROSTER,
-      gedu_id: TEST_IDS.GEDU,
-      product_id: PRODUCT_ROSTER,
-    });
+    await seedAssignment(admin, { groupId: GROUP_ROSTER, geduId: TEST_IDS.GEDU, productId: PRODUCT_ROSTER });
     await admin.from("participations").insert([
       {
         product_id: PRODUCT_ROSTER,

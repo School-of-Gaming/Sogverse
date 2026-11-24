@@ -24,6 +24,7 @@ import {
   eraseParticipations,
 } from "./product-helpers";
 import { getStringRecord } from "../helpers/json";
+import { seedAssignment } from "./assignment-helpers";
 
 /**
  * The chat surface's ten RPCs and two membership predicates, plus
@@ -217,7 +218,7 @@ describe("chat RPCs", () => {
       await adminAuth.rpc("apply_group_changes", {
         p_product_id: PRODUCT_LIVE,
         p_added_groups: [
-          { tempId: "tLive", name: "Live", geduIds: [TEST_IDS.GEDU] },
+          { tempId: "tLive", name: "Live", gedus: [{ geduId: TEST_IDS.GEDU, role: "primary" }] },
         ],
       }),
     );
@@ -226,7 +227,7 @@ describe("chat RPCs", () => {
     const silent = ok(
       await adminAuth.rpc("apply_group_changes", {
         p_product_id: PRODUCT_SILENT,
-        p_added_groups: [{ tempId: "tSilent", name: "Silent", geduIds: [] }],
+        p_added_groups: [{ tempId: "tSilent", name: "Silent", gedus: [] }],
       }),
     );
     silentGroup = getStringRecord(silent, "tempMap").tSilent;
@@ -514,6 +515,38 @@ describe("chat RPCs", () => {
           .strict(),
       );
       expect(() => strictRoster.parse(rawInitialRoster)).not.toThrow();
+    });
+
+    it("leaves out a gedu whose period on the product has ended", async () => {
+      // The silent group's only gedu was taken off it, and nobody has a seat
+      // or a message there, so the ended period is the only thing that could
+      // put a name on this roster. The channel is fabricated as the expired one
+      // is: the silent product never opens a window.
+      await seedAssignment(admin, {
+        groupId: silentGroup,
+        geduId: TEST_IDS.GEDU,
+        productId: PRODUCT_SILENT,
+        endedAt: "2001-01-01T00:00:00Z",
+      });
+      const opens = await dbTime(-10 * 60_000);
+      const channel = await admin
+        .from("chat_channels")
+        .insert({
+          type: "group_session",
+          group_id: silentGroup,
+          session_opens_at: opens.toISOString(),
+          session_ends_at: new Date(opens.getTime() + 60 * 60_000).toISOString(),
+        })
+        .select("id")
+        .single();
+      if (channel.error) {
+        throw new Error(`seed silent channel failed: ${channel.error.message}`);
+      }
+
+      const roster = chatChannelRoster.parse(
+        ok(await adminAuth.rpc("get_chat_channel_roster", { p_channel_id: channel.data.id })),
+      );
+      expect(roster).toEqual([]);
     });
 
     it("refuses a stranger", async () => {

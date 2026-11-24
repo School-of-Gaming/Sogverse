@@ -67,7 +67,7 @@ describe("product_groups + gedu_group_assignments RLS", () => {
     // Group on product X with GEDU assigned + GAMER participating.
     const x = await adminAuth.rpc("apply_group_changes", {
       p_product_id: PRODUCT_X,
-      p_added_groups: [{ tempId: "tX1", name: "X1", geduIds: [TEST_IDS.GEDU] }],
+      p_added_groups: [{ tempId: "tX1", name: "X1", gedus: [{ geduId: TEST_IDS.GEDU, role: "primary" }] }],
     });
     groupX1 = getStringRecord(x.data, "tempMap").tX1;
 
@@ -82,7 +82,7 @@ describe("product_groups + gedu_group_assignments RLS", () => {
     // Group on product Y with no relevant ownership.
     const y = await adminAuth.rpc("apply_group_changes", {
       p_product_id: PRODUCT_Y,
-      p_added_groups: [{ tempId: "tY1", name: "Y1", geduIds: [] }],
+      p_added_groups: [{ tempId: "tY1", name: "Y1", gedus: [] }],
     });
     groupY1 = getStringRecord(y.data, "tempMap").tY1;
   });
@@ -204,6 +204,7 @@ describe("product_groups + gedu_group_assignments RLS", () => {
         group_id: groupX1,
         gedu_id: TEST_IDS.ADMIN,
         product_id: PRODUCT_X,
+        started_at: "2000-01-01T00:00:00Z",
       });
       expect(error).not.toBeNull();
     });
@@ -252,7 +253,7 @@ describe("ended participation loses RLS visibility on v2 groups", () => {
 
     const created = await adminAuth.rpc("apply_group_changes", {
       p_product_id: PRODUCT_Z,
-      p_added_groups: [{ tempId: "tZ", name: "Z", geduIds: [TEST_IDS.GEDU] }],
+      p_added_groups: [{ tempId: "tZ", name: "Z", gedus: [{ geduId: TEST_IDS.GEDU, role: "primary" }] }],
     });
     groupZ = getStringRecord(created.data, "tempMap").tZ;
 

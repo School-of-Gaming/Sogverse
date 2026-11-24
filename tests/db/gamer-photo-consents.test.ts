@@ -10,6 +10,7 @@ import {
 } from "./helpers";
 import { TEST_IDS, TEST_CREDENTIALS } from "./constants";
 import { createTestProduct, deleteTestProducts, eraseParticipations } from "./product-helpers";
+import { seedAssignment } from "./assignment-helpers";
 
 /**
  * Gamer photo consents: the marketing-consent system with the
@@ -176,12 +177,7 @@ describe("gamer photo consents", () => {
       });
     expect(group.error).toBeNull();
 
-    const assignment = await admin.from("gedu_group_assignments").insert({
-      group_id: GROUP_TAUGHT,
-      gedu_id: TEST_IDS.GEDU,
-      product_id: PRODUCT_TAUGHT,
-    });
-    expect(assignment.error).toBeNull();
+    await seedAssignment(admin, { groupId: GROUP_TAUGHT, geduId: TEST_IDS.GEDU, productId: PRODUCT_TAUGHT });
 
     const seat = await admin.from("participations").insert({
       product_id: PRODUCT_TAUGHT,

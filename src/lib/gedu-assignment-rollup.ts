@@ -241,9 +241,11 @@ export function rollUpGeduAssignments({
   const summaries = rows
     // Substitution rows are the other roll-up's: a substitution is one dated afternoon, and
     // drawing it as a run would give a sub a recurring card
-    // claiming they teach the club every week. A trainee seat is a standing
-    // seat on a group like an assignment, so it takes the same card.
-    .filter((row) => row.kind !== "substitution")
+    // claiming they teach the club every week. An ended assignment is no
+    // longer a run of the gedu's either, and takes the substitution's card. A
+    // trainee seat is a standing seat on a group like an assignment, so it
+    // takes the same card.
+    .filter((row) => row.kind === "assignment" || row.kind === "trainee")
     .map((row) => {
     // A cancelled session is skipped rather than named, so the Join never
     // lights for a session that is not happening; one in progress is still
@@ -364,6 +366,13 @@ function bySoonestSession(
  * Monday. What a sub needs is where and when, and the way in.
  */
 export interface GeduSubstitutionSummary {
+  /**
+   * Which temporary seat the card stands for: a `substitution`, or an
+   * `ended_assignment` — a group the gedu was taken off, which stays theirs on
+   * a substitute's terms while a session of theirs on it is inside its window.
+   * The card is the same card; the eyebrow names which.
+   */
+  seat: "substitution" | "ended_assignment";
   groupId: string;
   productId: string;
   groupName: string | null;
@@ -517,39 +526,134 @@ export function rollUpGeduSubstitutions({
     if (row.kind !== "substitution" || row.substitutionDate === null) return [];
 
     const key = geduAssignmentKey(row.product.id, row.groupId);
-    const session = buildSessionFacts({
-      product: row.product,
-      sessionDate: row.substitutionDate,
-      startsAt: row.substitutionStartsAt,
-      endsAt: row.substitutionEndsAt,
-      locale,
-    });
     const hasVoiceRoom = productHasVoiceRoom(row.product.deliveryMode);
     return [
-      {
-        groupId: row.groupId,
-        productId: row.product.id,
-        groupName: row.groupName,
-        session,
-        accessOpensAt: new Date(
-          substitutionAccessAnchor(session).getTime() -
-            SUBSTITUTION_ACCESS_LEAD_MS,
-        ),
+      temporarySeatCard({
+        row,
+        seat: "substitution",
+        sessionDate: row.substitutionDate,
+        locale,
         cancelled: row.substitutionCancelled,
         hasVoiceRoom,
-        voiceRoom: row.product.voiceRoom,
         voiceHref: hasVoiceRoom
           ? (voiceHrefByAssignment?.[key] ?? INERT_HREF)
           : INERT_HREF,
-        openHref: substitutionWorkspaceHref(hrefByAssignment[key], row.groupId),
+        workspace: hrefByAssignment[key],
         attentionCount:
           attentionBySubstitution?.[geduSubstitutionKey(row.groupId, row.substitutionDate)] ?? 0,
-      } satisfies GeduSubstitutionSummary,
+      }),
     ];
   });
 
   substitutions.sort(bySubstitutionMoment);
   return substitutions;
+}
+
+export interface EndedAssignmentRollUpArgs {
+  rows: readonly GeduAssignmentRow[];
+  locale: SupportedLocale;
+  /**
+   * Outstanding work per ended assignment, keyed by {@link geduAssignmentKey};
+   * missing means none.
+   */
+  attentionByEndedAssignment?: Readonly<Record<string, number>>;
+  /** The same seat-href map the other two roll-ups take. */
+  hrefByAssignment: Readonly<Record<string, AppHrefObject>>;
+}
+
+/**
+ * Roll the groups a gedu was taken off, and still holds, into one card each:
+ * **the substitution card, dated by the latest session still open to them.**
+ *
+ * An ended gedu is treated like a substitute — the group stays theirs while a
+ * session they ran on it is inside its window, so they can finish its
+ * register and report — and the card is the substitute's for the same reason
+ * the access is. The database decides how long the row exists, exactly as it
+ * does for a substitution, so there is no clock here.
+ *
+ * **No Join.** The voice room is for the group's current gedus only, so the
+ * card offers none, whatever the product's delivery mode.
+ */
+export function rollUpGeduEndedAssignments({
+  rows,
+  locale,
+  attentionByEndedAssignment,
+  hrefByAssignment,
+}: EndedAssignmentRollUpArgs): GeduSubstitutionSummary[] {
+  const ended = rows.flatMap((row) => {
+    if (row.kind !== "ended_assignment" || row.lastSessionDate === null) return [];
+    const key = geduAssignmentKey(row.product.id, row.groupId);
+    return [
+      temporarySeatCard({
+        row,
+        seat: "ended_assignment",
+        sessionDate: row.lastSessionDate,
+        locale,
+        cancelled: false,
+        hasVoiceRoom: false,
+        voiceHref: INERT_HREF,
+        workspace: hrefByAssignment[key],
+        attentionCount: attentionByEndedAssignment?.[key] ?? 0,
+      }),
+    ];
+  });
+
+  ended.sort(bySubstitutionMoment);
+  return ended;
+}
+
+/**
+ * One temporary seat's card — a substitution or an ended assignment — from its
+ * row and the one session it is dated by.
+ *
+ * The workspace opens 48 hours before that session either way; for an ended
+ * assignment the session started before the period ended, so that instant is
+ * always behind us and the card is never drawn locked.
+ */
+function temporarySeatCard({
+  row,
+  seat,
+  sessionDate,
+  locale,
+  cancelled,
+  hasVoiceRoom,
+  voiceHref,
+  workspace,
+  attentionCount,
+}: {
+  row: GeduAssignmentRow;
+  seat: GeduSubstitutionSummary["seat"];
+  sessionDate: string;
+  locale: SupportedLocale;
+  cancelled: boolean;
+  hasVoiceRoom: boolean;
+  voiceHref: MaybeInertHrefObject;
+  workspace: AppHrefObject | undefined;
+  attentionCount: number;
+}): GeduSubstitutionSummary {
+  const session = buildSessionFacts({
+    product: row.product,
+    sessionDate,
+    startsAt: row.substitutionStartsAt,
+    endsAt: row.substitutionEndsAt,
+    locale,
+  });
+  return {
+    seat,
+    groupId: row.groupId,
+    productId: row.product.id,
+    groupName: row.groupName,
+    session,
+    accessOpensAt: new Date(
+      substitutionAccessAnchor(session).getTime() - SUBSTITUTION_ACCESS_LEAD_MS,
+    ),
+    cancelled,
+    hasVoiceRoom,
+    voiceRoom: row.product.voiceRoom,
+    voiceHref,
+    openHref: substitutionWorkspaceHref(workspace, row.groupId),
+    attentionCount,
+  };
 }
 
 /**

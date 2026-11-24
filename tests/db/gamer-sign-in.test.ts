@@ -9,6 +9,7 @@ import {
   deleteTestProducts,
   eraseParticipations,
 } from "./product-helpers";
+import { seedAssignment } from "./assignment-helpers";
 
 /**
  * `gamer_profiles.sign_in` — who may write it, and what having a real
@@ -105,11 +106,7 @@ describe("gamer sign-in mode", () => {
     await admin
       .from("product_groups")
       .insert({ id: GROUP, product_id: PRODUCT, name: "Boundary cohort" });
-    await admin.from("gedu_group_assignments").insert({
-      group_id: GROUP,
-      gedu_id: TEST_IDS.GEDU,
-      product_id: PRODUCT,
-    });
+    await seedAssignment(admin, { groupId: GROUP, geduId: TEST_IDS.GEDU, productId: PRODUCT });
 
     // A family of its own rather than the seeded one, because this child has to
     // hold a REAL address and the seeded gamer's synthetic handle is what half

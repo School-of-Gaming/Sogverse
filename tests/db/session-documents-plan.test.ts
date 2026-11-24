@@ -26,6 +26,7 @@ import {
   createTestProduct,
   deleteTestProducts,
 } from "./product-helpers";
+import { seedAssignment } from "./assignment-helpers";
 
 /**
  * The plan on the session documents: every document a session list is drawn
@@ -149,12 +150,7 @@ describe("the session documents carry the plan", () => {
     ]);
     expect(groups.error).toBeNull();
 
-    const assignment = await admin.from("gedu_group_assignments").insert({
-      group_id: DATED_GROUP,
-      gedu_id: TEST_IDS.GEDU,
-      product_id: DATED,
-    });
-    expect(assignment.error).toBeNull();
+    await seedAssignment(admin, { groupId: DATED_GROUP, geduId: TEST_IDS.GEDU, productId: DATED });
     const trainee = await admin.from("gedu_group_trainees").insert({
       group_id: OPEN_GROUP,
       gedu_id: TEST_IDS.GEDU,

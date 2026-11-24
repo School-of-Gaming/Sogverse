@@ -124,16 +124,21 @@ bundler cannot trace**: the route is listed in `outputFileTracingIncludes` in
 locally and fails deployed. A month with no seats still downloads, as an empty month named
 from the caller's profile; a failed read answers an error, never an empty file.
 
-## Staffing is today's
+## Staffing is by period
 
-**Assignments keep no history, so a past month is read against today's staffing.** Removing
-a gedu from a group, or changing their role on it, rewrites every past month: the seats they
-held vanish from the months they worked them, or move to the other role's fee. Substitutions
-and absences do not drift — a request is dated and keeps the role it was filed in. The owner
-accepted this for v1, pending a check with the team on how often a gedu permanently changes
-on a running club. It has to be settled before any approval or snapshot is built on these
-figures: an approved month that a later reassignment silently rewrites is the failure that
-would ship.
+**A session is paid to the assignment period that holds its start instant**, in that
+period's role. The document carries every period of the gedu's that overlaps the month,
+with its bounds, and each group's start instant for every date it names, by the
+database's one start rule; the builder hands both to the substitution derivation. So a
+gedu taken off a group keeps the sessions that started while they held it, a
+replacement is paid only from the instant they were added, a role change splits the
+month into one club line per role, and the gap between a removal and a re-add pays
+nobody. Substitutions and absences are dated and keep the role they were filed in.
+
+**A gedu added after a group's sessions have already run is not paid for them** (owner
+ruling, 2026-11-24): their period starts when they are added, and nothing backdates it.
+Admins assign a group's gedus before its first session, so the gap stays accepted rather
+than built for.
 
 ## Shared with municipality invoicing
 

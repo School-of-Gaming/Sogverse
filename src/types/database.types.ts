@@ -1076,24 +1076,33 @@ export type Database = {
       gedu_group_assignments: {
         Row: {
           created_at: string
+          ended_at: string | null
           gedu_id: string
           group_id: string
+          id: string
           product_id: string
           role: Database["public"]["Enums"]["gedu_assignment_role"]
+          started_at: string
         }
         Insert: {
           created_at?: string
+          ended_at?: string | null
           gedu_id: string
           group_id: string
+          id?: string
           product_id: string
           role?: Database["public"]["Enums"]["gedu_assignment_role"]
+          started_at: string
         }
         Update: {
           created_at?: string
+          ended_at?: string | null
           gedu_id?: string
           group_id?: string
+          id?: string
           product_id?: string
           role?: Database["public"]["Enums"]["gedu_assignment_role"]
+          started_at?: string
         }
         Relationships: [
           {
@@ -5018,6 +5027,7 @@ export type Database = {
           group_count: number
           group_id: string
           kind: string
+          last_session_date: string
           participant_count: number
           product: Json
           substitution_cancelled: boolean
@@ -5035,12 +5045,20 @@ export type Database = {
         Args: { p_gedu_id: string; p_product_id: string }
         Returns: boolean
       }
+      gedu_holds_live_substitution_on_group: {
+        Args: { p_group_id: string }
+        Returns: boolean
+      }
       gedu_holds_seat_at_session: {
         Args: { p_gedu_id: string; p_group_id: string; p_session_date: string }
         Returns: boolean
       }
       gedu_holds_session_qualifications: {
         Args: { p_gedu_id: string; p_group_id: string }
+        Returns: boolean
+      }
+      gedu_holds_unexpired_ended_assignment: {
+        Args: { p_gedu_id: string; p_group_id: string; p_session_date: string }
         Returns: boolean
       }
       gedu_holds_unexpired_substitution: {
@@ -5084,6 +5102,16 @@ export type Database = {
         Returns: boolean
       }
       gedu_trains_group: { Args: { p_group_id: string }; Returns: boolean }
+      gedu_unexpired_ended_assignment_dates: {
+        Args: { p_gedu_id: string; p_group_id: string }
+        Returns: {
+          session_date: string
+        }[]
+      }
+      gedu_writes_group_session: {
+        Args: { p_group_id: string; p_session_date: string }
+        Returns: boolean
+      }
       get_admin_consent_answer_totals: {
         Args: { p_from: string; p_to: string }
         Returns: {
@@ -5116,6 +5144,7 @@ export type Database = {
           group_count: number
           group_id: string
           kind: string
+          last_session_date: string
           participant_count: number
           product: Json
           substitution_cancelled: boolean
@@ -5189,6 +5218,7 @@ export type Database = {
           group_count: number
           group_id: string
           kind: string
+          last_session_date: string
           participant_count: number
           product: Json
           substitution_cancelled: boolean
@@ -5356,6 +5386,13 @@ export type Database = {
         Args: { p_participation_id: string }
         Returns: number
       }
+      group_assignments_at: {
+        Args: { p_at: string; p_group_id: string }
+        Returns: {
+          gedu_id: string
+          role: Database["public"]["Enums"]["gedu_assignment_role"]
+        }[]
+      }
       group_final_session_date: {
         Args: { p_group_id: string }
         Returns: string
@@ -5370,6 +5407,10 @@ export type Database = {
           session_date: string
           starts_at: string
         }[]
+      }
+      group_session_access_ends_at: {
+        Args: { p_group_id: string; p_session_date: string }
+        Returns: string
       }
       group_session_date_is_holiday: {
         Args: { p_group_id: string; p_session_date: string }
@@ -5386,6 +5427,10 @@ export type Database = {
       group_session_is_cancelled: {
         Args: { p_group_id: string; p_session_date: string }
         Returns: boolean
+      }
+      group_session_starts_at: {
+        Args: { p_group_id: string; p_session_date: string }
+        Returns: string
       }
       group_upcoming_planned_sessions: {
         Args: { p_group_id: string }

@@ -17,6 +17,7 @@ DECLARE
   v_substitutions     jsonb;
   v_cancellations     jsonb;
   v_trainees          jsonb;
+  v_temporary_seat    jsonb;
   v_viewer     uuid    := (SELECT auth.uid());
   v_is_admin   boolean;
   v_start_date date;
@@ -280,19 +281,30 @@ BEGIN
          AND NOT public.group_session_date_is_holiday(s.group_id, s.session_date)
     ) AS session_rows;
 
-  -- The group's STAFF, with roles. The client's staffing derivation needs two
-  -- inputs — who is assigned and in what role, and the non-withdrawn requests
-  -- for the date — and this is the first of them. First name only, exactly as
-  -- every other staff list on this surface: a workspace names colleagues, it
-  -- does not carry their records.
-  SELECT COALESCE(jsonb_agg(entry ORDER BY entry->>'first_name'), '[]'::jsonb)
+  -- The group's STAFF: every assignment period it has had, ended ones
+  -- included, each with its role and its bounds. The client's staffing
+  -- derivation needs two inputs — who was assigned at the session and in what
+  -- role, and the non-withdrawn requests for the date — and this is the first
+  -- of them; it places each session in the period containing its start, so a
+  -- past session keeps the gedu who held the group then. First name only,
+  -- exactly as every other staff list on this surface: a workspace names
+  -- colleagues, it does not carry their records.
+  SELECT COALESCE(
+           jsonb_agg(entry ORDER BY first_name, started_at, period_id),
+           '[]'::jsonb
+         )
     INTO v_gedus
     FROM (
       SELECT jsonb_build_object(
         'id',         pr.id,
         'first_name', pr.first_name,
-        'role',       ga.role
-      ) AS entry
+        'role',       ga.role,
+        'started_at', ga.started_at,
+        'ended_at',   ga.ended_at
+      ) AS entry,
+      pr.first_name,
+      ga.started_at,
+      ga.id AS period_id
         FROM public.gedu_group_assignments ga
         JOIN public.profiles pr ON pr.id = ga.gedu_id
        WHERE ga.group_id = p_group_id
@@ -357,6 +369,76 @@ BEGIN
     JOIN public.profiles pr ON pr.id = t.gedu_id
    WHERE t.group_id = p_group_id;
 
+  -- The reader's TEMPORARY SEAT on the group, or NULL where they hold it
+  -- outright: an admin, or a gedu with a current period on it, may write and
+  -- mail every session. Anyone else reached this document through
+  -- gedu_substitutes_group, and the page offers them only what the database
+  -- admits:
+  --
+  -- * `writes_every_session` — whether a live substitution writes every
+  --   session of the group (gedu_writes_group_session).
+  -- * `session_dates` — the dates they may mail, and the only ones they may
+  --   write unless a substitution writes every session: the dates they
+  --   substitute (gedu_holds_unexpired_substitution, the card's own test) and
+  --   the dates they still hold through an ended assignment
+  --   (gedu_unexpired_ended_assignment_dates).
+  -- * `voice_dates` — the dates whose room admits them, which are the
+  --   substitution dates alone. is_voice_group_member and the voice token
+  --   route admit a current period on the product, a live substitution on its
+  --   date and a trainee seat; an ended assignment is none of them, so its
+  --   windowed dates are writes and mail, never a room.
+  -- * `teaches_product` — whether they hold a current period on any group of
+  --   the product, which admits them to every room of it, this one included,
+  --   whatever their seat on this group.
+  --
+  -- The window is the database's; the page never derives one.
+  IF NOT v_is_admin
+     AND NOT EXISTS (
+           SELECT 1
+             FROM public.gedu_group_assignments ga
+            WHERE ga.group_id = p_group_id
+              AND ga.gedu_id  = v_viewer
+              AND ga.ended_at IS NULL
+         ) THEN
+    WITH substituted AS (
+      SELECT DISTINCT r.session_date
+        FROM public.session_substitution_requests r
+       WHERE r.group_id      = p_group_id
+         AND r.substitute_id = v_viewer
+         AND r.status        = 'substituted'::public.substitution_request_status
+         AND public.gedu_holds_unexpired_substitution(v_viewer, p_group_id, r.session_date)
+    ),
+    held AS (
+      SELECT s.session_date FROM substituted s
+      UNION
+      SELECT e.session_date
+        FROM public.gedu_unexpired_ended_assignment_dates(v_viewer, p_group_id) e
+    )
+    SELECT jsonb_build_object(
+             'writes_every_session',
+             public.gedu_holds_live_substitution_on_group(p_group_id),
+             'session_dates',
+             COALESCE(
+               (SELECT jsonb_agg(h.session_date ORDER BY h.session_date) FROM held h),
+               '[]'::jsonb
+             ),
+             'voice_dates',
+             COALESCE(
+               (SELECT jsonb_agg(s.session_date ORDER BY s.session_date) FROM substituted s),
+               '[]'::jsonb
+             ),
+             'teaches_product',
+             EXISTS (
+               SELECT 1
+                 FROM public.gedu_group_assignments ga
+                WHERE ga.product_id = v_product_id
+                  AND ga.gedu_id    = v_viewer
+                  AND ga.ended_at IS NULL
+             )
+           )
+      INTO v_temporary_seat;
+  END IF;
+
   RETURN jsonb_build_object(
     'product',  v_product,
     'group',    v_group,
@@ -377,7 +459,9 @@ BEGIN
     'holiday_breaks',   public.holiday_breaks_document(v_product_id, v_start_date, v_horizon),
     -- The run's last session the group has not cancelled, NULL on an
     -- open-ended product: the session that owes creations.
-    'final_session_date', public.group_final_session_date(p_group_id)
+    'final_session_date', public.group_final_session_date(p_group_id),
+    -- NULL, or what the reader's temporary seat reaches; see above.
+    'viewer_temporary_seat', v_temporary_seat
   );
 END;
 $$;
@@ -387,7 +471,7 @@ $$;
 -- Name: FUNCTION get_gedu_group_feed(p_group_id uuid); Type: COMMENT; Schema: public; Owner: -
 --
 
-COMMENT ON FUNCTION public.get_gedu_group_feed(p_group_id uuid) IS 'One round trip for a group workspace: product shell (with the gedu-only material link, read from product_staff_details), group notes, site notes on in-person and hybrid products, the current roster, and every stored session row with its sparse attendance map and its photos — except a row on a holiday date, which carries its break and nothing else. Carries the product''s planned sessions beside its schedule parameters: `planned_sessions`, the plan from start_date to this group''s session_plan_horizon (planned_sessions_document), so the group''s next running session is inside however many dates ahead of it the group cancelled, as plain {session_date, starts_at, ends_at} rows with no cancellation folded in; `holiday_breaks`, holiday_breaks_document over the same span — each break of a calendar the product follows, with its name in every locale and the plan rows it withdrew; and `final_session_date`, this group''s group_final_session_date — NULL on an open-ended product. `cancellations` lists the cancellations in effect, none on a holiday date. Open to an ADMIN as well as to the assigned gedu, guard-first on assert_role with the ownership question as a second 42501 — the same shape set_group_notes uses. The admin caller is the product page''s per-group GROUP DETAILS page, which renders the gedu workspace''s page body unchanged: one body fed by one document is what keeps the two surfaces one surface, where a second admin-shaped RPC would have started drifting field by field. An admin passes the ownership half outright; a gedu is shown only their OWN group''s feed, and a customer or a gamer is refused on the first statement, which is what keeps the material link and the three staff notes off every family surface. Each roster row is keyed by participant_id (whoever holds the seat, child or adult), carries both game identities (minecraft_username/minecraft_uuid and roblox_username/roblox_user_id, independent of each other and drawn according to the product''s topic, which this document does not carry), and carries two contact fields and never both: parent_email for a child (their linked parent), participant_email for an adult seat (their own address, NULL on child rows because a gamer profile''s email is a synthetic non-mailbox). Each roster row also carries the staff-only flair — group_joined_at (when the seat entered THIS group, as against signed_up_at, which is when it was taken on the product), note and note_updated_by_first_name — in deliberate parity with get_gedu_assigned_product''s roster, which is the parity the page depends on because it renders this copy. Each roster row additionally carries `creations` (always an array, [] when there is no row) — the one roster field that is NOT staff-only, since the member''s own family reads the same list — and the product shell carries requires_gamer_creations, because the final session''s fourth completeness condition is derived on the CLIENT from that flag, the schedule and this roster''s creations; no document carries an "owed" field. Each session row carries report_emailed_at — when its report was mailed to the families, NULL until it was — and never report_emailed_by, which is audit and renders nowhere. Each session row also carries `images`: {id, width, height} per photo, ordered by (created_at, id), with the uploader deliberately off the wire for the same reason the sender is. The key sits directly on the session rather than under a versioned name, because the gedu contracts schema is tolerant of unknown keys. The document carries two more members, both of them inputs to the client-side staffing derivation rather than answers from it: `gedus`, the group''s assignments as {id, first_name, role}; and `substitutions`, every NON-WITHDRAWN substitution request on the group, unbounded, in the one shape substitution_request_document defines and every substitution write returns. Withdrawn is the one status that does not travel, because it changes nothing about who is expected. The client merges substitutions onto its entries by date, and a projected date with no session row carries its requests like any other. `reason` and `reason_note` ride for an ADMIN caller only — this document is served to an admin too, so the flag is the CALLER''s role rather than a property of the RPC, which is what keeps a `sick` category off a colleague''s screen while the one document stays one document. `offer_count` rides for an admin and for the requester themselves. The GATE is gedu_teaches_group, which admits a live substitution on the group, so a sub opens the workspace they are substituting. It is the ONE caller that asks substitution_request_document to reveal the requester explicitly. The workspace is reached only by staff on the group and its session card''s staffing line names who is away; the REASON rides on the admin flag alone, so a colleague learns that somebody is absent and never that it was `sick`. `trainees` names the group''s trainee seats as {id, first_name} in placement order, drawn as Trainee-marked chips after the group''s gedus on every workspace shell; a trainee is not in `gedus`, and a trainee cannot read this document — gedu_teaches_group has no trainee arm, and their own read is get_trainee_group_feed.';
+COMMENT ON FUNCTION public.get_gedu_group_feed(p_group_id uuid) IS 'One round trip for a group workspace: product shell (with the gedu-only material link, read from product_staff_details), group notes, site notes on in-person and hybrid products, the current roster, and every stored session row with its sparse attendance map and its photos — except a row on a holiday date, which carries its break and nothing else. Carries the product''s planned sessions beside its schedule parameters: `planned_sessions`, the plan from start_date to this group''s session_plan_horizon (planned_sessions_document), so the group''s next running session is inside however many dates ahead of it the group cancelled, as plain {session_date, starts_at, ends_at} rows with no cancellation folded in; `holiday_breaks`, holiday_breaks_document over the same span — each break of a calendar the product follows, with its name in every locale and the plan rows it withdrew; and `final_session_date`, this group''s group_final_session_date — NULL on an open-ended product. `cancellations` lists the cancellations in effect, none on a holiday date. Open to an ADMIN as well as to the assigned gedu, guard-first on assert_role with the ownership question as a second 42501 — the same shape set_group_notes uses. The admin caller is the product page''s per-group GROUP DETAILS page, which renders the gedu workspace''s page body unchanged: one body fed by one document is what keeps the two surfaces one surface, where a second admin-shaped RPC would have started drifting field by field. An admin passes the ownership half outright; a gedu is shown only their OWN group''s feed, and a customer or a gamer is refused on the first statement, which is what keeps the material link and the three staff notes off every family surface. Each roster row is keyed by participant_id (whoever holds the seat, child or adult), carries both game identities (minecraft_username/minecraft_uuid and roblox_username/roblox_user_id, independent of each other and drawn according to the product''s topic, which this document does not carry), and carries two contact fields and never both: parent_email for a child (their linked parent), participant_email for an adult seat (their own address, NULL on child rows because a gamer profile''s email is a synthetic non-mailbox). Each roster row also carries the staff-only flair — group_joined_at (when the seat entered THIS group, as against signed_up_at, which is when it was taken on the product), note and note_updated_by_first_name — in deliberate parity with get_gedu_assigned_product''s roster, which is the parity the page depends on because it renders this copy. Each roster row additionally carries `creations` (always an array, [] when there is no row) — the one roster field that is NOT staff-only, since the member''s own family reads the same list — and the product shell carries requires_gamer_creations, because the final session''s fourth completeness condition is derived on the CLIENT from that flag, the schedule and this roster''s creations; no document carries an "owed" field. Each session row carries report_emailed_at — when its report was mailed to the families, NULL until it was — and never report_emailed_by, which is audit and renders nowhere. Each session row also carries `images`: {id, width, height} per photo, ordered by (created_at, id), with the uploader deliberately off the wire for the same reason the sender is. The key sits directly on the session rather than under a versioned name, because the gedu contracts schema is tolerant of unknown keys. The document carries two more members, both of them inputs to the client-side staffing derivation rather than answers from it: `gedus`, every assignment period the group has had, ended ones included, as {id, first_name, role, started_at, ended_at}, so the client places each session in the period containing its start and a past session keeps the gedu who held the group then; and `substitutions`, every NON-WITHDRAWN substitution request on the group, unbounded, in the one shape substitution_request_document defines and every substitution write returns. Withdrawn is the one status that does not travel, because it changes nothing about who is expected. The client merges substitutions onto its entries by date, and a projected date with no session row carries its requests like any other. `reason` and `reason_note` ride for an ADMIN caller only — this document is served to an admin too, so the flag is the CALLER''s role rather than a property of the RPC, which is what keeps a `sick` category off a colleague''s screen while the one document stays one document. `offer_count` rides for an admin and for the requester themselves. The GATE is gedu_teaches_group, which admits a live substitution on the group, so a sub opens the workspace they are substituting. It is the ONE caller that asks substitution_request_document to reveal the requester explicitly. The workspace is reached only by staff on the group and its session card''s staffing line names who is away; the REASON rides on the admin flag alone, so a colleague learns that somebody is absent and never that it was `sick`. `trainees` names the group''s trainee seats as {id, first_name} in placement order, drawn as Trainee-marked chips after the group''s gedus on every workspace shell; a trainee is not in `gedus`, and a trainee cannot read this document — gedu_teaches_group has no trainee arm, and their own read is get_trainee_group_feed. `viewer_temporary_seat` is NULL for an admin and for a gedu holding a current period on the group, who write and mail every session; for anyone else — a substitute, or a gedu taken off the group and still in its window — it is {writes_every_session, session_dates, voice_dates, teaches_product}: whether a live substitution lets them write every session (gedu_writes_group_session); the dates they hold the group for — the dates they substitute and the dates their ended assignment still holds — which are the only sessions they may mail; the dates whose voice room admits them, which are the substitution dates alone, because is_voice_group_member admits an ended assignment to no room; and whether they hold a current period on any group of the product, which admits them to every room of it, this one included. The page reads the window from here and never derives one.';
 
 
 --

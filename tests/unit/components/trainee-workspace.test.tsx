@@ -129,6 +129,7 @@ describe("the trainee shell's mapping", () => {
       substitutions: [],
       cancellations: feed.cancellations,
       holidayBreaks: feed.holiday_breaks,
+      viewerSeat: null,
       now: NOW,
       reach: "redacted",
     });
