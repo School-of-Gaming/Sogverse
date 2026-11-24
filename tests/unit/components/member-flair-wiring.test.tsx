@@ -1219,12 +1219,23 @@ describe("gedu product page — the voice room a temporary seat reaches", () => 
     endsAt: new Date(`${date}T16:00:00.000Z`),
     cancelled: false,
   }));
+  /** A sister group of the product — the reader's own, in the last case. */
+  const SISTER = {
+    id: "06b7ea5f-5e51-474d-86c0-0854605f71cc",
+    name: "Monday B",
+    created_at: "2025-09-01T00:00:00.000Z",
+    is_my_group: false as const,
+    participant_count: 0,
+    gedus: [],
+    roster: [],
+  };
 
   function renderOnline(seat: GeduGroupFeed["viewer_temporary_seat"]) {
     const product = assignedProduct("consumer_club");
     reads.product = {
       ...product,
       product: { ...product.product, delivery_mode: "online" },
+      groups: [...product.groups, SISTER],
       planned_sessions: plan,
     };
     const feed = groupFeed("consumer_club");
@@ -1247,20 +1258,56 @@ describe("gedu product page — the voice room a temporary seat reaches", () => 
     );
   }
 
-  const roomButton = () => screen.queryByRole("button", { name: /^Opens / });
+  /** Every room the rail draws a Join for, this group's and the sister's. */
+  const roomButtons = () => screen.queryAllByRole("button", { name: /^Opens / });
 
-  it("draws the group's room for a gedu holding the group outright", () => {
+  it("draws every room for a gedu holding the group outright", () => {
     renderOnline(null);
-    expect(roomButton()).not.toBeNull();
+    expect(roomButtons()).toHaveLength(2);
   });
 
   it("draws no room for a gedu taken off the group, whose dates are all behind them", () => {
-    renderOnline({ writes_every_session: false, session_dates: [PAST] });
-    expect(roomButton()).toBeNull();
+    renderOnline({
+      writes_every_session: false,
+      session_dates: [PAST],
+      voice_dates: [],
+      teaches_product: false,
+    });
+    expect(roomButtons()).toHaveLength(0);
   });
 
-  it("draws the room for a substitute whose date is still ahead", () => {
-    renderOnline({ writes_every_session: true, session_dates: [NEXT] });
-    expect(roomButton()).not.toBeNull();
+  it("draws no room for a gedu taken off the group whose window holds a date ahead", () => {
+    // Theirs to write and send, but the room admits an ended assignment to
+    // nothing: a Join here is one the room would refuse.
+    renderOnline({
+      writes_every_session: false,
+      session_dates: [NEXT],
+      voice_dates: [],
+      teaches_product: false,
+    });
+    expect(roomButtons()).toHaveLength(0);
+  });
+
+  it("draws this group's room alone for a substitute whose date is still ahead", () => {
+    renderOnline({
+      writes_every_session: true,
+      session_dates: [NEXT],
+      voice_dates: [NEXT],
+      teaches_product: false,
+    });
+    expect(roomButtons()).toHaveLength(1);
+  });
+
+  it("draws every room for a substitute who teaches a sister group", () => {
+    // The current period on the sister group admits them to every room of
+    // the product: that group's Join stays, and this group's room opens on
+    // every date, not only the substituted one, which is behind them.
+    renderOnline({
+      writes_every_session: true,
+      session_dates: [PAST],
+      voice_dates: [PAST],
+      teaches_product: true,
+    });
+    expect(roomButtons()).toHaveLength(2);
   });
 });

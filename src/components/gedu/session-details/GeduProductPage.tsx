@@ -327,13 +327,17 @@ function Workspace({
 
   /**
    * The dates whose voice room is this reader's, or `null` for every room the
-   * plan opens — the same temporary seat, read for the rail.
+   * plan opens — the same temporary seat, read for the rail. A current period
+   * anywhere on the product opens every room of it, and otherwise only a
+   * substitution's dates do: an ended assignment's dates are the reader's to
+   * write and send, never a room.
    */
   const voiceSessionDates = useMemo(
     () =>
-      feed.viewer_temporary_seat === null
+      feed.viewer_temporary_seat === null ||
+      feed.viewer_temporary_seat.teaches_product
         ? null
-        : new Set(feed.viewer_temporary_seat.session_dates),
+        : new Set(feed.viewer_temporary_seat.voice_dates),
     [feed.viewer_temporary_seat],
   );
 

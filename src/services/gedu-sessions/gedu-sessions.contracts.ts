@@ -412,13 +412,20 @@ export const geduGroupFeed = z.object({
    * `writes_every_session` is whether a live substitution lets them write any
    * session of the group, and `session_dates` are the product-local dates they
    * hold it for — the ones they substitute and the ones their ended assignment
-   * still holds. Only those are theirs to send, and only those rooms. The
+   * still holds. Only those are theirs to send.
+   *
+   * The voice room admits less: `voice_dates` are the substitution dates alone,
+   * because an ended assignment is in no room, and `teaches_product` is whether
+   * the reader holds a current period on any group of the product, which
+   * admits them to every room of it — this group's on every date included. The
    * window behind the dates is the database's; nothing here derives one.
    */
   viewer_temporary_seat: z
     .object({
       writes_every_session: z.boolean(),
       session_dates: z.array(z.string()),
+      voice_dates: z.array(z.string()),
+      teaches_product: z.boolean(),
     })
     .nullable(),
 });

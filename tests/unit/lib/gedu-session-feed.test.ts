@@ -624,7 +624,12 @@ describe("buildGeduSessionFeed — staffing", () => {
     // A gedu taken off the group, still in the window of the past Monday: that
     // card is theirs to write and send, and the next one is neither.
     const entries = build({
-      viewerSeat: { writes_every_session: false, session_dates: [PAST] },
+      viewerSeat: {
+        writes_every_session: false,
+        session_dates: [PAST],
+        voice_dates: [],
+        teaches_product: false,
+      },
     });
     expect(byDate(entries, PAST)?.staffing).toMatchObject({
       viewerMayWrite: true,

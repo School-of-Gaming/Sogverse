@@ -516,14 +516,15 @@ interface GroupWorkspaceProps {
   namedOnlyRoomLock: LockExplanation | null;
   /**
    * The session dates whose voice room is the reader's, or `null` for every
-   * room the product's plan opens — an admin, a gedu holding the group
-   * outright, a trainee in their own group's room.
+   * room the product's plan opens — an admin, a gedu holding a current period
+   * anywhere on the product, a trainee in their own group's room.
    *
-   * A reader on a **temporary seat** — a substitute, or a gedu taken off the
-   * group whose window is still open — is admitted to this group's room on
-   * those dates and to no sister group's room at all, so the rail draws this
-   * group's Join only while one of those dates is still ahead, and no Join on a
-   * sister group. The dates are the workspace document's, never derived here.
+   * A substitute with no current period on the product is admitted to this
+   * group's room on the dates they substitute and to no sister group's room at
+   * all, so the rail draws this group's Join only while one of those dates is
+   * still ahead, and no Join on a sister group. A gedu taken off the group
+   * holds no room on it, so their set is empty. The dates are the workspace
+   * document's, never derived here.
    *
    * Required for the same reason as {@link trainees}: a shell that forgot it
    * would draw a Join on rooms that refuse the reader.
@@ -660,7 +661,7 @@ export function GroupWorkspace({
       }),
     [data.planned_sessions, openEnded, now, locale, timeZone],
   );
-  // A temporary seat's room is this group's on its own dates alone, so its
+  // A room held by date is this group's on those dates alone, so its
   // countdown is read across those dates of the plan and no others.
   const ownVoiceState = useMemo(
     () =>
@@ -689,7 +690,7 @@ export function GroupWorkspace({
     ],
   );
   // Whether each Join is the reader's to draw. A product with no voice room
-  // draws none; a temporary seat draws this group's only while one of its
+  // draws none; a room held by date draws this group's only while one of its
   // dates is still ahead, and never a sister group's.
   const drawsOwnJoin =
     hasVoiceRoom(data.product.delivery_mode) &&

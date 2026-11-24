@@ -384,9 +384,10 @@ roster not at all, and a gedu still current on the group gets nothing extra. Whe
 substitute writes every session of the group, they write only those dates too: the run
 is no longer theirs, so the session writes ask a session-scoped gate and the group-level
 ones (notes, roster, game accounts) stay as a substitute's. The workspace document
-states what the reader's temporary seat reaches — whether they write every session, and
-which dates are theirs to send and to join — and the page offers Edit, Send and the room
-from that answer alone. The dashboard reads that draw the card ask only
+states what the reader's temporary seat reaches — whether they write every session, which
+dates are theirs to send, which dates' rooms admit them (their substitution dates only,
+never an ended assignment's), and whether a current period elsewhere on the product opens
+every room of it — and the page offers Edit, Send and Join from that answer alone. The dashboard reads that draw the card ask only
 whether the substitution has expired, which is why the card outlives the lock rather than
 appearing with it.
 

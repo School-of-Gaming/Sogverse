@@ -563,11 +563,38 @@ describe("an ended assignment keeps a substitute's window", () => {
     // Product-local dates, oldest first, each once.
     expect([...seat.session_dates].sort()).toEqual(seat.session_dates);
     expect(new Set(seat.session_dates).size).toBe(seat.session_dates.length);
+    // Theirs to write and send, never a room: voice admits an ended assignment
+    // to nothing, and they teach nowhere else on the product.
+    expect(seat.voice_dates).toEqual([]);
+    expect(seat.teaches_product).toBe(false);
 
     // The admin reading the same document holds the group outright.
     const asAdmin = await adminAuth.rpc("get_gedu_group_feed", { p_group_id: GROUP });
     expect(asAdmin.error).toBeNull();
     expect(geduGroupFeed.parse(asAdmin.data).viewer_temporary_seat).toBeNull();
+  });
+
+  it("tells a gedu moved to a sister group that every room of the product is theirs", async () => {
+    // Off GROUP two days ago and onto GROUP_2 at the same instant.
+    await seedAssignments(admin, [
+      { groupId: GROUP, geduId: GEDU, productId: PRODUCT, startedAt: nineAm(-20), endedAt: nineAm(-2) },
+      { groupId: GROUP_2, geduId: GEDU, productId: PRODUCT, startedAt: nineAm(-2) },
+    ]);
+    const { data, error } = await geduAuth.rpc("get_gedu_group_feed", { p_group_id: GROUP });
+    expect(error).toBeNull();
+    const seat = geduGroupFeed.parse(data).viewer_temporary_seat;
+    if (seat === null) throw new Error("GROUP is held through the ended period alone");
+
+    // GROUP's windowed dates are still theirs to send, still no room of their
+    // own — but the current period on GROUP_2 is what voice admits them by, to
+    // every room of the product, GROUP's included.
+    expect(seat.session_dates).toContain(utcDate(-3));
+    expect(seat.voice_dates).toEqual([]);
+    expect(seat.teaches_product).toBe(true);
+
+    const voice = await geduAuth.rpc("is_voice_group_member", { p_group_id: GROUP });
+    expect(voice.error).toBeNull();
+    expect(voice.data).toBe(true);
   });
 
   it("keeps the ended gedu out of the voice room and the chat roster", async () => {

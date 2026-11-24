@@ -1693,9 +1693,13 @@ describe("session substitutions", () => {
 
       const sub = await subAuth.rpc("get_gedu_group_feed", { p_group_id: GROUP_A });
       expect(sub.error).toBeNull();
+      // Their date is also their room, and only theirs: they teach nowhere on
+      // the product.
       expect(geduGroupFeed.parse(sub.data).viewer_temporary_seat).toEqual({
         writes_every_session: true,
         session_dates: [utcDate(-3)],
+        voice_dates: [utcDate(-3)],
+        teaches_product: false,
       });
 
       // The group's own gedu holds it outright.
