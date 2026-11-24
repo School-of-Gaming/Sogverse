@@ -5,7 +5,12 @@ import {
   CHAT_IMAGES_BUCKET,
   ensureChatChannelResult,
 } from "@/services/chat/chat.contracts";
-import { createAdminTestClient, createAuthenticatedClient } from "./helpers";
+import {
+  createAdminTestClient,
+  createAuthenticatedClient,
+  dbNow,
+  dbTime,
+} from "./helpers";
 import { TEST_IDS, TEST_CREDENTIALS } from "./constants";
 import {
   createScheduleSlot,
@@ -128,20 +133,23 @@ describe("chat image storage policy", () => {
     ]);
 
     await deleteTestProducts(admin, [PRODUCT_LIVE]);
+    // Every time below is the database's: it is the clock that judges the
+    // term, the open window and the family's read bound.
+    const now = await dbNow();
     // The term started a week ago: a session is only a session inside its
     // product's term, and the helper's default start is tomorrow.
     await createTestProduct(admin, {
       id: PRODUCT_LIVE,
       seatCount: 50,
       timezone: "UTC",
-      startDate: new Date(Date.now() - 7 * 86_400_000).toISOString().slice(0, 10),
+      startDate: new Date(now.getTime() - 7 * 86_400_000).toISOString().slice(0, 10),
     });
 
     // A slot whose window is open RIGHT NOW: the session started ten minutes
     // ago and runs an hour, so `ensure_chat_channel` finds it however long this
     // file takes. The product's timezone is UTC, so the weekday and wall clock
     // come straight off the UTC fields.
-    const sessionStart = new Date(Date.now() - 10 * 60_000);
+    const sessionStart = new Date(now.getTime() - 10 * 60_000);
     await createScheduleSlot(admin, PRODUCT_LIVE, {
       // schedule_slots.weekday is 0 = Monday; getUTCDay() is 0 = Sunday.
       weekday: (sessionStart.getUTCDay() + 6) % 7,
@@ -193,20 +201,18 @@ describe("chat image storage policy", () => {
       throw new Error(`seed image message failed: ${liveRow.error.message}`);
     }
 
-    // A channel whose window closed a month ago, and a picture inside it. Both
-    // fabricated through the service-role client on purpose: they are the rows
-    // no RPC will produce, because the ensure function only ever mints the
-    // window that is open now.
-    const expiredOpens = new Date(Date.now() - 30 * 24 * 60 * 60_000);
+    // A channel whose family read bound — an hour past its close — lapsed a
+    // second ago, and a picture inside it. Both fabricated through the
+    // service-role client on purpose: they are the rows no RPC will produce,
+    // because the ensure function only ever mints the window that is open now.
+    const expiredEnds = await dbTime(-(60 * 60_000 + 1_000));
     const expired = await admin
       .from("chat_channels")
       .insert({
         type: "group_session",
         group_id: liveGroup,
-        session_opens_at: expiredOpens.toISOString(),
-        session_ends_at: new Date(
-          expiredOpens.getTime() + 60 * 60_000,
-        ).toISOString(),
+        session_opens_at: new Date(expiredEnds.getTime() - 60 * 60_000).toISOString(),
+        session_ends_at: expiredEnds.toISOString(),
       })
       .select("id")
       .single();

@@ -4883,6 +4883,7 @@ export type Database = {
         Returns: string
       }
       create_testimonial: { Args: { p_versions: Json }; Returns: string }
+      db_clock: { Args: never; Returns: string }
       decline_session_substitution: {
         Args: { p_request_id: string }
         Returns: Json

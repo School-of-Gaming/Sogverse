@@ -5,6 +5,7 @@ import {
   createAdminTestClient,
   createAnonTestClient,
   createAuthenticatedClient,
+  uniqueSuffix,
 } from "./helpers";
 import { TEST_IDS, TEST_CREDENTIALS } from "./constants";
 import { deleteTestProducts } from "./product-helpers";
@@ -171,7 +172,7 @@ describe("gedu invoicing", () => {
     // The sub is minted rather than seeded, and unique per run, so whatever it
     // holds is this file's alone — which is what lets its own read be asserted
     // whole.
-    const email = `gedu-invoicing-sub-${Date.now()}@test.local`;
+    const email = `gedu-invoicing-sub-${uniqueSuffix()}@test.local`;
     const { data: created, error } = await admin.auth.admin.createUser({
       email,
       password: "testpassword123",

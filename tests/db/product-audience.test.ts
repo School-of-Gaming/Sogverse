@@ -11,6 +11,8 @@ import {
   callRpcRaw,
   createAdminTestClient,
   createAuthenticatedClient,
+  dbNow,
+  utcDayOffset,
 } from "./helpers";
 import { TEST_CREDENTIALS, TEST_IDS } from "./constants";
 import {
@@ -56,16 +58,13 @@ const PRODUCT_ROSTER = "00000000-0000-0000-0000-000000000614";
 const PRODUCT_AGE_PROBE = "00000000-0000-0000-0000-000000000615";
 
 /**
- * `YYYY-MM-DD`, `offset` days from today. The fixture products run in UTC, so a
- * UTC-pinned walk is exact here rather than merely convenient.
+ * The database's clock, read when the file loads: the dates below are built
+ * then, and they count from the database's today, the one its functions judge
+ * against.
  */
-function dayOffset(offset: number): string {
-  const d = new Date();
-  d.setUTCDate(d.getUTCDate() + offset);
-  return d.toISOString().slice(0, 10);
-}
+const DB_NOW = await dbNow();
 
-const YESTERDAY = dayOffset(-1);
+const YESTERDAY = utcDayOffset(DB_NOW, -1);
 
 const ALL_PRODUCTS = [
   PRODUCT_GAMERS,
@@ -134,7 +133,7 @@ describe("product audience", () => {
       id: PRODUCT_ROSTER,
       forGamers: true,
       forParents: true,
-      startDate: dayOffset(-30),
+      startDate: utcDayOffset(DB_NOW, -30),
     });
     // A slot on yesterday's weekday, so the group has one finished session an
     // attendance mark can land on. 09:00 UTC has passed on any day already in
@@ -228,7 +227,7 @@ describe("product audience", () => {
         // Required by the column. Nothing in these probes turns on it.
         start_date: "2099-01-01",
         spoken_language_code: "en" as const,
-        registration_opens_at: new Date().toISOString(),
+        registration_opens_at: "2020-01-01T00:00:00Z",
         created_by: TEST_IDS.ADMIN,
         ...fields,
       };

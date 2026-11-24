@@ -16,6 +16,12 @@ import {
   createAdminTestClient,
   createAnonTestClient,
   createAuthenticatedClient,
+  dbNow,
+  utcDayOffset,
+  utcDatesThrough,
+  dbInterval,
+  dbTime,
+  uniqueSuffix,
 } from "./helpers";
 import { TEST_IDS, TEST_CREDENTIALS } from "./constants";
 import { deleteTestProducts, eraseParticipations } from "./product-helpers";
@@ -122,18 +128,18 @@ const FORBIDDEN = "42501";
 const CHECK_VIOLATION = "23514";
 
 /**
- * A UTC calendar date `offset` days from now, UTC-pinned end to end — built with
- * `Date.UTC` and read back through `toISOString`, never by stepping a zoned Date
- * by 86_400_000. The product's timezone is UTC, so this is the product's own
- * calendar.
+ * The database's clock, read when the file loads (a describe below builds its
+ * date then): the calendar dates count from the database's today, in UTC, the
+ * products' zone.
+ *
+ * Refreshed before each test, because the tests judge today themselves — the
+ * voice room on today's date, the 48-hour window before a session two days
+ * out — and each must count from the day it runs on.
  */
-function utcDate(offset: number): string {
-  const now = new Date();
-  const day = new Date(
-    Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), now.getUTCDate() + offset),
-  );
-  return day.toISOString().slice(0, 10);
-}
+let DB_NOW = await dbNow();
+beforeEach(async () => {
+  DB_NOW = await dbNow();
+});
 
 /**
  * **A zone in which it is currently about midday, picked from the clock rather
@@ -154,7 +160,7 @@ function utcDate(offset: number): string {
  * `Etc/GMT` names invert their sign (`Etc/GMT-14` is UTC+14), which is why the
  * two branches read backwards.
  */
-const MIDDAY_OFFSET_HOURS = 12 - new Date().getUTCHours();
+const MIDDAY_OFFSET_HOURS = 12 - DB_NOW.getUTCHours();
 const MIDDAY_ZONE =
   MIDDAY_OFFSET_HOURS === 0
     ? "UTC"
@@ -167,15 +173,7 @@ const LATE_SLOT = "20:00";
 
 /** A calendar date `offset` days from today **as MIDDAY_ZONE is living it**. */
 function middayDate(offset: number): string {
-  const local = new Date(Date.now() + MIDDAY_OFFSET_HOURS * 3_600_000);
-  const day = new Date(
-    Date.UTC(
-      local.getUTCFullYear(),
-      local.getUTCMonth(),
-      local.getUTCDate() + offset,
-    ),
-  );
-  return day.toISOString().slice(0, 10);
+  return utcDayOffset(new Date(DB_NOW.getTime() + MIDDAY_OFFSET_HOURS * 3_600_000), offset);
 }
 
 /** `schedule_slots.weekday` (0 = Monday) for a bare date, read UTC-pinned. */
@@ -251,7 +249,7 @@ describe("session substitutions", () => {
     // Unique per run: CI's database carries the seed fixtures AND whatever a
     // previous run left behind, so a fixed address is a collision waiting to
     // happen.
-    const stamp = Date.now();
+    const stamp = uniqueSuffix();
     const accounts = [
       { email: `substitution-sub-${stamp}@test.local`, first: "Saku", last: "Substitute" },
       { email: `substitution-third-${stamp}@test.local`, first: "Kolme", last: "Thirdson" },
@@ -312,11 +310,11 @@ describe("session substitutions", () => {
         delivery_mode: "online",
         location_id: null,
         timezone: "UTC",
-        registration_opens_at: new Date(Date.now() - 60_000).toISOString(),
+        registration_opens_at: "2020-01-01T00:00:00Z",
         is_visible: true,
         created_by: TEST_IDS.ADMIN,
-        start_date: utcDate(-60),
-        end_date: utcDate(60),
+        start_date: utcDayOffset(DB_NOW, -60),
+        end_date: utcDayOffset(DB_NOW, 60),
         min_age: 8,
         max_age: 18,
         seat_count: null,
@@ -332,11 +330,11 @@ describe("session substitutions", () => {
         delivery_mode: "in_person",
         location_id: SITE,
         timezone: "UTC",
-        registration_opens_at: new Date(Date.now() - 60_000).toISOString(),
+        registration_opens_at: "2020-01-01T00:00:00Z",
         is_visible: true,
         created_by: TEST_IDS.ADMIN,
-        start_date: utcDate(-60),
-        end_date: utcDate(60),
+        start_date: utcDayOffset(DB_NOW, -60),
+        end_date: utcDayOffset(DB_NOW, 60),
         min_age: 8,
         max_age: 18,
         seat_count: null,
@@ -350,11 +348,11 @@ describe("session substitutions", () => {
         delivery_mode: "online",
         location_id: null,
         timezone: "UTC",
-        registration_opens_at: new Date(Date.now() - 60_000).toISOString(),
+        registration_opens_at: "2020-01-01T00:00:00Z",
         is_visible: true,
         created_by: TEST_IDS.ADMIN,
-        start_date: utcDate(-60),
-        end_date: utcDate(60),
+        start_date: utcDayOffset(DB_NOW, -60),
+        end_date: utcDayOffset(DB_NOW, 60),
         min_age: 8,
         max_age: 18,
         seat_count: null,
@@ -372,7 +370,7 @@ describe("session substitutions", () => {
         delivery_mode: "online" as const,
         location_id: null,
         timezone: MIDDAY_ZONE,
-        registration_opens_at: new Date(Date.now() - 60_000).toISOString(),
+        registration_opens_at: "2020-01-01T00:00:00Z",
         is_visible: true,
         created_by: TEST_IDS.ADMIN,
         start_date: middayDate(-60),
@@ -390,11 +388,11 @@ describe("session substitutions", () => {
         delivery_mode: "online",
         location_id: TEST_IDS.LOCATION_MUNICIPALITY,
         timezone: "UTC",
-        registration_opens_at: new Date(Date.now() - 60_000).toISOString(),
+        registration_opens_at: "2020-01-01T00:00:00Z",
         is_visible: true,
         created_by: TEST_IDS.ADMIN,
-        start_date: utcDate(-60),
-        end_date: utcDate(60),
+        start_date: utcDayOffset(DB_NOW, -60),
+        end_date: utcDayOffset(DB_NOW, 60),
         min_age: 8,
         max_age: 18,
         seat_count: null,
@@ -476,7 +474,7 @@ describe("session substitutions", () => {
     });
     await admin
       .from("participations")
-      .update({ group_joined_at: `${utcDate(-30)}T00:00:00.000Z` })
+      .update({ group_joined_at: `${utcDayOffset(DB_NOW, -30)}T00:00:00.000Z` })
       .eq("product_id", PRODUCT);
   });
 
@@ -561,7 +559,7 @@ describe("session substitutions", () => {
         status: input.status ?? (substituted ? "substituted" : "open"),
         substitute_id: substituted,
         approved_by: substituted ? TEST_IDS.ADMIN : null,
-        approved_at: substituted ? new Date().toISOString() : null,
+        approved_at: substituted ? "2020-01-01T00:00:00Z" : null,
       })
       .select("id")
       .single();
@@ -931,7 +929,7 @@ describe("session substitutions", () => {
     });
 
     it("a gedu's own client cannot read a request row", async () => {
-      const date = utcDate(4);
+      const date = utcDayOffset(DB_NOW, 4);
       await seedRequest({ date });
 
       const { data, error } = await geduAuth
@@ -952,28 +950,28 @@ describe("session substitutions", () => {
 
   describe("who is expected at a session", () => {
     it("an assigned gedu is expected, and an unassigned one is not", async () => {
-      const date = utcDate(5);
+      const date = utcDayOffset(DB_NOW, 5);
       expect(await isExpected(TEST_IDS.GEDU, date)).toBe(true);
       expect(await isExpected(subId, date)).toBe(false);
     });
 
     it("an OPEN request takes the requester out", async () => {
-      const date = utcDate(5);
+      const date = utcDayOffset(DB_NOW, 5);
       await seedRequest({ date });
       expect(await isExpected(TEST_IDS.GEDU, date)).toBe(false);
       // …and only on that date.
-      expect(await isExpected(TEST_IDS.GEDU, utcDate(6))).toBe(true);
+      expect(await isExpected(TEST_IDS.GEDU, utcDayOffset(DB_NOW, 6))).toBe(true);
     });
 
     it("a SUBSTITUTED request puts the sub in and keeps the requester out", async () => {
-      const date = utcDate(5);
+      const date = utcDayOffset(DB_NOW, 5);
       await seedRequest({ date, substituteId: subId });
       expect(await isExpected(TEST_IDS.GEDU, date)).toBe(false);
       expect(await isExpected(subId, date)).toBe(true);
     });
 
     it("a CHAIN names only the last sub", async () => {
-      const date = utcDate(5);
+      const date = utcDayOffset(DB_NOW, 5);
       // A is out, SUB substitutions; SUB is then out too, THIRD substitutions.
       await seedRequest({ date, substituteId: subId });
       await seedRequest({ date, absent: subId, substituteId: thirdId });
@@ -984,7 +982,7 @@ describe("session substitutions", () => {
     });
 
     it("an OPEN sub-of-sub request leaves nobody expected", async () => {
-      const date = utcDate(5);
+      const date = utcDayOffset(DB_NOW, 5);
       await seedRequest({ date, substituteId: subId });
       await seedRequest({ date, absent: subId });
 
@@ -994,7 +992,7 @@ describe("session substitutions", () => {
     });
 
     it("a WITHDRAWN request restores the assigned gedu", async () => {
-      const date = utcDate(5);
+      const date = utcDayOffset(DB_NOW, 5);
       const id = await seedRequest({ date });
       await admin
         .from("session_substitution_requests")
@@ -1008,7 +1006,7 @@ describe("session substitutions", () => {
       // The distinction the whole model rests on: clearing a substitution reopens the
       // REQUEST, it does not cancel the ABSENCE. Nobody is expected, which is
       // exactly "back in the queue".
-      const date = utcDate(5);
+      const date = utcDayOffset(DB_NOW, 5);
       const id = await seedRequest({ date, substituteId: subId });
 
       const { error } = await adminAuth.rpc("clear_session_substitution", {
@@ -1021,12 +1019,12 @@ describe("session substitutions", () => {
     });
 
     it("answers about the group and the date it was asked about", async () => {
-      const date = utcDate(5);
+      const date = utcDayOffset(DB_NOW, 5);
       await seedRequest({ date, substituteId: subId });
       // A substitution on GROUP_A says nothing about GROUP_B, and nothing about
       // another date of GROUP_A.
       expect(await isExpected(subId, date, GROUP_B)).toBe(false);
-      expect(await isExpected(subId, utcDate(6))).toBe(false);
+      expect(await isExpected(subId, utcDayOffset(DB_NOW, 6))).toBe(false);
     });
   });
 
@@ -1036,12 +1034,12 @@ describe("session substitutions", () => {
 
   describe("the substitution access window", () => {
     it("is open before the report is mailed, inside the 15-day fallback", async () => {
-      await seedRequest({ date: utcDate(-3), substituteId: subId });
+      await seedRequest({ date: utcDayOffset(DB_NOW, -3), substituteId: subId });
       expect(await substitutesGroup(subAuth)).toBe(true);
     });
 
     it("has closed 15 days after the session when no report was ever mailed", async () => {
-      await seedRequest({ date: utcDate(-20), substituteId: subId });
+      await seedRequest({ date: utcDayOffset(DB_NOW, -20), substituteId: subId });
       expect(await substitutesGroup(subAuth)).toBe(false);
     });
 
@@ -1049,47 +1047,47 @@ describe("session substitutions", () => {
       // The boundary, walked rather than asserted at one point — the predicate
       // has to be shown FLIPPING, or a body that always answered true would pass
       // the case above.
-      const id = await seedRequest({ date: utcDate(-14), substituteId: subId });
+      const id = await seedRequest({ date: utcDayOffset(DB_NOW, -14), substituteId: subId });
       expect(await substitutesGroup(subAuth)).toBe(true);
 
       await admin
         .from("session_substitution_requests")
-        .update({ session_date: utcDate(-16) })
+        .update({ session_date: utcDayOffset(DB_NOW, -16) })
         .eq("id", id);
       expect(await substitutesGroup(subAuth)).toBe(false);
     });
 
     it("closes 24 hours after the report is mailed, however early that is", async () => {
-      const date = utcDate(-3);
+      const date = utcDayOffset(DB_NOW, -3);
       await seedRequest({ date, substituteId: subId });
       await admin.from("group_sessions").insert({
         group_id: GROUP_A,
         session_date: date,
         ...slotInstants(date),
         report: "a report",
-        report_emailed_at: new Date(Date.now() - 60 * 60 * 1000).toISOString(),
+        report_emailed_at: (await dbTime(-(24 * 60 * 60_000 - 60_000))).toISOString(),
       });
 
-      // One hour after the send: the 24 hours have not run out, and the mail
-      // arm — not the 15-day fallback — is what is deciding.
+      // A minute short of 24 hours after the send: the window has not run out,
+      // and the mail arm — not the 15-day fallback — is what is deciding.
       expect(await substitutesGroup(subAuth)).toBe(true);
 
       await admin
         .from("group_sessions")
         .update({
-          report_emailed_at: new Date(Date.now() - 25 * 60 * 60 * 1000).toISOString(),
+          report_emailed_at: (await dbTime(-(24 * 60 * 60_000 + 1_000))).toISOString(),
         })
         .eq("group_id", GROUP_A)
         .eq("session_date", date);
 
-      // Twenty-five hours after the send, and still eleven days inside the
+      // A second past 24 hours after the send, and still eleven days inside the
       // fallback: the mail arm overrides it, which is the whole point of the
       // COALESCE reading the mail stamp first.
       expect(await substitutesGroup(subAuth)).toBe(false);
     });
 
     it("shuts the moment the holder is de-certified, mid-window", async () => {
-      await seedRequest({ date: utcDate(-3), substituteId: subId });
+      await seedRequest({ date: utcDayOffset(DB_NOW, -3), substituteId: subId });
       expect(await substitutesGroup(subAuth)).toBe(true);
 
       await admin
@@ -1103,7 +1101,7 @@ describe("session substitutions", () => {
     it("answers only about the caller", async () => {
       // The spine classifies gedu_substitutes_group as self-scoping, and this is the
       // scope test it names: the same group id, three callers, three answers.
-      await seedRequest({ date: utcDate(-3), substituteId: subId });
+      await seedRequest({ date: utcDayOffset(DB_NOW, -3), substituteId: subId });
 
       expect(await substitutesGroup(subAuth)).toBe(true);
       expect(await substitutesGroup(thirdAuth)).toBe(false);
@@ -1113,7 +1111,7 @@ describe("session substitutions", () => {
     });
 
     it("says nothing about a group the substitution is not on", async () => {
-      await seedRequest({ date: utcDate(-3), substituteId: subId });
+      await seedRequest({ date: utcDayOffset(DB_NOW, -3), substituteId: subId });
       expect(await substitutesGroup(subAuth, GROUP_B)).toBe(false);
       expect(await substitutesGroup(subAuth, GROUP_OFF)).toBe(false);
     });
@@ -1131,12 +1129,12 @@ describe("session substitutions", () => {
       // a date three days out is tomorrow at 10:00 — still ahead whatever hour
       // this runs at — and the opening for one day out was yesterday at 10:00,
       // which is behind it for the same reason.
-      const id = await seedRequest({ date: utcDate(3), substituteId: subId });
+      const id = await seedRequest({ date: utcDayOffset(DB_NOW, 3), substituteId: subId });
       expect(await substitutesGroup(subAuth)).toBe(false);
 
       await admin
         .from("session_substitution_requests")
-        .update({ session_date: utcDate(1) })
+        .update({ session_date: utcDayOffset(DB_NOW, 1) })
         .eq("id", id);
       expect(await substitutesGroup(subAuth)).toBe(true);
     });
@@ -1208,7 +1206,7 @@ describe("session substitutions", () => {
       // reaches this case, which is the property worth pinning.
       const { error } = await adminAuth.rpc("set_session_substitution", {
         p_group_id: GROUP_A,
-        p_session_date: utcDate(-5),
+        p_session_date: utcDayOffset(DB_NOW, -5),
         p_absent_gedu_id: TEST_IDS.GEDU,
         p_sub_gedu_id: subId,
         p_reason: "other",
@@ -1223,7 +1221,7 @@ describe("session substitutions", () => {
       // reaches the group refuses, because the workspace opens eight days from
       // now. The two halves are the point: a card with no page behind it yet,
       // rather than no card at all.
-      const date = utcDate(10);
+      const date = utcDayOffset(DB_NOW, 10);
       await seedRequest({ date, substituteId: subId });
       await seedRequest({ groupId: GROUP_SITE, date, substituteId: subId });
 
@@ -1236,7 +1234,7 @@ describe("session substitutions", () => {
       ]);
 
       const summaries = await subAuth.rpc("get_my_gedu_assignment_summaries", {
-        p_epoch_date: utcDate(-3),
+        p_epoch_date: utcDayOffset(DB_NOW, -3),
       });
       expect(summaries.error).toBeNull();
       const mine = assignmentSummaries
@@ -1279,7 +1277,7 @@ describe("session substitutions", () => {
   // -------------------------------------------------------------------------
 
   describe("who may be seated as a sub", () => {
-    const date = utcDate(5);
+    const date = utcDayOffset(DB_NOW, 5);
 
     it("refuses the absent gedu themselves", async () => {
       await seedRequest({ date });
@@ -1308,7 +1306,7 @@ describe("session substitutions", () => {
           status: "substituted",
           substitute_id: subId,
           approved_by: TEST_IDS.ADMIN,
-          approved_at: new Date().toISOString(),
+          approved_at: "2020-01-01T00:00:00Z",
         })
         .eq("group_id", GROUP_A)
         .eq("session_date", date);
@@ -1358,7 +1356,7 @@ describe("session substitutions", () => {
 
   describe("the workspace a substitute reaches", () => {
     it("admits a live substitution to the group feed, and shuts again when the window does", async () => {
-      const id = await seedRequest({ date: utcDate(-3), substituteId: subId });
+      const id = await seedRequest({ date: utcDayOffset(DB_NOW, -3), substituteId: subId });
 
       const open = await subAuth.rpc("get_gedu_group_feed", {
         p_group_id: GROUP_A,
@@ -1368,7 +1366,7 @@ describe("session substitutions", () => {
 
       await admin
         .from("session_substitution_requests")
-        .update({ session_date: utcDate(-20) })
+        .update({ session_date: utcDayOffset(DB_NOW, -20) })
         .eq("id", id);
 
       const shut = await subAuth.rpc("get_gedu_group_feed", {
@@ -1385,7 +1383,7 @@ describe("session substitutions", () => {
     });
 
     it("resolves the substituted group when the caller has no assignment on the product", async () => {
-      await seedRequest({ groupId: GROUP_B, date: utcDate(-3), substituteId: subId });
+      await seedRequest({ groupId: GROUP_B, date: utcDayOffset(DB_NOW, -3), substituteId: subId });
 
       const { data, error } = await subAuth.rpc("get_gedu_assigned_product", {
         p_product_id: PRODUCT,
@@ -1409,7 +1407,7 @@ describe("session substitutions", () => {
       });
       await seedRequest({
         groupId: GROUP_B,
-        date: utcDate(-3),
+        date: utcDayOffset(DB_NOW, -3),
         absent: thirdId,
         substituteId: subId,
       });
@@ -1443,7 +1441,7 @@ describe("session substitutions", () => {
     it("admits a live substitution to the site notes of an in-person product at that site", async () => {
       await seedRequest({
         groupId: GROUP_SITE,
-        date: utcDate(-3),
+        date: utcDayOffset(DB_NOW, -3),
         substituteId: subId,
       });
 
@@ -1494,8 +1492,8 @@ describe("session substitutions", () => {
       // the case still passes rather than flaking; the two-days-back case below
       // is deterministic under either reading and is what proves the window is
       // exactly two days wide.
-      await seedRequest({ date: utcDate(-1), substituteId: subId });
-      await seedRequest({ date: utcDate(1), substituteId: subId });
+      await seedRequest({ date: utcDayOffset(DB_NOW, -1), substituteId: subId });
+      await seedRequest({ date: utcDayOffset(DB_NOW, 1), substituteId: subId });
 
       expect(await voiceArms()).toEqual({ member: true, moderator: true });
     });
@@ -1503,7 +1501,7 @@ describe("session substitutions", () => {
     it("refuses a substitution dated TWO DAYS ago, so the overlap is one day and not a week", async () => {
       // Deterministic however the run straddles midnight: two days back reads as
       // two or three days back, and neither is admitted.
-      await seedRequest({ date: utcDate(-2), substituteId: subId });
+      await seedRequest({ date: utcDayOffset(DB_NOW, -2), substituteId: subId });
 
       expect(await voiceArms()).toEqual({ member: false, moderator: false });
 
@@ -1516,7 +1514,7 @@ describe("session substitutions", () => {
     it("refuses a substitution whose date is not today", async () => {
       // A week out, so no reading of "today" can reach it however the run
       // straddles UTC midnight.
-      await seedRequest({ date: utcDate(7), substituteId: subId });
+      await seedRequest({ date: utcDayOffset(DB_NOW, 7), substituteId: subId });
 
       const member = await subAuth.rpc("is_voice_group_member", {
         p_group_id: GROUP_A,
@@ -1542,8 +1540,8 @@ describe("session substitutions", () => {
       // one of the two rows matches, so this cannot flake at a midnight
       // boundary. Two rows on two dates are legal — the live-seat key is per
       // (group, date, person).
-      await seedRequest({ date: utcDate(0), substituteId: subId });
-      await seedRequest({ date: utcDate(1), substituteId: subId });
+      await seedRequest({ date: utcDayOffset(DB_NOW, 0), substituteId: subId });
+      await seedRequest({ date: utcDayOffset(DB_NOW, 1), substituteId: subId });
 
       const member = await subAuth.rpc("is_voice_group_member", {
         p_group_id: GROUP_A,
@@ -1572,8 +1570,8 @@ describe("session substitutions", () => {
 
   describe("the family report mail admits a substitution on the substitution date only", () => {
     it("refuses the claim for a date the substitution is not on", async () => {
-      const substituted = utcDate(-3);
-      const other = utcDate(-4);
+      const substituted = utcDayOffset(DB_NOW, -3);
+      const other = utcDayOffset(DB_NOW, -4);
       await seedRequest({ date: substituted, substituteId: subId });
 
       // A report exists on BOTH dates, so the refusal cannot be the "nothing to
@@ -1601,7 +1599,7 @@ describe("session substitutions", () => {
     });
 
     it("still admits the group's assigned gedu on any date", async () => {
-      const date = utcDate(-4);
+      const date = utcDayOffset(DB_NOW, -4);
       await admin.from("group_sessions").insert({
         group_id: GROUP_A,
         session_date: date,
@@ -1620,11 +1618,11 @@ describe("session substitutions", () => {
       // Writing is group-wide and only the MAIL is date-scoped, which is the
       // asymmetry the plan is explicit about: a sub may fix a typo, and may not
       // announce a session they did not run.
-      await seedRequest({ date: utcDate(-3), substituteId: subId });
+      await seedRequest({ date: utcDayOffset(DB_NOW, -3), substituteId: subId });
 
       const { error } = await subAuth.rpc("set_group_session_notes", {
         p_group_id: GROUP_A,
-        p_session_date: utcDate(-4),
+        p_session_date: utcDayOffset(DB_NOW, -4),
         p_report: "written by the sub",
         p_gedu_note: "",
       });
@@ -1638,7 +1636,7 @@ describe("session substitutions", () => {
 
   describe("filing, withdrawing and offering", () => {
     it("files a request with the filer's assignment role and a trimmed note", async () => {
-      const date = utcDate(5);
+      const date = utcDayOffset(DB_NOW, 5);
       const { data, error } = await geduAuth.rpc("request_session_substitution", {
         p_group_id: GROUP_A,
         p_session_date: date,
@@ -1675,7 +1673,7 @@ describe("session substitutions", () => {
 
       const { data, error } = await geduAuth.rpc("request_session_substitution", {
         p_group_id: GROUP_A,
-        p_session_date: utcDate(5),
+        p_session_date: utcDayOffset(DB_NOW, 5),
         p_reason: "other",
       });
       expect(error).toBeNull();
@@ -1691,14 +1689,14 @@ describe("session substitutions", () => {
     it("refuses a gedu who is not expected at that session", async () => {
       const { error } = await subAuth.rpc("request_session_substitution", {
         p_group_id: GROUP_A,
-        p_session_date: utcDate(5),
+        p_session_date: utcDayOffset(DB_NOW, 5),
         p_reason: "sick",
       });
       expect(error?.code).toBe(FORBIDDEN);
     });
 
     it("lets an approved substitute file their own absence, with the substituted role", async () => {
-      const date = utcDate(5);
+      const date = utcDayOffset(DB_NOW, 5);
       await seedRequest({ date, substituteId: subId, role: "assistant" });
 
       const { data, error } = await subAuth.rpc("request_session_substitution", {
@@ -1715,28 +1713,28 @@ describe("session substitutions", () => {
     it("refuses a past date, a missing reason, and an unscheduled one", async () => {
       const past = await geduAuth.rpc("request_session_substitution", {
         p_group_id: GROUP_A,
-        p_session_date: utcDate(-5),
+        p_session_date: utcDayOffset(DB_NOW, -5),
         p_reason: "sick",
       });
       expect(past.error?.code).toBe(CHECK_VIOLATION);
 
       const noReason = await geduAuth.rpc("request_session_substitution", {
         p_group_id: GROUP_A,
-        p_session_date: utcDate(5),
+        p_session_date: utcDayOffset(DB_NOW, 5),
       });
       expect(noReason.error?.code).toBe(CHECK_VIOLATION);
 
       // Beyond the term's end date, so the writable-date check refuses it.
       const outsideTerm = await geduAuth.rpc("request_session_substitution", {
         p_group_id: GROUP_A,
-        p_session_date: utcDate(120),
+        p_session_date: utcDayOffset(DB_NOW, 120),
         p_reason: "sick",
       });
       expect(outsideTerm.error?.code).toBe(CHECK_VIOLATION);
     });
 
     it("withdraws its own open request, and refuses somebody else's", async () => {
-      const date = utcDate(5);
+      const date = utcDayOffset(DB_NOW, 5);
       const mine = await seedRequest({ date });
 
       const stranger = await subAuth.rpc("withdraw_session_substitution_request", {
@@ -1760,7 +1758,7 @@ describe("session substitutions", () => {
     });
 
     it("refuses to withdraw a request an admin has already substituted", async () => {
-      const id = await seedRequest({ date: utcDate(5), substituteId: subId });
+      const id = await seedRequest({ date: utcDayOffset(DB_NOW, 5), substituteId: subId });
       const { error } = await geduAuth.rpc("withdraw_session_substitution_request", {
         p_request_id: id,
       });
@@ -1768,7 +1766,7 @@ describe("session substitutions", () => {
     });
 
     it("offers idempotently, and refuses a candidate the guard turns down", async () => {
-      const id = await seedRequest({ date: utcDate(5) });
+      const id = await seedRequest({ date: utcDayOffset(DB_NOW, 5) });
 
       for (let i = 0; i < 2; i += 1) {
         const { error } = await subAuth.rpc("offer_session_substitution", {
@@ -1788,13 +1786,13 @@ describe("session substitutions", () => {
     });
 
     it("refuses an offer on a past session and on a substituted request", async () => {
-      const past = await seedRequest({ date: utcDate(-5) });
+      const past = await seedRequest({ date: utcDayOffset(DB_NOW, -5) });
       const pastOffer = await subAuth.rpc("offer_session_substitution", {
         p_request_id: past,
       });
       expect(pastOffer.error?.code).toBe(CHECK_VIOLATION);
 
-      const taken = await seedRequest({ date: utcDate(5), substituteId: thirdId });
+      const taken = await seedRequest({ date: utcDayOffset(DB_NOW, 5), substituteId: thirdId });
       const takenOffer = await subAuth.rpc("offer_session_substitution", {
         p_request_id: taken,
       });
@@ -1802,7 +1800,7 @@ describe("session substitutions", () => {
     });
 
     it("switches one row between offer and decline, and refuses either once the caller IS the substitute", async () => {
-      const id = await seedRequest({ date: utcDate(5) });
+      const id = await seedRequest({ date: utcDayOffset(DB_NOW, 5) });
       await subAuth.rpc("offer_session_substitution", { p_request_id: id });
 
       const declined = await subAuth.rpc("decline_session_substitution", {
@@ -1823,7 +1821,7 @@ describe("session substitutions", () => {
           status: "substituted",
           substitute_id: subId,
           approved_by: TEST_IDS.ADMIN,
-          approved_at: new Date().toISOString(),
+          approved_at: "2020-01-01T00:00:00Z",
         })
         .eq("id", id);
 
@@ -1839,7 +1837,7 @@ describe("session substitutions", () => {
     });
 
     it("stamps responded_at when the answer changes, and not when it is repeated", async () => {
-      const id = await seedRequest({ date: utcDate(5) });
+      const id = await seedRequest({ date: utcDayOffset(DB_NOW, 5) });
       await subAuth.rpc("offer_session_substitution", { p_request_id: id });
       const first = await answerRow(id, subId);
 
@@ -1855,7 +1853,7 @@ describe("session substitutions", () => {
     });
 
     it("lets a gedu who could be asked decline without having offered", async () => {
-      const id = await seedRequest({ date: utcDate(5) });
+      const id = await seedRequest({ date: utcDayOffset(DB_NOW, 5) });
       const { error } = await thirdAuth.rpc("decline_session_substitution", {
         p_request_id: id,
       });
@@ -1868,7 +1866,7 @@ describe("session substitutions", () => {
       // offerer who is no longer certified — and so could no longer offer —
       // still declines, which is the only way to take the offer off the
       // office's list.
-      const id = await seedRequest({ date: utcDate(5) });
+      const id = await seedRequest({ date: utcDayOffset(DB_NOW, 5) });
       await subAuth.rpc("offer_session_substitution", { p_request_id: id });
       await admin.from("gedu_profiles").update({ certified: false }).eq("user_id", subId);
 
@@ -1888,7 +1886,7 @@ describe("session substitutions", () => {
       // follows must not hand them over: a document carrying requested_by on
       // every write would make one button-press the whole
       // attack, on any open request in the pool.
-      const id = await seedRequest({ date: utcDate(5) });
+      const id = await seedRequest({ date: utcDayOffset(DB_NOW, 5) });
       await admin
         .from("session_substitution_requests")
         .update({ reason: "sick", reason_note: "private" })
@@ -1914,7 +1912,7 @@ describe("session substitutions", () => {
       // A decline that may write for anybody would be a free lookup of the
       // request, keyed by its id. 42501 is the answer an unknown id already
       // gets, so it is not an existence oracle either.
-      const id = await seedRequest({ date: utcDate(5) });
+      const id = await seedRequest({ date: utcDayOffset(DB_NOW, 5) });
       await admin.from("gedu_profiles").update({ certified: false }).eq("user_id", thirdId);
 
       const { data, error } = await thirdAuth.rpc("decline_session_substitution", {
@@ -1930,7 +1928,7 @@ describe("session substitutions", () => {
     });
 
     it("conceals the absent gedu on a decline", async () => {
-      const id = await seedRequest({ date: utcDate(5) });
+      const id = await seedRequest({ date: utcDayOffset(DB_NOW, 5) });
 
       const { data, error } = await subAuth.rpc("decline_session_substitution", {
         p_request_id: id,
@@ -1946,7 +1944,7 @@ describe("session substitutions", () => {
     it("refuses a losing offerer's decline once somebody else took the request", async () => {
       // Nothing is left to answer: the request is settled, and "not selected"
       // is derived from it being substituted by somebody else.
-      const id = await seedRequest({ date: utcDate(5) });
+      const id = await seedRequest({ date: utcDayOffset(DB_NOW, 5) });
       await thirdAuth.rpc("offer_session_substitution", { p_request_id: id });
       await admin
         .from("session_substitution_requests")
@@ -1954,7 +1952,7 @@ describe("session substitutions", () => {
           status: "substituted",
           substitute_id: subId,
           approved_by: TEST_IDS.ADMIN,
-          approved_at: new Date().toISOString(),
+          approved_at: "2020-01-01T00:00:00Z",
         })
         .eq("id", id);
 
@@ -1967,7 +1965,7 @@ describe("session substitutions", () => {
     });
 
     it("refuses a decline on a past session", async () => {
-      const id = await seedRequest({ date: utcDate(-5) });
+      const id = await seedRequest({ date: utcDayOffset(DB_NOW, -5) });
       const { error } = await subAuth.rpc("decline_session_substitution", {
         p_request_id: id,
       });
@@ -1978,7 +1976,7 @@ describe("session substitutions", () => {
 
   describe("the pool list", () => {
     it("carries the request the caller could take, with its role's fee and no absent name", async () => {
-      const date = utcDate(7);
+      const date = utcDayOffset(DB_NOW, 7);
       const id = await seedRequest({ date });
 
       const { data, error } = await subAuth.rpc("get_open_substitution_requests");
@@ -2000,7 +1998,7 @@ describe("session substitutions", () => {
     });
 
     it("reports the assistant fee for an assistant seat", async () => {
-      const id = await seedRequest({ date: utcDate(7), role: "assistant" });
+      const id = await seedRequest({ date: utcDayOffset(DB_NOW, 7), role: "assistant" });
       const { data } = await subAuth.rpc("get_open_substitution_requests");
       const row = openSubstitutionRequests
         .parse(data)
@@ -2009,7 +2007,7 @@ describe("session substitutions", () => {
     });
 
     it("carries the caller's own answer, keeps a declined request listed, and never shows a colleague's", async () => {
-      const id = await seedRequest({ date: utcDate(7) });
+      const id = await seedRequest({ date: utcDayOffset(DB_NOW, 7) });
       const myResponse = async (client: SupabaseClient<Database>) => {
         const { data, error } = await client.rpc("get_open_substitution_requests");
         expect(error).toBeNull();
@@ -2032,7 +2030,7 @@ describe("session substitutions", () => {
     it("lists a request however far ahead its session is", async () => {
       // The pool matches the notification DMs, which go out at filing whatever
       // the date — so nothing caps how far ahead it reaches.
-      const id = await seedRequest({ date: utcDate(90) });
+      const id = await seedRequest({ date: utcDayOffset(DB_NOW, 90) });
 
       const { data, error } = await subAuth.rpc("get_open_substitution_requests");
       expect(error).toBeNull();
@@ -2041,16 +2039,16 @@ describe("session substitutions", () => {
     });
 
     it("excludes the caller's own absence, a substituted request and a past one", async () => {
-      const own = await seedRequest({ date: utcDate(7) });
+      const own = await seedRequest({ date: utcDayOffset(DB_NOW, 7) });
       const taken = await seedRequest({
         groupId: GROUP_B,
-        date: utcDate(7),
+        date: utcDayOffset(DB_NOW, 7),
         absent: thirdId,
         substituteId: subId,
       });
       const past = await seedRequest({
         groupId: GROUP_SITE,
-        date: utcDate(-7),
+        date: utcDayOffset(DB_NOW, -7),
       });
 
       const { data } = await geduAuth.rpc("get_open_substitution_requests");
@@ -2061,7 +2059,7 @@ describe("session substitutions", () => {
     });
 
     it("is empty for an uncertified gedu rather than a refusal", async () => {
-      await seedRequest({ date: utcDate(7) });
+      await seedRequest({ date: utcDayOffset(DB_NOW, 7) });
       await admin
         .from("gedu_profiles")
         .update({ certified: false })
@@ -2126,7 +2124,7 @@ describe("session substitutions", () => {
     });
 
     it("keeps a consumer-club request out of the pool of a gedu without consumer_products, until granted", async () => {
-      const id = await seedRequest({ date: utcDate(7) });
+      const id = await seedRequest({ date: utcDayOffset(DB_NOW, 7) });
       await setQualification(subId, "consumer_products", false);
 
       expect(await poolIds(subAuth)).not.toContain(id);
@@ -2145,7 +2143,7 @@ describe("session substitutions", () => {
 
     it("asks a neuroinclusive product for both of its qualifications", async () => {
       await admin.from("products").update({ tag: "neuroinclusive" }).eq("id", PRODUCT);
-      const id = await seedRequest({ date: utcDate(7) });
+      const id = await seedRequest({ date: utcDayOffset(DB_NOW, 7) });
 
       // consumer_products alone is not enough on a neuroinclusive consumer club.
       expect(await poolIds(subAuth)).not.toContain(id);
@@ -2162,7 +2160,7 @@ describe("session substitutions", () => {
 
     it("asks nothing of a gedu on an untagged municipality club", async () => {
       await setQualification(subId, "consumer_products", false);
-      const id = await seedRequest({ groupId: GROUP_MUNI, date: utcDate(7) });
+      const id = await seedRequest({ groupId: GROUP_MUNI, date: utcDayOffset(DB_NOW, 7) });
 
       expect(await poolIds(subAuth)).toContain(id);
       const { error } = await subAuth.rpc("offer_session_substitution", { p_request_id: id });
@@ -2174,7 +2172,7 @@ describe("session substitutions", () => {
 
       const { data, error } = await adminAuth.rpc("set_session_substitution", {
         p_group_id: GROUP_A,
-        p_session_date: utcDate(5),
+        p_session_date: utcDayOffset(DB_NOW, 5),
         p_absent_gedu_id: TEST_IDS.GEDU,
         p_sub_gedu_id: subId,
         p_reason: "sick",
@@ -2184,7 +2182,7 @@ describe("session substitutions", () => {
     });
 
     it("approves an offer whose gedu has since lost the qualification", async () => {
-      const id = await seedRequest({ date: utcDate(5) });
+      const id = await seedRequest({ date: utcDayOffset(DB_NOW, 5) });
       const offered = await subAuth.rpc("offer_session_substitution", { p_request_id: id });
       expect(offered.error).toBeNull();
       await setQualification(subId, "consumer_products", false);
@@ -2227,7 +2225,7 @@ describe("session substitutions", () => {
     }
 
     it("keeps a request out of the pool of a gedu who does not speak its language, until they list it", async () => {
-      const id = await seedRequest({ date: utcDate(7) });
+      const id = await seedRequest({ date: utcDayOffset(DB_NOW, 7) });
       await setSpokenLanguages(subId, ["fi", "sv"]);
 
       expect(await poolIds(subAuth)).not.toContain(id);
@@ -2245,8 +2243,8 @@ describe("session substitutions", () => {
     });
 
     it("shows a gedu who has listed no language an empty pool", async () => {
-      await seedRequest({ date: utcDate(7) });
-      await seedRequest({ groupId: GROUP_MUNI, date: utcDate(8) });
+      await seedRequest({ date: utcDayOffset(DB_NOW, 7) });
+      await seedRequest({ groupId: GROUP_MUNI, date: utcDayOffset(DB_NOW, 8) });
       await setSpokenLanguages(subId, []);
 
       // Not only this file's requests: no session anywhere is run in a
@@ -2259,7 +2257,7 @@ describe("session substitutions", () => {
 
       const { data, error } = await adminAuth.rpc("set_session_substitution", {
         p_group_id: GROUP_A,
-        p_session_date: utcDate(5),
+        p_session_date: utcDayOffset(DB_NOW, 5),
         p_absent_gedu_id: TEST_IDS.GEDU,
         p_sub_gedu_id: subId,
         p_reason: "sick",
@@ -2269,7 +2267,7 @@ describe("session substitutions", () => {
     });
 
     it("approves an offer whose gedu has since stopped listing the language", async () => {
-      const id = await seedRequest({ date: utcDate(5) });
+      const id = await seedRequest({ date: utcDayOffset(DB_NOW, 5) });
       const offered = await subAuth.rpc("offer_session_substitution", { p_request_id: id });
       expect(offered.error).toBeNull();
       await setSpokenLanguages(subId, ["fi"]);
@@ -2310,7 +2308,7 @@ describe("session substitutions", () => {
     }
 
     it("keeps an in-person request out of the pool of a gedu whose areas miss its site, until a place above it is ticked", async () => {
-      const id = await seedRequest({ groupId: GROUP_SITE, date: utcDate(7) });
+      const id = await seedRequest({ groupId: GROUP_SITE, date: utcDayOffset(DB_NOW, 7) });
       // Another site in the same municipality: a sibling, not an ancestor.
       await setCoverage(subId, [TEST_IDS.LOCATION_SITE]);
 
@@ -2330,17 +2328,17 @@ describe("session substitutions", () => {
     });
 
     it("counts a tick on the site itself", async () => {
-      const id = await seedRequest({ groupId: GROUP_SITE, date: utcDate(7) });
+      const id = await seedRequest({ groupId: GROUP_SITE, date: utcDayOffset(DB_NOW, 7) });
       await setCoverage(subId, [SITE]);
 
       expect(await poolIds(subAuth)).toContain(id);
     });
 
     it("shows a gedu who has ticked no area the online requests and none in person", async () => {
-      const online = await seedRequest({ date: utcDate(7) });
+      const online = await seedRequest({ date: utcDayOffset(DB_NOW, 7) });
       // An online municipality club carries a location; it still asks nothing.
-      const onlineMuni = await seedRequest({ groupId: GROUP_MUNI, date: utcDate(8) });
-      const inPerson = await seedRequest({ groupId: GROUP_SITE, date: utcDate(9) });
+      const onlineMuni = await seedRequest({ groupId: GROUP_MUNI, date: utcDayOffset(DB_NOW, 8) });
+      const inPerson = await seedRequest({ groupId: GROUP_SITE, date: utcDayOffset(DB_NOW, 9) });
       await setCoverage(subId, []);
 
       const pool = await poolIds(subAuth);
@@ -2354,7 +2352,7 @@ describe("session substitutions", () => {
 
       const { data, error } = await adminAuth.rpc("set_session_substitution", {
         p_group_id: GROUP_SITE,
-        p_session_date: utcDate(5),
+        p_session_date: utcDayOffset(DB_NOW, 5),
         p_absent_gedu_id: TEST_IDS.GEDU,
         p_sub_gedu_id: subId,
         p_reason: "sick",
@@ -2397,7 +2395,7 @@ describe("session substitutions", () => {
         expect(error).toBeNull();
         expect(data).toContain(subId);
 
-        const id = await seedRequest({ groupId: GROUP_SITE, date: utcDate(7) });
+        const id = await seedRequest({ groupId: GROUP_SITE, date: utcDayOffset(DB_NOW, 7) });
         expect(await poolIds(subAuth)).toContain(id);
       } finally {
         const back = await admin
@@ -2415,7 +2413,7 @@ describe("session substitutions", () => {
 
   describe("the admin staffing editor", () => {
     it("approves one offer and leaves the others standing", async () => {
-      const id = await seedRequest({ date: utcDate(5) });
+      const id = await seedRequest({ date: utcDayOffset(DB_NOW, 5) });
       await subAuth.rpc("offer_session_substitution", { p_request_id: id });
       await thirdAuth.rpc("offer_session_substitution", { p_request_id: id });
 
@@ -2446,7 +2444,7 @@ describe("session substitutions", () => {
     });
 
     it("counts offers and not declines, and refuses to approve a declined answer as not found", async () => {
-      const id = await seedRequest({ date: utcDate(5) });
+      const id = await seedRequest({ date: utcDayOffset(DB_NOW, 5) });
       await subAuth.rpc("offer_session_substitution", { p_request_id: id });
       await thirdAuth.rpc("offer_session_substitution", { p_request_id: id });
       await thirdAuth.rpc("decline_session_substitution", { p_request_id: id });
@@ -2468,7 +2466,7 @@ describe("session substitutions", () => {
     });
 
     it("refuses a second approval on the same request", async () => {
-      const id = await seedRequest({ date: utcDate(5) });
+      const id = await seedRequest({ date: utcDayOffset(DB_NOW, 5) });
       await subAuth.rpc("offer_session_substitution", { p_request_id: id });
       await thirdAuth.rpc("offer_session_substitution", { p_request_id: id });
       const { data: offers } = await admin
@@ -2496,7 +2494,7 @@ describe("session substitutions", () => {
       // the group's workspace to stand in for nobody. The row is emptied here
       // by deleting the assignment directly, which is the state the sweep is
       // meant to make impossible — this asserts what happens if it ever is not.
-      const id = await seedRequest({ date: utcDate(5) });
+      const id = await seedRequest({ date: utcDayOffset(DB_NOW, 5) });
       await subAuth.rpc("offer_session_substitution", { p_request_id: id });
       const { data: offers } = await admin
         .from("session_substitution_offers")
@@ -2526,7 +2524,7 @@ describe("session substitutions", () => {
     });
 
     it("sets a sub on a PAST session with no request at all", async () => {
-      const date = utcDate(-5);
+      const date = utcDayOffset(DB_NOW, -5);
       const { data, error } = await adminAuth.rpc("set_session_substitution", {
         p_group_id: GROUP_A,
         p_session_date: date,
@@ -2547,7 +2545,7 @@ describe("session substitutions", () => {
     it("refuses a filing with no reason, and keeps the row's reason on a re-point", async () => {
       // Filing on a gedu's behalf states why, exactly as the gedu's own filing
       // does; the refusal is the function's own, raised before any row exists.
-      const refusedDate = utcDate(5);
+      const refusedDate = utcDayOffset(DB_NOW, 5);
       const refused = await adminAuth.rpc("set_session_substitution", {
         p_group_id: GROUP_A,
         p_session_date: refusedDate,
@@ -2565,7 +2563,7 @@ describe("session substitutions", () => {
 
       // A re-point is not a filing: the seat's request already says why, and an
       // omitted reason keeps it.
-      const date = utcDate(6);
+      const date = utcDayOffset(DB_NOW, 6);
       const id = await seedRequest({ date, substituteId: subId, reason: "sick" });
       const { data, error } = await adminAuth.rpc("set_session_substitution", {
         p_group_id: GROUP_A,
@@ -2581,7 +2579,7 @@ describe("session substitutions", () => {
     });
 
     it("fills an OPEN request rather than filing a second one", async () => {
-      const date = utcDate(5);
+      const date = utcDayOffset(DB_NOW, 5);
       const id = await seedRequest({ date });
 
       const { data, error } = await adminAuth.rpc("set_session_substitution", {
@@ -2602,7 +2600,7 @@ describe("session substitutions", () => {
     });
 
     it("RE-POINTS an existing substitution, and sweeps the displaced sub's own absence", async () => {
-      const date = utcDate(5);
+      const date = utcDayOffset(DB_NOW, 5);
       const first = await seedRequest({ date, substituteId: subId });
       // The seated sub files their own absence, which only makes sense while they
       // hold the seat.
@@ -2631,7 +2629,7 @@ describe("session substitutions", () => {
     });
 
     it("does not overwrite the gedu's reason when the admin supplies none", async () => {
-      const date = utcDate(5);
+      const date = utcDayOffset(DB_NOW, 5);
       const { data: seeded } = await geduAuth.rpc("request_session_substitution", {
         p_group_id: GROUP_A,
         p_session_date: date,
@@ -2652,7 +2650,7 @@ describe("session substitutions", () => {
     });
 
     it("refuses a sub the guard turns down and an absent gedu who is not expected", async () => {
-      const date = utcDate(5);
+      const date = utcDayOffset(DB_NOW, 5);
 
       const notExpected = await adminAuth.rpc("set_session_substitution", {
         p_group_id: GROUP_A,
@@ -2674,7 +2672,7 @@ describe("session substitutions", () => {
     });
 
     it("clears a substitution back to open and withdraws the cleared sub's own request", async () => {
-      const date = utcDate(5);
+      const date = utcDayOffset(DB_NOW, 5);
       const first = await seedRequest({ date, substituteId: subId });
       const chain = await seedRequest({ date, absent: subId, substituteId: thirdId });
 
@@ -2698,7 +2696,7 @@ describe("session substitutions", () => {
     });
 
     it("refuses to clear a request that has no substitution", async () => {
-      const id = await seedRequest({ date: utcDate(5) });
+      const id = await seedRequest({ date: utcDayOffset(DB_NOW, 5) });
       const { error } = await adminAuth.rpc("clear_session_substitution", {
         p_request_id: id,
       });
@@ -2706,7 +2704,7 @@ describe("session substitutions", () => {
     });
 
     it("withdraws a request as admin and unwinds the substitution", async () => {
-      const date = utcDate(5);
+      const date = utcDayOffset(DB_NOW, 5);
       const first = await seedRequest({ date, substituteId: subId });
       const chain = await seedRequest({ date, absent: subId });
 
@@ -2726,7 +2724,7 @@ describe("session substitutions", () => {
     });
 
     it("refuses to withdraw an already-withdrawn request", async () => {
-      const id = await seedRequest({ date: utcDate(5) });
+      const id = await seedRequest({ date: utcDayOffset(DB_NOW, 5) });
       await admin
         .from("session_substitution_requests")
         .update({ status: "withdrawn" })
@@ -2743,7 +2741,7 @@ describe("session substitutions", () => {
       // The sweep withdraws a request whose requester holds no seat. The
       // assigned gedu always holds one, so their own request survives every
       // cascade — which is what stops a clear from cancelling the absence.
-      const date = utcDate(5);
+      const date = utcDayOffset(DB_NOW, 5);
       const id = await seedRequest({ date, substituteId: subId });
       await adminAuth.rpc("clear_session_substitution", { p_request_id: id });
       expect((await statusOf(id))?.status).toBe("open");
@@ -2756,9 +2754,9 @@ describe("session substitutions", () => {
 
   describe("the documents the surfaces read", () => {
     it("the gedu feed carries the group's gedus with roles and its non-withdrawn substitutions", async () => {
-      const date = utcDate(5);
+      const date = utcDayOffset(DB_NOW, 5);
       const open = await seedRequest({ date });
-      const gone = await seedRequest({ date: utcDate(6) });
+      const gone = await seedRequest({ date: utcDayOffset(DB_NOW, 6) });
       await admin
         .from("session_substitution_requests")
         .update({ status: "withdrawn" })
@@ -2784,7 +2782,7 @@ describe("session substitutions", () => {
       // Today, so the substitute's window is open: the feed is behind the
       // group-wide gate, and that opens 48 hours before the session starts. A
       // run straddling midnight leaves the row dated yesterday, still inside it.
-      const date = utcDate(0);
+      const date = utcDayOffset(DB_NOW, 0);
       await seedRequest({ date, substituteId: subId });
       await admin
         .from("session_substitution_requests")
@@ -2824,7 +2822,7 @@ describe("session substitutions", () => {
     });
 
     it("the admin product-session document carries roles and substitutions per group", async () => {
-      const date = utcDate(5);
+      const date = utcDayOffset(DB_NOW, 5);
       await seedRequest({ date });
 
       const { data, error } = await adminAuth.rpc("get_admin_product_sessions", {
@@ -2861,7 +2859,7 @@ describe("session substitutions", () => {
     });
 
     it("the admin queue carries the open request with its offers", async () => {
-      const date = utcDate(7);
+      const date = utcDayOffset(DB_NOW, 7);
       const id = await seedRequest({ date });
       await admin
         .from("session_substitution_requests")
@@ -2928,10 +2926,10 @@ describe("session substitutions", () => {
      * session is exactly as the pool does.
      */
     it("every surface describes the session through the one shell, venue and language included", async () => {
-      const open = await seedRequest({ groupId: GROUP_SITE, date: utcDate(7) });
+      const open = await seedRequest({ groupId: GROUP_SITE, date: utcDayOffset(DB_NOW, 7) });
       await seedRequest({
         groupId: GROUP_SITE,
-        date: utcDate(8),
+        date: utcDayOffset(DB_NOW, 8),
         substituteId: subId,
       });
 
@@ -2976,7 +2974,7 @@ describe("session substitutions", () => {
      * about is the RPC not putting the field on the wire.
      */
     it("an offer and a decline carry no certification or criminal-record data", async () => {
-      const id = await seedRequest({ date: utcDate(7) });
+      const id = await seedRequest({ date: utcDayOffset(DB_NOW, 7) });
       await subAuth.rpc("offer_session_substitution", { p_request_id: id });
       await thirdAuth.rpc("decline_session_substitution", { p_request_id: id });
 
@@ -3005,7 +3003,7 @@ describe("session substitutions", () => {
     });
 
     it("the admin queue drops an open request whose date has passed", async () => {
-      const id = await seedRequest({ date: utcDate(-7) });
+      const id = await seedRequest({ date: utcDayOffset(DB_NOW, -7) });
       const { data } = await adminAuth.rpc("get_admin_substitution_requests");
       // Unfilled is a derived state of an open request, so the row simply stops
       // being offered — nothing sweeps and no clock runs.
@@ -3023,11 +3021,11 @@ describe("session substitutions", () => {
      */
     it("the admin document carries an upcoming substituted request with its substitute and approver, and no withdrawn one", async () => {
       const substituted = await seedRequest({
-        date: utcDate(5),
+        date: utcDayOffset(DB_NOW, 5),
         substituteId: subId,
       });
       const withdrawn = await seedRequest({
-        date: utcDate(6),
+        date: utcDayOffset(DB_NOW, 6),
         absent: thirdId,
         status: "withdrawn",
       });
@@ -3054,7 +3052,7 @@ describe("session substitutions", () => {
     });
 
     it("the admin document drops a substituted request whose date has passed", async () => {
-      const id = await seedRequest({ date: utcDate(-7), substituteId: subId });
+      const id = await seedRequest({ date: utcDayOffset(DB_NOW, -7), substituteId: subId });
       const { data } = await adminAuth.rpc("get_admin_substitution_requests");
       // A past substitution is history the group's own page carries.
       expect(
@@ -3063,7 +3061,7 @@ describe("session substitutions", () => {
     });
 
     it("get_my_assigned_products discriminates a substitution row from an assignment row", async () => {
-      const date = utcDate(-3);
+      const date = utcDayOffset(DB_NOW, -3);
       await seedRequest({ date, substituteId: subId });
 
       // Scoped to this file's own product throughout: CI runs the db files in
@@ -3096,15 +3094,15 @@ describe("session substitutions", () => {
     });
 
     it("get_my_assigned_products drops a substitution whose window has closed", async () => {
-      await seedRequest({ date: utcDate(-20), substituteId: subId });
+      await seedRequest({ date: utcDayOffset(DB_NOW, -20), substituteId: subId });
       const { data, error } = await subAuth.rpc("get_my_assigned_products");
       expect(error).toBeNull();
       expect((data ?? []).filter((row) => row.group_id === GROUP_A)).toEqual([]);
     });
 
     it("the summaries carry a substitution row for the substitution date and stop counting the absent gedu's", async () => {
-      const date = utcDate(-3);
-      const epoch = utcDate(-3);
+      const date = utcDayOffset(DB_NOW, -3);
+      const epoch = utcDayOffset(DB_NOW, -3);
 
       // The claim is made in ABSOLUTE terms rather than as a before/after
       // difference, and that is what keeps it off a clock: the product has a slot
@@ -3126,7 +3124,7 @@ describe("session substitutions", () => {
       expect(baseline?.attention_count).toBeGreaterThanOrEqual(3);
 
       await seedRequest({ date, substituteId: subId });
-      for (const other of [utcDate(-2), utcDate(-1), utcDate(0)]) {
+      for (const other of [utcDayOffset(DB_NOW, -2), utcDayOffset(DB_NOW, -1), utcDayOffset(DB_NOW, 0)]) {
         await seedRequest({ date: other });
       }
 
@@ -3224,7 +3222,7 @@ describe("session substitutions", () => {
 
     beforeAll(async () => {
       anon = createAnonTestClient();
-      const email = `substitution-slack-admin-${Date.now()}@test.local`;
+      const email = `substitution-slack-admin-${uniqueSuffix()}@test.local`;
       const { data, error } = await admin.auth.admin.createUser({
         email,
         password: "testpassword123",
@@ -3274,7 +3272,7 @@ describe("session substitutions", () => {
     });
 
     it("offers and declines as the gedu the Discord user acts as", async () => {
-      const id = await seedRequest({ date: utcDate(5) });
+      const id = await seedRequest({ date: utcDayOffset(DB_NOW, 5) });
 
       const offered = await admin.rpc("offer_session_substitution_for_discord_user", {
         p_discord_user_id: DISCORD_SUB,
@@ -3295,7 +3293,7 @@ describe("session substitutions", () => {
     });
 
     it("refuses a Discord user nobody has linked, and writes nothing", async () => {
-      const id = await seedRequest({ date: utcDate(5) });
+      const id = await seedRequest({ date: utcDayOffset(DB_NOW, 5) });
       for (const name of [
         "offer_session_substitution_for_discord_user",
         "decline_session_substitution_for_discord_user",
@@ -3310,7 +3308,7 @@ describe("session substitutions", () => {
     });
 
     it("surfaces the answer's own refusals unchanged", async () => {
-      const past = await seedRequest({ date: utcDate(-5) });
+      const past = await seedRequest({ date: utcDayOffset(DB_NOW, -5) });
       const pastOffer = await admin.rpc("offer_session_substitution_for_discord_user", {
         p_discord_user_id: DISCORD_SUB,
         p_request_id: past,
@@ -3319,7 +3317,7 @@ describe("session substitutions", () => {
       expect(pastOffer.error?.message).toContain("is in the past");
 
       await admin.from("profiles").update({ spoken_languages: [] }).eq("id", subId);
-      const current = await seedRequest({ date: utcDate(5) });
+      const current = await seedRequest({ date: utcDayOffset(DB_NOW, 5) });
       const unspoken = await admin.rpc("offer_session_substitution_for_discord_user", {
         p_discord_user_id: DISCORD_SUB,
         p_request_id: current,
@@ -3329,7 +3327,7 @@ describe("session substitutions", () => {
     });
 
     it("approves an offer as the admin the Slack user is linked to", async () => {
-      const id = await seedRequest({ date: utcDate(5) });
+      const id = await seedRequest({ date: utcDayOffset(DB_NOW, 5) });
       await subAuth.rpc("offer_session_substitution", { p_request_id: id });
       const offer = await answerRow(id, subId);
 
@@ -3353,7 +3351,7 @@ describe("session substitutions", () => {
     });
 
     it("refuses a Slack user with no admin link — none at all, or one to a gedu account — and approves nothing", async () => {
-      const id = await seedRequest({ date: utcDate(5) });
+      const id = await seedRequest({ date: utcDayOffset(DB_NOW, 5) });
       await subAuth.rpc("offer_session_substitution", { p_request_id: id });
       const offer = await answerRow(id, subId);
 
@@ -3369,7 +3367,7 @@ describe("session substitutions", () => {
     });
 
     it("surfaces the approval's own refusals unchanged", async () => {
-      const id = await seedRequest({ date: utcDate(5) });
+      const id = await seedRequest({ date: utcDayOffset(DB_NOW, 5) });
       await subAuth.rpc("decline_session_substitution", { p_request_id: id });
       const declined = await answerRow(id, subId);
 
@@ -3392,7 +3390,7 @@ describe("session substitutions", () => {
     }
 
     it("the wrappers are closed to signed-in and anonymous callers", async () => {
-      const id = await seedRequest({ date: utcDate(5) });
+      const id = await seedRequest({ date: utcDayOffset(DB_NOW, 5) });
       const wrappers = [
         [
           "offer_session_substitution_for_discord_user",
@@ -3416,7 +3414,7 @@ describe("session substitutions", () => {
     });
 
     it("the bodies behind them are closed to every API role, the service role included", async () => {
-      const id = await seedRequest({ date: utcDate(5) });
+      const id = await seedRequest({ date: utcDayOffset(DB_NOW, 5) });
       const internals = [
         [
           "respond_to_session_substitution",
@@ -3485,8 +3483,8 @@ describe("session substitutions", () => {
       // which is what made this the one unseating that left live requests
       // behind: an open request by somebody who is no longer expected, ready for
       // an admin to answer with a sub for nobody.
-      const open = await seedRequest({ date: utcDate(5) });
-      const substituted = await seedRequest({ date: utcDate(6), substituteId: subId });
+      const open = await seedRequest({ date: utcDayOffset(DB_NOW, 5) });
+      const substituted = await seedRequest({ date: utcDayOffset(DB_NOW, 6), substituteId: subId });
 
       const { error } = await adminAuth.rpc("apply_group_changes", {
         p_product_id: PRODUCT,
@@ -3519,7 +3517,7 @@ describe("session substitutions", () => {
       // the touched (group, date) whose requester no longer holds a seat — so a
       // colleague who is still assigned keeps their absence on the very same
       // date, and another group of the same product is not swept at all.
-      const date = utcDate(5);
+      const date = utcDayOffset(DB_NOW, 5);
       await admin.from("gedu_group_assignments").insert([
         { group_id: GROUP_A, gedu_id: thirdId, product_id: PRODUCT, role: "assistant" },
         { group_id: GROUP_B, gedu_id: subId, product_id: PRODUCT, role: "primary" },
@@ -3622,8 +3620,8 @@ describe("session substitutions", () => {
     const none: Window = { starts_at: null, ends_at: null };
 
     it("gives the admin queue the planned window, and none for an orphan or a date past the term", async () => {
-      const inTerm = utcDate(3);
-      const pastTerm = utcDate(61);
+      const inTerm = utcDayOffset(DB_NOW, 3);
+      const pastTerm = utcDayOffset(DB_NOW, 61);
       const orphan = middayDate(2);
       await seedRequest({ date: inTerm });
       await seedRequest({ date: pastTerm });
@@ -3638,7 +3636,7 @@ describe("session substitutions", () => {
           .map((row) => [`${row.group_id}:${row.session_date}`, asInstants(row)]),
       );
       expect(windows.get(`${GROUP_A}:${inTerm}`)).toEqual(planned(inTerm));
-      // The term ends at utcDate(60): the plan has no session after it.
+      // The term ends at utcDayOffset(DB_NOW, 60): the plan has no session after it.
       expect(windows.get(`${GROUP_A}:${pastTerm}`)).toEqual(none);
       // The weekday the twin's schedule skips: the row stays, with no instants.
       expect(windows.get(`${GROUP_ORPHAN}:${orphan}`)).toEqual(none);
@@ -3652,7 +3650,7 @@ describe("session substitutions", () => {
     });
 
     it("gives the pool the planned window", async () => {
-      const date = utcDate(3);
+      const date = utcDayOffset(DB_NOW, 3);
       await seedRequest({ date });
       const { data, error } = await subAuth.rpc("get_open_substitution_requests");
       expect(error).toBeNull();
@@ -3663,8 +3661,8 @@ describe("session substitutions", () => {
     });
 
     it("gives the requester's own live requests the planned window, and none past the term", async () => {
-      const inTerm = utcDate(3);
-      const pastTerm = utcDate(61);
+      const inTerm = utcDayOffset(DB_NOW, 3);
+      const pastTerm = utcDayOffset(DB_NOW, 61);
       await seedRequest({ date: inTerm });
       await seedRequest({ date: pastTerm });
       const { data, error } = await geduAuth.rpc("get_my_live_substitution_requests");
@@ -3680,7 +3678,7 @@ describe("session substitutions", () => {
     });
 
     it("gives the notification snapshot the planned window, and none for an orphan", async () => {
-      const date = utcDate(3);
+      const date = utcDayOffset(DB_NOW, 3);
       const plannedId = await seedRequest({ date });
       const orphanedId = await seedRequest({
         groupId: GROUP_ORPHAN,
@@ -3699,7 +3697,7 @@ describe("session substitutions", () => {
     });
 
     it("gives a substitution seat its session's window and no plan, and an orphan none", async () => {
-      const date = utcDate(3);
+      const date = utcDayOffset(DB_NOW, 3);
       await seedRequest({ date, substituteId: subId });
       await seedRequest({
         groupId: GROUP_ORPHAN,
@@ -3728,27 +3726,35 @@ describe("session substitutions", () => {
     });
 
     it("gives an assignment seat its group's plan from yesterday to the term's end, flagging only its group's cancellations", async () => {
-      const cancelledHere = utcDate(2);
-      const cancelledOnSister = utcDate(4);
+      const cancelledHere = utcDayOffset(DB_NOW, 2);
+      const cancelledOnSister = utcDayOffset(DB_NOW, 4);
       const { error: cancelError } = await admin.from("session_cancellations").insert([
         { group_id: GROUP_A, session_date: cancelledHere, cancelled_by: TEST_IDS.ADMIN },
         { group_id: GROUP_B, session_date: cancelledOnSister, cancelled_by: TEST_IDS.ADMIN },
       ]);
       expect(cancelError).toBeNull();
       try {
-        const { data, error } = await geduAuth.rpc("get_my_assigned_products");
+        const term = await admin.from("products").select("end_date").eq("id", PRODUCT).single();
+        expect(term.error).toBeNull();
+        const {
+          result: { data, error },
+          reads,
+        } = await dbInterval(async () => geduAuth.rpc("get_my_assigned_products"));
         expect(error).toBeNull();
         const seat = myAssignedProductRows
           .parse(data)
           .find((row) => row.group_id === GROUP_A && row.kind === "assignment");
         const plan = seat?.upcoming_sessions ?? [];
-        // A slot every day: every date from the day before today to the term's
-        // last day, one session each.
+        // A slot every day: every date from the day before the database's today
+        // to the term's last day, one session each. Midnight can pass during
+        // the call, so that today is either clock read's day.
+        const opening = plan[0].date;
+        expect(reads.map((read) => utcDayOffset(read, -1))).toContain(opening);
         expect(plan.map((session) => session.date)).toEqual(
-          Array.from({ length: 62 }, (_, index) => utcDate(index - 1)),
+          utcDatesThrough(opening, term.data!.end_date!),
         );
-        expect(plan[0].startsAt.toISOString()).toBe(planned(utcDate(-1)).starts_at);
-        expect(plan[0].endsAt.toISOString()).toBe(planned(utcDate(-1)).ends_at);
+        expect(plan[0].startsAt.toISOString()).toBe(planned(opening).starts_at);
+        expect(plan[0].endsAt.toISOString()).toBe(planned(opening).ends_at);
         // The sister group's cancellation is not this group's.
         expect(plan.filter((session) => session.cancelled).map((session) => session.date)).toEqual([
           cancelledHere,

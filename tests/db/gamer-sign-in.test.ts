@@ -1,7 +1,7 @@
 import { describe, it, expect, beforeAll, afterAll } from "vitest";
 import type { SupabaseClient } from "@supabase/supabase-js";
 import type { Database } from "@/types/database.types";
-import { createAdminTestClient, createAuthenticatedClient } from "./helpers";
+import { createAdminTestClient, createAuthenticatedClient, dbNow } from "./helpers";
 import { TEST_CREDENTIALS, TEST_IDS } from "./constants";
 import {
   createScheduleSlot,
@@ -84,7 +84,7 @@ describe("gamer sign-in mode", () => {
     await createTestProduct(admin, {
       id: PRODUCT,
       seatCount: null,
-      startDate: new Date(Date.now() - 30 * 86_400_000)
+      startDate: new Date((await dbNow()).getTime() - 30 * 86_400_000)
         .toISOString()
         .slice(0, 10),
     });

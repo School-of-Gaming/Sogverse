@@ -154,7 +154,7 @@ describe("waitlist — self-service positions + leave", () => {
           participant_id: TEST_IDS.GAMER_2,
           customer_id: TEST_IDS.CUSTOMER_2,
           status: "waitlisted",
-          waitlisted_at: new Date(Date.now() - 60_000).toISOString(),
+          waitlisted_at: "2020-01-01T00:00:00Z",
         })
         .select("id")
         .single();

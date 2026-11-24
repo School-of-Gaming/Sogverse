@@ -1,5 +1,5 @@
-import { createClient } from "@supabase/supabase-js";
-import { beforeAll } from "vitest";
+import { afterAll, beforeAll } from "vitest";
+import { closeDbTestConnections, createAdminTestClient } from "./helpers";
 
 /**
  * DB test setup — verifies local Supabase is running before any tests execute.
@@ -18,9 +18,7 @@ beforeAll(async () => {
     );
   }
 
-  const admin = createClient(supabaseUrl, serviceRoleKey, {
-    auth: { autoRefreshToken: false, persistSession: false },
-  });
+  const admin = createAdminTestClient();
 
   // Quick connectivity check — query a table that always exists
   const { error } = await admin.from("profiles").select("id").limit(1);
@@ -33,3 +31,7 @@ beforeAll(async () => {
     );
   }
 });
+
+// Registered before any file's own hooks, so it runs after all of them: the DB
+// config pins `sequence.hooks` to "stack", which runs `afterAll` hooks in reverse.
+afterAll(closeDbTestConnections);

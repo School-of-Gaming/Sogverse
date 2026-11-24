@@ -17,6 +17,12 @@ import {
   createAdminTestClient,
   createAnonTestClient,
   createAuthenticatedClient,
+  dbInterval,
+  dbNow,
+  utcDayOffset,
+  utcMidnightsSince,
+  dbTime,
+  uniqueSuffix,
 } from "./helpers";
 import { TEST_CREDENTIALS, TEST_IDS } from "./constants";
 import {
@@ -95,7 +101,10 @@ const ALL_PRODUCTS = [PRODUCT_MINE, PRODUCT_OTHER, PRODUCT_SITE];
  * today's session ends at tomorrow's midnight, so it has NOT finished at any
  * hour the suite might run — while yesterday's ended at today's midnight and
  * therefore always has. Without that, "how many past sessions are owed"
- * silently changes answer depending on what time CI started.
+ * silently changes answer depending on what time CI started. The one moment it
+ * does change is a run crossing midnight, which ends today's session: the
+ * owed-count reads accept that answer only when the database's clock says
+ * midnight has passed.
  */
 const SLOT_START = "23:00";
 const SLOT_MINUTES = 60;
@@ -108,14 +117,14 @@ const SLOT_MINUTES = 60;
  */
 const ROBLOX_USER_ID = 987654321;
 
-/** `YYYY-MM-DD`, `offset` days from today. The products all run in UTC. */
-function dayOffset(offset: number): string {
-  const d = new Date();
-  d.setUTCDate(d.getUTCDate() + offset);
-  return d.toISOString().slice(0, 10);
-}
+/**
+ * The database's clock, read when the file loads: the day constants below are
+ * built then, and they count from the database's today, the one it judges
+ * sessions against. The products all run in UTC.
+ */
+const DB_NOW = await dbNow();
 
-const TODAY = dayOffset(0);
+const TODAY = utcDayOffset(DB_NOW, 0);
 
 /**
  * When these seats entered their groups — the products' own start date, so
@@ -140,10 +149,9 @@ const TODAY = dayOffset(0);
  * does not name `group_id` never fires the stamping trigger, which is the same
  * property the schema's own join-date backfill relies on.
  */
-const JOINED_AT_BACKDATE = `${dayOffset(-30)}T00:00:00.000Z`;
-const YESTERDAY = dayOffset(-1);
-const TWO_DAYS_AGO = dayOffset(-2);
-const TOMORROW = dayOffset(1);
+const JOINED_AT_BACKDATE = `${utcDayOffset(DB_NOW, -30)}T00:00:00.000Z`;
+const YESTERDAY = utcDayOffset(DB_NOW, -1);
+const TWO_DAYS_AGO = utcDayOffset(DB_NOW, -2);
 
 describe("gedu session feed", () => {
   let admin: SupabaseClient<Database>;
@@ -179,7 +187,7 @@ describe("gedu session feed", () => {
       await createTestProduct(admin, {
         id,
         seatCount: null,
-        startDate: dayOffset(-30),
+        startDate: utcDayOffset(DB_NOW, -30),
       });
       await admin.from("product_translations").insert({
         product_id: id,
@@ -297,7 +305,7 @@ describe("gedu session feed", () => {
     it("refuses every non-gedu role on the assignment summaries", async () => {
       for (const client of [adminAuth, customerAuth, gamerAuth]) {
         const { error } = await client.rpc("get_my_gedu_assignment_summaries", {
-          p_epoch_date: dayOffset(-365),
+          p_epoch_date: utcDayOffset(DB_NOW, -365),
         });
         expect(error?.code).toBe("42501");
       }
@@ -646,7 +654,7 @@ describe("gedu session feed", () => {
     it("refuses a date before the product started", async () => {
       const { error } = await geduAuth.rpc("set_group_session_notes", {
         p_group_id: GROUP_MINE,
-        p_session_date: dayOffset(-400),
+        p_session_date: utcDayOffset(DB_NOW, -400),
         p_report: "before the beginning",
         p_gedu_note: "",
       });
@@ -656,7 +664,7 @@ describe("gedu session feed", () => {
     it("refuses a date beyond the visible horizon", async () => {
       const { error } = await geduAuth.rpc("set_group_session_notes", {
         p_group_id: GROUP_MINE,
-        p_session_date: dayOffset(400),
+        p_session_date: utcDayOffset(DB_NOW, 400),
         p_report: "far too far ahead",
         p_gedu_note: "",
       });
@@ -666,7 +674,7 @@ describe("gedu session feed", () => {
     it("accepts notes on a FUTURE session — forward planning is the point", async () => {
       const { data, error } = await geduAuth.rpc("set_group_session_notes", {
         p_group_id: GROUP_MINE,
-        p_session_date: TOMORROW,
+        p_session_date: utcDayOffset(await dbNow(), 1),
         p_report: "Tomorrow we build a castle.",
         p_gedu_note: "Start the machines early.",
       });
@@ -678,7 +686,7 @@ describe("gedu session feed", () => {
     it("refuses attendance on a session that has not started", async () => {
       const { error } = await geduAuth.rpc("record_attendance", {
         p_group_id: GROUP_MINE,
-        p_session_date: TOMORROW,
+        p_session_date: utcDayOffset(await dbNow(), 1),
         p_participant_id: TEST_IDS.GAMER,
         p_status: "present",
       });
@@ -694,17 +702,18 @@ describe("gedu session feed", () => {
       // Materialize the row directly with a window straddling `now` — the RPC
       // reuses an existing row's snapshot instants rather than re-deriving, so
       // this stands at any hour the suite runs, unlike the fixture slot.
+      const today = utcDayOffset(await dbNow(), 0);
       const { error: seedError } = await admin.from("group_sessions").insert({
         group_id: GROUP_MINE,
-        session_date: TODAY,
-        starts_at: new Date(Date.now() - 30 * 60_000).toISOString(),
-        ends_at: new Date(Date.now() + 30 * 60_000).toISOString(),
+        session_date: today,
+        starts_at: (await dbTime(-30 * 60_000)).toISOString(),
+        ends_at: (await dbTime(30 * 60_000)).toISOString(),
       });
       expect(seedError).toBeNull();
 
       const { data, error } = await geduAuth.rpc("record_attendance", {
         p_group_id: GROUP_MINE,
-        p_session_date: TODAY,
+        p_session_date: today,
         p_participant_id: TEST_IDS.GAMER,
         p_status: "present",
       });
@@ -1355,11 +1364,11 @@ describe("gedu session feed", () => {
       // The epoch decides what the platform ASKS for, never what it permits —
       // the same rule the write validator follows. A gedu catching up on last
       // term may still mail that report.
-      await writeReport(dayOffset(-20), "Late, but sent.");
+      await writeReport(utcDayOffset(DB_NOW, -20), "Late, but sent.");
 
       const { error } = await geduAuth.rpc("claim_group_session_report_email", {
         p_group_id: GROUP_MINE,
-        p_session_date: dayOffset(-20),
+        p_session_date: utcDayOffset(DB_NOW, -20),
       });
       expect(error).toBeNull();
     });
@@ -1391,10 +1400,33 @@ describe("gedu session feed", () => {
       }
     }
 
+    /**
+     * Asserts GROUP_MINE's attention count from `epoch` is `expected` as of
+     * `asOf`, the UTC day the test's dates were built on: the file's load-time
+     * today, unless the test read the clock itself.
+     *
+     * Every fixture session ends at midnight UTC, and the one on `asOf` is
+     * unrecorded, so a midnight passing since that read ends one more owed
+     * session. The count is therefore read between two reads of the database's
+     * clock, and each read's day accepts `expected` plus the midnights between
+     * `asOf` and it — on a run that crosses none, `expected` alone.
+     */
+    async function expectOwedFrom(epoch: string, expected: number, asOf = TODAY): Promise<void> {
+      const { result: count, reads } = await dbInterval(async () => {
+        const { data, error } = await geduAuth.rpc("get_my_gedu_assignment_summaries", {
+          p_epoch_date: epoch,
+        });
+        expect(error).toBeNull();
+        return geduAssignmentSummaries.parse(data).find((s) => s.group_id === GROUP_MINE)
+          ?.attention_count;
+      });
+      expect(reads.map((read) => expected + utcMidnightsSince(asOf, read))).toContain(count);
+    }
+
     it("returns one entry per assignment, parsed through the contract schema", async () => {
       const { data, error } = await geduAuth.rpc(
         "get_my_gedu_assignment_summaries",
-        { p_epoch_date: dayOffset(-365) },
+        { p_epoch_date: utcDayOffset(DB_NOW, -365) },
       );
       expect(error).toBeNull();
 
@@ -1416,15 +1448,9 @@ describe("gedu session feed", () => {
     });
 
     it("counts an unrecorded past session as outstanding work", async () => {
-      const { data } = await geduAuth.rpc("get_my_gedu_assignment_summaries", {
-        p_epoch_date: TWO_DAYS_AGO,
-      });
-      const summaries = geduAssignmentSummaries.parse(data);
-      const mine = summaries.find((s) => s.group_id === GROUP_MINE);
-
       // Two days ago and yesterday have both finished; today's has not, and
       // nothing has been recorded against either of the two that have.
-      expect(mine?.attention_count).toBe(2);
+      await expectOwedFrom(TWO_DAYS_AGO, 2);
     });
 
     /**
@@ -1439,14 +1465,7 @@ describe("gedu session feed", () => {
     it("keeps counting a fully-marked session that has no report", async () => {
       await markWholeRoster([TWO_DAYS_AGO, YESTERDAY]);
 
-      const { data } = await geduAuth.rpc("get_my_gedu_assignment_summaries", {
-        p_epoch_date: TWO_DAYS_AGO,
-      });
-      const summaries = geduAssignmentSummaries.parse(data);
-
-      expect(
-        summaries.find((s) => s.group_id === GROUP_MINE)?.attention_count,
-      ).toBe(2);
+      await expectOwedFrom(TWO_DAYS_AGO, 2);
     });
 
     /**
@@ -1464,14 +1483,7 @@ describe("gedu session feed", () => {
         });
       }
 
-      const { data } = await geduAuth.rpc("get_my_gedu_assignment_summaries", {
-        p_epoch_date: TWO_DAYS_AGO,
-      });
-      const summaries = geduAssignmentSummaries.parse(data);
-
-      expect(
-        summaries.find((s) => s.group_id === GROUP_MINE)?.attention_count,
-      ).toBe(2);
+      await expectOwedFrom(TWO_DAYS_AGO, 2);
     });
 
     /**
@@ -1493,14 +1505,7 @@ describe("gedu session feed", () => {
         });
       }
 
-      const { data } = await geduAuth.rpc("get_my_gedu_assignment_summaries", {
-        p_epoch_date: TWO_DAYS_AGO,
-      });
-      const summaries = geduAssignmentSummaries.parse(data);
-
-      expect(
-        summaries.find((s) => s.group_id === GROUP_MINE)?.attention_count,
-      ).toBe(2);
+      await expectOwedFrom(TWO_DAYS_AGO, 2);
     });
 
     it("stops counting a session once it is marked, reported and emailed", async () => {
@@ -1522,24 +1527,14 @@ describe("gedu session feed", () => {
         p_session_date: TWO_DAYS_AGO,
       });
 
-      async function count(): Promise<number | undefined> {
-        const { data } = await geduAuth.rpc(
-          "get_my_gedu_assignment_summaries",
-          { p_epoch_date: TWO_DAYS_AGO },
-        );
-        return geduAssignmentSummaries
-          .parse(data)
-          .find((s) => s.group_id === GROUP_MINE)?.attention_count;
-      }
-
-      expect(await count()).toBe(1);
+      await expectOwedFrom(TWO_DAYS_AGO, 1);
 
       await geduAuth.rpc("claim_group_session_report_email", {
         p_group_id: GROUP_MINE,
         p_session_date: YESTERDAY,
       });
 
-      expect(await count()).toBe(0);
+      await expectOwedFrom(TWO_DAYS_AGO, 0);
     });
 
     /**
@@ -1567,14 +1562,7 @@ describe("gedu session feed", () => {
         .eq("group_id", GROUP_MINE)
         .eq("session_date", YESTERDAY);
 
-      const { data } = await geduAuth.rpc("get_my_gedu_assignment_summaries", {
-        p_epoch_date: TWO_DAYS_AGO,
-      });
-      const summaries = geduAssignmentSummaries.parse(data);
-
-      expect(
-        summaries.find((s) => s.group_id === GROUP_MINE)?.attention_count,
-      ).toBe(2);
+      await expectOwedFrom(TWO_DAYS_AGO, 2);
     });
 
     /**
@@ -1588,26 +1576,17 @@ describe("gedu session feed", () => {
      * as before, and exactly as the client's own derivation says.
      */
     it("never counts a session that has not finished, however empty", async () => {
-      async function countFrom(epoch: string): Promise<number | undefined> {
-        const { data } = await geduAuth.rpc(
-          "get_my_gedu_assignment_summaries",
-          { p_epoch_date: epoch },
-        );
-        return geduAssignmentSummaries
-          .parse(data)
-          .find((s) => s.group_id === GROUP_MINE)?.attention_count;
-      }
-
       // Floored at today, the only occurrence in range is today's — which
       // started at 23:00 and ends at tomorrow's midnight. It has no register
       // and no report, so under a rule that asked only "is anything missing"
       // it would be outstanding. Nothing is owed until the hour is over.
-      expect(await countFrom(TODAY)).toBe(0);
+      const today = utcDayOffset(await dbNow(), 0);
+      await expectOwedFrom(today, 0, today);
 
       // Drop the floor by one day and the same call finds exactly one: the
       // difference between the two answers is the end-instant boundary, and
       // nothing else moved.
-      expect(await countFrom(YESTERDAY)).toBe(1);
+      await expectOwedFrom(utcDayOffset(new Date(`${today}T00:00:00Z`), -1), 1, today);
     });
 
     /**
@@ -1626,15 +1605,7 @@ describe("gedu session feed", () => {
         .update({ group_joined_at: `${YESTERDAY}T12:00:00.000Z` })
         .eq("group_id", GROUP_MINE);
       try {
-        const { data } = await geduAuth.rpc(
-          "get_my_gedu_assignment_summaries",
-          { p_epoch_date: TWO_DAYS_AGO },
-        );
-        const summaries = geduAssignmentSummaries.parse(data);
-
-        expect(
-          summaries.find((s) => s.group_id === GROUP_MINE)?.attention_count,
-        ).toBe(1);
+        await expectOwedFrom(TWO_DAYS_AGO, 1);
       } finally {
         await admin
           .from("participations")
@@ -1645,9 +1616,11 @@ describe("gedu session feed", () => {
 
     it("owes nothing for sessions before the epoch, however incomplete", async () => {
       // The epoch gates what is OWED and nothing else — the same two sessions
-      // are still fully recordable, they simply stop being asked for.
+      // are still fully recordable, they simply stop being asked for. A
+      // midnight passing during the run leaves it at nought: the first session
+      // on or after tomorrow ends the midnight after tomorrow's.
       const { data } = await geduAuth.rpc("get_my_gedu_assignment_summaries", {
-        p_epoch_date: dayOffset(1),
+        p_epoch_date: utcDayOffset(DB_NOW, 1),
       });
       const summaries = geduAssignmentSummaries.parse(data);
 
@@ -1662,7 +1635,7 @@ describe("gedu session feed", () => {
       // that decides whether we nag them about it.
       const { error } = await geduAuth.rpc("record_attendance", {
         p_group_id: GROUP_MINE,
-        p_session_date: dayOffset(-20),
+        p_session_date: utcDayOffset(DB_NOW, -20),
         p_participant_id: TEST_IDS.GAMER,
         p_status: "present",
       });
@@ -1909,7 +1882,7 @@ describe("gedu session feed", () => {
       // Unique per run: CI's database carries the seed fixtures AND whatever a
       // previous run left behind, so a fixed address is a collision waiting to
       // happen.
-      const email = `feed-marker-${Date.now()}@test.local`;
+      const email = `feed-marker-${uniqueSuffix()}@test.local`;
       const { data, error } = await admin.auth.admin.createUser({
         email,
         password: "testpassword123",

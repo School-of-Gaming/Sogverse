@@ -1,7 +1,15 @@
 import { describe, it, expect, beforeAll, afterAll } from "vitest";
 import type { SupabaseClient } from "@supabase/supabase-js";
 import type { Database } from "@/types/database.types";
-import { createAdminTestClient, createAuthenticatedClient } from "./helpers";
+import {
+  createAdminTestClient,
+  createAuthenticatedClient,
+  dbInterval,
+  dbNow,
+  utcDatesThrough,
+  utcDayOffset,
+  uniqueSuffix,
+} from "./helpers";
 import { TEST_IDS, TEST_CREDENTIALS } from "./constants";
 import { createTestProduct, deleteTestProducts } from "./product-helpers";
 import { addCalendarDays, addCalendarMonths } from "@/lib/calendar-date";
@@ -138,25 +146,25 @@ const ALL_PRODUCTS = [
 ];
 
 /**
- * A bare calendar date `offset` days from today, UTC-pinned end to end: built
- * from `Date.UTC` and read back through `toISOString`, so there is no zoned wall
- * clock anywhere in it and the day arithmetic is exact. Every fixture product is
- * created in the `UTC` timezone (the helper's default), which is what makes a
- * UTC date the right one to compare the RPC's own windows against.
+ * The database's clock, read once before the setup: the fixtures' dates count
+ * from it. Every fixture product runs in UTC, the helper's default.
  */
-function utcDay(offset: number): string {
-  const now = new Date();
-  const day = new Date(
-    Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), now.getUTCDate() + offset),
-  );
-  return day.toISOString().slice(0, 10);
-}
+let DB_NOW: Date;
+beforeAll(async () => {
+  DB_NOW = await dbNow();
+});
 
 describe("get_admin_dashboard", () => {
   let admin: SupabaseClient<Database>;
   let adminUser: SupabaseClient<Database>;
   let customer: SupabaseClient<Database>;
   let snapshot: AdminDashboardSnapshot;
+  /**
+   * The database's clock on either side of the snapshot. Its schedule window
+   * counts from the day it judged as today, which is either read's day: one
+   * day unless midnight passed during the call.
+   */
+  let snapshotReads: Date[];
 
   /** The uncertified gedu that must appear in the queue. Has signed nothing. */
   let queuedGeduId: string | null = null;
@@ -213,7 +221,7 @@ describe("get_admin_dashboard", () => {
 
   async function createUser(label: string): Promise<string> {
     const { data, error } = await admin.auth.admin.createUser({
-      email: `admin-dashboard-${label}-${Date.now()}@test.local`,
+      email: `admin-dashboard-${label}-${uniqueSuffix()}@test.local`,
       password: "testpassword123",
       email_confirm: true,
       user_metadata: { first_name: "Dash", last_name: label, locale: "en" },
@@ -245,7 +253,7 @@ describe("get_admin_dashboard", () => {
       user_id: userId,
       opted_in: state !== "not-ready",
       approved: state === "public",
-      approval_decided_at: state === "public" ? new Date().toISOString() : null,
+      approval_decided_at: state === "public" ? "2020-01-01T00:00:00Z" : null,
     });
     expect(error).toBeNull();
   }
@@ -287,7 +295,7 @@ describe("get_admin_dashboard", () => {
       productType: "municipality_club",
       billingMode: "external_contract",
       locationId: TEST_IDS.LOCATION_MUNICIPALITY,
-      endDate: utcDay(60),
+      endDate: utcDayOffset(DB_NOW, 60),
       seatCount: null,
       waitlistEnabled: false,
     });
@@ -295,8 +303,8 @@ describe("get_admin_dashboard", () => {
       id: P_CLEAN,
       seatCount: null,
       waitlistEnabled: false,
-      startDate: utcDay(-7),
-      endDate: utcDay(60),
+      startDate: utcDayOffset(DB_NOW, -7),
+      endDate: utcDayOffset(DB_NOW, 60),
     });
     await createTestProduct(admin, {
       id: P_EMPTY_GROUP,
@@ -310,8 +318,8 @@ describe("get_admin_dashboard", () => {
       id: P_ENDED,
       seatCount: null,
       waitlistEnabled: false,
-      startDate: utcDay(-200),
-      endDate: utcDay(-100),
+      startDate: utcDayOffset(DB_NOW, -200),
+      endDate: utcDayOffset(DB_NOW, -100),
     });
     // The invoice-customer pair: two municipality clubs identical in
     // every respect the queue reads except the buyer. One cannot be both, which
@@ -322,7 +330,7 @@ describe("get_admin_dashboard", () => {
         productType: "municipality_club",
         billingMode: "external_contract",
         locationId: TEST_IDS.LOCATION_MUNICIPALITY,
-        endDate: utcDay(60),
+        endDate: utcDayOffset(DB_NOW, 60),
         seatCount: null,
         waitlistEnabled: false,
       });
@@ -333,14 +341,14 @@ describe("get_admin_dashboard", () => {
       id: P_PLANNED,
       seatCount: null,
       waitlistEnabled: false,
-      startDate: utcDay(-40),
-      endDate: utcDay(20),
+      startDate: utcDayOffset(DB_NOW, -40),
+      endDate: utcDayOffset(DB_NOW, 20),
     });
     await createTestProduct(admin, {
       id: P_PLANNED_OPEN,
       seatCount: null,
       waitlistEnabled: false,
-      startDate: utcDay(5),
+      startDate: utcDayOffset(DB_NOW, 5),
     });
 
     // The buyer. Deleted by id AND by number first, because the number is
@@ -458,7 +466,7 @@ describe("get_admin_dashboard", () => {
         participant_id: TEST_IDS.GAMER,
         customer_id: TEST_IDS.CUSTOMER,
         status: "waitlisted",
-        waitlisted_at: new Date().toISOString(),
+        waitlisted_at: "2020-01-01T00:00:00Z",
       },
     ]);
     expect(participations.error).toBeNull();
@@ -493,10 +501,10 @@ describe("get_admin_dashboard", () => {
       .from("session_cancellations")
       .insert([
         // One of the two groups.
-        { group_id: GROUP_PLANNED_B, session_date: utcDay(3), cancelled_by: TEST_IDS.ADMIN },
+        { group_id: GROUP_PLANNED_B, session_date: utcDayOffset(DB_NOW, 3), cancelled_by: TEST_IDS.ADMIN },
         // Both of them.
-        { group_id: GROUP_PLANNED_A, session_date: utcDay(4), cancelled_by: TEST_IDS.ADMIN },
-        { group_id: GROUP_PLANNED_B, session_date: utcDay(4), cancelled_by: TEST_IDS.ADMIN },
+        { group_id: GROUP_PLANNED_A, session_date: utcDayOffset(DB_NOW, 4), cancelled_by: TEST_IDS.ADMIN },
+        { group_id: GROUP_PLANNED_B, session_date: utcDayOffset(DB_NOW, 4), cancelled_by: TEST_IDS.ADMIN },
       ]);
     expect(plannedCancellations.error).toBeNull();
 
@@ -610,9 +618,13 @@ describe("get_admin_dashboard", () => {
 
     // One read, after everything is in place. Through the admin's own session:
     // the service-role client has no profiles row, so assert_admin refuses it.
-    const { data, error } = await adminUser.rpc("get_admin_dashboard");
+    const {
+      result: { data, error },
+      reads,
+    } = await dbInterval(async () => adminUser.rpc("get_admin_dashboard"));
     expect(error).toBeNull();
     snapshot = adminDashboardSnapshot.parse(data);
+    snapshotReads = reads;
   });
 
   afterAll(async () => {
@@ -906,8 +918,8 @@ describe("get_admin_dashboard", () => {
       const product = scheduled(P_CLEAN);
       expect(product).toBeDefined();
       expect(product?.timezone).toBe("UTC");
-      expect(product?.start_date).toBe(utcDay(-7));
-      expect(product?.end_date).toBe(utcDay(60));
+      expect(product?.start_date).toBe(utcDayOffset(DB_NOW, -7));
+      expect(product?.end_date).toBe(utcDayOffset(DB_NOW, 60));
       expect(product?.seat_count).toBeNull();
       expect(product?.active_count).toBe(0);
       expect(product?.waitlist_count).toBe(0);
@@ -932,8 +944,9 @@ describe("get_admin_dashboard", () => {
       // ends in twenty, inside the window, so its own end clips it there.
       const dates =
         scheduled(P_PLANNED)?.planned_sessions.map((s) => s.session_date) ?? [];
-      const expected = Array.from({ length: 51 }, (_, i) => utcDay(i - 30));
-      expect(dates).toEqual(expected);
+      expect(
+        snapshotReads.map((read) => utcDatesThrough(utcDayOffset(read, -30), utcDayOffset(DB_NOW, 20))),
+      ).toContainEqual(dates);
     });
 
     it("plans an open-ended term from its first day to the window's far edge", () => {
@@ -942,21 +955,21 @@ describe("get_admin_dashboard", () => {
       const dates =
         scheduled(P_PLANNED_OPEN)?.planned_sessions.map((s) => s.session_date) ??
         [];
-      expect(dates[0]).toBe(utcDay(5));
-      expect(dates.at(-1)).toBe(
-        addCalendarDays(addCalendarMonths(utcDay(0), 4), -1),
-      );
+      expect(dates[0]).toBe(utcDayOffset(DB_NOW, 5));
+      expect(
+        snapshotReads.map((read) => addCalendarDays(addCalendarMonths(utcDayOffset(read, 0), 4), -1)),
+      ).toContain(dates.at(-1));
     });
 
     it("carries each session's instants in the product's zone", () => {
       const session = scheduled(P_PLANNED)?.planned_sessions.find(
-        (s) => s.session_date === utcDay(0),
+        (s) => s.session_date === utcDayOffset(DB_NOW, 0),
       );
       expect(new Date(session!.starts_at).toISOString()).toBe(
-        `${utcDay(0)}T10:00:00.000Z`,
+        `${utcDayOffset(DB_NOW, 0)}T10:00:00.000Z`,
       );
       expect(new Date(session!.ends_at).toISOString()).toBe(
-        `${utcDay(0)}T11:00:00.000Z`,
+        `${utcDayOffset(DB_NOW, 0)}T11:00:00.000Z`,
       );
     });
 
@@ -966,9 +979,9 @@ describe("get_admin_dashboard", () => {
       const cancelledOn = (date: string) =>
         product?.planned_sessions.find((s) => s.session_date === date)
           ?.cancelled_group_ids;
-      expect(cancelledOn(utcDay(2))).toEqual([]);
-      expect(cancelledOn(utcDay(3))).toEqual([GROUP_PLANNED_B]);
-      expect(cancelledOn(utcDay(4))).toEqual([GROUP_PLANNED_A, GROUP_PLANNED_B]);
+      expect(cancelledOn(utcDayOffset(DB_NOW, 2))).toEqual([]);
+      expect(cancelledOn(utcDayOffset(DB_NOW, 3))).toEqual([GROUP_PLANNED_B]);
+      expect(cancelledOn(utcDayOffset(DB_NOW, 4))).toEqual([GROUP_PLANNED_A, GROUP_PLANNED_B]);
     });
   });
 });

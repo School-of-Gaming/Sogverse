@@ -1481,6 +1481,53 @@ const eslintConfig = defineConfig([
       "security/detect-non-literal-fs-filename": "off",
     },
   },
+  {
+    // The DB tests run on the host and the database in a WSL2 kernel whose
+    // clock drifts seconds from the host's, so a time a test builds from this
+    // process's clock can land on the wrong side of a boundary the database
+    // judges. And every request to the stack goes through the helpers' clients
+    // and `dbTestFetch`, which share one connection pool (tests/CLAUDE.md).
+    // No other block sets these rules for tests/db, so nothing is restated.
+    files: ["tests/db/**/*.ts"],
+    rules: {
+      "no-restricted-syntax": ["error",
+        {
+          selector: "CallExpression[callee.object.name='Date'][callee.property.name='now']",
+          message: "A DB test reads the database's clock, never this process's: dbNow(), dbTime() or dbInterval() for a time the database judges or a stamp it wrote, a fixed literal for a time that is only data, uniqueSuffix() for a unique name.",
+        },
+        {
+          selector: "NewExpression[callee.name='Date'][arguments.length=0]",
+          message: "A DB test reads the database's clock, never this process's: dbNow(), dbTime() or dbInterval() for a time the database judges or a stamp it wrote, a fixed literal for a time that is only data.",
+        },
+      ],
+      "no-restricted-imports": ["error", {
+        paths: [{
+          name: "@supabase/supabase-js",
+          importNames: ["createClient"],
+          message: "Use the clients in tests/db/helpers.ts: they share the one connection pool.",
+        }],
+      }],
+      "no-restricted-globals": ["error", {
+        name: "fetch",
+        message: "Use dbTestFetch from tests/db/helpers.ts: it shares the one connection pool.",
+      }],
+      "no-restricted-properties": ["error", {
+        object: "globalThis",
+        property: "fetch",
+        message: "Use dbTestFetch from tests/db/helpers.ts: it shares the one connection pool.",
+      }],
+    },
+  },
+  {
+    // The one file that builds the pooled clients and hands Node's own `fetch`
+    // the pool, so it is the one place allowed to reach for either.
+    files: ["tests/db/helpers.ts"],
+    rules: {
+      "no-restricted-imports": "off",
+      "no-restricted-globals": "off",
+      "no-restricted-properties": "off",
+    },
+  },
   // Override default ignores of eslint-config-next.
   globalIgnores([
     // Default ignores of eslint-config-next:

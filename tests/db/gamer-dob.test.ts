@@ -5,6 +5,7 @@ import {
   accessTokenFor,
   createAdminTestClient,
   createAuthenticatedClient,
+  dbNow,
   patchRaw,
 } from "./helpers";
 import { SEED, TEST_CREDENTIALS, TEST_IDS } from "./constants";
@@ -14,8 +15,8 @@ import { SEED, TEST_CREDENTIALS, TEST_IDS } from "./constants";
  * is not one: a month outside 1–12, a year before 1900, a year and month still
  * in the future, and either half missing. There is no day column to test.
  *
- * "Now" is read in UTC, the zone the database's CURRENT_DATE answers in, so
- * the test and the CHECK agree on which month is the current one.
+ * "Now" is read off the database's clock, in UTC, the zone its CURRENT_DATE
+ * answers in, so the test and the CHECK agree on which month is the current one.
  */
 describe("gamer_profiles birth year and month constraints", () => {
   // Never inserted: each CHECK fires before the foreign key would.
@@ -34,8 +35,8 @@ describe("gamer_profiles birth year and month constraints", () => {
       .eq("user_id", TEST_IDS.GAMER);
   });
 
-  function thisMonth() {
-    const now = new Date();
+  async function thisMonth() {
+    const now = await dbNow();
     return { birth_year: now.getUTCFullYear(), birth_month: now.getUTCMonth() + 1 };
   }
 
@@ -58,7 +59,7 @@ describe("gamer_profiles birth year and month constraints", () => {
   });
 
   it("refuses a birth month in the future on INSERT", async () => {
-    const { birth_year, birth_month } = thisMonth();
+    const { birth_year, birth_month } = await thisMonth();
     const { error } = await admin.from("gamer_profiles").insert({
       user_id: NO_SUCH_USER,
       birth_year: birth_year + 1,
@@ -69,7 +70,7 @@ describe("gamer_profiles birth year and month constraints", () => {
   });
 
   it("refuses a birth month in the future on UPDATE", async () => {
-    const { birth_year, birth_month } = thisMonth();
+    const { birth_year, birth_month } = await thisMonth();
     const { error } = await admin
       .from("gamer_profiles")
       .update({ birth_year: birth_year + 1, birth_month })
@@ -82,7 +83,7 @@ describe("gamer_profiles birth year and month constraints", () => {
     // The cases above step the year, so this one holds the month half of the
     // CHECK to account: the year alone does not put next month in the future.
     // December's next month is January of the following year.
-    const { birth_year, birth_month } = thisMonth();
+    const { birth_year, birth_month } = await thisMonth();
     const nextMonth =
       birth_month === 12
         ? { birth_year: birth_year + 1, birth_month: 1 }
@@ -98,7 +99,7 @@ describe("gamer_profiles birth year and month constraints", () => {
   it("accepts the current month", async () => {
     const { error } = await admin
       .from("gamer_profiles")
-      .update(thisMonth())
+      .update(await thisMonth())
       .eq("user_id", TEST_IDS.GAMER);
 
     expect(error).toBeNull();

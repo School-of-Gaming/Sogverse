@@ -1,6 +1,5 @@
 import { describe, it, expect, beforeAll, beforeEach, afterAll } from "vitest";
 import type { SupabaseClient } from "@supabase/supabase-js";
-import { formatInTimeZone } from "date-fns-tz";
 import type { Database } from "@/types/database.types";
 import { consentAnswerTotalsResult } from "@/lib/consent-answers.contracts";
 import {
@@ -8,6 +7,8 @@ import {
   callRpcRaw,
   createAdminTestClient,
   createAuthenticatedClient,
+  dbInterval,
+  utcDayOffset,
 } from "./helpers";
 import { TEST_CREDENTIALS } from "./constants";
 
@@ -25,10 +26,6 @@ import { TEST_CREDENTIALS } from "./constants";
 
 /** The canonical forbidden SQLSTATE a missing grant or a guard produces. */
 const FORBIDDEN = "42501";
-
-function utcToday(): string {
-  return formatInTimeZone(new Date(), "UTC", "yyyy-MM-dd");
-}
 
 describe("consent answer tally", () => {
   let admin: SupabaseClient<Database>;
@@ -51,21 +48,24 @@ describe("consent answer tally", () => {
   }
 
   /**
-   * The rows a pair of counts made today. The two calls can straddle UTC
-   * midnight, which is two days and so two rows; every claim below holds on
-   * the sum and on the day each row carries, whichever happened.
+   * The rows a pair of counts made today, by the database's clock. The two
+   * calls can straddle UTC midnight, which is two days and so two rows; every
+   * claim below holds on the sum and on the day each row carries, whichever
+   * happened.
    */
   async function countTwice(
     args: Database["public"]["Functions"]["count_consent_answer"]["Args"],
   ) {
-    const before = utcToday();
-    for (let i = 0; i < 2; i++) {
-      const { error } = await admin.rpc("count_consent_answer", args);
-      expect(error).toBeNull();
-    }
-    const after = utcToday();
+    const { reads } = await dbInterval(async () => {
+      for (let i = 0; i < 2; i++) {
+        const { error } = await admin.rpc("count_consent_answer", args);
+        expect(error).toBeNull();
+      }
+    });
+    const [before, after] = reads.map((read) => utcDayOffset(read, 0));
     const counted = await rows();
-    expect(counted.length).toBe(before === after ? 1 : 2);
+    expect(counted.length).toBeGreaterThanOrEqual(1);
+    expect(counted.length).toBeLessThanOrEqual(before === after ? 1 : 2);
     for (const row of counted) expect([before, after]).toContain(row.day);
     return counted;
   }

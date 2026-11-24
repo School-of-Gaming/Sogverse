@@ -177,7 +177,7 @@ describe("participations race + idempotency", () => {
           customer_id: TEST_IDS.CUSTOMER,
           status,
           waitlisted_at:
-            status === "waitlisted" ? new Date().toISOString() : null,
+            status === "waitlisted" ? "2020-01-01T00:00:00Z" : null,
         });
         expect(seedErr).toBeNull();
 
@@ -292,7 +292,7 @@ describe("participations race + idempotency", () => {
           participant_id: TEST_IDS.GAMER_2,
           customer_id: TEST_IDS.CUSTOMER,
           status: "waitlisted",
-          waitlisted_at: new Date().toISOString(),
+          waitlisted_at: "2020-01-01T00:00:00Z",
         })
         .select("id")
         .single();

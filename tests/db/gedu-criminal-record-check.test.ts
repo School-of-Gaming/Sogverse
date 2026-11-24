@@ -1,7 +1,12 @@
 import { describe, it, expect, beforeAll, afterAll } from "vitest";
 import type { SupabaseClient } from "@supabase/supabase-js";
 import type { Database } from "@/types/database.types";
-import { createAdminTestClient, createAuthenticatedClient } from "./helpers";
+import {
+  createAdminTestClient,
+  createAuthenticatedClient,
+  dbInterval,
+  uniqueSuffix,
+} from "./helpers";
 import { TEST_IDS, TEST_CREDENTIALS } from "./constants";
 import { adminDashboardSnapshot } from "@/services/admin-dashboard/admin-dashboard.contracts";
 
@@ -61,7 +66,7 @@ describe("gedu criminal record check", () => {
 
   async function createGedu(label: string): Promise<string> {
     const { data, error } = await admin.auth.admin.createUser({
-      email: `gedu-crc-${label}-${Date.now()}@test.local`,
+      email: `gedu-crc-${label}-${uniqueSuffix()}@test.local`,
       password: "testpassword123",
       email_confirm: true,
       user_metadata: { first_name: "Crc", last_name: label, locale: "en" },
@@ -117,11 +122,16 @@ describe("gedu criminal record check", () => {
     });
 
     it("stamps the moment and the admin when an admin records it", async () => {
-      const before = Date.now();
-      const { error } = await adminUser.rpc("set_gedu_criminal_record_check", {
-        p_gedu_id: subjectGeduId!,
-        p_passed: true,
-      });
+      const {
+        result: { error },
+        notBefore,
+        notAfter,
+      } = await dbInterval(async () =>
+        adminUser.rpc("set_gedu_criminal_record_check", {
+          p_gedu_id: subjectGeduId!,
+          p_passed: true,
+        }),
+      );
       expect(error).toBeNull();
 
       const row = await checkRow(subjectGeduId!);
@@ -129,9 +139,9 @@ describe("gedu criminal record check", () => {
       // Both halves of the audit pair come from the server: the clock, and the
       // session's own user. Neither was in the call.
       expect(row.criminal_record_check_at).not.toBeNull();
-      expect(
-        Date.parse(row.criminal_record_check_at!),
-      ).toBeGreaterThanOrEqual(before - 60_000);
+      const checkedAt = Date.parse(row.criminal_record_check_at!);
+      expect(checkedAt).toBeGreaterThanOrEqual(notBefore.getTime());
+      expect(checkedAt).toBeLessThanOrEqual(notAfter.getTime());
       expect(row.criminal_record_check_by).toBe(TEST_IDS.ADMIN);
     });
 
@@ -193,7 +203,7 @@ describe("gedu criminal record check", () => {
         .from("gedu_profiles")
         .update({
           criminal_record_check_passed: true,
-          criminal_record_check_at: new Date().toISOString(),
+          criminal_record_check_at: "2020-01-01T00:00:00Z",
           criminal_record_check_by: TEST_IDS.ADMIN,
         })
         .eq("user_id", TEST_IDS.GEDU);
@@ -231,7 +241,7 @@ describe("gedu criminal record check", () => {
         .from("gedu_profiles")
         .update({
           criminal_record_check_passed: false,
-          criminal_record_check_at: new Date().toISOString(),
+          criminal_record_check_at: "2020-01-01T00:00:00Z",
         })
         .eq("user_id", subjectGeduId!);
       // 23514 is check_violation. A moment attached to a check nobody recorded
@@ -266,7 +276,7 @@ describe("gedu criminal record check", () => {
         .from("gedu_profiles")
         .update({
           criminal_record_check_passed: true,
-          criminal_record_check_at: new Date().toISOString(),
+          criminal_record_check_at: "2020-01-01T00:00:00Z",
         })
         .eq("user_id", subjectGeduId!);
       expect(recorded.error).toBeNull();
