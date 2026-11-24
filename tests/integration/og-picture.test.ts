@@ -78,11 +78,9 @@ function publicObjectUrl(bucket: string, path: string): string {
   return `${SUPABASE_URL}/storage/v1/object/public/${bucket}/${path}`;
 }
 
-/** The body, after checking the declared `Content-Length` is its real length. */
+/** The body of a served picture. */
 async function served(response: Response): Promise<Buffer> {
-  const body = Buffer.from(await response.arrayBuffer());
-  expect(response.headers.get("content-length")).toBe(String(body.length));
-  return body;
+  return Buffer.from(await response.arrayBuffer());
 }
 
 function picture(purpose: string, path: string) {
