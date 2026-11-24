@@ -66,7 +66,7 @@ git checkout dev && git pull --ff-only && git fetch origin \
 
 A conflict here is between the hotfix and work on `dev` that touched the same lines — resolve it as any merge, keeping both intents, and run the gates before pushing.
 
-The hotfix branch needs no manual deletion afterwards — `/cleanup-branches` picks it up once its commits are on `dev`.
+The hotfix branch needs no manual deletion afterwards — `/cleanup` picks it up once its commits are on `dev`.
 
 ## Notes
 
