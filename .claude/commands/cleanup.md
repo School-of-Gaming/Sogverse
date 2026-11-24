@@ -28,7 +28,10 @@ its work is on `dev`** (git).
 - **By transcript:** a `/worktree-flow` worktree is made by a session running in the
   main checkout, so its `cwd` never matches. For every worktree still unmatched, run
   `search_session_transcripts` with `include_archived: true` and the query
-  `worktrees\<name>`. For every unmatched branch, query the branch name.
+  `worktrees\<name>`. For every unmatched branch, query the branch name. A hit counts
+  only when its snippet shows the session made or worked on it (the setup script's
+  `branch <name> base dev` line, a checkout, its commits); a session that merely lists
+  it in `git branch` output is not its owner.
 - A nested worktree (one under another worktree's `.claude/worktrees/`) belongs to its
   parent's owner.
 
