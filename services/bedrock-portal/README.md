@@ -168,10 +168,10 @@ The root `package.json` has:
 "overrides": { "axios": "^1.7.9" }
 ```
 
-This exists because `prismarine-auth` (pinned to the `LucienHH/prismarine-auth#playfab` fork) pulls in `@xboxreplay/xboxlive-auth@3.3.3`, which declares `axios@^0.21.1` — a version with 7 open high-severity advisories (SSRF, CSRF, proto-pollution DoS, NO_PROXY bypass, cloud metadata exfiltration). Most aren't practically exploitable here — this service only makes outbound HTTPS calls to hardcoded Microsoft OAuth endpoints with no attacker-controlled input — but the override is cheap and gets `npm audit` to a clean 0.
+This exists because `prismarine-auth` (pinned to the `LucienHH/prismarine-auth#playfab` fork) pulls in `@xboxreplay/xboxlive-auth@3.3.3`, which declares `axios@^0.21.1` — a version with 7 open high-severity advisories (SSRF, CSRF, proto-pollution DoS, NO_PROXY bypass, cloud metadata exfiltration). Most aren't practically exploitable here — this service only makes outbound HTTPS calls to hardcoded Microsoft OAuth endpoints with no attacker-controlled input — but the override is cheap.
 
-The API surface `xboxlive-auth` uses (`axios.post(url, body, { headers })`, `response.status/data`, `err.response.status`) is stable between 0.21 and 1.x, so forcing the axios 1.x line is safe without needing to fork xboxlive-auth.
+The API surface `xboxlive-auth` uses (`axios.post(url, body, { headers })`, `response.status/data`, `err.response.status`) is stable between 0.21 and 1.x, so forcing the axios 1.x line is safe without needing to fork xboxlive-auth. The override also reaches `cmake-js`, which `raknet-native` uses only when no prebuilt binary fits; its one call (`axios.get(url, { responseType: "stream" })`, reading `content-length` and piping the body) behaves the same on 1.x.
 
-`npm ls axios` will show `invalid: "^0.21.1"` against the overridden copy — that's the override doing its job, not a real problem.
+The rest of this service's tree still carries open advisories (`tar` under `cmake-js`, `uuid` under `@azure/msal-node`) that only a `bedrock-portal` upgrade clears, and that upgrade replaces the pinned `prismarine-auth` fork — so it is a change to test against the live portal, not a routine patch.
 
 **When to revisit:** if the `LucienHH/prismarine-auth` fork ever updates to `@xboxreplay/xboxlive-auth@5.x` (zero-dep, uses native fetch), the override becomes a no-op and can be removed.
