@@ -36,7 +36,6 @@ export async function ogCardResponse(
   return new Response(new Uint8Array(bytes), {
     headers: {
       "Content-Type": contentType,
-      "Content-Length": String(bytes.length),
       "Cache-Control": init.cacheControl,
     },
   });

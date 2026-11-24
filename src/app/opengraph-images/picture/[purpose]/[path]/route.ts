@@ -115,7 +115,6 @@ export async function GET(
     return new Response(new Uint8Array(picture.bytes), {
       headers: {
         "Content-Type": picture.contentType,
-        "Content-Length": String(picture.bytes.length),
         "Cache-Control": OG_CARD_CACHE_CONTROL,
         "Content-Security-Policy": CONTENT_SECURITY_POLICY,
       },

@@ -131,14 +131,13 @@ async function noisyPhoto(): Promise<Blob> {
 
 /**
  * The body of a drawn card, after asserting what every card answers: a body
- * no larger than the preview budget, whose `Content-Length` says its size.
+ * no larger than the preview budget.
  */
 async function served(response: Response): Promise<Buffer> {
   expect(response.status).toBe(200);
   const bytes = Buffer.from(await response.arrayBuffer());
   expect(bytes.length).toBeGreaterThan(0);
   expect(bytes.length).toBeLessThanOrEqual(PREVIEW_IMAGE_BUDGET_BYTES);
-  expect(response.headers.get("content-length")).toBe(String(bytes.length));
   return bytes;
 }
 
